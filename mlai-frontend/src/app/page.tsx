@@ -1,6 +1,6 @@
-import { ArrowPathIcon, CloudArrowUpIcon, FingerPrintIcon, LockClosedIcon } from "@heroicons/react/20/solid";
-import Image from "next/image";
+import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
+import CTA from "@/components/CTA";
 
 const features = [
   {
@@ -37,9 +37,10 @@ const posts = [
     date: 'Mar 16, 2020',
     datetime: '2020-03-16',
     author: {
-      name: 'Michael Foster',
+      name: 'Library at the dock',
       imageUrl:
-        'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+        ''
+      ,
     },
   },
   // More posts...
@@ -189,7 +190,7 @@ export default function Home() {
         </div>
 
         {/* Logo Cloud */}
-        <div className="bg-white py-24 sm:py-32">
+        <div id="logoCloud" className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-12 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:grid-cols-5">
               <img
@@ -240,10 +241,24 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
+        </div>
+
+
         {/* Feature section */}
-        <div className="mx-auto mt-32 max-w-7xl px-6 sm:mt-56 lg:px-8">
+        <div className="mx-auto my-24 max-w-7xl px-6 sm:my-32 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
-            <h2 className="text-base font-semibold leading-7 text-indigo-600">Deploy faster</h2>
+            <div className="flex justify-center lg:flex-1">
+              <img
+                className="h-48 w-auto"
+                src="/MLAI-Logo.png"
+                alt=""
+              />
+            </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Everything you need to deploy your app
             </p>
@@ -263,14 +278,18 @@ export default function Home() {
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
                     <p className="flex-auto">{feature.description}</p>
                     <p className="mt-6">
-                      <a href={feature.href} className="text-sm font-semibold leading-6 text-indigo-600">
-                        Learn more <span aria-hidden="true">→</span>
-                      </a>
                     </p>
                   </dd>
                 </div>
               ))}
             </dl>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
         </div>
 
@@ -302,7 +321,11 @@ export default function Home() {
                         <circle cx={1} cy={1} r={1} />
                       </svg>
                       <div className="flex gap-x-2.5">
-                        <img src={post.author.imageUrl} alt="" className="h-6 w-6 flex-none rounded-full bg-white/10" />
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
+
                         {post.author.name}
                       </div>
                     </div>
@@ -316,6 +339,13 @@ export default function Home() {
                 </article>
               ))}
             </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
         </div>
 
@@ -408,6 +438,13 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
+        </div>
+
         {/* Newsletter section */}
         <div className="bg-white py-16 sm:py-24 lg:py-32">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-4 lg:px-8">
@@ -424,7 +461,12 @@ export default function Home() {
         </div>
 
 
-
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
+        </div>
 
         {/* Team section */}
         <div className="bg-white py-24 sm:py-32">
@@ -453,72 +495,7 @@ export default function Home() {
         </div>
 
         {/* CTA section */}
-        <div className="bg-gray-900 relative isolate mt-32 px-6 py-32 sm:mt-56 sm:py-40 lg:px-8">
-          <svg
-            className="absolute inset-0 -z-10 h-full w-full stroke-white/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]"
-            aria-hidden="true"
-          >
-            <defs>
-              <pattern
-                id="1d4240dd-898f-445f-932d-e2872fd12de3"
-                width={200}
-                height={200}
-                x="50%"
-                y={0}
-                patternUnits="userSpaceOnUse"
-              >
-                <path d="M.5 200V.5H200" fill="none" />
-              </pattern>
-            </defs>
-            <svg x="50%" y={0} className="overflow-visible fill-gray-800/20">
-              <path
-                d="M-200 0h201v201h-201Z M600 0h201v201h-201Z M-400 600h201v201h-201Z M200 800h201v201h-201Z"
-                strokeWidth={0}
-              />
-            </svg>
-            <rect width="100%" height="100%" strokeWidth={0} fill="url(#1d4240dd-898f-445f-932d-e2872fd12de3)" />
-          </svg>
-          <div
-            className="absolute inset-x-0 top-10 -z-10 flex transform-gpu justify-center overflow-hidden blur-3xl"
-            aria-hidden="true"
-          >
-            <div
-              className="aspect-[1108/632] w-[69.25rem] flex-none bg-gradient-to-r from-[#80caff] to-[#4f46e5] opacity-20"
-              style={{
-                clipPath:
-                  'polygon(73.6% 51.7%, 91.7% 11.8%, 100% 46.4%, 97.4% 82.2%, 92.5% 84.9%, 75.7% 64%, 55.3% 47.5%, 46.5% 49.4%, 45% 62.9%, 50.3% 87.2%, 21.3% 64.1%, 0.1% 100%, 5.4% 51.1%, 21.4% 63.9%, 58.9% 0.2%, 73.6% 51.7%)',
-              }}
-            />
-          </div>
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Boost your productivity.
-              <br />
-              Start using our app today.
-            </h2>
-            <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-              Incididunt sint fugiat pariatur cupidatat consectetur sit cillum anim id veniam aliqua proident excepteur
-              commodo do ea.
-            </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-            <a
-                    href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-                  >
-                    I want to volunteer
-                  </a>
-                  <a
-                    href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
-                  >
-                    I want to build
-                  </a>
-                  <a href="#" className="text-sm font-semibold leading-6 text-white">
-                    I want to sponsor <span aria-hidden="true">→</span>
-                  </a>
-            </div>
-          </div>
-        </div>
+        <CTA></CTA>
 
       </main>
     </div>
