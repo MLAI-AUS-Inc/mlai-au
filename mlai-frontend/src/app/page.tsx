@@ -1,41 +1,41 @@
-import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
+import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon, UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
 import CTA from "@/components/CTA";
 
 const features = [
   {
-    name: 'Push to deploy',
+    name: 'Meetups',
     description:
-      'Commodo nec sagittis tortor mauris sed. Turpis tortor quis scelerisque diam id accumsan nullam tempus. Pulvinar etiam lacus volutpat eu. Phasellus praesent ligula sit faucibus.',
+    'Community is everything, and most online events are simply not that great. We\'re organising monthly in-person events with talks about tech, research and startups. And then we have some drinks and make friends, wan\'t to join us? We will never commercialise our community.',
     href: '#',
-    icon: CloudArrowUpIcon,
+    icon: UsersIcon,
   },
   {
-    name: 'SSL certificates',
+    name: 'Hackathons',
     description:
-      'Pellentesque enim a commodo malesuada turpis eleifend risus. Facilisis donec placerat sapien consequat tempor fermentum nibh.',
+      'Getting together with other smart people and building a prototype is an awesome adventure and a great way to meet co-founders for your next unicorn. That\'s why we\'re hosting several larger hackathons per year. Check out aihackmelb23 - 99 hackers and over 300 pitch night attendees.',
     href: '#',
-    icon: LockClosedIcon,
+    icon: WrenchIcon,
   },
   {
-    name: 'Simple queues',
+    name: 'Codecamp',
     description:
-      'Pellentesque sit elit congue ante nec amet. Dolor aenean curabitur viverra suspendisse iaculis eget. Nec mollis placerat ultricies euismod ut condimentum.',
+      'We\'re all still learning, AI just moves too fast! If you\'re keen to get hands-on with coding and build you own AI systems, say no more and head straight to our codecamp. Run in collaboration with the Melbourne Hackerspace we\'re delivering ongoing build sessions.',
     href: '#',
-    icon: ArrowPathIcon,
+    icon: CodeBracketIcon,
   },
 ]
 const posts = [
   {
     id: 1,
-    title: 'Boost your conversion rate',
+    title: 'MLAI Green Battery Hack',
     href: '#',
     description:
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
       'https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80',
-    date: 'Mar 16, 2020',
-    datetime: '2020-03-16',
+    date: 'April 6th - April 20th, 2024',
+    datetime: '2024-04-06',
     author: {
       name: 'Library at the dock',
       imageUrl:
@@ -43,6 +43,8 @@ const posts = [
       ,
     },
   },
+
+  
   // More posts...
 ]
 const featuredTestimonial = {
@@ -152,7 +154,7 @@ export default function Home() {
             <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
-                  Announcing our next round of funding.{' '}
+                  Announcing the "MLAI Green Battery Hack"{' '}
                   <a href="#" className="font-semibold text-white">
                     <span className="absolute inset-0" aria-hidden="true" />
                     Read more <span aria-hidden="true">&rarr;</span>
@@ -164,8 +166,7 @@ export default function Home() {
                   Empowering the Australian AI Community
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-300">
-                  Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt
-                  amet fugiat veniam occaecat fugiat aliqua.
+                  MLAI Aus is a non-profit org dedicated to making Australia an awesome home for AI builders. Join us for one of our next meetups and hackathons.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
@@ -231,7 +232,7 @@ export default function Home() {
             </div>
             <div className="mt-16 flex justify-center">
               <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
-                <span className="hidden md:inline">Supported by over 100 companies and mentors across Australia. </span>
+                <span className="hidden md:inline">Sponsored and supported by over 50 awesome companies and mentors across Australia. </span>
                 <a href="#" className="font-semibold text-indigo-600">
                   <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
                   <span aria-hidden="true">&rarr;</span>
@@ -260,11 +261,10 @@ export default function Home() {
               />
             </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need to deploy your app
+              We are MLAI Aus
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Quis tellus eget adipiscing convallis sit sit eget aliquet quis. Suspendisse eget egestas a elementum
-              pulvinar et feugiat blandit at. In mi viverra elit nunc.
+            Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let's get on it.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
@@ -297,9 +297,9 @@ export default function Home() {
         <div className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">From the blog</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Events</h2>
               <p className="mt-2 text-lg leading-8 text-gray-600">
-                Learn how to grow your business with our expert advice.
+                Can't wait to see you for the next one!
               </p>
             </div>
             <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
