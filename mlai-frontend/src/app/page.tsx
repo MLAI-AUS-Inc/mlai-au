@@ -50,8 +50,8 @@ const posts = [
 const featuredTestimonial = {
   body: 'Integer id nunc sit semper purus. Bibendum at lacus ut arcu blandit montes vitae auctor libero. Hac condimentum dignissim nibh vulputate ut nunc. Amet nibh orci mi venenatis blandit vel et proin. Non hendrerit in vel ac diam.',
   author: {
-    name: 'Brenna Goyette',
-    handle: 'brennagoyette',
+    name: 'Kendra Vant',
+    handle: 'Director Europalabs',
     imageUrl:
       'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=1024&h=1024&q=80',
     logoUrl: 'https://tailwindui.com/img/logos/savvycal-logo-gray-900.svg',
@@ -63,8 +63,8 @@ const testimonials = [
       {
         body: 'Laborum quis quam. Dolorum et ut quod quia. Voluptas numquam delectus nihil. Aut enim doloremque et ipsam.',
         author: {
-          name: 'Leslie Alexander',
-          handle: 'lesliealexander',
+          name: 'Andy Gelme',
+          handle: 'Founder Hackerspace',
           imageUrl:
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
@@ -75,8 +75,8 @@ const testimonials = [
       {
         body: 'Aut reprehenderit voluptatem eum asperiores beatae id. Iure molestiae ipsam ut officia rem nulla blanditiis.',
         author: {
-          name: 'Lindsay Walton',
-          handle: 'lindsaywalton',
+          name: 'Josh Fourier',
+          handle: 'Founder Decoded AI',
           imageUrl:
             'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
@@ -89,8 +89,8 @@ const testimonials = [
       {
         body: 'Voluptas quos itaque ipsam in voluptatem est. Iste eos blanditiis repudiandae. Earum deserunt enim molestiae ipsum perferendis recusandae saepe corrupti.',
         author: {
-          name: 'Tom Cook',
-          handle: 'tomcook',
+          name: 'Nick Holmes a Court',
+          handle: 'AWS Startups',
           imageUrl:
             'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
@@ -101,8 +101,8 @@ const testimonials = [
       {
         body: 'Molestias ea earum quos nostrum doloremque sed. Quaerat quasi aut velit incidunt excepturi rerum voluptatem minus harum.',
         author: {
-          name: 'Leonard Krasner',
-          handle: 'leonardkrasner',
+          name: 'Eike Zeller',
+          handle: 'Hub lead Stone & Chalk',
           imageUrl:
             'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
@@ -113,8 +113,32 @@ const testimonials = [
 ]
 const people = [
   {
-    name: 'Leslie Alexander',
-    role: 'Co-Founder / CEO',
+    name: 'Louka Ewington-Pitsos',
+    role: 'Co-Founder',
+    imageUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+  },
+  {
+    name: 'Jamie Blackwell',
+    role: 'Co-Founder',
+    imageUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+  },
+  {
+    name: 'Lukas Wesemann',
+    role: 'Co-Founder',
+    imageUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+  },
+  {
+    name: 'Andrew Atta',
+    role: 'Marketing Wizz',
+    imageUrl:
+      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+  },
+  {
+    name: 'Doc Sam Donegan',
+    role: 'Master of the Web',
     imageUrl:
       'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
   },
@@ -134,7 +158,7 @@ export default function Home() {
         {/* Hero section */}
         <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20">
           <img
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2830&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
+            src="photos/bg.jpg"
             alt=""
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
@@ -166,7 +190,7 @@ export default function Home() {
                   Empowering the Australian AI Community
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-300">
-                  MLAI Aus is a non-profit org dedicated to making Australia an awesome home for AI builders. Join us for one of our next meetups and hackathons.
+                  MLAI Aus is a non-profit org dedicated to making Australia an awesome home for AI builders. Join us for one of our next meetups and hackathons!
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
@@ -190,44 +214,93 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Logo Cloud */}
+          {/* Logo Cloud */}
         <div id="logoCloud" className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-12 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:grid-cols-5">
+              {/* AirTree Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/transistor-logo-gray-900.svg"
-                alt="Transistor"
-                width={158}
-                height={48}
+                src="sponsor_logos/airtree.jpeg"
+                alt="AirTree"
               />
+              {/* AWS Startups Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/reform-logo-gray-900.svg"
-                alt="Reform"
-                width={158}
-                height={48}
+                src="sponsor_logos/aws.png"
+                alt="AWS Startups"
               />
+              {/* Blackbird Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/tuple-logo-gray-900.svg"
-                alt="Tuple"
-                width={158}
-                height={48}
+                src="sponsor_logos/blackbird.png"
+                alt="Blackbird"
               />
+              {/* Cake Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/savvycal-logo-gray-900.svg"
-                alt="SavvyCal"
-                width={158}
-                height={48}
+                src="sponsor_logos/cake.png"
+                alt="Cake"
               />
+              {/* Dropshipzone Logo */}
               <img
                 className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/statamic-logo-gray-900.svg"
-                alt="Statamic"
-                width={158}
-                height={48}
+                src="sponsor_logos/dropshipzone.jpeg"
+                alt="Dropshipzone"
+              />
+              {/* Humyn.ai Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/humyn.png"
+                alt="Humyn.ai"
+              />
+              {/* Mantel Group Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/mantel.png"
+                alt="Mantel Group"
+              />
+              {/* Microsoft Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1"
+                src="sponsor_logos/microsoft.png"
+                alt="Microsoft"
+              />
+              {/* NAB Logo */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/nab.png"
+                alt="NAB"
+              />
+              {/* Rampersand Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/rampersand.png"
+                alt="Rampersand"
+              />
+              {/* sirius */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/sirius.png"
+                alt="Sirius"
+              />
+              {/*squarepeg */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/squarepeg.png"
+                alt="squarepeg"
+              />
+              {/* uom */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/uom.jpeg"
+                alt="Uom"
+              />
+              {/* wilsonai */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/wilson.jpeg"
+                alt="wilsonai"
               />
             </div>
             <div className="mt-16 flex justify-center">
@@ -241,6 +314,7 @@ export default function Home() {
             </div>
           </div>
         </div>
+
 
         {/* Divider */}
         <div className="relative">
@@ -377,9 +451,9 @@ export default function Home() {
           </div>
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-xl text-center">
-              <h2 className="text-lg font-semibold leading-8 tracking-tight text-indigo-600">Testimonials</h2>
+              <h2 className="text-lg font-semibold leading-8 tracking-tight text-indigo-600">"Honestly, meeting cool people was the best part of it all"</h2>
               <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                We have worked with thousands of amazing people
+                We are proud to have worked with amazing people
               </p>
             </div>
             <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 text-gray-900 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-4">
@@ -395,7 +469,7 @@ export default function Home() {
                   />
                   <div className="flex-auto">
                     <div className="font-semibold">{featuredTestimonial.author.name}</div>
-                    <div className="text-gray-600">{`@${featuredTestimonial.author.handle}`}</div>
+                    <div className="text-gray-600">{`${featuredTestimonial.author.handle}`}</div>
                   </div>
                   <img className="h-10 w-auto flex-none" src={featuredTestimonial.author.logoUrl} alt="" />
                 </figcaption>
@@ -425,7 +499,7 @@ export default function Home() {
                             <img className="h-10 w-10 rounded-full bg-gray-50" src={testimonial.author.imageUrl} alt="" />
                             <div>
                               <div className="font-semibold">{testimonial.author.name}</div>
-                              <div className="text-gray-600">{`@${testimonial.author.handle}`}</div>
+                              <div className="text-gray-600">{`${testimonial.author.handle}`}</div>
                             </div>
                           </figcaption>
                         </figure>
