@@ -183,10 +183,7 @@ function classNames(...classes: any) {
 
 export default function Home() {
   return (
-    <div className="bg-white">
-
-
-      <main>
+      <main className="bg-white">
         {/* Hero section */}
         <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen">
           <img
@@ -210,7 +207,7 @@ export default function Home() {
             <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
-                  Announcing the "MLAI Green Battery Hack"{' '}
+                  Announcing the &quot;MLAI Green Battery Hack&quot;{' '}
                   <a href="#" className="font-semibold text-white">
                     <span className="absolute inset-0" aria-hidden="true" />
                     Read more <span aria-hidden="true">&rarr;</span>
@@ -335,29 +332,29 @@ export default function Home() {
                 alt="Rampersand"
               />
             </div>
-        <div className="mt-16 flex justify-center">
-          <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
-            <span className="hidden md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
-            <a href="#" className="font-semibold text-teal-600">
-              <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
-              <span aria-hidden="true">&rarr;</span>
-            </a>
-          </p>
-        </div>
-    </div>
+            <div className="mt-16 flex justify-center">
+              <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
+                <span className="hidden md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
+                <a href="#" className="font-semibold text-teal-600">
+                  <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
+                  <span aria-hidden="true">&rarr;</span>
+                </a>
+              </p>
+            </div>
+          </div>
         </div >
 
 
-    {/* Divider */ }
-    < div className = "relative" >
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-2/3 m-auto border-t border-gray-300" />
-      </div>
+        {/* Divider */}
+        < div className="relative" >
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
         </div >
 
 
-    {/* Feature section */ }
-    < div className = "mx-auto my-24 max-w-7xl px-6 sm:my-32 lg:px-8" >
+        {/* Feature section */}
+        < div className="mx-auto my-24 max-w-7xl px-6 sm:my-32 lg:px-" >
           <div className="mx-auto max-w-2xl lg:text-center">
             <div className="flex justify-center lg:flex-1">
               <img
@@ -370,7 +367,7 @@ export default function Home() {
               We are MLAI Aus
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-            Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let's get on it.
+              Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let&apos;s get on it.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
@@ -392,71 +389,71 @@ export default function Home() {
           </div>
         </div >
 
-    {/* Divider */ }
-    < div className = "relative" >
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-2/3 m-auto border-t border-gray-300" />
-      </div>
+        {/* Divider */}
+        < div className="relative" >
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
         </div >
 
-    {/* Blog section */ }
-    < div className = "bg-white py-24 sm:py-32" >
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Events</h2>
-          <p className="mt-2 text-lg leading-8 text-gray-600">
-            Can't wait to see you for the next one!
-          </p>
-        </div>
-        <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
-          {posts.map((post) => (
-            <article
-              key={post.id}
-              className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80"
-            >
-              <img src={post.imageUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
-              <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
-              <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+        {/* Blog section */}
+        < div className="bg-white py-24 sm:py-32" >
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Events</h2>
+              <p className="mt-2 text-lg leading-8 text-gray-600">
+                Can&apos;t wait to see you for the next one!
+              </p>
+            </div>
+            <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+              {posts.map((post) => (
+                <article
+                  key={post.id}
+                  className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80"
+                >
+                  <img src={post.imageUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+                  <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
+                  <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
 
-              <div className="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm leading-6 text-gray-300">
-                <time dateTime={post.datetime} className="mr-8">
-                  {post.date}
-                </time>
-                <div className="-ml-4 flex items-center gap-x-4">
-                  <svg viewBox="0 0 2 2" className="-ml-0.5 h-0.5 w-0.5 flex-none fill-white/50">
-                    <circle cx={1} cy={1} r={1} />
-                  </svg>
-                  <div className="flex gap-x-2.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
-                    </svg>
+                  <div className="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm leading-6 text-gray-300">
+                    <time dateTime={post.datetime} className="mr-8">
+                      {post.date}
+                    </time>
+                    <div className="-ml-4 flex items-center gap-x-4">
+                      <svg viewBox="0 0 2 2" className="-ml-0.5 h-0.5 w-0.5 flex-none fill-white/50">
+                        <circle cx={1} cy={1} r={1} />
+                      </svg>
+                      <div className="flex gap-x-2.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                        </svg>
 
-                    {post.author.name}
+                        {post.author.name}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-              <h3 className="mt-3 text-lg font-semibold leading-6 text-white">
-                <a href={post.href}>
-                  <span className="absolute inset-0" />
-                  {post.title}
-                </a>
-              </h3>
-            </article>
-          ))}
-        </div>
-      </div>
+                  <h3 className="mt-3 text-lg font-semibold leading-6 text-white">
+                    <a href={post.href}>
+                      <span className="absolute inset-0" />
+                      {post.title}
+                    </a>
+                  </h3>
+                </article>
+              ))}
+            </div>
+          </div>
         </div >
 
-    {/* Divider */ }
-    < div className = "relative" >
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-2/3 m-auto border-t border-gray-300" />
-      </div>
+        {/* Divider */}
+        < div className="relative" >
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
         </div >
 
-    {/* Testimonials section */ }
-    < div className = "relative isolate bg-white pb-32 pt-24 sm:pt-32" >
+        {/* Testimonials section */}
+        < div className="relative isolate bg-white pb-32 pt-24 sm:pt-32" >
           <div
             className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
             aria-hidden="true"
@@ -483,7 +480,7 @@ export default function Home() {
           </div>
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-xl text-center">
-              <h2 className="text-lg font-semibold leading-8 tracking-tight text-teal-600">"Honestly, meeting cool people was the best part of it all"</h2>
+              <h2 className="text-lg font-semibold leading-8 tracking-tight text-teal-600">&quot;Honestly, meeting cool people was the best part of it all&quot;</h2>
               <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                 We are proud to have worked with amazing people
               </p>
@@ -544,66 +541,65 @@ export default function Home() {
           </div>
         </div >
 
-    {/* Divider */ }
-    < div className = "relative" >
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-2/3 m-auto border-t border-gray-300" />
-      </div>
+        {/* Divider */}
+        < div className="relative" >
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
         </div >
 
-    {/* Newsletter section */ }
-    < div className = "bg-white py-16 sm:py-24 lg:py-32" >
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-4 lg:px-8">
-        <div className="max-w-xl text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-5 lg:mt-6">
-          <h2 className="inline sm:block lg:inline xl:block">Want to stay in the loop?</h2>{' '}
-          <p className="inline sm:block lg:inline xl:block">Sign up for our newsletter.</p>
-        </div>
+        {/* Newsletter section */}
+        < div className="bg-white py-16 sm:py-24 lg:py-32" >
+          <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-4 lg:px-8">
+            <div className="max-w-xl text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-5 lg:mt-6">
+              <h2 className="inline sm:block lg:inline xl:block">Want to stay in the loop?</h2>{' '}
+              <p className="inline sm:block lg:inline xl:block">Sign up for our newsletter.</p>
+            </div>
 
-        {/* Substack Signup Component */}
-        <div className="w-full max-w-md mx-auto lg:mx-0 lg:col-span-7 lg:pt-2">
-          <SubstackSignup />
-        </div>
-      </div>
-        </div >
-
-
-    {/* Divider */ }
-    < div className = "relative" >
-      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-        <div className="w-2/3 m-auto border-t border-gray-300" />
-      </div>
-        </div >
-
-    {/* Team section */ }
-    < div className = "bg-white py-24 sm:py-32" >
-      <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
-        <div className="max-w-2xl">
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">That's us looking all professional.</h2>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
-            MLAI Aus is run entirely by volunteers. Interested in jumping aboard the pirate ship?
-          </p>
-        </div>
-        <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-y-16 xl:col-span-2 xl:grid-cols-3">
-          {people.map((person) => (
-            <li key={person.name}>
-              <div className="flex items-center gap-x-6">
-                <img className="h-20 w-20 rounded-full" src={person.imageUrl} alt="" />
-                <div>
-                  <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">{person.name}</h3>
-                  <p className="text-sm font-semibold leading-6 text-teal-600">{person.role}</p>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
+            {/* Substack Signup Component */}
+            <div className="w-full max-w-md mx-auto lg:mx-0 lg:col-span-7 lg:pt-2">
+              <SubstackSignup />
+            </div>
+          </div>
         </div >
 
 
-    {/* CTA section */ }
-    <CTA></CTA >
+        {/* Divider */}
+        < div className="relative" >
+          <div className="absolute inset-0 flex items-center" aria-hidden="true">
+            <div className="w-2/3 m-auto border-t border-gray-300" />
+          </div>
+        </div >
+
+        {/* Team section */}
+        < div className="bg-white py-24 sm:py-32" >
+          <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
+            <div className="max-w-2xl">
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">That&apos;s us looking all professional.</h2>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                MLAI Aus is run entirely by volunteers. Interested in jumping aboard the pirate ship?
+              </p>
+            </div>
+            <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-y-16 xl:col-span-2 xl:grid-cols-3">
+              {people.map((person) => (
+                <li key={person.name}>
+                  <div className="flex items-center gap-x-6">
+                    <img className="h-20 w-20 rounded-full" src={person.imageUrl} alt="" />
+                    <div>
+                      <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">{person.name}</h3>
+                      <p className="text-sm font-semibold leading-6 text-teal-600">{person.role}</p>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div >
+
+
+        {/* CTA section */}
+        <CTA></CTA >
 
       </main >
-    </div >
   );
 }
