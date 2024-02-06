@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function CTA() {
     return (
-        <div className="bg-gray-900 relative isolate px-6 py-24 sm:py-32 lg:px-8">
+        <div className="bg-gray-900 relative isolate px-6 py-24  sm:py-32 lg:px-8">
             <svg
                 className="absolute inset-0 -z-10 h-full w-full stroke-white/10 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]"
                 aria-hidden="true"
@@ -41,24 +41,22 @@ export default function CTA() {
             </div>
             <div className="mx-auto max-w-2xl text-center">
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                    Boost your productivity.
-                    <br />
-                    Start using our app today.
+                    Keen to jump aboard the pirate ship?
+
                 </h2>
                 <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
-                    Incididunt sint fugiat pariatur cupidatat consectetur sit cillum anim id veniam aliqua proident excepteur
-                    commodo do ea.
+                    Wait no longer, click the button sailor.
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                     <a
                         href="#"
-                        className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                        className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                     >
                         I want to volunteer
                     </a>
                     <a
                         href="#"
-                        className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                        className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
                     >
                         I want to build
                     </a>
