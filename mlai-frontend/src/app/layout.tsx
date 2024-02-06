@@ -226,7 +226,7 @@ export default function RootLayout({
           </Dialog> */}
         </header>
 
-        {children}</body>
+        {children}
       <footer className="bg-gray-900" aria-labelledby="footer-heading">
         <h2 id="footer-heading" className="sr-only">
           Footer
@@ -331,6 +331,7 @@ export default function RootLayout({
           </div>
         </div>
       </footer>
+      </body>
     </html >
   );
 }
