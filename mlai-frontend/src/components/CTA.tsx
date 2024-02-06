@@ -41,7 +41,7 @@ export default function CTA() {
             </div>
             <div className="mx-auto max-w-2xl text-center">
                 <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                    Kenn to jump aboard the pirate ship?
+                    Keen to jump aboard the pirate ship?
 
                 </h2>
                 <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
