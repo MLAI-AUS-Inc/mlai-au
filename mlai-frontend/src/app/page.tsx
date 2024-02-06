@@ -28,21 +28,57 @@ const features = [
 const posts = [
   {
     id: 1,
-    title: 'MLAI Green Battery Hack',
+    title: 'MLAI Green Battery Hack 2024 (Melbourne)',
     href: '#',
     description:
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
-      'https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80',
-    date: 'April 6th - April 20th, 2024',
+      'photos/gbh_melbourne.webp',
+    date: 'April 6th - April 30th, 2024',
     datetime: '2024-04-06',
     author: {
-      name: 'Library at the dock',
+      name: 'Melbourne',
       imageUrl:
         ''
       ,
     },
   },
+
+  {
+    id: 2,
+    title: 'MLAI Green Battery Hack 2024 (Sydney)',
+    href: '#',
+    description:
+      'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
+    imageUrl:
+      'photos/gbh_sydney.webp',
+    date: 'April 6th - April 30th, 2024',
+    datetime: '2024-04-06',
+    author: {
+      name: 'Sydney',
+      imageUrl:
+        ''
+      ,
+    },
+  },
+
+  {
+    id: 3,
+    title: 'AI Lightning Talks',
+    href: '#',
+    description:
+      'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
+    imageUrl:
+      'photos/lightning_talks.png',
+    date: 'April 6th - April 20th, 2024',
+    datetime: '2024-04-06',
+    author: {
+      name: 'Kathleen Syme Library, Melbourne',
+      imageUrl:
+        ''
+      ,
+    },
+  }
 
   
   // More posts...
@@ -116,31 +152,31 @@ const people = [
     name: 'Louka Ewington-Pitsos',
     role: 'Co-Founder',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/louka.jpeg',
   },
   {
     name: 'Jamie Blackwell',
     role: 'Co-Founder',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/jaime.png',
   },
   {
     name: 'Lukas Wesemann',
     role: 'Co-Founder',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/lukas.png',
   },
   {
     name: 'Andrew Atta',
     role: 'Marketing Wizz',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/andrew.png',
   },
   {
     name: 'Doc Sam Donegan',
     role: 'Master of the Web',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/sam.png',
   },
   // More people...
 ]
@@ -156,7 +192,7 @@ export default function Home() {
 
       <main>
         {/* Hero section */}
-        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20">
+        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen">
           <img
             src="photos/bg.jpg"
             alt=""
@@ -195,13 +231,13 @@ export default function Home() {
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
                     href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                   >
                     I want to volunteer
                   </a>
                   <a
                     href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                   >
                     I want to build
                   </a>
@@ -305,8 +341,8 @@ export default function Home() {
             </div>
             <div className="mt-16 flex justify-center">
               <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
-                <span className="hidden md:inline">Sponsored and supported by over 50 awesome companies and mentors across Australia. </span>
-                <a href="#" className="font-semibold text-indigo-600">
+                <span className="hidden md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
+                <a href="#" className="font-semibold text-teal-600">
                   <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
                   <span aria-hidden="true">&rarr;</span>
                 </a>
@@ -319,7 +355,7 @@ export default function Home() {
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-2/3 m-auto border-t border-gray-300" />
+          <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
         </div>
 
@@ -346,7 +382,7 @@ export default function Home() {
               {features.map((feature) => (
                 <div key={feature.name} className="flex flex-col">
                   <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                    <feature.icon className="h-5 w-5 flex-none text-indigo-600" aria-hidden="true" />
+                    <feature.icon className="h-5 w-5 flex-none text-teal-500" aria-hidden="true" />
                     {feature.name}
                   </dt>
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -451,7 +487,7 @@ export default function Home() {
           </div>
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-xl text-center">
-              <h2 className="text-lg font-semibold leading-8 tracking-tight text-indigo-600">"Honestly, meeting cool people was the best part of it all"</h2>
+              <h2 className="text-lg font-semibold leading-8 tracking-tight text-teal-600">"Honestly, meeting cool people was the best part of it all"</h2>
               <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                 We are proud to have worked with amazing people
               </p>
@@ -523,7 +559,7 @@ export default function Home() {
         <div className="bg-white py-16 sm:py-24 lg:py-32">
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-4 lg:px-8">
             <div className="max-w-xl text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-5 lg:mt-6">
-              <h2 className="inline sm:block lg:inline xl:block">Want to stAI up to date?</h2>{' '}
+              <h2 className="inline sm:block lg:inline xl:block">Want to stay in the loop?</h2>{' '}
               <p className="inline sm:block lg:inline xl:block">Sign up for our newsletter.</p>
             </div>
 
@@ -546,20 +582,19 @@ export default function Home() {
         <div className="bg-white py-24 sm:py-32">
           <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Meet our leadership</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">That's us looking all professional.</h2>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Libero fames augue nisl porttitor nisi, quis. Id ac elit odio vitae elementum enim vitae ullamcorper
-                suspendisse.
+                MLAI Aus is run entirely by volunteers. Interested in jumping aboard the pirate ship?
               </p>
             </div>
-            <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
+            <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-y-16 xl:col-span-2 xl:grid-cols-3">
               {people.map((person) => (
                 <li key={person.name}>
                   <div className="flex items-center gap-x-6">
                     <img className="h-20 w-20 rounded-full" src={person.imageUrl} alt="" />
                     <div>
                       <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">{person.name}</h3>
-                      <p className="text-sm font-semibold leading-6 text-indigo-600">{person.role}</p>
+                      <p className="text-sm font-semibold leading-6 text-teal-600">{person.role}</p>
                     </div>
                   </div>
                 </li>
@@ -567,6 +602,7 @@ export default function Home() {
             </ul>
           </div>
         </div>
+
 
         {/* CTA section */}
         <CTA></CTA>
