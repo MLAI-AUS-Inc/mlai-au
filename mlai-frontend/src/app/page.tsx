@@ -90,7 +90,7 @@ const featuredTestimonial = {
     handle: 'Director Europalabs',
     imageUrl:
       'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=1024&h=1024&q=80',
-    logoUrl: 'https://tailwindui.com/img/logos/savvycal-logo-gray-900.svg',
+    logoUrl: '',
   },
 }
 const testimonials = [
@@ -254,11 +254,11 @@ export default function Home() {
         <div id="logoCloud" className="bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-12 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:grid-cols-5">
-              {/* AirTree Logo */}
+              {/* NAB Logo */}
               <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="sponsor_logos/airtree.jpeg"
-                alt="AirTree"
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/nab.png"
+                alt="NAB"
               />
               {/* AWS Startups Logo */}
               <img
@@ -266,11 +266,23 @@ export default function Home() {
                 src="sponsor_logos/aws.png"
                 alt="AWS Startups"
               />
-              {/* Blackbird Logo */}
+              {/* Mantel Group Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="sponsor_logos/blackbird.png"
-                alt="Blackbird"
+                src="sponsor_logos/mantel.png"
+                alt="Mantel Group"
+              />
+              {/* wilsonai */}
+              <img
+                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
+                src="sponsor_logos/wilson.jpeg"
+                alt="wilsonai"
+              />
+              {/* Humyn.ai Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/humyn.png"
+                alt="Humyn.ai"
               />
               {/* Cake Logo */}
               <img
@@ -284,35 +296,11 @@ export default function Home() {
                 src="sponsor_logos/dropshipzone.jpeg"
                 alt="Dropshipzone"
               />
-              {/* Humyn.ai Logo */}
-              <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="sponsor_logos/humyn.png"
-                alt="Humyn.ai"
-              />
-              {/* Mantel Group Logo */}
-              <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="sponsor_logos/mantel.png"
-                alt="Mantel Group"
-              />
               {/* Microsoft Logo */}
               <img
                 className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1"
                 src="sponsor_logos/microsoft.png"
                 alt="Microsoft"
-              />
-              {/* NAB Logo */}
-              <img
-                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-                src="sponsor_logos/nab.png"
-                alt="NAB"
-              />
-              {/* Rampersand Logo */}
-              <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="sponsor_logos/rampersand.png"
-                alt="Rampersand"
               />
               {/* sirius */}
               <img
@@ -320,23 +308,35 @@ export default function Home() {
                 src="sponsor_logos/sirius.png"
                 alt="Sirius"
               />
-              {/*squarepeg */}
-              <img
-                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-                src="sponsor_logos/squarepeg.png"
-                alt="squarepeg"
-              />
               {/* uom */}
               <img
                 className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
                 src="sponsor_logos/uom.jpeg"
                 alt="Uom"
               />
-              {/* wilsonai */}
+              {/*squarepeg */}
               <img
                 className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-                src="sponsor_logos/wilson.jpeg"
-                alt="wilsonai"
+                src="sponsor_logos/squarepeg.png"
+                alt="squarepeg"
+              />
+              {/* AirTree Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/airtree.jpeg"
+                alt="AirTree"
+              />
+              {/* Blackbird Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/blackbird.png"
+                alt="Blackbird"
+              />
+              {/* Rampersand Logo */}
+              <img
+                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
+                src="sponsor_logos/rampersand.png"
+                alt="Rampersand"
               />
             </div>
             <div className="mt-16 flex justify-center">
