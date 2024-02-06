@@ -1,58 +1,96 @@
-import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
+import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon, UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
 import CTA from "@/components/CTA";
 
 const features = [
   {
-    name: 'Push to deploy',
+    name: 'Meetups',
     description:
-      'Commodo nec sagittis tortor mauris sed. Turpis tortor quis scelerisque diam id accumsan nullam tempus. Pulvinar etiam lacus volutpat eu. Phasellus praesent ligula sit faucibus.',
+      'Community is everything, and most online events are simply not that great. We\'re organising monthly in-person events with talks about tech, research and startups. And then we have some drinks and make friends, wan\'t to join us? We will never commercialise our community.',
     href: '#',
-    icon: CloudArrowUpIcon,
+    icon: UsersIcon,
   },
   {
-    name: 'SSL certificates',
+    name: 'Hackathons',
     description:
-      'Pellentesque enim a commodo malesuada turpis eleifend risus. Facilisis donec placerat sapien consequat tempor fermentum nibh.',
+      'Getting together with other smart people and building a prototype is an awesome adventure and a great way to meet co-founders for your next unicorn. That\'s why we\'re hosting several larger hackathons per year. Check out aihackmelb23 - 99 hackers and over 300 pitch night attendees.',
     href: '#',
-    icon: LockClosedIcon,
+    icon: WrenchIcon,
   },
   {
-    name: 'Simple queues',
+    name: 'Codecamp',
     description:
-      'Pellentesque sit elit congue ante nec amet. Dolor aenean curabitur viverra suspendisse iaculis eget. Nec mollis placerat ultricies euismod ut condimentum.',
+      'We\'re all still learning, AI just moves too fast! If you\'re keen to get hands-on with coding and build you own AI systems, say no more and head straight to our codecamp. Run in collaboration with the Melbourne Hackerspace we\'re delivering ongoing build sessions.',
     href: '#',
-    icon: ArrowPathIcon,
+    icon: CodeBracketIcon,
   },
 ]
 const posts = [
   {
     id: 1,
-    title: 'Boost your conversion rate',
+    title: 'MLAI Green Battery Hack 2024 (Melbourne)',
     href: '#',
     description:
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
-      'https://images.unsplash.com/photo-1496128858413-b36217c2ce36?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=3603&q=80',
-    date: 'Mar 16, 2020',
-    datetime: '2020-03-16',
+      'photos/gbh_melbourne.webp',
+    date: 'April 6th - April 30th, 2024',
+    datetime: '2024-04-06',
     author: {
-      name: 'Library at the dock',
+      name: 'Melbourne',
       imageUrl:
         ''
       ,
     },
   },
+
+  {
+    id: 2,
+    title: 'MLAI Green Battery Hack 2024 (Sydney)',
+    href: '#',
+    description:
+      'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
+    imageUrl:
+      'photos/gbh_sydney.webp',
+    date: 'April 6th - April 30th, 2024',
+    datetime: '2024-04-06',
+    author: {
+      name: 'Sydney',
+      imageUrl:
+        ''
+      ,
+    },
+  },
+
+  {
+    id: 3,
+    title: 'AI Lightning Talks',
+    href: '#',
+    description:
+      'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
+    imageUrl:
+      'photos/lightning_talks.png',
+    date: 'April 6th - April 20th, 2024',
+    datetime: '2024-04-06',
+    author: {
+      name: 'Kathleen Syme Library, Melbourne',
+      imageUrl:
+        ''
+      ,
+    },
+  }
+
+
   // More posts...
 ]
 const featuredTestimonial = {
   body: 'Integer id nunc sit semper purus. Bibendum at lacus ut arcu blandit montes vitae auctor libero. Hac condimentum dignissim nibh vulputate ut nunc. Amet nibh orci mi venenatis blandit vel et proin. Non hendrerit in vel ac diam.',
   author: {
-    name: 'Brenna Goyette',
-    handle: 'brennagoyette',
+    name: 'Kendra Vant',
+    handle: 'Director Europalabs',
     imageUrl:
       'https://images.unsplash.com/photo-1550525811-e5869dd03032?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=1024&h=1024&q=80',
-    logoUrl: 'https://tailwindui.com/img/logos/savvycal-logo-gray-900.svg',
+    logoUrl: '',
   },
 }
 const testimonials = [
@@ -61,25 +99,23 @@ const testimonials = [
       {
         body: 'Laborum quis quam. Dolorum et ut quod quia. Voluptas numquam delectus nihil. Aut enim doloremque et ipsam.',
         author: {
-          name: 'Leslie Alexander',
-          handle: 'lesliealexander',
+          name: 'Andy Gelme',
+          handle: 'Founder Hackerspace',
           imageUrl:
             'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
       },
-      // More testimonials...
     ],
     [
       {
         body: 'Aut reprehenderit voluptatem eum asperiores beatae id. Iure molestiae ipsam ut officia rem nulla blanditiis.',
         author: {
-          name: 'Lindsay Walton',
-          handle: 'lindsaywalton',
+          name: 'Josh Fourier',
+          handle: 'Founder Decoded AI',
           imageUrl:
             'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
       },
-      // More testimonials...
     ],
   ],
   [
@@ -87,34 +123,56 @@ const testimonials = [
       {
         body: 'Voluptas quos itaque ipsam in voluptatem est. Iste eos blanditiis repudiandae. Earum deserunt enim molestiae ipsum perferendis recusandae saepe corrupti.',
         author: {
-          name: 'Tom Cook',
-          handle: 'tomcook',
+          name: 'Nick Holmes a Court',
+          handle: 'AWS Startups',
           imageUrl:
             'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
       },
-      // More testimonials...
     ],
     [
       {
         body: 'Molestias ea earum quos nostrum doloremque sed. Quaerat quasi aut velit incidunt excepturi rerum voluptatem minus harum.',
         author: {
-          name: 'Leonard Krasner',
-          handle: 'leonardkrasner',
+          name: 'Eike Zeller',
+          handle: 'Hub lead Stone & Chalk',
           imageUrl:
             'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
         },
       },
-      // More testimonials...
     ],
   ],
 ]
 const people = [
   {
-    name: 'Leslie Alexander',
-    role: 'Co-Founder / CEO',
+    name: 'Louka Ewington-Pitsos',
+    role: 'Co-Founder',
     imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+      'photos/louka.jpeg',
+  },
+  {
+    name: 'Jamie Blackwell',
+    role: 'Co-Founder',
+    imageUrl:
+      'photos/jaime.png',
+  },
+  {
+    name: 'Lukas Wesemann',
+    role: 'Co-Founder',
+    imageUrl:
+      'photos/lukas.png',
+  },
+  {
+    name: 'Andrew Atta',
+    role: 'Marketing Wizz',
+    imageUrl:
+      'photos/andrew.png',
+  },
+  {
+    name: 'Doc Sam Donegan',
+    role: 'Master of the Web',
+    imageUrl:
+      'photos/sam.png',
   },
   // More people...
 ]
@@ -125,14 +183,11 @@ function classNames(...classes: any) {
 
 export default function Home() {
   return (
-    <div className="bg-white">
-
-
-      <main>
+      <main className="bg-white">
         {/* Hero section */}
-        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20">
+        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen">
           <img
-            src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2830&q=80&blend=111827&sat=-100&exp=15&blend-mode=multiply"
+            src="photos/bg.jpg"
             alt=""
             className="absolute inset-0 -z-10 h-full w-full object-cover"
           />
@@ -152,7 +207,7 @@ export default function Home() {
             <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
                 <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
-                  Announcing our next round of funding.{' '}
+                  Announcing the &quot;MLAI Green Battery Hack&quot;{' '}
                   <a href="#" className="font-semibold text-white">
                     <span className="absolute inset-0" aria-hidden="true" />
                     Read more <span aria-hidden="true">&rarr;</span>
@@ -164,19 +219,18 @@ export default function Home() {
                   Empowering the Australian AI Community
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-300">
-                  Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt
-                  amet fugiat veniam occaecat fugiat aliqua.
+                  MLAI Aus is a non-profit org dedicated to making Australia an awesome home for AI builders. Join us for one of our next meetups and hackathons!
                 </p>
                 <div className="mt-10 flex items-center justify-center gap-x-6">
                   <a
                     href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                   >
                     I want to volunteer
                   </a>
                   <a
                     href="#"
-                    className="rounded-md bg-indigo-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                   >
                     I want to build
                   </a>
@@ -190,67 +244,117 @@ export default function Home() {
         </div>
 
         {/* Logo Cloud */}
-        <div id="logoCloud" className="bg-white py-24 sm:py-32">
-          <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="mx-auto grid max-w-lg grid-cols-4 items-center gap-x-8 gap-y-12 sm:max-w-xl sm:grid-cols-6 sm:gap-x-10 sm:gap-y-14 lg:mx-0 lg:max-w-none lg:grid-cols-5">
+        <div id="logoCloud" className="bg-white py-12 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5 lg:max-w-none">
+              {/* NAB Logo */}
               <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/transistor-logo-gray-900.svg"
-                alt="Transistor"
-                width={158}
-                height={48}
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/nab.png"
+                alt="NAB"
               />
+              {/* AWS Startups Logo */}
               <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/reform-logo-gray-900.svg"
-                alt="Reform"
-                width={158}
-                height={48}
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/aws.png"
+                alt="AWS Startups"
               />
+              {/* Mantel Group Logo */}
               <img
-                className="col-span-2 max-h-12 w-full object-contain lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/tuple-logo-gray-900.svg"
-                alt="Tuple"
-                width={158}
-                height={48}
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/mantel.png"
+                alt="Mantel Group"
               />
+              {/* wilsonai Logo */}
               <img
-                className="col-span-2 max-h-12 w-full object-contain sm:col-start-2 lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/savvycal-logo-gray-900.svg"
-                alt="SavvyCal"
-                width={158}
-                height={48}
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/wilson.jpeg"
+                alt="wilsonai"
               />
+              {/* Humyn.ai Logo */}
               <img
-                className="col-span-2 col-start-2 max-h-12 w-full object-contain sm:col-start-auto lg:col-span-1"
-                src="https://tailwindui.com/img/logos/158x48/statamic-logo-gray-900.svg"
-                alt="Statamic"
-                width={158}
-                height={48}
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/humyn.png"
+                alt="Humyn.ai"
+              />
+              {/* Cake Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/cake.png"
+                alt="Cake"
+              />
+              {/* Dropshipzone Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/dropshipzone.jpeg"
+                alt="Dropshipzone"
+              />
+              {/* Microsoft Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/microsoft.png"
+                alt="Microsoft"
+              />
+              {/* Sirius Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/sirius.png"
+                alt="Sirius"
+              />
+              {/* Uom Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/uom.jpeg"
+                alt="Uom"
+              />
+              {/* Squarepeg Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/squarepeg.png"
+                alt="Squarepeg"
+              />
+              {/* AirTree Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/airtree.jpeg"
+                alt="AirTree"
+              />
+              {/* Blackbird Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/blackbird.png"
+                alt="Blackbird"
+              />
+              {/* Rampersand Logo */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/rampersand.png"
+                alt="Rampersand"
               />
             </div>
             <div className="mt-16 flex justify-center">
               <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
-                <span className="hidden md:inline">Supported by over 100 companies and mentors across Australia. </span>
-                <a href="#" className="font-semibold text-indigo-600">
+                <span className="hidden md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
+                <a href="#" className="font-semibold text-teal-600">
                   <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
                   <span aria-hidden="true">&rarr;</span>
                 </a>
               </p>
             </div>
           </div>
-        </div>
+        </div >
+
 
         {/* Divider */}
-        <div className="relative">
+        < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
-        </div>
+        </div >
 
 
         {/* Feature section */}
-        <div className="mx-auto my-24 max-w-7xl px-6 sm:my-32 lg:px-8">
+        < div className="mx-auto my-24 max-w-7xl px-6 sm:my-32 lg:px-" >
           <div className="mx-auto max-w-2xl lg:text-center">
             <div className="flex justify-center lg:flex-1">
               <img
@@ -260,11 +364,10 @@ export default function Home() {
               />
             </div>
             <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need to deploy your app
+              We are MLAI Aus
             </p>
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Quis tellus eget adipiscing convallis sit sit eget aliquet quis. Suspendisse eget egestas a elementum
-              pulvinar et feugiat blandit at. In mi viverra elit nunc.
+              Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let&apos;s get on it.
             </p>
           </div>
           <div className="mx-auto mt-16 max-w-2xl sm:mt-20 lg:mt-24 lg:max-w-none">
@@ -272,7 +375,7 @@ export default function Home() {
               {features.map((feature) => (
                 <div key={feature.name} className="flex flex-col">
                   <dt className="flex items-center gap-x-3 text-base font-semibold leading-7 text-gray-900">
-                    <feature.icon className="h-5 w-5 flex-none text-indigo-600" aria-hidden="true" />
+                    <feature.icon className="h-5 w-5 flex-none text-teal-500" aria-hidden="true" />
                     {feature.name}
                   </dt>
                   <dd className="mt-4 flex flex-auto flex-col text-base leading-7 text-gray-600">
@@ -284,22 +387,22 @@ export default function Home() {
               ))}
             </dl>
           </div>
-        </div>
+        </div >
 
         {/* Divider */}
-        <div className="relative">
+        < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
-        </div>
+        </div >
 
         {/* Blog section */}
-        <div className="bg-white py-24 sm:py-32">
+        < div className="bg-white py-24 sm:py-32" >
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">From the blog</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Events</h2>
               <p className="mt-2 text-lg leading-8 text-gray-600">
-                Learn how to grow your business with our expert advice.
+                Can&apos;t wait to see you for the next one!
               </p>
             </div>
             <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
@@ -340,17 +443,17 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </div >
 
         {/* Divider */}
-        <div className="relative">
+        < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
-        </div>
+        </div >
 
         {/* Testimonials section */}
-        <div className="relative isolate bg-white pb-32 pt-24 sm:pt-32">
+        < div className="relative isolate bg-white pb-32 pt-24 sm:pt-32" >
           <div
             className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
             aria-hidden="true"
@@ -377,9 +480,9 @@ export default function Home() {
           </div>
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-xl text-center">
-              <h2 className="text-lg font-semibold leading-8 tracking-tight text-indigo-600">Testimonials</h2>
+              <h2 className="text-lg font-semibold leading-8 tracking-tight text-teal-600">&quot;Honestly, meeting cool people was the best part of it all&quot;</h2>
               <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                We have worked with thousands of amazing people
+                We are proud to have worked with amazing people
               </p>
             </div>
             <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 text-gray-900 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-4">
@@ -395,7 +498,7 @@ export default function Home() {
                   />
                   <div className="flex-auto">
                     <div className="font-semibold">{featuredTestimonial.author.name}</div>
-                    <div className="text-gray-600">{`@${featuredTestimonial.author.handle}`}</div>
+                    <div className="text-gray-600">{`${featuredTestimonial.author.handle}`}</div>
                   </div>
                   <img className="h-10 w-auto flex-none" src={featuredTestimonial.author.logoUrl} alt="" />
                 </figcaption>
@@ -425,7 +528,7 @@ export default function Home() {
                             <img className="h-10 w-10 rounded-full bg-gray-50" src={testimonial.author.imageUrl} alt="" />
                             <div>
                               <div className="font-semibold">{testimonial.author.name}</div>
-                              <div className="text-gray-600">{`@${testimonial.author.handle}`}</div>
+                              <div className="text-gray-600">{`${testimonial.author.handle}`}</div>
                             </div>
                           </figcaption>
                         </figure>
@@ -436,20 +539,20 @@ export default function Home() {
               ))}
             </div>
           </div>
-        </div>
+        </div >
 
         {/* Divider */}
-        <div className="relative">
+        < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
-        </div>
+        </div >
 
         {/* Newsletter section */}
-        <div className="bg-white py-16 sm:py-24 lg:py-32">
+        < div className="bg-white py-16 sm:py-24 lg:py-32" >
           <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-4 lg:px-8">
             <div className="max-w-xl text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-5 lg:mt-6">
-              <h2 className="inline sm:block lg:inline xl:block">Want to stAI up to date?</h2>{' '}
+              <h2 className="inline sm:block lg:inline xl:block">Want to stay in the loop?</h2>{' '}
               <p className="inline sm:block lg:inline xl:block">Sign up for our newsletter.</p>
             </div>
 
@@ -458,46 +561,45 @@ export default function Home() {
               <SubstackSignup />
             </div>
           </div>
-        </div>
+        </div >
 
 
         {/* Divider */}
-        <div className="relative">
+        < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
             <div className="w-2/3 m-auto border-t border-gray-300" />
           </div>
-        </div>
+        </div >
 
         {/* Team section */}
-        <div className="bg-white py-24 sm:py-32">
+        < div className="bg-white py-24 sm:py-32" >
           <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
             <div className="max-w-2xl">
-              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Meet our leadership</h2>
+              <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">That&apos;s us looking all professional.</h2>
               <p className="mt-6 text-lg leading-8 text-gray-600">
-                Libero fames augue nisl porttitor nisi, quis. Id ac elit odio vitae elementum enim vitae ullamcorper
-                suspendisse.
+                MLAI Aus is run entirely by volunteers. Interested in jumping aboard the pirate ship?
               </p>
             </div>
-            <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 sm:gap-y-16 xl:col-span-2">
+            <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-y-16 xl:col-span-2 xl:grid-cols-3">
               {people.map((person) => (
                 <li key={person.name}>
                   <div className="flex items-center gap-x-6">
                     <img className="h-20 w-20 rounded-full" src={person.imageUrl} alt="" />
                     <div>
                       <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">{person.name}</h3>
-                      <p className="text-sm font-semibold leading-6 text-indigo-600">{person.role}</p>
+                      <p className="text-sm font-semibold leading-6 text-teal-600">{person.role}</p>
                     </div>
                   </div>
                 </li>
               ))}
             </ul>
           </div>
-        </div>
+        </div >
+
 
         {/* CTA section */}
-        <CTA></CTA>
+        <CTA></CTA >
 
-      </main>
-    </div>
+      </main >
   );
 }

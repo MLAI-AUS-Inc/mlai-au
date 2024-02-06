@@ -58,29 +58,23 @@ const features = [
   },
 ]
 const footerNavigation = {
-  solutions: [
-    { name: 'Marketing', href: '#' },
-    { name: 'Analytics', href: '#' },
-    { name: 'Commerce', href: '#' },
-    { name: 'Insights', href: '#' },
+  events: [
+    { name: 'Meetups', href: '#' },
+    { name: 'Hackathons', href: '#' },
+    { name: 'Codecamp', href: '#' },
   ],
-  support: [
-    { name: 'Pricing', href: '#' },
-    { name: 'Documentation', href: '#' },
-    { name: 'Guides', href: '#' },
-    { name: 'API Status', href: '#' },
+  volunteering: [
+    { name: 'How to volunteer', href: '#' },
+    { name: 'Apply', href: '#' },
   ],
-  company: [
-    { name: 'About', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Jobs', href: '#' },
-    { name: 'Press', href: '#' },
-    { name: 'Partners', href: '#' },
+  Sponsoring: [
+    { name: 'Info for sponsors', href: '#' },
+    { name: 'Talk to us', href: '#' },
   ],
-  legal: [
-    { name: 'Claim', href: '#' },
-    { name: 'Privacy', href: '#' },
-    { name: 'Terms', href: '#' },
+  About: [
+    { name: 'Contact', href: '#' },
+    { name: 'Code of Conduct', href: '#' },
+    { name: 'LinkedIn', href: '#' },
   ],
   social: [
     {
@@ -131,19 +125,6 @@ const footerNavigation = {
         </svg>
       ),
     },
-    {
-      name: 'YouTube',
-      href: '#',
-      icon: (props: any) => (
-        <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
-          <path
-            fillRule="evenodd"
-            d="M19.812 5.418c.861.23 1.538.907 1.768 1.768C21.998 8.746 22 12 22 12s0 3.255-.418 4.814a2.504 2.504 0 0 1-1.768 1.768c-1.56.419-7.814.419-7.814.419s-6.255 0-7.814-.419a2.505 2.505 0 0 1-1.768-1.768C2 15.255 2 12 2 12s0-3.255.417-4.814a2.507 2.507 0 0 1 1.768-1.768C5.744 5 11.998 5 11.998 5s6.255 0 7.814.418ZM15.194 12 10 15V9l5.194 3Z"
-            clipRule="evenodd"
-          />
-        </svg>
-      ),
-    },
   ],
 }
 
@@ -168,8 +149,8 @@ export default function RootLayout({
               <a href="#" className="-m-1.5 p-1.5">
                 <span className="sr-only">Empowering the Australian AI Community</span>
                 <img
-                  className="h-16 w-auto"
-                  src="/MLAI-Logo.png"
+                  className="h-6 w-auto"
+                  src="/text_logo.png"
                   alt=""
                 />
               </a>
@@ -245,19 +226,19 @@ export default function RootLayout({
           </Dialog> */}
         </header>
 
-        {children}</body>
+        {children}
       <footer className="bg-gray-900" aria-labelledby="footer-heading">
         <h2 id="footer-heading" className="sr-only">
           Footer
         </h2>
-        <div className="mx-auto max-w-7xl px-6 pb-8 pt-20 sm:pt-24 lg:px-8 lg:pt-32">
+        <div className="mx-auto max-w-7xl px-6 pb-8 pt-6 sm:pt-24 lg:px-8 lg:pt-32">
           <div className="xl:grid xl:grid-cols-3 xl:gap-8">
             <div className="grid grid-cols-2 gap-8 xl:col-span-2">
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-sm font-semibold leading-6 text-white">Solutions</h3>
+                  <h3 className="text-sm font-semibold leading-6 text-white">Events</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.solutions.map((item) => (
+                    {footerNavigation.events.map((item) => (
                       <li key={item.name}>
                         <a href={item.href} className="text-sm leading-6 text-gray-300 hover:text-white">
                           {item.name}
@@ -267,9 +248,9 @@ export default function RootLayout({
                   </ul>
                 </div>
                 <div className="mt-10 md:mt-0">
-                  <h3 className="text-sm font-semibold leading-6 text-white">Support</h3>
+                  <h3 className="text-sm font-semibold leading-6 text-white">Volunteering</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.support.map((item) => (
+                    {footerNavigation.volunteering.map((item) => (
                       <li key={item.name}>
                         <a href={item.href} className="text-sm leading-6 text-gray-300 hover:text-white">
                           {item.name}
@@ -281,9 +262,9 @@ export default function RootLayout({
               </div>
               <div className="md:grid md:grid-cols-2 md:gap-8">
                 <div>
-                  <h3 className="text-sm font-semibold leading-6 text-white">Company</h3>
+                  <h3 className="text-sm font-semibold leading-6 text-white">Sponsoring</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.company.map((item) => (
+                    {footerNavigation.Sponsoring.map((item) => (
                       <li key={item.name}>
                         <a href={item.href} className="text-sm leading-6 text-gray-300 hover:text-white">
                           {item.name}
@@ -293,9 +274,9 @@ export default function RootLayout({
                   </ul>
                 </div>
                 <div className="mt-10 md:mt-0">
-                  <h3 className="text-sm font-semibold leading-6 text-white">Legal</h3>
+                  <h3 className="text-sm font-semibold leading-6 text-white">About</h3>
                   <ul role="list" className="mt-6 space-y-4">
-                    {footerNavigation.legal.map((item) => (
+                    {footerNavigation.About.map((item) => (
                       <li key={item.name}>
                         <a href={item.href} className="text-sm leading-6 text-gray-300 hover:text-white">
                           {item.name}
@@ -321,13 +302,13 @@ export default function RootLayout({
                   id="email-address"
                   autoComplete="email"
                   required
-                  className="w-full min-w-0 appearance-none rounded-md border-0 bg-white/5 px-3 py-1.5 text-base text-white shadow-sm ring-1 ring-inset ring-white/10 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-indigo-500 sm:w-64 sm:text-sm sm:leading-6 xl:w-full"
+                  className="w-full min-w-0 appearance-none rounded-md border-0 bg-white/5 px-3 py-1.5 text-base text-white shadow-sm ring-1 ring-inset ring-white/10 placeholder:text-gray-500 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:w-64 sm:text-sm sm:leading-6 xl:w-full"
                   placeholder="Enter your email"
                 />
                 <div className="mt-4 sm:ml-4 sm:mt-0 sm:flex-shrink-0">
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center rounded-md bg-indigo-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                    className="flex w-full items-center justify-center rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
                   >
                     Subscribe
                   </button>
@@ -345,11 +326,12 @@ export default function RootLayout({
               ))}
             </div>
             <p className="mt-8 text-xs leading-5 text-gray-400 md:order-1 md:mt-0">
-              &copy; 2024 MLAI, Inc. All rights reserved.
+              &copy; 2024 MLAI Aus Inc. All rights reserved.
             </p>
           </div>
         </div>
       </footer>
+      </body>
     </html >
   );
 }
