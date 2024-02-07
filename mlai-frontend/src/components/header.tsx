@@ -7,13 +7,15 @@ const navigation = [
     { name: 'About', href: '/about' },
     { name: 'Events', href: '#' },
     { name: 'Volunteer', href: '#' },
+    { name: 'Contact', href: '#' },
+    { name: 'Blog', href: '#' },
 ];
 
 export default function CTA() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     return (
         <header className="fixed inset-x-0 top-0 z-50 bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg">
-            <nav className="flex items-center justify-between p-3 lg:px-5" aria-label="Global">
+            <nav className="flex items-center justify-between p-2 lg:px-4" aria-label="Global">
                 <div className="flex lg:flex-1">
                     <a href="#" className="-m-1.5 p-1.5">
                         <span className="sr-only">MLAI - Empowering the Australian AI Community</span>
@@ -36,13 +38,13 @@ export default function CTA() {
                 </div>
                 <div className="hidden lg:flex lg:gap-x-12">
                     {navigation.map((item) => (
-                        <a key={item.name} href={item.href} className="text-sm font-semibold leading-6 text-white">
+                        <a key={item.name} href={item.href} className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
                             {item.name}
                         </a>
                     ))}
                 </div>
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                    <a href="#" className="text-sm font-semibold leading-6 text-white">
+                    <a href="#" className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
                         Join us <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
@@ -74,7 +76,7 @@ export default function CTA() {
                                 <a
                                     key={item.name}
                                     href={item.href}
-                                    className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-white hover:bg-gray-700"
+                                    className="-mx-3 block py-2 text-base font-semibold leading-7 text-white hover:text-teal-300"
                                 >
                                     {item.name}
                                 </a>
