@@ -290,7 +290,7 @@ export default function Home() {
               {/* wilsonai Logo */}
               <img
                 className="h-8 w-auto object-contain mx-auto"
-                src="sponsor_logos/wilson.jpeg"
+                src="sponsor_logos/wilsonai.png"
                 alt="wilsonai"
               />
               {/* Humyn.ai Logo */}
@@ -308,7 +308,7 @@ export default function Home() {
               {/* Dropshipzone Logo */}
               <img
                 className="h-8 w-auto object-contain mx-auto"
-                src="sponsor_logos/dropshipzone.jpeg"
+                src="sponsor_logos/dropshipzone.png"
                 alt="Dropshipzone"
               />
               {/* Microsoft Logo */}
