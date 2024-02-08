@@ -14,7 +14,7 @@ const navigation = [
 export default function CTA() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     return (
-        <header className="fixed inset-x-0 top-0 z-50 bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg">
+        <header className="fixed inset-x-0 top-0 z-50 bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg ">
             <nav className="flex items-center justify-between p-2 lg:px-4" aria-label="Global">
                 <div className="flex lg:flex-1">
                     <a href="#" className="-m-1.5 p-1.5">
@@ -29,7 +29,7 @@ export default function CTA() {
                 <div className="flex lg:hidden">
                     <button
                         type="button"
-                        className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
+                        className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white "
                         onClick={() => setMobileMenuOpen(true)}
                     >
                         <span className="sr-only">Open main menu</span>
@@ -50,7 +50,7 @@ export default function CTA() {
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen}>
-                <div className="fixed inset-0 z-50 lg:hidden" />
+                <div className="fixed inset-0 z-50 lg:hidden transition transition" />
                 <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
                     <div className="flex items-center justify-between">
                         <a href="#" className="-m-1.5 p-1.5">

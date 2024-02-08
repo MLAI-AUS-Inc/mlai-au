@@ -6,7 +6,7 @@ const SubstackSignup = () => {
       src="https://mlaiaus.substack.com/embed" 
       width="100%" 
       height="150" 
-      style={{ border: '0px', background: 'white' }} 
+      style={{ border: '0px', background: 'red' }} 
       frameBorder="0" 
       scrolling="no">
     </iframe>

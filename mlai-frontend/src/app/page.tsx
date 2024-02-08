@@ -1,6 +1,8 @@
 import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon, UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
 import CTA from "@/components/CTA";
+import MountainView from '@/components/MountainView'; // Adjust the path based on your file structure
+
 
 const features = [
   {
@@ -185,7 +187,7 @@ export default function Home() {
   return (
       <main className="bg-white">
         {/* Hero section */}
-        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen">
+        <div className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen ">
           <img
             src="photos/bg.jpg"
             alt=""
@@ -414,6 +416,7 @@ export default function Home() {
           </div>
         </div >
 
+
         {/* Divider */}
         < div className="relative" >
           <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -470,15 +473,9 @@ export default function Home() {
           </div>
         </div >
 
-        {/* Divider */}
-        < div className="relative" >
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-2/3 m-auto border-t border-gray-300" />
-          </div>
-        </div >
-
+ 
         {/* Testimonials section */}
-        < div className="relative isolate bg-white pb-32 pt-24 sm:pt-32" >
+        < div className="relative isolate bg-white pb-32 pt-12 sm:pt-32" >
           <div
             className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
             aria-hidden="true"
