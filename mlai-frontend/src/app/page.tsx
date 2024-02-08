@@ -80,7 +80,27 @@ const posts = [
         ''
       ,
     },
-  }
+  },
+
+  {
+    id: 4,
+    title: 'AI Hack Melb 23',
+    href: '#',
+    description:
+      'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
+    imageUrl:
+      'photos/aihackmelb23.png',
+    date: '30th November, 2023',
+    datetime: '2024-04-06',
+    author: {
+      name: 'NAB Arena, Melbourne',
+      imageUrl:
+        ''
+      ,
+    },
+  },
+
+  
 
 
   // More posts...
@@ -433,11 +453,11 @@ export default function Home() {
                 Can&apos;t wait to see you for the next one!
               </p>
             </div>
-            <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+            <div className="mx-auto mt-16 grid max-w-2xl auto-rows-fr grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4">
               {posts.map((post) => (
                 <article
                   key={post.id}
-                  className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80"
+                  className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-60 hover:opacity-90 transition duration:150"
                 >
                   <img src={post.imageUrl} alt="" className="absolute inset-0 -z-10 h-full w-full object-cover" />
                   <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
