@@ -4,11 +4,12 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/20/solid';
 import React, { useState } from 'react';
 
 const navigation = [
-    { name: 'About', href: '/about' },
-    { name: 'Events', href: '#' },
-    { name: 'Volunteer', href: '#' },
-    { name: 'Contact', href: '#' },
-    { name: 'Blog', href: '#' },
+    { name: 'home', href: '/#hero' },
+    { name: 'about', href: '/#about' },
+    { name: 'events', href: '/#events' },
+    { name: 'volunteer', href: '/volunteer' },
+    { name: 'contact', href: '/contact' },
+    { name: 'blog', href: 'https://mlaiaus.substack.com/', target: "_blank", rel: "noopener noreferrer" },
 ];
 
 export default function CTA() {
@@ -37,15 +38,24 @@ export default function CTA() {
                     </button>
                 </div>
                 <div className="hidden lg:flex lg:gap-x-12">
-                    {navigation.map((item) => (
-                        <a key={item.name} href={item.href} className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
+                {navigation.map((item) => (
+                        <a
+                            key={item.name}
+                            href={item.href}
+                            className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out"
+                            // Add target attribute if it exists in the item object
+                            target={item.target ? item.target : undefined}
+                            // Add rel attribute if target="_blank" for security reasons
+                            rel={item.target === '_blank' ? 'noopener noreferrer' : undefined}
+                        >
                             {item.name}
                         </a>
                     ))}
                 </div>
+
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
-                    <a href="#" className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
-                        Join us <span aria-hidden="true">&rarr;</span>
+                    <a href="#join" className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
+                        join us <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
             </nav>
