@@ -54,27 +54,26 @@ const features = [
 ]
 const footerNavigation = {
   events: [
-    { name: 'Meetups', href: '#' },
-    { name: 'Hackathons', href: '#' },
-    { name: 'Codecamp', href: '#' },
+    { name: 'Meetups', href: '/#events' },
+    { name: 'Hackathons', href: '/#events' },
+    { name: 'Codecamp', href: '/codecamp' },
   ],
   volunteering: [
-    { name: 'How to volunteer', href: '#' },
-    { name: 'Apply', href: '#' },
+    { name: 'How to volunteer', href: '/volunteer' },
+    { name: 'Apply', href: '/volunteer' },
   ],
   Sponsoring: [
-    { name: 'Info for sponsors', href: '#' },
-    { name: 'Talk to us', href: '#' },
+    { name: 'Info for sponsors', href: '/sponsors' },
   ],
   About: [
-    { name: 'Contact', href: '#' },
-    { name: 'Code of Conduct', href: '#' },
-    { name: 'LinkedIn', href: '#' },
+    { name: 'Contact', href: '/#about' },
+    { name: 'Code of Conduct', href: '/codeofconduct' },
+    { name: 'LinkedIn', href: 'https://www.linkedin.com/company/mlai-aus-inc' },
   ],
   social: [
     {
       name: 'LinkedIn',
-      href: '#',
+      href: 'https://www.linkedin.com/company/mlai-aus-inc',
       icon: (props: any) => (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -88,7 +87,7 @@ const footerNavigation = {
     },
     {
       name: 'Instagram',
-      href: '#',
+      href: 'https://www.linkedin.com/company/mlai-aus-inc',
       icon: (props: any) => (
         <svg fill="currentColor" viewBox="0 0 24 24" {...props}>
           <path
@@ -101,7 +100,7 @@ const footerNavigation = {
     },
     {
       name: 'Slack',
-      href: '#',
+      href: 'https://join.slack.com/t/aihackmelb/shared_invite/zt-2br01q4n9-PiiT9mgEOPMEG__8SOWQ8g',
       icon: (props: any) => (
         <svg
           class="h-6 w-6"
