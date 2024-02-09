@@ -7,7 +7,7 @@ const navigation = [
     { name: 'home', href: '/#hero' },
     { name: 'about', href: '/#about' },
     { name: 'events', href: '/#events' },
-    { name: 'volunteer', href: '/volunteer' },
+    { name: 'volunteer', href: '/contact' },
     { name: 'contact', href: '/contact' },
     { name: 'blog', href: 'https://mlaiaus.substack.com/', target: "_blank", rel: "noopener noreferrer" },
 ];
