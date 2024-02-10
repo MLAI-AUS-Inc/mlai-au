@@ -9,7 +9,7 @@ export default function Contact() {
                 <div className="flex justify-center">
                     <div className="max-w-2xl">
                         <div className="text-base leading-7 text-gray-700">
-                            <p className="text-base font-semibold leading-7 text-teal-600">We'd love to hear from you</p>
+                            <p className="text-base font-semibold leading-7 text-teal-600">We&apos;d love to hear from you</p>
                             <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl pb-16">
                                 Contact
                             </h1>

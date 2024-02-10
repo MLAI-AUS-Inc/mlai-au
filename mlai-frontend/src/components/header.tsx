@@ -4,7 +4,6 @@ import { Bars3Icon, XMarkIcon } from '@heroicons/react/20/solid';
 import React, { useState } from 'react';
 
 const navigation = [
-    { name: 'home', href: '/#hero' },
     { name: 'about', href: '/#about' },
     { name: 'events', href: '/#events' },
     { name: 'volunteer', href: '/contact' },
@@ -18,7 +17,7 @@ export default function CTA() {
         <header className="fixed inset-x-0 top-0 z-50 bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg ">
             <nav className="flex items-center justify-between p-2 lg:px-4" aria-label="Global">
                 <div className="flex lg:flex-1">
-                    <a href="#" className="-m-1.5 p-1.5">
+                    <a href="/" className="-m-1.5 p-1.5">
                         <span className="sr-only">MLAI - Empowering the Australian AI Community</span>
                         <img
                             className="h-6 w-auto"
@@ -60,7 +59,7 @@ export default function CTA() {
                 </div>
             </nav>
             <Dialog open={mobileMenuOpen} onClose={setMobileMenuOpen}>
-                <div className="fixed inset-0 z-50 lg:hidden transition transition" />
+                <div className="fixed inset-0 z-50 lg:hidden transition" />
                 <Dialog.Panel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-black px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
                     <div className="flex items-center justify-between">
                         <a href="#" className="-m-1.5 p-1.5">

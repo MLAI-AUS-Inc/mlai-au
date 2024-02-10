@@ -1,8 +1,6 @@
 import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon, UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
 import CTA from "@/components/CTA";
-import MountainView from '@/components/MountainView'; // Adjust the path based on your file structure
-
 
 const features = [
   {
@@ -115,7 +113,7 @@ const featuredTestimonial = {
     logoUrl: '',
   },
 }
-const testimonials = [
+const testimonials: any = [
 /*  [
     [
       {
@@ -512,9 +510,9 @@ export default function Home() {
                   <img className="h-10 w-auto flex-none" src={featuredTestimonial.author.logoUrl} alt="" />
                 </figcaption>
               </figure>
-              {testimonials.map((columnGroup, columnGroupIdx) => (
+              {testimonials.map((columnGroup: any, columnGroupIdx: any) => (
                 <div key={columnGroupIdx} className="space-y-8 xl:contents xl:space-y-0">
-                  {columnGroup.map((column, columnIdx) => (
+                  {columnGroup.map((column: any, columnIdx: any) => (
                     <div
                       key={columnIdx}
                       className={classNames(
@@ -525,7 +523,7 @@ export default function Home() {
                         'space-y-8'
                       )}
                     >
-                      {column.map((testimonial) => (
+                      {column.map((testimonial: any) => (
                         <figure
                           key={testimonial.author.handle}
                           className="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-gray-900/5"
