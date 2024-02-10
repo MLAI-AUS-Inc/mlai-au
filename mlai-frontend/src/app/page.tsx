@@ -356,7 +356,7 @@ export default function Home() {
 
 
             <p className="mt-6 text-lg leading-8 text-gray-600">
-              Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let&apos;s get on it. <a href="#" className="font-semibold text-teal-600 hover:text-teal-500 transition duration-200 ease-in-out">Love letters: hi@mlai.au</a>
+              Our vision is to make Australia an amazing home for AI and machine learning entrepreneurs. Let&apos;s get on it. <a href="#" className="font-semibold text-teal-600 hover:text-teal-500 transition duration-200 ease-in-out">Love letters: hello@aihackmelb.com</a>
             
             </p>
 
