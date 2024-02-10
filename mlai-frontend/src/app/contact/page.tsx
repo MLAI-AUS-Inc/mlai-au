@@ -24,7 +24,7 @@ export default function Contact() {
                                     ABN: 94 807 394 137
                                 </p>
                                 <p className="mt-2">
-                                    hi@mlai.au
+                                    hello@aihackmelb.com
                                 </p>
 
                                 <div className="flex justify-left items-center space-x-4 pt-12 pb-32">
