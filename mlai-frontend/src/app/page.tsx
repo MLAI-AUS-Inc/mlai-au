@@ -213,7 +213,7 @@ export default function Home() {
                     href="/contact"
                     className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400"
                   >
-                    I want to volunteers
+                    I want to volunteer
                   </a>
                   <a
                     href="#events"
@@ -239,6 +239,13 @@ export default function Home() {
                 className="h-8 w-auto object-contain mx-auto"
                 src="sponsor_logos/nab.png"
                 alt="NAB"
+              />
+
+              {/* V2 */}
+              <img
+                className="h-8 w-auto object-contain mx-auto"
+                src="sponsor_logos/v2digital.png"
+                alt="V2 Digital"
               />
               {/* AWS Startups Logo */}
               <img
