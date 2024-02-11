@@ -9,7 +9,7 @@
     margin: 0; 
     padding: 0; 
     overflow: hidden;
-    background: linear-gradient(230deg, #E8E8E8, #15e7a8, #E8E8E8) 0% 0% / 300% 300%;
+    background: linear-gradient(230deg, #E8E8E8, #18d199, #E8E8E8) 0% 0% / 300% 300%;
     animation: background 10s infinite;
     width: 100%;
     height: 100%;
