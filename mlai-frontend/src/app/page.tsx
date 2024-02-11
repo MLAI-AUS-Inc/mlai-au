@@ -104,7 +104,7 @@ const posts = [
   // More posts...
 ]
 const featuredTestimonial = {
-  body: "It's great to see the MLAI Aus crew working hard to build this community across Australia. As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch and get involved!",
+  body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch and get involved!",
   author: {
     name: 'Kendra Vant',
     handle: 'Director Europalabs',
