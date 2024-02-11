@@ -32,10 +32,6 @@ body {
   }
 }
 
-.text-shadow {
-  text-shadow: -1px -1px 0 #525252, 1px -1px 0 #525252, -1px 1px 0 #525252, 1px 1px 0 #525252;
-}
-
 html {
   scroll-behavior: smooth;
 }

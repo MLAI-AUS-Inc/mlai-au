@@ -9,9 +9,13 @@
     margin: 0; 
     padding: 0; 
     overflow: hidden;
-    background: linear-gradient(230deg, #E8E8E8, #18d199, #E8E8E8) 0% 0% / 300% 300%;
+    background: linear-gradient(230deg, #E8E8E8, #d2fff2, #48d09c) 0% 0% / 300% 300%;
     animation: background 10s infinite;
     width: 100%;
-    height: 100%;
+    min-height: 100vh; /* At least as tall as the viewport */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
   }
   

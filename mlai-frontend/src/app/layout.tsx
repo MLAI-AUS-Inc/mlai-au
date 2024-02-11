@@ -174,7 +174,7 @@ export default function RootLayout({
         src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
       />
     </noscript>
-        <Header></Header>
+        {/* <Header></Header> */}
         {children}
       <footer className="bg-black" aria-labelledby="footer-heading">
         <h2 id="footer-heading" className="sr-only">
