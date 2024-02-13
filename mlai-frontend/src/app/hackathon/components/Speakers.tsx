@@ -138,18 +138,18 @@ export function Speakers() {
     <section
       id="speakers"
       aria-labelledby="speakers-title"
-      className="bg-white"
+      className="bg-gray-900"
     >
       <ImageClipPaths id={id} />
       <Container>
         <div className="mt-32 mx-auto max-w-2xl lg:mx-0">
           <h2
             id="speakers-title"
-            className="font-display text-4xl font-medium tracking-tighter text-teal-600 sm:text-5xl"
+            className="font-display text-4xl font-medium tracking-tighter text-teal-500 sm:text-5xl"
           >
             Speakers and Mentors
           </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-teal-900">
+          <p className="mt-4 font-display text-2xl tracking-tight text-teal-500">
             We're incredibly excited to have some of Australia's smartest minds in AI and Energy as speakers and mentors for the event.
           </p>
         </div>
@@ -169,7 +169,7 @@ export function Speakers() {
                         className={clsx(
                           'absolute left-[-0.5px] top-[0.5625rem] hidden h-1.5 w-1.5 overflow-visible lg:block',
                           dayIndex === selectedIndex
-                            ? 'fill-teal-600 stroke-teal-600'
+                            ? 'fill-teal-500 stroke-teal-500'
                             : 'fill-transparent stroke-slate-400',
                         )}
                       />
@@ -178,7 +178,7 @@ export function Speakers() {
                           className={clsx(
                             'font-mono text-sm',
                             dayIndex === selectedIndex
-                              ? 'text-teal-600'
+                              ? 'text-teal-500'
                               : 'text-slate-500',
                           )}
                         >
@@ -189,7 +189,7 @@ export function Speakers() {
                         </div>
                         <time
                           dateTime={day.dateTime}
-                          className="mt-1.5 block text-2xl font-semibold tracking-tight text-teal-900"
+                          className="mt-1.5 block text-2xl font-semibold tracking-tight text-teal-500"
                         >
                           {day.date}
                         </time>
@@ -215,7 +215,7 @@ export function Speakers() {
                           'absolute bottom-6 left-0 right-4 top-0 rounded-4xl border transition duration-300 group-hover:scale-95 xl:right-6',
                           [
                             'border-teal-300',
-                            'border-teal-600',
+                            'border-teal-500',
                             'border-teal-100',
                           ][speakerIndex % 3],
                         )}

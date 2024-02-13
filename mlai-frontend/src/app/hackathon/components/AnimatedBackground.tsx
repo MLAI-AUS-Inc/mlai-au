@@ -18,7 +18,7 @@ const AnimatedBackground: React.FC = () => {
         const scene = new THREE.Scene();
         const aspectRatio = maxSceneWidth / maxSceneHeight;
         const camera = new THREE.PerspectiveCamera(15, aspectRatio, 0.1, 1000);
-        camera.position.set(0, 8, 8);
+        camera.position.set(0, 8, 3);
         camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         // Renderer setup

@@ -125,20 +125,20 @@ function ScheduleTabbed() {
     }
   }, [])
 
-  const handleTabClick = (dayIndex) => {
-    // Calculate center position for the clicked tab
-    const tabListElement = tabListRef.current;
-    if (tabListElement) {
-      const clickedTabElement = tabListElement.children[dayIndex];
-      if (clickedTabElement) {
-        const scrollLeft = clickedTabElement.offsetLeft - (tabListElement.offsetWidth / 2) + (clickedTabElement.offsetWidth / 2);
-        tabListElement.scroll({
-          left: scrollLeft,
-          behavior: 'smooth',
-        });
-      }
-    }
-  };
+  // const handleTabClick = (dayIndex: any) => {
+  //   // Calculate center position for the clicked tab
+  //   const tabListElement = tabListRef.current;
+  //   if (tabListElement) {
+  //     const clickedTabElement = tabListElement.children[dayIndex];
+  //     if (clickedTabElement) {
+  //       const scrollLeft = clickedTabElement.offsetLeft - (tabListElement.offsetWidth / 2) + (clickedTabElement.offsetWidth / 2);
+  //       tabListElement.scroll({
+  //         left: scrollLeft,
+  //         behavior: 'smooth',
+  //       });
+  //     }
+  //   }
+  // };
 
   return (
     <Tab.Group
@@ -152,7 +152,7 @@ function ScheduleTabbed() {
             {schedule.map((day, dayIndex) => (
               <div
                 key={day.dateTime}
-                onClick={() => handleTabClick(dayIndex)} // Add the onClick event here
+                // onClick={() => handleTabClick(dayIndex)} // Add the onClick event here
                 className={clsx(
                   'relative w-3/4 flex-none pr-4 sm:w-auto sm:pr-0 cursor-pointer',
                   dayIndex !== selectedIndex && 'opacity-70',
@@ -192,10 +192,10 @@ function ScheduleTabbed() {
 function DaySummary({ day }: { day: Day }) {
   return (
     <>
-      <h3 className="text-2xl font-semibold tracking-tight text-teal-900">
+      <h3 className="text-2xl font-semibold tracking-tight text-teal-500">
         <time dateTime={day.dateTime}>{day.date}</time>
       </h3>
-      <p className="mt-1.5 text-base tracking-tight text-teal-900">
+      <p className="mt-1.5 text-base tracking-tight text-teal-500">
         {day.summary}
       </p>
     </>
@@ -258,7 +258,7 @@ function ScheduleStatic() {
 
 export function Schedule() {
   return (
-    <section id="schedule" aria-label="Schedule" className="py-20 sm:py-32 bg-white">
+    <section id="schedule" aria-label="Schedule" className="py-20 sm:py-32 bg-gray-900">
         <div
           className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
           aria-hidden="true"
@@ -273,14 +273,14 @@ export function Schedule() {
         </div>
       <Container className="relative z-10">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
-          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-600 sm:text-5xl">
+          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-500 sm:text-5xl">
             What's happening when and where?
           </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-teal-900">
+          <p className="mt-4 font-display text-2xl tracking-tight text-teal-500">
            We've jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector. 
            The two main events of the hackathon are the "Team Formation Event (Hack Day)" and the "Final Pitch Night".
           </p>
-          <p className="mt-4 font-display font-bold text-2xl tracking-tight text-teal-900">
+          <p className="mt-4 font-display font-bold text-2xl tracking-tight text-teal-500">
           You can either join the event as a hacker and build a solution, or just join the pitch night to see our awesome teams present.
           </p>
           <div className="pt-6 sm:pt-0">

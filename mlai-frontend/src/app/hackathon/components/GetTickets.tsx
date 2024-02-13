@@ -4,7 +4,7 @@ import { DiamondIcon } from './DiamondIcon'
 
 export default function GetTickets() {
   return (
-    <header className="relative z-50 flex-none lg:pt-11 transparent">
+    <section className="relative z-50 flex-none lg:pt-11 bg-gray-900">
       <Container className="flex flex-wrap items-center justify-center lg:flex-nowrap">
         <div className="mt-4 w-full lg:grow lg:basis-0 flex justify-center flex-wrap">
           {/* Adjusted mt-10 to mt-4 to reduce the top margin */}
@@ -18,6 +18,6 @@ export default function GetTickets() {
           </div>
         </div>
       </Container>
-    </header>
+    </section>
   )
 }

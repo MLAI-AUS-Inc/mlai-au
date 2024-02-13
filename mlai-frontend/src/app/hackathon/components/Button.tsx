@@ -7,7 +7,7 @@ type ButtonProps =
 
 export function Button({ className, ...props }: ButtonProps) {
   className = clsx(
-    'inline-flex justify-center rounded-md bg-teal-600 p-3 text-sm font-semibold text-white hover:bg-teal-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 active:text-white/70 transition duration-150',
+    'inline-flex justify-center rounded-md bg-teal-400 p-3 text-sm font-semibold text-white hover:bg-teal-500 focus:outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-400 active:text-white/70 transition duration-150',
     className,
   )
 
