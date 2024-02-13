@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { Tab } from '@headlessui/react'
 import clsx from 'clsx'
 import { Container } from './Container'
+import  GetTickets  from './GetTickets'
 
 // import { BackgroundImage } from '@/components/BackgroundImage'
 
@@ -22,10 +23,10 @@ interface Day {
 
 const schedule: Array<Day> = [
   {
-    date: 'April 4',
+    date: 'April 6',
     dateTime: '2022-04-04',
     summary:
-      'The first day of the conference is focused on dark patterns for ecommerce.',
+      'Team formation day (Melbourne and Sydney)',
     timeSlots: [
       {
         name: 'Steven McHail',
@@ -51,31 +52,14 @@ const schedule: Array<Day> = [
         start: '12:00PM',
         end: '1:00PM',
       },
-      {
-        name: 'Ronni Cantadore',
-        description: 'Buy or die',
-        start: '1:00PM',
-        end: '2:00PM',
-      },
-      {
-        name: 'Erhart Cockrin',
-        description: 'In-person cancellation',
-        start: '2:00PM',
-        end: '3:00PM',
-      },
-      {
-        name: 'Parker Johnson',
-        description: 'The pay/cancel switcheroo',
-        start: '3:00PM',
-        end: '4:00PM',
-      },
+
     ],
   },
   {
-    date: 'April 5',
+    date: 'April 15',
     dateTime: '2022-04-05',
     summary:
-      'Next we spend the day talking about deceiving people with technology.',
+      'Submission day - The hackathon teams submit their solutions.',
     timeSlots: [
       {
         name: 'Damaris Kimura',
@@ -89,43 +73,13 @@ const schedule: Array<Day> = [
         start: '10:00AM',
         end: '11:00AM',
       },
-      {
-        name: 'Cathlene Burrage',
-        description: 'Voting machines',
-        start: '11:00AM',
-        end: '12:00PM',
-      },
-      {
-        name: 'Lunch',
-        description: null,
-        start: '12:00PM',
-        end: '1:00PM',
-      },
-      {
-        name: 'Rinaldo Beynon',
-        description: 'Blackhat SEO that works',
-        start: '1:00PM',
-        end: '2:00PM',
-      },
-      {
-        name: 'Waylon Hyden',
-        description: 'Turning your audience into a botnet',
-        start: '2:00PM',
-        end: '3:00PM',
-      },
-      {
-        name: 'Giordano Sagucio',
-        description: 'Fly phishing',
-        start: '3:00PM',
-        end: '4:00PM',
-      },
     ],
   },
   {
-    date: 'April 6',
+    date: 'April 30',
     dateTime: '2022-04-06',
     summary:
-      'We close out the event previewing new techniques that are still in development.',
+      'Final Pitch Night (Melbourne and Sydney)',
     timeSlots: [
       {
         name: 'Andrew Greene',
@@ -145,36 +99,16 @@ const schedule: Array<Day> = [
         start: '11:00AM',
         end: '12:00PM',
       },
-      {
-        name: 'Lunch',
-        description: null,
-        start: '12:00PM',
-        end: '1:00PM',
-      },
-      {
-        name: 'Gordon Sanderson',
-        description: 'SkyNet is coming',
-        start: '1:00PM',
-        end: '2:00PM',
-      },
-      {
-        name: 'Kimberly Parsons',
-        description: 'Dark patterns for the metaverse',
-        start: '2:00PM',
-        end: '3:00PM',
-      },
-      {
-        name: 'Richard Astley',
-        description: 'Knowing the game and playing it',
-        start: '3:00PM',
-        end: '4:00PM',
-      },
+
     ],
   },
 ]
 
+import { useRef } from 'react';
+
 function ScheduleTabbed() {
   let [tabOrientation, setTabOrientation] = useState('horizontal')
+  const tabListRef = useRef(null); // Add this line
 
   useEffect(() => {
     let smMediaQuery = window.matchMedia('(min-width: 640px)')
@@ -191,20 +125,36 @@ function ScheduleTabbed() {
     }
   }, [])
 
+  const handleTabClick = (dayIndex) => {
+    // Calculate center position for the clicked tab
+    const tabListElement = tabListRef.current;
+    if (tabListElement) {
+      const clickedTabElement = tabListElement.children[dayIndex];
+      if (clickedTabElement) {
+        const scrollLeft = clickedTabElement.offsetLeft - (tabListElement.offsetWidth / 2) + (clickedTabElement.offsetWidth / 2);
+        tabListElement.scroll({
+          left: scrollLeft,
+          behavior: 'smooth',
+        });
+      }
+    }
+  };
+
   return (
     <Tab.Group
       as="div"
       className="mx-auto grid max-w-2xl grid-cols-1 gap-y-6 sm:grid-cols-2 lg:hidden"
       vertical={tabOrientation === 'vertical'}
     >
-      <Tab.List className="-mx-4 flex gap-x-4 gap-y-10 overflow-x-auto pb-4 pl-4 sm:mx-0 sm:flex-col sm:pb-0 sm:pl-0 sm:pr-8">
+      <Tab.List ref={tabListRef} className="-mx-4 flex gap-x-2 gap-y-10 overflow-x-auto pb-4 pl-4 sm:mx-0 sm:flex-col sm:pb-0 sm:pl-0 sm:pr-8">
         {({ selectedIndex }) => (
           <>
             {schedule.map((day, dayIndex) => (
               <div
                 key={day.dateTime}
+                onClick={() => handleTabClick(dayIndex)} // Add the onClick event here
                 className={clsx(
-                  'relative w-3/4 flex-none pr-4 sm:w-auto sm:pr-0',
+                  'relative w-3/4 flex-none pr-4 sm:w-auto sm:pr-0 cursor-pointer',
                   dayIndex !== selectedIndex && 'opacity-70',
                 )}
               >
@@ -237,6 +187,7 @@ function ScheduleTabbed() {
     </Tab.Group>
   )
 }
+
 
 function DaySummary({ day }: { day: Day }) {
   return (
@@ -323,16 +274,21 @@ export function Schedule() {
       <Container className="relative z-10">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
           <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-600 sm:text-5xl">
-            Our three day schedule is jam-packed with brilliant, creative, evil
-            geniuses.
+            What's happening when and where?
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-teal-900">
-            The worst people in our industry giving the best talks you’ve ever
-            seen. Nothing will be recorded and every attendee has to sign an NDA
-            to watch the talks.
+           We've jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector. 
+           The two main events of the hackathon are the "Team Formation Event (Hack Day)" and the "Final Pitch Night".
           </p>
+          <p className="mt-4 font-display font-bold text-2xl tracking-tight text-teal-900">
+          You can either join the event as a hacker and build a solution, or just join the pitch night to see our awesome teams present.
+          </p>
+          <div className="pt-6 sm:pt-0">
+            <GetTickets />
+          </div>
         </div>
       </Container>
+      
       <div className="relative mt-14 sm:mt-24">
         {/* <BackgroundImage position="right" className="-bottom-32 -top-40" /> */}
         <Container className="relative">
