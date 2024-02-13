@@ -24,121 +24,74 @@ import rinaldoBeynonImage from '/src/app/hackathon/images/avatars/rinaldo-beynon
 import ronniCantadoreImage from '/src/app/hackathon/images/avatars/ronni-cantadore.jpg'
 import stevenMchailImage from '/src/app/hackathon/images/avatars/steven-mchail.jpg'
 import waylonHydenImage from '/src/app/hackathon/images/avatars/waylon-hyden.jpg'
+import placeholder from '/src/app/hackathon/images/avatars/placeholder.png'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
 
 const days = [
   {
-    name: 'Opening Day',
-    date: 'April 4',
+    name: 'Team Formation Day',
+    date: 'April 6',
     dateTime: '2022-04-04',
     speakers: [
       {
-        name: 'Steven McHail',
-        role: 'Designer at Globex Corporation',
-        image: stevenMchailImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Jaquelin Isch',
-        role: 'UX Design at InGen',
-        image: jaquelinIschImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Dianne Guilianelli',
-        role: 'General Manager at Initech',
-        image: dianneGuilianelliImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Ronni Cantadore',
-        role: 'Design Engineer at Weyland-Yutani',
-        image: ronniCantadoreImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Erhart Cockrin',
-        role: 'Product Lead at Cyberdyne Systems',
-        image: erhartCockrinImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Parker Johnson',
-        role: 'UI Designer at MomCorp',
-        image: parkerJohnsonImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
+
     ],
   },
   {
-    name: 'Speakers & Workshops',
-    date: 'April 5',
-    dateTime: '2022-04-05',
+    name: 'Final Pitch Night',
+    date: 'April 30',
+    dateTime: '2022-04-04',
     speakers: [
       {
-        name: 'Damaris Kimura',
-        role: 'Senior Engineer at OCP',
-        image: damarisKimuraImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Ibrahim Frasch',
-        role: 'Programmer at Umbrella Corp',
-        image: ibrahimFraschImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
       {
-        name: 'Cathlene Burrage',
-        role: 'Frontend Developer at Buy n Large',
-        image: cathleneBurrageImage,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
-      {
-        name: 'Rinaldo Beynon',
-        role: 'Data Scientist at Rekall',
-        image: rinaldoBeynonImage,
-      },
-      {
-        name: 'Waylon Hyden',
-        role: 'DevOps at RDA Corporation',
-        image: waylonHydenImage,
-      },
-      {
-        name: 'Giordano Sagucio',
-        role: 'Game Developer at Soylent Corp',
-        image: giordanoSagucioImage,
-      },
+
+
     ],
   },
-  {
-    name: 'Interviews',
-    date: 'April 6',
-    dateTime: '2022-04-06',
-    speakers: [
-      {
-        name: 'Andrew Greene',
-        role: 'Frontend Developer at Ultratech',
-        image: andrewGreeneImage,
-      },
-      {
-        name: 'Heather Terry',
-        role: 'Backend Developer at Xanatos Enterprises',
-        image: heatherTerryImage,
-      },
-      {
-        name: 'Piers Wilkins',
-        role: 'Full stack Developer at BiffCo',
-        image: piersWilkinsImage,
-      },
-      {
-        name: 'Gordon Sanderson',
-        role: 'Mobile Developer at Cobra Industries',
-        image: gordonSandersonImage,
-      },
-      {
-        name: 'Kimberly Parsons',
-        role: 'Game Developer at Tyrell Corporation',
-        image: kimberlyParsonsImage,
-      },
-      {
-        name: 'Richard Astley',
-        role: 'CEO at Roll Out',
-        image: richardAstley,
-      },
-    ],
-  },
+
 ]
 
 function ImageClipPaths({
@@ -194,11 +147,10 @@ export function Speakers() {
             id="speakers-title"
             className="font-display text-4xl font-medium tracking-tighter text-teal-600 sm:text-5xl"
           >
-            Speakers
+            Speakers and Mentors
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-teal-900">
-            Learn from the experts on the cutting-edge of deception at the most
-            sinister companies.
+            We're incredibly excited to have some of Australia's smartest minds in AI and Energy as speakers and mentors for the event.
           </p>
         </div>
         <Tab.Group
