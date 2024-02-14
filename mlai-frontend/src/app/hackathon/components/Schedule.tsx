@@ -143,7 +143,7 @@ function ScheduleTabbed() {
   return (
     <Tab.Group
       as="div"
-      className="mx-auto grid max-w-2xl grid-cols-1 gap-y-6 sm:grid-cols-2 lg:hidden"
+      className="mx-auto grid max-w-2xl grid-cols-1 gap-y-6 sm:grid-cols-2 lg:hidden overflow-hidden"
       vertical={tabOrientation === 'vertical'}
     >
       <Tab.List ref={tabListRef} className="-mx-4 flex gap-x-2 gap-y-10 overflow-x-auto pb-4 pl-4 sm:mx-0 sm:flex-col sm:pb-0 sm:pl-0 sm:pr-8">
@@ -245,7 +245,7 @@ function TimeSlots({ day, className }: { day: Day; className?: string }) {
 
 function ScheduleStatic() {
   return (
-    <div className="hidden lg:grid lg:grid-cols-3 lg:gap-x-8">
+    <div className="hidden lg:grid lg:grid-cols-3 lg:gap-x-8 overflow-hidden">
       {schedule.map((day) => (
         <section key={day.dateTime}>
           <DaySummary day={day} />

@@ -35,3 +35,62 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
+.section-typo-zoom-in {
+  width: 100%;
+  height: 200vh;
+  color: #000;
+  position: relative;
+}
+
+.typo-zoom-sticky {
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: -webkit-sticky;
+  position: sticky;
+  top: 0;
+}
+
+.typo-zoom-sticky-inner {
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  overflow: hidden;
+}
+
+.typo-zoom-text {
+  width: 0.0625rem;
+  height: 0.0625rem;
+  overflow: hidden;
+}
+
+.typo-zoom-text-image {
+  width: 100%;
+}
+
+.typo-zoom-text-wrapper {
+  width: 90vw;
+}
+
+@keyframes zoomInEffect {
+  from {
+    width: 50vw;
+    transform: translate3d(0vw, 0vh, 0px) scale(0.5);
+  }
+  to {
+    width: 9000vw;
+    transform: translate3d(-120vw, -40vh, 0px) scale(1);
+  }
+}
+
+.zoomAnimation {
+  animation-name: zoomInEffect;
+  animation-fill-mode: forwards; 
+  animation-duration: 5s; 
+}
