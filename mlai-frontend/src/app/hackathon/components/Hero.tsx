@@ -58,8 +58,8 @@ export function Hero() {
                                 ['Location', 'Melbourne & Sydney'],
                             ].map(([name, value]) => (
                                 <div key={name}>
-                                    <dt className="font-mono text-sm text-black">{name}</dt>
-                                    <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-teal-900">
+                                    <dt className="font-mono text-sm text-white">{name}</dt>
+                                    <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-teal-200">
                                         {value}
                                     </dd>
                                 </div>

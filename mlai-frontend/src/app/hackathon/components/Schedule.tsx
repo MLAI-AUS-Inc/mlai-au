@@ -26,7 +26,7 @@ const schedule: Array<Day> = [
     date: 'April 6',
     dateTime: '2022-04-04',
     summary:
-      'Team formation day (Melbourne and Sydney)',
+      'Team formation day (Melb & Syd)',
     timeSlots: [
       {
         name: 'Steven McHail',
@@ -59,7 +59,7 @@ const schedule: Array<Day> = [
     date: 'April 15',
     dateTime: '2022-04-05',
     summary:
-      'Submission day - The hackathon teams submit their solutions.',
+      'Teams submit projects',
     timeSlots: [
       {
         name: 'Damaris Kimura',
@@ -79,7 +79,7 @@ const schedule: Array<Day> = [
     date: 'April 30',
     dateTime: '2022-04-06',
     summary:
-      'Final Pitch Night (Melbourne and Sydney)',
+      'Final Pitch Night (Melb & Syd)',
     timeSlots: [
       {
         name: 'Andrew Greene',
@@ -152,7 +152,7 @@ function ScheduleTabbed() {
             {schedule.map((day, dayIndex) => (
               <div
                 key={day.dateTime}
-                // onClick={() => handleTabClick(dayIndex)} // Add the onClick event here
+                
                 className={clsx(
                   'relative w-3/4 flex-none pr-4 sm:w-auto sm:pr-0 cursor-pointer',
                   dayIndex !== selectedIndex && 'opacity-70',
@@ -192,10 +192,10 @@ function ScheduleTabbed() {
 function DaySummary({ day }: { day: Day }) {
   return (
     <>
-      <h3 className="text-2xl font-semibold tracking-tight text-teal-500">
+      <h3 className="text-2xl font-semibold tracking-tight text-teal-200">
         <time dateTime={day.dateTime}>{day.date}</time>
       </h3>
-      <p className="mt-1.5 text-base tracking-tight text-teal-500">
+      <p className="mt-1.5 text-base tracking-tight text-teal-200">
         {day.summary}
       </p>
     </>
@@ -208,7 +208,7 @@ function TimeSlots({ day, className }: { day: Day; className?: string }) {
       role="list"
       className={clsx(
         className,
-        'space-y-8 bg-white/60 px-10 py-14 text-center shadow-xl shadow-teal-900/5 backdrop-blur',
+        'space-y-8 bg-black px-10 py-14 text-center shadow-xl shadow-teal-900/5 backdrop-blur',
       )}
     >
       {day.timeSlots.map((timeSlot, timeSlotIndex) => (
@@ -217,17 +217,17 @@ function TimeSlots({ day, className }: { day: Day; className?: string }) {
           aria-label={`${timeSlot.name} talking about ${timeSlot.description} at ${timeSlot.start} - ${timeSlot.end} PST`}
         >
           {timeSlotIndex > 0 && (
-            <div className="mx-auto mb-8 h-px w-48 bg-indigo-500/10" />
+            <div className="mx-auto mb-8 h-px w-48 bg-teal-500/10" />
           )}
-          <h4 className="text-lg font-semibold tracking-tight text-teal-900">
+          <h4 className="text-lg font-semibold tracking-tight text-teal-200">
             {timeSlot.name}
           </h4>
           {timeSlot.description && (
-            <p className="mt-1 tracking-tight text-teal-900">
+            <p className="mt-1 tracking-tight text-teal-200">
               {timeSlot.description}
             </p>
           )}
-          <p className="mt-1 font-mono text-sm text-slate-500">
+          <p className="mt-1 font-mono text-sm text-slate-200">
             <time dateTime={`${day.dateTime}T${timeSlot.start}-08:00`}>
               {timeSlot.start}
             </time>{' '}
@@ -273,14 +273,13 @@ export function Schedule() {
         </div>
       <Container className="relative z-10">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
-          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-500 sm:text-5xl">
+          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
             What's happening when and where?
           </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-teal-500">
-           We've jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector. 
+          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200"> 
            The two main events of the hackathon are the "Team Formation Event (Hack Day)" and the "Final Pitch Night".
           </p>
-          <p className="mt-4 font-display font-bold text-2xl tracking-tight text-teal-500">
+          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
           You can either join the event as a hacker and build a solution, or just join the pitch night to see our awesome teams present.
           </p>
           <div className="pt-6 sm:pt-0">

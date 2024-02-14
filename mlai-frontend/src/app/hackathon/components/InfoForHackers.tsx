@@ -21,10 +21,10 @@ export function InfoForHackers() {
         </div>
       <Container className="relative z-10">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
-          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-500 sm:text-5xl">
+          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
             Want to join the hack? All info here.
           </h2>
-          <p className="mt-4 pb-10 font-display text-2xl tracking-tight text-teal-500">
+          <p className="mt-4 pb-10 font-display text-2xl tracking-tight text-gray-200">
            We've jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector.
           </p>
         </div>
