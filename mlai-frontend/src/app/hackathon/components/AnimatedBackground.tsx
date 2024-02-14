@@ -1,50 +1,45 @@
 'use client'
 import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'; // Correct import
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 const AnimatedBackground: React.FC = () => {
     const mountRef = useRef<HTMLDivElement>(null);
-    let frameId: number | null = null;
 
     useEffect(() => {
         if (!mountRef.current) return;
+        let frameId: number | null = null;
 
-        const maxSceneWidth = 800; // Maximum width in pixels
-        const maxSceneHeight = 600; // Maximum height in pixels
+        // Dynamic sizing based on viewport
+        const getSizes = () => {
+            return {
+                width: Math.min(window.innerWidth, 800), // 800 as max width or smaller if on a smaller screen
+                height: Math.min(window.innerHeight, 600) // 600 as max height or smaller if on a smaller screen
+            };
+        };
+
+        const { width, height } = getSizes();
 
         // Scene setup
         const scene = new THREE.Scene();
-        const aspectRatio = maxSceneWidth / maxSceneHeight;
-        const camera = new THREE.PerspectiveCamera(15, aspectRatio, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(15, width / height, 0.1, 1000);
         camera.position.set(0, 8, 3);
-        camera.lookAt(new THREE.Vector3(0, 0, 0));
 
         // Renderer setup
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(width, height);
         renderer.setPixelRatio(window.devicePixelRatio);
         renderer.setClearColor(0xE8E8E8, 0);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-        // Set initial size
-        const setSize = () => {
-            const width = Math.min(maxSceneWidth, window.innerWidth);
-            const height = Math.min(maxSceneHeight, window.innerHeight);
-            renderer.setSize(width, height);
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-        };
-        setSize(); // Set size on initial load
 
         mountRef.current.appendChild(renderer.domElement);
+
         const controls = new OrbitControls(camera, renderer.domElement);
 
         // Lighting setup
         const ambientLight = new THREE.AmbientLight(0xffffff, 2);
         scene.add(ambientLight);
-
         const pointLight = new THREE.PointLight(0xffffff, 50);
         pointLight.position.set(0, 0, 6);
         pointLight.castShadow = true;
@@ -96,20 +91,23 @@ const AnimatedBackground: React.FC = () => {
 
         animate();
 
-        // Resize handler
-        const onWindowResize = () => {
-            const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-            const windowHeight = window.innerHeight;
+        const updateCameraPosition = () => {
+            const { width } = getSizes(); // Use only width for responsiveness
+            const zPosition = width < 800 ? 10 : 3; // Adjust Z based on width
+            camera.position.set(0, 8, zPosition);
+            camera.lookAt(new THREE.Vector3(0, 0, 0)); // Re-focus the camera
+        };
+    
+        // Call once on mount to set initial position
+        updateCameraPosition();
 
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.fov = (360 / Math.PI) * Math.atan(tanFOV * (window.innerHeight / windowHeight));
+        const onWindowResize = () => {
+            const { width, height } = getSizes();
+            renderer.setSize(width, height);
+            camera.aspect = width / height;
             camera.updateProjectionMatrix();
-            camera.lookAt(scene.position);
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.render(scene, camera);
         };
 
-        // Add event listener for window resize.
         window.addEventListener('resize', onWindowResize);
 
         // Cleanup function
@@ -124,7 +122,7 @@ const AnimatedBackground: React.FC = () => {
         };
     }, []); // Dependency array is empty, useEffect runs once
     return <div ref={mountRef} />;
-    // return <div ref={mountRef} className={styles.animatedBackground} />;
+    // return <div />;
 };
 
 export default AnimatedBackground;

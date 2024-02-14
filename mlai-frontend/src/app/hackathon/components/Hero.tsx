@@ -8,9 +8,7 @@ import styles from '../AnimatedBackground.module.css';
 
 export function Hero() {
     return (
-        <div className="relative sm:pt-24 bg-gray-900 min-h-96">
-
-            {/* <BackgroundImage className="-bottom-14 -top-36" /> */}
+        <div className="relative sm:pt-24 bg-gray-900 min-h-screen">
             <Container className="relative">
                 <div className="relative isolate pt-14">
                     <div
@@ -27,49 +25,52 @@ export function Hero() {
                     </div>
 
                 </div>
-                <div className="absolute flex justify-center items-center min-w-full -mt-40 mb-10 z-0">
-                    <AnimatedBackground />
+                <div className='relative flex justify-center items-center max-w-full'>
+                    <div className="top-0 absolute flex justify-center items-center max-w-full -mt-40 mb-10 z-0 overflow-hidden">
+                        <AnimatedBackground />
+                    </div>
                 </div>
-                <div className='absolute flex justify-center items-center w-full'>
-                    <div className="mx-auto max-w-2xl pb-32 sm:pb-48 lg:pb-56">
+                <div className='relative flex justify-center items-center'>
+                    <div className='top-0 absolute flex justify-center items-center max-w-2xl flex-wrap'>
+                        <div className="mx-auto max-w-2xl pb-32 sm:pb-48 lg:pb-56">
 
-                        <div className="text-center">
-                            <h1 className="text-7xl font-bold tracking-tight text-black sm:text-9xl">
-                                MLAI Green Battery Hack
-                            </h1>
-                        </div>
-                        <div className="mt-6 space-y-6 font-display text-2xl tracking-tight text-black">
-                        <p>
-                        The MLAI Green Battery Hack is a beginner friendly hackathon where you are given a simulated battery and have to use it to trade the electricity spot market with the help of an AI model. 
-                        </p>
-                        
-                        {/* <p>
+                            <div className="text-center">
+                                <h1 className="text-7xl font-bold tracking-tight text-black sm:text-9xl">
+                                    MLAI Green Battery Hack
+                                </h1>
+                            </div>
+                            <div className="mt-6 space-y-6 font-display text-2xl tracking-tight text-black">
+                                <p>
+                                    The MLAI Green Battery Hack is a beginner friendly hackathon where you are given a simulated battery and have to use it to trade the electricity spot market with the help of an AI model.
+                                </p>
+
+                                {/* <p>
                         This simulation will give insight into the propensity of private batteries to disrupt or “game” the electricity market. Your solution could inform Australian policy to achieve net zero!
                         </p> */}
-                        
+
+                            </div>
+                            <Button href="#schedule" className="mt-10 w-full sm:hidden">
+                                Get your tickets
+                            </Button>
+                            <dl className="mt-10 grid grid-cols-2 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:auto-cols-auto lg:grid-flow-col lg:grid-cols-none lg:justify-start lg:text-left z-10">
+                                {[
+                                    ['Speakers', '12'],
+                                    ['People Attending', '250'],
+                                    ['Location', 'Melbourne & Sydney'],
+                                ].map(([name, value]) => (
+                                    <div key={name}>
+                                        <dt className="font-mono text-sm text-white">{name}</dt>
+                                        <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-teal-200">
+                                            {value}
+                                        </dd>
+                                    </div>
+                                ))}
+                            </dl>
+                        </div>
                     </div>
-                        <Button href="#schedule" className="mt-10 w-full sm:hidden">
-                            Get your tickets
-                        </Button>
-                        <dl className="mt-10 grid grid-cols-2 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:auto-cols-auto lg:grid-flow-col lg:grid-cols-none lg:justify-start lg:text-left z-10">
-                            {[
-                                ['Speakers', '12'],
-                                ['People Attending', '250'],
-                                ['Location', 'Melbourne & Sydney'],
-                            ].map(([name, value]) => (
-                                <div key={name}>
-                                    <dt className="font-mono text-sm text-white">{name}</dt>
-                                    <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-teal-200">
-                                        {value}
-                                    </dd>
-                                </div>
-                            ))}
-                        </dl>
-                    </div>
-                </div>
-                <div className="relative isolate min-h-96">
                 </div>
             </Container >
         </div >
+        
     )
 }
