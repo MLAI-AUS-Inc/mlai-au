@@ -149,7 +149,7 @@ export function Speakers() {
           >
             Speakers and Mentors
           </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-teal-500">
+          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
             We're incredibly excited to have some of Australia's smartest minds in AI and Energy as speakers and mentors for the event.
           </p>
         </div>
@@ -183,7 +183,7 @@ export function Speakers() {
                           )}
                         >
                           <Tab className="ui-not-focus-visible:outline-none">
-                            <span className="absolute inset-0" />
+                            <span className="absolute inset-0 " />
                             {day.name}
                           </Tab>
                         </div>
@@ -233,7 +233,7 @@ export function Speakers() {
                         />
                       </div>
                     </div>
-                    <h3 className="mt-8 font-display text-xl font-bold tracking-tight text-slate-900">
+                    <h3 className="mt-8 font-display text-xl font-bold tracking-tight text-gray-200">
                       {speaker.name}
                     </h3>
                     <p className="mt-1 text-base tracking-tight text-slate-500">

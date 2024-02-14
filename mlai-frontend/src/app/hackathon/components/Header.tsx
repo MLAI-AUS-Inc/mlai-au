@@ -5,7 +5,7 @@ import { DiamondIcon } from './DiamondIcon'
 
 export default function Header() {
   return (
-    <header className="relative z-50 flex-none lg:pt-11 bg-gray-900">
+    <header className="relative z-50 flex-none lg:pt-2 lg:pb-2  bg-black">
       <Container className="flex flex-wrap items-center justify-center sm:justify-between lg:flex-nowrap">
         <div className="mt-10 lg:mt-0 lg:grow lg:basis-0">
           <img className="h-12 w-auto" src="/MLAI-Logo.png" alt="" />
@@ -14,10 +14,10 @@ export default function Header() {
           <div className="mx-auto flex items-center gap-4 px-4">
             <p>
               <time dateTime="2022-04-04">06</time>-
-              <time dateTime="2022-04-06">30 of April, 2024</time>
+              <time dateTime="2022-04-06">30 April 2024</time>
             </p>
             <DiamondIcon className="h-1.5 w-1.5 overflow-visible fill-current stroke-current" />
-            <p>Melbourne & Sydney, Australia</p>
+            <p>Melbourne & Sydney</p>
           </div>
         </div>
         <div className="hidden sm:mt-10 sm:flex sm:gap-x-4 lg:mt-0 lg:grow lg:basis-0 lg:justify-end">
