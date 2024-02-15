@@ -38,7 +38,7 @@ export function Hero() {
                                     MLAI Green Battery Hack
                                 </h1>
                             </div>
-                            <div className="mt-6 space-y-6 font-display text-3xl tracking-tight text-black">
+                            <div className="mt-16 space-y-6 font-display text-3xl tracking-tight text-black">
                                 <p>
                                     The MLAI Green Battery Hack is a beginner friendly hackathon where you are given a simulated battery and have to use it to trade the electricity spot market with the help of an AI model.
                                 </p>
@@ -51,20 +51,22 @@ export function Hero() {
                             <Button color='teal' href="#schedule" className="mt-10 w-full sm:hidden">
                                 Get your tickets
                             </Button>
-                            <dl className="mt-10 grid grid-cols-2 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:auto-cols-auto lg:grid-flow-col lg:grid-cols-none lg:justify-start lg:text-left z-10">
+                            <dl className="hidden lg:grid mt-10 lg:grid-cols-3 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:justify-start lg:text-left z-10">
                                 {[
                                     ['Speakers', '12'],
                                     ['People Attending', '250'],
                                     ['Location', 'Melbourne & Sydney'],
                                 ].map(([name, value]) => (
                                     <div key={name}>
-                                        <dt className="font-mono text-sm text-white">{name}</dt>
-                                        <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-teal-200">
+                                        <dt className="font-mono text-sm text-black">{name}</dt>
+                                        <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-black">
                                             {value}
                                         </dd>
                                     </div>
                                 ))}
                             </dl>
+
+
                         </div>
                     </div>
                 </div>

@@ -41,12 +41,12 @@ export default function GetTickets() {
             </p> */}
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
-                href="#"
+                href="https://events.humanitix.com/the-ml-ai-green-battery-hack-kickoff-team-formation-day"
                 className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 Join the Hackathon
               </a>
-              <a href="#" className="text-sm font-semibold leading-6 text-white">
+              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-white">
                 Attend the Pitch Night <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -60,12 +60,12 @@ export default function GetTickets() {
               </p> */}
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
-                href="#"
+                href="https://events.humanitix.com/copy-of-the-ml-ai-green-battery-hack-team-formation-day-sydney"
                 className="rounded-md bg-teal-300 px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-teal-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal300"
               >
                 Join the Hackathon
               </a>
-              <a href="#" className="text-sm font-semibold leading-6 text-teal-300">
+              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-teal-300">
                 Attend the Pitch Night <span aria-hidden="true">→</span>
               </a>
             </div>
