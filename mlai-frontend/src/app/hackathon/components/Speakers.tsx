@@ -25,10 +25,11 @@ const days = [
         image: scottthomson,
       },
       {
-        name: 'Nick Holmes à Court',
-        role: 'Venture Capital Business Development Manager - Amazon Web Services',
-        image: nickholmesacourt,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
+
       {
         name: 'To be announced soon',
         role: '-',

@@ -2,22 +2,13 @@
 import Image from 'next/image'
 
 
-import logoLaravel from '/src/app/hackathon/images/logos/laravel.svg'
-import logoMirage from '/src/app/hackathon/images/logos/mirage.svg'
-import logoStatamic from '/src/app/hackathon/images/logos/statamic.svg'
-import logoStaticKit from '/src/app/hackathon/images/logos/statickit.svg'
-import logoTransistor from '/src/app/hackathon/images/logos/transistor.svg'
-import logoTuple from '/src/app/hackathon/images/logos/tuple.svg'
+import haizea from '/src/app/hackathon/images/logos/haizea.png'
+
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
 
 const sponsors = [
-  { name: 'Transistor', logo: logoTransistor },
-  { name: 'Tuple', logo: logoTuple },
-  { name: 'StaticKit', logo: logoStaticKit },
-  { name: 'Mirage', logo: logoMirage },
-  { name: 'Laravel', logo: logoLaravel },
-  { name: 'Statamic', logo: logoStatamic },
+  { name: 'haizea', logo: haizea },
 ]
 
 

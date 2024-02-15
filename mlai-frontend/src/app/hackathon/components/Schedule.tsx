@@ -29,28 +29,40 @@ const schedule: Array<Day> = [
       'Team formation day (Melb & Syd)',
     timeSlots: [
       {
-        name: 'Intro talk',
-        description: 'TBA',
+        name: 'Introduction',
+        description: ' ',
         start: '9:00AM',
         end: '10:00AM',
       },
       {
-        name: 'Hacking',
+        name: 'Talk 1',
         description: 'TBA',
         start: '10:00AM',
-        end: '11:00AM',
+        end: '10:30AM',
+      },
+      {
+        name: 'Hacking',
+        description: 'TBA',
+        start: '10:30AM',
+        end: '12:00AM',
       },
       {
         name: 'Lunch',
-        description: 'TBA',
-        start: '11:00AM',
-        end: '12:00PM',
+        description: '',
+        start: '12:00AM',
+        end: '1:00PM',
       },
       {
         name: 'Talk 2',
         description: 'TBA',
-        start: '12:00PM',
-        end: '1:00PM',
+        start: '1:00PM',
+        end: '1:30PM',
+      },
+      {
+        name: 'Hacking',
+        description: '',
+        start: '1:30PM',
+        end: '5:30PM',
       },
 
     ],
@@ -63,13 +75,13 @@ const schedule: Array<Day> = [
     timeSlots: [
       {
         name: 'Submission deadline',
-        description: 'TBA',
+        description: '',
         start: 'submit by',
         end: '9:00AM',
       },
       {
         name: 'Semi final judging',
-        description: 'Stealing fingerprints',
+        description: '',
         start: 'finalised by',
         end: '11:00AM',
       },
@@ -82,22 +94,34 @@ const schedule: Array<Day> = [
       'Final Pitch Night (Melb & Syd)',
     timeSlots: [
       {
+        name: 'Networking',
+        description: 'TBA',
+        start: '5:30pM',
+        end: '6:00pM',
+      },
+      {
         name: 'Opening Speech',
         description: 'TBA',
-        start: '9:00AM',
-        end: '10:00AM',
+        start: '6:00PM',
+        end: '6:20pM',
       },
       {
         name: 'Pitches',
         description: 'TBA',
-        start: '10:00AM',
-        end: '11:00AM',
+        start: '6:20AM',
+        end: '6:50PM',
       },
       {
         name: 'Keynote',
         description: 'TBA',
-        start: '11:00AM',
-        end: '12:00PM',
+        start: '6:50PM',
+        end: '7:10PM',
+      },
+      {
+        name: 'Announcement Winners',
+        description: 'TBA',
+        start: '7:15PM',
+        end: '7:30PM',
       },
 
     ],

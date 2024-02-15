@@ -27,7 +27,7 @@ export function InfoForHackers() {
         </div>
         
         <div className="flex justify-center lg:justify-start">
-          <Button color="teal" href="#" className="whitespace-nowrap">Go to Green Battery Hack Wiki</Button>
+          <Button color="teal" href="https://maroon-button-187.notion.site/Welcome-f511642e9807442d9d0a64d4464c6596" className="whitespace-nowrap">Go to Green Battery Hack Wiki</Button>
         </div>
       </Container>
     </section>
