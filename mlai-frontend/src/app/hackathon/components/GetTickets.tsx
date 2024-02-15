@@ -34,7 +34,7 @@ export default function GetTickets() {
 
           <div className="mx-auto max-w-md text-center mb-12 lg:mb-0 lg:mx-0 lg:flex-auto lg:py-32 lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              Join us in Sydney
+              Join us in Melbourne
             </h2>
             {/* <p className="mt-6 text-lg leading-8 text-gray-300">
               Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
@@ -53,7 +53,7 @@ export default function GetTickets() {
           </div>
           <div className="mx-auto max-w-md text-center mb-12 lg:mb-0 lg:mx-0 lg:flex-auto lg:py-32 lg:text-left">
             <h2 className="text-3xl font-bold tracking-tight text-teal-300 sm:text-4xl">
-              Join us in Melbourne
+              Join us in Sydney
             </h2>
             {/* <p className="mt-6 text-lg leading-8 text-gray-300">
                 Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
