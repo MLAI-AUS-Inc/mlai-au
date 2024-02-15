@@ -40,7 +40,7 @@ export function Hero() {
                             </div>
                             <div className="mt-16 space-y-6 font-display text-3xl tracking-tight text-black">
                                 <p>
-                                    The MLAI Green Battery Hack is a beginner friendly hackathon where you are given a simulated battery and have to use it to trade the electricity spot market with the help of an AI model.
+                                    The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia's journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.
                                 </p>
 
                                 {/* <p>
