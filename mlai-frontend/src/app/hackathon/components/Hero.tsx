@@ -30,15 +30,15 @@ export function Hero() {
                     </div>
                 </div>
                 <div className='relative flex justify-center items-center'>
-                    <div className='top-0 absolute flex justify-center items-center max-w-2xl flex-wrap'>
-                        <div className="mx-auto max-w-2xl pb-32 sm:pb-48 lg:pb-56">
+                    <div className='top-0 absolute flex justify-center items-center max-w-3xl flex-wrap'>
+                        <div className="mx-auto max-w-3xl pb-32 sm:pb-48 lg:pb-56">
 
                             <div className="text-center">
-                                <h1 className="text-7xl font-bold tracking-tight text-black sm:text-9xl">
+                                <h1 className="text-8xl font-bold tracking-tight text-black sm:text-9xl md:text-9xl">
                                     MLAI Green Battery Hack
                                 </h1>
                             </div>
-                            <div className="mt-6 space-y-6 font-display text-2xl tracking-tight text-black">
+                            <div className="mt-6 space-y-6 font-display text-3xl tracking-tight text-black">
                                 <p>
                                     The MLAI Green Battery Hack is a beginner friendly hackathon where you are given a simulated battery and have to use it to trade the electricity spot market with the help of an AI model.
                                 </p>
