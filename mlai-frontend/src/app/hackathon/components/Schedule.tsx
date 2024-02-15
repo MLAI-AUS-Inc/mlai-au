@@ -29,26 +29,26 @@ const schedule: Array<Day> = [
       'Team formation day (Melb & Syd)',
     timeSlots: [
       {
-        name: 'Steven McHail',
-        description: 'Not so one-time payments',
+        name: 'Intro talk',
+        description: 'TBA',
         start: '9:00AM',
         end: '10:00AM',
       },
       {
-        name: 'Jaquelin Isch',
-        description: 'The finer print',
+        name: 'Hacking',
+        description: 'TBA',
         start: '10:00AM',
         end: '11:00AM',
       },
       {
-        name: 'Dianne Guilianelli',
-        description: 'Post-purchase blackmail',
+        name: 'Lunch',
+        description: 'TBA',
         start: '11:00AM',
         end: '12:00PM',
       },
       {
-        name: 'Lunch',
-        description: null,
+        name: 'Talk 2',
+        description: 'TBA',
         start: '12:00PM',
         end: '1:00PM',
       },
@@ -62,15 +62,15 @@ const schedule: Array<Day> = [
       'Teams submit projects',
     timeSlots: [
       {
-        name: 'Damaris Kimura',
-        description: 'The invisible card reader',
-        start: '9:00AM',
-        end: '10:00AM',
+        name: 'Submission deadline',
+        description: 'TBA',
+        start: 'submit by',
+        end: '9:00AM',
       },
       {
-        name: 'Ibrahim Frasch',
+        name: 'Semi final judging',
         description: 'Stealing fingerprints',
-        start: '10:00AM',
+        start: 'finalised by',
         end: '11:00AM',
       },
     ],
@@ -82,20 +82,20 @@ const schedule: Array<Day> = [
       'Final Pitch Night (Melb & Syd)',
     timeSlots: [
       {
-        name: 'Andrew Greene',
-        description: 'Neuralink dark patterns',
+        name: 'Opening Speech',
+        description: 'TBA',
         start: '9:00AM',
         end: '10:00AM',
       },
       {
-        name: 'Heather Terry',
-        description: 'DALL-E for passports',
+        name: 'Pitches',
+        description: 'TBA',
         start: '10:00AM',
         end: '11:00AM',
       },
       {
-        name: 'Piers Wilkins',
-        description: 'Quantum password cracking',
+        name: 'Keynote',
+        description: 'TBA',
         start: '11:00AM',
         end: '12:00PM',
       },
@@ -214,7 +214,7 @@ function TimeSlots({ day, className }: { day: Day; className?: string }) {
       {day.timeSlots.map((timeSlot, timeSlotIndex) => (
         <li
           key={timeSlot.start}
-          aria-label={`${timeSlot.name} talking about ${timeSlot.description} at ${timeSlot.start} - ${timeSlot.end} PST`}
+          aria-label={`${timeSlot.name} talking about ${timeSlot.description} at ${timeSlot.start} - ${timeSlot.end} `}
         >
           {timeSlotIndex > 0 && (
             <div className="mx-auto mb-8 h-px w-48 bg-teal-500/10" />
@@ -235,7 +235,7 @@ function TimeSlots({ day, className }: { day: Day; className?: string }) {
             <time dateTime={`${day.dateTime}T${timeSlot.end}-08:00`}>
               {timeSlot.end}
             </time>{' '}
-            PST
+            
           </p>
         </li>
       ))}

@@ -30,7 +30,7 @@ export function InfoForHackers() {
         </div>
         
         <div className="flex justify-center lg:justify-start">
-          <Button href="#" className="whitespace-nowrap">Go to Green Battery Hack Wiki</Button>
+          <Button color="teal" href="#" className="whitespace-nowrap">Go to Green Battery Hack Wiki</Button>
         </div>
       </Container>
     </section>
