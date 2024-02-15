@@ -21,8 +21,8 @@ export default function Header() {
           </div>
         </div>
         <div className="hidden sm:mt-10 sm:flex sm:gap-x-4 lg:mt-0 lg:grow lg:basis-0 lg:justify-end">
-          <Button href="#schedule" className="whitespace-nowrap">Tickets Melbourne</Button>
-          <Button href="#schedule" className="whitespace-nowrap">Tickets Sydney</Button>
+          <Button color="teal" href="#schedule" className="whitespace-nowrap">Tickets Melbourne</Button>
+          <Button color="teal" href="#schedule" className="whitespace-nowrap">Tickets Sydney</Button>
         </div>
       </Container>
     </header>

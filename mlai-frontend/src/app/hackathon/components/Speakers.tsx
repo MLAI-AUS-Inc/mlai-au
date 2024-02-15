@@ -6,25 +6,10 @@ import { Tab } from '@headlessui/react'
 import clsx from 'clsx'
 
 
-import andrewGreeneImage from '/src/app/hackathon/images/avatars/andrew-greene.jpg'
-import cathleneBurrageImage from '/src/app/hackathon/images/avatars/cathlene-burrage.jpg'
-import damarisKimuraImage from '/src/app/hackathon/images/avatars/damaris-kimura.jpg'
-import dianneGuilianelliImage from '/src/app/hackathon/images/avatars/dianne-guilianelli.jpg'
-import erhartCockrinImage from '/src/app/hackathon/images/avatars/erhart-cockrin.jpg'
-import giordanoSagucioImage from '/src/app/hackathon/images/avatars/giordano-sagucio.jpg'
-import gordonSandersonImage from '/src/app/hackathon/images/avatars/gordon-sanderson.jpg'
-import heatherTerryImage from '/src/app/hackathon/images/avatars/heather-terry.jpg'
-import ibrahimFraschImage from '/src/app/hackathon/images/avatars/ibrahim-frasch.jpg'
-import jaquelinIschImage from '/src/app/hackathon/images/avatars/jaquelin-isch.jpg'
-import kimberlyParsonsImage from '/src/app/hackathon/images/avatars/kimberly-parsons.jpg'
-import parkerJohnsonImage from '/src/app/hackathon/images/avatars/parker-johnson.jpg'
-import piersWilkinsImage from '/src/app/hackathon/images/avatars/piers-wilkins.jpg'
-import richardAstley from '/src/app/hackathon/images/avatars/richard-astley.jpg'
-import rinaldoBeynonImage from '/src/app/hackathon/images/avatars/rinaldo-beynon.jpg'
-import ronniCantadoreImage from '/src/app/hackathon/images/avatars/ronni-cantadore.jpg'
-import stevenMchailImage from '/src/app/hackathon/images/avatars/steven-mchail.jpg'
-import waylonHydenImage from '/src/app/hackathon/images/avatars/waylon-hyden.jpg'
+
 import placeholder from '/src/app/hackathon/images/avatars/placeholder.png'
+import scottthomson from '/src/app/hackathon/images/avatars/scottthomson.jpeg'
+import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
 
@@ -35,29 +20,14 @@ const days = [
     dateTime: '2022-04-04',
     speakers: [
       {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
+        name: 'Scott Thomson',
+        role: 'Head of Innovation - Customer Engineering Google',
+        image: scottthomson,
       },
       {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
+        name: 'Nick Holmes à Court',
+        role: 'Venture Capital Business Development Manager - Amazon Web Services',
+        image: nickholmesacourt,
       },
       {
         name: 'To be announced soon',
@@ -145,7 +115,7 @@ export function Speakers() {
         <div className="mt-32 mx-auto max-w-2xl lg:mx-0">
           <h2
             id="speakers-title"
-            className="font-display text-4xl font-medium tracking-tighter text-teal-500 sm:text-5xl"
+            className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl"
           >
             Speakers and Mentors
           </h2>
@@ -170,7 +140,7 @@ export function Speakers() {
                           'absolute left-[-0.5px] top-[0.5625rem] hidden h-1.5 w-1.5 overflow-visible lg:block',
                           dayIndex === selectedIndex
                             ? 'fill-teal-500 stroke-teal-500'
-                            : 'fill-transparent stroke-slate-400',
+                            : 'fill-transparent stroke-teal-400',
                         )}
                       />
                       <div className="relative">
