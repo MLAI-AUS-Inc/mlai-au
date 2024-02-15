@@ -262,10 +262,10 @@ export function Schedule() {
       <Container className="relative z-10">
         <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
           <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
-            What's happening when and where?
+            What&apos;s happening when and where?
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            The two main events of the hackathon are the "Team Formation Event (Hack Day)" and the "Final Pitch Night".
+            The two main events of the hackathon are the &quot;Team Formation Event (Hack Day)&quot; and the &quot;Final Pitch Night&quot;.
           </p>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
             You can either join the event as a hacker and build a solution, or just join the pitch night to see our awesome teams present.
