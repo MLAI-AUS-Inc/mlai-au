@@ -22,7 +22,7 @@ export function InfoForHackers() {
             Want to join the hack? All info here.
           </h2>
           <p className="mt-4 pb-10 font-display text-2xl tracking-tight text-gray-200">
-           We've jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector.
+           We&apos;ve jam packed the Green Battery Hack with everything you need to unleash your AI solution onto the Australian energy sector.
           </p>
         </div>
         

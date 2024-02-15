@@ -120,7 +120,7 @@ export function Speakers() {
             Speakers and Mentors
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            We're incredibly excited to have some of Australia's smartest minds in AI and Energy as speakers and mentors for the event.
+            We&apos;re incredibly excited to have some of Australia&apos;s smartest minds in AI and Energy as speakers and mentors for the event.
           </p>
         </div>
         <Tab.Group
