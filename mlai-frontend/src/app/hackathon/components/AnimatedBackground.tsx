@@ -93,7 +93,7 @@ const AnimatedBackground: React.FC = () => {
 
         const updateCameraPosition = () => {
             const { width } = getSizes(); // Use only width for responsiveness
-            const zPosition = width < 800 ? 10 : 3; // Adjust Z based on width
+            const zPosition = width < 800 ? 7 : 3; // Adjust Z based on width
             camera.position.set(0, 8, zPosition);
             camera.lookAt(new THREE.Vector3(0, 0, 0)); // Re-focus the camera
         };

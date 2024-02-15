@@ -1,12 +1,9 @@
-import { useEffect, useState } from 'react'
-import { Tab } from '@headlessui/react'
-import clsx from 'clsx'
 import { Container } from './Container'
 import { Button } from './Button'
 
 export function InfoForHackers() {
   return (
-    <section id="schedule" aria-label="Schedule" className="py-20 sm:py-32 bg-gray-900">
+    <section id="infoForHackers" aria-label="InfoForHackers" className="py-20 sm:py-32 bg-gray-900">
         <div
           className="absolute inset-x-0 -top-20 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
           aria-hidden="true"

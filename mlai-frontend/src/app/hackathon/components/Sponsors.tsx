@@ -42,7 +42,7 @@ export function Sponsors() {
 
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
-      <div ref={mountRef} className="typo-zoom-sticky">
+      {/* <div ref={mountRef} className="typo-zoom-sticky">
         <div className="typo-zoom-sticky-inner">
           <div
             className={`typo-zoom-text-wrapper ${isZoomed ? 'zoomAnimation' : ''}`}
@@ -52,10 +52,10 @@ export function Sponsors() {
             }}
           >
             <div className="typo-zoom-text"></div>
-            <img src="https://assets-global.website-files.com/61f1e1f5e79d214f7f0df5a0/65a530c5b54dfea4a6decaee_Take%20a%20look%20under%20the%20hood....svg" loading="lazy" alt="" className="typo-zoom-text-image"/>
+            <img src="https://assets-global.website-files.com/61f1e1f5e79d214f7f0df5a0/65a530c5b54dfea4a6decaee_Take%20a%20look%20under%20the%20hood....svg" loading="lazy" alt="" className="typo-zoom-text-image" />
           </div>
         </div>
-      </div>
+      </div> */}
 
 
       <Container>
