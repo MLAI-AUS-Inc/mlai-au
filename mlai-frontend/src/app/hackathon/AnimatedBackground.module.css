@@ -1,0 +1,22 @@
+/* AnimatedBackground.module.css */
+@keyframes background {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  
+  .animatedBackground { 
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden;
+    background: linear-gradient(230deg, #E8E8E8, #d2fff2, #48d09c) 0% 0% / 300% 300%;
+    animation: background 4s infinite;
+    width: 100%;
+    min-height: 24rem; 
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+  }
+  
+  
