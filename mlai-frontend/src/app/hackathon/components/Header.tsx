@@ -3,9 +3,9 @@ import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
 
 
-export default function Header() {
+export default function Header({ className }: { className?: string }) {
   return (
-    <header className="relative z-50 flex-none lg:pt-2 lg:pb-2  bg-black">
+    <header className={`relative z-50 flex-none lg:pt-2 lg:pb-2 bg-black ${className}`}>
       <Container className="flex flex-wrap items-center justify-center sm:justify-between lg:flex-nowrap">
         <div className="mt-10 lg:mt-0 lg:grow lg:basis-0">
           <img className="h-12 w-auto hidden md:block sm:block" src="/MLAI-Logo-Teal.png" alt="" />

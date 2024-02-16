@@ -8,7 +8,7 @@ import styles from '../AnimatedBackground.module.css';
 
 export function Hero() {
     return (
-        <div className="relative sm:pt-24 bg-gray-900" style={{ height: '66.67vh' }}>
+        <div className="relative sm:pt-24 bg-gray-900" style={{ height: '60vh' }}>
             <Container className="relative">
                 <div className="relative isolate pt-14">
                     <div className={`${styles.animatedBackground} absolute inset-x-0 top-0 sm:top-auto sm:-top-80 z-10 transform-gpu blur-3xl sm:h-auto`}
@@ -34,13 +34,13 @@ export function Hero() {
                         <div className="mx-auto max-w-3xl pb-32 sm:pb-48 lg:pb-56">
 
                             <div className="text-center">
-                                <h1 className="text-8xl font-bold tracking-tight text-black sm:text-9xl md:text-9xl">
+                                <h1 className="text-6xl font-bold tracking-tight text-black sm:text-9xl md:text-7xl">
                                     MLAI Green Battery Hack
                                 </h1>
                             </div>
-                            <div className="mt-16 space-y-6 font-display text-3xl tracking-tight text-black">
+                            <div className="mt-16 space-y-6 font-display text-xl text-center tracking-tight text-black sm:text-3xl md:text-2xl">
                                 <p>
-                                    The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia's journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.
+                                    The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia&apos;s journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.
                                 </p>
 
                                 {/* <p>
@@ -51,15 +51,15 @@ export function Hero() {
                             <Button color='teal' href="#schedule" className="mt-10 w-full sm:hidden">
                                 Get your tickets
                             </Button>
-                            <dl className="hidden lg:grid mt-10 lg:grid-cols-3 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:justify-start lg:text-left z-10">
+                            <dl className="lg:grid mt-10 lg:grid-cols-3 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:justify-start lg:text-left z-10">
                                 {[
                                     ['Speakers', '12'],
                                     ['People Attending', '250'],
                                     ['Location', 'Melbourne & Sydney'],
                                 ].map(([name, value]) => (
                                     <div key={name}>
-                                        <dt className="font-mono text-sm text-black">{name}</dt>
-                                        <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-black">
+                                        <dt className="font-mono text-sm text-teal-200 sm:text-black lg:text-black">{name}</dt>
+                                        <dd className="mt-0.5 text-2xl font-semibold tracking-tight text-white sm:text-black lg:text-black">
                                             {value}
                                         </dd>
                                     </div>
