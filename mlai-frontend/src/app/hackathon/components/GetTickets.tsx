@@ -7,7 +7,7 @@ export default function GetTickets() {
     <section className="relative z-50 flex-none lg:pt-11 bg-gray-900">
       <div className="mx-auto max-w-7xl py-24 sm:px-6 sm:py-32 lg:px-8">
         <div className="relative isolate overflow-hidden bg-gray-900 px-6 pt-16 shadow-2xl sm:rounded-3xl sm:px-16 md:pt-24 lg:flex lg:gap-x-20 lg:px-24 lg:pt-0">
-          <div className='absolute inset-x-0 transform-gpu z-10 blur-3xl sm:full'
+          <div className='absolute inset-x-0 transform-gpu -z-10 blur-3xl sm:full'
             aria-hidden="true"
           >
             <div
@@ -46,7 +46,7 @@ export default function GetTickets() {
               >
                 Join the Hackathon
               </a>
-              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-white">
+              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-white hover:underline">
                 Attend the Pitch Night <span aria-hidden="true">→</span>
               </a>
             </div>
@@ -65,7 +65,7 @@ export default function GetTickets() {
               >
                 Join the Hackathon
               </a>
-              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-teal-300">
+              <a href="https://www.linkedin.com/company/mlai-aus-inc" className="text-sm font-semibold leading-6 text-teal-300 hover:underline">
                 Attend the Pitch Night <span aria-hidden="true">→</span>
               </a>
             </div>

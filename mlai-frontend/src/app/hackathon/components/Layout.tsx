@@ -8,7 +8,7 @@ export default function Layout({
   return (
     <>
     <div className='bg-gray-900' />
-      <Header />
+      <Header className="sticky top-0"></Header>
       <main className="flex-auto">{children}</main>
     </>
   )
