@@ -4,6 +4,8 @@ import { Speakers } from './components/Speakers'
 import { Sponsors } from './components/Sponsors'
 import { InfoForHackers } from './components/InfoForHackers'
 import { ExtendedInfo } from './components/ExtendedInfo'
+import { GbhPeople } from './components/gbhPeople'
+import { MentorsVolunteers } from './components/MentorsVolunteers'
 
 export default function HackathonPage() {
     return (
@@ -15,8 +17,9 @@ export default function HackathonPage() {
                 <ExtendedInfo />
                 <Speakers />
                 <Schedule />
+                <MentorsVolunteers />
+                <GbhPeople />
                 <InfoForHackers />
-                
             </div>
         </div>
     )

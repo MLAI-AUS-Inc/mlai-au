@@ -29,7 +29,7 @@ const posts = [
   {
     id: 1,
     title: 'MLAI Green Battery Hack 2024 (Melbourne)',
-    href: 'https://events.humanitix.com/the-ml-ai-green-battery-hack-kickoff-team-formation-day',
+    href: '/hackathon',
     description:
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
@@ -47,7 +47,7 @@ const posts = [
   {
     id: 2,
     title: 'MLAI Green Battery Hack 2024 (Sydney)',
-    href: 'https://events.humanitix.com/copy-of-the-ml-ai-green-battery-hack-team-formation-day-sydney',
+    href: '/hackathon',
     description:
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
@@ -193,9 +193,9 @@ export default function Home() {
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
             <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-32">
               <div className="hidden sm:mb-8 sm:flex sm:justify-center">
-                <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-400 ring-1 ring-white/10 hover:ring-white/20">
+                <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-white ring-1 ring-white/10 hover:ring-white/20 backdrop-blur-sm">
                   Announcing the &quot;MLAI Green Battery Hack&quot;{' '}
-                  <a href="#events" className="font-semibold text-white">
+                  <a href="/hackathon" className="font-semibold text-teal-200">
                     <span className="absolute inset-0" aria-hidden="true" />
                     Read more <span aria-hidden="true">&rarr;</span>
                   </a>
@@ -327,7 +327,7 @@ export default function Home() {
               />
             </div>
             <div className="mt-16 flex justify-center">
-              <p className="relative rounded-full bg-gray-50 px-4 py-1.5 text-sm leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
+              <p className="relative rounded-full bg-gray-50 px-5 py-3 text-sm text-center leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
                 <span className=" md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
                 <a href="/contact" className="font-semibold text-teal-500">
                   <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
