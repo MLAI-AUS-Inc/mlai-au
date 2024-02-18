@@ -15,15 +15,21 @@ export function MentorsVolunteers() {
     },
     {
       name: 'Oil Wongmayura',
-      role: 'Marketing Volunteer',
+      role: 'Digital Event Manager',
       imageUrl: 'photos/oil.png',
     },
-/*
     {
       name: 'Dr. Nick Kirkwood',
       role: 'Uni Melbourne',
       imageUrl: 'photos/nickkirckwood.jpg',
     },
+    {
+      name: 'Michael Foley',
+      role: 'Data Scientist @ Solcast',
+      imageUrl: 'photos/michaelfoley.jpg',
+    },
+/*
+
     {
       name: 'Dr. Vlada Rozova',
       role: 'Uni Melbourne',
