@@ -28,6 +28,11 @@ export function MentorsVolunteers() {
       role: 'Data Scientist @ Solcast',
       imageUrl: 'photos/michaelfoley.jpg',
     },
+    {
+      name: 'Asmita Govind',
+      role: 'MetaPM',
+      imageUrl: 'photos/asmita.png',
+    },
 /*
 
     {
@@ -35,11 +40,7 @@ export function MentorsVolunteers() {
       role: 'Uni Melbourne',
       imageUrl: 'photos/vlada.png',
     },
-    {
-      name: 'Asmita Govind',
-      role: 'MetaPM',
-      imageUrl: 'photos/asmita.png',
-    },
+
 
 */
     // More people...
