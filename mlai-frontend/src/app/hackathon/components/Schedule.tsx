@@ -289,7 +289,7 @@ export function Schedule() {
             What&apos;s happening when and where?
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            The two main events of the hackathon are the &quot;Team Formation Event (Hack Day)&quot; and the &quot;Final Pitch Night&quot;.
+            The two main events of the hackathon are the &quot;Team Formation Event (Hack Day)&quot; and the &quot;Final Pitch Night&quot;. Each event happens in Melbourne and in Sydney.
           </p>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
             You can either join the event as a hacker and build a solution, or just join the pitch night to see our awesome teams present.
