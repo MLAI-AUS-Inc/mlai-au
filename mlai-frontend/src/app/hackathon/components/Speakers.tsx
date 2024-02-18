@@ -118,7 +118,7 @@ export function Speakers() {
             id="speakers-title"
             className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl"
           >
-            Speakers and Mentors
+            Speakers
           </h2>
           <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
             We&apos;re incredibly excited to have some of Australia&apos;s smartest minds in AI and Energy as speakers and mentors for the event.

@@ -38,7 +38,7 @@ export function Hero() {
                                     MLAI Green Battery Hack
                                 </h1>
                             </div>
-                            <div className="mt-16 space-y-6 font-display text-xl text-center tracking-tight text-black sm:text-3xl md:text-2xl">
+                            <div className="mt-16 space-y-6 font-display text-xl text-center tracking-tight text-black sm:text-3xl md:text-2xl ">
                                 <p>
                                     The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia&apos;s journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.
                                 </p>
@@ -48,7 +48,7 @@ export function Hero() {
                         </p> */}
 
                             </div>
-                            <Button color='teal' href="#schedule" className="mt-10 w-full sm:hidden">
+                            <Button color='teal' href="#schedule" className="mt-10 w-full sm:hidden">   
                                 Get your tickets
                             </Button>
                             <dl className="lg:grid mt-10 lg:grid-cols-3 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:justify-start lg:text-left z-10">
