@@ -114,21 +114,33 @@ const featuredTestimonial = {
   },
 }
 const testimonials: any = [
-/*  [
+ [
     [
       {
-        body: 'Laborum quis quam. Dolorum et ut quod quia. Voluptas numquam delectus nihil. Aut enim doloremque et ipsam.',
+        body: 'It was an absolute pleasure to work with the MLAI team on the Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community join in for the startup speed dating. ',
         author: {
-          name: 'Andy Gelme',
-          handle: 'Founder Hackerspace',
+          name: 'Eike Zeller',
+          handle: 'Ecosystems Director @ Stone & Chalk',
           imageUrl:
-            'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
+            'photos/eikezeller.jpg',
+        },
+      },
+    ],
+
+    [
+      {
+        body: 'MLAI has been a fantastic community for connecting with like-minded, talented people. Everyone has been warm, welcoming, and eager to talk nitty-gritty tech details.',
+        author: {
+          name: 'Xavier Andueza',
+          handle: 'Founder Everdawn.ai',
+          imageUrl:
+            'photos/xavierandueza.jpg',
         },
       },
     ],
 
   ],
-*/  
+
 ]
 const people = [
   {
