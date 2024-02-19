@@ -24,18 +24,6 @@ const days = [
         role: 'Head of Innovation - Customer Engineering Google',
         image: scottthomson,
       },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-
     ],
   },
   {
@@ -48,18 +36,6 @@ const days = [
         role: '-',
         image: placeholder,
       },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-
-
     ],
   },
 
