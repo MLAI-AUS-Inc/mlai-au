@@ -4,10 +4,10 @@ import Layout from "./components/Layout"
 export const metadata: Metadata = {
   metadataBase: new URL("https://mlai.au/hackathon"), 
   title: "MLAI Green Battery Hack",
-  description: "The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia's journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.",
+  description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
   openGraph: {
     title: 'MLAI',
-    description: "The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia's journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.",
+    description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
     url: 'https://mlai.au/hackathon',
     type: 'website',
     images: [
