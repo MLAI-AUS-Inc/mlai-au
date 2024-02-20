@@ -19,6 +19,16 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://mlai.au"), 
   title: "MLAI",
   description: "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+  authors: [
+    {
+      name: 'Dr Sam Donegan',
+      url: 'https://www.linkedin.com/in/samueldonegan/', 
+    },
+    {
+        name: 'Dr Lukas Wesemann',
+        url: 'https://www.linkedin.com/in/lukaswesemann/', 
+      },
+  ],
   openGraph: {
     title: 'MLAI',
     description: 'MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community',

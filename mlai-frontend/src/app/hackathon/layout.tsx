@@ -5,6 +5,16 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://mlai.au/hackathon"), 
   title: "MLAI Green Battery Hack",
   description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
+  authors: [
+    {
+      name: 'Dr Sam Donegan',
+      url: 'https://www.linkedin.com/in/samueldonegan/', 
+    },
+    {
+        name: 'Dr Lukas Wesemann',
+        url: 'https://www.linkedin.com/in/lukaswesemann/', 
+      },
+  ],
   openGraph: {
     title: 'MLAI',
     description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
