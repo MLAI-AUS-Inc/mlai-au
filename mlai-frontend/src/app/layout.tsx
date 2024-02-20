@@ -59,7 +59,7 @@ const footerNavigation = {
   events: [
     { name: 'Meetups', href: '/#events' },
     { name: 'Hackathons', href: '/#events' },
-    { name: 'Codecamp', href: '/codecamp' },
+    { name: 'Codecamp', href: '#' },
   ],
   volunteering: [
     { name: 'How to volunteer', href: '/contact' },
