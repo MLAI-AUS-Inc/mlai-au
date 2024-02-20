@@ -18,6 +18,7 @@ LogRocket.init('4s6cqz/mlai-website');
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mlai.au"), 
   title: "MLAI",
   description: "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
   openGraph: {
@@ -36,6 +37,11 @@ export const metadata: Metadata = {
   },
   robots: {
     index: true, // Allow indexing of the page by search engines
+    follow: false, // Do not follow the links on the page to discourage scrapers
+    noarchive: true,
+    nosnippet: true,
+    noimageindex: true,
+    nocache: true,
   },
 };
 
