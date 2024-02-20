@@ -83,12 +83,12 @@ const schedule: Array<Day> = [
         name: 'Semi final judging',
         description: '',
         start: 'finalised by',
-        end: '11:00AM',
+        end: '4:00PM',
       },
     ],
   },
   {
-    date: 'April 30',
+    date: 'May 8',
     dateTime: '2022-04-06',
     summary:
       'Final Pitch Night (Melb & Syd)',

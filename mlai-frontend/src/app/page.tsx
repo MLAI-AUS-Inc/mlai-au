@@ -34,7 +34,7 @@ const posts = [
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
       'photos/gbh_melbourne.webp',
-    date: 'April 6th - April 30th, 2024',
+    date: 'April 6 - May 8, 2024',
     datetime: '2024-04-06',
     author: {
       name: 'Melbourne',
@@ -52,7 +52,7 @@ const posts = [
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
       'photos/gbh_sydney.webp',
-    date: 'April 6th - April 30th, 2024',
+    date: 'April 6 - May 8, 2024',
     datetime: '2024-04-06',
     author: {
       name: 'Sydney',
@@ -88,7 +88,7 @@ const posts = [
       'Illo sint voluptas. Error voluptates culpa eligendi. Hic vel totam vitae illo. Non aliquid explicabo necessitatibus unde. Sed exercitationem placeat consectetur nulla deserunt vel. Iusto corrupti dicta.',
     imageUrl:
       'photos/aihackmelb23.png',
-    date: '30th November, 2023',
+    date: 'November 30, 2023',
     datetime: '2024-04-06',
     author: {
       name: 'NAB Arena, Melbourne',
