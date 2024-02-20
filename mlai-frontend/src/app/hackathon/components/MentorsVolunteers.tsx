@@ -20,7 +20,7 @@ export function MentorsVolunteers() {
     },
     {
       name: 'Dr. Nick Kirkwood',
-      role: 'Uni Melbourne',
+      role: 'Univerity of Melbourne',
       imageUrl: 'photos/nickkirckwood.jpg',
     },
     {
@@ -50,7 +50,7 @@ export function MentorsVolunteers() {
     <div className="bg-gray-900 py-24 sm:py-36">
       <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
         <div className="max-w-2xl">
-          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">Awesome mentors and volunteers</h2>
+          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">Awesome Mentors and Advisors</h2>
           <p className="mt-6 text-lg leading-8 text-gray-200">
             The MLAI Green Battery Hack would simply be impossible without our awesome mentors and volunteers.
           </p>
