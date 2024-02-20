@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import {
   ArrowPathIcon,
-  Bars3Icon,
   CloudArrowUpIcon,
   Cog6ToothIcon,
   FingerPrintIcon,
@@ -11,10 +10,9 @@ import {
   ServerIcon,
 } from '@heroicons/react/20/solid'
 import Header from "@/components/header";
-import LogRocket from 'logrocket';
 import Script from "next/script";
+import LogRocket from 'logrocket';
 LogRocket.init('4s6cqz/mlai-website');
-
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -172,6 +170,11 @@ export default function RootLayout({
           `,
       }}
     />
+    {/* LogRocket  */}
+    <Script
+        src="https://cdn.logr-ingest.com/LogRocket.min.js"
+        crossOrigin="anonymous"
+      />
 {/* Meta Pixel Code */}
 <Script
       id="meta-pixel"
