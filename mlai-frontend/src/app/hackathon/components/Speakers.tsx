@@ -28,7 +28,7 @@ const days = [
   },
   {
     name: 'Final Pitch Night',
-    date: 'April 30',
+    date: 'May 8',
     dateTime: '2022-04-04',
     speakers: [
       {
