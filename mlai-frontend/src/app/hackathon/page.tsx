@@ -29,7 +29,7 @@ export const metadata: Metadata = {
       type: 'website',
       images: [
         {
-          url: 'photos/gbh_melbourne.webp',
+          url: '/MLAI-Logo-Teal.png',
           width: 1200,
           height: 630,
           alt: 'A Giant green battery in the middle of Melbourne and Sydney',
