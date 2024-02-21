@@ -1,7 +1,5 @@
 'use client'
 import Image from 'next/image'
-
-
 import haizea from '/src/app/hackathon/images/logos/haizea.png'
 
 import { Container } from './Container'
