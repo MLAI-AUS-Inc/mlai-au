@@ -1,4 +1,4 @@
-import { ArrowPathIcon, CloudArrowUpIcon, LockClosedIcon, UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
+import { UsersIcon, CodeBracketIcon, WrenchIcon } from "@heroicons/react/20/solid";
 import SubstackSignup from '../components/SubstackSignup';
 import CTA from "@/components/CTA";
 
