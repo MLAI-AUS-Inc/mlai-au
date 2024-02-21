@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://mlai.au/hackathon"), 
   title: "MLAI Green Battery Hack",
   description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
+  generator: 'Next.js',
+  applicationName: 'MLAI-website',
+  referrer: 'origin-when-cross-origin',
+  keywords: ['Machine Learning', 'Artificial Intelligence', 'AI', 'Australia'],
   authors: [
     {
       name: 'Dr Sam Donegan',
@@ -30,8 +34,8 @@ export const metadata: Metadata = {
     ],
   },
   robots: {
-    index: true, // Allow indexing of the page by search engines
-    follow: false, // Do not follow the links on the page to discourage scrapers
+    index: true,
+    follow: false,
     noarchive: true,
     nosnippet: true,
     noimageindex: true,
