@@ -16,9 +16,12 @@ LogRocket.init('4s6cqz/mlai-website');
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mlai.au"), 
   title: "MLAI",
   description: "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+  generator: 'Next.js',
+  applicationName: 'MLAI-website',
+  referrer: 'origin-when-cross-origin',
+  keywords: ['Machine Learning', 'Artificial Intelligence', 'AI', 'Australia'],
   authors: [
     {
       name: 'Dr Sam Donegan',
@@ -36,7 +39,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/MLAI-Logo.png',
+        url: 'https://www.mlai.au/MLAI-Logo.png',
         width: 1200,
         height: 630,
         alt: 'MLAI Logo, a Kangaroo wearing sunglasses',
