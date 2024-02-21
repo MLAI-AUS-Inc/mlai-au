@@ -2,7 +2,6 @@ import { Metadata } from "next";
 import Layout from "./components/Layout"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://mlai.au/hackathon"), 
   title: "MLAI Green Battery Hack",
   description: "MLAI Green Battery Hackathon, Melbourne & Sydney, April-May 2024",
   generator: 'Next.js',
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/MLAI-Logo.png',
+        url: 'https://www.mlai.au/photos/gbh_melbourne.webp',
         width: 1200,
         height: 630,
         alt: 'MLAI Logo, a Kangaroo wearing sunglasses',
