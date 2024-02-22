@@ -9,19 +9,29 @@ export function MentorsVolunteers() {
   // Define the people array outside of the return statement
   const people = [
     {
+      name: 'Dr. Vlada Rozova',
+      role: 'University of Melbourne',
+      imageUrl: 'photos/vladarozova.jpg',
+    },
+    {
+      name: 'Charles Rendigs',
+      role: 'Aus. Inst. of Energy - Director Nat. Board',
+      imageUrl: 'photos/charlesrendigs.jpg',
+    },
+    {
+      name: 'Dr. Nick Kirkwood',
+      role: 'Univerity of Melbourne',
+      imageUrl: 'photos/nickkirckwood.jpg',
+    },
+    {
       name: 'Alexar Pendashteh',
-      role: 'Electron Workshop',
+      role: 'Electron Workshop, President Linux VIC',
       imageUrl: 'photos/alexar.png',
     },
     {
       name: 'Oil Wongmayura',
       role: 'Digital Event Manager',
       imageUrl: 'photos/oil.png',
-    },
-    {
-      name: 'Dr. Nick Kirkwood',
-      role: 'Univerity of Melbourne',
-      imageUrl: 'photos/nickkirckwood.jpg',
     },
     {
       name: 'Michael Foley',
