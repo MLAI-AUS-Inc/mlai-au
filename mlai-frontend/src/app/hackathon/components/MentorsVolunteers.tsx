@@ -20,7 +20,7 @@ export function MentorsVolunteers() {
     },
     {
       name: 'Dr. Nick Kirkwood',
-      role: 'Univerity of Melbourne',
+      role: 'University of Melbourne',
       imageUrl: 'photos/nickkirckwood.jpg',
     },
     {
