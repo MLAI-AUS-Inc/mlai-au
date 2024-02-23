@@ -8,7 +8,7 @@ const navigation = [
     { name: 'events', href: '/#events' },
     { name: 'volunteer', href: '/contact' },
     { name: 'contact', href: '/contact' },
-    { name: 'blog', href: 'https://mlaiaus.substack.com/', target: "_blank", rel: "noopener noreferrer" },
+    { name: 'blog', href: 'https://mlaiaus.substack.com/archive', target: "_blank", rel: "noopener noreferrer" },
 ];
 
 export default function CTA() {
