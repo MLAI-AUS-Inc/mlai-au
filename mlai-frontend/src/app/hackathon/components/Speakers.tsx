@@ -20,9 +20,9 @@ const days = [
     dateTime: '2022-04-04',
     speakers: [
       {
-        name: 'Scott Thomson',
-        role: 'Head of Innovation - Customer Engineering Google',
-        image: scottthomson,
+        name: 'To be announced soon',
+        role: '-',
+        image: placeholder,
       },
     ],
   },
