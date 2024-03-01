@@ -11,7 +11,7 @@ const navigation = [
     { name: 'blog', href: 'https://mlaiaus.substack.com/archive', target: "_blank", rel: "noopener noreferrer" },
 ];
 
-export default function CTA() {
+export default function Header() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     return (
         <header className="fixed inset-x-0 top-0 z-50 bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg ">
