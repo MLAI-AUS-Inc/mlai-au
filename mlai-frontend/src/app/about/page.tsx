@@ -1,4 +1,6 @@
 import CTA from "@/components/CTA";
+import Events from "@/components/events";
+import Team from "@/components/team";
 
 const stats = [
     { label: 'Founded', value: '2021' },
@@ -12,7 +14,7 @@ export default function About() {
     <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
     <div className="relative lg:col-span-5 lg:-mr-8 xl:absolute xl:inset-0 xl:left-1/2 xl:mr-0">
         {/* Overlay Text Box */}
-        <div className="absolute top-0 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
+        <div className="absolute top-10 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
             <h2 className="text-xl font-bold">Text 1</h2>
             <p className="mt-2 text-sm">is simply dummy text of the printing and typesetting industry. 
             Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
@@ -20,7 +22,7 @@ export default function About() {
             It has survived not only five centuries, but also the leap.</p>
         </div>
 
-        <div className="absolute top-0 left-0 m-12 p-12 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
+        <div className="absolute top-60 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
             <h2 className="text-xl font-bold">Text 2</h2>
             <p className="mt-2 text-sm">is simply dummy text of the printing and typesetting industry. 
             Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
@@ -28,11 +30,11 @@ export default function About() {
             It has survived not only five centuries, but also the leap.</p>
         </div>
         
-        <img
+        {/* <img
             className="aspect-[3/2] w-full bg-gray-50 object-cover lg:absolute lg:inset-0 lg:aspect-auto lg:h-full"
             src="https://images.unsplash.com/photo-1498758536662-35b82cd15e29?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90oy1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2102&q=80"
             alt=""
-        />
+        /> */}
     </div>
       <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-56 lg:pt-48 xl:col-span-6">
         <div className="mx-auto max-w-2xl lg:mx-0">
@@ -62,6 +64,9 @@ export default function About() {
         />
       </div> */}
     </div>
+    <Team></Team>
+    <Events></Events>
+  
   </div>
 )
 }
