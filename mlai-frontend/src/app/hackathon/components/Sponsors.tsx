@@ -2,9 +2,10 @@
 import Image from 'next/image'
 import haizea from '/src/app/hackathon/images/logos/haizea.png'
 import solcast from '/src/app/hackathon/images/logos/solcast.png'
-import awsstartups from '/src/app/hackathon/images/logos/aws-startups.jpg'
-import melbconnect from '/src/app/hackathon/images/logos/melbconnect.png'
+import awsstartups from '/src/app/hackathon/images/logos/awsstartups.png'
+import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
 import aie from '/src/app/hackathon/images/logos/aie.jpg'
+import v2 from '/src/app/hackathon/images/logos/v2.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -12,6 +13,7 @@ import { useEffect, useRef, useState } from 'react'
 const sponsors = [
   { name: 'melbconnect', logo: melbconnect },
   { name: 'aws', logo: awsstartups },
+  { name: 'v2', logo: v2 },
 ]
 
 const sponsorssilver = [
@@ -47,45 +49,61 @@ export function Sponsors() {
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
       <Container>
-        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
-          Current sponsors
+        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-4xl">
+         Gold Sponsors
         </h2>
-        
-        <div className="mx-auto flex items-center justify-center mt-20 grid w-full max-w-full grid-cols-2 place-items-center gap-x-8 gap-y-12 sm:grid-cols-3 md:gap-x-32 lg:gap-x-16 ">
-          {sponsors.map((sponsor) => (
-            <div
-              key={sponsor.name}
-              className="flex items-center justify-center"
-            >
-              <Image src={sponsor.logo} alt={sponsor.name} unoptimized />
-            </div>
-          ))}
+
+        <div className="flex justify-center items-center max-w-full mt-8">
+          <div
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {sponsors.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/4 px-4"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="mx-auto  mt-20 grid w-full max-w-full grid-cols-3 place-items-center gap-x-8 gap-y-12 sm:grid-cols-5 md:gap-x-16 lg:gap-x-8">
-          {sponsorssilver.map((sponsorssilver) => (
-            <div
-              key={sponsorssilver.name}
-              className="flex items-center justify-center"
-            >
-              <Image src={sponsorssilver.logo} alt={sponsorssilver.name} unoptimized />
-            </div>
-          ))}
+        <h2 className="mx-auto pt-8 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-3xl">
+          Silver Sponsors
+        </h2>
+
+        <div className="flex justify-center items-center max-w-full mt-4">
+          <div
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {sponsorssilver.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/5 px-4"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+              </div>
+            ))}
+          </div>
         </div>
 
-        <h3 className="mx-auto mt-32 max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-3xl">
+
+        <h3 className="mx-auto mt-10 max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-2xl">
           Community Partners
         </h3>
-        <div className="mx-auto mt-20 grid w-full max-w-full grid-cols-3 place-items-center gap-x-8 gap-y-12 sm:grid-cols-6 md:gap-x-16 lg:gap-x-16">
-          {communitypartner.map((communitypartner) => (
-            <div
-              key={communitypartner.name}
-              className="flex items-center justify-center"
-            >
-              <Image src={communitypartner.logo} alt={communitypartner.name} unoptimized />
-            </div>
-          ))}
+
+        <div className="flex justify-center items-center max-w-full mt-4">
+          <div
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {communitypartner.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/6 px-4"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+              </div>
+            ))}
+          </div>
         </div>
+
       </Container>
     </section>
 
