@@ -1,5 +1,6 @@
 import CTA from "@/components/CTA";
 import Events from "@/components/events";
+import Hero from "@/components/hero";
 import Team from "@/components/team";
 
 const stats = [
@@ -65,7 +66,7 @@ export default function About() {
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
             <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:col-span-2 xl:col-auto">
-              We’re changing the way people connect.
+                Vision & Values
             </h1>
             <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
               <p className="text-lg leading-8 text-gray-600">
@@ -106,7 +107,7 @@ export default function About() {
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
             <h1 className="max-w-2xl text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:col-span-2 xl:col-auto">
-              We’re changing the way people connect.
+                Interested in sponsoring our events?
             </h1>
             <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
               <p className="text-lg leading-8 text-gray-600">
@@ -141,8 +142,7 @@ export default function About() {
     <div className="bg-white py-16 sm:py-24 lg:py-32">
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-6 lg:grid-cols-12 lg:gap-8 lg:px-8">
         <div className="max-w-xl text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-7">
-          <h2 className="inline sm:block lg:inline xl:block">Want product news and updates?</h2>{' '}
-          <p className="inline sm:block lg:inline xl:block">Sign up for our newsletter.</p>
+          <h2 className="inline sm:block lg:inline xl:block">Stay up to date with MLAI</h2>{' '}
         </div>
         <form className="w-full max-w-md lg:col-span-5 lg:pt-2">
           <div className="flex gap-x-4">
@@ -175,7 +175,9 @@ export default function About() {
         </form>
       </div>
     </div>
+    <CTA></CTA>
   
   </div>
+  
 )
 }
