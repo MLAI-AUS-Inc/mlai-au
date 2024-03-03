@@ -21,6 +21,19 @@ export default function About() {
           alt=""
           className="absolute inset-0 h-full w-full object-cover z-0"
         />
+        <div className="absolute inset-0 bg-gray-00 mix-blend-multiply" />
+                            <div
+                                className="absolute left-1/2 top-1/2 -ml-16 -translate-x-1/2 -translate-y-1/2 transform-gpu blur-3xl"
+                                aria-hidden="true"
+                            >
+                                <div
+                                    className="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#46fff3] to-[#776fff] opacity-30"
+                                    style={{
+                                        clipPath:
+                                            'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+                                    }}
+                                />
+                            </div>
         {/*Ensuring all content is above the background image*/}
         <div className="relative z-10">
           <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
@@ -167,7 +180,7 @@ export default function About() {
                 alt=""
                 className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />
-              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+              <div className="absolute inset-8 rounded-xl ring-1 ring-inset ring-gray-900/10" />
             </div>
           </div>
         </div>
