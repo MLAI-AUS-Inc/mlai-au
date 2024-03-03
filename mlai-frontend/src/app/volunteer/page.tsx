@@ -110,23 +110,23 @@ export default function About() {
                         <article className="flex flex-col items-start justify-between">
                             <div className="relative w-full">
                                 <img
-                                    src="path-to-your-image.jpg" // Replace with your image path
+                                    src="photos/Mentoring.png" // Replace with your image path
                                     alt=""
                                     className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
                                 />
                                 <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
                             </div>
                             <div className="max-w-xl">
-                                <div className="mt-8 flex items-center gap-x-4 text-xs">
-                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
-                                        Category Title
-                                    </span>
-                                </div>
                                 <div className="group relative">
                                     <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
                                         Mentoring
                                     </h3>
-                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                                    is simply dummy text of the printing and typesetting industry. 
+                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
+                                    when an unknown printer took a galley of type and scrambled it to make 
+                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                    </p>
                                 </div>
                                 
                             </div>
@@ -142,16 +142,16 @@ export default function About() {
                                 <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
                             </div>
                             <div className="max-w-xl">
-                                <div className="mt-8 flex items-center gap-x-4 text-xs">
-                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
-                                        Category Title
-                                    </span>
-                                </div>
                                 <div className="group relative">
                                     <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
                                         Code
                                     </h3>
-                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                                    is simply dummy text of the printing and typesetting industry. 
+                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
+                                    when an unknown printer took a galley of type and scrambled it to make 
+                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                    </p>
                                 </div>
                                 
                             </div>
@@ -166,16 +166,16 @@ export default function About() {
                                 <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
                             </div>
                             <div className="max-w-xl">
-                                <div className="mt-8 flex items-center gap-x-4 text-xs">
-                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
-                                        Category Title
-                                    </span>
-                                </div>
                                 <div className="group relative">
                                     <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
                                         Friend
                                     </h3>
-                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                                    is simply dummy text of the printing and typesetting industry. 
+                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
+                                    when an unknown printer took a galley of type and scrambled it to make 
+                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                    </p>
                                 </div>
                                
                             </div>
