@@ -15,7 +15,7 @@ export default function About() {
 
         <div className="bg-white pt-24 sm:pt-32">
             {/* You want to build, we want to build */}
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="mx-auto mb-20 max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
                     <div className="lg:pr-4">
                         <div className="relative overflow-hidden rounded-3xl bg-gray-900 px-6 pb-9 pt-64 shadow-2xl sm:px-12 lg:max-w-lg lg:px-8 lg:pb-8 xl:px-10 xl:pb-10">
@@ -84,17 +84,16 @@ export default function About() {
                                 </p>
                             </div>
                         </div>
-                        <dl className="mt-10 grid grid-cols-2 gap-8 border-t border-gray-900/10 pt-10 sm:grid-cols-4">
-
-                        </dl>
-                        <div className="mt-10 flex">
-                            <a href="#" className="text-base font-semibold leading-7 text-indigo-600">
-                                Learn more about our company <span aria-hidden="true">&rarr;</span>
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Divider */}
+            < div className="relative" >
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-2/3 m-auto border-t border-gray-300" />
+                </div>
+            </div >
 
             {/* Mentoring/ Code/ Friend */}
             <div className="bg-white py-24 sm:py-32">
@@ -122,13 +121,13 @@ export default function About() {
                                         Mentoring
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
-                                    is simply dummy text of the printing and typesetting industry. 
-                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
-                                    when an unknown printer took a galley of type and scrambled it to make 
-                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                        is simply dummy text of the printing and typesetting industry.
+                                        Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
+                                        when an unknown printer took a galley of type and scrambled it to make
+                                        a type specimen book. It has survived not only five centuries, but also the leap
                                     </p>
                                 </div>
-                                
+
                             </div>
                         </article>
                         {/* Repeat the article block for as many posts as you need */}
@@ -147,13 +146,13 @@ export default function About() {
                                         Code
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
-                                    is simply dummy text of the printing and typesetting industry. 
-                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
-                                    when an unknown printer took a galley of type and scrambled it to make 
-                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                        is simply dummy text of the printing and typesetting industry.
+                                        Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
+                                        when an unknown printer took a galley of type and scrambled it to make
+                                        a type specimen book. It has survived not only five centuries, but also the leap
                                     </p>
                                 </div>
-                                
+
                             </div>
                         </article>
                         <article className="flex flex-col items-start justify-between">
@@ -171,21 +170,25 @@ export default function About() {
                                         Friend
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
-                                    is simply dummy text of the printing and typesetting industry. 
-                                    Lorem Ipsum has been the industrys standard dummy text ever since the 1500s, 
-                                    when an unknown printer took a galley of type and scrambled it to make 
-                                    a type specimen book. It has survived not only five centuries, but also the leap
+                                        is simply dummy text of the printing and typesetting industry.
+                                        Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
+                                        when an unknown printer took a galley of type and scrambled it to make
+                                        a type specimen book. It has survived not only five centuries, but also the leap
                                     </p>
                                 </div>
-                               
+
                             </div>
                         </article>
                     </div>
                 </div>
             </div>
 
-
-
+            {/* Divider */}
+            < div className="relative" >
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-2/3 m-auto border-t border-gray-300" />
+                </div>
+            </div >
 
             <Newsletter></Newsletter>
             {/* Launching an AI startup in Australia? */}
@@ -230,8 +233,24 @@ export default function About() {
                 </div>
             </div>
 
+            {/* Divider */}
+            < div className="relative" >
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-2/3 m-auto border-t border-gray-300" />
+                </div>
+            </div >
+
+
             {/* CTA section */}
             <Events></Events>
+
+             {/* Divider */}
+             < div className="relative" >
+                <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-2/3 m-auto border-t border-gray-300" />
+                </div>
+            </div >
+            
             <Feature></Feature>
             <CTA></CTA>
         </div>
