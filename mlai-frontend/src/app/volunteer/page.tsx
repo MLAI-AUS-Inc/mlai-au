@@ -1,5 +1,6 @@
 import CTA from "@/components/CTA";
 import Events from "@/components/events";
+import Feature from "@/components/feature";
 import Newsletter from "@/components/newsletter";
 
 const stats = [
@@ -11,7 +12,9 @@ const stats = [
 
 export default function About() {
     return (
+
         <div className="bg-white pt-24 sm:pt-32">
+            {/* You want to build, we want to build */}
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
                     <div className="lg:pr-4">
@@ -47,16 +50,12 @@ export default function About() {
                                     />
                                     <use href="#0ef284b8-28c2-426e-9442-8655d393522e" x={86} />
                                 </svg>
-                                <img src="https://tailwindui.com/img/logos/workcation-logo-white.svg" alt="" className="h-12 w-auto" />
                                 <blockquote className="mt-6 text-xl font-semibold leading-8 text-white">
                                     <p>
-                                        “Amet amet eget scelerisque tellus sit neque faucibus non eleifend. Integer eu praesent at a. Ornare
-                                        arcu gravida natoque erat et cursus tortor.”
+                                        “You want to build, we want to build”
                                     </p>
                                 </blockquote>
-                                <figcaption className="mt-6 text-sm leading-6 text-gray-300">
-                                    <strong className="font-semibold text-white">Judith Rogers,</strong> CEO at Workcation
-                                </figcaption>
+
                             </figure>
                         </div>
                     </div>
@@ -86,12 +85,7 @@ export default function About() {
                             </div>
                         </div>
                         <dl className="mt-10 grid grid-cols-2 gap-8 border-t border-gray-900/10 pt-10 sm:grid-cols-4">
-                            {stats.map((stat, statIdx) => (
-                                <div key={statIdx}>
-                                    <dt className="text-sm font-semibold leading-6 text-gray-600">{stat.label}</dt>
-                                    <dd className="mt-2 text-3xl font-bold leading-10 tracking-tight text-gray-900">{stat.value}</dd>
-                                </div>
-                            ))}
+
                         </dl>
                         <div className="mt-10 flex">
                             <a href="#" className="text-base font-semibold leading-7 text-indigo-600">
@@ -102,21 +96,99 @@ export default function About() {
                 </div>
             </div>
 
+            {/* Mentoring/ Code/ Friend */}
             <div className="bg-white py-24 sm:py-32">
                 <div className="mx-auto max-w-7xl px-6 lg:px-8">
-                    <div className="mx-auto max-w-2xl lg:mx-0">
+                    <div className="mx-auto max-w-2xl text-center">
                         <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">From the blog</h2>
                         <p className="mt-2 text-lg leading-8 text-gray-600">
                             Learn how to grow your business with our expert advice.
                         </p>
                     </div>
-                    {/* The section rendering posts has been deleted */}
+                    <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-x-8 gap-y-20 lg:mx-0 lg:max-w-none lg:grid-cols-3">
+                        {/* Replace the content below with your actual content */}
+                        <article className="flex flex-col items-start justify-between">
+                            <div className="relative w-full">
+                                <img
+                                    src="path-to-your-image.jpg" // Replace with your image path
+                                    alt=""
+                                    className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
+                                />
+                                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+                            </div>
+                            <div className="max-w-xl">
+                                <div className="mt-8 flex items-center gap-x-4 text-xs">
+                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
+                                        Category Title
+                                    </span>
+                                </div>
+                                <div className="group relative">
+                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                        Mentoring
+                                    </h3>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                </div>
+                                
+                            </div>
+                        </article>
+                        {/* Repeat the article block for as many posts as you need */}
+                        <article className="flex flex-col items-start justify-between">
+                            <div className="relative w-full">
+                                <img
+                                    src="path-to-your-image.jpg" // Replace with your image path
+                                    alt=""
+                                    className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
+                                />
+                                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+                            </div>
+                            <div className="max-w-xl">
+                                <div className="mt-8 flex items-center gap-x-4 text-xs">
+                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
+                                        Category Title
+                                    </span>
+                                </div>
+                                <div className="group relative">
+                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                        Code
+                                    </h3>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                </div>
+                                
+                            </div>
+                        </article>
+                        <article className="flex flex-col items-start justify-between">
+                            <div className="relative w-full">
+                                <img
+                                    src="path-to-your-image.jpg" // Replace with your image path
+                                    alt=""
+                                    className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
+                                />
+                                <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+                            </div>
+                            <div className="max-w-xl">
+                                <div className="mt-8 flex items-center gap-x-4 text-xs">
+                                    <span className="relative z-10 rounded-full bg-gray-50 px-3 py-1.5 font-medium text-gray-600">
+                                        Category Title
+                                    </span>
+                                </div>
+                                <div className="group relative">
+                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                        Friend
+                                    </h3>
+                                    <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">Post Description</p>
+                                </div>
+                               
+                            </div>
+                        </article>
+                    </div>
                 </div>
             </div>
 
 
 
+
             <Newsletter></Newsletter>
+            {/* Launching an AI startup in Australia? */}
             <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
                 <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
                     <div className="lg:grid lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:gap-x-8">
@@ -160,6 +232,7 @@ export default function About() {
 
             {/* CTA section */}
             <Events></Events>
+            <Feature></Feature>
             <CTA></CTA>
         </div>
 

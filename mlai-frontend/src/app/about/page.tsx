@@ -16,17 +16,23 @@ export default function About() {
     <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
       <div className="relative lg:col-span-5 lg:-mr-8 xl:absolute xl:inset-0 xl:left-1/2 xl:mr-0">
         {/* Overlay Text Box */}
-        <div className="absolute top-10 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
+        <div className="absolute top-10 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg  z-10">
           <h2 className="text-xl font-bold text-black">Text 1</h2>
           <p className="mt-2 text-sm text-black">is simply dummy text of the printing and typesetting industry.
+            Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
+            when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+            It has survived not only five centuries, but also the leap. is simply dummy text of the printing and typesetting industry.
             Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
             when an unknown printer took a galley of type and scrambled it to make a type specimen book.
             It has survived not only five centuries, but also the leap. </p>
         </div>
 
-        <div className="absolute top-60 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg shadow-md z-10">
+        <div className="absolute top-60 left-0 m-12 p-6 bg-white bg-opacity-50 rounded-lg  z-10">
           <h2 className="text-xl font-bold text-black">Text 2</h2>
           <p className="mt-2 text-sm text-black">is simply dummy text of the printing and typesetting industry.
+            Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
+            when an unknown printer took a galley of type and scrambled it to make a type specimen book.
+            It has survived not only five centuries, but also the leap. is simply dummy text of the printing and typesetting industry.
             Lorem Ipsum has been the industrys standard dummy text ever since the 1500s,
             when an unknown printer took a galley of type and scrambled it to make a type specimen book.
             It has survived not only five centuries, but also the leap.</p>
