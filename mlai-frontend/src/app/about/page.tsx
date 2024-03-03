@@ -15,59 +15,59 @@ export default function About() {
   return (
 
     <div className="relative bg-white">
-        <div id='hero' className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen ">
-          <img
-            src="photos/bg.jpg"
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover z-0"
-          />
-          {/*Ensuring all content is above the background image*/}
-          <div className="relative z-10">
-            <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
+      <div id='hero' className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen ">
+        <img
+          src="photos/bg.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover z-0"
+        />
+        {/*Ensuring all content is above the background image*/}
+        <div className="relative z-10">
+          <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
             <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-56 lg:pt-48 xl:col-span-6">
-                <div className="mx-auto max-w-2xl lg:mx-0">
-                  <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
-                    Hi! We are MLAI Aus
-                  </h1>
-                  <div className="mt-10 flex items-center gap-x-6">
-                    <a
-                      href="#"
-                      className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      Get started
-                    </a>
-                    <a href="#" className="text-sm font-semibold leading-6 text-white">
-                      Learn more <span aria-hidden="true">→</span>
-                    </a>
-                  </div>
+              <div className="mx-auto max-w-2xl lg:mx-0">
+                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+                  Hi! We are MLAI Aus
+                </h1>
+                <div className="mt-10 flex items-center gap-x-6">
+                  <a
+                    href="#"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  >
+                    Get started
+                  </a>
+                  <a href="#" className="text-sm font-semibold leading-6 text-white">
+                    Learn more <span aria-hidden="true">→</span>
+                  </a>
                 </div>
               </div>
-              <div className="lg:col-span-5 xl:col-span-6">
-                {/*Overlay Text Box 1*/}
-                <div className="m-12 p-6 rounded-lg">
-                  <h2 className="text-xl font-bold text-white">Text 1</h2>
-                  <p className="mt-2 text-sm text-white">
-                  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the 
-                  industry's standard dummy text ever since the 1500s, when an unknown printer took a galley 
-                  of type and scrambled it to make a type specimen book. It has survived not only five centuries, 
-                  but also the leap
-                  </p>
-                </div>
-                {/*Overlay Text Box 2*/}
-                <div className="m-12 p-6 rounded-lg">
-                  <h2 className="text-xl font-bold text-white">Text 2</h2>
-                  <p className="mt-2 text-sm text-white">
-                  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the 
-                  industry's standard dummy text ever since the 1500s, when an unknown printer took a galley 
-                  of type and scrambled it to make a type specimen book. It has survived not only five centuries, 
-                  but also the leap
-                  </p>
-                </div>
-              </div>
-              
             </div>
+            <div className="lg:col-span-5 xl:col-span-6">
+              {/*Overlay Text Box 1*/}
+              <div className="m-12 p-6 rounded-lg">
+                <h2 className="text-xl font-bold text-white">Text 1</h2>
+                <p className="mt-2 text-sm text-white">
+                  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
+                  industry's standard dummy text ever since the 1500s, when an unknown printer took a galley
+                  of type and scrambled it to make a type specimen book. It has survived not only five centuries,
+                  but also the leap
+                </p>
+              </div>
+              {/*Overlay Text Box 2*/}
+              <div className="m-12 p-6 rounded-lg">
+                <h2 className="text-xl font-bold text-white">Text 2</h2>
+                <p className="mt-2 text-sm text-white">
+                  is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
+                  industry's standard dummy text ever since the 1500s, when an unknown printer took a galley
+                  of type and scrambled it to make a type specimen book. It has survived not only five centuries,
+                  but also the leap
+                </p>
+              </div>
+            </div>
+
           </div>
         </div>
+      </div>
 
 
 
@@ -159,6 +159,15 @@ export default function About() {
                   Learn more <span aria-hidden="true">→</span>
                 </a>
               </div>
+            </div>
+
+            <div className="relative w-full">
+              <img
+                src="photos/Mentoring.png" // Replace with your image path
+                alt=""
+                className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
+              />
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
             </div>
           </div>
         </div>
