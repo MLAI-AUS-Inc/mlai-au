@@ -61,7 +61,7 @@ export default function About() {
                     </div>
                     <div>
                         <div className="text-base leading-7 text-gray-700 lg:max-w-lg">
-                            <p className="text-base font-semibold leading-7 text-indigo-600">Company values</p>
+                            <p className="text-base font-semibold leading-7 text-teal-500">You want to build, we want to build</p>
                             <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                                 On a mission to empower remote teams
                             </h1>
@@ -117,7 +117,7 @@ export default function About() {
                             </div>
                             <div className="max-w-xl">
                                 <div className="group relative">
-                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                    <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900">
                                         Mentoring
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
@@ -134,7 +134,7 @@ export default function About() {
                         <article className="flex flex-col items-start justify-between">
                             <div className="relative w-full">
                                 <img
-                                    src="path-to-your-image.jpg" // Replace with your image path
+                                    src="photos/code.png" // Replace with your image path
                                     alt=""
                                     className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
                                 />
@@ -142,7 +142,7 @@ export default function About() {
                             </div>
                             <div className="max-w-xl">
                                 <div className="group relative">
-                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                    <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900">
                                         Code
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
@@ -166,7 +166,7 @@ export default function About() {
                             </div>
                             <div className="max-w-xl">
                                 <div className="group relative">
-                                    <h3 className="mt-3 text-lg font-semibold leading-6 text-gray-900">
+                                    <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900">
                                         Friend
                                     </h3>
                                     <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
@@ -250,7 +250,7 @@ export default function About() {
                     <div className="w-2/3 m-auto border-t border-gray-300" />
                 </div>
             </div >
-            
+
             <Feature></Feature>
             <CTA></CTA>
         </div>
