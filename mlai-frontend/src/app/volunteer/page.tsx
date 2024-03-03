@@ -195,43 +195,36 @@ export default function About() {
             <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
                 <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
                     <div className="lg:grid lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:gap-x-8">
-                        {/* Removed the overlay text boxes */}
-
-                        {/* Vision Section */}
-                        <div className="lg:col-start-2 xl:col-start-auto">
-                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                                Vision
+                        {/* Heading Section */}
+                        <div className="col-span-2">
+                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl text-left ">
+                                Launching an AI startup in Australia?
                             </h1>
-                            <p className="mt-6 text-lg leading-8 text-gray-600">
-                                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet
+                        </div>
+
+                        {/* Left Column Text */}
+                        <div>
+                            <p className="mt-6 text-lg leading-8 text-gray-600 text-justify">
+                                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat 
+                                commodo. Elit sunt amet fugiat veniam occaecat fugiat aliqua. Anim aute id magna 
+                                aliqua ad ad non deserunt sunt. <br />Qui irure qui lorem cupidatat commodo. Elit sunt amet
                                 fugiat veniam occaecat fugiat aliqua.
                             </p>
                         </div>
 
-                        {/* Values Section */}
-                        <div className="lg:col-start-2 xl:col-start-auto">
-                            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
-                                Values
-                            </h1>
-                            <p className="mt-6 text-lg leading-8 text-gray-600">
-                                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet
+                        {/* Right Column Text */}
+                        <div>
+                            <p className="mt-6 text-lg leading-8 text-gray-600 text-justify">
+                                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat 
+                                commodo. Elit sunt amet fugiat veniam occaecat fugiat aliqua. Anim aute id magna 
+                                aliqua ad ad non deserunt sunt. <br />Qui irure qui lorem cupidatat commodo. Elit sunt amet
                                 fugiat veniam occaecat fugiat aliqua.
                             </p>
-                            <div className="mt-10 flex items-center gap-x-6">
-                                <a
-                                    href="#"
-                                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                >
-                                    Get started
-                                </a>
-                                <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
-                                    Learn more →
-                                </a>
-                            </div>
                         </div>
                     </div>
                 </div>
             </div>
+
 
             {/* Divider */}
             < div className="relative" >
@@ -244,8 +237,8 @@ export default function About() {
             {/* CTA section */}
             <Events></Events>
 
-             {/* Divider */}
-             < div className="relative" >
+            {/* Divider */}
+            < div className="relative" >
                 <div className="absolute inset-0 flex items-center" aria-hidden="true">
                     <div className="w-2/3 m-auto border-t border-gray-300" />
                 </div>
