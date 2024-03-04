@@ -141,7 +141,7 @@ export default function Home() {
           </div>
         </div >
 
-        {/* Blog section */}
+        {/* Events section */}
         <Events></Events>
  
         {/* Testimonials section */}
