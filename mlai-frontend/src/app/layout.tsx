@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
-import Script from "next/script";
-import LogRocket from 'logrocket';
 import Footer from "@/components/footer";
-LogRocket.init('4s6cqz/mlai-website');
+import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -75,11 +73,6 @@ export default function RootLayout({
             gtag('config', 'G-JB8E813T8W');
           `,
         }}
-      />
-      {/* LogRocket  */}
-      <Script
-        src="https://cdn.logr-ingest.com/LogRocket.min.js"
-        crossOrigin="anonymous"
       />
       {/* Meta Pixel Code */}
       <Script
