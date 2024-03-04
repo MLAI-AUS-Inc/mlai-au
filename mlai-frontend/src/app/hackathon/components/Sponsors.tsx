@@ -2,16 +2,15 @@
 import Image from 'next/image'
 import haizea from '/src/app/hackathon/images/logos/haizea.png'
 import solcast from '/src/app/hackathon/images/logos/solcast.png'
-import awsstartups from '/src/app/hackathon/images/logos/awsstartups.png'
+import awsstartups from '/src/app/hackathon/images/logos/aws_padd.png'
 import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
 import aie from '/src/app/hackathon/images/logos/aie.jpg'
-import v2 from '/src/app/hackathon/images/logos/v2.png'
+import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
 
 const sponsors = [
-  { name: 'melbconnect', logo: melbconnect },
   { name: 'aws', logo: awsstartups },
   { name: 'v2', logo: v2 },
 ]
@@ -59,9 +58,9 @@ export function Sponsors() {
             {sponsors.map((sponsor) => (
               <div
                 key={sponsor.name}
-                className="flex items-center justify-center w-1/3 sm:w-1/4 px-4"  
+                className="flex items-center justify-center w-1/3 sm:w-1/4 px-2"  
               >
-                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
               </div>
             ))}
           </div>
@@ -79,7 +78,7 @@ export function Sponsors() {
                 key={sponsor.name}
                 className="flex items-center justify-center w-1/3 sm:w-1/5 px-4"  
               >
-                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
               </div>
             ))}
           </div>
@@ -98,7 +97,7 @@ export function Sponsors() {
                 key={sponsor.name}
                 className="flex items-center justify-center w-1/3 sm:w-1/6 px-4"  
               >
-                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
               </div>
             ))}
           </div>
