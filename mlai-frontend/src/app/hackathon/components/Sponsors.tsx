@@ -1,12 +1,28 @@
 'use client'
 import Image from 'next/image'
 import haizea from '/src/app/hackathon/images/logos/haizea.png'
+import solcast from '/src/app/hackathon/images/logos/solcast.png'
+import awsstartups from '/src/app/hackathon/images/logos/aws_padd.png'
+import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
+import aie from '/src/app/hackathon/images/logos/aie.jpg'
+import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
 
 const sponsors = [
+  { name: 'aws', logo: awsstartups },
+  { name: 'v2', logo: v2 },
+]
+
+const sponsorssilver = [
   { name: 'haizea', logo: haizea },
+  { name: 'solcast', logo: solcast },
+]
+
+const communitypartner = [
+  { name: 'aie', logo: aie },
+
 ]
 
 
@@ -31,37 +47,65 @@ export function Sponsors() {
 
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
-      {/* <div ref={mountRef} className="typo-zoom-sticky">
-        <div className="typo-zoom-sticky-inner">
+      <Container>
+        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-4xl">
+         Gold Sponsors
+        </h2>
+
+        <div className="flex justify-center items-center max-w-full mt-8">
           <div
-            className={`typo-zoom-text-wrapper ${isZoomed ? 'zoomAnimation' : ''}`}
-            style={{
-              willChange: 'transform',
-              transformStyle: 'preserve-3d',
-            }}
-          >
-            <div className="typo-zoom-text"></div>
-            <img src="https://assets-global.website-files.com/61f1e1f5e79d214f7f0df5a0/65a530c5b54dfea4a6decaee_Take%20a%20look%20under%20the%20hood....svg" loading="lazy" alt="" className="typo-zoom-text-image" />
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {sponsors.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/4 px-2"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
+              </div>
+            ))}
           </div>
         </div>
-      </div> */}
 
-
-      <Container>
-        <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
-          Current sponsors
+        <h2 className="mx-auto pt-8 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-3xl">
+          Silver Sponsors
         </h2>
-        <div className="mx-auto mt-20 grid max-w-max grid-cols-1 place-content-center gap-x-32 gap-y-12 sm:grid-cols-3 md:gap-x-16 lg:gap-x-32">
-          {sponsors.map((sponsor) => (
-            <div
-              key={sponsor.name}
-              className="flex items-center justify-center"
-            >
-              <Image src={sponsor.logo} alt={sponsor.name} unoptimized />
-            </div>
-          ))}
+
+        <div className="flex justify-center items-center max-w-full mt-4">
+          <div
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {sponsorssilver.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/5 px-4"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
+              </div>
+            ))}
+          </div>
         </div>
+
+
+        <h3 className="mx-auto mt-10 max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-2xl">
+          Community Partners
+        </h3>
+
+        <div className="flex justify-center items-center max-w-full mt-4">
+          <div
+            className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
+            {communitypartner.map((sponsor) => (
+              <div
+                key={sponsor.name}
+                className="flex items-center justify-center w-1/3 sm:w-1/6 px-4"  
+              >
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+
       </Container>
     </section>
+
+
   )
 }
