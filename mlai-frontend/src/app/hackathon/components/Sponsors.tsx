@@ -6,6 +6,7 @@ import awsstartups from '/src/app/hackathon/images/logos/aws_padd.png'
 import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
 import aie from '/src/app/hackathon/images/logos/aie.jpg'
 import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
+import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -18,6 +19,7 @@ const sponsors = [
 const sponsorssilver = [
   { name: 'haizea', logo: haizea },
   { name: 'solcast', logo: solcast },
+  { name: 'dscubed', logo: dscubed },
 ]
 
 const communitypartner = [
