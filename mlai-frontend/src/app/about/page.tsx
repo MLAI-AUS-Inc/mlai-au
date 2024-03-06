@@ -51,7 +51,7 @@ export default function About() {
             </div>
             <div className="lg:col-span-3 xl:col-span-6">
               {/*Overlay Text Box 1*/}
-              <div className="mt-20 ml-8 mr-2 pt-6 pl-8 pb-6 pr-0 rounded-lg">
+              <div className="mt-20 ml-8 mr-0 pt-6 pl-8 pb-6 pr-0 rounded-lg">
                 <h2 className="text-xl font-bold text-white">Text 1</h2>
                 <p className="mt-2 text-sm text-white text-justify">
                   is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
@@ -61,7 +61,7 @@ export default function About() {
                 </p>
               </div>
               {/*Overlay Text Box 2*/}
-              <div className="mt-20 ml-8 mr-2 pt-6 pl-8 pb-6 pr-0 rounded-lg">
+              <div className="mt-20 ml-8 mr-0 pt-6 pl-8 pb-6 pr-0 rounded-lg">
                 <h2 className="text-xl font-bold text-white">Text 2</h2>
                 <p className="mt-2 text-sm text-white text-justify">
                   is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the
