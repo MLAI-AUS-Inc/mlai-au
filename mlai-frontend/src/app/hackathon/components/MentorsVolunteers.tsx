@@ -24,6 +24,16 @@ export function MentorsVolunteers() {
       imageUrl: 'photos/nickkirckwood.jpg',
     },
     {
+      name: 'James Khan',
+      role: 'Full-Stack ML engineer/researcher',
+      imageUrl: 'photos/jameskhan.png',
+    },
+    {
+      name: 'Annie Dang',
+      role: ' Full Stack Developer',
+      imageUrl: 'photos/anniedang.png',
+    },
+    {
       name: 'Alexar Pendashteh',
       role: 'Electron Workshop, President Linux VIC',
       imageUrl: 'photos/alexar.png',
