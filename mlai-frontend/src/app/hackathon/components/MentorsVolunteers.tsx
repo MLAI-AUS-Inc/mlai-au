@@ -24,7 +24,7 @@ export function MentorsVolunteers() {
       imageUrl: 'photos/nickkirckwood.jpg',
     },
     {
-      name: 'James Khan',
+      name: 'Dr. James Khan',
       role: 'Full-Stack ML engineer/researcher',
       imageUrl: 'photos/jameskhan.png',
     },
