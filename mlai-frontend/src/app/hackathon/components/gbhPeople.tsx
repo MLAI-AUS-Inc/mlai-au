@@ -37,6 +37,11 @@ export function GbhPeople() {
       role: 'Sydney Lead',
       imageUrl: 'photos/vincent.jpg',
     },
+    {
+      name: 'Axel Ahmer',
+      role: 'ML Research, Aus. Bureau of Statistics',
+      imageUrl: 'photos/axelahmer.png',
+    },
     // More people...
   ];
 
