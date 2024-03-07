@@ -7,6 +7,7 @@ import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
 import aie from '/src/app/hackathon/images/logos/aie.jpg'
 import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
+import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -24,6 +25,7 @@ const sponsorssilver = [
 
 const communitypartner = [
   { name: 'aie', logo: aie },
+  { name: 'buildclub', logo: buildclub },
 
 ]
 
