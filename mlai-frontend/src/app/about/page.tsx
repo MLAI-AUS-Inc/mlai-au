@@ -7,49 +7,46 @@ import Team from "@/components/team";
 
 export default function About() {
   return (
-
     <div className="relative bg-white">
-      <div id='hero' className="relative isolate overflow-hidden bg-gray-900 pb-16 pt-14 sm:pb-20 h-screen ">
-        <img
-          src="photos/bg.jpg"
-          alt=""
-          className="absolute inset-0 h-full w-full object-cover z-0"
-        />
-        <div className="absolute inset-0 bg-gray-00 mix-blend-multiply" />
-        <div
-          className="absolute left-1/2 top-1/2 -ml-16 -translate-x-1/2 -translate-y-1/2 transform-gpu blur-3xl"
-          aria-hidden="true"
-        >
-          <div
-            className="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#46fff3] to-[#776fff] opacity-30"
-            style={{
-              clipPath:
-                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
-            }}
-          />
-        </div>
-        {/*Ensuring all content is above the background image*/}
-        <div className="relative z-10">
-          <div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
-            <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-56 lg:pt-48 xl:col-span-6">
-              <div className="mx-auto max-w-2xl lg:mx-0">
-                <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-                  Hi! We are MLAI Aus 👋
-                </h1>
-                <div className="mt-10 flex items-center gap-x-6">
-                  <a
-                    href="#"
-                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                  >
-                    Get started
-                  </a>
-                  <a href="#" className="text-sm font-semibold leading-6 text-white">
-                    Learn more <span aria-hidden="true">→</span>
-                  </a>
-                </div>
+<div className="mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
+        <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-56 lg:pt-48 xl:col-span-6">
+          <div className="mx-auto max-w-2xl lg:mx-0">
+            <img
+              className="h-11"
+              src="MLAI-Logo-Teal.png"
+              alt="MLAI"
+            />
+            <div className="hidden sm:mt-32 sm:flex lg:mt-16">
+              <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-500 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
+                Anim aute id magna aliqua ad ad non deserunt sunt.{' '}
+                <a href="#" className="whitespace-nowrap font-semibold text-indigo-600">
+                  <span className="absolute inset-0" aria-hidden="true" />
+                  Read more <span aria-hidden="true">&rarr;</span>
+                </a>
               </div>
             </div>
-            <div className="lg:col-span-3 xl:col-span-6">
+            <h1 className="mt-24 text-4xl font-bold tracking-tight text-gray-900 sm:mt-10 sm:text-5xl">
+              👋Hi! We are MLAI Aus 
+            </h1>
+            <p className="mt-6 text-lg leading-8 text-gray-600">
+              Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt amet
+              fugiat veniam occaecat fugiat aliqua.
+            </p>
+            <div className="mt-10 flex items-center gap-x-6">
+              <a
+                href="#"
+                className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              >
+                Get started
+              </a>
+              <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
+                Learn more <span aria-hidden="true">→</span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div className="relative lg:col-span-5 lg:-mr-8 xl:absolute xl:inset-0 xl:left-1/2 xl:mr-0 ">
+        <div className="lg:col-span-3 xl:col-span-6">
               {/*Overlay Text Box 1*/}
               <div className="mt-20 ml-8 mr-0 pt-6 pl-8 pb-6 pr-0 rounded-lg">
                 <h2 className="text-xl font-bold text-white">Text 1</h2>
@@ -71,18 +68,18 @@ export default function About() {
                 </p>
               </div>
             </div>
-
-          </div>
         </div>
       </div>
 
+
+  {/* Vision & Values Section */}
       <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:gap-x-8">
 
             {/* Vision Section */}
             <div className="lg:col-start-2 xl:col-start-auto">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                 Vision
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
@@ -93,7 +90,7 @@ export default function About() {
 
             {/* Values Section */}
             <div className="lg:col-start-2 xl:col-start-auto">
-              <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
                 Values
               </h1>
               <p className="mt-6 text-lg leading-8 text-gray-600">
@@ -199,3 +196,4 @@ export default function About() {
 
   )
 }
+
