@@ -153,7 +153,7 @@ export default function About() {
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
             <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
-              <h1 className="max-w-2xl mb-8 text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:col-span-2 xl:col-auto">
+              <h1 className="max-w-2xl mb-8 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-2 xl:col-auto">
                 Interested in sponsoring our events?
               </h1>
               <p className="text-lg leading-8 top-10 text-gray-600">
