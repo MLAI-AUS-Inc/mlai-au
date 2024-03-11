@@ -7,7 +7,7 @@ import Team from "@/components/team";
 export default function About() {
   return (
     <div className="relative bg-white">
-      <div className="mx-auto max-w-7xl bg-gray-50 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
+      <div className="mx-auto max-w-8xl bg-gray-50 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8">
         {/* Hero - Left side */}
         <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-56 lg:pt-48 xl:col-span-6">
           <div className="relative text-white p-6">
@@ -83,7 +83,8 @@ export default function About() {
         {/* </div> */}
       </div>
       {/* </div> */}
-      {/* Vision & Values Section */}
+
+      {/* <div className="mx-auto max-w-7xl bg-gray-50 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8"> */}
       {/* Vision & Values Section */}
       <div className="relative isolate overflow-hidden bg-white pt-14">
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
@@ -128,6 +129,7 @@ export default function About() {
           </div>
         </div>
       </div>
+      {/* </div> */}
 
       {/* Divider */}
       <div className="relative">
