@@ -10,74 +10,80 @@ export default function About() {
       {/* You want to build, we want to build */}
       <div className="mx-auto mb-20 max-w-7xl px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-          <div className="lg:pr-4">
-            <img className="h-11" src="MLAI-Logo-Teal.png" alt="MLAI" />
-            <div className="hidden sm:mt-32 sm:flex lg:mt-16">
-              <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-500 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-                Anim aute id magna aliqua ad ad non deserunt sunt.{" "}
+          {/* <div className="bg-gray-50 p-6"> */}
+          <div className="bg-gray-50 p-6 flex flex-col h-full rounded-xl">
+            <div className="lg:pr-4">
+              <img className="h-11" src="MLAI-Logo-Teal.png" alt="MLAI" />
+              <div className="hidden sm:mt-32 sm:flex lg:mt-16">
+                <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-500 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
+                  Anim aute id magna aliqua ad ad non deserunt sunt.{" "}
+                  <a
+                    href="#"
+                    className="whitespace-nowrap font-semibold text-teal-500"
+                  >
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    Read more <span aria-hidden="true">&rarr;</span>
+                  </a>
+                </div>
+              </div>
+              <h1 className="mt-24 text-4xl font-bold tracking-tight text-gray-900 sm:mt-10 sm:text-5xl">
+                👋Hi! We are MLAI Aus
+              </h1>
+              <p className="mt-6 text-lg leading-8 text-gray-600">
+                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
+                lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat
+                fugiat aliqua.
+              </p>
+              <div className="mt-10 flex items-center gap-x-6">
                 <a
                   href="#"
-                  className="whitespace-nowrap font-semibold text-teal-500"
+                  className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
-                  <span className="absolute inset-0" aria-hidden="true" />
-                  Read more <span aria-hidden="true">&rarr;</span>
+                  Get started
+                </a>
+                <a
+                  href="#"
+                  className="text-sm font-semibold leading-6 text-gray-900"
+                >
+                  Learn more <span aria-hidden="true">→</span>
                 </a>
               </div>
             </div>
-            <h1 className="mt-24 text-4xl font-bold tracking-tight text-gray-900 sm:mt-10 sm:text-5xl">
-              👋Hi! We are MLAI Aus
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
-              Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
-              lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat
-              fugiat aliqua.
-            </p>
-            <div className="mt-10 flex items-center gap-x-6">
-              <a
-                href="#"
-                className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Get started
-              </a>
-              <a
-                href="#"
-                className="text-sm font-semibold leading-6 text-gray-900"
-              >
-                Learn more <span aria-hidden="true">→</span>
-              </a>
-            </div>
           </div>
           <div>
-            <div className="text-base leading-7 text-gray-700 lg:max-w-lg">
-              <p className="text-base font-semibold leading-7 text-teal-500">
-                Who are we?
-              </p>
-              <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                Introduce yourself
-              </h1>
-              <div className="max-w-xl">
-                <p className="mt-6">
-                  Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget
-                  risus enim. Mattis mauris semper sed amet vitae sed turpis id.
-                  Id dolor praesent donec est. Odio penatibus risus viverra
-                  tellus varius sit neque erat velit. Faucibus commodo massa
-                  rhoncus, volutpat. Dignissim sed eget risus enim. Mattis
-                  mauris semper sed amet vitae sed turpis id.
+            {/* <div className="bg-teal-50 p-6"> */}
+            <div className="bg-teal-50 p-6 flex flex-col h-full rounded-xl">
+              <div className="text-base leading-7 text-gray-700 lg:max-w-lg">
+                <p className="text-base font-semibold leading-7 text-teal-500">
+                  Who are we?
                 </p>
-                <p className="mt-8">
-                  Et vitae blandit facilisi magna lacus commodo. Vitae sapien
-                  duis odio id et. Id blandit molestie auctor fermentum
-                  dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
-                  varius vulputate et ultrices hac adipiscing egestas. Iaculis
-                  convallis ac tempor et ut. Ac lorem vel integer orci.
-                </p>
-                <p className="mt-8">
-                  Et vitae blandit facilisi magna lacus commodo. Vitae sapien
-                  duis odio id et. Id blandit molestie auctor fermentum
-                  dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
-                  varius vulputate et ultrices hac adipiscing egestas. Iaculis
-                  convallis ac tempor et ut. Ac lorem vel integer orci.
-                </p>
+                <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                  Introduce yourself
+                </h1>
+                <div className="max-w-xl">
+                  <p className="mt-6">
+                    Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget
+                    risus enim. Mattis mauris semper sed amet vitae sed turpis
+                    id. Id dolor praesent donec est. Odio penatibus risus
+                    viverra tellus varius sit neque erat velit. Faucibus commodo
+                    massa rhoncus, volutpat. Dignissim sed eget risus enim.
+                    Mattis mauris semper sed amet vitae sed turpis id.
+                  </p>
+                  <p className="mt-8">
+                    Et vitae blandit facilisi magna lacus commodo. Vitae sapien
+                    duis odio id et. Id blandit molestie auctor fermentum
+                    dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
+                    varius vulputate et ultrices hac adipiscing egestas. Iaculis
+                    convallis ac tempor et ut. Ac lorem vel integer orci.
+                  </p>
+                  <p className="mt-8">
+                    Et vitae blandit facilisi magna lacus commodo. Vitae sapien
+                    duis odio id et. Id blandit molestie auctor fermentum
+                    dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
+                    varius vulputate et ultrices hac adipiscing egestas. Iaculis
+                    convallis ac tempor et ut. Ac lorem vel integer orci.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
