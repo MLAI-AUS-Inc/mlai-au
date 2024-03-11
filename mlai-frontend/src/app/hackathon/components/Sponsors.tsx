@@ -8,12 +8,14 @@ import aie from '/src/app/hackathon/images/logos/aie.jpg'
 import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
 import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
+import hal from '/src/app/hackathon/images/logos/Hal.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
 
 const sponsors = [
   { name: 'aws', logo: awsstartups },
+  { name: 'unimelb', logo: melbconnect },
   { name: 'v2', logo: v2 },
 ]
 
@@ -21,6 +23,7 @@ const sponsorssilver = [
   { name: 'haizea', logo: haizea },
   { name: 'solcast', logo: solcast },
   { name: 'dscubed', logo: dscubed },
+  { name: 'hal', logo: hal },
 ]
 
 const communitypartner = [
@@ -52,7 +55,7 @@ export function Sponsors() {
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
       <Container>
-        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-4xl">
+        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-5xl">
          Gold Sponsors
         </h2>
 
@@ -70,7 +73,7 @@ export function Sponsors() {
           </div>
         </div>
 
-        <h2 className="mx-auto pt-8 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-3xl">
+        <h2 className="mx-auto pt-8 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-3xl">
           Silver Sponsors
         </h2>
 
@@ -89,7 +92,7 @@ export function Sponsors() {
         </div>
 
 
-        <h3 className="mx-auto mt-10 max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-sm sm:text-2xl">
+        <h3 className="mx-auto mt-10 max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-2xl">
           Community Partners
         </h3>
 
