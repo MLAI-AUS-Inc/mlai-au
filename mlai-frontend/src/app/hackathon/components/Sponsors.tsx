@@ -10,6 +10,7 @@ import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
 import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
 import hal from '/src/app/hackathon/images/logos/Hal.png'
 import acs from '/src/app/hackathon/images/logos/acs.png'
+import amber from '/src/app/hackathon/images/logos/amber.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -18,6 +19,7 @@ const sponsors = [
   { name: 'aws', logo: awsstartups },
   { name: 'unimelb', logo: melbconnect },
   { name: 'v2', logo: v2 },
+  { name: 'amber', logo: amber },
 ]
 
 const sponsorssilver = [
@@ -67,15 +69,15 @@ export function Sponsors() {
             {sponsors.map((sponsor) => (
               <div
                 key={sponsor.name}
-                className="flex items-center justify-center w-1/3 sm:w-1/4 px-2"  
+                className="flex items-center justify-center w-1/2 sm:w-1/4 px-4"  
               >
-                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '90%', height: 'auto' }} />
+                <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
               </div>
             ))}
           </div>
         </div>
 
-        <h2 className="mx-auto pt-8 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-3xl">
+        <h2 className="mx-auto pt-16 justify-center max-w-1xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-3xl">
           Silver Sponsors
         </h2>
 
