@@ -9,6 +9,7 @@ import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
 import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
 import hal from '/src/app/hackathon/images/logos/Hal.png'
+import acs from '/src/app/hackathon/images/logos/acs.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -24,6 +25,7 @@ const sponsorssilver = [
   { name: 'solcast', logo: solcast },
   { name: 'dscubed', logo: dscubed },
   { name: 'hal', logo: hal },
+  { name: 'acs', logo: acs },
 ]
 
 const communitypartner = [
