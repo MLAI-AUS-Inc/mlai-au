@@ -20,7 +20,7 @@ const days = [
     dateTime: '2022-04-04',
     speakers: [
       {
-        name: 'Aleksis Xenophon',
+        name: 'Dr. Aleksis Xenophon',
         role: 'Optimisation and Machine Learning Engineer at Amber Electric',
         image: aleksis,
       },
