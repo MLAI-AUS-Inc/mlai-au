@@ -11,6 +11,7 @@ import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
 import hal from '/src/app/hackathon/images/logos/Hal.png'
 import acs from '/src/app/hackathon/images/logos/acs.png'
 import amber from '/src/app/hackathon/images/logos/amber.png'
+import optima from '/src/app/hackathon/images/logos/optima.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -33,6 +34,7 @@ const sponsorssilver = [
 const communitypartner = [
   { name: 'aie', logo: aie },
   { name: 'buildclub', logo: buildclub },
+  { name: 'optima', logo: optima },
 
 ]
 
