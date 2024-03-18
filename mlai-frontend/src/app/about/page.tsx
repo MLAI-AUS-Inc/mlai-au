@@ -56,11 +56,7 @@ export default function About() {
           </div>
         </div>
         <div className="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <img
-            className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
-            src="photos/test1.png"
-            alt=""
-          />
+
         </div>
       </div>
 
