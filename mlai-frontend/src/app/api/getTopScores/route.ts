@@ -14,13 +14,14 @@ export async function GET() {
 
   const params = {
     TableName: 'green-battery-hack',
-    IndexName: 'team-submitted_at-index',
-    KeyConditionExpression: 'team = :teamValue',
+    IndexName: 'team-commit_hash-index',
+    KeyConditionExpression: 'team = :teamValue AND commit_hash = :commitHashValue',
     ExpressionAttributeValues: {
-      ':teamValue': 'scream-team',
+        ':teamValue': 'scream-team',
+        ':commitHashValue': '098fffa0-bf29-45ef-81c8-b10d72aa62e2',
     },
     ScanIndexForward: false,
-    Limit: 3,
+    Limit: 1,
   };
 
   console.log('Querying DynamoDB with params:', params);
