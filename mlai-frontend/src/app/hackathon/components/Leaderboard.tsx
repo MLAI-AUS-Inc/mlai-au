@@ -1,46 +1,8 @@
 'use client'
 import { useEffect } from 'react';
 import { Container } from './Container';
-import ApexCharts from 'apexcharts';
-import AWS from 'aws-sdk';
+// import ApexCharts from 'apexcharts';
 import { useState } from 'react';
-
-
-require('dotenv').config();
-
-const docClient = new AWS.DynamoDB.DocumentClient();
-
-export default async function handler(res: any) {
-    const params = {
-        TableName: 'YourTableName',
-        ProjectionExpression: '#sc, #tm, #sa',
-        ExpressionAttributeNames: {
-            '#sc': 'score',
-            '#tm': 'team',
-            '#sa': 'submitted_at'
-        },
-    };
-
-    try {
-        const data = await docClient.scan(params).promise();
-        let items = data.Items;
-
-        if (!items) {
-            // Handle the case where no items are found
-            res.status(404).json({ error: 'No items found' });
-            return;
-        }
-
-        // Sort the items by score in descending order and take the top three
-        items.sort((a, b) => b.score - a.score); // Assuming 'score' is a numeric attribute
-        const topThreeItems = items.slice(0, 3);
-        console.log('scores: ', topThreeItems)
-        res.status(200).json(topThreeItems);
-    } catch (err) {
-        console.error('DynamoDB error: ', err);
-        res.status(500).json({ error: 'Could not fetch data from DynamoDB' });
-    }
-}
 
 const options = {
     chart: {
@@ -118,29 +80,39 @@ const options = {
 export function Leaderboard() {
     const [data, setData] = useState(null);
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch('/api/getTopScores');
-            if (!response.ok) {
-                throw new Error(`Failed to fetch: ${response.statusText}`);
-            }
-            const data = await response.json();
-            setData(data); // Do something with the data
-            console.log(data);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-        }
-    };
-
     useEffect(() => {
-        if (typeof ApexCharts !== 'undefined') {
-            const chartElement = document.querySelector("#line-chart");
-            if (chartElement) {
-                const chart = new ApexCharts(chartElement, options);
-                chart.render();
+        const fetchData = async () => {
+          try {
+            console.log('Making a request to /api/getTopScores');
+            const response = await fetch('/api/getTopScores');
+            console.log(`Response Status: ${response.status}`);
+            
+            if (!response.ok) {
+              console.error('Response not OK:', response.statusText);
+              throw new Error(`Failed to fetch: ${response.statusText}`);
             }
-        }
-    }, []);
+            
+            const result = await response.json();
+            console.log('Data received:', result.data);
+            setData(result.data); // Use the data from the response
+          } catch (error) {
+            console.error('Error caught during fetch operation:', error);
+          }
+        };
+        
+        fetchData();
+      }, []);
+      
+
+    // useEffect(() => {
+    //     if (typeof ApexCharts !== 'undefined') {
+    //         const chartElement = document.querySelector("#line-chart");
+    //         if (chartElement) {
+    //             const chart = new ApexCharts(chartElement, options);
+    //             chart.render();
+    //         }
+    //     }
+    // }, []);
     return (
         <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
             <Container>
@@ -223,7 +195,6 @@ export function Leaderboard() {
                     <div className="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between mt-2.5">
                         <div className="pt-5">
                             <button
-                                onClick={fetchData}
                                 className="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                             >
                                 <svg className="w-3.5 h-3.5 text-white me-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">

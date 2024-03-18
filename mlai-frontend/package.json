@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/util-dynamodb": "^3.535.0",
     "@headlessui/react": "^1.7.18",
     "@heroicons/react": "^2.1.1",
     "@types/three": "^0.161.2",
     "apexcharts": "^3.47.0",
-    "aws-sdk": "^2.1574.0",
+    "aws-sdk": "^2.1579.0",
     "clsx": "^2.1.0",
     "dotenv": "^16.4.5",
     "flowbite": "^2.3.0",
