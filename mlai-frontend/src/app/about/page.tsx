@@ -7,90 +7,65 @@ import Team from "@/components/team";
 export default function About() {
   return (
     <div className="bg-white pt-24 sm:pt-32">
-      {/* You want to build, we want to build */}
-      <div className="mx-auto mb-20 max-w-7xl px-6 lg:px-8">
-        <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
-          {/* <div className="bg-gray-50 p-6"> */}
-          <div className="bg-gray-50 p-6 flex flex-col h-full rounded-xl">
-            <div className="lg:pr-4">
-              <img className="h-11" src="MLAI-Logo-Teal.png" alt="MLAI" />
-              <div className="hidden sm:mt-32 sm:flex lg:mt-16">
-                <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-500 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-                  Anim aute id magna aliqua ad ad non deserunt sunt.{" "}
+      <div className="relative">
+        <div className="mx-auto max-w-7xl">
+          <div className="relative z-10 pt-14 lg:w-full lg:max-w-2xl">
+            <svg
+              className="absolute inset-y-0 right-8 hidden h-full w-80 translate-x-1/2 transform fill-white lg:block"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <polygon points="0,0 90,0 50,100 0,100" />
+            </svg>
+
+            <div className="relative px-6 py-32 sm:py-40 lg:px-8 lg:py-56 lg:pr-0">
+              <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
+                <div className="hidden sm:mb-10 sm:flex">
+                  <img className="h-11" src="MLAI-Logo-Teal.png" alt="MLAI" />
+                  <div className="hidden sm:mt-32 sm:flex lg:mt-16">
+                    <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-gray-500 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
+                      Anim aute id magna aliqua ad ad non deserunt sunt.{' '}
+                      <a href="#" className="whitespace-nowrap font-semibold text-indigo-600">
+                        <span className="absolute inset-0" aria-hidden="true" />
+                        Read more <span aria-hidden="true">&rarr;</span>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                  👋Hi! We are MLAI Aus
+                </h1>
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui lorem cupidatat commodo. Elit sunt
+                  amet fugiat veniam occaecat fugiat aliqua.
+                </p>
+                <div className="mt-10 flex items-center gap-x-6">
                   <a
                     href="#"
-                    className="whitespace-nowrap font-semibold text-teal-500"
+                    className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                   >
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    Read more <span aria-hidden="true">&rarr;</span>
+                    Get started
                   </a>
-                </div>
-              </div>
-              <h1 className="mt-24 text-4xl font-bold tracking-tight text-gray-900 sm:mt-10 sm:text-5xl">
-                👋Hi! We are MLAI Aus
-              </h1>
-              <p className="mt-6 text-lg leading-8 text-gray-600">
-                Anim aute id magna aliqua ad ad non deserunt sunt. Qui irure qui
-                lorem cupidatat commodo. Elit sunt amet fugiat veniam occaecat
-                fugiat aliqua.
-              </p>
-              <div className="mt-10 flex items-center gap-x-6">
-                <a
-                  href="#"
-                  className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Get started
-                </a>
-                <a
-                  href="#"
-                  className="text-sm font-semibold leading-6 text-gray-900"
-                >
-                  Learn more <span aria-hidden="true">→</span>
-                </a>
-              </div>
-            </div>
-          </div>
-          <div>
-            {/* <div className="bg-teal-50 p-6"> */}
-            <div className="bg-teal-50 p-6 flex flex-col h-full rounded-xl">
-              <div className="text-base leading-7 text-gray-700 lg:max-w-lg">
-                <p className="text-base font-semibold leading-7 text-teal-500">
-                  Who are we?
-                </p>
-                <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-                  Introduce yourself
-                </h1>
-                <div className="max-w-xl">
-                  <p className="mt-6">
-                    Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget
-                    risus enim. Mattis mauris semper sed amet vitae sed turpis
-                    id. Id dolor praesent donec est. Odio penatibus risus
-                    viverra tellus varius sit neque erat velit. Faucibus commodo
-                    massa rhoncus, volutpat. Dignissim sed eget risus enim.
-                    Mattis mauris semper sed amet vitae sed turpis id.
-                  </p>
-                  <p className="mt-8">
-                    Et vitae blandit facilisi magna lacus commodo. Vitae sapien
-                    duis odio id et. Id blandit molestie auctor fermentum
-                    dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
-                    varius vulputate et ultrices hac adipiscing egestas. Iaculis
-                    convallis ac tempor et ut. Ac lorem vel integer orci.
-                  </p>
-                  <p className="mt-8">
-                    Et vitae blandit facilisi magna lacus commodo. Vitae sapien
-                    duis odio id et. Id blandit molestie auctor fermentum
-                    dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
-                    varius vulputate et ultrices hac adipiscing egestas. Iaculis
-                    convallis ac tempor et ut. Ac lorem vel integer orci.
-                  </p>
+                  <a href="#" className="text-sm font-semibold leading-6 text-gray-900">
+                    Learn more <span aria-hidden="true">→</span>
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        <div className="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+          <img
+            className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
+            src="https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1587&q=80"
+            alt=""
+          />
+        </div>
       </div>
 
-      {/* <div className="mx-auto max-w-7xl bg-gray-50 lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8"> */}
+
+
       {/* Vision & Values Section */}
       <div className="relative isolate overflow-hidden bg-white pt-14">
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
@@ -210,6 +185,6 @@ export default function About() {
       </div>
       <Newsletter></Newsletter>
       <CTA></CTA>
-    </div>
+    </div >
   );
 }
