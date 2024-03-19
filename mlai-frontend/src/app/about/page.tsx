@@ -19,7 +19,7 @@ export default function About() {
               <polygon points="0,0 90,0 50,100 0,100" />
             </svg>
 
-            <div className="relative px-6 py-32 sm:py-40 lg:px-8 lg:py-56 lg:pr-0">
+            <div className="relative px-6 py-20 sm:py-30 lg:px-8 lg:py-56 lg:pr-0">
               <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-xl">
                 <div className="hidden sm:mb-10 sm:flex">
                   <img className="h-11" src="MLAI-Logo-Teal.png" alt="MLAI" />
@@ -69,7 +69,7 @@ export default function About() {
 
       {/* Vision & Values Section */}
       <div className="relative isolate overflow-hidden bg-white pt-14">
-        <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
+        <div className="mx-auto max-w-7xl px-6 py-20 sm:py-30 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-x-16 lg:gap-y-12 xl:gap-x-8">
             {/* Vision Section */}
             <div className="mb-16 lg:mb-0 lg:col-start-1 xl:col-start-auto">
