@@ -19,7 +19,7 @@ export default function About() {
           <div className="lg:pr-4">
             <div className="relative w-full">
               <img
-                src="photos/test5.png" // Replace with your image path
+                src="photos/volunteer.png"
                 alt="Descriptive Text for Image"
                 className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />

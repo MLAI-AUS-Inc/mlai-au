@@ -58,7 +58,7 @@ export default function About() {
         <div className="bg-gray-50 lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
           <img
             className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
-            src="photos/test7.png"
+            src="photos/collaborate.png"
             alt=""
           />
 
@@ -111,7 +111,6 @@ export default function About() {
           </div>
         </div>
       </div>
-      {/* </div> */}
 
       {/* Divider */}
       <div className="relative">
@@ -119,7 +118,9 @@ export default function About() {
           <div className="w-2/3 m-auto border-t border-gray-300" />
         </div>
       </div>
+
       <Team></Team>
+
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
@@ -161,8 +162,7 @@ export default function About() {
 
             <div className="relative w-full">
               <img
-                src="photos/sponsoring_event.png" // Replace with your image path
-                alt=""
+                src="photos/sponsoring_event.png"
                 className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />
               <div className="absolute inset-8 rounded-xl ring-1 ring-inset ring-gray-900/10" />
@@ -177,15 +177,20 @@ export default function About() {
           <div className="w-2/3 m-auto border-t border-gray-300" />
         </div>
       </div>
+
       <Events></Events>
+
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
           <div className="w-2/3 m-auto border-t border-gray-300" />
         </div>
       </div>
+
       <Newsletter></Newsletter>
+
       <CTA></CTA>
+
     </div >
   );
 }
