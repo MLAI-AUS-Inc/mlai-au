@@ -6,7 +6,7 @@ import Team from "@/components/team";
 
 export default function About() {
   return (
-    <div className="bg-white pt-24 sm:pt-32">
+    <div className="bg-white pt-0">
       <div className="relative">
         <div className="mx-auto max-w-7xl">
           <div className="relative z-10 pt-14 lg:w-full lg:max-w-2xl">
@@ -33,7 +33,7 @@ export default function About() {
                     </div>
                   </div>
                 </div>
-                <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+                <h1 className="text4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                   👋Hi! We are MLAI Aus
                 </h1>
                 <p className="mt-6 text-lg leading-8 text-gray-600">
