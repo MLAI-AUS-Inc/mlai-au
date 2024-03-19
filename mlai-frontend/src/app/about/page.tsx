@@ -132,7 +132,7 @@ export default function About() {
           className="absolute inset-y-0 right-1/2 -z-10 -mr-96 w-[200%] origin-top-right skew-x-[-30deg]   sm:-mr-80 lg:-mr-96"
           aria-hidden="true"
         />
-        <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
+        <div className="mx-auto max-w-7xl px-6 py-20 sm:py-30 lg:px-8">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:grid lg:max-w-none lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:grid-cols-1 xl:grid-rows-1 xl:gap-x-8">
             <div className="mt-6 max-w-xl lg:mt-0 xl:col-end-1 xl:row-start-1">
               <h1 className="max-w-2xl mb-8 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:col-span-2 xl:col-auto">
@@ -160,12 +160,12 @@ export default function About() {
               </div>
             </div>
 
-            <div className="relative w-full">
+            <div className="relative w-full pt-10 lg:pt-0">
               <img
                 src="photos/sponsoring_event.png"
                 className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />
-              <div className="absolute inset-8 rounded-xl ring-1 ring-inset ring-gray-900/10" />
+
             </div>
           </div>
         </div>
