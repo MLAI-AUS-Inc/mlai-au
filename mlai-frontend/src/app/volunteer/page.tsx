@@ -20,11 +20,18 @@ export default function About() {
             {/* <div className="relative overflow-hidden rounded-3xl bg-gray-900 px-6 pb-9 pt-64 shadow-2xl sm:px-12 lg:max-w-lg lg:px-8 lg:pb-8 xl:px-10 xl:pb-10"> */}
             <div className="relative w-full">
               {/* Image Container */}
-              <img
-                className="aspect-[3/2] object-cover lg:aspect-auto lg:h-full lg:w-full"
+              {/* <img
+                className="w-full object-contain rounded-2xl ring-1 ring-inset ring-gray-900/50"
                 src="photos/test5.png"
                 alt=""
+              /> */}
+              <img
+                src="photos/test5.png" // Replace with your image path
+                alt=""
+                className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />
+              <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+
               <div className="relative rounded-2xl overflow-hidden">
                 {/* Image */}
                 {/* <img
