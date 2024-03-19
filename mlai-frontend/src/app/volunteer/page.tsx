@@ -17,46 +17,16 @@ export default function About() {
       <div className="mx-auto mb-20 max-w-7xl px-6 lg:px-8">
         <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
           <div className="lg:pr-4">
-            {/* <div className="relative overflow-hidden rounded-3xl bg-gray-900 px-6 pb-9 pt-64 shadow-2xl sm:px-12 lg:max-w-lg lg:px-8 lg:pb-8 xl:px-10 xl:pb-10"> */}
             <div className="relative w-full">
-              {/* Image Container */}
-              {/* <img
-                className="w-full object-contain rounded-2xl ring-1 ring-inset ring-gray-900/50"
-                src="photos/test5.png"
-                alt=""
-              /> */}
               <img
                 src="photos/test5.png" // Replace with your image path
-                alt=""
+                alt="Descriptive Text for Image"
                 className="aspect-[16/9] w-full rounded-2xl bg-gray-100 object-cover sm:aspect-[2/1] lg:aspect-[3/2]"
               />
               <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
 
               <div className="relative rounded-2xl overflow-hidden">
-                {/* Image */}
-                {/* <img
-                  src="photos/bg.jpg" // Replace with your image path
-                  alt=""
-                  className="w-full h-auto bg-gray-100 object-cover"
-                /> */}
-                {/* Border Overlay */}
-                {/* <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-gray-900/10" /> */}
               </div>
-              {/* </div> */}
-
-              {/* <div className="absolute inset-0 bg-gray-900 mix-blend-multiply" /> */}
-              {/* <div
-                className="absolute left-1/2 top-1/2 -ml-16 -translate-x-1/2 -translate-y-1/2 transform-gpu blur-3xl"
-                aria-hidden="true"
-              > */}
-              {/* <div
-                className="aspect-[1097/845] w-[68.5625rem] bg-gradient-to-tr from-[#46fff3] to-[#776fff] opacity-40"
-                style={{
-                  clipPath:
-                    "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-                }} */}
-              {/* /> */}
-              {/* </div> */}
             </div>
           </div>
           <div>
@@ -68,7 +38,7 @@ export default function About() {
                 On a mission to empower remote teams
               </h1>
               <div className="max-w-xl">
-                <p className="mt-6">
+                <p className="mt-6 text-justify">
                   Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget
                   risus enim. Mattis mauris semper sed amet vitae sed turpis id.
                   Id dolor praesent donec est. Odio penatibus risus viverra
@@ -76,7 +46,7 @@ export default function About() {
                   rhoncus, volutpat. Dignissim sed eget risus enim. Mattis
                   mauris semper sed amet vitae sed turpis id.
                 </p>
-                <p className="mt-8">
+                <p className="mt-8 text-justify">
                   Et vitae blandit facilisi magna lacus commodo. Vitae sapien
                   duis odio id et. Id blandit molestie auctor fermentum
                   dignissim. Lacus diam tincidunt ac cursus in vel. Mauris
@@ -124,7 +94,7 @@ export default function About() {
                   <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900 sm:text-4xl">
                     Mentoring
                   </h3>
-                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-justify">
                     is simply dummy text of the printing and typesetting
                     industry. Lorem Ipsum has been the industrys standard dummy
                     text ever since the 1500s, when an unknown printer took a
@@ -150,7 +120,7 @@ export default function About() {
                   <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900 sm:text-4xl">
                     Code
                   </h3>
-                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-justify">
                     is simply dummy text of the printing and typesetting
                     industry. Lorem Ipsum has been the industrys standard dummy
                     text ever since the 1500s, when an unknown printer took a
@@ -175,7 +145,7 @@ export default function About() {
                   <h3 className="mt-3 text-3xl font-semibold leading-6 text-gray-900 sm:text-4xl">
                     Friend
                   </h3>
-                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
+                  <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600 text-justify">
                     is simply dummy text of the printing and typesetting
                     industry. Lorem Ipsum has been the industrys standard dummy
                     text ever since the 1500s, when an unknown printer took a
@@ -198,8 +168,16 @@ export default function About() {
       </div>
 
       <Newsletter></Newsletter>
+
+      {/* Divider */}
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+          <div className="w-2/3 m-auto border-t border-gray-300" />
+        </div>
+      </div>
+
       {/* Launching an AI startup in Australia? */}
-      <div className="relative isolate overflow-hidden bg-gradient-to-b from-indigo-100/20 pt-14">
+      <div className="relative isolate overflow-hidden ">
         <div className="mx-auto max-w-7xl px-6 py-32 sm:py-40 lg:px-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-x-16 lg:gap-y-6 xl:gap-x-8">
             {/* Heading Section */}
