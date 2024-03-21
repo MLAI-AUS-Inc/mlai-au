@@ -4,7 +4,7 @@ import haizea from '/src/app/hackathon/images/logos/haizea.png'
 import solcast from '/src/app/hackathon/images/logos/solcast.png'
 import awsstartups from '/src/app/hackathon/images/logos/aws_padd.png'
 import melbconnect from '/src/app/hackathon/images/logos/melbourneconnect.png'
-import aie from '/src/app/hackathon/images/logos/aie.jpg'
+import aie from '/src/app/hackathon/images/logos/aie.png'
 import v2 from '/src/app/hackathon/images/logos/v2_logo.png'
 import dscubed from '/src/app/hackathon/images/logos/dscubed.png'
 import buildclub from '/src/app/hackathon/images/logos/buildclub.png'
@@ -12,6 +12,7 @@ import hal from '/src/app/hackathon/images/logos/Hal.png'
 import acs from '/src/app/hackathon/images/logos/acs.png'
 import amber from '/src/app/hackathon/images/logos/amber.png'
 import optima from '/src/app/hackathon/images/logos/optima.png'
+import mcn from '/src/app/hackathon/images/logos/mcn.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -35,6 +36,7 @@ const communitypartner = [
   { name: 'aie', logo: aie },
   { name: 'buildclub', logo: buildclub },
   { name: 'optima', logo: optima },
+  { name: 'mcn', logo: mcn },
 
 ]
 
