@@ -13,14 +13,18 @@ import acs from '/src/app/hackathon/images/logos/acs.png'
 import amber from '/src/app/hackathon/images/logos/amber.png'
 import optima from '/src/app/hackathon/images/logos/optima.png'
 import mcn from '/src/app/hackathon/images/logos/mcn.png'
+import CoM from '/src/app/hackathon/images/logos/CoM_pad.png'
+import exciton from '/src/app/hackathon/images/logos/exciton.png'
+import mcds from '/src/app/hackathon/images/logos/mcds.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
 
 const sponsors = [
-  { name: 'aws', logo: awsstartups },
   { name: 'unimelb', logo: melbconnect },
+  { name: 'CoM', logo: CoM },
   { name: 'v2', logo: v2 },
+  { name: 'aws', logo: awsstartups },
   { name: 'amber', logo: amber },
 ]
 
@@ -34,10 +38,10 @@ const sponsorssilver = [
 
 const communitypartner = [
   { name: 'aie', logo: aie },
-  { name: 'buildclub', logo: buildclub },
   { name: 'optima', logo: optima },
   { name: 'mcn', logo: mcn },
-
+  { name: 'exciton', logo: exciton },
+  { name: 'mcds', logo: mcds },
 ]
 
 
@@ -73,7 +77,7 @@ export function Sponsors() {
             {sponsors.map((sponsor) => (
               <div
                 key={sponsor.name}
-                className="flex items-center justify-center w-1/2 sm:w-1/4 px-4"  
+                className="flex items-center justify-center w-1/2 sm:w-1/3 px-4"  
               >
                 <Image src={sponsor.logo} alt={sponsor.name} unoptimized style={{ width: '100%', height: 'auto' }} />
               </div>
