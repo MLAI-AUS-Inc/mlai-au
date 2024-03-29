@@ -8,7 +8,7 @@ import clsx from 'clsx'
 
 
 import placeholder from '/src/app/hackathon/images/avatars/placeholder.png'
-import scottthomson from '/src/app/hackathon/images/avatars/scottthomson.jpeg'
+import aleksis from '/src/app/hackathon/images/avatars/aleksis.png'
 import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
@@ -20,9 +20,9 @@ const days = [
     dateTime: '2024-04-06',
     speakers: [
       {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
+        name: 'Dr. Aleksis Xenophon',
+        role: 'Optimisation and Machine Learning Engineer at Amber Electric',
+        image: aleksis,
       },
     ],
   },
