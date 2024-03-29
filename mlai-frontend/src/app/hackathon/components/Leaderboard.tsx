@@ -1,232 +1,156 @@
 'use client'
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Container } from './Container';
-import ReactApexChart from 'react-apexcharts';
-import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
+const statuses: any = { Completed: 'text-green-400 bg-green-400/10', Error: 'text-rose-400 bg-rose-400/10' }
+const activityItems: any[] = []
+interface ActivityItem {
+    user: {
+        name: string;
+        imageUrl: string;
+    };
+    commit: string;
+    branch: string;
+    status: string;
+    score: string;
+    date: string;
+}
+
+function classNames(...classes: any) {
+    return classes.filter(Boolean).join(' ')
+}
 
 export function Leaderboard() {
-    const [profitData, setProfitData] = useState([]);
-    const [marketData, setMarketData] = useState<number[]>([]);
-    const [meanProfit, setMeanProfit] = useState([]);
+    const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
 
-    const totalEpisodes = 288; // or however many episodes there are
-    const episodes = Array.from({ length: totalEpisodes }, (_, index) => index + 1);
+    const fetchData = async () => {
 
-    const options = {
-        series: [
-            {
-                name: "Profit",
-                data: profitData,
-                color: "#1A56DB",
-            },
-            {
-                name: "Market Price",
-                data: marketData,
-                color: "#7E3AF2",
-            },
-        ],
-        fill: {
-            type: "gradient",
-            gradient: {
-                opacityFrom: 0.55,
-                opacityTo: 0,
-                shade: "#1C64F2",
-                gradientToColors: ["#1C64F2"],
-            },
-        },
-        chart: {
-            height: "100%",
-            maxWidth: "100%",
-            type: "area",
-            fontFamily: "Inter, sans-serif",
-            dropShadow: {
-                enabled: false,
-            },
-            toolbar: {
-                show: false,
-            },
-        },
-        tooltip: {
-            enabled: true,
-            x: {
-                show: false,
-            },
-        },
-        legend: {
-            show: true
-        },
+        try {
+            // console.log('Making a request to /api/getTopScores');
+            const response = await fetch('/api/getTopScores');
+            // console.log(`Response Status: ${response.status}`);
 
-        dataLabels: {
-            enabled: false,
-        },
-        stroke: {
-            width: 3,
-            curve: 'smooth'
-        },
-        grid: {
-            show: false,
-            strokeDashArray: 4,
-            padding: {
-                left: 2,
-                right: 2,
-                top: 0
-            },
-        },
-        xaxis: {
-            categories: episodes,
-            labels: {
-                show: false,
-                style: {
-                    fontFamily: "Inter, sans-serif",
-                    cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400'
-                }
-            },
-            axisBorder: {
-                show: false,
-            },
-            axisTicks: {
-                show: true,
-            },
-        },
-        yaxis: {
-            show: false,
-        },
-    } as ApexCharts.ApexOptions;
+            if (!response.ok) {
+                console.error('Response not OK:', response.statusText);
+                throw new Error(`Failed to fetch: ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            const updatedActivityItems = result.data.map((item: any) => ({
+                user: {
+                    name: `${item.team_name}`,
+                    imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', // Placeholder or fetch from another source
+                },
+                commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
+                branch: 'main', // Assuming default or fetch from another source
+                status: item.error_traceback != null ? 'Error' : 'Completed', // Example conditional status
+                score: `${item.score}`, // Placeholder or fetch from another source
+                date: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
+            }));
+            setActivityItems(updatedActivityItems);
+            console.log('Data received:', result.data);
+        } catch (error) {
+            console.error('Error caught during fetch operation:', error);
+        }
+    };
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            const fetchData = async () => {
-                try {
-                    // console.log('Making a request to /api/getTopScores');
-                    const response = await fetch('/api/getTopScores');
-                    // console.log(`Response Status: ${response.status}`);
-
-                    if (!response.ok) {
-                        console.error('Response not OK:', response.statusText);
-                        throw new Error(`Failed to fetch: ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    // console.log('Data received:', result.data);
-                    setProfitData(result.data[0].main_trial.profits);
-                    setMarketData(result.data[0].main_trial.market_prices.map((price: number) =>
-                        Number(price.toFixed(2))
-                    )); // set veriable and restrict to 2 decimal places
-                    setMeanProfit(result.data[0].mean_profit.toFixed(2));
-                    // console.log('Data received:', marketData);
-                } catch (error) {
-                    console.error('Error caught during fetch operation:', error);
-                }
-            };
-
             fetchData();
         }
     }, []);
-
-    useEffect(() => {
-        console.log('Updated marketData:', marketData);
-    }, [marketData]);
 
 
     return (
         <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
             <Container>
                 <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
-                    Scream Team
+                    Leaderboard
                 </h2>
 
-                <div className="w-full mt-12 bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
-                    <div className="flex justify-between mb-5">
-                        <div className="grid gap-4 grid-cols-2">
-                            <div>
-                                <h5 className="inline-flex items-center text-gray-500 dark:text-gray-400 leading-none font-normal mb-2">Episodes
-                                    <svg data-popover-target="clicks-info" data-popover-placement="bottom" className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                                    </svg>
-                                    <div data-popover id="clicks-info" role="tooltip" className="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 w-72 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
-                                        <div className="p-3 space-y-2">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Episodes</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT EPISIDES HERE</p>
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Average Profit</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT AV PROFIT HERE</p>
-                                            <a href="#" className="flex items-center font-medium text-blue-600 dark:text-blue-500 dark:hover:text-blue-600 hover:text-blue-700 hover:underline">Read more <svg className="w-2 h-2 ms-1.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="m1 9 4-4-4-4" />
-                                            </svg></a>
+                <div className="bg-gray-900 py-10">
+                    <h2 className="px-4 text-base font-semibold leading-7 text-white sm:px-6 lg:px-8">Best performing commit</h2>
+                    <table className="mt-6 w-full whitespace-nowrap text-left">
+                        <colgroup>
+                            <col className="w-full sm:w-4/12" />
+                            <col className="lg:w-4/12" />
+                            <col className="lg:w-2/12" />
+                            <col className="lg:w-1/12" />
+                            <col className="lg:w-1/12" />
+                        </colgroup>
+                        <thead className="border-b border-white/10 text-sm leading-6 text-white">
+                            <tr>
+                                <th scope="col" className="py-2 pl-2 pr-2 font-semibold sm:pl-4 lg:pl-4">
+                                    
+                                </th>
+                                <th scope="col" className="py-2 pl-4 pr-8 font-semibold sm:pl-6 lg:pl-8">
+                                    Team
+                                </th>
+                                <th scope="col" className="hidden py-2 pl-0 pr-8 font-semibold sm:table-cell">
+                                    Commit
+                                </th>
+                                <th scope="col" className="py-2 pl-0 pr-4 text-right font-semibold sm:pr-8 sm:text-left lg:pr-20">
+                                    Status
+                                </th>
+                                <th scope="col" className="hidden py-2 pl-0 pr-8 font-semibold md:table-cell lg:pr-20">
+                                    Score
+                                </th>
+                                <th scope="col" className="hidden py-2 pl-0 pr-4 text-right font-semibold sm:table-cell sm:pr-6 lg:pr-8">
+                                    Deployed
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {activityItems.map((item, index) => (
+                                <tr key={item.user.name}>
+                                    <td className="py-4 pl-2 pr-2 sm:pl-6 lg:pl-8">
+                                        {/* Conditionally render medal based on index */}
+                                        {index === 0 && (
+                                            <img src="/first.png" alt="Gold medal" className="inline-block h-6 min-w-6" />
+                                        )}
+                                        {index === 1 && (
+                                            <img src="/second.png" alt="Silver medal" className="inline-block h-6 min-w-6" />
+                                        )}
+                                        {index === 2 && (
+                                            <img src="/third.png" alt="Silver medal" className="inline-block h-6 min-w-6" />
+                                        )}
+                                    </td>
+                                    <td className="py-4 pl-4 pr-8 sm:pl-6 lg:pl-8">
+                                        <div className="flex items-center gap-x-4">
+                                            <img src={item.user.imageUrl} alt="" className="h-8 w-8 rounded-full bg-gray-800" />
+                                            <div className="truncate text-sm font-medium leading-6 text-white">{item.user.name}</div>
                                         </div>
-                                        <div data-popper-arrow></div>
-                                    </div>
-                                </h5>
-                                <p className="text-gray-900 dark:text-white text-2xl leading-none font-bold">{episodes.length}</p>
-                            </div>
-                            <div>
-                                <h5 className="inline-flex items-center text-gray-500 dark:text-gray-400 leading-none font-normal mb-2">Mean Profit
-                                    <svg data-popover-target="cpc-info" data-popover-placement="bottom" className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                                    </svg>
-                                    <div data-popover id="cpc-info" role="tooltip" className="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 w-72 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
-                                        <div className="p-3 space-y-2">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Episodes</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT EPISIDES HERE</p>
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Calculation</h3>
-                                            <p>For each date bucket, the all-time volume of activities is calculated. This means that activities in period n contain all activities up to period n, plus the activities generated by your community in period.</p>
-                                            <a href="#" className="flex items-center font-medium text-blue-600 dark:text-blue-500 dark:hover:text-blue-600 hover:text-blue-700 hover:underline">Read more <svg className="w-2 h-2 ms-1.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="m1 9 4-4-4-4" />
-                                            </svg></a>
+                                    </td>
+                                    <td className="hidden py-4 pl-0 pr-4 sm:table-cell sm:pr-8">
+                                        <div className="flex gap-x-3">
+                                            <div className="font-mono text-sm leading-6 text-gray-400">{item.commit}</div>
+                                            <div className="rounded-md bg-gray-700/40 px-2 py-1 text-xs font-medium text-gray-400 ring-1 ring-inset ring-white/10">
+                                                {item.branch}
+                                            </div>
                                         </div>
-                                        <div data-popper-arrow></div>
-                                    </div>
-                                </h5>
-                                <p className="text-gray-900 dark:text-white text-2xl leading-none font-bold">${meanProfit}</p>
-                            </div>
-                        </div>
-                        <div>
-                            <button id="dropdownDefaultButton"
-                                data-dropdown-toggle="lastDaysdropdown"
-                                data-dropdown-placement="bottom" type="button" className="px-3 py-2 inline-flex items-center text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Last week <svg className="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
-                                </svg></button>
-                            <div id="lastDaysdropdown" className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                                <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Yesterday</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Today</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 7 days</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 30 days</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 90 days</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="line-chart"></div>
-                    <ReactApexChart
-                        options={options}
-                        series={options.series}
-                        type="area"
-                        height={500}
-                    />
-                    <div className="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between mt-2.5">
-                        <div className="pt-5">
-                            <button
-                                className="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                            >
-                                <svg className="w-3.5 h-3.5 text-white me-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">
-                                    <path d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2Zm-3 15H4.828a1 1 0 0 1 0-2h6.238a1 1 0 0 1 0 2Zm0-4H4.828a1 1 0 0 1 0-2h6.238a1 1 0 1 1 0 2Z"></path>
-                                    <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-                                </svg>
-                                View full report
-                            </button>
-                        </div>
-                    </div>
+                                    </td>
+                                    <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
+                                        <div className="flex items-center justify-end gap-x-2 sm:justify-start">
+                                            <time className="text-gray-400 sm:hidden">
+                                                {item.date}
+                                            </time>
+                                            <div className={classNames(statuses[item.status], 'flex-none rounded-full p-1')}>
+                                                <div className="h-1.5 w-1.5 rounded-full bg-current" />
+                                            </div>
+                                            <div className="hidden text-white sm:block">{item.status}</div>
+                                        </div>
+                                    </td>
+                                    <td className="hidden py-4 pl-0 pr-8 text-md font-bold leading-6 text-teal-400 md:table-cell lg:pr-20">
+                                        {item.score}
+                                    </td>
+                                    <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
+                                        <time>{item.date}</time>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
 
 
