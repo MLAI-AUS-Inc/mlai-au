@@ -36,9 +36,6 @@ export default function GetTickets() {
             <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
               Join us in Melbourne
             </h2>
-            {/* <p className="mt-6 text-lg leading-8 text-gray-300">
-              Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
-            </p> */}
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
                 href="https://events.humanitix.com/the-ml-ai-green-battery-hack-kickoff-team-formation-day" target='_'
@@ -55,9 +52,6 @@ export default function GetTickets() {
             <h2 className="text-3xl font-bold tracking-tight text-teal-200 sm:text-4xl">
               Join us in Sydney
             </h2>
-            {/* <p className="mt-6 text-lg leading-8 text-gray-300">
-                Ac euismod vel sit maecenas id pellentesque eu sed consectetur. Malesuada adipiscing sagittis vel nulla.
-              </p> */}
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
               <a
                 href="https://events.humanitix.com/copy-of-the-ml-ai-green-battery-hack-team-formation-day-sydney" target='_'
@@ -72,19 +66,6 @@ export default function GetTickets() {
           </div>
         </div>
       </div>
-
-
-      {/* <Container className="flex flex-wrap items-center justify-center lg:flex-nowrap">
-        <div className="mt-4 w-full lg:grow lg:basis-0 flex justify-center flex-wrap">
-          <div className="grid grid-cols-2 gap-4 lg:flex lg:gap-x-4">
-            <Button color="teal" href="#" className="whitespace-nowrap">Join as a Hacker - Melb</Button>
-            <Button color="teal" href="#" className="whitespace-nowrap">Join as a Hacker - Syd</Button>
-            <div className="hidden lg:block lg:flex-1"></div> 
-            <Button color="complementary" href="#" className="whitespace-nowrap">Tickets Pitch Night - Melb</Button>
-            <Button color="complementary" href="#" className="whitespace-nowrap">Tickets Pitch Night - Syd</Button>
-          </div>
-        </div>
-      </Container> */}
     </section>
   )
 }

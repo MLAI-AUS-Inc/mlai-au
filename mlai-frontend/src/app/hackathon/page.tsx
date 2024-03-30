@@ -7,6 +7,7 @@ import { ExtendedInfo } from './components/ExtendedInfo'
 import { GbhPeople } from './components/gbhPeople'
 import { MentorsVolunteers } from './components/MentorsVolunteers'
 import { Leaderboard } from './components/Leaderboard'
+import { SubmissionViewer } from './components/SubmissionViewer'
 
 export default function HackathonPage() {
     return (
@@ -15,6 +16,7 @@ export default function HackathonPage() {
             <div className="relative z-10">
                 <Hero />
                 <Leaderboard />
+                <SubmissionViewer />
                 <Sponsors />
                 <ExtendedInfo />
                 <Speakers />
