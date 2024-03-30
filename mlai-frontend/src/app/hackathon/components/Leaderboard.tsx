@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { Container } from './Container';
 import { formatDistanceToNow } from 'date-fns';
+import { Button } from './Button';
 
 const statuses: any = { Completed: 'text-green-400 bg-green-400/10', Error: 'text-rose-400 bg-rose-400/10' }
 const activityItems: any[] = []

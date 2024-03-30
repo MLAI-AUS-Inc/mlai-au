@@ -1,12 +1,39 @@
 'use client'
-import { useEffect } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
 import ReactApexChart from 'react-apexcharts';
-import { useState } from 'react';
+import { Menu, Transition } from '@headlessui/react';
+import { ChevronDownIcon } from '@heroicons/react/20/solid';
 
+function averageDataPoints(data: number[], targetPoints: number): number[] {
+    const chunkSize = Math.ceil(data.length / targetPoints);
+    const averagedData: number[] = [];
+
+    for (let i = 0; i < data.length; i += chunkSize) {
+        const chunk = data.slice(i, i + chunkSize);
+        const avg = chunk.reduce((acc, val) => acc + val, 0) / chunk.length;
+        averagedData.push(avg);
+    }
+
+    return averagedData;
+}
+
+
+const teams = {
+    team_1: {
+        name: '_uwu_',
+        team_id: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    team_2: {
+        name: 'no name here biatch get your own',
+        team_id: 2,
+        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    }
+}
 
 export function SubmissionViewer() {
-    const [profitData, setProfitData] = useState([]);
+    const [profitData, setProfitData] = useState<number[]>([]);
     const [marketData, setMarketData] = useState<number[]>([]);
     const [meanProfit, setMeanProfit] = useState([]);
 
@@ -94,47 +121,92 @@ export function SubmissionViewer() {
         },
     } as ApexCharts.ApexOptions;
 
-    useEffect(() => {
+
+    const fetchData = async (team_id: string) => {
         if (typeof window !== "undefined") {
-            const fetchData = async () => {
-                try {
-                    // console.log('Making a request to /api/getTopScores');
-                    const response = await fetch('/api/getTopScores');
-                    // console.log(`Response Status: ${response.status}`);
+            try {
+                console.log('Making a request to /api/getTeamScores: ', team_id);
+                const queryParams = new URLSearchParams({ team_id });
+                const response = await fetch(`/api/getTeamScores?${queryParams}`);
+                console.log(`Response Status: ${response.status}`);
 
-                    if (!response.ok) {
-                        console.error('Response not OK:', response.statusText);
-                        throw new Error(`Failed to fetch: ${response.statusText}`);
-                    }
-
-                    const result = await response.json();
-                    // console.log('Data received:', result.data);
-                    setProfitData(result.data[0].main_trial.profits);
-                    setMarketData(result.data[0].main_trial.market_prices.map((price: number) =>
-                        Number(price.toFixed(2))
-                    )); // set veriable and restrict to 2 decimal places
-                    setMeanProfit(result.data[0].mean_profit.toFixed(2));
-                    // console.log('Data received:', marketData);
-                } catch (error) {
-                    console.error('Error caught during fetch operation:', error);
+                if (!response.ok) {
+                    console.error('Response not OK:', response.statusText);
+                    throw new Error(`Failed to fetch: ${response.statusText}`);
                 }
-            };
 
-            fetchData();
+                const result = await response.json();
+                console.log('Data received:', result.data);
+                // Averaging and rounding market prices
+                const marketPrices: number[] = result.data[0].main_trial.market_prices;
+                const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
+                setMarketData(averagedMarketPrices);
+
+                // Averaging and rounding profits
+                const profits: number[] = result.data[0].main_trial.profits;
+                const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
+                setProfitData(averagedProfits);
+            } catch (error) {
+                console.error('Error caught during fetch operation:', error);
+            }
         }
-    }, []);
+    };
 
-    useEffect(() => {
-        console.log('Updated marketData:', marketData);
-    }, [marketData]);
+    const handleMenuItemClick = (team_id: Number) => () => {
+        const stringTeamID = team_id.toString()
+        fetchData(stringTeamID);
+    };
+
+    function classNames(...classes: any[]) {
+        return classes.filter(Boolean).join(' ');
+    }
 
 
     return (
-        <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
+        <section id="submissions" aria-label="Submissions" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
             <Container>
                 <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
-                    Scream Team
+                    Team Submissions
                 </h2>
+                <Menu as="div" className="relative inline-block text-left">
+                    <div>
+                        <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                            Team Name
+                            <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
+                        </Menu.Button>
+                    </div>
+
+                    <Transition
+                        as={Fragment}
+                        enter="transition ease-out duration-100"
+                        enterFrom="transform opacity-0 scale-95"
+                        enterTo="transform opacity-100 scale-100"
+                        leave="transition ease-in duration-75"
+                        leaveFrom="transform opacity-100 scale-100"
+                        leaveTo="transform opacity-0 scale-95"
+                    >
+                        <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                            <div className="py-1">
+                                {Object.values(teams).map((team) => (
+                                    <Menu.Item key={team.team_id}>
+                                        {({ active }) => (
+                                            <button
+                                                onClick={handleMenuItemClick(team.team_id)}
+                                                className={`
+                                                ${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
+                                                block px-4 py-2 text-sm w-full text-left`
+                                                }
+                                            >
+                                                {team.name}
+                                            </button>
+                                        )}
+                                    </Menu.Item>
+                                ))}
+
+                            </div>
+                        </Menu.Items>
+                    </Transition>
+                </Menu>
 
                 <div className="w-full mt-12 bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
                     <div className="flex justify-between mb-5">
