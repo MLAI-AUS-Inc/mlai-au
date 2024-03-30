@@ -2,8 +2,8 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
 import ReactApexChart from 'react-apexcharts';
-import { Menu, Transition } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/20/solid';
+import { Dialog, Menu, Transition } from '@headlessui/react';
+import { CheckIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
 
 function averageDataPoints(data: number[], targetPoints: number): number[] {
     const chunkSize = Math.ceil(data.length / targetPoints);
@@ -36,21 +36,26 @@ export function SubmissionViewer() {
     const [profitData, setProfitData] = useState<number[]>([]);
     const [marketData, setMarketData] = useState<number[]>([]);
     const [meanProfit, setMeanProfit] = useState([]);
+    const [totalTrades, setTotalTrades] = useState<number>(0);
+    const [score, setScore] = useState<number>(0);
+    const [team_name, setTeamName] = useState('');
+    const [open, setOpen] = useState(true)
+    const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-    const totalEpisodes = 288; // or however many episodes there are
-    const episodes = Array.from({ length: totalEpisodes }, (_, index) => index + 1);
+
+    const trades = Array.from({ length: totalTrades }, (_, index) => index + 1);
 
     const options = {
         series: [
             {
                 name: "Profit",
                 data: profitData,
-                color: "#1A56DB",
+                color: "#7E3AF2",
             },
             {
                 name: "Market Price",
                 data: marketData,
-                color: "#7E3AF2",
+                color: "#03fcb1"
             },
         ],
         fill: {
@@ -101,7 +106,7 @@ export function SubmissionViewer() {
             },
         },
         xaxis: {
-            categories: episodes,
+            categories: trades,
             labels: {
                 show: false,
                 style: {
@@ -146,6 +151,20 @@ export function SubmissionViewer() {
                 const profits: number[] = result.data[0].main_trial.profits;
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
                 setProfitData(averagedProfits);
+
+                // Set totalTrades with the episode_length from the response
+                const episodeLength: number = result.data[0].main_trial.episode_length;
+                setTotalTrades(episodeLength);
+
+                // Set score with the score from the response
+                const score: number = result.data[0].score.toFixed(2);
+                setScore(score);
+
+                // Set team name with the score from the response
+                const team_name: string = result.data[0].team_name;
+                setTeamName(team_name);
+
+                setIsDataLoaded(true);
             } catch (error) {
                 console.error('Error caught during fetch operation:', error);
             }
@@ -163,15 +182,72 @@ export function SubmissionViewer() {
 
 
     return (
+
         <section id="submissions" aria-label="Submissions" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
+            <Transition.Root show={open} as={Fragment}>
+                <Dialog as="div" className="relative z-10" onClose={setOpen}>
+                    <Transition.Child
+                        as={Fragment}
+                        enter="ease-out duration-300"
+                        enterFrom="opacity-0"
+                        enterTo="opacity-100"
+                        leave="ease-in duration-200"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                    >
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                    </Transition.Child>
+
+                    <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+                        <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                            <Transition.Child
+                                as={Fragment}
+                                enter="ease-out duration-300"
+                                enterFrom="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                enterTo="opacity-100 translate-y-0 sm:scale-100"
+                                leave="ease-in duration-200"
+                                leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                                leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                            >
+                                <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
+                                    <div>
+                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                                            <CheckIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
+                                        </div>
+                                        <div className="mt-3 text-center sm:mt-5">
+                                            <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
+                                                Payment successful
+                                            </Dialog.Title>
+                                            <div className="mt-2">
+                                                <p className="text-sm text-gray-400">
+                                                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur amet labore.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="mt-5 sm:mt-6">
+                                        <button
+                                            type="button"
+                                            className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                            onClick={() => setOpen(false)}
+                                        >
+                                            Go back to dashboard
+                                        </button>
+                                    </div>
+                                </Dialog.Panel>
+                            </Transition.Child>
+                        </div>
+                    </div>
+                </Dialog>
+            </Transition.Root>
             <Container>
                 <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
                     Team Submissions
                 </h2>
-                <Menu as="div" className="relative inline-block text-left">
+                <Menu as="div" className="relative inline-block text-left mt-10">
                     <div>
                         <Menu.Button className="inline-flex w-full justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                            Team Name
+                            Choose your team..
                             <ChevronDownIcon className="-mr-1 h-5 w-5 text-gray-400" aria-hidden="true" />
                         </Menu.Button>
                     </div>
@@ -208,87 +284,43 @@ export function SubmissionViewer() {
                     </Transition>
                 </Menu>
 
-                <div className="w-full mt-12 bg-white rounded-lg shadow dark:bg-gray-800 p-4 md:p-6">
-                    <div className="flex justify-between mb-5">
-                        <div className="grid gap-4 grid-cols-2">
-                            <div>
-                                <h5 className="inline-flex items-center text-gray-500 dark:text-gray-400 leading-none font-normal mb-2">Episodes
-                                    <svg data-popover-target="clicks-info" data-popover-placement="bottom" className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                                    </svg>
-                                    <div data-popover id="clicks-info" role="tooltip" className="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 w-72 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
-                                        <div className="p-3 space-y-2">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Episodes</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT EPISIDES HERE</p>
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Average Profit</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT AV PROFIT HERE</p>
-                                            <a href="#" className="flex items-center font-medium text-blue-600 dark:text-blue-500 dark:hover:text-blue-600 hover:text-blue-700 hover:underline">Read more <svg className="w-2 h-2 ms-1.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="m1 9 4-4-4-4" />
-                                            </svg></a>
-                                        </div>
-                                        <div data-popper-arrow></div>
-                                    </div>
-                                </h5>
-                                <p className="text-gray-900 dark:text-white text-2xl leading-none font-bold">{episodes.length}</p>
-                            </div>
-                            <div>
-                                <h5 className="inline-flex items-center text-gray-500 dark:text-gray-400 leading-none font-normal mb-2">Mean Profit
-                                    <svg data-popover-target="cpc-info" data-popover-placement="bottom" className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
-                                    </svg>
-                                    <div data-popover id="cpc-info" role="tooltip" className="absolute z-10 invisible inline-block text-sm text-gray-500 transition-opacity duration-300 bg-white border border-gray-200 rounded-lg shadow-sm opacity-0 w-72 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-400">
-                                        <div className="p-3 space-y-2">
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Episodes</h3>
-                                            <p>INSERT AN EXPLAINER ABOUT EPISIDES HERE</p>
-                                            <h3 className="font-semibold text-gray-900 dark:text-white">Calculation</h3>
-                                            <p>For each date bucket, the all-time volume of activities is calculated. This means that activities in period n contain all activities up to period n, plus the activities generated by your community in period.</p>
-                                            <a href="#" className="flex items-center font-medium text-blue-600 dark:text-blue-500 dark:hover:text-blue-600 hover:text-blue-700 hover:underline">Read more <svg className="w-2 h-2 ms-1.5 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
-                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="m1 9 4-4-4-4" />
-                                            </svg></a>
-                                        </div>
-                                        <div data-popper-arrow></div>
-                                    </div>
-                                </h5>
-                                <p className="text-gray-900 dark:text-white text-2xl leading-none font-bold">${meanProfit}</p>
-                            </div>
-                        </div>
+                <div className="w-full mt-12 bg-gray-800 rounded-lg shadow p-4 md:p-6">
+                    {isDataLoaded ? (
                         <div>
-                            <button id="dropdownDefaultButton"
-                                data-dropdown-toggle="lastDaysdropdown"
-                                data-dropdown-placement="bottom" type="button" className="px-3 py-2 inline-flex items-center text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700">Last week <svg className="w-2.5 h-2.5 ms-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m1 1 4 4 4-4" />
-                                </svg></button>
-                            <div id="lastDaysdropdown" className="z-10 hidden bg-white divide-y divide-gray-100 rounded-lg shadow w-44 dark:bg-gray-700">
-                                <ul className="py-2 text-sm text-gray-700 dark:text-gray-200" aria-labelledby="dropdownDefaultButton">
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Yesterday</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Today</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 7 days</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 30 days</a>
-                                    </li>
-                                    <li>
-                                        <a href="#" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Last 90 days</a>
-                                    </li>
-                                </ul>
+                            <h4 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
+                                {team_name}
+                            </h4>
+                            <div className="flex justify-between mb-5">
+                                <div className="grid gap-4 grid-cols-2">
+                                    <div>
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Trades
+                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" onClick={() => setOpen(true)}>
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                                            </svg>
+                                        </h5>
+                                        <p className="text-teal-400 text-2xl leading-none font-bold">{trades.length}</p>
+                                    </div>
+                                    <div>
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Score
+                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                                            </svg>
+                                        </h5>
+                                        <p className="text-teal-400 text-2xl leading-none font-bold">${score}</p>
+                                    </div>
+                                </div>
+
                             </div>
-                        </div>
-                    </div>
-                    <div id="line-chart"></div>
-                    <ReactApexChart
-                        options={options}
-                        series={options.series}
-                        type="area"
-                        height={500}
-                    />
-                    <div className="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between mt-2.5">
-                        <div className="pt-5">
-                            <button
+                            <div id="line-chart"></div>
+                            <ReactApexChart
+                                options={options}
+                                series={options.series}
+                                type="area"
+                                height={500}
+                            />
+                            <div className="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between mt-2.5">
+                                <div className="pt-5">
+                                    {/* <button
                                 className="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
                             >
                                 <svg className="w-3.5 h-3.5 text-white me-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">
@@ -296,11 +328,23 @@ export function SubmissionViewer() {
                                     <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
                                 </svg>
                                 View full report
-                            </button>
+                            </button> */}
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        // Empty state
+                        <div className="text-center bg-contain bg-center h-96 w-full flex justify-center items-center" style={{ backgroundImage: "url('/Chart_Blur.jpg')" }}>
+                            <div>
+                                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
+                                </svg>
+                                <h3 className="mt-2 text-sm font-semibold text-gray-900">No team selected</h3>
+                                <p className="mt-1 text-sm text-gray-500">Get started viewing submissions by selecting a team fromt he dropdown above</p>
+                            </div>
+                        </div>
+                    )}
                 </div>
-
 
             </Container>
         </section>
