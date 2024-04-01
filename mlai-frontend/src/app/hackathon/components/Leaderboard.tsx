@@ -15,7 +15,39 @@ interface ActivityItem {
     branch: string;
     status: string;
     score: number;
-    date: string;
+    submitted: string;
+}
+
+const teams = {
+    team_1: {
+        city: 'MEL',
+        team_id: 1,
+        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    },
+    team_2: {
+        city: 'SYD',
+        team_id: 2,
+        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
+    }
+}
+
+const cities = {
+    mel: {
+        name: 'Melbourne',
+        teams: 20,
+        score: 32.55,
+        commits: 225,
+        total_profits: 3257.65,
+        imageUrl: 'photos/gbh_melbourne.webp'
+    },
+    syd: {
+        name: 'Sydney',
+        teams: 7,
+        score: 30.65,
+        commits: 130,
+        total_profits: 1023.65,
+        imageUrl: 'photos/gbh_sydney.webp'
+    },
 }
 
 function classNames(...classes: any) {
@@ -47,7 +79,7 @@ export function Leaderboard() {
                 branch: 'main', // Assuming default or fetch from another source
                 status: item.error_traceback != null ? 'Error' : 'Completed', // Example conditional status
                 score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
-                date: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
+                submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
             }));
             setActivityItems(updatedActivityItems);
             console.log('Data received:', result.data);
@@ -66,6 +98,7 @@ export function Leaderboard() {
     return (
         <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
             <Container>
+                {/* Main Leaderboard */}
                 <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">
                     Leaderboard
                 </h2>
@@ -100,7 +133,7 @@ export function Leaderboard() {
                                         Score
                                     </th>
                                     <th scope="col" className="hidden py-2 pl-0 pr-4 text-right font-semibold sm:table-cell sm:pr-6 lg:pr-8">
-                                        Deployed
+                                        Submitted
                                     </th>
                                 </tr>
                             </thead>
@@ -138,7 +171,7 @@ export function Leaderboard() {
                                         <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
                                             <div className="flex items-center justify-end gap-x-2 sm:justify-start">
                                                 <time className="text-gray-400 sm:hidden">
-                                                    {item.date}
+                                                    {item.submitted}
                                                 </time>
                                                 <div className={classNames(statuses[item.status], 'flex-none rounded-full p-1')}>
                                                     <div className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -150,7 +183,7 @@ export function Leaderboard() {
                                             {item.score}
                                         </td>
                                         <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
-                                            <time>{item.date}</time>
+                                            <time>{item.submitted}</time>
                                         </td>
                                     </tr>
                                 ))}
@@ -160,7 +193,92 @@ export function Leaderboard() {
                 </div>
 
 
+
+                {/* City Leaderboard */}
+                <div className="flex justify-center items-center mx-auto max-w-2xl mt-20">
+                    <div className="overflow-hidden rounded-xl border border-gray-300 w-full">
+                        <div
+                            className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80"
+                        >
+                            <img src={cities.mel.imageUrl} alt="Melbourne green battey picture" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+                            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
+                            <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+
+                            <h2 className="text-4xl font-bold leading-6 text-gray-100">{cities.mel.name}</h2>
+
+                            <div className="mt-5 flex flex-wrap items-center gap-y-1 overflow-hidden text-sm font-bold leading-6 text-gray-300">
+                                <div className="mr-8">
+                                    Teams: <span className="text-teal-400">{cities.mel.teams}</span>
+                                </div>
+                                <div className="-ml-4 flex items-center gap-x-4">
+                                    <div className="flex gap-x-2.5">
+                                        Commits: <span className="text-teal-400">{cities.mel.commits}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm font-bold leading-6 text-gray-300">
+                                <div className="mr-8">
+                                    Total profits: <span className="text-teal-400">${cities.mel.total_profits}</span>
+                                </div>
+                            </div>
+                            <div className="-mt-10 flex justify-end items-end gap-x-4">
+                                <div className="mr-8"> Score: 
+                                    <span className="text-4xl font-bold leading-6 text-teal-400">{cities.mel.score}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="relative">
+                    <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                        <div className="w-full border-t border-gray-900" />
+                    </div>
+                    <div className="relative flex justify-center -mt-20 z-10">
+                        <img
+                            src='/vs.png'
+                            alt='versus icon'
+                            className="h-48 w-48 overflow-visible flex-noneobject-cover ring-1 ring-gray-900/10"
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-center items-center mx-auto max-w-2xl -mt-20">
+                    <div className="overflow-hidden rounded-xl border border-gray-300 w-full">
+                        <div
+                            className="relative isolate flex flex-col justify-end overflow-hidden rounded-2xl bg-gray-900 px-8 pb-8 pt-80 sm:pt-48 lg:pt-80"
+                        >
+                            <img src={cities.syd.imageUrl} alt="Melbourne green battey picture" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+                            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-gray-900 via-gray-900/40" />
+                            <div className="absolute inset-0 -z-10 rounded-2xl ring-1 ring-inset ring-gray-900/10" />
+
+                            <h2 className="text-4xl font-bold leading-6 text-gray-100">{cities.syd.name}</h2>
+
+                            <div className="mt-5 flex flex-wrap items-center gap-y-1 overflow-hidden text-sm font-bold leading-6 text-gray-300">
+                                <div className="mr-8">
+                                    Teams: <span className="text-teal-400">{cities.syd.teams}</span>
+                                </div>
+                                <div className="-ml-4 flex items-center gap-x-4">
+                                    <div className="flex gap-x-2.5">
+                                        Commits: <span className="text-teal-400">{cities.syd.commits}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm font-bold leading-6 text-gray-300">
+                                <div className="mr-8">
+                                    Total profits: <span className="text-teal-400">${cities.syd.total_profits}</span>
+                                </div>
+                            </div>
+                            <div className="-mt-10 flex justify-end items-end gap-x-4">
+                                <div className="mr-8"> Score: 
+                                    <span className="text-4xl font-bold leading-6 text-teal-400">{cities.syd.score}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </Container>
-        </section>
+        </section >
     )
 }
