@@ -29,6 +29,11 @@ export function MentorsVolunteers() {
       imageUrl: 'photos/jameskhan.png',
     },
     {
+      name: 'Govind Reghunandanan',
+      role: 'Machine Learning and AI Advisor',
+      imageUrl: 'photos/govind.png',
+    },
+    {
       name: 'Annie Dang',
       role: ' Full Stack Developer',
       imageUrl: 'photos/anniedang.png',
