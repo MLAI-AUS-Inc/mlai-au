@@ -9,6 +9,8 @@ import clsx from 'clsx'
 
 import placeholder from '/src/app/hackathon/images/avatars/placeholder.png'
 import aleksis from '/src/app/hackathon/images/avatars/aleksis.png'
+import haowang from '/src/app/hackathon/images/avatars/haowang.png'
+import yien from '/src/app/hackathon/images/avatars/yien.jpg'
 import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
@@ -24,8 +26,29 @@ const days = [
         role: 'Optimisation and Machine Learning Engineer at Amber Electric',
         image: aleksis,
       },
+      {
+        name: 'Dr. Hao Wang',
+        role: 'Senior Research Fellow, Dept. of Data Science & AI, Monash Futures Institute',
+        image: haowang,
+      },
     ],
   },
+
+  {
+    name: 'Submission Mentoring Day',
+    date: 'April 13',
+    dateTime: '2022-04-04',
+    speakers: [
+      {
+        name: 'Yien Fuang Tiong',
+        role: 'AGL Australia - VPP Data Science Manager',
+        image: yien,
+      },
+    ],
+  },
+
+
+  
   {
     name: 'Final Pitch Night',
     date: 'May 8',
