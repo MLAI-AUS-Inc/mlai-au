@@ -144,14 +144,10 @@ export function SubmissionViewer() {
         tooltip: {
             enabled: true,
             x: {
-                show: true,
+                show: false,
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex, w }: { seriesIndex: any, dataPointIndex: any, w: any }) {
-                    // Use seriesIndex to determine which series the tooltip is for
-                    // Return the original data value for the tooltip
-                    // You may need to adjust the logic here to fetch the original data
-                    // For demonstration, assuming original data can be accessed directly
                     if (seriesIndex === 0) { // Profits
                         return `${profitData[dataPointIndex].toFixed(2)}`;
                     } else if (seriesIndex === 1) { // Market Prices
@@ -234,7 +230,7 @@ export function SubmissionViewer() {
 
     return (
 
-        <section id="submissions" aria-label="Submissions" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
+        <section id="submissions" aria-label="Submissions" className="pt-20 pb-20 sm:pb-32 sm:pt-32 bg-gray-900">
             <Transition.Root show={open} as={Fragment}>
                 <Dialog as="div" className="relative z-10" onClose={setOpen}>
                     <Transition.Child

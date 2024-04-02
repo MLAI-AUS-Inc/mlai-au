@@ -4,7 +4,7 @@ import { Container } from './Container';
 import { formatDistanceToNow } from 'date-fns';
 import { Button } from './Button';
 
-const statuses: any = { Completed: 'text-green-400 bg-green-400/10', Error: 'text-rose-400 bg-rose-400/10' }
+const city: any = { SYD: 'text-teal-400 bg-teal-400/10', MEL: 'text-purple-400 bg-purple-400/10' }
 const activityItems: any[] = []
 interface ActivityItem {
     user: {
@@ -13,9 +13,27 @@ interface ActivityItem {
     };
     commit: string;
     branch: string;
-    status: string;
+    city: string;
     score: number;
     submitted: string;
+}
+interface Cities {
+    mel: {
+        name: string;
+        teams: number;
+        score: number;
+        commits: number;
+        total_profits: number;
+        imageUrl: string;
+    },
+    syd: {
+        name: string;
+        teams: number;
+        score: number;
+        commits: number;
+        total_profits: number;
+        imageUrl: string;
+    },
 }
 
 const teams = {
@@ -31,24 +49,45 @@ const teams = {
     }
 }
 
-const cities = {
-    mel: {
-        name: 'Melbourne',
-        teams: 20,
-        score: 32.55,
-        commits: 225,
-        total_profits: 3257.65,
-        imageUrl: 'photos/gbh_melbourne.webp'
-    },
-    syd: {
-        name: 'Sydney',
-        teams: 7,
-        score: 30.65,
-        commits: 130,
-        total_profits: 1023.65,
-        imageUrl: 'photos/gbh_sydney.webp'
-    },
-}
+function updateCities(data: ActivityItem[]) {
+  
+    let totalTeamsMel = 0;
+    let totalScoreMel = 0;
+    let totalTeamsSyd = 0;
+    let totalScoreSyd = 0;
+  
+    data.forEach(team => {
+      if (team.city === "MEL") {
+        totalTeamsMel++;
+        totalScoreMel += team.score;
+      }
+      if (team.city === "SYD") {
+        totalTeamsSyd++;
+        totalScoreSyd += team.score;
+      }
+    });
+
+    let cities = {
+        mel: {
+            name: 'Melbourne',
+            teams: totalTeamsMel,
+            score: Math.round((totalScoreMel / totalTeamsMel) * 100) / 100,
+            commits: 225,
+            total_profits: Math.round(totalScoreMel* 100) / 100,
+            imageUrl: 'photos/gbh_melbourne.webp'
+        },
+        syd: {
+            name: 'Sydney',
+            teams: totalTeamsSyd,
+            score: Math.round((totalScoreSyd / totalTeamsSyd)* 100) / 100,
+            commits: 225,
+            total_profits: Math.round(totalScoreSyd* 100) / 100,
+            imageUrl: 'photos/gbh_sydney.webp'
+        },
+    }
+  
+    return cities
+  }
 
 function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
@@ -56,6 +95,24 @@ function classNames(...classes: any) {
 
 export function Leaderboard() {
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+    const [cities, setCities] = useState<Cities>({
+        mel: { 
+            name: 'Melbourne',
+            teams: 0,
+            score: 0,
+            commits: 0,
+            total_profits: 0,
+            imageUrl: 'photos/gbh_melbourne.webp'
+        },
+        syd: { 
+            name: 'Sydney',
+            teams: 0,
+            score: 0,
+            commits: 0,
+            total_profits: 0,
+            imageUrl: 'photos/gbh_sydney.webp'
+        }
+    });
 
     const fetchData = async () => {
 
@@ -73,15 +130,21 @@ export function Leaderboard() {
             const updatedActivityItems = result.data.map((item: any) => ({
                 user: {
                     name: `${item.team_name}`,
-                    imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80', // Placeholder or fetch from another source
+                    imageUrl: item && item.imageUrl 
+                                ? item.team.imageUrl 
+                                : '/MLAI-Logo-Teal.png'
                 },
                 commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
                 branch: 'main', // Assuming default or fetch from another source
-                status: item.error_traceback != null ? 'Error' : 'Completed', // Example conditional status
+                city: item.city != null ? 'MEL' : 'SYD', 
                 score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
                 submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
             }));
             setActivityItems(updatedActivityItems);
+
+            // Update the city leaderboards
+            const updatedCities = updateCities(result.data)
+            setCities(updatedCities);
             console.log('Data received:', result.data);
         } catch (error) {
             console.error('Error caught during fetch operation:', error);
@@ -127,7 +190,7 @@ export function Leaderboard() {
                                         Commit
                                     </th>
                                     <th scope="col" className="py-2 pl-0 pr-4 text-right font-semibold sm:pr-8 sm:text-left lg:pr-20">
-                                        Status
+                                        City
                                     </th>
                                     <th scope="col" className="hidden py-2 pl-0 pr-8 font-semibold md:table-cell lg:pr-20">
                                         Score
@@ -173,10 +236,10 @@ export function Leaderboard() {
                                                 <time className="text-gray-400 sm:hidden">
                                                     {item.submitted}
                                                 </time>
-                                                <div className={classNames(statuses[item.status], 'flex-none rounded-full p-1')}>
+                                                <div className={classNames(city[item.city], 'flex-none rounded-full p-1')}>
                                                     <div className="h-1.5 w-1.5 rounded-full bg-current" />
                                                 </div>
-                                                <div className="hidden text-white sm:block">{item.status}</div>
+                                                <div className="hidden text-white sm:block">{item.city}</div>
                                             </div>
                                         </td>
                                         <td className="hidden py-4 pl-0 pr-8 text-md font-bold leading-6 text-teal-400 md:table-cell lg:pr-20">

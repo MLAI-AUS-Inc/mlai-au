@@ -22,7 +22,7 @@ const awsConfig = {
         ExpressionAttributeValues: {
           ":team_id": teamID,
         },
-        ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback",
+        ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
         ScanIndexForward: false,
         Limit: 1,
       };
