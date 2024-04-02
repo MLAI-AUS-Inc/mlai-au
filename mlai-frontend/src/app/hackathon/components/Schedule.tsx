@@ -67,26 +67,7 @@ const schedule: Array<Day> = [
 
     ],
   },
-  {
-    date: 'April 15',
-    dateTime: '2022-04-05',
-    summary:
-      'Teams submit projects',
-    timeSlots: [
-      {
-        name: 'Submission deadline',
-        description: '',
-        start: 'submit by',
-        end: '9:00AM',
-      },
-      {
-        name: 'Semi final judging',
-        description: '',
-        start: 'finalised by',
-        end: '4:00PM',
-      },
-    ],
-  },
+
   {
     date: 'May 8',
     dateTime: '2022-04-06',
@@ -96,32 +77,32 @@ const schedule: Array<Day> = [
       {
         name: 'Networking',
         description: '',
-        start: '5:30pM',
-        end: '6:00pM',
+        start: '5:30 PM',
+        end: '6:00 PM',
       },
       {
         name: 'Opening Speech',
         description: '',
-        start: '6:00PM',
-        end: '6:20pM',
+        start: '6:00 PM',
+        end: '6:20 PM',
       },
       {
         name: 'Pitches',
         description: '',
-        start: '6:20AM',
-        end: '6:50PM',
+        start: '6:20 AM',
+        end: '6:50 PM',
       },
       {
         name: 'Keynote',
         description: '',
-        start: '6:50PM',
-        end: '7:10PM',
+        start: '6:50 PM',
+        end: '7:10 PM',
       },
       {
         name: 'Announcement Winners',
         description: '',
-        start: '7:15PM',
-        end: '7:30PM',
+        start: '7:15 PM',
+        end: '7:30 PM',
       },
 
     ],
