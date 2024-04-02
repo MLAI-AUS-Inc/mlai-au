@@ -45,7 +45,7 @@ export function SubmissionViewer() {
     const [open, setOpen] = useState(true)
     const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-    const fetchData = async (team_id: string) => {
+    const fetchBest = async (team_id: string) => {
         if (typeof window !== "undefined") {
             try {
                 console.log('Making a request to /api/getTeamScores: ', team_id);
@@ -97,9 +97,32 @@ export function SubmissionViewer() {
         }
     };
 
+    const fetchSubmissions = async (team_id: string) => {
+        if (typeof window !== "undefined") {
+            try {
+                console.log('Making a request to /api/getTeamSubmissions: ', team_id);
+                const queryParams = new URLSearchParams({ team_id });
+                const response = await fetch(`/api/getTeamSubmissions?${queryParams}`);
+                console.log(`Response Status: ${response.status}`);
+
+                if (!response.ok) {
+                    console.error('Response not OK:', response.statusText);
+                    throw new Error(`Failed to fetch: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                console.log('Data received:', result.data);
+                
+            } catch (error) {
+                console.error('Error caught during fetch operation:', error);
+            }
+        }
+    };
+
     const handleMenuItemClick = (team_id: Number) => () => {
         const stringTeamID = team_id.toString()
-        fetchData(stringTeamID);
+        fetchBest(stringTeamID);
+        fetchSubmissions(stringTeamID);
     };
 
 
