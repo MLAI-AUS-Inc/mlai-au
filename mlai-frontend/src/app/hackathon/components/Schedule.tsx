@@ -31,17 +31,17 @@ const schedule: Array<Day> = [
       {
         name: 'Introduction',
         description: ' ',
-        start: '9:00AM',
-        end: '10:00AM',
-      },
-      {
-        name: 'Opening Talk',
-        description: '',
         start: '10:00AM',
         end: '10:30AM',
       },
       {
-        name: 'Hacking',
+        name: 'Opening Talk',
+        description: '',
+        start: '10:40AM',
+        end: '10:30AM',
+      },
+      {
+        name: 'Keynote 2',
         description: '',
         start: '10:30AM',
         end: '12:00AM',
@@ -62,7 +62,7 @@ const schedule: Array<Day> = [
         name: 'Hacking',
         description: '',
         start: '1:30PM',
-        end: '5:30PM',
+        end: '5:00PM',
       },
 
     ],
