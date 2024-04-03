@@ -11,6 +11,7 @@ import placeholder from '/src/app/hackathon/images/avatars/placeholder.png'
 import aleksis from '/src/app/hackathon/images/avatars/aleksis.png'
 import haowang from '/src/app/hackathon/images/avatars/haowang.png'
 import yien from '/src/app/hackathon/images/avatars/yien.jpg'
+import ruchika from '/src/app/hackathon/images/avatars/ruchika.jpg'
 import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
@@ -25,6 +26,11 @@ const days = [
         name: 'Dr. Aleksis Xenophon',
         role: 'Optimisation and Machine Learning Engineer at Amber Electric',
         image: aleksis,
+      },
+      {
+        name: 'Ruchika Deora',
+        role: 'Head of Product, SEC Victoria',
+        image: ruchika,
       },
       {
         name: 'Dr. Hao Wang',

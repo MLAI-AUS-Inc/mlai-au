@@ -16,6 +16,7 @@ import mcn from '/src/app/hackathon/images/logos/mcn.png'
 import CoM from '/src/app/hackathon/images/logos/CoM_pad.png'
 import exciton from '/src/app/hackathon/images/logos/exciton.png'
 import mcds from '/src/app/hackathon/images/logos/mcds.png'
+import onem from '/src/app/hackathon/images/logos/onem.png'
 
 import { Container } from './Container'
 import { useEffect, useRef, useState } from 'react'
@@ -42,6 +43,8 @@ const communitypartner = [
   { name: 'mcn', logo: mcn },
   { name: 'exciton', logo: exciton },
   { name: 'mcds', logo: mcds },
+  { name: 'buildclub', logo: buildclub },
+  { name: 'opennem', logo: onem },
 ]
 
 
