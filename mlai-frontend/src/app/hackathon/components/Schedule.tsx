@@ -1,12 +1,9 @@
 'use client'
-
 import { useEffect, useState } from 'react'
 import { Tab } from '@headlessui/react'
 import clsx from 'clsx'
 import { Container } from './Container'
 import GetTickets from './GetTickets'
-
-// import { BackgroundImage } from '@/components/BackgroundImage'
 
 
 interface Day {

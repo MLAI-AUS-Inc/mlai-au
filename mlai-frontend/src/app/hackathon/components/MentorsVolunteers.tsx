@@ -1,9 +1,3 @@
-import { useEffect, useState } from 'react'
-import { Tab } from '@headlessui/react'
-import clsx from 'clsx'
-import { Container } from './Container'
-import { Button } from './Button'
-import Image from 'next/image'
 
 export function MentorsVolunteers() {
   // Define the people array outside of the return statement
