@@ -22,6 +22,7 @@ interface ActivityItem {
     city: string;
     score: number;
     submitted: string;
+    team_id: number;
 }
 
 const HackathonPage = () => {
@@ -48,6 +49,7 @@ const HackathonPage = () => {
                                     ? item.team.imageUrl 
                                     : '/MLAI-Logo-Teal.png'
                     },
+                    team_id: `${item.team_id}`,
                     commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
                     branch: 'main', // Assuming default or fetch from another source
                     city: item.city,
