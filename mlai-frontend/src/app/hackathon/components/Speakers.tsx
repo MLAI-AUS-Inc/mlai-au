@@ -12,6 +12,7 @@ import aleksis from '/src/app/hackathon/images/avatars/aleksis.png'
 import haowang from '/src/app/hackathon/images/avatars/haowang.png'
 import yien from '/src/app/hackathon/images/avatars/yien.jpg'
 import ruchika from '/src/app/hackathon/images/avatars/ruchika.jpg'
+import jacksimpson from '/src/app/hackathon/images/avatars/jacksimpson.jpg'
 import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
@@ -36,6 +37,11 @@ const days = [
         name: 'Dr. Hao Wang',
         role: 'Senior Research Fellow, Dept. of Data Science & AI, Monash Futures Institute',
         image: haowang,
+      },
+      {
+        name: 'Jack Simpson',
+        role: 'Director at Endgame Economics & Cartesian Software',
+        image: jacksimpson,
       },
     ],
   },
