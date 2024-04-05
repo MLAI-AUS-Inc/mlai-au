@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { Container } from './Container';
 import { formatDistanceToNow } from 'date-fns';
-import { Button } from './Button';
 
-const city: any = { SYD: 'text-teal-400 bg-teal-400/10', MEL: 'text-purple-400 bg-purple-400/10' }
-const activityItems: any[] = []
+interface LeaderboardProps {
+    topScores?: ActivityItem[];
+}
 interface ActivityItem {
     user: {
         name: string;
@@ -36,35 +36,25 @@ interface Cities {
     },
 }
 
-const teams = {
-    team_1: {
-        city: 'MEL',
-        team_id: 1,
-        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    },
-    team_2: {
-        city: 'SYD',
-        team_id: 2,
-        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    }
-}
+const city: any = { SYD: 'text-teal-400 bg-teal-400/10', MEL: 'text-purple-400 bg-purple-400/10' }
 
 function updateCities(data: ActivityItem[]) {
-  
+
     let totalTeamsMel = 0;
     let totalScoreMel = 0;
     let totalTeamsSyd = 0;
     let totalScoreSyd = 0;
-  
+
     data.forEach(team => {
-      if (team.city === "MEL") {
-        totalTeamsMel++;
-        totalScoreMel += team.score;
-      }
-      if (team.city === "SYD") {
-        totalTeamsSyd++;
-        totalScoreSyd += team.score;
-      }
+        if (team.city === "MEL") {
+            totalTeamsMel++;
+            totalScoreMel += Number(team.score);
+        }
+        if (team.city === "SYD") {
+            totalTeamsSyd++;
+            totalScoreSyd += Number(team.score);
+        }
+        console.log('topscores: ', totalTeamsMel, totalScoreMel, totalTeamsSyd, totalScoreSyd);
     });
 
     let cities = {
@@ -73,30 +63,30 @@ function updateCities(data: ActivityItem[]) {
             teams: totalTeamsMel,
             score: Math.round((totalScoreMel / totalTeamsMel) * 100) / 100,
             commits: 225,
-            total_profits: Math.round(totalScoreMel* 100) / 100,
+            total_profits: Math.round(totalScoreMel * 100) / 100,
             imageUrl: 'photos/gbh_melbourne.webp'
         },
         syd: {
             name: 'Sydney',
             teams: totalTeamsSyd,
-            score: Math.round((totalScoreSyd / totalTeamsSyd)* 100) / 100,
+            score: Math.round((totalScoreSyd / totalTeamsSyd) * 100) / 100,
             commits: 225,
-            total_profits: Math.round(totalScoreSyd* 100) / 100,
+            total_profits: Math.round(totalScoreSyd * 100) / 100,
             imageUrl: 'photos/gbh_sydney.webp'
         },
     }
-  
+
     return cities
-  }
+}
 
 function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
 }
 
-export function Leaderboard() {
+export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
     const [cities, setCities] = useState<Cities>({
-        mel: { 
+        mel: {
             name: 'Melbourne',
             teams: 0,
             score: 0,
@@ -104,7 +94,7 @@ export function Leaderboard() {
             total_profits: 0,
             imageUrl: 'photos/gbh_melbourne.webp'
         },
-        syd: { 
+        syd: {
             name: 'Sydney',
             teams: 0,
             score: 0,
@@ -114,46 +104,16 @@ export function Leaderboard() {
         }
     });
 
-    const fetchData = async () => {
 
-        try {
-            // console.log('Making a request to /api/getTopScores');
-            const response = await fetch('/api/getTopScores');
-            // console.log(`Response Status: ${response.status}`);
-
-            if (!response.ok) {
-                console.error('Response not OK:', response.statusText);
-                throw new Error(`Failed to fetch: ${response.statusText}`);
-            }
-
-            const result = await response.json();
-            const updatedActivityItems = result.data.map((item: any) => ({
-                user: {
-                    name: `${item.team_name}`,
-                    imageUrl: item && item.imageUrl 
-                                ? item.team.imageUrl 
-                                : '/MLAI-Logo-Teal.png'
-                },
-                commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
-                branch: 'main', // Assuming default or fetch from another source
-                city: item.city != null ? 'MEL' : 'SYD', 
-                score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
-                submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
-            }));
-            setActivityItems(updatedActivityItems);
-
-            // Update the city leaderboards
-            const updatedCities = updateCities(result.data)
-            setCities(updatedCities);
-            console.log('Data received:', result.data);
-        } catch (error) {
-            console.error('Error caught during fetch operation:', error);
-        }
-    };
 
     useEffect(() => {
         if (typeof window !== "undefined") {
-            fetchData();
+            // Update the city leaderboards
+            setActivityItems(topScores)
+
+            // Update the city leaderboards
+            const updatedCities = updateCities(topScores)
+            setCities(updatedCities);
         }
     }, []);
 
@@ -196,7 +156,7 @@ export function Leaderboard() {
                                         Score
                                     </th>
                                     <th scope="col" className="hidden py-2 pl-0 pr-4 text-right font-semibold sm:table-cell sm:pr-6 lg:pr-8">
-                                        Submitted
+                                        Last Updated
                                     </th>
                                 </tr>
                             </thead>
@@ -285,7 +245,7 @@ export function Leaderboard() {
                                 </div>
                             </div>
                             <div className="-mt-10 flex justify-end items-end gap-x-4">
-                                <div className="mr-8"> Score: 
+                                <div className="mr-8"> Score:
                                     <span className="text-4xl font-bold leading-6 text-teal-400">{cities.mel.score}</span>
                                 </div>
                             </div>
@@ -333,7 +293,7 @@ export function Leaderboard() {
                                 </div>
                             </div>
                             <div className="-mt-10 flex justify-end items-end gap-x-4">
-                                <div className="mr-8"> Score: 
+                                <div className="mr-8"> Score:
                                     <span className="text-4xl font-bold leading-6 text-teal-400">{cities.syd.score}</span>
                                 </div>
                             </div>

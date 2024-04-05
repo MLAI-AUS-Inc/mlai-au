@@ -12,42 +12,41 @@ const awsConfig = {
   export async function GET() {
     console.log('Handling GET request on /api/getTopScores');
   
-    const teamIDs = Array.from({ length: 5 }, (_, i) => i + 1);
-    const leaderboardData = [];
-  
-    for (const teamID of teamIDs) {
-      const params = {
-        TableName: "leaderboard",
-        KeyConditionExpression: "team_id = :team_id",
-        ExpressionAttributeValues: {
-          ":team_id": teamID,
+  const params = {
+    TableName: "leaderboard",
+    FilterExpression: "team_id BETWEEN :start_id AND :end_id",
+    ExpressionAttributeValues: {
+      ":start_id": 1,
+      ":end_id": 50,
+    },
+    ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
+  };
+
+  try {
+    const data = await docClient.scan(params).promise();
+    // Note that scan does not sort the results. You'll need to sort them after retrieval if needed.
+    if (data.Items) {
+      const sortedItems = data.Items.sort((a, b) => b.score - a.score); // Sort by score in descending order
+      return new Response(JSON.stringify({ data: sortedItems }), {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
-        ScanIndexForward: false,
-        Limit: 1,
-      };
-  
-      try {
-        const data = await docClient.query(params).promise();
-        if (data.Items) {
-          console.log('Query successful, items returned:', data.Items.length);
-          leaderboardData.push(...data.Items);
-        }
-      } catch (err: any) {
-        console.error("Unable to query DynamoDB. Error:", JSON.stringify(err, null, 2));
-        return new Response(JSON.stringify({ error: "Unable to query data", details: err.message }), {
-          status: 500,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      }
+      });
+    } else {
+      // If Items is undefined, return an empty array or handle as appropriate
+      return new Response(JSON.stringify({ data: [] }), {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
-  
-    return new Response(JSON.stringify({ data: leaderboardData }), {
+  } catch (err: any) {
+    console.error("Unable to scan DynamoDB. Error:", JSON.stringify(err, null, 2));
+    return new Response(JSON.stringify({ error: "Unable to scan data", details: err.message }), {
+      status: 500,
       headers: {
         'Content-Type': 'application/json',
       },
     });
   }
-
+}

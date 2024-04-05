@@ -3,136 +3,127 @@ import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
 import ReactApexChart from 'react-apexcharts';
 import { Dialog, Menu, Transition } from '@headlessui/react';
-import { CheckIcon, ChevronDownIcon } from '@heroicons/react/20/solid';
+import { CheckIcon, ChevronDownIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid';
 import { formatDistanceToNow } from 'date-fns';
 
+interface ActivityItem {
+    user: {
+        name: string;
+        imageUrl: string;
+    };
+    commit: string;
+    branch: string;
+    city: string;
+    score: number;
+    submitted: string;
+}
+
+interface SubmissionViewerProps {
+    topScores?: ActivityItem[];
+  }
+
+interface Task {
+    commit_hash: string;
+    created_at: string;
+    diagnostic: string;
+    state_: string;
+    task_type: string;
+}
+
+interface Team {
+    name: string;
+    team_id: number;
+    imageUrl: string;
+}
+
+interface MarketData {
+    profitData: number[];
+    marketData: number[];
+    totalTrades: number;
+    score: number;
+}
+
+// Helper function for averaging data points
 function averageDataPoints(data: number[], targetPoints: number): number[] {
     const chunkSize = Math.ceil(data.length / targetPoints);
-    const averagedData: number[] = [];
-
-    for (let i = 0; i < data.length; i += chunkSize) {
-        const chunk = data.slice(i, i + chunkSize);
-        const avg = chunk.reduce((acc, val) => acc + val, 0) / chunk.length;
-        averagedData.push(avg);
-    }
-
-    return averagedData;
+    return Array.from({ length: targetPoints }, (_, i) => {
+        const start = i * chunkSize;
+        const end = start + chunkSize;
+        const chunk = data.slice(start, Math.min(end, data.length));
+        return chunk.reduce((acc, val) => acc + val, 0) / (chunk.length || 1);
+    });
 }
 
 
-const teams = {
-    team_1: {
-        name: '_uwu_',
-        team_id: 1,
-        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    },
-    team_2: {
-        name: 'no name here biatch get your own',
-        team_id: 2,
-        imageUrl: 'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80'
-    }
-}
+export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores }) => {
 
-export function SubmissionViewer() {
-    const [profitData, setProfitData] = useState<number[]>([]);
-    const [marketData, setMarketData] = useState<number[]>([]);
-    const [meanProfit, setMeanProfit] = useState([]);
-    const [totalTrades, setTotalTrades] = useState<number>(0);
-    const [score, setScore] = useState<number>(0);
-    const [team_name, setTeamName] = useState('');
-    const [commit_hash, setCommitHash] = useState('');
-    const [submitted, setSubmitted] = useState('');
-    const [open, setOpen] = useState(true)
+    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], totalTrades: 0, score: 0 });
+    const [teams, setTeams] = useState<Team[]>([]);
+    const [open, setOpen] = useState(true);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
+    const [tasks, setTasks] = useState<Task[]>([]);
 
-    const fetchBest = async (team_id: string) => {
+    const fetchData = async (team_id: string, endpoint: string) => {
         if (typeof window !== "undefined") {
             try {
-                console.log('Making a request to /api/getTeamScores: ', team_id);
                 const queryParams = new URLSearchParams({ team_id });
-                const response = await fetch(`/api/getTeamScores?${queryParams}`);
-                console.log(`Response Status: ${response.status}`);
-
+                const response = await fetch(`/api/${endpoint}?${queryParams}`);
                 if (!response.ok) {
-                    console.error('Response not OK:', response.statusText);
                     throw new Error(`Failed to fetch: ${response.statusText}`);
                 }
+                return response.json();
+            } catch (error) {
+                console.error('Error caught during fetch operation:', error);
+            }
+        }
+    };
 
-                const result = await response.json();
-                console.log('Data received:', result.data);
+    const handleMenuItemClick = (team_id: number) => async () => {
+        const stringTeamID = team_id.toString();
+        const bestData = await fetchData(stringTeamID, 'getTeamScores');
+        if (bestData) {
+            const { data } = bestData;
+            if (data && data.length > 0) {
+                const trialData = data[0].main_trial;
+
                 // Averaging and rounding market prices
-                const marketPrices: number[] = result.data[0].main_trial.market_prices;
+                const marketPrices: number[] = trialData.market_prices;
                 const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
-                setMarketData(averagedMarketPrices);
 
                 // Averaging and rounding profits
-                const profits: number[] = result.data[0].main_trial.profits;
+                const profits: number[] = trialData.profits;
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
-                setProfitData(averagedProfits);
 
                 // Set totalTrades with the episode_length from the response
-                const episodeLength: number = result.data[0].main_trial.episode_length;
-                setTotalTrades(episodeLength);
+                const episodeLength: number = trialData.episode_length;
 
-                // Set score with the score from the response
-                const score: number = result.data[0].score.toFixed(2);
-                setScore(score);
+                // Assuming formatDistanceToNow returns a formatted string indicating the distance to now
+                const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
-                // Set team name with the data from the response
-                const team_name: string = result.data[0].team_name;
-                setTeamName(team_name);
-
-                // Set commit hash with the data from the response
-                const commit_hash: string = result.data[0].git_commit_hash;
-                setCommitHash(commit_hash);
-
-                // Set submitted at with the data from the response
-                const submitted = formatDistanceToNow(new Date(result.data[0].submitted_at), { addSuffix: true })
-                setSubmitted(submitted);
+                // Update your state with the newly processed data
+                setMarketData({ profitData: averagedProfits, marketData: averagedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
+                // setTeams({ name: topScores.team_name });
 
                 setIsDataLoaded(true);
-            } catch (error) {
-                console.error('Error caught during fetch operation:', error);
+            } else {
+                console.log("No data available");
+                setIsDataLoaded(false);
             }
+        }
+
+        const submissionsData = await fetchData(stringTeamID, 'getTeamSubmissions');
+        if (submissionsData) {
+            setTasks(submissionsData.data);
         }
     };
 
-    const fetchSubmissions = async (team_id: string) => {
-        if (typeof window !== "undefined") {
-            try {
-                console.log('Making a request to /api/getTeamSubmissions: ', team_id);
-                const queryParams = new URLSearchParams({ team_id });
-                const response = await fetch(`/api/getTeamSubmissions?${queryParams}`);
-                console.log(`Response Status: ${response.status}`);
-
-                if (!response.ok) {
-                    console.error('Response not OK:', response.statusText);
-                    throw new Error(`Failed to fetch: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                console.log('Data received:', result.data);
-                
-            } catch (error) {
-                console.error('Error caught during fetch operation:', error);
-            }
-        }
-    };
-
-    const handleMenuItemClick = (team_id: Number) => () => {
-        const stringTeamID = team_id.toString()
-        fetchBest(stringTeamID);
-        fetchSubmissions(stringTeamID);
-    };
-
-
-    const trades = Array.from({ length: totalTrades }, (_, index) => index + 1);
+    const trades = Array.from({ length: marketData.totalTrades }, (_, index) => index + 1);
 
     const options = {
         series: [
             {
                 name: "Profit",
-                data: profitData,
+                data: marketData.profitData,
                 color: "#7E3AF2",
                 yAxisIndex: 0,
             },
@@ -172,9 +163,9 @@ export function SubmissionViewer() {
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex, w }: { seriesIndex: any, dataPointIndex: any, w: any }) {
                     if (seriesIndex === 0) { // Profits
-                        return `${profitData[dataPointIndex].toFixed(2)}`;
+                        return `${marketData.profitData[dataPointIndex].toFixed(2)}`;
                     } else if (seriesIndex === 1) { // Market Prices
-                        return `${marketData[dataPointIndex].toFixed(2)}`;
+                        return `${marketData.marketData[dataPointIndex].toFixed(2)}`;
                     }
                 }
             },
@@ -222,12 +213,12 @@ export function SubmissionViewer() {
                 title: {
                     text: "Profit",
                     style: {
-                        color: "#7E3AF2", 
+                        color: "#7E3AF2",
                     }
                 },
                 labels: {
                     style: {
-                        colors: "#7E3AF2", 
+                        colors: "#7E3AF2",
                     }
                 },
             },
@@ -238,12 +229,12 @@ export function SubmissionViewer() {
                 title: {
                     text: "Market Price",
                     style: {
-                        color: "#03fcb1", 
+                        color: "#03fcb1",
                     }
                 },
                 labels: {
                     style: {
-                        colors: "#03fcb1", 
+                        colors: "#03fcb1",
                     }
                 },
             },
@@ -357,11 +348,11 @@ export function SubmissionViewer() {
                 <div className="w-full mt-12 bg-gray-800 rounded-lg shadow p-4 md:p-6">
                     {isDataLoaded ? (
                         <div>
-                            <h4 className="max-w-2xl font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
+                            {/* <h4 className="max-w-2xl font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
                                 {team_name}
                             </h4>
-                            <h5 className="px-4 mt-4 text-base font-semibold leading-7 text-white">Best performing commit: {commit_hash}</h5>
-                            <div className="mt-10 flex justify-between mb-5">
+                            <h5 className="px-4 mt-4 text-base font-semibold leading-7 text-white">Best performing commit: {commit_hash}</h5> */}
+                            {/* <div className="mt-10 flex justify-between mb-5">
                                 <div className="grid gap-4 grid-cols-6">
                                     <div>
                                         <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Trades
@@ -380,7 +371,7 @@ export function SubmissionViewer() {
                                         <p className="text-teal-300 text-2xl leading-none font-bold">{score}</p>
                                     </div>
                                     <div>
-                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Submitted
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Processed
                                             <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                                             </svg>
@@ -389,7 +380,7 @@ export function SubmissionViewer() {
                                     </div>
                                 </div>
 
-                            </div>
+                            </div> */}
                             <div id="line-chart"></div>
                             <ReactApexChart
                                 options={options}
@@ -410,7 +401,68 @@ export function SubmissionViewer() {
                             </button> */}
                                 </div>
                             </div>
+
+                            {/* Tasks Submitted list */}
+                            <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                                {tasks.map((task) => (
+                                    <li key={task.created_at} className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow">
+                                        <div className="flex w-full items-center justify-between space-x-6 p-6">
+                                            <div className="flex-1 truncate">
+                                                <div className="flex items-center space-x-3">
+                                                    <h3 className="truncate text-sm font-medium text-gray-900">{task.commit_hash}</h3>
+                                                    {task.diagnostic !== '' ? (
+                                                        <span className="inline-flex flex-shrink-0 items-center rounded-full bg-red-50 px-1.5 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
+                                                            Error
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex flex-shrink-0 items-center rounded-full bg-green-50 px-1.5 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                                                            Success
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="mt-1 truncate text-sm text-gray-500">{task.created_at}</p>
+                                            </div>
+                                            <img className="h-10 w-10 flex-shrink-0 rounded-full bg-gray-300" src='/MLAI-Logo-Teal.png' alt="" />
+                                        </div>
+                                        <div className="flex items-center space-x-3 overflow-hidden">
+                                            {task.diagnostic !== '' ? (
+                                                <span className="flex-shrink items-center px-2 py-2 text-xs font-medium text-red-700  break-words max-w-full min-h-24 max-h-24 overflow-auto">
+                                                    {task.diagnostic}
+                                                </span>
+                                            ) :
+                                                <span className="flex-shrink items-center px-2 py-2 text-xs font-medium text-green-700 break-words max-w-full min-h-24 max-h-24 overflow-auto">
+                                                    No errors
+                                                </span>
+                                            }
+                                        </div>
+                                        {/* <div>
+                                            <div className="-mt-px flex divide-x divide-gray-200">
+                                                <div className="flex w-0 flex-1">
+                                                    <a
+                                                        href='/'
+                                                        className="relative -mr-px inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-bl-lg border border-transparent py-4 text-sm font-semibold text-gray-900"
+                                                    >
+                                                        <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                                        Email
+                                                    </a>
+                                                </div>
+                                                <div className="-ml-px flex w-0 flex-1">
+                                                    <a
+                                                        href='/'
+                                                        className="relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-br-lg border border-transparent py-4 text-sm font-semibold text-gray-900"
+                                                    >
+                                                        <PhoneIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                                        Call
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div> */}
+                                    </li>
+                                ))}
+                            </ul>
                         </div>
+
+
                     ) : (
                         // Empty state
                         <div className="text-center bg-contain bg-center h-96 w-full flex justify-center items-center rounded-lg" style={{ backgroundImage: "url('/Chart_Blur.jpg')" }}>
@@ -424,6 +476,7 @@ export function SubmissionViewer() {
                         </div>
                     )}
                 </div>
+
 
             </Container>
         </section>
