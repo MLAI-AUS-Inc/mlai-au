@@ -54,7 +54,7 @@ const AnimatedBackground: React.FC = () => {
         loader.load(
             '/green-battery.glb',
             (gltf) => {
-                console.log("GLTF Loaded", gltf); // For debugging
+                // console.log("GLTF Loaded", gltf); // For debugging
                 mesh = gltf.scene.children[0];
                 mesh.scale.set(0.05, 0.05, 0.05); // Adjust scale if necessary
                 mesh.castShadow = true;

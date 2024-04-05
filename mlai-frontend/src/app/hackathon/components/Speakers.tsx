@@ -1,5 +1,4 @@
 'use client'
-
 import { useEffect, useId, useState } from 'react'
 import Image from 'next/image'
 import { Tab } from '@headlessui/react'
@@ -21,7 +20,7 @@ const days = [
   {
     name: 'Team Formation Day',
     date: 'April 6',
-    dateTime: '2022-04-04',
+    dateTime: '2024-04-06',
     speakers: [
       {
         name: 'Dr. Aleksis Xenophon',
@@ -64,7 +63,7 @@ const days = [
   {
     name: 'Final Pitch Night',
     date: 'May 8',
-    dateTime: '2022-04-04',
+    dateTime: '2024-05-08',
     speakers: [
       {
         name: 'To be announced soon',

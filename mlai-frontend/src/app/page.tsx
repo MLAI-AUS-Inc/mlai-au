@@ -1,3 +1,4 @@
+'use client'
 import CTA from "@/components/CTA";
 import Team from "@/components/team";
 import Hero from "@/components/hero";
