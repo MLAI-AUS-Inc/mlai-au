@@ -23,7 +23,7 @@ export async function GET(req: any, res: any) {
 
     const params = {
         TableName: 'leaderboard',
-        IndexName: 'team_id-submitted_at-index',
+        IndexName: 'team_id-score-index',
         KeyConditionExpression: "team_id = :teamValue",
         ExpressionAttributeValues: {
             ":teamValue": numericTeamId,
