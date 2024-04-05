@@ -43,29 +43,12 @@ const communitypartner = [
   { name: 'mcn', logo: mcn },
   { name: 'exciton', logo: exciton },
   { name: 'mcds', logo: mcds },
-  { name: 'buildclub', logo: buildclub },
+  // { name: 'buildclub', logo: buildclub },
   { name: 'opennem', logo: onem },
 ]
 
 
 export function Sponsors() {
-  const [isZoomed, setIsZoomed] = useState(false);
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!mountRef.current) return;
-
-      const rect = mountRef.current.getBoundingClientRect();
-      const top = rect.top;
-
-      setIsZoomed(top <= 0); // Set isZoomed true if the element is at or past the top
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">

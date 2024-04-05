@@ -5,8 +5,6 @@ import clsx from 'clsx'
 import { Container } from './Container'
 import GetTickets from './GetTickets'
 
-// import { BackgroundImage } from '@/components/BackgroundImage'
-
 
 interface Day {
   date: React.ReactNode
