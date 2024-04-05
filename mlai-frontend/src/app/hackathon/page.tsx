@@ -64,9 +64,7 @@ const HackathonPage = () => {
 
         };
 
-        if (typeof window !== "undefined") {
             fetchData();
-        }
     }, []);
     return (
         <div className="relative min-h-screen">
