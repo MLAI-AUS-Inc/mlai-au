@@ -1,7 +1,11 @@
 'use client'
 import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
-import ReactApexChart from 'react-apexcharts';
+import dynamic from 'next/dynamic';
+
+const ReactApexChart = dynamic(() => import('react-apexcharts'), {
+  ssr: false, // This line disables server-side rendering
+});
 import { Dialog, Menu, Transition } from '@headlessui/react';
 import { CheckIcon, ChevronDownIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid';
 import { formatDistanceToNow } from 'date-fns';
