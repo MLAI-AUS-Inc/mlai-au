@@ -1,9 +1,3 @@
-import { useEffect, useState } from 'react'
-import { Tab } from '@headlessui/react'
-import clsx from 'clsx'
-import { Container } from './Container'
-import { Button } from './Button'
-
 export function GbhPeople() {
   // Define the people array outside of the return statement
   const people = [

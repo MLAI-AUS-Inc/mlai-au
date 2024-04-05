@@ -1,6 +1,3 @@
-import { Button } from './Button'
-import { Container } from './Container'
-import { DiamondIcon } from './DiamondIcon'
 
 export default function GetTickets() {
   return (

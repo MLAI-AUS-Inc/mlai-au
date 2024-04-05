@@ -100,7 +100,6 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     }, [topScores]);
 
     const fetchData = async (team_id: string, endpoint: string) => {
-        if (typeof window !== "undefined") {
             try {
                 const queryParams = new URLSearchParams({ team_id });
                 const response = await fetch(`/api/${endpoint}?${queryParams}`);
@@ -111,7 +110,6 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             } catch (error) {
                 console.error('Error caught during fetch operation:', error);
             }
-        }
     };
 
     const handleMenuItemClick = (team_id: number) => async () => {
@@ -121,7 +119,6 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             const { data } = bestData;
             if (data && data.length > 0) {
                 const trialData = data[0].main_trial;
-                console.log("tasks: ", trialData);
 
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
