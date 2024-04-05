@@ -5,6 +5,18 @@ import ReactApexChart from 'react-apexcharts';
 import { Dialog, Menu, Transition } from '@headlessui/react';
 import { CheckIcon, ChevronDownIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid';
 import { formatDistanceToNow } from 'date-fns';
+import {
+    AcademicCapIcon,
+    BanknotesIcon,
+    CheckBadgeIcon,
+    ClockIcon,
+    ReceiptRefundIcon,
+    UsersIcon,
+} from '@heroicons/react/24/outline'
+
+interface SubmissionViewerProps {
+    topScores?: ActivityItem[];
+}
 
 interface ActivityItem {
     user: {
@@ -16,24 +28,15 @@ interface ActivityItem {
     city: string;
     score: number;
     submitted: string;
+    team_id: number;
 }
-
-interface SubmissionViewerProps {
-    topScores?: ActivityItem[];
-  }
 
 interface Task {
     commit_hash: string;
-    created_at: string;
+    created_at: number;
     diagnostic: string;
     state_: string;
     task_type: string;
-}
-
-interface Team {
-    name: string;
-    team_id: number;
-    imageUrl: string;
 }
 
 interface MarketData {
@@ -41,6 +44,34 @@ interface MarketData {
     marketData: number[];
     totalTrades: number;
     score: number;
+}
+
+const actions = [
+    {
+        title: 'Trades',
+        icon: ClockIcon,
+        iconForeground: 'text-teal-700',
+        iconBackground: 'bg-teal-50',
+        description: 'Trades are the number of actions your model performed throughout the entire period in which it has been active. To represent the data on the graph, this number has been scaled down to 100 (otherwise the data wouldnt fit!)'
+    },
+    {
+        title: 'Score',
+        icon: CheckBadgeIcon,
+        iconForeground: 'text-purple-700',
+        iconBackground: 'bg-purple-50',
+        description: 'This is the total profit your model has been able to attain whilst performing trades. Whatever charge is left in your battery at the end of the arbitrage period has been sold and added to your score'
+    },
+    {
+        title: 'Last Processed',
+        icon: UsersIcon,
+        iconForeground: 'text-sky-700',
+        iconBackground: 'bg-sky-50',
+        description: 'We get packets of new live data every so often. As soon as we get a new packet of data, it is automatically imported and your model is ran against this new data to see how well it performs. Last processed represents the last time your model was run against new data'
+    },
+]
+
+function classNames(...classes: any) {
+    return classes.filter(Boolean).join(' ')
 }
 
 // Helper function for averaging data points
@@ -55,13 +86,18 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
 }
 
 
-export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores }) => {
-
+export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
     const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], totalTrades: 0, score: 0 });
-    const [teams, setTeams] = useState<Team[]>([]);
-    const [open, setOpen] = useState(true);
+    const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+    const [team, setTeam] = useState<ActivityItem | null>(null);
+    const [open, setOpen] = useState(false);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [tasks, setTasks] = useState<Task[]>([]);
+
+    useEffect(() => {
+        // This effect sets the activityItems state whenever topScores changes
+        setActivityItems(topScores);
+    }, [topScores]);
 
     const fetchData = async (team_id: string, endpoint: string) => {
         if (typeof window !== "undefined") {
@@ -85,6 +121,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
             const { data } = bestData;
             if (data && data.length > 0) {
                 const trialData = data[0].main_trial;
+                console.log("tasks: ", trialData);
 
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
@@ -95,14 +132,20 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
 
                 // Set totalTrades with the episode_length from the response
-                const episodeLength: number = trialData.episode_length;
+                const episodeLength: number = trialData.actions.length;
 
                 // Assuming formatDistanceToNow returns a formatted string indicating the distance to now
                 const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
                 // Update your state with the newly processed data
                 setMarketData({ profitData: averagedProfits, marketData: averagedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
-                // setTeams({ name: topScores.team_name });
+
+                const selectedTeam = topScores.find(team => team.team_id === team_id);
+                if (selectedTeam) {
+                    setTeam(selectedTeam);
+                } else {
+                    console.error('Selected team not found in the list');
+                }
 
                 setIsDataLoaded(true);
             } else {
@@ -112,8 +155,15 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
         }
 
         const submissionsData = await fetchData(stringTeamID, 'getTeamSubmissions');
-        if (submissionsData) {
-            setTasks(submissionsData.data);
+        if (submissionsData && Array.isArray(submissionsData.data)) {
+            // Use the Task interface to type each task in the map function
+            const updatedTasks: Task[] = submissionsData.data.map((task: Task) => ({
+                ...task, // spread the rest of the task properties
+                // Convert Unix timestamp to JS Date object and format
+                created_at: formatDistanceToNow(new Date(task.created_at * 1000), { addSuffix: true }),
+            }));
+
+            setTasks(updatedTasks);
         }
     };
 
@@ -129,7 +179,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
             },
             {
                 name: "Market Price",
-                data: marketData,
+                data: marketData.marketData,
                 color: "#03fcb1",
                 yAxisIndex: 1,
             },
@@ -271,20 +321,47 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                                 leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                             >
                                 <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
-                                    <div>
-                                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                                            <CheckIcon className="h-6 w-6 text-green-600" aria-hidden="true" />
-                                        </div>
-                                        <div className="mt-3 text-center sm:mt-5">
-                                            <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                                                Payment successful
-                                            </Dialog.Title>
-                                            <div className="mt-2">
-                                                <p className="text-sm text-gray-400">
-                                                    Lorem ipsum dolor sit amet consectetur adipisicing elit. Consequatur amet labore.
-                                                </p>
+                                    <div className="divide-y divide-gray-200 overflow-hidden rounded-lg bg-gray-200 shadow sm:grid sm:grid-cols-1 sm:gap-px sm:divide-y-0">
+                                        {actions.map((action, actionIdx) => (
+                                            <div
+                                                key={action.title}
+                                                className={classNames(
+                                                    actionIdx === 0 ? 'rounded-tl-lg rounded-tr-lg sm:rounded-tr-none' : '',
+                                                    actionIdx === 1 ? 'sm:rounded-tr-lg' : '',
+                                                    actionIdx === actions.length - 2 ? 'sm:rounded-bl-lg' : '',
+                                                    actionIdx === actions.length - 1 ? 'rounded-bl-lg rounded-br-lg sm:rounded-bl-none' : '',
+                                                    'group relative bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-500'
+                                                )}
+                                            >
+                                                <div>
+                                                    <span
+                                                        className={classNames(
+                                                            action.iconBackground,
+                                                            action.iconForeground,
+                                                            'inline-flex rounded-lg p-3 ring-4 ring-white'
+                                                        )}
+                                                    >
+                                                        <action.icon className="h-6 w-6" aria-hidden="true" />
+                                                    </span>
+                                                </div>
+                                                <div className="mt-8">
+                                                    <h3 className="text-base font-semibold leading-6 text-gray-900">
+                                                        {action.title}
+                                                    </h3>
+                                                    <p className="mt-2 text-sm text-gray-500">
+                                                        {action.description}
+                                                    </p>
+                                                </div>
+                                                <span
+                                                    className="pointer-events-none absolute right-6 top-6 text-gray-300 group-hover:text-gray-400"
+                                                    aria-hidden="true"
+                                                >
+                                                    <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M20 4h1a1 1 0 00-1-1v1zm-1 12a1 1 0 102 0h-2zM8 3a1 1 0 000 2V3zM3.293 19.293a1 1 0 101.414 1.414l-1.414-1.414zM19 4v12h2V4h-2zm1-1H8v2h12V3zm-.707.293l-16 16 1.414 1.414 16-16-1.414-1.414z" />
+                                                    </svg>
+                                                </span>
                                             </div>
-                                        </div>
+                                        ))}
                                     </div>
                                     <div className="mt-5 sm:mt-6">
                                         <button
@@ -292,7 +369,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                                             className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                             onClick={() => setOpen(false)}
                                         >
-                                            Go back to dashboard
+                                            Close popup
                                         </button>
                                     </div>
                                 </Dialog.Panel>
@@ -324,7 +401,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                     >
                         <Menu.Items className="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                             <div className="py-1">
-                                {Object.values(teams).map((team) => (
+                                {Object.values(activityItems).map((team) => (
                                     <Menu.Item key={team.team_id}>
                                         {({ active }) => (
                                             <button
@@ -334,7 +411,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                                                 block px-4 py-2 text-sm w-full text-left`
                                                 }
                                             >
-                                                {team.name}
+                                                {team.user.name}
                                             </button>
                                         )}
                                     </Menu.Item>
@@ -348,14 +425,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                 <div className="w-full mt-12 bg-gray-800 rounded-lg shadow p-4 md:p-6">
                     {isDataLoaded ? (
                         <div>
-                            {/* <h4 className="max-w-2xl font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
-                                {team_name}
+                            <h4 className="max-w-2xl font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
+                                {team?.user.name}
                             </h4>
-                            <h5 className="px-4 mt-4 text-base font-semibold leading-7 text-white">Best performing commit: {commit_hash}</h5> */}
-                            {/* <div className="mt-10 flex justify-between mb-5">
+                            <h5 className="mt-4 text-base font-semibold leading-7 text-white">Showing results for commit: <span className="text-teal-400">{team?.commit}</span></h5>
+                            <div className="mt-10 flex justify-between mb-5">
                                 <div className="grid gap-4 grid-cols-6">
                                     <div>
-                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Trades
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Trades:
                                             <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" onClick={() => setOpen(true)}>
                                                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                                             </svg>
@@ -363,24 +440,24 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                                         <p className="text-teal-300 text-2xl leading-none font-bold">{trades.length}</p>
                                     </div>
                                     <div>
-                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Score
-                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Score:
+                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" onClick={() => setOpen(true)}>
                                                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                                             </svg>
                                         </h5>
-                                        <p className="text-teal-300 text-2xl leading-none font-bold">{score}</p>
+                                        <p className="text-teal-300 text-2xl leading-none font-bold">{team?.score}</p>
                                     </div>
                                     <div>
-                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Processed
-                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Last processed:
+                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" onClick={() => setOpen(true)}>
                                                 <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
                                             </svg>
                                         </h5>
-                                        <p className="text-teal-300 text-2xl leading-none font-bold">{submitted}</p>
+                                        <p className="text-teal-300 text-2xl leading-none font-bold">{team?.submitted}</p>
                                     </div>
                                 </div>
 
-                            </div> */}
+                            </div>
                             <div id="line-chart"></div>
                             <ReactApexChart
                                 options={options}
@@ -390,19 +467,13 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                             />
                             <div className="grid grid-cols-1 items-center border-gray-200 border-t dark:border-gray-700 justify-between mt-2.5">
                                 <div className="pt-5">
-                                    {/* <button
-                                className="px-5 py-2.5 text-sm font-medium text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 rounded-lg text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-                            >
-                                <svg className="w-3.5 h-3.5 text-white me-2 rtl:rotate-180" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 20">
-                                    <path d="M14.066 0H7v5a2 2 0 0 1-2 2H0v11a1.97 1.97 0 0 0 1.934 2h12.132A1.97 1.97 0 0 0 16 18V2a1.97 1.97 0 0 0-1.934-2Zm-3 15H4.828a1 1 0 0 1 0-2h6.238a1 1 0 0 1 0 2Zm0-4H4.828a1 1 0 0 1 0-2h6.238a1 1 0 1 1 0 2Z"></path>
-                                    <path d="M5 5V.13a2.96 2.96 0 0 0-1.293.749L.879 3.707A2.98 2.98 0 0 0 .13 5H5Z"></path>
-                                </svg>
-                                View full report
-                            </button> */}
                                 </div>
                             </div>
 
                             {/* Tasks Submitted list */}
+                            <h4 className="max-w-2xl font-display text-lg font-medium tracking-tighter text-teal-300 mb-2">
+                                Recent runs:
+                            </h4>
                             <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                 {tasks.map((task) => (
                                     <li key={task.created_at} className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow">
@@ -431,7 +502,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores })
                                                 </span>
                                             ) :
                                                 <span className="flex-shrink items-center px-2 py-2 text-xs font-medium text-green-700 break-words max-w-full min-h-24 max-h-24 overflow-auto">
-                                                    No errors
+                                                    Updated score with no errors
                                                 </span>
                                             }
                                         </div>

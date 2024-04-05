@@ -1,7 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { Container } from './Container';
-import { formatDistanceToNow } from 'date-fns';
 
 interface LeaderboardProps {
     topScores?: ActivityItem[];
@@ -54,7 +53,6 @@ function updateCities(data: ActivityItem[]) {
             totalTeamsSyd++;
             totalScoreSyd += Number(team.score);
         }
-        console.log('topscores: ', totalTeamsMel, totalScoreMel, totalTeamsSyd, totalScoreSyd);
     });
 
     let cities = {
