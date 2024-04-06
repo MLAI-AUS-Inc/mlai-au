@@ -9,7 +9,8 @@ const awsConfig = {
   // Pass the configuration to DynamoDB client
   const docClient = new DynamoDB.DocumentClient(awsConfig);
 
-  export async function GET() {
+  export async function GET()  {
+    
     console.log('Handling GET request on /api/getTopScores');
   
   const params = {
@@ -26,10 +27,25 @@ const awsConfig = {
     const data = await docClient.scan(params).promise();
     // Note that scan does not sort the results. You'll need to sort them after retrieval if needed.
     if (data.Items) {
-      const sortedItems = data.Items.sort((a, b) => b.score - a.score); // Sort by score in descending order
+        // Group items by team_id
+        const groupedByTeamId = data.Items.reduce((acc, item) => {
+            (acc[item.team_id] = acc[item.team_id] || []).push(item);
+            return acc;
+        }, {});
+
+        // For each group, find the item with the latest submitted_at
+        const latestSubmissions = Object.values(groupedByTeamId).map(group => {
+            return group.reduce((prev: any, current: any) => {
+                return (prev.submitted_at > current.submitted_at) ? prev : current;
+            });
+        });
+
+
+      const sortedItems = latestSubmissions.sort((a, b) => b.score - a.score); // Sort by score in descending order
       return new Response(JSON.stringify({ data: sortedItems }), {
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 's-maxage=0, stale-while-revalidate'
         },
       });
     } else {
@@ -37,6 +53,7 @@ const awsConfig = {
       return new Response(JSON.stringify({ data: [] }), {
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 's-maxage=0, stale-while-revalidate'
         },
       });
     }
@@ -46,6 +63,7 @@ const awsConfig = {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 's-maxage=0, stale-while-revalidate'
       },
     });
   }
