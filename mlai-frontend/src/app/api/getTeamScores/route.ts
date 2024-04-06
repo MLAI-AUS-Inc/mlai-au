@@ -30,7 +30,7 @@ export async function GET(req: any, res: any) {
         },
         ProjectionExpression: "main_trial, class_name, mean_profit, seconds_elapsed, std_profit, score, team_name, git_commit_hash, submitted_at, error_traceback",
         ScanIndexForward: false,
-        Limit: 4,
+        Limit: 50,
     };
 
     // console.log('Querying DynamoDB with params:', params);
