@@ -272,11 +272,6 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                 <div className="mr-8">
                                     Teams: <span className="text-teal-400">{cities.syd.teams}</span>
                                 </div>
-                                <div className="-ml-4 flex items-center gap-x-4">
-                                    <div className="flex gap-x-2.5">
-                                        Commits: <span className="text-teal-400">{cities.syd.commits}</span>
-                                    </div>
-                                </div>
                             </div>
                             <div className="flex flex-wrap items-center gap-y-1 overflow-hidden text-sm font-bold leading-6 text-gray-300">
                                 <div className="mr-8">
