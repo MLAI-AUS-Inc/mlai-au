@@ -41,6 +41,7 @@ export async function GET(req: any, res: any) {
         return new Response(JSON.stringify({ data: data.Items }), {
             headers: {
                 'Content-Type': 'application/json',
+                'Cache-Control': 's-maxage=0, stale-while-revalidate'
             },
         });
     } catch (err: any) {
@@ -49,6 +50,7 @@ export async function GET(req: any, res: any) {
             status: 500,
             headers: {
                 'Content-Type': 'application/json',
+                'Cache-Control': 's-maxage=0, stale-while-revalidate'
             },
         });
     }
