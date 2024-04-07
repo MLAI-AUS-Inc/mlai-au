@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Container } from './Container';
 import { Button } from './Button';
 import { formatDistanceToNow } from 'date-fns';
-import { ArrowDownOnSquareIcon, ArrowPathIcon } from '@heroicons/react/20/solid';
+import { ArrowDownOnSquareIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid';
 
 interface LeaderboardProps {
     topScores?: ActivityItem[];
@@ -87,7 +87,19 @@ function classNames(...classes: any) {
 }
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    const indexOfLastItem = currentPage * itemsPerPage;
+    const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+    const currentItems = activityItems.slice(indexOfFirstItem, indexOfLastItem);
+    const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+    const pageNumbers = [];
+    for (let i = 1; i <= Math.ceil(activityItems.length / itemsPerPage); i++) {
+        pageNumbers.push(i);
+    }
+
+
     const [cities, setCities] = useState<Cities>({
         mel: {
             name: 'Melbourne',
@@ -134,7 +146,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                 submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
             }));
             // Sorting the items by score in descending order
-            updatedActivityItems.sort((a:any, b:any) => b.score - a.score);
+            updatedActivityItems.sort((a: any, b: any) => b.score - a.score);
             setActivityItems(updatedActivityItems);
             const updatedCities = updateCities(updatedActivityItems)
             setCities(updatedCities);
@@ -147,7 +159,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
 
     useEffect(() => {
         // Update the city leaderboards
-        topScores.sort((a:any, b:any) => b.score - a.score);
+        topScores.sort((a: any, b: any) => b.score - a.score);
         setActivityItems(topScores)
 
         // Update the city leaderboards
@@ -190,32 +202,32 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                     <th scope="col" className="py-2 pl-4 pr-8 font-semibold sm:pl-6 lg:pl-8">
                                         Team
                                     </th>
-                                    <th scope="col" className="hidden py-2 pl-0 pr-8 font-semibold sm:table-cell">
+                                    <th scope="col" className="py-2 pl-0 pr-8 font-semibold">
                                         Commit
                                     </th>
                                     <th scope="col" className="py-2 pl-0 pr-4 text-right font-semibold sm:pr-8 sm:text-left lg:pr-20">
                                         City
                                     </th>
-                                    <th scope="col" className="hidden py-2 pl-0 pr-8 font-semibold md:table-cell lg:pr-20">
+                                    <th scope="col" className="py-2 pl-0 pr-8 font-semibold lg:pr-20">
                                         Score
                                     </th>
-                                    <th scope="col" className="hidden py-2 pl-0 pr-4 text-right font-semibold sm:table-cell sm:pr-6 lg:pr-8">
+                                    <th scope="col" className="py-2 pl-0 pr-4 text-right font-semibold sm:pr-6 lg:pr-8">
                                         Last Updated
                                     </th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {activityItems.map((item, index) => (
+                                {currentItems.map((item, index) => (
                                     <tr key={item.user.name}>
                                         <td className="py-4 pl-2 pr-2 sm:pl-6 lg:pl-8">
-                                            {/* Conditionally render medal based on index */}
-                                            {index === 0 && (
+                                            {/* Adjust condition to also check if currentPage is 1 */}
+                                            {currentPage === 1 && index === 0 && (
                                                 <img src="/first.png" alt="Gold medal" className="inline-block h-6 w-6" />
                                             )}
-                                            {index === 1 && (
+                                            {currentPage === 1 && index === 1 && (
                                                 <img src="/second.png" alt="Silver medal" className="inline-block h-6 w-6" />
                                             )}
-                                            {index === 2 && (
+                                            {currentPage === 1 && index === 2 && (
                                                 <img src="/third.png" alt="Silver medal" className="inline-block h-6 w-6" />
                                             )}
                                         </td>
@@ -225,7 +237,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                                 <div className="truncate text-sm font-medium leading-6 text-white">{item.user.name}</div>
                                             </div>
                                         </td>
-                                        <td className="hidden py-4 pl-0 pr-4 sm:table-cell sm:pr-8">
+                                        <td className="py-4 pl-0 pr-4 sm:pr-8">
                                             <div className="flex gap-x-3">
                                                 <div className="font-mono text-sm leading-6 text-gray-400">
                                                     {item.commit.length > 10 ? `${item.commit.substring(0, 10)}...` : item.commit}
@@ -237,25 +249,66 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                         </td>
                                         <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
                                             <div className="flex items-center justify-end gap-x-2 sm:justify-start">
-                                                <time className="text-gray-400 sm:hidden">
+                                                <time className="text-gray-400">
                                                     {item.submitted}
                                                 </time>
                                                 <div className={classNames(city[item.city], 'flex-none rounded-full p-1')}>
                                                     <div className="h-1.5 w-1.5 rounded-full bg-current" />
                                                 </div>
-                                                <div className="hidden text-white sm:block">{item.city}</div>
+                                                <div className=" text-white sm:block">{item.city}</div>
                                             </div>
                                         </td>
-                                        <td className="hidden py-4 pl-0 pr-8 text-md font-bold leading-6 text-teal-400 md:table-cell lg:pr-20">
+                                        <td className="py-4 pl-0 pr-8 text-md font-bold leading-6 text-teal-400 lg:pr-20">
                                             {item.score}
                                         </td>
-                                        <td className="hidden py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:table-cell sm:pr-6 lg:pr-8">
+                                        <td className="py-4 pl-0 pr-4 text-right text-sm leading-6 text-gray-400 sm:pr-6 lg:pr-8">
                                             <time>{item.submitted}</time>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
+                        <div className="flex items-center justify-between border-t border-gray-400 bg-gray-900 px-4 py-3 sm:px-6">
+                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                <div>
+                                    <p className="text-sm text-gray-200">
+                                        Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to <span className="font-medium">{indexOfLastItem > activityItems.length ? activityItems.length : indexOfLastItem}</span> of{' '}
+                                        <span className="font-medium">{activityItems.length}</span> results
+                                    </p>
+                                </div>
+                                <div>
+                                    <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                                        <a
+                                            onClick={() => setCurrentPage(currentPage > 1 ? currentPage - 1 : 1)}
+                                            className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-600 focus:z-20 focus:outline-offset-0"
+                                            href="#!"
+                                        >
+                                            <span className="sr-only">Previous</span>
+                                            <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
+                                        </a>
+                                        {pageNumbers.map(number => (
+                                            <a
+                                                key={number}
+                                                onClick={() => paginate(number)}
+                                                href="#!"
+                                                className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-200 ring-1 ring-inset ring-gray-300 hover:bg-gray-600 focus:z-20 focus:outline-offset-0 ${currentPage === number ? "bg-gray-700" : ""
+                                                    }`}
+                                            >
+                                                {number}
+                                            </a>
+                                        ))}
+                                        <a
+                                            onClick={() => setCurrentPage(currentPage < pageNumbers.length ? currentPage + 1 : pageNumbers.length)}
+                                            className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-600 focus:z-20 focus:outline-offset-0"
+                                            href="#!"
+                                        >
+                                            <span className="sr-only">Next</span>
+                                            <ChevronRightIcon className="h-5 w-5" aria-hidden="true" />
+                                        </a>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -284,7 +337,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                 </div>
                             </div>
                             <div className="-mt-10 flex justify-end items-end gap-x-4 text-sm font-bold leading-6 text-gray-300">
-                                <div className="mr-8"> Score:
+                                <div className="mr-0"> Score:
                                     <span className="text-4xl font-bold leading-6 text-teal-400 ml-2">{cities.mel.score}</span>
                                 </div>
                             </div>
@@ -327,7 +380,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                 </div>
                             </div>
                             <div className="-mt-10 flex justify-end items-end gap-x-4 text-sm font-bold leading-6 text-gray-300">
-                                <div className="mr-8"> Score:
+                                <div className="mr-0"> Score:
                                     <span className="text-4xl font-bold leading-6 text-teal-400 ml-2">{cities.syd.score}</span>
                                 </div>
                             </div>
