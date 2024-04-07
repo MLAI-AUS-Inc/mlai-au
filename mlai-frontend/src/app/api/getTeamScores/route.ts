@@ -33,8 +33,6 @@ export async function GET(req: any, res: any) {
         Limit: 50,
     };
 
-    // console.log('Querying DynamoDB with params:', params);
-
     try {
         const data: any = await docClient.query(params).promise();
         console.log('Query successful, items returned:', data.Items.length);
