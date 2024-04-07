@@ -4,10 +4,10 @@ import { Container } from './Container';
 import dynamic from 'next/dynamic';
 
 const ReactApexChart = dynamic(() => import('react-apexcharts'), {
-  ssr: false, // This line disables server-side rendering
+    ssr: false, // This line disables server-side rendering
 });
 import { Dialog, Menu, Transition } from '@headlessui/react';
-import { CheckIcon, ChevronDownIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid';
+import { ArrowDownOnSquareIcon, CheckIcon, ChevronDownIcon, EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid';
 import { formatDistanceToNow } from 'date-fns';
 import {
     AcademicCapIcon,
@@ -17,6 +17,7 @@ import {
     ReceiptRefundIcon,
     UsersIcon,
 } from '@heroicons/react/24/outline'
+import { Button } from './Button';
 
 interface SubmissionViewerProps {
     topScores?: ActivityItem[];
@@ -104,16 +105,16 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     }, [topScores]);
 
     const fetchData = async (team_id: string, endpoint: string) => {
-            try {
-                const queryParams = new URLSearchParams({ team_id });
-                const response = await fetch(`/api/${endpoint}?${queryParams}`);
-                if (!response.ok) {
-                    throw new Error(`Failed to fetch: ${response.statusText}`);
-                }
-                return response.json();
-            } catch (error) {
-                console.error('Error caught during fetch operation:', error);
+        try {
+            const queryParams = new URLSearchParams({ team_id });
+            const response = await fetch(`/api/${endpoint}?${queryParams}`);
+            if (!response.ok) {
+                throw new Error(`Failed to fetch: ${response.statusText}`);
             }
+            return response.json();
+        } catch (error) {
+            console.error('Error caught during fetch operation:', error);
+        }
     };
 
     const handleMenuItemClick = (team_id: number) => async () => {
@@ -292,6 +293,50 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         ],
     } as any;
 
+    const downloadSubmissions = () => {
+        // Convert tasks array to JSON string
+        const jsonString = JSON.stringify(tasks);
+
+        // Create a Blob from the JSON string
+        const blob = new Blob([jsonString], { type: "application/json" });
+
+        // Create a URL for the blob
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element and trigger the download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "tasks.json"; // Filename to download
+        document.body.appendChild(a); // Append to the document
+        a.click(); // Trigger click to download
+
+        // Cleanup by removing the anchor element and revoking the blob URL
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const downloadSubmission = (task: Task) => {
+        // Convert single task object to JSON string
+        const jsonString = JSON.stringify(task);
+        
+        // Create a Blob from the JSON string
+        const blob = new Blob([jsonString], { type: "application/json" });
+        
+        // Create a URL for the blob
+        const url = URL.createObjectURL(blob);
+        
+        // Create a temporary anchor element and trigger the download
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `task-${task.created_at}.json`; // Filename to download, using the task's created_at timestamp for uniqueness
+        document.body.appendChild(a); // Append to the document
+        a.click(); // Trigger click to download
+        
+        // Cleanup by removing the anchor element and revoking the blob URL
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      };
+      
 
     return (
 
@@ -472,7 +517,11 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                             </div>
 
                             {/* Tasks Submitted list */}
-                            <h4 className="max-w-2xl font-display text-lg font-medium tracking-tighter text-teal-300 mb-2">
+                            <Button color="teal" onClick={downloadSubmissions} className="whitespace-nowrap my-2">
+                                Download all submissions JSON
+                            </Button>
+
+                            <h4 className="max-w-2xl font-display text-xl font-medium tracking-tighter text-teal-300 mb-2">
                                 Recent runs:
                             </h4>
                             <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -507,18 +556,18 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                                                 </span>
                                             }
                                         </div>
-                                        {/* <div>
+                                        <div>
                                             <div className="-mt-px flex divide-x divide-gray-200">
                                                 <div className="flex w-0 flex-1">
                                                     <a
-                                                        href='/'
-                                                        className="relative -mr-px inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-bl-lg border border-transparent py-4 text-sm font-semibold text-gray-900"
+                                                        onClick={() => downloadSubmission(task)}
+                                                        className="relative cursor-pointer -mr-px inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-bl-lg border border-transparent py-4 text-sm font-semibold text-gray-900"
                                                     >
-                                                        <EnvelopeIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                                        Email
+                                                        <ArrowDownOnSquareIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
+                                                        Download
                                                     </a>
                                                 </div>
-                                                <div className="-ml-px flex w-0 flex-1">
+                                                {/* <div className="-ml-px flex w-0 flex-1">
                                                     <a
                                                         href='/'
                                                         className="relative inline-flex w-0 flex-1 items-center justify-center gap-x-3 rounded-br-lg border border-transparent py-4 text-sm font-semibold text-gray-900"
@@ -526,9 +575,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                                                         <PhoneIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
                                                         Call
                                                     </a>
-                                                </div>
+                                                </div> */}
                                             </div>
-                                        </div> */}
+                                        </div>
                                     </li>
                                 ))}
                             </ul>
