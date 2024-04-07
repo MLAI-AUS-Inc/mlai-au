@@ -51,6 +51,8 @@ interface MarketData {
     symLogMarketData: number[];
     totalTrades: number;
     score: number;
+    socs: number[];
+    actions: number[];
 }
 
 const actions = [
@@ -105,14 +107,14 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
 }
 
 
-function selectEvenlySpacedItems(n:number, array: any[]) {
+function selectEvenlySpacedItems(n: number, array: any[]) {
     const result: any[] = [];
     const totalItems = array.length;
-    
+
     // If n is 1, return the last item; if array is empty or n is 0, return empty array
     if (n === 1) return [array[totalItems - 1]];
     if (n <= 0 || totalItems === 0) return result;
-    
+
     // Compute the interval between selected items, ensuring the last item is included
     const step = (totalItems - 1) / (n - 1);
 
@@ -125,12 +127,13 @@ function selectEvenlySpacedItems(n:number, array: any[]) {
 }
 
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
-    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], timestamps: [], totalTrades: 0, score: 0 });
+    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], timestamps: [], totalTrades: 0, score: 0, socs: [], actions: [] });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
     const [team, setTeam] = useState<ActivityItem | null>(null);
     const [open, setOpen] = useState(false);
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [rawData, setRawData] = useState(null);
 
     useEffect(() => {
         // This effect sets the activityItems state whenever topScores changes
@@ -156,8 +159,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         if (bestData) {
             const { data } = bestData;
             if (data && data.length > 0) {
-                const trialData = data[0].main_trial;
-
+                let trialData = data[0].main_trial;
+                setRawData(trialData);
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
                 // log scale market prices, in symmetric log
@@ -171,6 +174,19 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
                 const evenlySpacedTimestamps = selectEvenlySpacedItems(100, trialData.timestamps);
 
+                // SOCs
+                const maxSOCValue = 13.5; // Maximum SOC value representing 100%
+                const socs: number[] = trialData.socs;
+                const averagedSOCs = averageDataPoints(socs, 100);
+                const transformedSOCs = averagedSOCs.map((soc) => {
+                    const normalizedSOC = (soc / maxSOCValue) * 100; // Transform SOC to percentage
+                    return Number(normalizedSOC.toFixed(2)); // Round to 2 decimal places and ensure it's a number
+                });
+
+                // Actions
+                const actions: number[] = trialData.actions;
+                const averagedActions = averageDataPoints(actions, 100).map((action) => Number(action.toFixed(2)));
+
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
 
@@ -178,7 +194,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
                 // Update your state with the newly processed data
-                setMarketData({ profitData: averagedProfits, timestamps: evenlySpacedTimestamps, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
+                setMarketData({ profitData: averagedProfits, timestamps: evenlySpacedTimestamps, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)), socs: transformedSOCs, actions: averagedActions });
 
                 const selectedTeam = topScores.find(team => team.team_id === team_id);
                 if (selectedTeam) {
@@ -205,6 +221,19 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
 
             setTasks(updatedTasks);
         }
+    };
+
+    const downloadTrialData = (trialData: any) => {
+        const jsonString = JSON.stringify(trialData);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "trialData.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     };
 
     const trades = Array.from({ length: marketData.totalTrades }, (_, index) => index + 1);
@@ -251,7 +280,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 format: 'dd MMM HH:ss',
             },
             y: {
-                formatter: function (_value: any, { seriesIndex, dataPointIndex, w }: { seriesIndex: any, dataPointIndex: any, w: any }) {
+                formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
                     if (seriesIndex === 0) { // Profits
                         return `\$${marketData.profitData[dataPointIndex].toFixed(2)}`;
                     } else if (seriesIndex === 1) { // Market Prices
@@ -297,7 +326,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // First Y-axis for the Profits
                 show: true,
                 title: {
-                    text: "Profit",
+                    text: "Profit (Smoothed)",
                     style: {
                         color: "#7E3AF2",
                     }
@@ -339,6 +368,80 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         ],
     } as any;
 
+    const socOptions = {
+        ...options, // Spread the original options to reuse configurations like chart, fill, etc.
+        series: [
+            {
+                name: "State of Charge",
+                data: marketData.socs.map((soc, idx) => [marketData.timestamps[idx] * 1000, soc]),
+                color: "#FFE333",
+                yAxisIndex: 0,
+            },
+            {
+                name: "Actions",
+                data: marketData.actions.map((action, idx) => [marketData.timestamps[idx] * 1000, action]),
+                color: "#33B2FF",
+                yAxisIndex: 1,
+            },
+        ],
+        yaxis: [
+            {
+                // Y-axis for SOC
+                show: true,
+                title: {
+                    text: "State of Charge (Smoothed)",
+                    style: {
+                        color: "#FFE333",
+                    }
+                },
+                labels: {
+                    formatter: (value: any) => `${value.toFixed(2)}%`, // Format as percentage
+                    style: {
+                        colors: "#FFE333",
+                    }
+                },
+            },
+            {
+                // New Y-axis for Actions, positioned on the opposite side
+                opposite: true,
+                show: true,
+                title: {
+                    text: "Actions (Smoothed)",
+                    style: {
+                        color: "#33B2FF", // Example color for Actions Y-axis title
+                    }
+                },
+                labels: {
+                    style: {
+                        colors: "#33B2FF", // Example color for Actions Y-axis labels
+                    }
+                },
+                min: -10, // Set the minimum value of the Y-axis to -10
+                max: 10, // Set the maximum value of the Y-axis to 10
+                tickAmount: 4,
+            }
+        ],
+        legend: {
+            show: true
+        },
+        tooltip: {
+            enabled: true,
+            x: {
+                format: 'dd MMM HH:ss',
+            },
+            y: {
+                formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
+                    if (seriesIndex === 0) { // SOC
+                        return `${marketData.socs[dataPointIndex].toFixed(2)}% SOC`;
+                    } else if (seriesIndex === 1) { // Actions
+                        // Adjust this tooltip formatter as needed for Actions data
+                        return `${marketData.actions[dataPointIndex].toFixed(2)}`;
+                    }
+                }
+            },
+        },
+    };
+
     const downloadSubmissions = () => {
         // Convert tasks array to JSON string
         const jsonString = JSON.stringify(tasks);
@@ -364,25 +467,25 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     const downloadSubmission = (task: Task) => {
         // Convert single task object to JSON string
         const jsonString = JSON.stringify(task);
-        
+
         // Create a Blob from the JSON string
         const blob = new Blob([jsonString], { type: "application/json" });
-        
+
         // Create a URL for the blob
         const url = URL.createObjectURL(blob);
-        
+
         // Create a temporary anchor element and trigger the download
         const a = document.createElement("a");
         a.href = url;
         a.download = `task-${task.created_at}.json`; // Filename to download, using the task's created_at timestamp for uniqueness
         document.body.appendChild(a); // Append to the document
         a.click(); // Trigger click to download
-        
+
         // Cleanup by removing the anchor element and revoking the blob URL
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-      };
-      
+    };
+
 
     return (
 
@@ -521,6 +624,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                                 {team?.user.name}
                             </h4>
                             <h5 className="mt-4 text-base font-semibold leading-7 text-white">Showing results for commit: <span className="text-teal-400">{team?.commit}</span></h5>
+                            <Button color="teal" onClick={() => downloadTrialData(rawData)} className="whitespace-nowrap my-2">
+                                Download Raw Data JSON
+                            </Button>
                             <div className="mt-10 flex justify-between mb-5">
                                 <div className="grid gap-4 grid-cols-6">
                                     <div>
@@ -552,8 +658,17 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                             </div>
                             <div id="line-chart"></div>
                             <ReactApexChart
+                                key="profit-market-chart"
                                 options={options}
                                 series={options.series}
+                                type="area"
+                                height={500}
+                            />
+
+                            <ReactApexChart
+                                key="soc-chart"
+                                options={socOptions}
+                                series={socOptions.series}
                                 type="area"
                                 height={500}
                             />
@@ -563,13 +678,12 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                             </div>
 
                             {/* Tasks Submitted list */}
+                            <h4 className="max-w-2xl font-display text-2xl font-medium tracking-tighter text-teal-300 mb-2">
+                                Recent runs:
+                            </h4>
                             <Button color="teal" onClick={downloadSubmissions} className="whitespace-nowrap my-2">
                                 Download all submissions JSON
                             </Button>
-
-                            <h4 className="max-w-2xl font-display text-xl font-medium tracking-tighter text-teal-300 mb-2">
-                                Recent runs:
-                            </h4>
                             <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                                 {tasks.map((task, idx) => (
                                     <li key={idx} className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow">
