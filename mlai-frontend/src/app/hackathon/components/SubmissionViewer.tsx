@@ -87,6 +87,7 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
         const start = i * chunkSize;
         const end = start + chunkSize;
         const chunk = data.slice(start, Math.min(end, data.length));
+        console.log(chunk);
         return chunk.reduce((acc, val) => acc + val, 0) / (chunk.length || 1);
     });
 }
@@ -136,6 +137,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
+                console.log(averagedProfits)
 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
@@ -282,19 +284,16 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 tickAmount: 2,
                 min: 2.5,
                 max: -1.7,
-                // Second Y-axis for the Market Prices
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
-                // logarithmic: true,
                 title: {
-                    text: "Market Price",
+                    text: "Market Price (smoothed)",
                     style: {
                         color: "#03fcb1",
                     }
                 },
                 labels: {
                     formatter: function (value: any) {
-                        console.log(value)
                         if (value === -1.7) {
                             return `\$${Math.min(...marketData.marketData).toFixed(2)}`;
                         }
@@ -544,8 +543,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                                 Recent runs:
                             </h4>
                             <ul role="list" className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                                {tasks.map((task) => (
-                                    <li key={task.created_at} className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow">
+                                {tasks.map((task, idx) => (
+                                    <li key={idx} className="col-span-1 divide-y divide-gray-200 rounded-lg bg-white shadow">
                                         <div className="flex w-full items-center justify-between space-x-6 p-6">
                                             <div className="flex-1 truncate">
                                                 <div className="flex items-center space-x-3">
