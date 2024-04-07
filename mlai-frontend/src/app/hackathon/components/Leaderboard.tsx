@@ -249,9 +249,6 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                         </td>
                                         <td className="py-4 pl-0 pr-4 text-sm leading-6 sm:pr-8 lg:pr-20">
                                             <div className="flex items-center justify-end gap-x-2 sm:justify-start">
-                                                <time className="text-gray-400">
-                                                    {item.submitted}
-                                                </time>
                                                 <div className={classNames(city[item.city], 'flex-none rounded-full p-1')}>
                                                     <div className="h-1.5 w-1.5 rounded-full bg-current" />
                                                 </div>
