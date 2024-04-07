@@ -18,7 +18,7 @@ const awsConfig = {
     FilterExpression: "team_id BETWEEN :start_id AND :end_id",
     ExpressionAttributeValues: {
       ":start_id": 1,
-      ":end_id": 100,
+      ":end_id":50,
     },
     ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
   };
