@@ -34,6 +34,7 @@ interface ActivityItem {
     score: number;
     submitted: string;
     team_id: number;
+    policy: string;
 }
 
 interface Task {
@@ -53,6 +54,7 @@ interface MarketData {
     score: number;
     socs: number[];
     actions: number[];
+    policy: string;
 }
 
 const actions = [
@@ -127,7 +129,7 @@ function selectEvenlySpacedItems(n: number, array: any[]) {
 }
 
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
-    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], timestamps: [], totalTrades: 0, score: 0, socs: [], actions: [] });
+    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], timestamps: [], totalTrades: 0, score: 0, socs: [], actions: [], policy: '' });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
     const [team, setTeam] = useState<ActivityItem | null>(null);
     const [open, setOpen] = useState(false);
@@ -190,11 +192,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
 
+                // Set policy
+                const policy: string = trialData.class_name;
+
                 // Assuming formatDistanceToNow returns a formatted string indicating the distance to now
                 const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
                 // Update your state with the newly processed data
-                setMarketData({ profitData: averagedProfits, timestamps: evenlySpacedTimestamps, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)), socs: transformedSOCs, actions: averagedActions });
+                setMarketData({ profitData: averagedProfits, timestamps: evenlySpacedTimestamps, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)), socs: transformedSOCs, actions: averagedActions, policy: policy });
 
                 const selectedTeam = topScores.find(team => team.team_id === team_id);
                 if (selectedTeam) {
@@ -652,6 +657,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                                             </svg>
                                         </h5>
                                         <p className="text-teal-300 text-2xl leading-none font-bold">{team?.submitted}</p>
+                                    </div>
+                                    <div>
+                                        <h5 className="inline-flex items-center text-gray-400 leading-none font-normal mb-2">Policy
+                                            <svg className="w-3 h-3 text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer ms-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" onClick={() => setOpen(true)}>
+                                                <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5ZM9.5 4a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM12 15H8a1 1 0 0 1 0-2h1v-3H8a1 1 0 0 1 0-2h2a1 1 0 0 1 1 1v4h1a1 1 0 0 1 0 2Z" />
+                                            </svg>
+                                        </h5>
+                                        <p className="text-teal-300 text-2xl leading-none font-bold">{team?.policy}</p>
                                     </div>
                                 </div>
 
