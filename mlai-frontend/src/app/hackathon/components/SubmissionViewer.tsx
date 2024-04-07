@@ -90,13 +90,6 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
     });
 }
 
-
-function invertSymLogMarketPrices(price: number) {
-    const sign = Math.sign(price); // retrieve the original sign of the price
-    const absValue = Math.pow(10, Math.abs(price)) - 1; // invert the log10 and subtract 1 to get the original absolute value
-    return sign * absValue; // apply the original sign to get the original price
-}
-
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
     const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], totalTrades: 0, score: 0 });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
@@ -225,9 +218,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex, w }: { seriesIndex: any, dataPointIndex: any, w: any }) {
                     if (seriesIndex === 0) { // Profits
-                        return `${marketData.profitData[dataPointIndex].toFixed(2)}`;
+                        return `\$${marketData.profitData[dataPointIndex].toFixed(2)}`;
                     } else if (seriesIndex === 1) { // Market Prices
-                        return `${marketData.marketData[dataPointIndex].toFixed(2)}`;
+                        return `\$${marketData.marketData[dataPointIndex].toFixed(2)}`;
                     }
                 }
             },
@@ -285,6 +278,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 },
             },
             {
+                tickAmount: 2,
+                min: 2.5,
+                max: -1.7,
                 // Second Y-axis for the Market Prices
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
@@ -296,10 +292,16 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                     }
                 },
                 labels: {
-                    formatter: function (value: any, index: any) {
-                        console.log('value:', value, 'index:', index);
-                        return invertSymLogMarketPrices(value);
-                        // return `${marketData.marketData[index.seriesIndex].toFixed(2)}`;
+                    formatter: function (value: any) {
+                        console.log(value)
+                        if (value === -1.7) {
+                            return `\$${Math.min(...marketData.marketData).toFixed(2)}`;
+                        }
+                        if (value === 2.5) {
+                            return `\$${Math.max(...marketData.marketData).toFixed(2)}`;
+                        }
+
+                        return ""
                     },
                     style: {
                         colors: "#03fcb1",
