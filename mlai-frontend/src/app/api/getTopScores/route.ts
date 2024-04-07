@@ -42,10 +42,10 @@ const awsConfig = {
         });
 
 
-        console.log('latestSubmissions: ', latestSubmissions);
-      const sortedItems = latestSubmissions.sort((a, b) => b.score - a.score); // Sort by score in descending order
-      console.log('sortedItems: ', sortedItems);
-      return new Response(JSON.stringify({ data: sortedItems }), {
+      //   console.log('latestSubmissions: ', latestSubmissions);
+      // const sortedItems = latestSubmissions.sort((a, b) => b.score - a.score); // Sort by score in descending order
+      // console.log('sortedItems: ', sortedItems);
+      return new Response(JSON.stringify({ data: latestSubmissions }), {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 's-maxage=1, stale-while-revalidate'
