@@ -27,13 +27,10 @@ export async function GET(req: any, res: any) {
         KeyConditionExpression: "team_id = :teamValue",
         ExpressionAttributeValues: {
             ":teamValue": numericTeamId,
-            ":typeVal1": 'submission-kickoff',
-            ":typeVal2": 'evaluation',
         },
-        FilterExpression: "task_type = :typeVal1 OR task_type = :typeVal2",
-        ProjectionExpression: "run_at, stop_at, id, task_type, state_, team_name, commit_hash, created_at, diagnostic",
+        ProjectionExpression: "run_at, stop_at, id, task_type, state_, team_name, commit_hash, created_at, diagnostic, id_next, command",
         ScanIndexForward: false,
-        Limit: 6
+        Limit: 20
     };
 
     // console.log('Querying DynamoDB with params:', params);
