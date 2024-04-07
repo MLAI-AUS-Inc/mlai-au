@@ -23,6 +23,7 @@ interface ActivityItem {
     score: number;
     submitted: string;
     team_id: number;
+    policy: string;
 }
 
 const HackathonPage = () => {
@@ -54,7 +55,8 @@ const HackathonPage = () => {
                     branch: 'main', // Assuming default or fetch from another source
                     city: item.city,
                     score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
-                    submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
+                    submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true }),
+                    policy: item.class_name
                 }));
                 setActivityItems(updatedActivityItems);
                 console.log('Data received:', result.data);
