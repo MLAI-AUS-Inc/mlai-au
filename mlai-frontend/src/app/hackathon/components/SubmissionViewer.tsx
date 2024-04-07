@@ -82,16 +82,26 @@ function classNames(...classes: any) {
 
 // Helper function for averaging data points
 function averageDataPoints(data: number[], targetPoints: number): number[] {
-    const chunkSize = Math.ceil(data.length / targetPoints);
-    return Array.from({ length: targetPoints }, (_, i) => {
-        const start = i * chunkSize;
-        const end = start + chunkSize;
-        const chunk = data.slice(start, Math.min(end, data.length));
-        console.log(chunk);
-        return chunk.reduce((acc, val) => acc + val, 0) / (chunk.length || 1);
-    });
-}
+    const n = data.length;
+    const chunkSize = Math.floor(n / targetPoints);
+    const remainder = n % targetPoints;
+    let result: number[] = [];
+    let start = 0;
 
+    for (let i = 0; i < targetPoints; i++) {
+        // Increase the chunk size for the first 'remainder' chunks by 1
+        const adjustedChunkSize = chunkSize + (i < remainder ? 1 : 0);
+        const end = start + adjustedChunkSize;
+        const chunk = data.slice(start, end);
+        // Calculate the average, ensuring no division by zero
+        const average = chunk.length > 0 ? chunk.reduce((acc, val) => acc + val, 0) / chunk.length : 0;
+        result.push(average);
+        // Move the start pointer
+        start = end;
+    }
+
+    return result;
+}
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
     const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], totalTrades: 0, score: 0 });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
