@@ -1,5 +1,17 @@
 import { DynamoDB } from 'aws-sdk';
 
+async function scanDynamoDB(docClient: DynamoDB.DocumentClient, params: any): Promise<any[]> {
+  let scanResults: any[] = [];
+  let items;
+  do {
+    items = await docClient.scan(params).promise();
+    items.Items?.forEach((item) => scanResults.push(item));
+    params.ExclusiveStartKey = items.LastEvaluatedKey;
+  } while (typeof items.LastEvaluatedKey != "undefined");
+
+  return scanResults;
+}
+
 const awsConfig = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID, 
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, 
@@ -18,23 +30,23 @@ const awsConfig = {
     FilterExpression: "team_id BETWEEN :start_id AND :end_id",
     ExpressionAttributeValues: {
       ":start_id": 1,
-      ":end_id":50,
+      ":end_id": 50,
     },
     ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
   };
 
   try {
-    const data = await docClient.scan(params).promise();
+    const items = await scanDynamoDB(docClient, params);
     // Note that scan does not sort the results. You'll need to sort them after retrieval if needed.
-    if (data.Items) {
+    if (items) {
         // Group items by team_id
-        const groupedByTeamId = data.Items.reduce((acc, item) => {
+        const groupedByTeamId = items.reduce((acc, item) => {
             (acc[item.team_id] = acc[item.team_id] || []).push(item);
             return acc;
         }, {});
 
         // For each group, find the item with the latest submitted_at
-        const latestSubmissions = Object.values(groupedByTeamId).map(group => {
+        const latestSubmissions = Object.values(groupedByTeamId).map((group: any) => {
             return group.reduce((prev: any, current: any) => {
                 return (prev.submitted_at > current.submitted_at) ? prev : current;
             });
