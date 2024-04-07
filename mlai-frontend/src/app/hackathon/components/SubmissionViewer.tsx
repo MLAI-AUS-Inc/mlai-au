@@ -46,6 +46,7 @@ interface Task {
 interface MarketData {
     profitData: number[];
     marketData: number[];
+    symLogMarketData: number[];
     totalTrades: number;
     score: number;
 }
@@ -91,7 +92,7 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
 
 
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
-    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], totalTrades: 0, score: 0 });
+    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], totalTrades: 0, score: 0 });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
     const [team, setTeam] = useState<ActivityItem | null>(null);
     const [open, setOpen] = useState(false);
@@ -126,7 +127,11 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
 
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
+                // log scale market prices, in symmetric log
                 const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
+
+                const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
+                const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
@@ -139,7 +144,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
                 // Update your state with the newly processed data
-                setMarketData({ profitData: averagedProfits, marketData: averagedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
+                setMarketData({ profitData: averagedProfits, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
 
                 const selectedTeam = topScores.find(team => team.team_id === team_id);
                 if (selectedTeam) {
@@ -180,7 +185,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             },
             {
                 name: "Market Price",
-                data: marketData.marketData,
+                data: marketData.symLogMarketData,
                 color: "#03fcb1",
                 yAxisIndex: 1,
             },
@@ -277,6 +282,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // Second Y-axis for the Market Prices
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
+                // logarithmic: true,
                 title: {
                     text: "Market Price",
                     style: {
@@ -284,6 +290,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                     }
                 },
                 labels: {
+                    formatter: function (value: any, index: any) {
+                        console.log('value:', value, 'index:', index);
+                        return `${marketData.marketData[index.dataPointIndex].toFixed(2)}`;
+                    },
                     style: {
                         colors: "#03fcb1",
                     }
