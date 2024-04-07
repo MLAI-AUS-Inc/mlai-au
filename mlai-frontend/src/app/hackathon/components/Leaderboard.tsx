@@ -1,6 +1,9 @@
 'use client'
 import { useEffect, useState } from 'react';
 import { Container } from './Container';
+import { Button } from './Button';
+import { formatDistanceToNow } from 'date-fns';
+import { ArrowDownOnSquareIcon, ArrowPathIcon } from '@heroicons/react/20/solid';
 
 interface LeaderboardProps {
     topScores?: ActivityItem[];
@@ -77,6 +80,8 @@ function updateCities(data: ActivityItem[]) {
     return cities
 }
 
+
+
 function classNames(...classes: any) {
     return classes.filter(Boolean).join(' ')
 }
@@ -102,15 +107,49 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
         }
     });
 
-
+    const fetchData = async () => {
+        try {
+            // console.log('Making a request to /api/getTopScores');
+            const response = await fetch('/api/getTopScores');
+            // console.log(`Response Status: ${response.status}`);
+    
+            if (!response.ok) {
+                console.error('Response not OK:', response.statusText);
+                throw new Error(`Failed to fetch: ${response.statusText}`);
+            }
+    
+            const result = await response.json();
+            const updatedActivityItems = result.data.map((item: any) => ({
+                user: {
+                    name: `${item.team_name}`,
+                    imageUrl: item && item.imageUrl
+                        ? item.team.imageUrl
+                        : '/MLAI-Logo-Teal.png'
+                },
+                team_id: `${item.team_id}`,
+                commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
+                branch: 'main', // Assuming default or fetch from another source
+                city: item.city,
+                score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
+                submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
+            }));
+            setActivityItems(updatedActivityItems);
+            const updatedCities = updateCities(updatedActivityItems)
+            setCities(updatedCities);
+            console.log('Data received:', result.data);
+        } catch (error) {
+            console.error('Error caught during fetch operation:', error);
+        }
+    
+    };
 
     useEffect(() => {
-            // Update the city leaderboards
-            setActivityItems(topScores)
+        // Update the city leaderboards
+        setActivityItems(topScores)
 
-            // Update the city leaderboards
-            const updatedCities = updateCities(topScores)
-            setCities(updatedCities);
+        // Update the city leaderboards
+        const updatedCities = updateCities(topScores)
+        setCities(updatedCities);
     }, []);
 
 
@@ -123,7 +162,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                 </h2>
 
                 <div className="bg-gray-900 py-10">
-                    <h2 className="px-4 text-base font-semibold leading-7 text-white sm:px-6 lg:px-8">Most recent commit</h2>
+                    <div className='flex justify-between items-center'>
+                        <h2 className="px-4 text-xl font-semibold leading-7 text-white sm:px-6 lg:px-8">Most recent commit</h2>
+                        <Button color="teal" onClick={fetchData} className="whitespace-nowrap my-2">
+                        <ArrowPathIcon className="h-5 w-5 text-gray-900 mr-2" aria-hidden="true" />
+                            Refresh
+                        </Button>
+                    </div>
                     <div className="overflow-x-auto">
                         <table className="mt-6 w-full whitespace-nowrap text-left">
                             <colgroup>
