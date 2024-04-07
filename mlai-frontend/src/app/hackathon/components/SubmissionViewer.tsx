@@ -91,6 +91,12 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
 }
 
 
+function invertSymLogMarketPrices(price: number) {
+    const sign = Math.sign(price); // retrieve the original sign of the price
+    const absValue = Math.pow(10, Math.abs(price)) - 1; // invert the log10 and subtract 1 to get the original absolute value
+    return sign * absValue; // apply the original sign to get the original price
+}
+
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
     const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], totalTrades: 0, score: 0 });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
@@ -292,7 +298,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 labels: {
                     formatter: function (value: any, index: any) {
                         console.log('value:', value, 'index:', index);
-                        return `${marketData.marketData[index.dataPointIndex].toFixed(2)}`;
+                        return invertSymLogMarketPrices(value);
+                        // return `${marketData.marketData[index.seriesIndex].toFixed(2)}`;
                     },
                     style: {
                         colors: "#03fcb1",
