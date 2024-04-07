@@ -47,6 +47,7 @@ interface Task {
 interface MarketData {
     profitData: number[];
     marketData: number[];
+    timestamps: number[];
     symLogMarketData: number[];
     totalTrades: number;
     score: number;
@@ -102,8 +103,29 @@ function averageDataPoints(data: number[], targetPoints: number): number[] {
 
     return result;
 }
+
+
+function selectEvenlySpacedItems(n:number, array: any[]) {
+    const result: any[] = [];
+    const totalItems = array.length;
+    
+    // If n is 1, return the last item; if array is empty or n is 0, return empty array
+    if (n === 1) return [array[totalItems - 1]];
+    if (n <= 0 || totalItems === 0) return result;
+    
+    // Compute the interval between selected items, ensuring the last item is included
+    const step = (totalItems - 1) / (n - 1);
+
+    for (let i = 0; i < n; i++) {
+        const idx = Math.round(i * step);  // Calculate index, rounding to nearest integer
+        result.push(array[idx]);           // Add item at index to the result array
+    }
+
+    return result;
+}
+
 export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = [] }) => {
-    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], totalTrades: 0, score: 0 });
+    const [marketData, setMarketData] = useState<MarketData>({ profitData: [], marketData: [], symLogMarketData: [], timestamps: [], totalTrades: 0, score: 0 });
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
     const [team, setTeam] = useState<ActivityItem | null>(null);
     const [open, setOpen] = useState(false);
@@ -147,6 +169,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
+                const evenlySpacedTimestamps = selectEvenlySpacedItems(100, trialData.timestamps);
 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
@@ -155,7 +178,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 const submitted = formatDistanceToNow(new Date(data[0].submitted_at), { addSuffix: true });
 
                 // Update your state with the newly processed data
-                setMarketData({ profitData: averagedProfits, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
+                setMarketData({ profitData: averagedProfits, timestamps: evenlySpacedTimestamps, marketData: averagedMarketPrices, symLogMarketData: symLogAveragedMarketPrices, totalTrades: episodeLength, score: Number(data[0].score.toFixed(2)) });
 
                 const selectedTeam = topScores.find(team => team.team_id === team_id);
                 if (selectedTeam) {
@@ -190,13 +213,13 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         series: [
             {
                 name: "Profit",
-                data: marketData.profitData,
+                data: marketData.profitData.map((profit, idx) => [marketData.timestamps[idx] * 1000, profit]),
                 color: "#7E3AF2",
                 yAxisIndex: 0,
             },
             {
                 name: "Market Price",
-                data: marketData.symLogMarketData,
+                data: marketData.symLogMarketData.map((price, idx) => [marketData.timestamps[idx] * 1000, price]),
                 color: "#03fcb1",
                 yAxisIndex: 1,
             },
@@ -225,7 +248,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         tooltip: {
             enabled: true,
             x: {
-                show: false,
+                format: 'dd MMM HH:ss',
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex, w }: { seriesIndex: any, dataPointIndex: any, w: any }) {
@@ -260,18 +283,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         xaxis: {
             categories: trades,
             labels: {
-                show: false,
                 style: {
                     fontFamily: "Inter, sans-serif",
                     cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400'
-                }
+                },
+                format: 'dd MMM HH:ss',
+
             },
-            axisBorder: {
-                show: false,
-            },
-            axisTicks: {
-                show: false,
-            },
+            type: "datetime",
         },
         yaxis: [
             {
