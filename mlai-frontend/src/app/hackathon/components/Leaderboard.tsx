@@ -336,9 +336,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                     Total profits: <span className="text-teal-400">${cities.mel.total_profits}</span>
                                 </div>
                             </div>
-                            <div className="-mt-10 flex justify-end items-end gap-x-4 text-sm font-bold leading-6 text-gray-300">
-                                <div className="mr-0"> Score:
-                                    <span className="text-4xl font-bold leading-6 text-teal-400 ml-2">{cities.mel.score}</span>
+                            <div className="-mt-10 flex justify-end items-end gap-x-4 text-3xl font-bold leading-6 text-gray-300">
+                                <div className="mr-0"> Avg. Score:
+                                    <span className="text-3xl font-bold leading-6 text-teal-400 ml-2">{cities.mel.score}</span>
                                 </div>
                             </div>
                         </div>
@@ -379,9 +379,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                     Total profits: <span className="text-teal-400">${cities.syd.total_profits}</span>
                                 </div>
                             </div>
-                            <div className="-mt-10 flex justify-end items-end gap-x-4 text-sm font-bold leading-6 text-gray-300">
-                                <div className="mr-0"> Score:
-                                    <span className="text-4xl font-bold leading-6 text-teal-400 ml-2">{cities.syd.score}</span>
+                            <div className="-mt-10 flex justify-end items-end text-3xl gap-x-4 font-bold leading-6 text-gray-300">
+                                <div className="mr-0"> Avg. Score:
+                                    <span className="text-3xl font-bold leading-6 text-teal-400 ml-2">{cities.syd.score}</span>
                                 </div>
                             </div>
                         </div>
