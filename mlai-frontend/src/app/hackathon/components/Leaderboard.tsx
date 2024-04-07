@@ -110,14 +110,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
     const fetchData = async () => {
         try {
             // console.log('Making a request to /api/getTopScores');
-            const response = await fetch('/api/getTopScores');
+            const response = await fetch('/api/getTopScores', { cache: "no-store" });
             // console.log(`Response Status: ${response.status}`);
-    
+
             if (!response.ok) {
                 console.error('Response not OK:', response.statusText);
                 throw new Error(`Failed to fetch: ${response.statusText}`);
             }
-    
+
             const result = await response.json();
             const updatedActivityItems = result.data.map((item: any) => ({
                 user: {
@@ -130,9 +130,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                 commit: `${item.git_commit_hash}`, // Placeholder or fetch from another source
                 branch: 'main', // Assuming default or fetch from another source
                 city: item.city,
-                score: `${item.score.toFixed(2)}`, // Placeholder or fetch from another source
+                score: parseFloat(item.score.toFixed(2)), // Placeholder or fetch from another source
                 submitted: formatDistanceToNow(new Date(item.submitted_at), { addSuffix: true })
             }));
+            // Sorting the items by score in descending order
+            updatedActivityItems.sort((a:any, b:any) => b.score - a.score);
             setActivityItems(updatedActivityItems);
             const updatedCities = updateCities(updatedActivityItems)
             setCities(updatedCities);
@@ -140,11 +142,12 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
         } catch (error) {
             console.error('Error caught during fetch operation:', error);
         }
-    
+
     };
 
     useEffect(() => {
         // Update the city leaderboards
+        topScores.sort((a:any, b:any) => b.score - a.score);
         setActivityItems(topScores)
 
         // Update the city leaderboards
@@ -165,7 +168,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                     <div className='flex justify-between items-center'>
                         <h2 className="px-4 text-xl font-semibold leading-7 text-white sm:px-6 lg:px-8">Most recent commit</h2>
                         <Button color="teal" onClick={fetchData} className="whitespace-nowrap my-2">
-                        <ArrowPathIcon className="h-5 w-5 text-gray-900 mr-2" aria-hidden="true" />
+                            <ArrowPathIcon className="h-5 w-5 text-gray-900 mr-2" aria-hidden="true" />
                             Refresh
                         </Button>
                     </div>
