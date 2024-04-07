@@ -32,7 +32,7 @@ const awsConfig = {
       ":start_id": 1,
       ":end_id": 50,
     },
-    ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city",
+    ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city, class_name",
   };
 
   try {
