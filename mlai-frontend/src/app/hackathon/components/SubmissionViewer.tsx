@@ -147,7 +147,6 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
                 const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
-                console.log(averagedProfits)
 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
@@ -292,8 +291,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             },
             {
                 tickAmount: 2,
-                min: 2.5,
-                max: -1.7,
+                max: 2.5,
+                min: -1.7,
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
                 title: {
