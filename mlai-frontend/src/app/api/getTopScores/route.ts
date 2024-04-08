@@ -1,5 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 async function scanDynamoDB(docClient: DynamoDB.DocumentClient, params: any): Promise<any[]> {
   let scanResults: any[] = [];
@@ -22,7 +22,7 @@ const awsConfig = {
   // Pass the configuration to DynamoDB client
   const docClient = new DynamoDB.DocumentClient(awsConfig);
 
-  export async function GET(request: Request)  {
+  export async function GET(request: NextRequest)  {
     
     console.log('Handling GET request on /api/getTopScores: ', request);
   
