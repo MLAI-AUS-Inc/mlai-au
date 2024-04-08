@@ -145,7 +145,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     const fetchData = async (team_id: string, endpoint: string) => {
         try {
             const queryParams = new URLSearchParams({ team_id });
-            const response = await fetch(`/api/${endpoint}?${queryParams}`);
+            const response = await fetch(`/api/${endpoint}?${queryParams}`, { cache: 'no-store', next: { revalidate: 0 }});
             if (!response.ok) {
                 throw new Error(`Failed to fetch: ${response.statusText}`);
             }
