@@ -413,7 +413,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 yAxisIndex: 0,
             },
             {
-                name: "Actions",
+                name: "Action",
                 data: zonedMarketPriceData,
                 color: "#33B2FF",
                 yAxisIndex: 1,
@@ -469,7 +469,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
                     if (seriesIndex === 0) { // SOC
-                        return `${marketData.socs[dataPointIndex].toFixed(2)}% SOC`;
+                        return `${marketData.socs[dataPointIndex].toFixed(2)}%`;
                     } else if (seriesIndex === 1) { // Actions
                         // Adjust this tooltip formatter as needed for Actions data
                         return `${marketData.actions[dataPointIndex].toFixed(2)}`;
