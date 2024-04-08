@@ -157,36 +157,35 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     };
 
     const handleMenuItemClick = (team_id: number) => async () => {
-        const timeZone = 'America/New_York'; // Specify the time zone you want to use
-
         const stringTeamID = team_id.toString();
         const bestData = await fetchData(stringTeamID, 'getTeamScores');
         if (bestData) {
             const { data } = bestData;
             if (data && data.length > 0) {
+                const n_points = 150
                 let trialData = data[0].main_trial;
                 setRawData(trialData);
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
                 // log scale market prices, in symmetric log
-                const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
+                const averagedMarketPrices = averageDataPoints(marketPrices, n_points).map((price) => Number(price.toFixed(2)));
 
                 // const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
                 const symLogAveragedMarketPrices = averagedMarketPrices.map((price) => {
-                    return  (Math.sign(price) * (price < 0 ? Math.exp(price) : Math.log(price + 1) / Math.log(7))).toFixed(2);
+                    return  Number((Math.sign(price) * (price < 0 ? Math.log(-price + 1) / Math.log(20) : Math.log(price + 1) / Math.log(7))).toFixed(2));
                 });
                 
                 // const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
-                const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
-                const evenlySpacedTimestamps = selectEvenlySpacedItems(100, trialData.timestamps);
+                const averagedProfits = averageDataPoints(profits, n_points).map((profit) => Number(profit.toFixed(2)));
+                const evenlySpacedTimestamps = selectEvenlySpacedItems(n_points, trialData.timestamps);
 
                 // SOCs
                 const maxSOCValue = 13.5; // Maximum SOC value representing 100%
                 const socs: number[] = trialData.socs;
-                const averagedSOCs = averageDataPoints(socs, 100);
+                const averagedSOCs = averageDataPoints(socs, n_points);
                 const transformedSOCs = averagedSOCs.map((soc) => {
                     const normalizedSOC = (soc / maxSOCValue) * 100; // Transform SOC to percentage
                     return Number(normalizedSOC.toFixed(2)); // Round to 2 decimal places and ensure it's a number
@@ -194,7 +193,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
 
                 // Actions
                 const actions: number[] = trialData.actions;
-                const averagedActions = averageDataPoints(actions, 100).map((action) => Number(action.toFixed(2)));
+                const averagedActions = averageDataPoints(actions, n_points).map((action) => Number(action.toFixed(2)));
 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
