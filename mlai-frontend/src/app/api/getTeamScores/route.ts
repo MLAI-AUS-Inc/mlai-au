@@ -26,6 +26,7 @@ export async function GET(req: NextRequest, res: any) {
     const params = {
         TableName: 'leaderboard',
         KeyConditionExpression: "team_id = :teamValue",
+        IndexName: 'team_id-submitted_at-index',
         ExpressionAttributeValues: {
             ":teamValue": numericTeamId,
         },
@@ -36,7 +37,7 @@ export async function GET(req: NextRequest, res: any) {
 
     try {
         const data: any = await docClient.query(params).promise();
-        // console.log('Query successful, items returned:', data.Items.length);
+        console.log('Query successful, items returned:', data.Items.length);
         return new NextResponse(JSON.stringify({ data: data.Items }), {
             headers: {
                 'Content-Type': 'application/json',
