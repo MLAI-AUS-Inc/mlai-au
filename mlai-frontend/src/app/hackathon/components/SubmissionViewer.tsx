@@ -264,6 +264,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         return [convertTimestampsToZone(marketData.timestamps)[idx], price];
     })
 
+    const zonedSOCData = marketData.socs.map((soc, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], soc];
+    });
+
     const options = {
         series: [
             {
@@ -404,13 +408,13 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         series: [
             {
                 name: "State of Charge",
-                data: marketData.socs.map((soc, idx) => [marketData.timestamps[idx] * 1000, soc]),
+                data: zonedSOCData,
                 color: "#FFE333",
                 yAxisIndex: 0,
             },
             {
                 name: "Actions",
-                data: marketData.actions.map((action, idx) => [marketData.timestamps[idx] * 1000, action]),
+                data: zonedMarketPriceData,
                 color: "#33B2FF",
                 yAxisIndex: 1,
             },
@@ -458,7 +462,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         tooltip: {
             enabled: true,
             x: {
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm z', { timeZone });
+                },
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
