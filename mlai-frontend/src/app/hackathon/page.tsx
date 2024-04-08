@@ -34,7 +34,7 @@ const HackathonPage = () => {
         const fetchData = async () => {
             try {
                 // console.log('Making a request to /api/getTopScores');
-                const response = await fetch('/api/getTopScores');
+                const response = await fetch('/api/getTopScores', { cache: 'no-store', next: { revalidate: 0 }});
                 // console.log(`Response Status: ${response.status}`);
     
                 if (!response.ok) {

@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = "force-dynamic"
 
 const awsConfig = {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,

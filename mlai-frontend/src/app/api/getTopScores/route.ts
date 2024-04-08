@@ -1,5 +1,6 @@
 import { DynamoDB } from 'aws-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+export const dynamic = "force-dynamic"
 
 async function scanDynamoDB(docClient: DynamoDB.DocumentClient, params: any): Promise<any[]> {
   let scanResults: any[] = [];
