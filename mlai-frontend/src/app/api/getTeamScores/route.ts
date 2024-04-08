@@ -12,7 +12,7 @@ const docClient = new DynamoDB.DocumentClient(awsConfig);
 export async function GET(req: any, res: any) {
     // Extract 'team_id' from the query string
     const team_id = req.nextUrl.searchParams.get('team_id');
-    console.log('Handling GET request on /api/getTeamScores', team_id);
+    // console.log('Handling GET request on /api/getTeamScores', team_id);
 
     // Ensure team_id is a string and convert to number
     const numericTeamId = Number(team_id);
@@ -35,7 +35,7 @@ export async function GET(req: any, res: any) {
 
     try {
         const data: any = await docClient.query(params).promise();
-        console.log('Query successful, items returned:', data.Items.length);
+        // console.log('Query successful, items returned:', data.Items.length);
         return new Response(JSON.stringify({ data: data.Items }), {
             headers: {
                 'Content-Type': 'application/json',
