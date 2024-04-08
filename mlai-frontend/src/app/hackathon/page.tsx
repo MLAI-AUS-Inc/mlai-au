@@ -59,7 +59,7 @@ const HackathonPage = () => {
                     policy: item.class_name
                 }));
                 setActivityItems(updatedActivityItems);
-                console.log('Data received:', result.data);
+                // console.log('Data received:', result.data);
             } catch (error) {
                 console.error('Error caught during fetch operation:', error);
             }

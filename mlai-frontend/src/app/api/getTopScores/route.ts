@@ -1,4 +1,5 @@
 import { DynamoDB } from 'aws-sdk';
+import { NextResponse } from 'next/server';
 
 async function scanDynamoDB(docClient: DynamoDB.DocumentClient, params: any): Promise<any[]> {
   let scanResults: any[] = [];
@@ -21,9 +22,9 @@ const awsConfig = {
   // Pass the configuration to DynamoDB client
   const docClient = new DynamoDB.DocumentClient(awsConfig);
 
-  export async function GET()  {
+  export async function GET(request: Request)  {
     
-    console.log('Handling GET request on /api/getTopScores');
+    console.log('Handling GET request on /api/getTopScores: ', request);
   
   const params = {
     TableName: "leaderboard",
@@ -42,7 +43,7 @@ const awsConfig = {
         // Group items by team_id
         const groupedByTeamId = items.reduce((acc, item) => {
             (acc[item.team_id] = acc[item.team_id] || []).push(item);
-            console.log('acc: ', acc);
+            // console.log('acc: ', acc);
             return acc;
         }, {});
 
@@ -57,7 +58,8 @@ const awsConfig = {
       //   console.log('latestSubmissions: ', latestSubmissions);
       // const sortedItems = latestSubmissions.sort((a, b) => b.score - a.score); // Sort by score in descending order
       // console.log('sortedItems: ', sortedItems);
-      return new Response(JSON.stringify({ data: latestSubmissions }), {
+      // revalidatePath(request.url)
+      return new NextResponse(JSON.stringify({ data: latestSubmissions }), {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 's-maxage=1, stale-while-revalidate'
@@ -65,7 +67,7 @@ const awsConfig = {
       });
     } else {
       // If Items is undefined, return an empty array or handle as appropriate
-      return new Response(JSON.stringify({ data: [] }), {
+      return new NextResponse(JSON.stringify({ data: [] }), {
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 's-maxage=1, stale-while-revalidate'
@@ -74,7 +76,7 @@ const awsConfig = {
     }
   } catch (err: any) {
     console.error("Unable to scan DynamoDB. Error:", JSON.stringify(err, null, 2));
-    return new Response(JSON.stringify({ error: "Unable to scan data", details: err.message }), {
+    return new NextResponse(JSON.stringify({ error: "Unable to scan data", details: err.message }), {
       status: 500,
       headers: {
         'Content-Type': 'application/json',
