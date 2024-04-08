@@ -150,7 +150,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
             setActivityItems(updatedActivityItems);
             const updatedCities = updateCities(updatedActivityItems)
             setCities(updatedCities);
-            console.log('Data received:', result.data);
+            // console.log('Data received:', result.data);
         } catch (error) {
             console.error('Error caught during fetch operation:', error);
         }
