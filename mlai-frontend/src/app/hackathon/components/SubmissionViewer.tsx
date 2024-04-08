@@ -264,6 +264,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         return [convertTimestampsToZone(marketData.timestamps)[idx], price];
     })
 
+    const zonedActionData = marketData.actions.map((action, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], action];
+    });
+
     const zonedSOCData = marketData.socs.map((soc, idx) => {
         return [convertTimestampsToZone(marketData.timestamps)[idx], soc];
     });
@@ -414,7 +418,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             },
             {
                 name: "Action",
-                data: zonedMarketPriceData,
+                data: zonedActionData,
                 color: "#33B2FF",
                 yAxisIndex: 1,
             },
