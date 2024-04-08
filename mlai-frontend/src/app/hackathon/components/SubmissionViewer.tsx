@@ -171,8 +171,12 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 // log scale market prices, in symmetric log
                 const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
 
-                const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
-                const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
+                // const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
+                const symLogAveragedMarketPrices = averagedMarketPrices.map((price) => {
+                    return  (Math.sign(price) * (price < 0 ? Math.exp(price) : Math.log(price + 1) / Math.log(7))).toFixed(2);
+                });
+                
+                // const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
@@ -367,8 +371,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             },
             {
                 tickAmount: 2,
-                max: 2.5,
-                min: -1.7,
+                max: 3.8,
+                min: -1.2,
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
                 title: {
@@ -379,10 +383,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 },
                 labels: {
                     formatter: function (value: any) {
-                        if (value === -1.7) {
+                        if (value === -1.2) {
                             return `\$${Math.min(...marketData.marketData).toFixed(2)}`;
                         }
-                        if (value === 2.5) {
+                        if (value === 3.8) {
                             return `\$${Math.max(...marketData.marketData).toFixed(2)}`;
                         }
 
