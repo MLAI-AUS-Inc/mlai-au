@@ -25,7 +25,6 @@ export async function GET(req: NextRequest, res: any) {
 
     const params = {
         TableName: 'leaderboard',
-        IndexName: 'team_id-score-index',
         KeyConditionExpression: "team_id = :teamValue",
         ExpressionAttributeValues: {
             ":teamValue": numericTeamId,

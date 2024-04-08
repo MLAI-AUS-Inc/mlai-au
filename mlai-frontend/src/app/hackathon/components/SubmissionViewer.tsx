@@ -1,4 +1,5 @@
 'use client'
+import { toZonedTime, format } from 'date-fns-tz';
 import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
 import dynamic from 'next/dynamic';
@@ -156,6 +157,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
     };
 
     const handleMenuItemClick = (team_id: number) => async () => {
+        const timeZone = 'America/New_York'; // Specify the time zone you want to use
+
         const stringTeamID = team_id.toString();
         const bestData = await fetchData(stringTeamID, 'getTeamScores');
         if (bestData) {
@@ -240,20 +243,35 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
+    const timeZone = "Australia/Melbourne";
+    const convertTimestampsToZone = (timestamps: number[]) => {
+        return timestamps.map((timestamp: number) => {
+            const date = new Date(timestamp * 1000); // Convert UNIX timestamp to Date
+            const zonedDate = toZonedTime(date, timeZone);
+            return zonedDate.getTime(); // Get the time in milliseconds of the zoned date
+        });
+    }
 
     const trades = Array.from({ length: marketData.totalTrades }, (_, index) => index + 1);
+    const zonedProfitData = marketData.profitData.map((profit, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], profit];
+    });
+    
+    const zonedMarketPriceData = marketData.symLogMarketData.map((price, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], price];
+    })
 
     const options = {
         series: [
             {
                 name: "Profit",
-                data: marketData.profitData.map((profit, idx) => [marketData.timestamps[idx] * 1000, profit]),
+                data: zonedProfitData,
                 color: "#7E3AF2",
                 yAxisIndex: 0,
             },
             {
                 name: "Market Price",
-                data: marketData.symLogMarketData.map((price, idx) => [marketData.timestamps[idx] * 1000, price]),
+                data: zonedMarketPriceData,
                 color: "#03fcb1",
                 yAxisIndex: 1,
             },
@@ -282,7 +300,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         tooltip: {
             enabled: true,
             x: {
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm z', { timeZone });
+                }
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
@@ -321,7 +341,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                     fontFamily: "Inter, sans-serif",
                     cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400'
                 },
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm', { timeZone });
+                },
+                format: 'dd MMM HH:mm z',
 
             },
             type: "datetime",
