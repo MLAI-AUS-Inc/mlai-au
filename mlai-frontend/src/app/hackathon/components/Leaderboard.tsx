@@ -122,7 +122,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
     const fetchData = async () => {
         try {
             // console.log('Making a request to /api/getTopScores');
-            const response = await fetch(`/api/getTopScores?timestamp=${new Date().getTime()}`, { cache: "no-store" });
+            const response = await fetch(`/api/getTopScores`, { cache: 'no-store', next: { revalidate: 0 }});
             // console.log(`Response Status: ${response.status}`);
 
             if (!response.ok) {

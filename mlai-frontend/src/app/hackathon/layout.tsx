@@ -42,7 +42,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function HackathonLayout({
   children,
 }: {
