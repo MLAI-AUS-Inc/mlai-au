@@ -1,4 +1,5 @@
 'use client'
+import { toZonedTime, format } from 'date-fns-tz';
 import React, { Fragment, useEffect, useState } from 'react';
 import { Container } from './Container';
 import dynamic from 'next/dynamic';
@@ -161,25 +162,30 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         if (bestData) {
             const { data } = bestData;
             if (data && data.length > 0) {
+                const n_points = 150
                 let trialData = data[0].main_trial;
                 setRawData(trialData);
                 // Averaging and rounding market prices
                 const marketPrices: number[] = trialData.market_prices;
                 // log scale market prices, in symmetric log
-                const averagedMarketPrices = averageDataPoints(marketPrices, 100).map((price) => Number(price.toFixed(2)));
+                const averagedMarketPrices = averageDataPoints(marketPrices, n_points).map((price) => Number(price.toFixed(2)));
 
-                const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
-                const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
+                // const symLogMarketPrices = marketPrices.map((price) => Math.sign(price) * Math.log10(Math.abs(price) + 1));
+                const symLogAveragedMarketPrices = averagedMarketPrices.map((price) => {
+                    return  Number((Math.sign(price) * (price < 0 ? Math.log(-price + 1) / Math.log(20) : Math.log(price + 1) / Math.log(7))).toFixed(2));
+                });
+                
+                // const symLogAveragedMarketPrices = averageDataPoints(symLogMarketPrices, 100).map((price) => Number(price.toFixed(2)));
 
                 // Averaging and rounding profits
                 const profits: number[] = trialData.profits;
-                const averagedProfits = averageDataPoints(profits, 100).map((profit) => Number(profit.toFixed(2)));
-                const evenlySpacedTimestamps = selectEvenlySpacedItems(100, trialData.timestamps);
+                const averagedProfits = averageDataPoints(profits, n_points).map((profit) => Number(profit.toFixed(2)));
+                const evenlySpacedTimestamps = selectEvenlySpacedItems(n_points, trialData.timestamps);
 
                 // SOCs
                 const maxSOCValue = 13.5; // Maximum SOC value representing 100%
                 const socs: number[] = trialData.socs;
-                const averagedSOCs = averageDataPoints(socs, 100);
+                const averagedSOCs = averageDataPoints(socs, n_points);
                 const transformedSOCs = averagedSOCs.map((soc) => {
                     const normalizedSOC = (soc / maxSOCValue) * 100; // Transform SOC to percentage
                     return Number(normalizedSOC.toFixed(2)); // Round to 2 decimal places and ensure it's a number
@@ -187,7 +193,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
 
                 // Actions
                 const actions: number[] = trialData.actions;
-                const averagedActions = averageDataPoints(actions, 100).map((action) => Number(action.toFixed(2)));
+                const averagedActions = averageDataPoints(actions, n_points).map((action) => Number(action.toFixed(2)));
 
                 // Set totalTrades with the episode_length from the response
                 const episodeLength: number = trialData.actions.length;
@@ -240,20 +246,39 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     };
+    const timeZone = "Australia/Melbourne";
+    const convertTimestampsToZone = (timestamps: number[]) => {
+        return timestamps.map((timestamp: number) => {
+            const date = new Date(timestamp * 1000); // Convert UNIX timestamp to Date
+            const zonedDate = toZonedTime(date, timeZone);
+            return zonedDate.getTime(); // Get the time in milliseconds of the zoned date
+        });
+    }
 
     const trades = Array.from({ length: marketData.totalTrades }, (_, index) => index + 1);
+    const zonedProfitData = marketData.profitData.map((profit, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], profit];
+    });
+    
+    const zonedMarketPriceData = marketData.symLogMarketData.map((price, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], price];
+    })
+
+    const zonedSOCData = marketData.socs.map((soc, idx) => {
+        return [convertTimestampsToZone(marketData.timestamps)[idx], soc];
+    });
 
     const options = {
         series: [
             {
                 name: "Profit",
-                data: marketData.profitData.map((profit, idx) => [marketData.timestamps[idx] * 1000, profit]),
+                data: zonedProfitData,
                 color: "#7E3AF2",
                 yAxisIndex: 0,
             },
             {
                 name: "Market Price",
-                data: marketData.symLogMarketData.map((price, idx) => [marketData.timestamps[idx] * 1000, price]),
+                data: zonedMarketPriceData,
                 color: "#03fcb1",
                 yAxisIndex: 1,
             },
@@ -282,7 +307,9 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         tooltip: {
             enabled: true,
             x: {
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm z', { timeZone });
+                }
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
@@ -321,7 +348,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                     fontFamily: "Inter, sans-serif",
                     cssClass: 'text-xs font-normal fill-gray-500 dark:fill-gray-400'
                 },
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm', { timeZone });
+                },
+                format: 'dd MMM HH:mm z',
 
             },
             type: "datetime",
@@ -344,8 +374,8 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
             },
             {
                 tickAmount: 2,
-                max: 2.5,
-                min: -1.7,
+                max: 3.8,
+                min: -1.2,
                 opposite: true, // This positions the Y-axis on the right side
                 show: true,
                 title: {
@@ -356,10 +386,10 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 },
                 labels: {
                     formatter: function (value: any) {
-                        if (value === -1.7) {
+                        if (value === -1.2) {
                             return `\$${Math.min(...marketData.marketData).toFixed(2)}`;
                         }
-                        if (value === 2.5) {
+                        if (value === 3.8) {
                             return `\$${Math.max(...marketData.marketData).toFixed(2)}`;
                         }
 
@@ -378,13 +408,13 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         series: [
             {
                 name: "State of Charge",
-                data: marketData.socs.map((soc, idx) => [marketData.timestamps[idx] * 1000, soc]),
+                data: zonedSOCData,
                 color: "#FFE333",
                 yAxisIndex: 0,
             },
             {
-                name: "Actions",
-                data: marketData.actions.map((action, idx) => [marketData.timestamps[idx] * 1000, action]),
+                name: "Action",
+                data: zonedMarketPriceData,
                 color: "#33B2FF",
                 yAxisIndex: 1,
             },
@@ -432,12 +462,14 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
         tooltip: {
             enabled: true,
             x: {
-                format: 'dd MMM HH:ss',
+                formatter: function(value: number) {
+                    return format(toZonedTime(new Date(value), timeZone), 'dd MMM HH:mm z', { timeZone });
+                },
             },
             y: {
                 formatter: function (_value: any, { seriesIndex, dataPointIndex }: { seriesIndex: any, dataPointIndex: any }) {
                     if (seriesIndex === 0) { // SOC
-                        return `${marketData.socs[dataPointIndex].toFixed(2)}% SOC`;
+                        return `${marketData.socs[dataPointIndex].toFixed(2)}%`;
                     } else if (seriesIndex === 1) { // Actions
                         // Adjust this tooltip formatter as needed for Actions data
                         return `${marketData.actions[dataPointIndex].toFixed(2)}`;
