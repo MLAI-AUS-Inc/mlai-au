@@ -183,7 +183,7 @@ export const SubmissionViewer: React.FC<SubmissionViewerProps> = ({ topScores = 
                 const evenlySpacedTimestamps = selectEvenlySpacedItems(n_points, trialData.timestamps);
 
                 // SOCs
-                const maxSOCValue = 13.5; // Maximum SOC value representing 100%
+                const maxSOCValue = 13; // Maximum SOC value representing 100%
                 const socs: number[] = trialData.socs;
                 const averagedSOCs = averageDataPoints(socs, n_points);
                 const transformedSOCs = averagedSOCs.map((soc) => {
