@@ -3,6 +3,7 @@ import { Hero } from './components/Hero'
 import { Schedule } from './components/Schedule'
 import { Speakers } from './components/Speakers'
 import { Sponsors } from './components/Sponsors'
+import { SilverSponsors } from './components/SilverSponsors'
 import { InfoForHackers } from './components/InfoForHackers'
 import { ExtendedInfo } from './components/ExtendedInfo'
 import { GbhPeople } from './components/gbhPeople'
@@ -33,12 +34,11 @@ const HackathonPage = () => {
         // fetchData function here (similar to what you have in Leaderboard)
         const fetchData = async () => {
             try {
-                // console.log('Making a request to /api/getTopScores');
                 const response = await fetch('/api/getTopScores', { cache: 'no-store', next: { revalidate: 0 }});
                 // console.log(`Response Status: ${response.status}`);
     
                 if (!response.ok) {
-                    console.error('Response not OK:', response.statusText);
+                    console.error('Hackathon page Response not OK:', response.statusText);
                     throw new Error(`Failed to fetch: ${response.statusText}`);
                 }
     
@@ -73,6 +73,7 @@ const HackathonPage = () => {
 
             <div className="relative z-10">
                 <Hero />
+                <Sponsors />
                 {activityItems.length > 0 ? (
                     <>
                         <Leaderboard topScores={activityItems} />
@@ -81,7 +82,7 @@ const HackathonPage = () => {
                 ) : (
                     <div>Loading scores...</div>
                 )}
-                <Sponsors />
+                <SilverSponsors />
                 <ExtendedInfo />
                 <Speakers />
                 <Schedule />
