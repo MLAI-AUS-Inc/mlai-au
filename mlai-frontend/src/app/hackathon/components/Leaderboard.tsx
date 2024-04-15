@@ -121,12 +121,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
 
     const fetchData = async () => {
         try {
-            // console.log('Making a request to /api/getTopScores');
             const response = await fetch(`/api/getTopScores`, { cache: 'no-store', next: { revalidate: 0 }});
-            // console.log(`Response Status: ${response.status}`);
 
             if (!response.ok) {
-                console.error('Response not OK:', response.statusText);
+                console.error('Hackathon page Response not OK:', response.statusText);
                 throw new Error(`Failed to fetch: ${response.statusText}`);
             }
 
@@ -169,7 +167,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
 
 
     return (
-        <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
+        <section id="leaderboard" aria-label="Leaderboard" className="pt-16 pb-20 sm:pb-32 sm:pt-16 bg-gray-900">
             <Container>
                 {/* Main Leaderboard */}
                 <h2 className="mx-auto max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl">

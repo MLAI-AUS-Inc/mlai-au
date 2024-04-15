@@ -37,6 +37,10 @@ const awsConfig = {
     ProjectionExpression: "team_id, score, team_name, git_commit_hash, submitted_at, error_traceback, city, class_name",
   };
 
+
+  // wait 30 seconds
+  // await new Promise((resolve) => setTimeout(resolve, 600000));
+
   try {
     const items = await scanDynamoDB(docClient, params);
     // Note that scan does not sort the results. You'll need to sort them after retrieval if needed.

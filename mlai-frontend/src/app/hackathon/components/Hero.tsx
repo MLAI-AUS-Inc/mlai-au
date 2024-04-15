@@ -51,8 +51,8 @@ export function Hero() {
                             </Button>
                             <dl className="lg:grid mt-10 lg:grid-cols-3 gap-x-10 gap-y-6 sm:mt-16 sm:gap-x-16 sm:gap-y-10 sm:text-center lg:justify-start lg:text-left z-10">
                                 {[
-                                    ['Speakers', '12'],
-                                    ['People Attending', '250'],
+                                    ['Speakers', '8'],
+                                    ['Participants', '170'],
                                     ['Location', 'Melbourne & Sydney'],
                                 ].map(([name, value]) => (
                                     <div key={name}>
