@@ -42,27 +42,21 @@ const city: any = { SYD: 'text-teal-400 bg-teal-400/10', MEL: 'text-purple-400 b
 
 function updateCities(data: ActivityItem[]) {
 
-    let totalTeamsMel = 0;
-    let totalScoreMel = 0;
-    let totalTeamsSyd = 0;
-    let totalScoreSyd = 0;
+    // Filter out Melbourne teams and take the top 10 scores
+    const topMelbourneTeams = data.filter(team => team.city === "MEL").slice(0, 10);
+    const totalTeamsMel = topMelbourneTeams.length;
+    const totalScoreMel = topMelbourneTeams.reduce((acc, team) => acc + Number(team.score), 0);
 
-    data.forEach(team => {
-        if (team.city === "MEL") {
-            totalTeamsMel++;
-            totalScoreMel += Number(team.score);
-        }
-        if (team.city === "SYD") {
-            totalTeamsSyd++;
-            totalScoreSyd += Number(team.score);
-        }
-    });
+    // Filter out Sydney teams and take the top 10 scores
+    const topSydneyTeams = data.filter(team => team.city === "SYD").slice(0, 10);
+    const totalTeamsSyd = topSydneyTeams.length;
+    const totalScoreSyd = topSydneyTeams.reduce((acc, team) => acc + Number(team.score), 0);
 
     let cities = {
         mel: {
             name: 'Melbourne',
             teams: totalTeamsMel,
-            score: Math.round((totalScoreMel / totalTeamsMel) * 100) / 100,
+            score: totalTeamsMel ? Math.round((totalScoreMel / totalTeamsMel) * 100) / 100 : 0,
             commits: 225,
             total_profits: Math.round(totalScoreMel * 100) / 100,
             imageUrl: 'photos/gbh_melbourne.webp'
@@ -70,14 +64,14 @@ function updateCities(data: ActivityItem[]) {
         syd: {
             name: 'Sydney',
             teams: totalTeamsSyd,
-            score: Math.round((totalScoreSyd / totalTeamsSyd) * 100) / 100,
+            score: totalTeamsSyd ? Math.round((totalScoreSyd / totalTeamsSyd) * 100) / 100 : 0,
             commits: 225,
             total_profits: Math.round(totalScoreSyd * 100) / 100,
             imageUrl: 'photos/gbh_sydney.webp'
         },
     }
 
-    return cities
+    return cities;
 }
 
 
