@@ -74,14 +74,6 @@ const HackathonPage = () => {
             <div className="relative z-10">
                 <Hero />
                 <Sponsors />
-                {activityItems.length > 0 ? (
-                    <>
-                        <Leaderboard topScores={activityItems} />
-                        <SubmissionViewer topScores={activityItems} />
-                    </>
-                ) : (
-                    <div>Loading scores...</div>
-                )}
                 <SilverSponsors />
                 <ExtendedInfo />
                 <Speakers />
