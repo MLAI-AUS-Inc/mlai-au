@@ -21,6 +21,9 @@ import myleseftos from '/src/app/hackathon/images/avatars/myleseftos.jpg'
 import tommcleod from '/src/app/hackathon/images/avatars/tommcleod.jpg'
 import stevetzortzidis from '/src/app/hackathon/images/avatars/stevetzortzidis.jpg'
 import jameskahn from '/src/app/hackathon/images/avatars/jameskahn.jpeg'
+import stephenwallace from '/src/app/hackathon/images/avatars/stephenwallace.png'
+import taylorchu from '/src/app/hackathon/images/avatars/taylorchu.jpg'
+import alexar from '/src/app/hackathon/images/avatars/alexar.jpg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
 
@@ -52,25 +55,40 @@ const days = [
       },
       {
         name: 'Nicola Smith',
-        role: 'AWS Startups - Hackathon Judging Panel',
+        role: 'AWS Startups - Hackathon Judging Panel Melbourne',
         image: nicolasmyth,
       },
       {
         name: 'Myles Eftos',
-        role: 'Amber Electric - Hackathon Judging Panel',
+        role: 'Amber Electric - Hackathon Judging Panel Melbourne',
         image: myleseftos,
       },
       {
         name: 'Tom Mcleod',
-        role: 'University of Melbourne - Hackathon Judging Panel',
+        role: 'University of Melbourne - Hackathon Judging Panel Melbourne',
         image: tommcleod,
       },
       {
         name: 'Steve Tzortzidis',
-        role: 'V2 Digital - Hackathon Judging Panel',
+        role: 'V2 Digital - Hackathon Judging Panel Melbourne',
         image: stevetzortzidis,
       },
-      
+
+      {
+        name: 'Stephen Wallace',
+        role: 'BeerOps - Hackathon Judging Panel Sydney',
+        image: stephenwallace,
+      },
+      {
+        name: 'Taylor Chu',
+        role: 'Organon - Hackathon Judging Panel Sydney',
+        image: taylorchu,
+      },
+      {
+        name: 'Alexar Pendashteh',
+        role: 'Linux Users Victoria - Hackathon Judging Panel Sydney',
+        image: alexar,
+      },
     ],
   },
 
