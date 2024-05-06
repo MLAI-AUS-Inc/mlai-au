@@ -13,10 +13,68 @@ import yien from '/src/app/hackathon/images/avatars/yien.jpg'
 import ruchika from '/src/app/hackathon/images/avatars/ruchika.jpg'
 import jacksimpson from '/src/app/hackathon/images/avatars/jacksimpson.jpg'
 import nickholmesacourt from '/src/app/hackathon/images/avatars/nickholmesacourt.jpeg'
+import jackeddie from '/src/app/hackathon/images/avatars/jackeddie.jpg'
+import eduardhovy from '/src/app/hackathon/images/avatars/eduardhovy.jpg'
+import nicholasreece from '/src/app/hackathon/images/avatars/nicholasreece.jpg'
+import nicolasmyth from '/src/app/hackathon/images/avatars/nicolasmyth.jpg'
+import myleseftos from '/src/app/hackathon/images/avatars/myleseftos.jpg'
+import tommcleod from '/src/app/hackathon/images/avatars/tommcleod.jpg'
+import stevetzortzidis from '/src/app/hackathon/images/avatars/stevetzortzidis.jpg'
+import jameskahn from '/src/app/hackathon/images/avatars/jameskahn.jpeg'
 import { Container } from './Container'
 import { DiamondIcon } from './DiamondIcon'
 
 const days = [
+  {
+    name: 'Final Pitch Night',
+    date: 'May 8',
+    dateTime: '2024-05-08',
+    speakers: [
+      {
+        name: 'Nicholas Reece',
+        role: 'Deputy Lord Mayor of Melbourne',
+        image: nicholasreece,
+      },
+      {
+        name: 'Prof. Eduard Hovy',
+        role: 'Director Melbourne Connect, University of Melbourne',
+        image: eduardhovy,
+      },
+      {
+        name: 'Jack Eddie',
+        role: 'Senior Manager - Cyber and Enabling Capabilities - Victoria State Government',
+        image: jackeddie,
+      },
+      {
+        name: 'Dr. James Kahn',
+        role: 'HAL Systems',
+        image: jameskahn,
+      },
+      {
+        name: 'Nicola Smith',
+        role: 'AWS Startups - Hackathon Judging Panel',
+        image: nicolasmyth,
+      },
+      {
+        name: 'Myles Eftos',
+        role: 'Amber Electric - Hackathon Judging Panel',
+        image: myleseftos,
+      },
+      {
+        name: 'Tom Mcleod',
+        role: 'University of Melbourne - Hackathon Judging Panel',
+        image: tommcleod,
+      },
+      {
+        name: 'Steve Tzortzidis',
+        role: 'V2 Digital - Hackathon Judging Panel',
+        image: stevetzortzidis,
+      },
+      
+    ],
+  },
+
+
   {
     name: 'Team Formation Day',
     date: 'April 6',
@@ -42,14 +100,6 @@ const days = [
         role: 'Director at Endgame Economics & Cartesian Software',
         image: jacksimpson,
       },
-    ],
-  },
-
-  {
-    name: 'Submission Mentoring Day',
-    date: 'April 13',
-    dateTime: '2022-04-04',
-    speakers: [
       {
         name: 'Yien Fuang Tiong',
         role: 'AGL Australia - VPP Data Science Manager',
@@ -57,21 +107,8 @@ const days = [
       },
     ],
   },
-
-
   
-  {
-    name: 'Final Pitch Night',
-    date: 'May 8',
-    dateTime: '2024-05-08',
-    speakers: [
-      {
-        name: 'To be announced soon',
-        role: '-',
-        image: placeholder,
-      },
-    ],
-  },
+
 
 ]
 
