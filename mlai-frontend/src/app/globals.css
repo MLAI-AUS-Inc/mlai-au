@@ -35,6 +35,7 @@ body {
 html {
   scroll-behavior: smooth;
 }
+
 .carousel-open:checked + .carousel-item {
   position: static;
   opacity: 100;
@@ -69,4 +70,12 @@ html {
 #carousel-3:checked ~ .control-3 ~ .carousel-indicators li:nth-child(3) .carousel-bullet,
 #carousel-4:checked ~ .control-4 ~ .carousel-indicators li:nth-child(4) .carousel-bullet {
   color: #000;
+}
+
+.truncate-multiline {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
