@@ -36,61 +36,46 @@ html {
   scroll-behavior: smooth;
 }
 
-.section-typo-zoom-in {
-  width: 100%;
-  height: 200vh;
+.carousel-open:checked + .carousel-item {
+  position: static;
+  opacity: 100;
+}
+
+.carousel-item {
+  -webkit-transition: opacity 0.4s ease-in-out;
+  transition: opacity 0.4s ease-in-out;
+}
+
+#carousel-1:checked ~ .control-1,
+#carousel-2:checked ~ .control-2,
+#carousel-3:checked ~ .control-3,
+#carousel-4:checked ~ .control-4 {
+  display: block;
+}
+
+.carousel-indicators {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  bottom: 2%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 10;
+}
+
+#carousel-1:checked ~ .control-1 ~ .carousel-indicators li:nth-child(1) .carousel-bullet,
+#carousel-2:checked ~ .control-2 ~ .carousel-indicators li:nth-child(2) .carousel-bullet,
+#carousel-3:checked ~ .control-3 ~ .carousel-indicators li:nth-child(3) .carousel-bullet,
+#carousel-4:checked ~ .control-4 ~ .carousel-indicators li:nth-child(4) .carousel-bullet {
   color: #000;
-  position: relative;
 }
 
-.typo-zoom-sticky {
-  width: 100%;
-  height: 100vh;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  position: -webkit-sticky;
-  position: sticky;
-  top: 0;
-}
-
-.typo-zoom-sticky-inner {
-  width: 100%;
-  height: 100%;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  display: flex;
+.truncate-multiline {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.typo-zoom-text {
-  width: 0.0625rem;
-  height: 0.0625rem;
-  overflow: hidden;
-}
-
-.typo-zoom-text-image {
-  width: 100%;
-}
-
-.typo-zoom-text-wrapper {
-  width: 90vw;
-}
-
-@keyframes zoomInEffect {
-  from {
-    width: 50vw;
-    transform: translate3d(0vw, 0vh, 0px) scale(0.5);
-  }
-  to {
-    width: 9000vw;
-    transform: translate3d(-120vw, -40vh, 0px) scale(1);
-  }
-}
-
-.zoomAnimation {
-  animation-name: zoomInEffect;
-  animation-fill-mode: forwards; 
-  animation-duration: 5s; 
+  text-overflow: ellipsis;
 }
