@@ -5,6 +5,7 @@ import Hero from "@/components/hero";
 import Testimonials from "@/components/testimonials";
 import Feature from '@/components/feature';
 import Events from '@/components/events';
+import FlagshipEvents from '@/components/flagshipevents';
 import Newsletter from "@/components/newsletter";
 
 
@@ -143,7 +144,9 @@ export default function Home() {
         </div >
 
         {/* Events section */}
+        <FlagshipEvents></FlagshipEvents>
         <Events></Events>
+       
  
         {/* Testimonials section */}
         <Testimonials></Testimonials>
