@@ -2,27 +2,15 @@ import React from 'react';
 const people = [
     {
         name: 'Louka Ewington-Pitsos',
-        role: 'Co-Founder',
+        role: 'Event Guru',
         imageUrl:
             'photos/louka.jpeg',
     },
     {
-        name: 'Jamie Blackwell',
-        role: 'Co-Founder',
-        imageUrl:
-            'photos/jaime.png',
-    },
-    {
         name: 'Lukas Wesemann',
-        role: 'Co-Founder',
-        imageUrl:
-            'photos/lukas.png',
-    },
-    {
-        name: 'Andrew Atta',
         role: 'Marketing Wizz',
         imageUrl:
-            'photos/andrew.png',
+            'photos/lukas.png',
     },
     {
         name: 'Doc Sam Donegan',
@@ -30,6 +18,13 @@ const people = [
         imageUrl:
             'photos/sam.png',
     },
+    {
+        name: 'Jamie Blackwell',
+        role: 'Co-founder, Ex-Committee',
+        imageUrl:
+            'photos/jaime.png',
+    },
+
     // More people...
 ]
 
