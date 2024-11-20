@@ -1,53 +1,55 @@
+'use client'
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Script from "next/script";
+import { usePathname } from "next/navigation";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  metadataBase: new URL('https://www.mlai.au'),
-  title: "MLAI",
-  description: "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
-  generator: 'Next.js',
-  applicationName: 'MLAI-website',
-  referrer: 'origin-when-cross-origin',
-  keywords: ['Machine Learning', 'Artificial Intelligence', 'AI', 'Australia'],
-  authors: [
-    {
-      name: 'Dr Sam Donegan',
-      url: 'https://www.linkedin.com/in/samueldonegan/',
-    },
-    {
-      name: 'Dr Lukas Wesemann',
-      url: 'https://www.linkedin.com/in/lukaswesemann/',
-    },
-  ],
-  openGraph: {
-    title: 'MLAI',
-    description: 'MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community',
-    url: 'https://mlai.au',
-    type: 'website',
-    images: [
-      {
-        url: 'https://www.mlai.au/MLAI-Logo.png',
-        width: 1200,
-        height: 630,
-        alt: 'MLAI Logo, a Kangaroo wearing sunglasses',
-      },
-    ],
-  },
-  robots: {
-    index: true, // Allow indexing of the page by search engines
-    follow: false, // Do not follow the links on the page to discourage scrapers
-    noarchive: true,
-    nosnippet: true,
-    noimageindex: true,
-    nocache: true,
-  },
-};
+// export const metadata: Metadata = {
+//   metadataBase: new URL('https://www.mlai.au'),
+//   title: "MLAI",
+//   description: "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+//   generator: 'Next.js',
+//   applicationName: 'MLAI-website',
+//   referrer: 'origin-when-cross-origin',
+//   keywords: ['Machine Learning', 'Artificial Intelligence', 'AI', 'Australia'],
+//   authors: [
+//     {
+//       name: 'Dr Sam Donegan',
+//       url: 'https://www.linkedin.com/in/samueldonegan/',
+//     },
+//     {
+//       name: 'Dr Lukas Wesemann',
+//       url: 'https://www.linkedin.com/in/lukaswesemann/',
+//     },
+//   ],
+//   openGraph: {
+//     title: 'MLAI',
+//     description: 'MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community',
+//     url: 'https://mlai.au',
+//     type: 'website',
+//     images: [
+//       {
+//         url: 'https://www.mlai.au/MLAI-Logo.png',
+//         width: 1200,
+//         height: 630,
+//         alt: 'MLAI Logo, a Kangaroo wearing sunglasses',
+//       },
+//     ],
+//   },
+//   robots: {
+//     index: true, // Allow indexing of the page by search engines
+//     follow: false, // Do not follow the links on the page to discourage scrapers
+//     noarchive: true,
+//     nosnippet: true,
+//     noimageindex: true,
+//     nocache: true,
+//   },
+// };
 
 export default function RootLayout({
 
@@ -55,6 +57,11 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
+  const pathname = usePathname();
+  const hideHeaderRoutes = ['/medhack', '/hackathon'];
+
+  const shouldShowHeader = !hideHeaderRoutes.includes(pathname);
 
   return (
     <html lang="en">
@@ -99,7 +106,7 @@ export default function RootLayout({
             src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
           />
         </noscript>
-        <Header></Header>
+        {shouldShowHeader && <Header />}
         {children}
         <Footer></Footer>
       </body>
