@@ -1,5 +1,5 @@
 import Events from "@/components/events";
-import { CheckCircleIcon, CloudArrowUpIcon, InformationCircleIcon, LockClosedIcon, ServerIcon } from "@heroicons/react/20/solid";
+import { CheckBadgeIcon, CheckCircleIcon, CloudArrowUpIcon, ExclamationTriangleIcon, InformationCircleIcon, LifebuoyIcon, LockClosedIcon, ServerIcon } from "@heroicons/react/20/solid";
 
 export default function HowToPitch() {
     return (
@@ -25,9 +25,60 @@ export default function HowToPitch() {
                         </div>
                     </div>
                 </div>
+
+                {/* Table of Contents Section */}
+                <section className="mx-auto max-w-7xl px-6 lg:px-8 py-24 sm:py-32">
+                    <h2 className="mt-2 text-pretty text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+                        Table of Contents
+                    </h2>
+                    <p className="mt-6 text-base/7 text-gray-900">
+                        Use this guide to navigate through the sections of this pitch framework.
+                    </p>
+                    <ul className="mt-6 list-disc list-inside space-y-4 text-base/7 text-gray-900">
+                        <li>
+                            <a href="#overview" className="text-indigo-600 underline">Overview</a>
+                        </li>
+                        <li>
+                            <a href="#tldr" className="text-indigo-600 underline">TLDR</a>
+                        </li>
+                        <li>
+                            <a href="#what-is-a-pitch" className="text-indigo-600 underline">What is a pitch?</a>
+                        </li>
+                        <li>
+                            <a href="#key-elements" className="text-indigo-600 underline">Key Elements of a Successful Pitch</a>
+                        </li>
+                        <li>
+                            <span className="font-semibold">Steps for Crafting Your Pitch</span>
+                            <ul className="ml-6 mt-4 list-disc list-inside space-y-2 text-base/7 text-gray-900">
+                                <li>
+                                    <a href="#step-1" className="text-indigo-600 underline">Step 1: Identifying and Presenting Your Challenge</a>
+                                </li>
+                                <li>
+                                    <a href="#option-2" className="text-indigo-600 underline">Option 2: Utilizing Narrative to Illustrate the Challenge</a>
+                                </li>
+                                <li>
+                                    <a href="#step-2" className="text-indigo-600 underline">Step 2: Articulating a Compelling Value Proposition</a>
+                                </li>
+                                <li>
+                                    <a href="#step-3" className="text-indigo-600 underline">Step 3: Demonstrating Your Innovation with Effective Visualization</a>
+                                </li>
+                                <li>
+                                    <a href="#step-4" className="text-indigo-600 underline">Step 4: Validating Your Idea with Tangible Evidence</a>
+                                </li>
+                                <li>
+                                    <a href="#step-5" className="text-indigo-600 underline">Step 5: Concluding Your Pitch with a Decisive Call to Action</a>
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            <a href="#key-takeaways" className="text-indigo-600 underline">Key Takeaways</a>
+                        </li>
+                    </ul>
+                </section>
+
                 <section className="mt-20 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 lg:gap-y-16">
                     <div className="lg:pr-8">
-                        <h2 className="text-pretty text-2xl font-semibold tracking-tight text-gray-900">Overview</h2>
+                        <h2 id='overview' className="text-pretty text-2xl font-semibold tracking-tight text-gray-900">Overview</h2>
                         <p className="mt-6 text-base/7 text-gray-600">
                             A lot of people are afraid when it comes to delivering a pitch. “Don&apos;t I need to be a thick-skinned, type A, salesperson, business shark in order to do that?”
                         </p>
@@ -76,40 +127,10 @@ export default function HowToPitch() {
                             </div>
                         </div>
                     </div>
-                    {/* <div className="max-lg:mt-16 lg:col-span-1">
-                        <p className="text-base/7 font-semibold text-gray-500">The numbers</p>
-                        <hr className="mt-6 border-t border-gray-200" />
-                        <dl className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
-                            <div className="flex flex-col gap-y-2 border-b border-dotted border-gray-200 pb-4">
-                                <dt className="text-sm/6 text-gray-600">Raised</dt>
-                                <dd className="order-first text-6xl font-semibold tracking-tight">
-                                    $<span>150</span>M
-                                </dd>
-                            </div>
-                            <div className="flex flex-col gap-y-2 border-b border-dotted border-gray-200 pb-4">
-                                <dt className="text-sm/6 text-gray-600">Companies</dt>
-                                <dd className="order-first text-6xl font-semibold tracking-tight">
-                                    <span>30</span>K
-                                </dd>
-                            </div>
-                            <div className="flex flex-col gap-y-2 max-sm:border-b max-sm:border-dotted max-sm:border-gray-200 max-sm:pb-4">
-                                <dt className="text-sm/6 text-gray-600">Deals Closed</dt>
-                                <dd className="order-first text-6xl font-semibold tracking-tight">
-                                    <span>1.5</span>M
-                                </dd>
-                            </div>
-                            <div className="flex flex-col gap-y-2">
-                                <dt className="text-sm/6 text-gray-600">Leads Generated</dt>
-                                <dd className="order-first text-6xl font-semibold tracking-tight">
-                                    <span>200</span>M
-                                </dd>
-                            </div>
-                        </dl>
-                    </div> */}
                 </section>
             </div>
             {/* TLDR Section */}
-            <section className="relative isolate overflow-visible bg-white py-24 sm:py-32">
+            <section id='tldr' className="relative isolate overflow-visible bg-white py-24 sm:py-32">
                 <div
                     aria-hidden="true"
                     className="absolute -top-80 left-[max(6rem,33%)] -z-10 transform-gpu blur-3xl sm:left-1/2 md:top-20 lg:ml-20 xl:top-3 xl:ml-56"
@@ -160,8 +181,10 @@ export default function HowToPitch() {
                 </div>
             </section>
 
+
+
             {/* What is a Pitch Section */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='what-is-a-pitch' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h2 className="mt-2 mb-4 text-pretty text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
                         What is a pitch?
@@ -175,7 +198,7 @@ export default function HowToPitch() {
                         className="mt-8 max-w-xl space-y-8 text-gray-600 list-none"
                     >
                         <li className="flex gap-x-3">
-                            <CloudArrowUpIcon
+                            <ExclamationTriangleIcon
                                 aria-hidden="true"
                                 className="mt-1 h-5 w-5 flex-none text-indigo-600"
                             />
@@ -191,7 +214,7 @@ export default function HowToPitch() {
                             </span>
                         </li>
                         <li className="flex gap-x-3">
-                            <LockClosedIcon
+                            <CheckBadgeIcon
                                 aria-hidden="true"
                                 className="mt-1 h-5 w-5 flex-none text-indigo-600"
                             />
@@ -206,15 +229,15 @@ export default function HowToPitch() {
                             </span>
                         </li>
                         <li className="flex gap-x-3">
-                            <ServerIcon
+                            <LifebuoyIcon
                                 aria-hidden="true"
                                 className="mt-1 h-5 w-5 flex-none text-indigo-600"
                             />
                             <span>
                                 <strong className="font-semibold text-gray-900">
                                     What can I do to help?
-                                </strong>
-                                Make it simple. People want to help you, but you have to make
+                                </strong>{" "}
+                                 Make it simple. People want to help you, but you have to make
                                 it easy for them. &quot;Scan this QR code&quot; or &quot;Sign up to this
                                 newsletter&quot; or &quot;Talk to me if you know somebody that is XYZ&quot;
                                 are great options.
@@ -261,7 +284,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Key Elements Section */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='key-elements' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h2 className="mt-2 mb-4 text-pretty text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
                         Key Elements of a Successful Pitch
@@ -319,7 +342,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Steps for Crafting Your Pitch */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='step-1' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 {/* Step 1 */}
                 <div className="lg:col-span-7">
                     <h2 className="mt-2 mb-4 text-pretty text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
@@ -412,7 +435,7 @@ export default function HowToPitch() {
                         <ul className="mt-4 list-disc list-inside space-y-2 italic">
                             <li className="mt-6 text-base/7 text-gray-900">
                                 “For decades, [user persona] have grappled with [specific
-                                 challenge]. Our [product/service] addresses this by
+                                challenge]. Our [product/service] addresses this by
                                 [solution].”
                             </li>
                             <li className="mt-6 text-base/7 text-gray-900">
@@ -458,7 +481,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Option 2 */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='option-2' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h4 className="mt-8 text-lg font-semibold tracking-tight text-gray-900">
                         Option 2: Utilising Narrative to Illustrate the Challenge
@@ -528,7 +551,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Step 2 */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='step-2' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h3 className="mt-8 text-xl font-semibold tracking-tight text-gray-900">
                         Step 2: Articulating a Compelling Value Proposition
@@ -610,7 +633,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Step 3 */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='step-3' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h3 className="mt-8 text-xl font-semibold tracking-tight text-gray-900">
                         Step 3: Demonstrating Your Innovation with Effective Visualisation
@@ -667,7 +690,7 @@ export default function HowToPitch() {
 
 
             {/* Step 4 */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='step-4' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h3 className="mt-8 text-xl font-semibold tracking-tight text-gray-900">
                         Step 4: Validating Your Idea with Tangible Evidence
@@ -736,7 +759,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Step 5 */}
-            <section className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16">
+            <section id='step-5' className="mx-auto mt-24 max-w-7xl grid grid-cols-1 lg:grid-cols-12 lg:gap-x-8 lg:gap-y-16 px-6 lg:max-w-7xl lg:px-8">
                 <div className="lg:col-span-7">
                     <h3 className="mt-8 text-xl font-semibold tracking-tight text-gray-900">
                         Step 5: Concluding Your Pitch with a Decisive Call to Action
@@ -779,7 +802,7 @@ export default function HowToPitch() {
             </section>
 
             {/* Key Takeaways */}
-            <section className="mx-auto mt-24 max-w-7xl">
+            <section id='key-takeaways' className="mx-auto mt-24 max-w-7xl px-6 lg:max-w-7xl lg:px-8">
                 <h2 className="mt-8 mb-4 text-pretty text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
                     Key Takeaways
                 </h2>
@@ -804,20 +827,20 @@ export default function HowToPitch() {
 
 
                 <div className="mt-8 flex gap-x-4">
-                        <img
-                            alt=""
-                            src="../photos/sam.png"
-                            className="mt-1 size-10 flex-none rounded-full bg-gray-50"
-                        />
-                        <div className="text-sm/6">
-                            <div className="font-semibold text-gray-900">Dr Sam Donegan</div>
-                            <a href="https://www.linkedin.com/in/samueldonegan/" target="blank" className="text-indigo-600 underline">LinkedIn</a>
-                        </div>
+                    <img
+                        alt=""
+                        src="../photos/sam.png"
+                        className="mt-1 size-10 flex-none rounded-full bg-gray-50"
+                    />
+                    <div className="text-sm/6">
+                        <div className="font-semibold text-gray-900">Dr Sam Donegan</div>
+                        <a href="https://www.linkedin.com/in/samueldonegan/" target="blank" className="text-indigo-600 underline">LinkedIn</a>
                     </div>
+                </div>
             </section>
 
-            <Events/>
-            
+            <Events />
+
         </div>
 
     )
