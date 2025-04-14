@@ -29,6 +29,19 @@ export default function IWantToBuild() {
     y: number;
     rotation: number;
     scale: number;
+    speed: number;
+    wobble: number;
+    wobbleSpeed: number;
+    wobbleAmount: number;
+    glow: boolean;
+  }>>([]);
+  const [diagonalElements, setDiagonalElements] = useState<Array<{
+    id: number;
+    x: number;
+    y: number;
+    element: string;
+    speed: number;
+    direction: 'down-right' | 'down-left';
   }>>([]);
   const [codeLines, setCodeLines] = useState([
     '> import mlai from "future"',
@@ -70,45 +83,104 @@ export default function IWantToBuild() {
     return () => clearInterval(codeInterval);
   }, []);
 
-  // Optimize animation effects by combining them
+  // Initialize floating tools
   useEffect(() => {
     if (!isPageLoaded) return;
 
-    // Reduce animation frequency
-    const animationInterval = setInterval(() => {
-      // Update construction progress
-      setConstructionProgress(prev => (prev >= 100 ? 0 : prev + 1));
-      
-      // Update floating tools more frequently
+    // Initialize more tools with random starting positions
+    const initialTools = Array.from({ length: 25 }, (_, index) => ({
+      id: index,
+      tool: ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧', '🔌', '💡', '🎮', '🎨', '🖥️', '📱', '🤖', '🎓', '💻', '🔬', '🌟'][Math.floor(Math.random() * 24)],
+      x: Math.random() * 100,
+      y: 110 + (Math.random() * 20), // Random starting height
+      rotation: Math.random() * 360,
+      scale: 1.2 + Math.random() * 0.6, // Increased scale for larger tools
+      speed: 0.05 + Math.random() * 0.15, // Random speed for each tool
+      wobble: Math.random() * 2 * Math.PI, // Random phase for wobble
+      wobbleSpeed: 0.01 + Math.random() * 0.03, // Random wobble speed
+      wobbleAmount: 0.5 + Math.random() * 1.5, // Random wobble amount
+      glow: Math.random() > 0.5 // Random glow effect
+    }));
+
+    setFloatingTools(initialTools);
+
+    // Animate tools more frequently but slower
+    const toolInterval = setInterval(() => {
       setFloatingTools(prev => {
-        const tools = ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧', '🔌', '💡', '🎯', '🎮', '🎨', '🖥️', '📱', '🤖', '🎓', '💻', '📊', '🔬', '🧮', '🎪', '🏢', '🌟'];
+        const tools = ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧', '🔌', '💡', '🎮', '🎨', '🖥️', '📱', '🤖', '🎓', '💻', '🔬','🌟'];
         const newTools = [...prev];
         
-        if (newTools.length < 15) {
+        // Add new tools more frequently
+        if (newTools.length < 30) {  // Increased max tools
           newTools.push({
             id: Date.now(),
             tool: tools[Math.floor(Math.random() * tools.length)],
             x: Math.random() * 100,
-            y: 110,
+            y: 110 + (Math.random() * 20), // Random starting height
             rotation: Math.random() * 360,
-            scale: 0.9 + Math.random() * 0.4
+            scale: 1.2 + Math.random() * 0.6, // Increased scale for larger tools
+            speed: 0.05 + Math.random() * 0.15, // Random speed for each tool
+            wobble: Math.random() * 2 * Math.PI, // Random phase for wobble
+            wobbleSpeed: 0.01 + Math.random() * 0.03, // Random wobble speed
+            wobbleAmount: 0.5 + Math.random() * 1.5, // Random wobble amount
+            glow: Math.random() > 0.5 // Random glow effect
           });
         }
         
         return newTools
-          .map(tool => ({
-            ...tool,
-            y: tool.y - 0.35,  // Increased speed from 0.15 to 0.35
-            rotation: tool.rotation + 0.5,  // Slightly faster rotation
-            scale: tool.scale * 0.999
-          }))
+          .map(tool => {
+            // Update wobble phase
+            const newWobble = tool.wobble + tool.wobbleSpeed;
+            
+            // Calculate wobble offset
+            const wobbleOffset = Math.sin(newWobble) * tool.wobbleAmount;
+            
+            return {
+              ...tool,
+              y: tool.y - tool.speed,  // Slower vertical movement with individual speeds
+              x: tool.x + wobbleOffset, // Add horizontal wobble
+              rotation: tool.rotation + 0.3,  // Slower rotation
+              scale: tool.scale * 0.999,
+              wobble: newWobble // Update wobble phase
+            };
+          })
           .filter(tool => tool.y > -20);
       });
-    }, 60);  // Faster updates (from 100ms to 60ms)
+    }, 30);  // Slightly slower updates for smoother animation
 
-    return () => {
-      clearInterval(animationInterval);
-    };
+    return () => clearInterval(toolInterval);
+  }, [isPageLoaded]);
+
+  // Initialize diagonal animations
+  useEffect(() => {
+    if (!isPageLoaded) return;
+
+    // Initialize more diagonal elements
+    const initialElements = Array.from({ length: 20 }, (_, index) => ({
+      id: index,
+      x: Math.random() * 100,
+      y: -20 + (index * 8),  // Reduced spacing between elements
+      element: ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧', '🔌', '💡', '🎮', '🎨', '🖥️', '📱', '🤖', '🎓', '💻', '🔬', '🌟'][Math.floor(Math.random() * 24)],
+      speed: 0.2 + Math.random() * 0.3,  // Slower speed
+      direction: Math.random() > 0.5 ? 'down-right' : 'down-left' as 'down-right' | 'down-left',
+    }));
+
+    setDiagonalElements(initialElements);
+
+    // Animate diagonal elements more frequently but slower
+    const diagonalInterval = setInterval(() => {
+      setDiagonalElements(prev => 
+        prev.map(element => ({
+          ...element,
+          x: element.direction === 'down-right' 
+            ? element.x + element.speed 
+            : element.x - element.speed,
+          y: element.y + element.speed,
+        })).filter(element => element.y < 120)
+      );
+    }, 20);  // Faster updates for smoother animation
+
+    return () => clearInterval(diagonalInterval);
   }, [isPageLoaded]);
 
   // Fetch events data with loading state
@@ -353,13 +425,13 @@ export default function IWantToBuild() {
         {floatingTools.map(tool => (
           <div 
             key={tool.id}
-            className="absolute text-5xl transition-all duration-300 ease-out"  // Reduced duration from 500ms to 300ms
+            className="absolute text-6xl transition-all duration-300 ease-out"  // Increased text size from 5xl to 6xl
             style={{ 
               left: `${tool.x}%`, 
               top: `${tool.y}%`, 
               transform: `rotate(${tool.rotation}deg) scale(${tool.scale})`,
-              opacity: tool.y < 20 ? (tool.y + 20) / 40 : 0.8,
-              filter: `blur(${tool.y < 20 ? (20 - tool.y) * 0.1 : 0}px)`,
+              opacity: tool.y < 20 ? (tool.y + 20) / 40 : 0.9, // Increased opacity from 0.8 to 0.9
+              filter: `blur(${tool.y < 20 ? (20 - tool.y) * 0.05 : 0}px) ${tool.glow ? 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.7))' : ''}`,
               zIndex: 0
             }}
           >
@@ -789,6 +861,16 @@ export default function IWantToBuild() {
         
         .animate-hammer {
           animation: hammer 0.5s ease-in-out infinite;
+        }
+
+        @keyframes toolGlow {
+          0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+          50% { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8)); }
+          100% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.5)); }
+        }
+        
+        .tool-glow {
+          animation: toolGlow 2s ease-in-out infinite;
         }
       `}</style>
     </div>
