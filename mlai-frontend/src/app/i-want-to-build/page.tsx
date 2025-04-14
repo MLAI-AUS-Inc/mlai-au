@@ -457,8 +457,8 @@ export default function IWantToBuild() {
       {/* Main Content */}
       <div className="relative" style={{ zIndex: 10 }}>
         {/* Hero Section */}
-        <div className={`mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8 pt-10 transition-all duration-1000 ${sectionVisibility.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-          <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-48 lg:pt-40 xl:col-span-6">
+        <div className={`mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8 pt-4 transition-all duration-1000 ${sectionVisibility.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className="px-6 pb-24 pt-6 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-48 lg:pt-20 xl:col-span-6">
             <div className="mx-auto max-w-lg lg:mx-0">
               <div className="flex items-center space-x-4 mb-8">
                 <img
@@ -503,8 +503,8 @@ export default function IWantToBuild() {
           <div className="relative lg:col-span-5 lg:-mr-8 xl:absolute xl:inset-0 xl:left-1/2 xl:mr-0">
             <div className="relative h-96 lg:h-full">
               <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl shadow-xl transform rotate-3"></div>
-              <div className="absolute inset-0 bg-white rounded-2xl shadow-xl p-6 flex flex-col justify-between">
-                <div className="flex justify-between items-center">
+              <div className="absolute inset-0 bg-white rounded-2xl shadow-xl p-4 flex flex-col">
+                <div className="flex justify-between items-center mt-24">
                   <div className="h-10 w-10 bg-yellow-400 rounded-full flex items-center justify-center">
                     <CodeBracketIcon className="h-6 w-6 text-black" />
                   </div>
@@ -512,37 +512,26 @@ export default function IWantToBuild() {
                     <UsersIcon className="h-6 w-6 text-white" />
                   </div>
                 </div>
-                <div className="text-center">
+                <div className="text-center mt-4">
                   <h3 className="text-2xl font-bold text-gray-900">Join Our Builders</h3>
-                  <p className="mt-2 text-gray-600">Be part of something bigger</p>
-                  <div className="mt-4 bg-gray-900 rounded-lg p-6 text-left overflow-hidden h-[400px] flex items-center">
-                    <div className="font-mono text-base lg:text-lg space-y-3 w-full">
-                      {codeLines.map((line, index) => (
-                        <div
-                          key={index}
-                          className={`transition-all duration-300 ${
-                            index === currentLine
-                              ? 'text-green-400 font-bold transform scale-105'
-                              : index < currentLine
-                              ? 'text-gray-500'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          {line}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  <p className="mt-1 text-gray-600">Be part of something bigger</p>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🚀</span>
-                  </div>
-                  <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">💡</span>
-                  </div>
-                  <div className="h-16 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <span className="text-2xl">🔧</span>
+                <div className="bg-gray-900 rounded-lg p-6 text-left overflow-hidden h-[400px] flex items-center mt-4">
+                  <div className="font-mono text-base lg:text-lg space-y-3 w-full">
+                    {codeLines.map((line, index) => (
+                      <div
+                        key={index}
+                        className={`transition-all duration-300 ${
+                          index === currentLine
+                            ? 'text-green-400 font-bold transform scale-105'
+                            : index < currentLine
+                            ? 'text-gray-500'
+                            : 'text-gray-700'
+                        }`}
+                      >
+                        {line}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
