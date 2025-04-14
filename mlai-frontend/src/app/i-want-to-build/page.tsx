@@ -12,10 +12,9 @@ export default function IWantToBuild() {
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [cranePosition, setCranePosition] = useState(0);
-  const [brickAnimation, setBrickAnimation] = useState(false);
+  const [isPageLoaded, setIsPageLoaded] = useState(false);
   const [sectionVisibility, setSectionVisibility] = useState<Record<string, boolean>>({
-    hero: false,
+    hero: true,
     features: false,
     newsletter: false,
     connect: false,
@@ -43,16 +42,85 @@ export default function IWantToBuild() {
   ]);
   const [currentLine, setCurrentLine] = useState(0);
 
-  // Fetch events data
+  // Initialize page load
   useEffect(() => {
+    setIsPageLoaded(true);
+    
+    // Start animations only after initial render
+    const timer = setTimeout(() => {
+      setSectionVisibility(prev => ({
+        ...prev,
+        features: true,
+        newsletter: true,
+        connect: true,
+        events: true,
+        about: true
+      }));
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Separate useEffect for code animation
+  useEffect(() => {
+    const codeInterval = setInterval(() => {
+      setCurrentLine(prev => (prev + 1) % codeLines.length);
+    }, 2000);
+
+    return () => clearInterval(codeInterval);
+  }, []);
+
+  // Optimize animation effects by combining them
+  useEffect(() => {
+    if (!isPageLoaded) return;
+
+    // Reduce animation frequency
+    const animationInterval = setInterval(() => {
+      // Update construction progress
+      setConstructionProgress(prev => (prev >= 100 ? 0 : prev + 1));
+      
+      // Update floating tools more frequently
+      setFloatingTools(prev => {
+        const tools = ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧', '🔌', '💡', '🎯', '🎮', '🎨', '🖥️', '📱', '🤖', '🎓', '💻', '📊', '🔬', '🧮', '🎪', '🏢', '🌟'];
+        const newTools = [...prev];
+        
+        if (newTools.length < 15) {
+          newTools.push({
+            id: Date.now(),
+            tool: tools[Math.floor(Math.random() * tools.length)],
+            x: Math.random() * 100,
+            y: 110,
+            rotation: Math.random() * 360,
+            scale: 0.9 + Math.random() * 0.4
+          });
+        }
+        
+        return newTools
+          .map(tool => ({
+            ...tool,
+            y: tool.y - 0.35,  // Increased speed from 0.15 to 0.35
+            rotation: tool.rotation + 0.5,  // Slightly faster rotation
+            scale: tool.scale * 0.999
+          }))
+          .filter(tool => tool.y > -20);
+      });
+    }, 60);  // Faster updates (from 100ms to 60ms)
+
+    return () => {
+      clearInterval(animationInterval);
+    };
+  }, [isPageLoaded]);
+
+  // Fetch events data with loading state
+  useEffect(() => {
+    if (!isPageLoaded) return;
+
     const fetchEvents = async () => {
       try {
         const response = await fetch('/api/getEvents');
         if (response.ok) {
           const data = await response.json();
           setEvents(data);
-        } else {
-          console.error('Failed to fetch events');
         }
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -62,80 +130,7 @@ export default function IWantToBuild() {
     };
 
     fetchEvents();
-  }, []);
-
-  // Animation effects
-  useEffect(() => {
-    // Reduce animation interval frequency for better performance
-    const craneInterval = setInterval(() => {
-      setCranePosition(prev => (prev + 1) % 100);
-    }, 100); // Changed from 50ms to 100ms
-
-    const brickInterval = setInterval(() => {
-      setBrickAnimation(prev => !prev);
-    }, 2000);
-
-    // Reduce section visibility animation frequency
-    const sectionInterval = setInterval(() => {
-      setSectionVisibility(prev => {
-        const newState = { ...prev };
-        const sections = ['hero', 'features', 'newsletter', 'connect', 'events', 'about'];
-        const randomSection = sections[Math.floor(Math.random() * sections.length)];
-        newState[randomSection] = true;
-        return newState;
-      });
-    }, 4000); // Changed from 3000ms to 4000ms
-
-    // Optimize progress animation
-    const progressInterval = setInterval(() => {
-      setConstructionProgress(prev => {
-        if (prev >= 100) return 0;
-        return prev + 2; // Increment by 2 instead of 1 for smoother animation
-      });
-    }, 200); // Changed from 100ms to 200ms
-
-    // Optimize floating tools animation
-    const toolsInterval = setInterval(() => {
-      setFloatingTools(prev => {
-        const tools = ['🔨', '🔧', '🛠️', '📐', '🔩', '⚙️', '🏗️', '🚧'];
-        const newTools = [...prev];
-        
-        // Add a new tool less frequently
-        if (newTools.length < 10) { // Reduced max tools from 15 to 10
-          newTools.push({
-            id: Date.now(),
-            tool: tools[Math.floor(Math.random() * tools.length)],
-            x: Math.random() * 100,
-            y: Math.random() * 100,
-            rotation: Math.random() * 360,
-            scale: 0.5 + Math.random() * 0.5
-          });
-        }
-        
-        // Update existing tools with less frequent changes
-        return newTools.map(tool => ({
-          ...tool,
-          y: tool.y - 0.05, // Reduced movement speed
-          rotation: tool.rotation + 0.25, // Reduced rotation speed
-          x: tool.x + (Math.random() - 0.5) * 0.1 // Reduced horizontal movement
-        })).filter(tool => tool.y > -10);
-      });
-    }, 200); // Changed from 100ms to 200ms
-
-    // Add code animation effect
-    const codeInterval = setInterval(() => {
-      setCurrentLine((prev) => (prev + 1) % codeLines.length);
-    }, 2000);
-
-    return () => {
-      clearInterval(craneInterval);
-      clearInterval(brickInterval);
-      clearInterval(sectionInterval);
-      clearInterval(progressInterval);
-      clearInterval(toolsInterval);
-      clearInterval(codeInterval);
-    };
-  }, []);
+  }, [isPageLoaded]);
 
   // Carousel navigation functions
   const handleNext = () => {
@@ -323,9 +318,9 @@ export default function IWantToBuild() {
   ]
 
   return (
-    <div className="relative bg-gradient-to-b from-blue-100 to-blue-200 min-h-screen overflow-hidden">
+    <div className={`relative bg-gradient-to-b from-blue-100 to-blue-200 min-h-screen overflow-hidden transition-opacity duration-500 ${isPageLoaded ? 'opacity-100' : 'opacity-0'}`}>
       {/* Construction Theme Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
+      <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 0 }}>
         {/* Sky with clouds */}
         <div className="absolute top-0 left-0 w-full h-1/3 bg-gradient-to-b from-blue-300 to-blue-200"></div>
         
@@ -339,11 +334,11 @@ export default function IWantToBuild() {
         
         {/* Building blocks */}
         <div className="absolute bottom-1/3 left-20 w-24 h-24 bg-red-500 rounded-md shadow-lg transform transition-transform duration-1000" 
-             style={{ transform: brickAnimation ? 'translateY(-10px)' : 'translateY(0)' }}></div>
+             style={{ transform: sectionVisibility.hero ? 'translateY(-10px)' : 'translateY(0)' }}></div>
         <div className="absolute bottom-1/3 left-44 w-24 h-24 bg-yellow-400 rounded-md shadow-lg transform transition-transform duration-1000" 
-             style={{ transform: brickAnimation ? 'translateY(-5px)' : 'translateY(0)' }}></div>
+             style={{ transform: sectionVisibility.features ? 'translateY(-5px)' : 'translateY(0)' }}></div>
         <div className="absolute bottom-1/3 left-68 w-24 h-24 bg-blue-500 rounded-md shadow-lg transform transition-transform duration-1000" 
-             style={{ transform: brickAnimation ? 'translateY(-15px)' : 'translateY(0)' }}></div>
+             style={{ transform: sectionVisibility.newsletter ? 'translateY(-15px)' : 'translateY(0)' }}></div>
         
         {/* Mario-style pipes */}
         <div className="absolute bottom-1/3 right-1/4 w-16 h-32 bg-green-600 rounded-t-lg"></div>
@@ -358,12 +353,14 @@ export default function IWantToBuild() {
         {floatingTools.map(tool => (
           <div 
             key={tool.id}
-            className="absolute text-4xl animate-float"
+            className="absolute text-5xl transition-all duration-300 ease-out"  // Reduced duration from 500ms to 300ms
             style={{ 
               left: `${tool.x}%`, 
               top: `${tool.y}%`, 
               transform: `rotate(${tool.rotation}deg) scale(${tool.scale})`,
-              opacity: 0.7
+              opacity: tool.y < 20 ? (tool.y + 20) / 40 : 0.8,
+              filter: `blur(${tool.y < 20 ? (20 - tool.y) * 0.1 : 0}px)`,
+              zIndex: 0
             }}
           >
             {tool.tool}
@@ -386,7 +383,7 @@ export default function IWantToBuild() {
       </div>
       
       {/* Main Content */}
-      <div className="relative z-20">
+      <div className="relative" style={{ zIndex: 10 }}>
         {/* Hero Section */}
         <div className={`mx-auto max-w-7xl lg:grid lg:grid-cols-12 lg:gap-x-8 lg:px-8 pt-10 transition-all duration-1000 ${sectionVisibility.hero ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <div className="px-6 pb-24 pt-10 sm:pb-32 lg:col-span-7 lg:px-0 lg:pb-48 lg:pt-40 xl:col-span-6">
@@ -446,18 +443,18 @@ export default function IWantToBuild() {
                 <div className="text-center">
                   <h3 className="text-2xl font-bold text-gray-900">Join Our Builders</h3>
                   <p className="mt-2 text-gray-600">Be part of something bigger</p>
-                  <div className="mt-4 bg-gray-900 rounded-lg p-8 text-left overflow-hidden h-72">
-                    <div className="font-mono text-lg lg:text-xl">
+                  <div className="mt-4 bg-gray-900 rounded-lg p-6 text-left overflow-hidden h-[400px] flex items-center">
+                    <div className="font-mono text-base lg:text-lg space-y-3 w-full">
                       {codeLines.map((line, index) => (
                         <div
                           key={index}
-                          className={`transition-all duration-500 ${
+                          className={`transition-all duration-300 ${
                             index === currentLine
                               ? 'text-green-400 font-bold transform scale-105'
                               : index < currentLine
                               ? 'text-gray-500'
                               : 'text-gray-700'
-                          } py-2`}
+                          }`}
                         >
                           {line}
                         </div>
