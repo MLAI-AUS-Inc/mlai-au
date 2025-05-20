@@ -2,19 +2,19 @@ import React from 'react';
 const people = [
     {
         name: 'Louka Ewington-Pitsos',
-        role: 'Event Guru',
+        role: 'Co-founder',
         imageUrl:
             'photos/louka.jpeg',
     },
     {
         name: 'Lukas Wesemann',
-        role: 'Marketing Wizz',
+        role: 'Co-founder',
         imageUrl:
             'photos/lukas.png',
     },
     {
         name: 'Doc Sam Donegan',
-        role: 'Master of the Web',
+        role: 'Vice-President',
         imageUrl:
             'photos/sam.png',
     },
