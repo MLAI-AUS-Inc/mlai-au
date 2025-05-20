@@ -25,7 +25,7 @@ export default function Hero() {
         <div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-32">
           <div className="hidden sm:mb-8 sm:flex sm:justify-center">
             <div className="relative rounded-full px-3 py-1 text-sm leading-6 text-white ring-1 ring-white/10 hover:ring-white/20 backdrop-blur-sm">
-              Check out the Green Battery Hack!{" "}
+              Check out the Green Battery Hack {" "}
               <a href="/hackathon" className="font-semibold text-teal-200">
                 <span className="absolute inset-0" aria-hidden="true" />
                 Read more <span aria-hidden="true">&rarr;</span>
