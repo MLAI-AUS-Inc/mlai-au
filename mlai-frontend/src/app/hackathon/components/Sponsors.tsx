@@ -19,6 +19,7 @@ import mcds from '/src/app/hackathon/images/logos/mcds.png'
 import onem from '/src/app/hackathon/images/logos/onem.png'
 
 import { Container } from './Container'
+import { H2 } from '@/components/ui/Typography'
 
 const sponsors = [
   { name: 'unimelb', logo: melbconnect },
@@ -33,9 +34,9 @@ export function Sponsors() {
   return (
     <section id="sponsors" aria-label="Sponsors" className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900">
       <Container>
-        <h2 className="mx-auto justify-center max-w-2xl text-center font-display text-4xl font-medium tracking-tighter text-teal-200 text-xl sm:text-5xl">
+        <H2 className="mx-auto justify-center max-w-2xl text-center text-teal-200 font-display tracking-tighter">
          Gold Sponsors
-        </h2>
+        </H2>
 
         <div className="flex justify-center items-center max-w-full mt-8">
           <div

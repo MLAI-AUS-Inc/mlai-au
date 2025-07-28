@@ -16,7 +16,7 @@ export default function Home() {
         <Hero></Hero>
 
         {/* Logo Cloud */}
-        <div id="logoCloud" className="bg-white py-12 sm:py-24">
+        <div id="logoCloud" className="bg-white py-16 sm:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5 lg:max-w-none">
               {/* NAB Logo */}
@@ -114,7 +114,7 @@ export default function Home() {
             <div className="mt-16 flex justify-center">
               <p className="relative rounded-full bg-gray-50 px-5 py-3 text-sm text-center leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
                 <span className=" md:inline">Our events have been sponsored and supported by over 50 awesome organisations across Australia. </span>
-                <a href="/contact" className="font-semibold text-teal-500">
+                <a href="/sponsors" className="font-semibold text-teal-500">
                   <span className="absolute inset-0" aria-hidden="true" /> Become a sponsor{' '}
                   <span aria-hidden="true">&rarr;</span>
                 </a>

@@ -3,6 +3,7 @@ import AnimatedBackground from './AnimatedBackground';
 import { Button } from './Button'
 import { Container } from './Container'
 import styles from '../AnimatedBackground.module.css';
+import { H1, Lead } from '@/components/ui/Typography';
 
 export function Hero() {
     return (
@@ -32,14 +33,14 @@ export function Hero() {
                         <div className="mx-auto max-w-3xl pb-32 sm:pb-48 lg:pb-56">
 
                             <div className="text-center">
-                                <h1 className="text-6xl font-bold tracking-tight text-black sm:text-9xl md:text-7xl">
+                                <H1 className="text-black text-6xl sm:text-9xl md:text-7xl">
                                     MLAI Green Battery Hack
-                                </h1>
+                                </H1>
                             </div>
-                            <div className="mt-16 space-y-6 font-display text-xl text-center tracking-tight text-black sm:text-3xl md:text-2xl ">
-                                <p>
+                            <div className="mt-16 space-y-6 text-center">
+                                <Lead className="text-black font-display tracking-tight">
                                     The MLAI Green Battery Hack is a beginner friendly AI hackathon to support Australia&apos;s journey to carbon net zero. Your AI model will control a simulated battery trading in the electricity spot market.
-                                </p>
+                                </Lead>
 
                                 {/* <p>
                         This simulation will give insight into the propensity of private batteries to disrupt or “game” the electricity market. Your solution could inform Australian policy to achieve net zero!

@@ -1,4 +1,6 @@
 import React from 'react';
+import { H2, Body, Caption } from '@/components/ui/Typography';
+
 const people = [
     {
         name: 'Louka Ewington-Pitsos',
@@ -30,13 +32,13 @@ const people = [
 
 export default function Team() {
     return (
-        <div className="bg-white py-24 sm:py-32" >
+        <div className="bg-white py-16 sm:py-24" >
             <div className="mx-auto grid max-w-7xl gap-x-8 gap-y-20 px-6 lg:px-8 xl:grid-cols-3">
                 <div className="max-w-2xl">
-                    <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">That&apos;s us looking all professional.</h2>
-                    <p className="mt-6 text-lg leading-8 text-gray-600">
+                    <H2>That&apos;s us looking all professional.</H2>
+                    {/* <Body className="mt-6">
                         MLAI Aus is run entirely by volunteers. Interested in jumping aboard the pirate ship?
-                    </p>
+                    </Body> */}
                 </div>
                 <ul role="list" className="grid gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 sm:gap-y-16 xl:col-span-2 xl:grid-cols-3">
                     {people.map((person) => (
