@@ -43,7 +43,9 @@ export default function Hero() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <a
-                href="https://forms.gle/egJRbMhnuvJ7QPVT8"
+                href="https://forms.gle/GwZR49kwTMszLKtN8"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
               >
                 I want to volunteer
