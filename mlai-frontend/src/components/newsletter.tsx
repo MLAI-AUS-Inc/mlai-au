@@ -10,7 +10,7 @@ export default function Newsletter() {
                 </div>
 
                 {/* Substack Signup Component */}
-                <div className="w-full max-w-md mx-auto lg:mx-0 lg:col-span-7 lg:pt-2">
+                <div className="w-full mx-auto lg:mx-0 lg:col-span-7 lg:pt-2">
                     <SubstackSignup />
                 </div>
             </div>

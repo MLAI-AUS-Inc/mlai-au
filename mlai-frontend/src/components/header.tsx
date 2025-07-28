@@ -6,11 +6,11 @@ import LogRocket from 'logrocket';
 LogRocket.init('4s6cqz/mlai-website');
 
 const navigation = [
-    { name: 'about', href: '/#about' },
-    { name: 'events', href: '/#events' },
-    { name: 'volunteer', href: '/contact' },
-    { name: 'contact', href: '/contact' },
-    { name: 'blog', href: 'https://mlaiaus.substack.com/archive', target: "_blank", rel: "noopener noreferrer" },
+    { name: 'About', href: '/#about' },
+    { name: 'Events', href: '/#upcoming-events' },
+    { name: 'Volunteer', href: 'https://forms.gle/GwZR49kwTMszLKtN8', target: "_blank", rel: "noopener noreferrer" },
+    { name: 'Contact', href: '/contact' },
+    { name: 'Blog', href: 'https://mlaiaus.substack.com/archive', target: "_blank", rel: "noopener noreferrer" },
 ];
 
 export default function Header() {
@@ -56,7 +56,7 @@ export default function Header() {
 
                 <div className="hidden lg:flex lg:flex-1 lg:justify-end">
                     <a href="#join" className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-200 ease-in-out">
-                        join us <span aria-hidden="true">&rarr;</span>
+                        Join Us <span aria-hidden="true">&rarr;</span>
                     </a>
                 </div>
             </nav>

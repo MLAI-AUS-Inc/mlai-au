@@ -1,37 +1,45 @@
 import React from "react";
+import { ButtonLink } from "@/components/ui/Button";
+import { H2, Body } from "@/components/ui/Typography";
 
 export default function CTA() {
   return (
     <div
       id="join"
-      className="bg-black relative isolate px-6 py-24 sm:py-24 lg:px-8"
+      className="bg-black relative isolate px-6 py-16 sm:py-24 lg:px-8"
     >
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <H2 className="text-white">
           Keen to jump aboard the pirate ship?
-        </h2>
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-8 text-gray-300">
+        </H2>
+        <Body className="mx-auto mt-6 max-w-xl text-gray-300">
           Wait no longer, click the button sailor.
-        </p>
+        </Body>
         <div className="mt-10 flex items-center justify-center gap-x-6">
-          <a
-            href="https://forms.gle/egJRbMhnuvJ7QPVT8"
-            className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
+          <ButtonLink
+            href="https://forms.gle/GwZR49kwTMszLKtN8"
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="primary"
+            size="md"
           >
             I want to volunteer
-          </a>
-          <a
+          </ButtonLink>
+          <ButtonLink
             href="/#events"
-            className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+            variant="primary"
+            size="md"
           >
             I want to build
-          </a>
-          <a
-            href="/contact"
-            className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-150"
+          </ButtonLink>
+          <ButtonLink
+            href="/sponsors"
+            variant="ghost"
+            size="md"
+            className="text-white hover:text-teal-300"
           >
             I want to sponsor <span aria-hidden="true">→</span>
-          </a>
+          </ButtonLink>
         </div>
       </div>
     </div>

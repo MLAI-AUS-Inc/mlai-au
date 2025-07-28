@@ -2,10 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    
+    --primary: 174 72% 40%;
+    --primary-foreground: 210 40% 98%;
+    --primary-50: 166 76% 97%;
+    --primary-100: 163 75% 91%;
+    --primary-200: 166 76% 82%;
+    --primary-300: 166 76% 71%;
+    --primary-400: 168 83% 57%;
+    --primary-500: 174 72% 40%;
+    --primary-600: 175 73% 31%;
+    --primary-700: 173 80% 26%;
+    --primary-800: 172 83% 21%;
+    --primary-900: 172 82% 17%;
+    --primary-950: 175 86% 11%;
+    
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 174 72% 40%;
+    
+    --radius: 0.5rem;
+    
+    --foreground-rgb: 0, 0, 0;
+    --background-start-rgb: 214, 219, 220;
+    --background-end-rgb: 255, 255, 255;
+  }
+  
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 174 72% 40%;
+    --primary-foreground: 210 40% 98%;
+    --primary-50: 175 86% 11%;
+    --primary-100: 172 82% 17%;
+    --primary-200: 172 83% 21%;
+    --primary-300: 173 80% 26%;
+    --primary-400: 175 73% 31%;
+    --primary-500: 174 72% 40%;
+    --primary-600: 168 83% 57%;
+    --primary-700: 166 76% 71%;
+    --primary-800: 166 76% 82%;
+    --primary-900: 163 75% 91%;
+    --primary-950: 166 76% 97%;
+    
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 174 72% 40%;
+    
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {

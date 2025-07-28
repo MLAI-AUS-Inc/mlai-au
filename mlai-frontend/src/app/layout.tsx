@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/header";
+import Sidebar from "@/components/sidebar";
 import Footer from "@/components/footer";
+import FloatingSocials from "@/components/floating-socials";
+import StickySlackButton from "@/components/sticky-slack-button";
 import Script from "next/script";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -99,9 +101,13 @@ export default function RootLayout({
             src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
           />
         </noscript>
-        <Header></Header>
-        {children}
-        <Footer></Footer>
+        <StickySlackButton />
+        <Sidebar />
+        <FloatingSocials />
+        <div className="lg:pl-20">
+          {children}
+          <Footer></Footer>
+        </div>
       </body>
     </html >
   );
