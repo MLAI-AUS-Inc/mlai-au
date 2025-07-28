@@ -1,4 +1,6 @@
 
+import { ButtonLink } from "@/components/ui/Button";
+
 export default function GetTickets() {
   return (
     <section className="relative z-50 flex-none lg:pt-11 bg-gray-900">
@@ -34,15 +36,24 @@ export default function GetTickets() {
               Join us in Melbourne
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
-              <a
-                href="https://events.humanitix.com/the-ml-ai-green-battery-hack-kickoff-team-formation-day" target='_'
-                className="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              <ButtonLink
+                href="https://events.humanitix.com/the-ml-ai-green-battery-hack-kickoff-team-formation-day" 
+                target='_blank'
+                variant="secondary"
+                size="md"
+                className="bg-white text-gray-900 hover:bg-gray-100"
               >
                 Join the Hackathon
-              </a>
-              <a href="https://events.humanitix.com/the-ml-ai-green-battery-hack-pitch-night-melbourne" target='_' className="text-sm font-semibold leading-6 text-white hover:underline">
+              </ButtonLink>
+              <ButtonLink 
+                href="https://events.humanitix.com/the-ml-ai-green-battery-hack-pitch-night-melbourne" 
+                target='_blank' 
+                variant="ghost"
+                size="md"
+                className="text-white hover:text-gray-300 hover:underline"
+              >
                 Attend the Pitch Night <span aria-hidden="true">→</span>
-              </a>
+              </ButtonLink>
             </div>
           </div>
           <div className="mx-auto max-w-md text-center mb-12 lg:mb-0 lg:mx-0 lg:flex-auto lg:py-32 lg:text-left">
@@ -50,15 +61,24 @@ export default function GetTickets() {
               Join us in Sydney
             </h2>
             <div className="mt-10 flex items-center justify-center gap-x-6 lg:justify-start">
-              <a
-                href="https://events.humanitix.com/copy-of-the-ml-ai-green-battery-hack-team-formation-day-sydney" target='_'
-                className="rounded-md bg-teal-200 px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal300"
+              <ButtonLink
+                href="https://events.humanitix.com/copy-of-the-ml-ai-green-battery-hack-team-formation-day-sydney" 
+                target='_blank'
+                variant="primary"
+                size="md"
+                className="bg-teal-200 text-gray-900 hover:bg-teal-300"
               >
                 Join the Hackathon
-              </a>
-              <a href="https://events.humanitix.com/ml-ai-green-battery-hack-pitch-night-sydney" target='_' className="text-sm font-semibold leading-6 text-teal-200 hover:underline">
+              </ButtonLink>
+              <ButtonLink 
+                href="https://events.humanitix.com/ml-ai-green-battery-hack-pitch-night-sydney" 
+                target='_blank' 
+                variant="ghost"
+                size="md"
+                className="text-teal-200 hover:text-teal-300 hover:underline"
+              >
                 Attend the Pitch Night <span aria-hidden="true">→</span>
-              </a>
+              </ButtonLink>
             </div>
           </div>
         </div>

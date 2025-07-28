@@ -1,3 +1,6 @@
+import { Card, CardContent } from './ui/Card';
+import { Section, Container } from './ui/Container';
+
 const featuredTestimonial = {
     body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch and get involved!",
     author: {
@@ -44,7 +47,7 @@ const featuredTestimonial = {
 
 export default function Testimonals() {
     return (
-        < div className="relative isolate bg-white pb-32 pt-12 sm:pt-32" >
+        <div className="relative isolate bg-white py-16 sm:py-24">
             <div
                 className="absolute inset-x-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu overflow-hidden opacity-30 blur-3xl"
                 aria-hidden="true"
@@ -69,7 +72,7 @@ export default function Testimonals() {
                     }}
                 />
             </div>
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <Container>
                 <div className="mx-auto max-w-xl text-center">
                     <h2 className="text-lg font-semibold leading-8 tracking-tight text-teal-500">&quot;Honestly, meeting cool people was the best part of it all&quot;</h2>
                     <p className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -77,10 +80,12 @@ export default function Testimonals() {
                     </p>
                 </div>
                 <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 grid-rows-1 gap-8 text-sm leading-6 text-gray-900 sm:mt-20 sm:grid-cols-2 xl:mx-0 xl:max-w-none xl:grid-flow-col xl:grid-cols-4">
-                    <figure className="rounded-2xl bg-white shadow-lg ring-1 ring-gray-900/5 sm:col-span-2 xl:col-start-2 xl:row-end-1">
-                        <blockquote className="p-6 text-lg font-semibold leading-7 tracking-tight text-gray-900 sm:p-12 sm:text-xl sm:leading-8">
-                            <p>{`“${featuredTestimonial.body}”`}</p>
-                        </blockquote>
+                    <Card variant="elevated" as="figure" className="sm:col-span-2 xl:col-start-2 xl:row-end-1">
+                        <CardContent className="sm:p-12">
+                            <blockquote className="text-lg font-semibold leading-7 tracking-tight text-gray-900 sm:text-xl sm:leading-8">
+                                <p>{`"${featuredTestimonial.body}"`}</p>
+                            </blockquote>
+                        </CardContent>
                         <figcaption className="flex flex-wrap items-center gap-x-4 gap-y-4 border-t border-gray-900/10 px-6 py-4 sm:flex-nowrap">
                             <img
                                 className="h-10 w-10 flex-none rounded-full bg-gray-50"
@@ -93,7 +98,7 @@ export default function Testimonals() {
                             </div>
                             <img className="h-10 w-auto flex-none" src={featuredTestimonial.author.logoUrl} alt="" />
                         </figcaption>
-                    </figure>
+                    </Card>
                     {testimonials.map((columnGroup: any, columnGroupIdx: any) => (
                         <div key={columnGroupIdx} className="space-y-8 xl:contents xl:space-y-0">
                             {columnGroup.map((column: any, columnIdx: any) => (
@@ -108,28 +113,31 @@ export default function Testimonals() {
                                     )}
                                 >
                                     {column.map((testimonial: any) => (
-                                        <figure
+                                        <Card
                                             key={testimonial.author.handle}
-                                            className="rounded-2xl bg-white p-6 shadow-lg ring-1 ring-gray-900/5"
+                                            variant="testimonial"
+                                            as="figure"
                                         >
-                                            <blockquote className="text-gray-900">
-                                                <p>{`“${testimonial.body}”`}</p>
-                                            </blockquote>
-                                            <figcaption className="mt-6 flex items-center gap-x-4">
-                                                <img className="h-10 w-10 rounded-full bg-gray-50" src={testimonial.author.imageUrl} alt="" />
-                                                <div>
-                                                    <div className="font-semibold">{testimonial.author.name}</div>
-                                                    <div className="text-gray-600">{`${testimonial.author.handle}`}</div>
-                                                </div>
-                                            </figcaption>
-                                        </figure>
+                                            <CardContent>
+                                                <blockquote className="text-gray-900">
+                                                    <p>{`"${testimonial.body}"`}</p>
+                                                </blockquote>
+                                                <figcaption className="mt-6 flex items-center gap-x-4">
+                                                    <img className="h-10 w-10 rounded-full bg-gray-50" src={testimonial.author.imageUrl} alt="" />
+                                                    <div>
+                                                        <div className="font-semibold">{testimonial.author.name}</div>
+                                                        <div className="text-gray-600">{`${testimonial.author.handle}`}</div>
+                                                    </div>
+                                                </figcaption>
+                                            </CardContent>
+                                        </Card>
                                     ))}
                                 </div>
                             ))}
                         </div>
                     ))}
                 </div>
-            </div>
-        </div >
+            </Container>
+        </div>
     )
 }
