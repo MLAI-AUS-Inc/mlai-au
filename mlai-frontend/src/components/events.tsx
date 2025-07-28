@@ -23,7 +23,11 @@ export default function Events() {
                 if (response.ok) {
                     const data = await response.json();
                     console.log('Fetched Events:', data);
-                    setEvents(data.events || []); // Set the events array directly as returned by the API
+                    // Sort events by startDate in descending order (most recent first)
+                    const sortedEvents = (data.events || []).sort((a: Event, b: Event) => {
+                        return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+                    });
+                    setEvents(sortedEvents);
                 } else {
                     console.error('Failed to fetch events:', await response.json());
                 }
