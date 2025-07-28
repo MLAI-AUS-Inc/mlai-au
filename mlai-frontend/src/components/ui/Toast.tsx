@@ -129,3 +129,4 @@ const toastAnimations = `
 .animate-slide-in-right {
   animation: slide-in-right 0.3s ease-out;
 }
+`;
