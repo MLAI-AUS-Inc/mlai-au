@@ -1,3 +1,6 @@
+import { ButtonLink } from "@/components/ui/Button";
+import { H1, Body } from "@/components/ui/Typography";
+
 export default function Hero() {
   return (
     <div
@@ -33,33 +36,39 @@ export default function Hero() {
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">
+            <H1 className="text-white">
               Empowering the Australian AI Community
-            </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-300">
+            </H1>
+            <Body className="mt-6 text-gray-300">
               MLAI Aus is a non-profit org dedicated to making Australia an
               awesome home for AI builders. Join us for one of our next meetups
               and hackathons!
-            </p>
+            </Body>
             <div className="mt-10 flex items-center justify-center gap-x-6">
-              <a
-                href="https://forms.gle/egJRbMhnuvJ7QPVT8"
-                className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
+              <ButtonLink
+                href="https://forms.gle/GwZR49kwTMszLKtN8"
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="primary"
+                size="md"
               >
                 I want to volunteer
-              </a>
-              <a
+              </ButtonLink>
+              <ButtonLink
                 href="#events"
-                className="rounded-md bg-teal-500 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-teal-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-300"
+                variant="primary"
+                size="md"
               >
                 I want to build
-              </a>
-              <a
-                href="/contact"
-                className="text-sm font-semibold leading-6 text-white hover:text-teal-300 transition duration-150"
+              </ButtonLink>
+              <ButtonLink
+                href="/sponsors"
+                variant="ghost"
+                size="md"
+                className="text-white hover:text-teal-300"
               >
                 I want to sponsor <span aria-hidden="true">→</span>
-              </a>
+              </ButtonLink>
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Container } from './Container';
 import { Button } from './Button';
 import { formatDistanceToNow } from 'date-fns';
 import { ArrowDownOnSquareIcon, ArrowPathIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid';
+import { Spinner } from '@/components/ui/Spinner';
 
 interface LeaderboardProps {
     topScores?: ActivityItem[];
@@ -92,6 +93,8 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const currentItems = activityItems.slice(indexOfFirstItem, indexOfLastItem);
     const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
     const pageNumbers = [];
@@ -120,6 +123,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
     });
 
     const fetchData = async () => {
+        setRefreshing(true);
         try {
             const response = await fetch(`/api/getTopScores`, { cache: 'no-store', next: { revalidate: 0 }});
 
@@ -151,18 +155,24 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
             // console.log('Data received:', result.data);
         } catch (error) {
             console.error('Error caught during fetch operation:', error);
+        } finally {
+            setRefreshing(false);
         }
-
     };
 
     useEffect(() => {
-        // Update the city leaderboards
-        topScores.sort((a: any, b: any) => b.score - a.score);
-        setActivityItems(topScores)
+        if (topScores.length > 0) {
+            // Update the city leaderboards
+            topScores.sort((a: any, b: any) => b.score - a.score);
+            setActivityItems(topScores)
 
-        // Update the city leaderboards
-        const updatedCities = updateCities(topScores)
-        setCities(updatedCities);
+            // Update the city leaderboards
+            const updatedCities = updateCities(topScores)
+            setCities(updatedCities);
+        } else {
+            setLoading(true);
+            fetchData().finally(() => setLoading(false));
+        }
     }, []);
 
 
@@ -177,9 +187,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                 <div className="bg-gray-900 py-10">
                     <div className='flex justify-between items-center'>
                         <h2 className="px-4 text-xl font-semibold leading-7 text-white sm:px-6 lg:px-8">Most recent commit</h2>
-                        <Button color="teal" onClick={fetchData} className="whitespace-nowrap my-2">
-                            <ArrowPathIcon className="h-5 w-5 text-gray-900 mr-2" aria-hidden="true" />
-                            Refresh
+                        <Button color="teal" onClick={fetchData} className="whitespace-nowrap my-2" disabled={refreshing}>
+                            {refreshing ? (
+                                <Spinner size="sm" variant="dark" className="mr-2" />
+                            ) : (
+                                <ArrowPathIcon className="h-5 w-5 text-gray-900 mr-2" aria-hidden="true" />
+                            )}
+                            {refreshing ? 'Refreshing...' : 'Refresh'}
                         </Button>
                     </div>
                     <div className="overflow-x-auto">
@@ -215,7 +229,22 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5">
-                                {currentItems.map((item, index) => (
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={7} className="py-12 text-center">
+                                            <div className="flex justify-center">
+                                                <Spinner size="lg" variant="light" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : currentItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="py-12 text-center text-gray-400">
+                                            No scores available yet
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    currentItems.map((item, index) => (
                                     <tr key={item.user.name}>
                                         <td className="py-4 pl-2 pr-2 sm:pl-6 lg:pl-8">
                                             {/* Adjust condition to also check if currentPage is 1 */}
@@ -260,7 +289,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ topScores = [] }) => {
                                             <time>{item.submitted}</time>
                                         </td>
                                     </tr>
-                                ))}
+                                )))}
                             </tbody>
                         </table>
                         <div className="flex items-center justify-between border-t border-gray-400 bg-gray-900 px-4 py-3 sm:px-6">

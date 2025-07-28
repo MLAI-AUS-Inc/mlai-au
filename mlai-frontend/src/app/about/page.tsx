@@ -1,4 +1,5 @@
 import CTA from "@/components/CTA";
+import { H1, Body, Caption } from "@/components/ui/Typography";
 
 const stats = [
     { label: 'Founded', value: '2021' },
@@ -9,7 +10,7 @@ const stats = [
 
 export default function About() {
     return (
-        <div className="bg-white pt-24 sm:pt-32">
+        <div className="bg-white py-16 sm:py-24">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
                 <div className="mx-auto grid max-w-2xl grid-cols-1 items-start gap-x-8 gap-y-16 sm:gap-y-24 lg:mx-0 lg:max-w-none lg:grid-cols-2">
                     <div className="lg:pr-4">
@@ -60,27 +61,27 @@ export default function About() {
                     </div>
                     <div>
                         <div className="text-base leading-7 text-gray-700 lg:max-w-lg">
-                            <p className="text-base font-semibold leading-7 text-indigo-600">Company values</p>
-                            <h1 className="mt-2 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+                            <Caption className="font-semibold text-indigo-600">Company values</Caption>
+                            <H1 className="mt-2">
                                 On a mission to empower remote teams
-                            </h1>
+                            </H1>
                             <div className="max-w-xl">
-                                <p className="mt-6">
+                                <Body className="mt-6">
                                     Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget risus enim. Mattis mauris semper sed amet
                                     vitae sed turpis id. Id dolor praesent donec est. Odio penatibus risus viverra tellus varius sit neque
                                     erat velit. Faucibus commodo massa rhoncus, volutpat. Dignissim sed eget risus enim. Mattis mauris
                                     semper sed amet vitae sed turpis id.
-                                </p>
-                                <p className="mt-8">
+                                </Body>
+                                <Body className="mt-8">
                                     Et vitae blandit facilisi magna lacus commodo. Vitae sapien duis odio id et. Id blandit molestie
                                     auctor fermentum dignissim. Lacus diam tincidunt ac cursus in vel. Mauris varius vulputate et ultrices
                                     hac adipiscing egestas. Iaculis convallis ac tempor et ut. Ac lorem vel integer orci.
-                                </p>
-                                <p className="mt-8">
+                                </Body>
+                                <Body className="mt-8">
                                     Et vitae blandit facilisi magna lacus commodo. Vitae sapien duis odio id et. Id blandit molestie
                                     auctor fermentum dignissim. Lacus diam tincidunt ac cursus in vel. Mauris varius vulputate et ultrices
                                     hac adipiscing egestas. Iaculis convallis ac tempor et ut. Ac lorem vel integer orci.
-                                </p>
+                                </Body>
                             </div>
                         </div>
                         <dl className="mt-10 grid grid-cols-2 gap-8 border-t border-gray-900/10 pt-10 sm:grid-cols-4">
