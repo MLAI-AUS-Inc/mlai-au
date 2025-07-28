@@ -80,7 +80,7 @@ export default function SponsorsPage() {
               Partner with MLAI Aus
             </H1>
             <Body className="mt-6 text-gray-300">
-              Join Australia's leading AI community and connect with talented developers, 
+              Join Australia&apos;s leading AI community and connect with talented developers, 
               researchers, and entrepreneurs building the future of AI.
             </Body>
           </div>
@@ -94,7 +94,7 @@ export default function SponsorsPage() {
             <H2>Why Sponsor MLAI Aus?</H2>
             <Body className="mt-6">
               MLAI Aus is a non-profit dedicated to making Australia an amazing home for AI 
-              and machine learning entrepreneurs. We're building a thriving community through 
+              and machine learning entrepreneurs. We&apos;re building a thriving community through 
               meetups, hackathons, and educational programs.
             </Body>
           </div>
@@ -111,7 +111,7 @@ export default function SponsorsPage() {
                   Access Top AI Talent
                 </dt>
                 <dd className="mt-2 text-base leading-7 text-gray-600">
-                  Connect with Australia's brightest AI engineers, data scientists, and ML researchers 
+                  Connect with Australia&apos;s brightest AI engineers, data scientists, and ML researchers 
                   through our events and talent network.
                 </dd>
               </div>
@@ -237,8 +237,8 @@ export default function SponsorsPage() {
           <div className="mx-auto max-w-2xl lg:text-center">
             <H2>Our Current Sponsors</H2>
             <Body className="mt-6">
-              We're proud to partner with these forward-thinking organizations 
-              who share our vision for Australia's AI future.
+              We&apos;re proud to partner with these forward-thinking organizations 
+              who share our vision for Australia&apos;s AI future.
             </Body>
           </div>
           
@@ -266,11 +266,11 @@ export default function SponsorsPage() {
         <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <H2 className="text-white">
-              Ready to Support Australia's AI Community?
+              Ready to Support Australia&apos;s AI Community?
             </H2>
             <Body className="mx-auto mt-6 max-w-xl text-teal-50">
               Join us in building a thriving AI ecosystem in Australia. 
-              Let's discuss how we can create a partnership that delivers value 
+              Let&apos;s discuss how we can create a partnership that delivers value 
               for your organization while supporting our community.
             </Body>
             <div className="mt-10 flex items-center justify-center gap-x-6">
