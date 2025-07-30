@@ -3,29 +3,60 @@ import { H2, Body, Caption } from '@/components/ui/Typography';
 
 const people = [
     {
-        name: 'Louka Ewington-Pitsos',
-        role: 'Co-founder',
+        name: 'Xavier Andrueza',
+        role: 'President',
         imageUrl:
-            'photos/louka.jpeg',
+            'team-photos/Xavier.png',
+    },
+    {
+        name: 'Michael Reitzenstein',
+        role: 'Vice President',
+        imageUrl:
+            'team-photos/Michael.png',
     },
     {
         name: 'Lukas Wesemann',
-        role: 'Co-founder',
+        role: 'Secretary',
         imageUrl:
             'photos/lukas.png',
     },
     {
         name: 'Doc Sam Donegan',
-        role: 'Vice-President',
+        role: 'Head of Marketing',
         imageUrl:
             'photos/sam.png',
     },
     {
-        name: 'Jamie Blackwell',
-        role: 'Co-founder, Ex-Committee',
+        name: 'Callum Holt',
+        role: 'Head of Partnerships',
         imageUrl:
-            'photos/jaime.png',
+            'team-photos/Callum.png',
     },
+    {
+        name: 'Tom McKenzie',
+        role: 'Head of Technology',
+        imageUrl:
+            'team-photos/Tom.png',
+    },
+    {
+        name: 'Ethan Lee',
+        role: 'Co-Head of Community',
+        imageUrl:
+            'team-photos/Ethan.png',
+    },
+    {
+        name: 'Jasmine Raj',
+        role: 'Co-Head of Community',
+        imageUrl:
+            'team-photos/Jasmine.png',
+    },
+    {
+        name: 'Pegah Khaleghi',
+        role: 'Treasurer',
+        imageUrl:
+            'team-photos/Pegah.jpeg',
+    },
+    
 
     // More people...
 ]
