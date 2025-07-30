@@ -6,7 +6,7 @@ import Testimonials from "@/components/testimonials";
 import Feature from '@/components/feature';
 import Events from '@/components/events';
 import FlagshipEvents from '@/components/flagshipevents';
-import Newsletter from "@/components/newsletter";
+import SubstackUpdates from "@/components/SubstackUpdates";
 
 
 export default function Home() {
@@ -158,8 +158,8 @@ export default function Home() {
           </div>
         </div >
 
-        {/* Newsletter section */}
-        <Newsletter></Newsletter>
+        {/* Substack Updates section */}
+        <SubstackUpdates />
 
 
         {/* Divider */}
