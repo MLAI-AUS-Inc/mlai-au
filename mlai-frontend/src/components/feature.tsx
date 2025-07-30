@@ -3,27 +3,28 @@ import { H3, Body } from "@/components/ui/Typography";
 
 const features = [
     {
-        name: 'Meetups',
-        description:
-            'Community is everything, and most online events are simply not that great. We\'re organising monthly in-person events with talks about tech, research and startups. And then we have some drinks and make friends, wan\'t to join us? We will never monetise our community.',
-        href: '#',
-        icon: UsersIcon,
+      name: 'Meetups',
+      description:
+        'Monthly IRL tech talks, a few drinks, and new mates—always free.',
+      href: '#',
+      icon: UsersIcon,
     },
     {
-        name: 'Hackathons',
-        description:
-            'Getting together with other smart people and building a prototype is an awesome adventure and a great way to meet co-founders for your next unicorn. That\'s why we\'re hosting several larger hackathons per year. Check out aihackmelb23 - 99 hackers and over 300 pitch night attendees.',
-        href: '#',
-        icon: WrenchIcon,
+      name: 'Hackathons',
+      description:
+        'Weekend build sprints with 100+ hackers—perfect co-founder hunting ground. (See #aihackmelb23)',
+      href: '#',
+      icon: WrenchIcon,
     },
     {
-        name: 'Codecamp',
-        description:
-            'We\'re all still learning, AI just moves too fast! If you\'re keen to get hands-on with coding and build you own AI systems, say no more and head straight to our codecamp. Run in collaboration with the Melbourne Hackerspace we\'re delivering ongoing build sessions.',
-        href: '#',
-        icon: CodeBracketIcon,
+      name: 'Codecamp',
+      description:
+        'Hands-on AI sessions with Melbourne Hackerspace—learn by doing.',
+      href: '#',
+      icon: CodeBracketIcon,
     },
-]
+  ];
+  
 
 export default function Feature() {
     return (
