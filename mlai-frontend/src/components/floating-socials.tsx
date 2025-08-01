@@ -9,7 +9,7 @@ export default function FloatingSocials() {
         <div className="fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3">
             {/* Slack Join Button - Always visible */}
             <a
-                href="https://join.slack.com/t/mlai-au/shared_invite/zt-2br01q4n9-PiiT9mgEOPMEG__8SOWQ8g"
+                href="https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group relative"
@@ -34,7 +34,7 @@ export default function FloatingSocials() {
                 <>
                     {/* LinkedIn */}
                     <a
-                        href="https://www.linkedin.com/company/mlai-au/"
+                        href="https://www.linkedin.com/company/mlai-aus-inc"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="group relative animate-fadeIn"

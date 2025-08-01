@@ -43,7 +43,7 @@ const footerNavigation = {
     },
     {
       name: "Slack",
-      href: "https://join.slack.com/t/mlai-au/shared_invite/zt-2br01q4n9-PiiT9mgEOPMEG__8SOWQ8g",
+      href: "https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg",
       icon: (props: any) => (
         <svg
           className="h-6 w-6"
