@@ -17,7 +17,7 @@ export default function FloatingSocials() {
                 <div className="flex items-center">
                     {/* Tooltip */}
                     <span className="absolute right-full mr-3 px-3 py-1 bg-gray-900 text-white text-sm rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                        Join Slack Community
+                        Join Slack Community!
                     </span>
                     
                     {/* Icon Button */}
