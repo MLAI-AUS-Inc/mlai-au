@@ -8,6 +8,7 @@ LogRocket.init('4s6cqz/mlai-website');
 const navigation = [
     { name: 'About', href: '/#about' },
     { name: 'Events', href: '/#upcoming-events' },
+    { name: 'Luma Events', href: '/luma-events' },
     { name: 'Volunteer', href: 'https://forms.gle/GwZR49kwTMszLKtN8', target: "_blank", rel: "noopener noreferrer" },
     { name: 'Contact', href: '/contact' },
     { name: 'Blog', href: 'https://mlaiaus.substack.com/archive', target: "_blank", rel: "noopener noreferrer" },
