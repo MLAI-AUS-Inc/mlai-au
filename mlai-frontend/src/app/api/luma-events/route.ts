@@ -42,9 +42,6 @@ export async function GET(request: NextRequest) {
             calendar_api_id: item.event.calendar_api_id
         })) || [];
         
-        console.log(`Transformed ${transformedEvents.length} events from Luma API`);
-        console.log('Calendar API IDs found:', transformedEvents.map(e => e.calendar_api_id));
-        
         return NextResponse.json({ 
             ...data, 
             events: transformedEvents 
