@@ -53,56 +53,23 @@ export default function LumaEventsPage() {
 
     // Luma API integration
     const fetchFromLuma = async (): Promise<LumaEvent[]> => {
-        console.log('🔍 Starting Luma API fetch...');
-        
         try {
-            // Using a CORS proxy or backend endpoint since we can't make direct calls to Luma from frontend
-            console.log('📡 Calling /api/luma-events...');
             const response = await fetch('/api/luma-events');
-            
-            console.log('📡 Response status:', response.status, response.statusText);
-            console.log('📡 Response headers:', response.headers);
             
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Luma API error response:', errorText);
                 throw new Error(`Failed to fetch from Luma API: ${response.status} ${response.statusText}`);
             }
             
-            console.log('🔍 About to parse JSON response...');
             const data = await response.json();
-            console.log('✅ Luma API response received');
-            console.log('📊 Response keys:', Object.keys(data));
-            console.log('📊 Events array check:', !!data.events, Array.isArray(data.events), data.events?.length);
             
             if (!data.events || !Array.isArray(data.events)) {
-                console.warn('⚠️ No events array in response, using empty array');
-                console.log('📊 Full response:', JSON.stringify(data, null, 2));
                 return [];
             }
             
-            // Events are already transformed by the API route
-            const events: LumaEvent[] = data.events;
-            
-            console.log(`✅ Received ${events.length} transformed events from Luma API`);
-            console.log('📋 Sample event structure:', events[0] ? Object.keys(events[0]) : 'No events');
-            console.log('📋 Sample event:', events[0]);
-            
-            // Validate event structure
-            if (events.length > 0) {
-                const requiredFields = ['id', 'name', 'startDate', 'endDate', 'location', 'image', 'url'];
-                const firstEvent = events[0];
-                const missingFields = requiredFields.filter(field => !firstEvent[field as keyof LumaEvent]);
-                if (missingFields.length > 0) {
-                    console.warn('⚠️ Missing fields in event:', missingFields);
-                }
-            }
-            
-            return events;
+            return data.events;
         } catch (error) {
-            console.error('❌ Error fetching from Luma - Type:', typeof error);
-            console.error('❌ Error fetching from Luma - Constructor:', error?.constructor?.name);
-            console.error('❌ Error fetching from Luma - Details:', error);
+            console.error('Error fetching from Luma:', error);
             throw error;
         }
     };
@@ -154,11 +121,8 @@ export default function LumaEventsPage() {
         try {
             // Fetch events from Luma
             const lumaEvents = await fetchFromLuma();
-            console.log('🎯 About to save to Notion, events received:', lumaEvents.length);
-            
             // Save to Notion
-            const notionResult = await saveToNotion(lumaEvents);
-            console.log('✅ Notion save result:', notionResult);
+            await saveToNotion(lumaEvents);
             
             // Update local state
             setEvents(lumaEvents);
@@ -173,15 +137,11 @@ export default function LumaEventsPage() {
             
         } catch (error) {
             console.error('Import failed:', error);
-            console.error('Error type:', typeof error);
-            console.error('Error constructor:', error?.constructor?.name);
-            console.error('Error details:', JSON.stringify(error, null, 2));
             
-            // Try to get more specific error information
             if (error instanceof Error) {
                 alert(`Failed to import events from Luma: ${error.message}`);
             } else {
-                alert(`Failed to import events from Luma. Error: ${String(error)}`);
+                alert('Failed to import events from Luma. Please try again.');
             }
         } finally {
             setImporting(false);
