@@ -73,12 +73,9 @@ async function findLumaEventsDatabase() {
         if (searchResponse.ok) {
             const searchData = await searchResponse.json();
             if (searchData.results && searchData.results.length > 0) {
-                console.log('Found Luma Events database:', searchData.results[0].id);
                 return searchData.results[0].id;
             }
         }
-
-        console.log('No Luma Events database found');
         return null;
     } catch (error) {
         console.error('Error finding database:', error);
@@ -156,8 +153,6 @@ export async function GET() {
         
         events = [...upcomingEvents, ...pastEvents];
 
-        console.log(`Retrieved ${events.length} events from Notion database`);
-        console.log(`Upcoming events: ${upcomingEvents.length}, Past events: ${pastEvents.length}`);
         return NextResponse.json({ events });
     } catch (error) {
         console.error('Error fetching from Notion:', error);
@@ -188,17 +183,9 @@ export async function POST(request: NextRequest) {
         // Filter events to only include those with the specific calendar_api_id
         const targetCalendarApiId = 'cal-KPakbH2wTxQuyCj';
         
-        console.log('Received events for filtering:', events.length);
-        console.log('Calendar API IDs in received events:', events.map(e => `"${e.calendar_api_id}"`));
-        console.log('Target calendar API ID:', `"${targetCalendarApiId}"`);
-        
-        const filteredEvents = events.filter(event => {
-            const matches = event.calendar_api_id === targetCalendarApiId;
-            console.log(`Event "${event.name}" (${event.calendar_api_id}) matches: ${matches}`);
-            return matches;
-        });
-        
-        console.log(`Filtered ${events.length} events to ${filteredEvents.length} events with calendar_api_id: ${targetCalendarApiId}`);
+        const filteredEvents = events.filter(event => 
+            event.calendar_api_id === targetCalendarApiId
+        );
         
         if (filteredEvents.length === 0) {
             return NextResponse.json({
@@ -213,8 +200,6 @@ export async function POST(request: NextRequest) {
             });
         }
 
-        console.log(`Attempting to save ${filteredEvents.length} events to Notion database...`);
-
         const databaseId = await findLumaEventsDatabase();
         
         if (!databaseId) {
@@ -228,7 +213,6 @@ export async function POST(request: NextRequest) {
         }
 
         // Get existing events to check for duplicates
-        console.log('🔍 Checking for existing events to prevent duplicates...');
         const existingEventsResponse = await fetch(`https://api.notion.com/v1/databases/${databaseId}/query`, {
             method: 'POST',
             headers: {
@@ -247,12 +231,10 @@ export async function POST(request: NextRequest) {
                     page.properties['Event Link']?.url || ''
                 ).filter((url: string) => url)
             );
-            console.log(`📊 Found ${existingUrls.size} existing event URLs in database`);
         }
 
         // Filter out events that already exist (by URL)
         const newEvents = filteredEvents.filter(event => !existingUrls.has(event.url));
-        console.log(`📊 After deduplication: ${newEvents.length} new events to save (${filteredEvents.length - newEvents.length} duplicates skipped)`);
 
         if (newEvents.length === 0) {
             return NextResponse.json({
@@ -303,7 +285,7 @@ export async function POST(request: NextRequest) {
         };
 
         // Save each new event to the database
-        const savePromises = newEvents.map(async (event, index) => {
+        const savePromises = newEvents.map(async (event) => {
             try {
                 const response = await fetch('https://api.notion.com/v1/pages', {
                     method: 'POST',
@@ -392,7 +374,6 @@ export async function POST(request: NextRequest) {
                     throw new Error(`Failed to save event "${event.name}": ${response.status} ${errorText}`);
                 }
 
-                console.log(`Successfully saved event ${index + 1}/${newEvents.length}: ${event.name}`);
                 return await response.json();
             } catch (error) {
                 console.error(`Failed to save event "${event.name}":`, error);
