@@ -130,7 +130,9 @@ export default function Layout() {
         <StickySlackButton />
         <Sidebar />
         <FloatingSocials />
-        <Outlet />
+        <div className="lg:pl-20">
+          <Outlet />
+        </div>
         <Footer />
         <ScrollRestoration />
         <Scripts />
