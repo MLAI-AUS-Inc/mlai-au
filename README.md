@@ -1,79 +1,84 @@
-# Welcome to React Router!
+# MLAI Australia Website
 
-A modern, production-ready template for building full-stack React applications using React Router.
+The official website for MLAI Australia - empowering the Australian AI community through events, networking, and resources.
 
-## Features
+## Quick Start
 
-- 🚀 Server-side rendering
-- ⚡️ Hot Module Replacement (HMR)
-- 📦 Asset bundling and optimization
-- 🔄 Data loading and mutations
-- 🔒 TypeScript by default
-- 🎉 TailwindCSS for styling
-- 📖 [React Router docs](https://reactrouter.com/)
+This website is built with React Router v7 and deployed on Cloudflare.
 
-## Getting Started
+### Prerequisites
+
+- **Bun** (recommended) or Node.js
+- **Wrangler CLI** for deployment
 
 ### Installation
 
-Install the dependencies:
+1. **Install Bun** (if you don't have it):
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
 
-```bash
-npm install
-```
+2. **Install dependencies**:
+   ```bash
+   bun install
+   ```
 
 ### Development
 
-Start the development server with HMR:
+Start the development server:
+```bash
+bun run dev
+```
+
+Your site will be available at `http://localhost:5173` with hot reloading enabled.
+
+If you update `.dev.vars`, any service bindings, or page routes outside of dev server, you'll need to regenerate routes:
 
 ```bash
-npm run dev
+bun run typegen
 ```
 
-Your application will be available at `http://localhost:5173`.
+### Building & Deployment
 
-## Previewing the Production Build
+1. **Build for production**:
+   ```bash
+   bun run build
+   ```
 
-Preview the production build locally:
+2. **Deploy to Cloudflare**:
+   ```bash
+   bun run deploy
+   ```
 
-```bash
-npm run preview
-```
+   This builds the project and deploys it using Wrangler.
 
-## Building for Production
+## Project Structure
 
-Create a production build:
+- `/app/routes/` - Page routes and API endpoints
+- `/app/components/` - Reusable React components
+- `/public/` - Static assets
 
-```bash
-npm run build
-```
+## Key Features
 
-## Deployment
+- 🏠 Homepage with events and community info
+- 📅 Luma Events integration (`/luma-events`)
+- 📝 Contact form (`/contact`)
+- 🤝 Sponsor information (`/sponsors`)
+- 🏆 Hackathon pages (`/hackathon`)
+- 🔗 Social media integration
+- 📱 Responsive design with TailwindCSS
 
-Deployment is done using the Wrangler CLI.
+## Development Notes
 
-To build and deploy directly to production:
+- Uses React Router v7 with server-side rendering
+- API routes handle Notion and Luma integrations
+- TypeScript throughout for type safety
+- Cloudflare Workers runtime compatible
 
-```sh
-npm run deploy
-```
+## Community
 
-To deploy a preview URL:
+- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg)
+- **LinkedIn**: [Follow us](https://www.linkedin.com/company/mlai-aus-inc)
+- **Instagram**: [@mlai_aus](https://www.instagram.com/mlai_aus/)
 
-```sh
-npx wrangler versions upload
-```
-
-You can then promote a version to production after verification or roll it out progressively.
-
-```sh
-npx wrangler versions deploy
-```
-
-## Styling
-
-This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
-
----
-
-Built with ❤️ using React Router.
+Built with ❤️ for the Australian AI community.
