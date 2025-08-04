@@ -5,7 +5,7 @@ const { Client } = require("@notionhq/client");
 
 // Initialize Notion client
 const notion = new Client({
-  auth: "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", // Replace with your integration token
+  auth: process.env.NOTION_API_KEY, // Replace with your integration token
 });
 
 const REQUIRED_CALENDAR_API_ID = "cal-KPakbH2wTxQuyCj";
