@@ -1,6 +1,4 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
-
-const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_VERSION = "2022-06-28";
 
 interface LumaEvent {
@@ -52,12 +50,12 @@ interface NotionEvent {
 }
 
 // Helper function to find the Luma Events database
-async function findLumaEventsDatabase() {
+async function findLumaEventsDatabase(notionApiKey: string) {
   try {
     const searchResponse = await fetch("https://api.notion.com/v1/search", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${NOTION_API_KEY}`,
+        Authorization: `Bearer ${notionApiKey}`,
         "Notion-Version": NOTION_VERSION,
         "Content-Type": "application/json",
       },
@@ -84,9 +82,19 @@ async function findLumaEventsDatabase() {
 }
 
 // GET: Retrieve events from Notion database
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ context }: LoaderFunctionArgs) {
   try {
-    const databaseId = await findLumaEventsDatabase();
+    const notionApiKey = context.cloudflare.env.NOTION_API_KEY;
+    
+    if (!notionApiKey) {
+      console.log("API key not found");
+      return Response.json({
+        events: [],
+        message: "NOTION_API_KEY environment variable is not set",
+      });
+    }
+
+    const databaseId = await findLumaEventsDatabase(notionApiKey);
 
     if (!databaseId) {
       console.log("No database found, returning empty events array");
@@ -102,7 +110,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${NOTION_API_KEY}`,
+          Authorization: `Bearer ${notionApiKey}`,
           "Notion-Version": NOTION_VERSION,
           "Content-Type": "application/json",
         },
@@ -191,7 +199,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 }
 
 // POST: Save events to Notion database
-export async function action({ request }: ActionFunctionArgs) {
+export async function action({ request, context }: ActionFunctionArgs) {
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
@@ -200,6 +208,18 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   try {
+    const notionApiKey = context.cloudflare.env.NOTION_API_KEY;
+    
+    if (!notionApiKey) {
+      return new Response(
+        JSON.stringify({ error: "NOTION_API_KEY environment variable is not set" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const { events }: { events: LumaEvent[] } = await request.json();
 
     if (!events || !Array.isArray(events)) {
@@ -228,7 +248,7 @@ export async function action({ request }: ActionFunctionArgs) {
       });
     }
 
-    const databaseId = await findLumaEventsDatabase();
+    const databaseId = await findLumaEventsDatabase(notionApiKey);
 
     if (!databaseId) {
       return new Response(
@@ -253,7 +273,7 @@ export async function action({ request }: ActionFunctionArgs) {
         const createResponse = await fetch("https://api.notion.com/v1/pages", {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${NOTION_API_KEY}`,
+            Authorization: `Bearer ${notionApiKey}`,
             "Notion-Version": NOTION_VERSION,
             "Content-Type": "application/json",
           },
