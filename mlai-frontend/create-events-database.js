@@ -5,7 +5,7 @@ const { Client } = require("@notionhq/client");
 
 // Initialize Notion client
 const notion = new Client({
-  auth: process.env.NOTION_API_KEY, // Replace with your integration token
+  auth: process.env.NOTION_API_KEY, // Replace with your integration tokeN
 });
 
 async function createEventsDatabase() {
