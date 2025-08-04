@@ -1,84 +1,31 @@
-# CLAUDE.md
+# mlai website
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to assistants when working with code in this repository.
 
 ## Project Overview
 
-This is the MLAI (Machine Learning & AI Australia) website - a Next.js application for a not-for-profit community based in Australia that aims to empower the Australian AI Community. The project is located in the `mlai-frontend` directory.
+This is the MLAI website - a React Router v7 application for a not-for-profit community based in Australia that aims to empower the Australian AI Community.
 
-## Common Development Commands
+## Common advice
 
-```bash
-# Install dependencies
-npm install
+Add new routes to the `routes.ts` file
 
-# Run development server (localhost:3000)
-npm run dev
 
-# Build for production
-npm run build
+use [@TODO.md](@file:mlai-au/TODO.md) as your scratchpad to keep track.
 
-# Start production server
-npm run start
+you may use commands like `tree -I 'node_modules' mlai/ mlai-au/` to get an initial overview of the project structure.
 
-# Run linting
-npm run lint
-```
+# Migration advice
 
-## Architecture Overview
+We're migrating `./mlai` to a new repo at `./mlai-au`, this means we'11 migrate page routes one by one to the new stack, from nextjs/vercel, to new standards compatible with wrangler and Cloudflare workers runtime, and react-router v7.
 
-### Technology Stack
-- **Framework**: Next.js 14.1.0 with App Router
-- **UI**: React 18 with TypeScript
-- **Styling**: Tailwind CSS
-- **Backend**: AWS SDK for DynamoDB integration
-- **Analytics**: Google Analytics, Meta Pixel, LogRocket
+In many cases you should prefer to (first best):
 
-### Project Structure
+1. Use `cp` (copy) commands and `read_file` (the first 50 lines) on new files to assess imports.
+2. `read_file` the old file, then `write_file` the new file with updates applied.
 
-The application follows Next.js App Router conventions:
+Migration transformations:
+- use `~/` instead of `@/` as the root alias
 
-- **`src/app/`**: Contains all pages and API routes
-  - Each subdirectory represents a route (e.g., `/about`, `/hackathon`, `/contact`)
-  - `api/` contains server-side API routes that interact with DynamoDB
-  - `layout.tsx` defines the root layout with header/footer and analytics
-  - `page.tsx` files define page components
-
-- **`src/components/`**: Reusable React components used across pages
-  - Common components: `header.tsx`, `footer.tsx`, `hero.tsx`, `team.tsx`, etc.
-
-### Key Features
-
-1. **Main Website** (`src/app/page.tsx`): Landing page with sponsor logos, features, events, testimonials
-2. **Hackathon Section** (`src/app/hackathon/`): Dedicated hackathon functionality with:
-   - Leaderboard system fetching from DynamoDB
-   - Team submissions viewer
-   - Schedule, speakers, sponsors components
-   - Real-time activity updates
-
-3. **API Routes** (`src/app/api/`): Server-side endpoints for:
-   - `getTopScores`: Fetches team leaderboard data from DynamoDB
-   - `getTeamScores`: Gets specific team scores
-   - `getTeamSubmissions`: Retrieves team submissions
-   - `getEvents`: Fetches event data
-
-### Database Integration
-
-The application uses AWS DynamoDB for data persistence:
-- Configured via AWS SDK with credentials from environment variables
-- Primary table: `leaderboard` for hackathon team scores
-- Uses scanning with filters to retrieve and group team data
-
-### Environment Variables
-
-Required environment variables (set in `.env.local`):
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
-- Region is hardcoded to `ap-southeast-2` (Sydney)
-
-### Component Patterns
-
-- Most components are client-side (`'use client'` directive)
-- Components follow a modular structure with separate files
-- Heavy use of Tailwind CSS utility classes for styling
-- Responsive design with mobile-first approach
+<important>
+  Don't do too much at once! You can use
