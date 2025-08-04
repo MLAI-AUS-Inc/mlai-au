@@ -78,6 +78,7 @@ export default function LumaEventsPage() {
   // Easter egg keyboard detection
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     const key = event.key;
+    
     if (key === "ArrowUp" || key === "ArrowRight") {
       setKeySequence((prev) => {
         const newSequence = [...prev, key].slice(-5); // Keep only last 5 keys
@@ -224,6 +225,55 @@ export default function LumaEventsPage() {
   if (events.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        {/* Easter Egg Banner */}
+        {showBanner && (
+          <div className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-purple-600 to-teal-600 shadow-lg transform transition-transform duration-500 ease-in-out">
+            <div className="max-w-7xl mx-auto px-4 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <CloudArrowDownIcon className="w-8 h-8 text-white" />
+                  <div>
+                    <h3 className="text-white font-bold text-lg">
+                      {importSuccess
+                        ? "✅ Import Successful!"
+                        : "Import Events from Luma"}
+                    </h3>
+                    <p className="text-white/80 text-sm">
+                      {importSuccess
+                        ? "Events have been imported and saved to Notion database"
+                        : "Sync the latest events from Luma and save to Notion database"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {!importSuccess && (
+                    <button
+                      onClick={handleImportFromLuma}
+                      disabled={importing}
+                      className="bg-white text-purple-600 px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {importing ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent"></div>
+                          Importing...
+                        </>
+                      ) : (
+                        "Import from Luma"
+                      )}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setShowBanner(false)}
+                    className="text-white hover:text-gray-200 transition-colors"
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Luma Events</h1>
           <p className="text-lg text-gray-600">
@@ -302,7 +352,7 @@ export default function LumaEventsPage() {
                 <img
                   src={events[currentIndex].image}
                   alt={events[currentIndex].name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}
