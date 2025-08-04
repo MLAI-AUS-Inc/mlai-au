@@ -11,3 +11,20 @@
 .wrangler
 .dev.vars*
 !.dev.vars.example
+
+# Old NextJS/Legacy files
+mlai-frontend/node_modules/
+mlai-frontend/.next/
+mlai-frontend/next-env.d.ts
+mlai-frontend/package-lock.json
+
+# General ignore patterns
+*.log
+.env
+.env.local
+.env.production
+.env.development
+.vscode/
+*.swp
+*.swo
+*~
