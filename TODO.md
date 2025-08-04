@@ -62,6 +62,7 @@ All upstream changes have been successfully migrated to React Router v7:
 - ✅ API routes for Notion and Luma integration
 - ✅ Proper React Router v7 architecture patterns
 - ✅ All TypeScript errors resolved
+- ✅ Cloudflare Workers global scope issue fixed
 
 ### Technical Details
 **Migration Transformations Applied:**
@@ -80,3 +81,18 @@ All upstream changes have been successfully migrated to React Router v7:
 - Multiple components - Updated Slack URLs and LinkedIn URLs
 
 The migration is complete and ready for deployment! 🚀
+
+### Cloudflare Workers Global Scope Fix 🔧
+
+**Issue Fixed:** "Disallowed operation called within global scope" error in production
+- **Root Cause:** Three.js imports in `AnimatedBackground.tsx` were creating objects (like `AbortController`) at module load time
+- **Solution:** Made Three.js imports lazy and client-side only using dynamic imports within useEffect
+- **Files Modified:** 
+  - `/app/components/hackathon/AnimatedBackground.tsx` - Converted to lazy imports with client-side checks
+- **Technical Details:**
+  - Replaced static imports with `import()` calls inside useEffect
+  - Added client-side rendering check with useState to prevent SSR issues
+  - Added proper cleanup for Three.js objects
+  - All Three.js code now only runs in browser context, not during server-side rendering or Worker initialization
+
+This ensures the Hackathon page (and all pages) will work correctly in Cloudflare Workers production environment.

@@ -1,8 +1,6 @@
 import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/20/solid";
-import LogRocket from "logrocket";
 import { useState } from "react";
-LogRocket.init("4s6cqz/mlai-website");
 
 const navigation = [
   { name: "About", href: "/#about" },
