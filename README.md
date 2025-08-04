@@ -23,6 +23,11 @@ This website is built with React Router v7 and deployed on Cloudflare.
    bun install
    ```
 
+3. **Env Vars**
+  ```bash
+  cp .dev.vars.example .dev.vars
+  ```
+
 ### Development
 
 Start the development server:
@@ -32,10 +37,20 @@ bun run dev
 
 Your site will be available at `http://localhost:5173` with hot reloading enabled.
 
-If you update `.dev.vars`, any service bindings, or page routes outside of dev server, you'll need to regenerate routes:
+### Environment Vars and Secrets
+
+Variables and secrets live in:
+
+- `.dev.vars.example` - Example setup, do NOT put secrets in here, use example values
+- `.dev.vars` - your local dev variables, can contain secrets
+- Apple Passwords (MLAI Admin) includes a "Website Secrets .dev.vars" entry which can store secrets for development.
+
+Run `bunx wrangler secret put <key>` to save a secret to the production environment.
+
+If you add a new `.dev.vars` entry, you'll need to regenerate types:
 
 ```bash
-bun run typegen
+bun run cf-typegen
 ```
 
 ### Building & Deployment
