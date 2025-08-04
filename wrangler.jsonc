@@ -15,6 +15,10 @@
       "pattern": "mlai.au",
       "custom_domain": true,
     },
+    {
+      "pattern": "www.mlai.au",
+      "custom_domain": true,
+    },
   ],
   "workers_dev": true,
   "observability": {
