@@ -9,9 +9,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import LogRocket from "logrocket";
 import { useState } from "react";
-LogRocket.init("4s6cqz/mlai-website");
 
 const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },

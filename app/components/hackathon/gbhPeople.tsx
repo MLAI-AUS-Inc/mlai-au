@@ -4,37 +4,37 @@ export function GbhPeople() {
     {
       name: "Louka Ewington-Pitsos",
       role: "Co-Founder",
-      imageUrl: "photos/louka.jpeg",
+      imageUrl: "/hackathon/photos/louka.jpeg",
     },
     {
       name: "Jamie Blackwell",
       role: "Co-Founder",
-      imageUrl: "photos/jaime.png",
+      imageUrl: "/hackathon/photos/jaime.png",
     },
     {
       name: "Lukas Wesemann",
       role: "Co-Founder",
-      imageUrl: "photos/lukas.png",
+      imageUrl: "/hackathon/photos/lukas.png",
     },
     {
       name: "Andrew Atta",
       role: "Marketing Wizz",
-      imageUrl: "photos/andrew.png",
+      imageUrl: "/hackathon/photos/andrew.png",
     },
     {
       name: "Doc Sam Donegan",
       role: "Master of the Web",
-      imageUrl: "photos/sam.png",
+      imageUrl: "/hackathon/photos/sam.png",
     },
     {
       name: "Vincent Koc",
       role: "Sydney Lead",
-      imageUrl: "photos/vincent.jpg",
+      imageUrl: "/hackathon/photos/vincent.jpg",
     },
     {
       name: "Axel Ahmer",
       role: "ML Research, Aus. Bureau of Statistics",
-      imageUrl: "photos/axelahmer.png",
+      imageUrl: "/hackathon/photos/axelahmer.png",
     },
     // More people...
   ];
@@ -66,7 +66,7 @@ export function GbhPeople() {
               <div className="flex items-center gap-x-6">
                 <img
                   className="h-20 w-20 rounded-full"
-                  src={`/hackathon/${person.imageUrl}`}
+                  src={`${person.imageUrl}`}
                   alt=""
                 />
                 <div>
