@@ -1,6 +1,6 @@
 import { type ActionFunctionArgs, type LoaderFunctionArgs } from "react-router";
 
-const NOTION_API_KEY = "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";
+const NOTION_API_KEY = process.env.NOTION_API_KEY;
 const NOTION_VERSION = "2022-06-28";
 
 interface LumaEvent {
