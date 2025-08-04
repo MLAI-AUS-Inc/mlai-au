@@ -9,7 +9,8 @@
     "dev": "react-router dev",
     "postinstall": "npm run cf-typegen",
     "preview": "bun run build && vite preview",
-    "typecheck": "npm run cf-typegen && react-router typegen && tsc -b"
+    "typegen": "npm run cf-typegen && react-router typegen",
+    "typecheck": "tsc -b"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.7",
