@@ -12,8 +12,14 @@ interface LumaEvent {
   calendar_api_id?: string;
 }
 
-export async function loader({ request }: LoaderFunctionArgs) {
+export async function loader({ request, context }: LoaderFunctionArgs) {
   try {
+    const lumaAuthCookie = context.cloudflare.env.LUMA_AUTH_COOKIE;
+    
+    if (!lumaAuthCookie) {
+      throw new Error("LUMA_AUTH_COOKIE environment variable is not set");
+    }
+
     const response = await fetch(
       "https://api.lu.ma/search/get-results?query=",
       {
@@ -21,8 +27,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           Accept: "*/*",
           "Accept-Encoding": "gzip, deflate",
           "Accept-Language": "en-AU",
-          Cookie:
-            "__stripe_mid=3e440fd9-5848-4255-a736-d13cb8110069d17965; luma.auth-session-key=usr-yJC7HmpW1yGZoDL.gz273wf7elzth3nfqtt2; luma.evt-e8FFFuNlCiukxLG.referred_by=o2RUTY; luma.evt-qmoh92gxrHhCYTd.referred_by=9MULGS; luma.did=ztpj78vl60480r6blfp8x8qfyfduam; luma.first-page=%2Fapify; _ga=GA1.1.1859547030.1754129239; _ga_62P18XN9NS=GS2.1.s1754129238$o1$g0$t1754129241$j57$l0$h1816125937; luma.native-referrer=https%3A%2F%2Flu.ma%2Fcalendar%2Fmanage%2Fcal-KPakbH2wTxQuyCj%3Fperiod%3Dpast%26e%3Dcalev-f2JoHiVCLiOhYao; __cf_bm=HYlzDGL7cE3AteqvI.34jcoC8XH_0jJ2bzxpSTzpfBs-1754174489-1.0.1.1-HCazM9MmOjAPlF371bUhxI66yGu16qAkZdtKmC_51HXTUJ4U3xyg1hsROUhzn00w3343ojW6q1DBBpRpWEFtUECvy5X9ZX6LDXh0sPMl4yY",
+          Cookie: lumaAuthCookie,
           Origin: "https://lu.ma",
           Referer: "https://lu.ma/",
           "Sec-Ch-Ua":

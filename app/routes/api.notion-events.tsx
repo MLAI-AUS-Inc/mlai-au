@@ -86,14 +86,8 @@ export async function loader({ context }: LoaderFunctionArgs) {
   try {
     const notionApiKey = context.cloudflare.env.NOTION_API_KEY;
     
-    // Debug logging
-    console.log("Available env keys:", Object.keys(context.cloudflare.env));
-    console.log("Full env object:", JSON.stringify(context.cloudflare.env, null, 2));
-    console.log("NOTION_API_KEY exists:", !!notionApiKey);
-    console.log("NOTION_API_KEY length:", notionApiKey?.length || 0);
-    console.log("NOTION_API_KEY first 10 chars:", notionApiKey?.substring(0, 10) || 'undefined');
     if (!notionApiKey) {
-      console.log("API key not found");
+      console.log("NOTION_API_KEY environment variable is not set");
       return Response.json({
         events: [],
         message: "NOTION_API_KEY environment variable is not set",
@@ -216,10 +210,6 @@ export async function action({ request, context }: ActionFunctionArgs) {
   try {
     const notionApiKey = context.cloudflare.env.NOTION_API_KEY;
     
-    // Debug logging
-    console.log("POST - Available env keys:", Object.keys(context.cloudflare.env));
-    console.log("POST - NOTION_API_KEY exists:", !!notionApiKey);
-    console.log("POST - NOTION_API_KEY length:", notionApiKey?.length || 0);
     if (!notionApiKey) {
       return new Response(
         JSON.stringify({ error: "NOTION_API_KEY environment variable is not set" }),
