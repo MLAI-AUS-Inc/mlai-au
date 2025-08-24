@@ -1,8 +1,7 @@
 const footerNavigation = {
   events: [
-    { name: "Meetups", href: "/#upcoming-events" },
-    { name: "Hackathons", href: "/#upcoming-events" },
-    { name: "Codecamp", href: "#" },
+    { name: "Upcoming", href: "/#upcoming-events" },
+    { name: "Calendar", href: "/events" },
   ],
   volunteering: [
     {
@@ -15,7 +14,6 @@ const footerNavigation = {
   Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
   About: [
     { name: "Contact", href: "/#about" },
-    // { name: "Code of Conduct", href: "/codeofconduct" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/mlai-aus-inc" },
   ],
   social: [
@@ -69,106 +67,102 @@ export default function Events() {
       <h2 id="footer-heading" className="sr-only">
         Footer
       </h2>
-      <div className="mx-auto max-w-7xl px-6 pb-8 pt-6 sm:pt-24 lg:px-8 lg:pt-8">
-        <div className="xl:grid xl:grid-cols-3 xl:gap-8">
-          <div className="grid grid-cols-2 gap-8 xl:col-span-2">
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold leading-6 text-white">
-                  Events
-                </h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {footerNavigation.events.map((item) => (
-                    <li key={item.name}>
-                      <a
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-300 hover:text-white"
-                      >
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-white">
-                  Volunteering
-                </h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {footerNavigation.volunteering.map((item) => (
-                    <li key={item.name}>
-                      <a
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-300 hover:text-white"
-                        target={item.target}
-                        rel={item.rel}
-                      >
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-            <div className="md:grid md:grid-cols-2 md:gap-8">
-              <div>
-                <h3 className="text-sm font-semibold leading-6 text-white">
-                  Sponsoring
-                </h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {footerNavigation.Sponsoring.map((item) => (
-                    <li key={item.name}>
-                      <a
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-300 hover:text-white"
-                      >
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-10 md:mt-0">
-                <h3 className="text-sm font-semibold leading-6 text-white">
-                  About
-                </h3>
-                <ul role="list" className="mt-6 space-y-4">
-                  {footerNavigation.About.map((item) => (
-                    <li key={item.name}>
-                      <a
-                        href={item.href}
-                        className="text-sm leading-6 text-gray-300 hover:text-white"
-                      >
-                        {item.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+      <div className="mx-auto max-w-7xl px-6 pb-8 sm:pt-24 lg:px-8 lg:pt-8">
+        <div className="grid grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1fr] gap-12 md:gap-6 justify-items-start md:justify-items-center px-6 md:px-12 xl:px-24">
+          <div className="md:items-center md:justify-center md:mx-auto">
+            <h3 className="text-sm font-semibold leading-6 text-white">
+              Events
+            </h3>
+            <ul role="list" className="mt-6 space-y-4">
+              {footerNavigation.events.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className="text-sm leading-6 text-gray-300 hover:text-white"
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className="flex justify-center items-center p-4 pt-8">
-            <img
-              className="h-10 w-auto"
-              src="/text_logo.png"
-              alt="MLAI text logo"
-            />
+          <div className="md:items-center md:justify-center md:mx-auto">
+            <h3 className="text-sm font-semibold leading-6 text-white">
+              About
+            </h3>
+            <ul role="list" className="mt-6 space-y-4">
+              {footerNavigation.About.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className="text-sm leading-6 text-gray-300 hover:text-white"
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:items-center md:justify-center md:mx-auto">
+            <h3 className="text-sm font-semibold leading-6 text-white">
+              Sponsoring
+            </h3>
+            <ul role="list" className="mt-6 space-y-4">
+              {footerNavigation.Sponsoring.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className="text-sm leading-6 text-gray-300 hover:text-white"
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="md:items-center md:justify-center md:mx-auto">
+            <h3 className="text-sm font-semibold leading-6 text-white">
+              Volunteering
+            </h3>
+            <ul role="list" className="mt-6 space-y-4">
+              {footerNavigation.volunteering.map((item) => (
+                <li key={item.name}>
+                  <a
+                    href={item.href}
+                    className="text-sm leading-6 text-gray-300 hover:text-white"
+                    target={item.target}
+                    rel={item.rel}
+                  >
+                    {item.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
-        <div className="mt-8 border-t border-gray-400 pt-8 sm:mt-10 md:flex md:items-center md:justify-between lg:mt-12">
-          <div className="flex space-x-6 md:order-2">
-            {footerNavigation.social.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="text-gray-300 hover:text-gray-400"
-              >
-                <span className="sr-only">{item.name}</span>
-                <item.icon className="h-6 w-6" aria-hidden="true" />
-              </a>
-            ))}
+        <div className="mt-8 border-t border-gray-400 pt-8 sm:mt-10 lg:mt-12">
+          <div className="flex flex-row justify-between">
+            <div className="flex space-x-6 md:order-2">
+              {footerNavigation.social.map((item) => (
+                <a
+                  key={item.name}
+                  href={item.href}
+                  className="text-gray-300 hover:text-gray-400"
+                >
+                  <span className="sr-only">{item.name}</span>
+                  <item.icon className="h-6 w-6" aria-hidden="true" />
+                </a>
+              ))}
+            </div>
+            <div className="flex justify-center items-center ">
+              <img
+                className="h-auto w-24"
+                src="/text_logo.png"
+                alt="MLAI text logo"
+              />
+            </div>
           </div>
-          <p className="mt-8 text-xs leading-5 text-gray-300 md:order-1 md:mt-0">
+          <p className="flex justify-center mt-8 text-xs leading-5 text-gray-300 md:mt-0">
             &copy; 2025 MLAI Aus Inc. All rights reserved.{" "}
               <a href="https://mlaiau.notion.site/privacy-policy" className="underline">Privacy Policy</a>
           </p>
