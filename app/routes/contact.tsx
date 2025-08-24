@@ -4,8 +4,8 @@ const stats = [];
 
 export default function Contact() {
   return (
-    <div className="bg-white pt-12 sm:pt-16">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+    <div className="bg-white pt-12 sm:pt-16 min-h-screen flex flex-col">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8 flex-grow">
         <div className="flex justify-center">
           <div className="max-w-2xl">
             <div className="text-base leading-7 text-gray-700">
