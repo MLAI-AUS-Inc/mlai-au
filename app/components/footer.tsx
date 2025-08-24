@@ -169,7 +169,8 @@ export default function Events() {
             ))}
           </div>
           <p className="mt-8 text-xs leading-5 text-gray-300 md:order-1 md:mt-0">
-            &copy; 2025 MLAI Aus Inc. All rights reserved.
+            &copy; 2025 MLAI Aus Inc. All rights reserved.{" "}
+              <a href="https://mlaiau.notion.site/privacy-policy" className="underline">Privacy Policy</a>
           </p>
         </div>
       </div>
