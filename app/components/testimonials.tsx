@@ -5,7 +5,7 @@ const featuredTestimonial = {
   body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch and get involved!",
   author: {
     name: "Kendra Vant",
-    handle: "Director Europalabs",
+    handle: "Director - Europalabs",
     imageUrl: "photos/kendra.png",
     logoUrl: "",
   },
@@ -17,7 +17,7 @@ const testimonials: any = [
         body: "It was an absolute pleasure to work with the MLAI team on the Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community join in for the startup speed dating. ",
         author: {
           name: "Eike Zeller",
-          handle: "Ecosystems Director @ Stone & Chalk",
+          handle: "Ecosystems Director - Stone & Chalk",
           imageUrl: "photos/eikezeller.jpg",
         },
       },
@@ -28,7 +28,7 @@ const testimonials: any = [
         body: "MLAI has been a fantastic community for connecting with like-minded, talented people. Everyone has been warm, welcoming, and eager to talk nitty-gritty tech details.",
         author: {
           name: "Xavier Andueza",
-          handle: "Founder Everdawn.ai",
+          handle: "Founding AI Engineer - Userdoc",
           imageUrl: "photos/xavierandueza.jpg",
         },
       },
