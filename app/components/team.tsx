@@ -12,6 +12,11 @@ const people = [
     imageUrl: "team-photos/Michael.png",
   },
   {
+    name: "Pegah Khaleghi",
+    role: "Treasurer",
+    imageUrl: "team-photos/Pegah.jpeg",
+  },
+  {
     name: "Lukas Wesemann",
     role: "Secretary",
     imageUrl: "photos/lukas.png",
@@ -32,21 +37,15 @@ const people = [
     imageUrl: "team-photos/Tom.png",
   },
   {
-    name: "Ethan Lee",
-    role: "Co-Head of Community",
-    imageUrl: "team-photos/Ethan.png",
-  },
-  {
     name: "Jasmine Raj",
     role: "Co-Head of Community",
     imageUrl: "team-photos/Jasmine.png",
   },
   {
-    name: "Pegah Khaleghi",
-    role: "Treasurer",
-    imageUrl: "team-photos/Pegah.jpeg",
+    name: "Ethan Lee",
+    role: "Co-Head of Community",
+    imageUrl: "team-photos/Ethan.png",
   },
-
   // More people...
 ];
 
