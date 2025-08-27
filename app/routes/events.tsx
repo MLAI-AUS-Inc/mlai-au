@@ -242,9 +242,14 @@ export default function EventsCalendarPage() {
   };
 
   const renderListView = () => {
-    const upcomingEvents = events.filter(
-      (event) => new Date(event.startDate) >= new Date(),
-    );
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Reset to start of today for date comparison
+    
+    const upcomingEvents = events.filter((event) => {
+      const eventDate = new Date(event.startDate);
+      eventDate.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+      return eventDate >= now;
+    });
 
     return (
       <div className="space-y-4">

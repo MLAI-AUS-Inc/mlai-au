@@ -18,8 +18,15 @@ export default function Events({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
 
   // Filter to only include upcoming events and sort by ascending date
+  const now = new Date();
+  now.setHours(0, 0, 0, 0); // Reset to start of today for date comparison
+  
   const events = rawEvents
-    .filter((event: Event) => new Date(event.startDate) >= new Date())
+    .filter((event: Event) => {
+      const eventDate = new Date(event.startDate);
+      eventDate.setHours(0, 0, 0, 0); // Reset to start of day for comparison
+      return eventDate >= now;
+    })
     .sort((a: Event, b: Event) => {
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
