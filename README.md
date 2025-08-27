@@ -76,7 +76,7 @@ bun run cf-typegen
 ## Key Features
 
 - 🏠 Homepage with events and community info
-- 📅 Luma Events integration (`/luma-events`)
+- 📅 Event calendar with Humanitix integration (`/events`)
 - 📝 Contact form (`/contact`)
 - 🤝 Sponsor information (`/sponsors`)
 - 🏆 Hackathon pages (`/hackathon`)
@@ -86,7 +86,7 @@ bun run cf-typegen
 ## Development Notes
 
 - Uses React Router v7 with server-side rendering
-- API routes handle Notion and Luma integrations
+- API routes handle Humanitix integration for events
 - TypeScript throughout for type safety
 - Cloudflare Workers runtime compatible
 

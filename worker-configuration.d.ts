@@ -5,8 +5,6 @@ declare namespace Cloudflare {
 	interface Env {
 		VALUE_FROM_CLOUDFLARE: "Hello from Cloudflare";
 		PUBLIC_HUMANITIX_API_KEY: string;
-		NOTION_API_KEY: string;
-		LUMA_AUTH_COOKIE: string;
 	}
 }
 interface Env extends Cloudflare.Env {}

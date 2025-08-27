@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "packageManager": "bun@1.2.15",
+  "engines": {
+    "bun": ">=1.2.15",
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "build": "react-router build",
     "cf-typegen": "bunx --yes wrangler types",
@@ -15,7 +19,6 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
-    "@notionhq/client": "^4.0.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@rowanmanning/feed-parser": "^2.1.1",
     "class-variance-authority": "^0.7.1",
