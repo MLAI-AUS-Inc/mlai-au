@@ -15,7 +15,6 @@
   "dependencies": {
     "@headlessui/react": "^2.2.7",
     "@heroicons/react": "^2.2.0",
-    "@notionhq/client": "^4.0.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@rowanmanning/feed-parser": "^2.1.1",
     "class-variance-authority": "^0.7.1",
