@@ -8,12 +8,13 @@ import {
   HomeIcon,
   UserGroupIcon,
   XMarkIcon,
+  InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
 const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },
-  { name: "About", href: "/#about", icon: UserGroupIcon },
+  { name: "About", href: "/#about", icon: InformationCircleIcon },
   { name: "Upcoming Events", href: "/#upcoming-events", icon: CalendarIcon },
   { name: "Event Calendar", href: "/events", icon: CalendarIcon },
   {
@@ -31,6 +32,7 @@ const navigation = [
     rel: "noopener noreferrer",
     icon: BookOpenIcon,
   },
+  { name: "Members", href: "/members", icon: UserGroupIcon },
 ];
 
 export default function Sidebar() {
