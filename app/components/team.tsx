@@ -2,49 +2,58 @@ import { H2 } from "~/components/ui/Typography";
 
 const people = [
   {
-    name: "Xavier Andrueza",
+    name: "Xavier Andueza",
     role: "President",
-    imageUrl: "team-photos/Xavier.png",
+    imageUrl: "team-photos/xavier.png",
+    linkedIn: "https://www.linkedin.com/in/xavier-andueza/",
   },
   {
     name: "Michael Reitzenstein",
     role: "Vice President",
-    imageUrl: "team-photos/Michael.png",
+    imageUrl: "team-photos/michael.png",
+    linkedIn: "https://www.linkedin.com/in/michael-reitzenstein-5528024/",
   },
   {
     name: "Pegah Khaleghi",
     role: "Treasurer",
-    imageUrl: "team-photos/Pegah.jpeg",
+    imageUrl: "team-photos/pegah.png",
+    linkedIn: "https://www.linkedin.com/in/pegah-khaleghi/",
   },
   {
     name: "Lukas Wesemann",
     role: "Secretary",
-    imageUrl: "photos/lukas.png",
+    imageUrl: "team-photos/lukas.png",
+    linkedIn: "https://www.linkedin.com/in/lukaswesemann/",
   },
   {
-    name: "Doc Sam Donegan",
+    name: "Dr Sam Donegan",
     role: "Head of Marketing",
-    imageUrl: "photos/sam.png",
+    imageUrl: "team-photos/sam.png",
+    linkedIn: "https://www.linkedin.com/in/samueldonegan/",
   },
   {
     name: "Callum Holt",
     role: "Head of Partnerships",
-    imageUrl: "team-photos/Callum.png",
+    imageUrl: "team-photos/callum.png",
+    linkedIn: "https://www.linkedin.com/in/callumholt/",
   },
   {
     name: "Tom McKenzie",
     role: "Head of Technology",
-    imageUrl: "team-photos/Tom.png",
+    imageUrl: "team-photos/tom.png",
+    linkedIn: "https://www.linkedin.com/in/tom-mckenzie-dev/",
   },
   {
     name: "Jasmine Raj",
     role: "Co-Head of Community",
-    imageUrl: "team-photos/Jasmine.png",
+    imageUrl: "team-photos/jasmine.png",
+    linkedIn: "https://www.linkedin.com/in/jasmine-raj-49000b21a/",
   },
   {
     name: "Ethan Lee",
     role: "Co-Head of Community",
-    imageUrl: "team-photos/Ethan.png",
+    imageUrl: "team-photos/ethan.png",
+    linkedIn: "https://www.linkedin.com/in/ethan-lee-resume/",
   },
   // More people...
 ];
@@ -73,7 +82,18 @@ export default function Team() {
                 />
                 <div>
                   <h3 className="text-base font-semibold leading-7 tracking-tight text-gray-900">
-                    {person.name}
+                    {person.linkedIn ? (
+                      <a
+                        href={person.linkedIn}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:underline"
+                      >
+                        {person.name}
+                      </a>
+                    ) : (
+                      person.name
+                    )}
                   </h3>
                   <p className="text-sm font-semibold leading-6 text-teal-500">
                     {person.role}
