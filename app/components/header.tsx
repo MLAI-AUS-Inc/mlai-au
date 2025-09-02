@@ -6,12 +6,6 @@ const navigation = [
   { name: "About", href: "/#about" },
   { name: "Events", href: "/#upcoming-events" },
   {
-    name: "Post a Bounty Job",
-    href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
-    target: "_blank",
-    rel: "noopener noreferrer",
-  },
-  {
     name: "Volunteer",
     href: "https://forms.gle/GwZR49kwTMszLKtN8",
     target: "_blank",

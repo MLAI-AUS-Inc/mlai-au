@@ -2,6 +2,7 @@ import { Dialog } from "@headlessui/react";
 import {
   Bars3Icon,
   BookOpenIcon,
+  BriefcaseIcon,
   CalendarIcon,
   EnvelopeIcon,
   HandRaisedIcon,
@@ -16,6 +17,13 @@ const navigation = [
   { name: "About", href: "/#about", icon: UserGroupIcon },
   { name: "Upcoming Events", href: "/#upcoming-events", icon: CalendarIcon },
   { name: "Event Calendar", href: "/events", icon: CalendarIcon },
+  {
+    name: "Post a Bounty Job",
+    href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
+    target: "_blank",
+    rel: "noopener noreferrer",
+    icon: BriefcaseIcon,
+  },
   {
     name: "Volunteer",
     href: "https://forms.gle/GwZR49kwTMszLKtN8",
