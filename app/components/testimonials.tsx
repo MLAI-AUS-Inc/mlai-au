@@ -100,11 +100,13 @@ export default function Testimonals() {
                 </div>
                 <div className="text-gray-600">{`${featuredTestimonial.author.handle}`}</div>
               </div>
-              <img
-                className="h-10 w-auto flex-none"
-                src={featuredTestimonial.author.logoUrl}
-                alt=""
-              />
+              {featuredTestimonial.author.logoUrl ? (
+                <img
+                  className="h-10 w-auto flex-none"
+                  src={featuredTestimonial.author.logoUrl}
+                  alt=""
+                />
+              ) : null}
             </figcaption>
           </Card>
           {testimonials.map((columnGroup: any, columnGroupIdx: any) => (
