@@ -68,10 +68,7 @@ export default function Layout() {
         />
 
         {/* Robots meta tag */}
-        <meta
-          name="robots"
-          content="index, nofollow, noarchive, nosnippet, noimageindex, nocache"
-        />
+        <meta name="robots" content="index, follow" />
 
         <Meta />
         <Links />
