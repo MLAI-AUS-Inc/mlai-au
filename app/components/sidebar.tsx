@@ -10,6 +10,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
   InformationCircleIcon,
+  CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -18,6 +19,8 @@ const navigation = [
   { name: "About", href: "/#about", icon: InformationCircleIcon },
   { name: "Upcoming Events", href: "/#upcoming-events", icon: CalendarIcon },
   { name: "Event Calendar", href: "/events", icon: CalendarIcon },
+  { name: "Sponsor an Event", href: "/sponsor-an-event", icon: CurrencyDollarIcon },
+  { name: "Sponsor MLAI", href: "/sponsor-mlai", icon: CurrencyDollarIcon },
   {
     name: "Post a Bounty Job",
     href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
