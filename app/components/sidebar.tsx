@@ -17,8 +17,7 @@ import { useState } from "react";
 const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "About", href: "/#about", icon: InformationCircleIcon },
-  { name: "Upcoming Events", href: "/#upcoming-events", icon: CalendarIcon },
-  { name: "Event Calendar", href: "/events", icon: CalendarIcon },
+  { name: "Events", href: "/events", icon: CalendarIcon },
   { name: "Sponsor an Event", href: "/sponsor-an-event", icon: CurrencyDollarIcon },
   { name: "Sponsor MLAI", href: "/sponsor-mlai", icon: CurrencyDollarIcon },
   {

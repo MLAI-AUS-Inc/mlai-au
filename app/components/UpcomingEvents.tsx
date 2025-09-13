@@ -14,7 +14,7 @@ interface Event {
   slug: string;
 }
 
-export default function Events({ events: rawEvents }: { events: Event[] }) {
+export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
 
   // Filter to only include upcoming events and sort by ascending date
