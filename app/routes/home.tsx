@@ -7,52 +7,8 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
 import Testimonials from "~/components/testimonials";
 import { fetchSubstackPosts } from "~/lib/substack";
+import { fetchEvents } from "~/lib/events";
 import type { Route } from "./+types/home";
-
-async function fetchEvents(apiKey: string) {
-  if (!apiKey) {
-    console.error("API key not found");
-    return [];
-  }
-
-  const url = new URL("https://api.humanitix.com/v1/events");
-  url.searchParams.append("page", "1");
-
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        "x-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Failed to fetch events:", data);
-      return [];
-    }
-
-    // Filter to only include published events
-    const filteredData = {
-      ...(data as any),
-      events:
-        (data as any).events?.filter(
-          (event: any) => event.published === true,
-        ) || [],
-    };
-
-    console.log(
-      `Filtered ${(data as any).events?.length || 0} events to ${filteredData.events.length} published events`,
-    );
-
-    return filteredData.events;
-  } catch (error: any) {
-    console.error("Error fetching events:", error);
-    return [];
-  }
-}
 
 export async function loader({ context }: Route.LoaderArgs) {
   return {
