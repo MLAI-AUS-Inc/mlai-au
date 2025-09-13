@@ -64,8 +64,8 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
   const serverData = await serverLoader();
-  const eventsApiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
-  
+  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+
   // Fetch both APIs in parallel for better performance
   const [events, substackPosts] = await Promise.all([
     fetchEvents(eventsApiKey),
