@@ -1,4 +1,5 @@
 import CTA from "~/components/CTA";
+import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
 import FlagshipEvents from "~/components/flagshipevents";
 import Hero from "~/components/hero";
@@ -197,6 +198,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </div>
       {/* Events section */}
       <FlagshipEvents />
+      {/* Upcoming Events section */}
+      <UpcomingEvents events={events} />
 
       {/* Testimonials section */}
       <Testimonials />
