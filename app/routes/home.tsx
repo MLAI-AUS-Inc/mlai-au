@@ -55,22 +55,20 @@ async function fetchEvents(apiKey: string) {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const eventsApiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
-
   return {
-    eventsApiKey,
     // Initial load with empty data - will be populated by clientLoader
     substackPosts: [],
     events: [],
   };
 }
 
-export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
+export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
   const serverData = await serverLoader();
+  const eventsApiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
   
   // Fetch both APIs in parallel for better performance
   const [events, substackPosts] = await Promise.all([
-    fetchEvents(serverData.eventsApiKey),
+    fetchEvents(eventsApiKey),
     fetchSubstackPosts(),
   ]);
 
@@ -82,7 +80,7 @@ export async function clientLoader({ serverLoader }: Route.ClientLoaderArgs) {
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { substackPosts, eventsApiKey, events } = loaderData;
+  const { substackPosts, events } = loaderData;
 
   return (
     <main className="bg-white">
