@@ -19,11 +19,11 @@ interface LoaderData {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const apiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
+  const apiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
 
   if (!apiKey) {
-    console.error("PUBLIC_HUMANITIX_API_KEY environment variable is not set");
-    return { events: [] };
+    console.error("PRIVATE_HUMANITIX_API_KEY environment variable is not set");
+    throw new Response("API key not found", { status: 500 });
   }
 
   const url = new URL("https://api.humanitix.com/v1/events");

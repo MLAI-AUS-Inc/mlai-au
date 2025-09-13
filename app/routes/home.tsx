@@ -55,19 +55,32 @@ async function fetchEvents(apiKey: string) {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const eventsApiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
-  const events = await fetchEvents(eventsApiKey);
+  return {
+    // Initial load with empty data - will be populated by clientLoader
+    substackPosts: [],
+    events: [],
+  };
+}
+
+export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
+  const serverData = await serverLoader();
+  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+
+  // Fetch both APIs in parallel for better performance
+  const [events, substackPosts] = await Promise.all([
+    fetchEvents(eventsApiKey),
+    fetchSubstackPosts(),
+  ]);
 
   return {
-    // TODO: move to clientLoader to not hold up TTFB?
-    substackPosts: await fetchSubstackPosts(),
-    eventsApiKey,
+    ...serverData,
+    substackPosts,
     events,
   };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { substackPosts, eventsApiKey, events } = loaderData;
+  const { substackPosts, events } = loaderData;
 
   return (
     <main className="bg-white">
