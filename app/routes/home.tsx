@@ -1,5 +1,5 @@
 import CTA from "~/components/CTA";
-import Events from "~/components/events";
+import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
 import FlagshipEvents from "~/components/flagshipevents";
 import Hero from "~/components/hero";
@@ -7,67 +7,36 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
 import Testimonials from "~/components/testimonials";
 import { fetchSubstackPosts } from "~/lib/substack";
+import { fetchEvents } from "~/lib/events";
 import type { Route } from "./+types/home";
 
-async function fetchEvents(apiKey: string) {
-  if (!apiKey) {
-    console.error("API key not found");
-    return [];
-  }
-
-  const url = new URL("https://api.humanitix.com/v1/events");
-  url.searchParams.append("page", "1");
-
-  try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        "x-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Failed to fetch events:", data);
-      return [];
-    }
-
-    // Filter to only include published events
-    const filteredData = {
-      ...(data as any),
-      events:
-        (data as any).events?.filter(
-          (event: any) => event.published === true,
-        ) || [],
-    };
-
-    console.log(
-      `Filtered ${(data as any).events?.length || 0} events to ${filteredData.events.length} published events`,
-    );
-
-    return filteredData.events;
-  } catch (error: any) {
-    console.error("Error fetching events:", error);
-    return [];
-  }
+export async function loader({ context }: Route.LoaderArgs) {
+  return {
+    // Initial load with empty data - will be populated by clientLoader
+    substackPosts: [],
+    events: [],
+  };
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
-  const eventsApiKey = context.cloudflare.env.PUBLIC_HUMANITIX_API_KEY;
-  const events = await fetchEvents(eventsApiKey);
+export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
+  const serverData = await serverLoader();
+  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+
+  // Fetch both APIs in parallel for better performance
+  const [events, substackPosts] = await Promise.all([
+    fetchEvents(eventsApiKey),
+    fetchSubstackPosts(),
+  ]);
 
   return {
-    // TODO: move to clientLoader to not hold up TTFB?
-    substackPosts: await fetchSubstackPosts(),
-    eventsApiKey,
+    ...serverData,
+    substackPosts,
     events,
   };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { substackPosts, eventsApiKey, events } = loaderData;
+  const { substackPosts, events } = loaderData;
 
   return (
     <main className="bg-white">
@@ -198,7 +167,8 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </div>
       {/* Events section */}
       <FlagshipEvents />
-      <Events events={events} />
+      {/* Upcoming Events section */}
+      <UpcomingEvents events={events} />
 
       {/* Testimonials section */}
       <Testimonials />
