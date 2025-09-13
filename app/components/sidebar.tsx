@@ -10,16 +10,174 @@ import {
   UserGroupIcon,
   XMarkIcon,
   InformationCircleIcon,
-  CurrencyDollarIcon,
+  BuildingStorefrontIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+  ArrowTurnDownRightIcon
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
+
+interface NavigationItem {
+  name: string;
+  href: string;
+  icon: any;
+  target?: string;
+  rel?: string;
+  collapsible?: boolean;
+  children?: NavigationItem[];
+}
+
+interface SingleLevelBarProps {
+  item: NavigationItem;
+  isExpanded: boolean;
+  isMobile?: boolean;
+  onMobileMenuClose?: () => void;
+}
+
+function SingleLevelBar({ item, isExpanded, isMobile = false, onMobileMenuClose }: SingleLevelBarProps) {
+  return (
+    <a
+      href={item.href}
+      className={`group flex items-center rounded-lg px-3 py-2 ${
+        isMobile ? "text-base" : "text-sm"
+      } font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200`}
+      target={item.target}
+      rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+      onClick={onMobileMenuClose}
+    >
+      <item.icon
+        className={`flex-shrink-0 ${isMobile ? "h-6 w-6" : "h-6 w-6"} ${
+          isMobile ? "mr-3" : isExpanded ? "mr-3" : "mr-0"
+        } transition-all duration-300`}
+        aria-hidden="true"
+      />
+      <span
+        className={`${
+          isMobile
+            ? "overflow-hidden whitespace-nowrap"
+            : `transition-all duration-300 ${
+                isExpanded ? "opacity-100" : "opacity-0 w-0"
+              } overflow-hidden whitespace-nowrap`
+        }`}
+      >
+        {item.name}
+      </span>
+    </a>
+  );
+}
+
+interface MultiLevelBarProps {
+  item: NavigationItem;
+  isExpanded: boolean;
+  isMobile?: boolean;
+  onMobileMenuClose?: () => void;
+}
+
+function MultiLevelBar({ item, isExpanded, isMobile = false, onMobileMenuClose }: MultiLevelBarProps) {
+  const [childrenExpanded, setChildrenExpanded] = useState(false);
+
+  const handleMouseEnter = () => {
+    if (!isMobile) {
+      setChildrenExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isMobile) {
+      setChildrenExpanded(false);
+    }
+  };
+
+  const toggleExpanded = (e: React.MouseEvent) => {
+    if (isMobile) {
+      e.preventDefault();
+      setChildrenExpanded(!childrenExpanded);
+    }
+  };
+
+  return (
+    <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {/* Parent item */}
+      <div className={`group flex items-center rounded-lg px-3 py-2 ${
+        isMobile ? "text-base" : "text-sm"
+      } font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200`}>
+        <a
+          href={item.href}
+          className="flex items-center flex-1"
+          onClick={isMobile ? onMobileMenuClose : undefined}
+        >
+          <item.icon
+            className={`flex-shrink-0 ${isMobile ? "h-6 w-6" : "h-6 w-6"} ${
+              isMobile ? "mr-3" : isExpanded ? "mr-3" : "mr-0"
+            } transition-all duration-300`}
+            aria-hidden="true"
+          />
+          <span
+            className={`${
+              isMobile
+                ? "overflow-hidden whitespace-nowrap"
+                : `transition-all duration-300 ${
+                    isExpanded ? "opacity-100" : "opacity-0 w-0"
+                  } overflow-hidden whitespace-nowrap`
+            }`}
+          >
+            {item.name}
+          </span>
+        </a>
+        {((isMobile || isExpanded) && item.children) && (
+          <button
+            onClick={toggleExpanded}
+            className={`ml-2 p-1 ${isMobile ? "" : "hover:bg-white hover:bg-opacity-10"} rounded transition-all duration-200`}
+          >
+            {childrenExpanded ? (
+              <ChevronDownIcon className={`${isMobile ? "h-5 w-5" : "h-4 w-4"}`} />
+            ) : (
+              <ChevronRightIcon className={`${isMobile ? "h-5 w-5" : "h-4 w-4"}`} />
+            )}
+          </button>
+        )}
+      </div>
+
+      {/* Children items with smooth transition */}
+      {item.children && (
+        <div
+          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+            childrenExpanded && (isMobile || isExpanded)
+              ? "max-h-96 opacity-100"
+              : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="ml-6 space-y-1 py-1">
+            {item.children.map((child) => (
+              <SingleLevelBar
+                key={child.name}
+                item={child}
+                isExpanded={true}
+                isMobile={isMobile}
+                onMobileMenuClose={onMobileMenuClose}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "About", href: "/#about", icon: InformationCircleIcon },
   { name: "Events", href: "/events", icon: CalendarIcon },
-  { name: "Sponsor an Event", href: "/sponsor-an-event", icon: CurrencyDollarIcon },
-  { name: "Sponsor MLAI", href: "/sponsor-mlai", icon: CurrencyDollarIcon },
+  {
+    name: "Sponsorships",
+    href: "/sponsors",
+    icon: BuildingStorefrontIcon,
+    collapsible: true,
+    children: [
+      { name: "Sponsor MLAI", href: "/sponsor-mlai", icon: ArrowTurnDownRightIcon },
+      { name: "Sponsor an Event", href: "/sponsor-an-event", icon: ArrowTurnDownRightIcon },
+    ],
+  },
   {
     name: "Post a Bounty Job",
     href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
@@ -84,29 +242,21 @@ export default function Sidebar() {
           {/* Navigation */}
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navigation.map((item) => (
-              <a
-                key={item.name}
-                href={item.href}
-                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200"
-                target={item.target}
-                rel={
-                  item.target === "_blank" ? "noopener noreferrer" : undefined
-                }
-              >
-                <item.icon
-                  className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${
-                    isExpanded ? "mr-3" : "mr-0"
-                  }`}
-                  aria-hidden="true"
+              item.collapsible && item.children ? (
+                <MultiLevelBar
+                  key={item.name}
+                  item={item}
+                  isExpanded={isExpanded}
+                  isMobile={false}
                 />
-                <span
-                  className={`transition-all duration-300 ${
-                    isExpanded ? "opacity-100" : "opacity-0 w-0"
-                  } overflow-hidden whitespace-nowrap`}
-                >
-                  {item.name}
-                </span>
-              </a>
+              ) : (
+                <SingleLevelBar
+                  key={item.name}
+                  item={item}
+                  isExpanded={isExpanded}
+                  isMobile={false}
+                />
+              )
             ))}
           </nav>
         </div>
@@ -142,22 +292,23 @@ export default function Sidebar() {
           <div className="mt-6 flow-root">
             <nav className="space-y-2">
               {navigation.map((item) => (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  className="flex items-center rounded-lg px-3 py-2 text-base font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300"
-                  target={item.target}
-                  rel={
-                    item.target === "_blank" ? "noopener noreferrer" : undefined
-                  }
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <item.icon
-                    className="mr-3 h-6 w-6 flex-shrink-0"
-                    aria-hidden="true"
+                item.collapsible && item.children ? (
+                  <MultiLevelBar
+                    key={item.name}
+                    item={item}
+                    isExpanded={true}
+                    isMobile={true}
+                    onMobileMenuClose={() => setMobileMenuOpen(false)}
                   />
-                  {item.name}
-                </a>
+                ) : (
+                  <SingleLevelBar
+                    key={item.name}
+                    item={item}
+                    isExpanded={true}
+                    isMobile={true}
+                    onMobileMenuClose={() => setMobileMenuOpen(false)}
+                  />
+                )
               ))}
             </nav>
           </div>
