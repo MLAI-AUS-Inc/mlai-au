@@ -16,8 +16,7 @@ import { useState } from "react";
 const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "About", href: "/#about", icon: InformationCircleIcon },
-  { name: "Upcoming Events", href: "/#upcoming-events", icon: CalendarIcon },
-  { name: "Event Calendar", href: "/events", icon: CalendarIcon },
+  { name: "Events", href: "/events", icon: CalendarIcon },
   {
     name: "Post a Bounty Job",
     href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",

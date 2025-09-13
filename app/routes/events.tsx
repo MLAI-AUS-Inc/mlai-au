@@ -6,6 +6,7 @@ import {
 import { useState } from "react";
 import { useLoaderData } from "react-router";
 import type { Route } from "./+types/events";
+import Events from "~/components/events";
 
 interface Event {
   _id: string;
@@ -309,16 +310,23 @@ export default function EventsCalendarPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Event Calendar
-          </h1>
-          <p className="text-lg text-gray-600">
-            Discover and join our upcoming AI and machine learning events
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Upcoming Events Section */}
+      <div className="bg-white">
+        <Events events={events} />
+      </div>
+      
+      {/* Calendar Section */}
+      <div className="py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Event Calendar
+            </h1>
+            <p className="text-lg text-gray-600">
+              Explore our complete calendar of AI and machine learning events
+            </p>
+          </div>
         <div className="flex justify-center mb-8">
           <div className="inline-flex rounded-lg shadow-sm" role="group">
             <button
@@ -343,8 +351,9 @@ export default function EventsCalendarPage() {
             </button>
           </div>
         </div>
-        <div>
-          {view === "calendar" ? renderCalendarView() : renderListView()}
+          <div>
+            {view === "calendar" ? renderCalendarView() : renderListView()}
+          </div>
         </div>
       </div>
     </div>
