@@ -46,6 +46,9 @@ jobs:
           # Optional: Trigger when specific user is assigned to an issue
           assignee_trigger: "claude-bot"
 
+          # Allow claude to run common commands
+          allowed_tools: "Bash(*),Bash(bun *),Bash(gh *)"
+
           # Optional: Configure Claude's behavior with CLI arguments
           # claude_args: |
           #   --model claude-opus-4-1-20250805
