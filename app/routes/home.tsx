@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import CTA from "~/components/CTA";
 import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
@@ -7,12 +8,12 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
 import Testimonials from "~/components/testimonials";
 import { fetchSubstackPosts } from "~/lib/substack";
-import { fetchEvents } from "~/lib/events";
+import type { Event } from "~/lib/events";
 import type { Route } from "./+types/home";
 
 export async function loader({ context }: Route.LoaderArgs) {
   return {
-    // Initial load with empty data - will be populated by clientLoader
+    // Fast initial load - events will be fetched client-side
     substackPosts: [],
     events: [],
   };
@@ -20,23 +21,42 @@ export async function loader({ context }: Route.LoaderArgs) {
 
 export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
   const serverData = await serverLoader();
-  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
 
-  // Fetch both APIs in parallel for better performance
-  const [events, substackPosts] = await Promise.all([
-    fetchEvents(eventsApiKey),
-    fetchSubstackPosts(),
-  ]);
+  // Only fetch Substack posts on client side
+  const substackPosts = await fetchSubstackPosts();
 
   return {
     ...serverData,
     substackPosts,
-    events,
   };
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
-  const { substackPosts, events } = loaderData;
+  const { substackPosts } = loaderData;
+  const [events, setEvents] = useState<Event[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+
+  // Fetch events after component mounts
+  useEffect(() => {
+    const fetchEventsData = async () => {
+      try {
+        const response = await fetch('/api/events');
+        const data = await response.json();
+
+        if (data.success) {
+          setEvents(data.data);
+        } else {
+          console.error('Failed to fetch events:', data.error);
+        }
+      } catch (error) {
+        console.error('Error fetching events:', error);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+
+    fetchEventsData();
+  }, []);
 
   return (
     <main className="bg-white">
@@ -168,7 +188,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* Events section */}
       <FlagshipEvents />
       {/* Upcoming Events section */}
-      <UpcomingEvents events={events} />
+      <UpcomingEvents events={events} loading={eventsLoading} />
 
       {/* Testimonials section */}
       <Testimonials />

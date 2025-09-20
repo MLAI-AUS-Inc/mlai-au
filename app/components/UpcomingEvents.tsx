@@ -14,7 +14,7 @@ interface Event {
   slug: string;
 }
 
-export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
+export default function UpcomingEvents({ events: rawEvents, loading = false }: { events: Event[]; loading?: boolean }) {
   const [currentPage, setCurrentPage] = useState(0);
 
   // Filter to only include upcoming events and sort by ascending date
@@ -50,8 +50,13 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
             className="carousel-inner relative w-full overflow-hidden"
             style={{ minHeight: "480px" }}
           >
-            {events.length === 0 ? (
-              <p className="text-center text-gray-900">No events available</p>
+            {loading ? (
+              <div className="text-center text-gray-900">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-4"></div>
+                <p>Loading events...</p>
+              </div>
+            ) : events.length === 0 ? (
+              <p className="text-center  text-gray-900">No upcoming events, stay tuned!</p>
             ) : (
               <div
                 className="relative flex transition-transform duration-700 ease-out"

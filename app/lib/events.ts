@@ -11,6 +11,7 @@ export interface Event {
 }
 
 export async function fetchEvents(apiKey: string): Promise<Event[]> {
+  console.error("GETTING DATA")
   if (!apiKey) {
     console.error("API key not found");
     return [];
