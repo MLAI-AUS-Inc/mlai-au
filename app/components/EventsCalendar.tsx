@@ -18,9 +18,10 @@ interface Event {
 
 interface EventsCalendarProps {
   events: Event[];
+  loading?: boolean;
 }
 
-export default function EventsCalendar({ events }: EventsCalendarProps) {
+export default function EventsCalendar({ events, loading = false }: EventsCalendarProps) {
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const [view, setView] = useState<"calendar" | "list">("calendar");
 
