@@ -11,7 +11,7 @@ const footerNavigation = {
       rel: "noopener noreferrer",
     },
   ],
-  Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
+  Sponsoring: [{ name: "Sponsor", href: "/sponsors" }],
   About: [
     { name: "Contact", href: "/#about" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/mlai-aus-inc" },
@@ -105,7 +105,7 @@ export default function Events() {
           </div>
           <div className="md:items-center md:justify-center md:mx-auto">
             <h3 className="text-sm font-semibold leading-6 text-white">
-              Sponsoring
+              Sponsorships
             </h3>
             <ul role="list" className="mt-6 space-y-4">
               {footerNavigation.Sponsoring.map((item) => (
