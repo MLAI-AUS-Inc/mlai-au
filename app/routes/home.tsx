@@ -9,6 +9,7 @@ import Testimonials from "~/components/testimonials";
 import { fetchSubstackPosts } from "~/lib/substack";
 import { fetchEvents } from "~/lib/events";
 import type { Route } from "./+types/home";
+import Divider from "~/components/Divider";
 
 export async function loader({ context }: Route.LoaderArgs) {
   return {
@@ -40,7 +41,6 @@ export default function Home({ loaderData }: Route.ComponentProps) {
 
   return (
     <main className="bg-white">
-      {/* Hero section */}
       <Hero />
       {/* Logo Cloud */}
       <div id="logoCloud" className="bg-white py-16 sm:py-24">
@@ -151,44 +151,21 @@ export default function Home({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
       </div>
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
-      {/* Feature section */}
-      <Feature />
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
-      {/* Events section */}
-      <FlagshipEvents />
-      {/* Upcoming Events section */}
-      <UpcomingEvents events={events} />
+      <Divider />
 
-      {/* Testimonials section */}
+      <Feature />
+      <Divider />
+
+      <FlagshipEvents />
+      <UpcomingEvents events={events} />
       <Testimonials />
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
-      {/* Substack Updates section */}
+
+      <Divider />
+
       <SubstackUpdates posts={substackPosts} />
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
-      {/* Team section */}
+      <Divider />
+
       <Team />
-      {/* CTA section */}
       <CTA />
     </main>
   );
