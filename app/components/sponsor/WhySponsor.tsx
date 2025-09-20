@@ -26,7 +26,7 @@ export default function WhySponsor() {
         href="/sponsor-mlai"
         variant="primary"
       >
-        Sponsor MLAI Aus
+        Become a Partner
       </ButtonLink>
       </div>
     </div>

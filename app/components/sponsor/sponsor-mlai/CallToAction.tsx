@@ -1,0 +1,29 @@
+import { ButtonLink } from "~/components/ui/Button";
+import { H2, Body } from "~/components/ui/Typography";
+
+export default function CallToAction() {
+  return (
+    <div className="bg-teal-500">
+      <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
+        <div className="mx-auto max-w-2xl text-center">
+          <H2 className="text-white">
+            Ready to Partner with Australia&apos;s AI Future?
+          </H2>
+          <Body className="mx-auto mt-6 max-w-xl text-teal-50">
+            Join us in building a thriving AI ecosystem that benefits all
+            Australians. Let&apos;s discuss how we can create a partnership
+            that drives mutual value and community impact.
+          </Body>
+          <div className="mt-10 flex items-center justify-center gap-x-6">
+            <ButtonLink
+              href="mailto:hi@mlai.au?subject=MLAI Partnership Inquiry"
+              variant="secondary"
+            >
+              Become a Partner
+            </ButtonLink>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

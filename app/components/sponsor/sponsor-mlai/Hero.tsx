@@ -1,4 +1,4 @@
-import { Body, H1 } from "~/components/ui/Typography";
+import { H1, Body } from "~/components/ui/Typography";
 
 export default function Hero() {
   return (
@@ -14,11 +14,11 @@ export default function Hero() {
       </div>
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
-          <H1 className="text-white">Sponsorships</H1>
+          <H1 className="text-white">Sponsor MLAI Aus</H1>
           <Body className="mt-6 text-gray-300">
-            Sponsor Australia&apos;s leading AI community and connect with
-            talented developers, researchers, and entrepreneurs building the
-            future of AI.
+            Become an annual partner of Australia&apos;s leading AI community.
+            Join industry leaders in building the future of AI talent and
+            innovation in Australia.
           </Body>
         </div>
       </div>
