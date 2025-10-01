@@ -195,7 +195,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       <FlagshipEvents />
       {/* Upcoming Events section */}
       <Suspense fallback={<UpcomingEventsSkeleton />}>
-        <Await resolve={events}>
+        <Await resolve={events} errorElement={<div className="py-8 text-center text-gray-600">Unable to load events</div>}>
           {(resolvedEvents) => <UpcomingEvents events={resolvedEvents} />}
         </Await>
       </Suspense>
@@ -210,7 +210,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       </div>
       {/* Substack Updates section */}
       <Suspense fallback={<SubstackUpdatesSkeleton />}>
-        <Await resolve={substackPosts}>
+        <Await resolve={substackPosts} errorElement={<div className="py-8 text-center text-gray-600">Unable to load updates</div>}>
           {(resolvedPosts) => <SubstackUpdates posts={resolvedPosts} />}
         </Await>
       </Suspense>
