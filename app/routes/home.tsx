@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+import { Await } from "react-router";
 import CTA from "~/components/CTA";
 import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
@@ -11,28 +13,52 @@ import { fetchEvents } from "~/lib/events";
 import type { Route } from "./+types/home";
 
 export async function loader({ context }: Route.LoaderArgs) {
+  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+
+  // Return promises WITHOUT awaiting - enables streaming
+  // Fetch both APIs in parallel for better performance
+  const eventsPromise = fetchEvents(eventsApiKey);
+  const substackPostsPromise = fetchSubstackPosts();
+
   return {
-    // Initial load with empty data - will be populated by clientLoader
-    substackPosts: [],
-    events: [],
+    substackPosts: substackPostsPromise,
+    events: eventsPromise,
   };
 }
 
-export async function clientLoader({ context, serverLoader }: Route.ClientLoaderArgs) {
-  const serverData = await serverLoader();
-  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+function UpcomingEventsSkeleton() {
+  return (
+    <div className="bg-white py-16 animate-pulse">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-10 bg-gray-200 rounded w-1/3 mx-auto mb-4" />
+        <div className="h-6 bg-gray-200 rounded w-1/2 mx-auto mb-12" />
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-96 bg-gray-200 rounded-3xl" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  // Fetch both APIs in parallel for better performance
-  const [events, substackPosts] = await Promise.all([
-    fetchEvents(eventsApiKey),
-    fetchSubstackPosts(),
-  ]);
-
-  return {
-    ...serverData,
-    substackPosts,
-    events,
-  };
+function SubstackUpdatesSkeleton() {
+  return (
+    <div className="bg-white py-16 animate-pulse">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="h-10 bg-gray-200 rounded w-1/3 mx-auto mb-12" />
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i}>
+              <div className="h-48 bg-gray-200 rounded-lg mb-4" />
+              <div className="h-6 bg-gray-200 rounded w-3/4 mb-2" />
+              <div className="h-4 bg-gray-200 rounded w-full" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function Home({ loaderData }: Route.ComponentProps) {
@@ -168,7 +194,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
       {/* Events section */}
       <FlagshipEvents />
       {/* Upcoming Events section */}
-      <UpcomingEvents events={events} />
+      <Suspense fallback={<UpcomingEventsSkeleton />}>
+        <Await resolve={events}>
+          {(resolvedEvents) => <UpcomingEvents events={resolvedEvents} />}
+        </Await>
+      </Suspense>
 
       {/* Testimonials section */}
       <Testimonials />
@@ -179,7 +209,11 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </div>
       </div>
       {/* Substack Updates section */}
-      <SubstackUpdates posts={substackPosts} />
+      <Suspense fallback={<SubstackUpdatesSkeleton />}>
+        <Await resolve={substackPosts}>
+          {(resolvedPosts) => <SubstackUpdates posts={resolvedPosts} />}
+        </Await>
+      </Suspense>
       {/* Divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
