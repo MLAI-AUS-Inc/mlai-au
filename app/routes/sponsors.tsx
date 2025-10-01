@@ -1,5 +1,6 @@
 import { ButtonLink } from "~/components/ui/Button";
 import { Body, H1, H2 } from "~/components/ui/Typography";
+import SponsorsSideNav from "~/components/sponsors-sidenav";
 
 const sponsorshipTiers = [
   {
@@ -59,7 +60,8 @@ const currentSponsors = [
 
 export default function SponsorPage() {
   return (
-    <main className="bg-white">
+    <main className="bg-white relative">
+      <SponsorsSideNav />
       {/* Hero Section */}
       <div className="relative isolate bg-gray-900 py-24">
         <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80">
@@ -83,7 +85,7 @@ export default function SponsorPage() {
         </div>
       </div>
       {/* Why Sponsor Section */}
-      <div className="py-24 sm:py-32">
+      <div id="why-sponsor" className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
             <H2>Why Sponsor MLAI Aus?</H2>
@@ -263,7 +265,7 @@ export default function SponsorPage() {
         </div>
       </div> */}
       {/* Current Sponsors */}
-      <div className="py-24 sm:py-32">
+      <div id="current-sponsors" className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl lg:text-center">
             <H2>Our Current Sponsors</H2>
@@ -291,7 +293,7 @@ export default function SponsorPage() {
         </div>
       </div>
       {/* CTA Section */}
-      <div className="bg-teal-500">
+      <div id="contact-sponsorship" className="bg-teal-500">
         <div className="px-6 py-24 sm:px-6 sm:py-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <H2 className="text-white">

@@ -10,6 +10,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
   InformationCircleIcon,
+  HeartIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Home", href: "/", icon: HomeIcon },
   { name: "About", href: "/#about", icon: InformationCircleIcon },
   { name: "Events", href: "/events", icon: CalendarIcon },
+  { name: "Sponsors", href: "/sponsors", icon: HeartIcon },
   {
     name: "Post a Bounty Job",
     href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
