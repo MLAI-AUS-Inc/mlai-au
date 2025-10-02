@@ -18,7 +18,7 @@ export default function Contact() {
               <div className="max-w-xl">
                 <p className="mt-6 font-bold">MLAI Aus Inc.</p>
                 <p className="mt-2">
-                  7 Curran Street, North Melbourne, 3051, Australia
+                  Suite 350, 585 Little Collins St, Melbourne, Australia
                 </p>
                 <p className="mt-2">ABN: 94 807 394 137</p>
                 <p className="mt-2">
