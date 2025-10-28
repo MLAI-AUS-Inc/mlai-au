@@ -1,0 +1,56 @@
+{
+  "events": [
+    {
+      "id": "build-club-1",
+      "name": "Build Club Co-working Session",
+      "description": "Join our fortnightly co-working session where AI builders come together to work on projects, share ideas, and collaborate. Perfect for students, professionals, and entrepreneurs working on AI-related projects.",
+      "startDate": "2025-11-01T10:00:00+11:00",
+      "endDate": "2025-11-01T16:00:00+11:00",
+      "eventLocation": {
+        "address": "Melbourne Connect, 700 Swanston St, Carlton VIC 3053"
+      },
+      "source": "manual",
+      "externalUrl": "https://www.mlai.au/build-club",
+      "bannerImage": "/sponsor_logos/buildclub.png"
+    },
+    {
+      "id": "build-club-2",
+      "name": "Build Club Co-working Session",
+      "description": "Join our fortnightly co-working session where AI builders come together to work on projects, share ideas, and collaborate. Perfect for students, professionals, and entrepreneurs working on AI-related projects.",
+      "startDate": "2025-11-15T10:00:00+11:00",
+      "endDate": "2025-11-15T16:00:00+11:00",
+      "eventLocation": {
+        "address": "Melbourne Connect, 700 Swanston St, Carlton VIC 3053"
+      },
+      "source": "manual",
+      "externalUrl": "https://www.mlai.au/build-club",
+      "bannerImage": "/sponsor_logos/buildclub.png"
+    },
+    {
+      "id": "build-club-3",
+      "name": "Build Club Co-working Session",
+      "description": "Join our fortnightly co-working session where AI builders come together to work on projects, share ideas, and collaborate. Perfect for students, professionals, and entrepreneurs working on AI-related projects.",
+      "startDate": "2025-11-29T10:00:00+11:00",
+      "endDate": "2025-11-29T16:00:00+11:00",
+      "eventLocation": {
+        "address": "Melbourne Connect, 700 Swanston St, Carlton VIC 3053"
+      },
+      "source": "manual",
+      "externalUrl": "https://www.mlai.au/build-club",
+      "bannerImage": "/sponsor_logos/buildclub.png"
+    },
+    {
+      "id": "build-club-4",
+      "name": "Build Club Co-working Session",
+      "description": "Join our fortnightly co-working session where AI builders come together to work on projects, share ideas, and collaborate. Perfect for students, professionals, and entrepreneurs working on AI-related projects.",
+      "startDate": "2025-12-13T10:00:00+11:00",
+      "endDate": "2025-12-13T16:00:00+11:00",
+      "eventLocation": {
+        "address": "Melbourne Connect, 700 Swanston St, Carlton VIC 3053"
+      },
+      "source": "manual",
+      "externalUrl": "https://www.mlai.au/build-club",
+      "bannerImage": "/sponsor_logos/buildclub.png"
+    }
+  ]
+}

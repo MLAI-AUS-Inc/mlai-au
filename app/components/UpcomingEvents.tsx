@@ -12,6 +12,10 @@ interface Event {
     address: string;
   };
   slug: string;
+  published?: boolean;
+  source?: 'humanitix' | 'manual';
+  description?: string;
+  externalUrl?: string;
 }
 
 export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
@@ -66,7 +70,11 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                           .map((event, eventIndex) => (
                             <a
                               key={event._id}
-                              href={`https://events.humanitix.com/${event.slug}`}
+                              href={
+                                event.source === 'manual' && event.externalUrl
+                                  ? event.externalUrl
+                                  : `https://events.humanitix.com/${event.slug}`
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block h-full transform transition-all duration-300 hover:scale-105 hover:-translate-y-1"

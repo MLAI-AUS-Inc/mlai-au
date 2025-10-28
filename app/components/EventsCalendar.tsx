@@ -14,6 +14,10 @@ interface Event {
     address: string;
   };
   slug: string;
+  published?: boolean;
+  source?: 'humanitix' | 'manual';
+  description?: string;
+  externalUrl?: string;
 }
 
 interface EventsCalendarProps {
@@ -106,7 +110,11 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
             {dayEvents.slice(0, 2).map((event) => (
               <a
                 key={event._id}
-                href={`https://events.humanitix.com/${event.slug}`}
+                href={
+                  event.source === 'manual' && event.externalUrl
+                    ? event.externalUrl
+                    : `https://events.humanitix.com/${event.slug}`
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-xs p-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors truncate"
@@ -201,7 +209,11 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
         {upcomingEvents.map((event) => (
           <a
             key={event._id}
-            href={`https://events.humanitix.com/${event.slug}`}
+            href={
+              event.source === 'manual' && event.externalUrl
+                ? event.externalUrl
+                : `https://events.humanitix.com/${event.slug}`
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
