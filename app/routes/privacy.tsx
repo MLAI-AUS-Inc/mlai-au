@@ -98,7 +98,7 @@ export default function Privacy() {
                 <strong>You can unsubscribe at any time by clicking the unsubscribe button</strong> included in every email we send. You may also:
               </p>
               <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
-                <li>Contact us directly at info@mlai.org.au to request removal from our mailing list</li>
+                <li>Contact us directly at hi@mlai.au to request removal from our mailing list</li>
                 <li>Update your email preferences through the link provided in our emails</li>
                 <li>Opt out of specific types of communications while remaining subscribed to others</li>
               </ul>
@@ -169,8 +169,8 @@ export default function Privacy() {
               
               <div className="mt-4 bg-gray-50 p-6 rounded-lg">
                 <p className="mb-2 text-base leading-7 text-zinc-600"><strong>MLAI Aus Inc</strong></p>
-                <p className="mb-2 text-base leading-7 text-zinc-600">Email: info@mlai.org.au</p>
-                <p className="text-base leading-7 text-zinc-600">Website: https://mlai.org.au</p>
+                <p className="mb-2 text-base leading-7 text-zinc-600">Email: hi@mlai.au</p>
+                <p className="text-base leading-7 text-zinc-600">Website: https://mlai.au</p>
               </div>
 
             </div>
