@@ -8,4 +8,5 @@ export default [
   route("/hackathon", "routes/hackathon.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
+  route("/privacy", "routes/privacy.tsx"),
 ] satisfies RouteConfig;
