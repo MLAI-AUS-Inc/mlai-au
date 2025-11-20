@@ -1,4 +1,5 @@
 import { ExtendedInfo } from "~/components/hackathon/ExtendedInfo";
+import { FAQ } from "~/components/hackathon/FAQ";
 import { GbhPeople } from "~/components/hackathon/gbhPeople";
 import { Hero } from "~/components/hackathon/Hero";
 import { InfoForHackers } from "~/components/hackathon/InfoForHackers";
@@ -20,7 +21,9 @@ const HackathonPage = () => {
         <Schedule />
         <MentorsVolunteers />
         <GbhPeople />
-        <InfoForHackers />
+        <FAQ />
+
+        {/* <InfoForHackers /> */}
       </div>
     </div>
   );

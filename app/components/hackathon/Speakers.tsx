@@ -1,132 +1,66 @@
 import { Tab } from "@headlessui/react";
 import clsx from "clsx";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Container } from "./Container";
-import { DiamondIcon } from "./DiamondIcon";
 
 const days = [
   {
-    name: "Final Pitch Night",
-    date: "May 8",
-    dateTime: "2024-05-08",
+    name: "Hack Day 1",
+    date: "Nov 29",
+    dateTime: "2025-11-29",
     speakers: [
       {
-        name: "Nicholas Reece",
-        role: "Deputy Lord Mayor of Melbourne",
-        image: "/hackathon/avatars/nicholasreece.jpg",
+        name: "David Gilmore",
+        role: "Cybersecurity Analyst & AI Researcher",
+        image: "/hackathon/avatars/david.jpeg",
       },
       {
-        name: "Prof. Eduard Hovy",
-        role: "Director Melbourne Connect, University of Melbourne",
-        image: "/hackathon/avatars/eduardhovy.jpg",
+        name: "Alan Agon",
+        role: "Founder, Paxmod",
+        image: "/hackathon/avatars/alan.jpeg",
       },
       {
-        name: "Jack Eddie",
-        role: "Senior Manager - Cyber and Enabling Capabilities - Victoria State Government",
-        image: "/hackathon/avatars/jackeddie.jpg",
+        name: "Macken Murphy",
+        role: "Scientist & Behavioural Researcher (PhD, University of Melbourne)",
+        image: "/hackathon/avatars/macken.jpg",
       },
       {
-        name: "Dr. James Kahn",
-        role: "HAL Systems",
-        image: "/hackathon/avatars/jameskahn.jpeg",
-      },
-      {
-        name: "Nicola Smith",
-        role: "AWS Startups - Hackathon Judging Panel Melbourne",
-        image: "/hackathon/avatars/nicolasmyth.jpg",
-      },
-      {
-        name: "Myles Eftos",
-        role: "Amber Electric - Hackathon Judging Panel Melbourne",
-        image: "/hackathon/avatars/myleseftos.jpg",
-      },
-      {
-        name: "Tom Mcleod",
-        role: "University of Melbourne - Hackathon Judging Panel Melbourne",
-        image: "/hackathon/avatars/tommcleod.jpg",
-      },
-      {
-        name: "Steve Tzortzidis",
-        role: "V2 Digital - Hackathon Judging Panel Melbourne",
-        image: "/hackathon/avatars/stevetzortzidis.jpg",
+        name: "Manan Jaiswal",
+        role: "Lyra",
+        image: "/hackathon/avatars/manan.jpeg",
       },
 
-      {
-        name: "Stephen Wallace",
-        role: "BeerOps - Hackathon Judging Panel Sydney",
-        image: "/hackathon/avatars/stephenwallace.png",
-      },
-      {
-        name: "Taylor Chu",
-        role: "Organon - Hackathon Judging Panel Sydney",
-        image: "/hackathon/avatars/taylorchu.jpg",
-      },
-      {
-        name: "Alexar Pendashteh",
-        role: "Linux Users Victoria - Hackathon Judging Panel Sydney",
-        image: "/hackathon/avatars/alexar.jpg",
-      },
+
     ],
   },
 
   {
-    name: "Team Formation Day",
-    date: "April 6",
-    dateTime: "2024-04-06",
+    name: "Hack Day 2",
+    date: "Nov 30",
+    dateTime: "2025-11-30",
     speakers: [
       {
-        name: "Dr. Aleksis Xenophon",
-        role: "Optimisation and Machine Learning Engineer at Amber Electric",
-        image: "/hackathon/avatars/aleksis.png",
+        name: "Chistine De Kock",
+        role: "Lecturer & NLP Researcher, University of Melbourne",
+        image: "/hackathon/avatars/christine.jpeg",
       },
       {
-        name: "Ruchika Deora",
-        role: "Head of Product, SEC Victoria",
-        image: "/hackathon/avatars/ruchika.jpg",
+        name: "Rocky (TBC)",
+        role: "",
+        image: "/hackathon/avatars/.png",
       },
       {
-        name: "Dr. Hao Wang",
-        role: "Senior Research Fellow, Dept. of Data Science & AI, Monash Futures Institute",
-        image: "/hackathon/avatars/haowang.png",
+        name: "David's Wife (TBC)",
+        role: "",
+        image: "/hackathon/avatars/.png",
       },
-      {
-        name: "Jack Simpson",
-        role: "Director at Endgame Economics & Cartesian Software",
-        image: "/hackathon/avatars/jacksimpson.jpg",
-      },
-      {
-        name: "Yien Fuang Tiong",
-        role: "AGL Australia - VPP Data Science Manager",
-        image: "/hackathon/avatars/yien.jpg",
-      },
+
     ],
   },
 ];
 
-function ImageClipPaths({
-  id,
-  ...props
-}: React.ComponentPropsWithoutRef<"svg"> & { id: string }) {
-  return (
-    <svg aria-hidden="true" width={0} height={0} {...props}>
-      <defs>
-        <clipPath id={`${id}-0`} clipPathUnits="objectBoundingBox">
-          <path d="M0,0 h0.729 v0.129 h0.121 l-0.016,0.032 C0.815,0.198,0.843,0.243,0.885,0.243 H1 v0.757 H0.271 v-0.086 l-0.121,0.057 v-0.214 c0,-0.032,-0.026,-0.057,-0.057,-0.057 H0 V0" />
-        </clipPath>
-        <clipPath id={`${id}-1`} clipPathUnits="objectBoundingBox">
-          <path d="M1,1 H0.271 v-0.129 H0.15 l0.016,-0.032 C0.185,0.802,0.157,0.757,0.115,0.757 H0 V0 h0.729 v0.086 l0.121,-0.057 v0.214 c0,0.032,0.026,0.057,0.057,0.057 h0.093 v0.7" />
-        </clipPath>
-        <clipPath id={`${id}-2`} clipPathUnits="objectBoundingBox">
-          <path d="M1,0 H0.271 v0.129 H0.15 l0.016,0.032 C0.185,0.198,0.157,0.243,0.115,0.243 H0 v0.757 h0.729 v-0.086 l0.121,0.057 v-0.214 c0,-0.032,0.026,-0.057,0.057,-0.057 h0.093 V0" />
-        </clipPath>
-      </defs>
-    </svg>
-  );
-}
-
 export function Speakers() {
-  let id = useId();
   let [tabOrientation, setTabOrientation] = useState("horizontal");
 
   useEffect(() => {
@@ -148,106 +82,76 @@ export function Speakers() {
     <section
       id="speakers"
       aria-labelledby="speakers-title"
-      className="bg-gray-900"
+      className="py-16 sm:py-24 bg-gray-900"
     >
-      <ImageClipPaths id={id} />
       <Container>
-        <div className="mt-32 mx-auto max-w-2xl lg:mx-0">
+        <div className="mx-auto max-w-2xl mb-12">
           <h2
             id="speakers-title"
-            className="font-display text-4xl font-medium tracking-tighter text-teal-200 sm:text-5xl"
+            className="font-display text-3xl font-medium tracking-tight text-teal-200 sm:text-4xl mb-4"
           >
             Speakers
           </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            We&apos;re incredibly excited to have some of Australia&apos;s
-            smartest minds in AI and Energy as speakers and mentors for the
-            event.
+          <p className="text-lg text-gray-300">
+            We’re thrilled to welcome some of Australia’s leading thinkers and builders in AI, safety, and digital communities as speakers and mentors for this event.
           </p>
         </div>
         <Tab.Group
           as="div"
-          className="mt-14 grid grid-cols-1 items-start gap-x-8 gap-y-8 sm:mt-16 sm:gap-y-16 lg:mt-24 lg:grid-cols-4"
+          className="grid grid-cols-1 gap-8 lg:grid-cols-4"
           vertical={tabOrientation === "vertical"}
         >
-          <div className="relative -mx-4 flex overflow-x-auto pb-4 sm:mx-0 sm:block sm:overflow-visible sm:pb-0">
-            <div className="absolute bottom-0 left-0.5 top-2 hidden w-px bg-slate-200 lg:block" />
-            <Tab.List className="grid auto-cols-auto grid-flow-col justify-start gap-x-8 gap-y-10 whitespace-nowrap px-4 sm:mx-auto sm:max-w-2xl sm:grid-cols-3 sm:px-0 sm:text-center lg:grid-flow-row lg:grid-cols-1 lg:text-left">
-              {({ selectedIndex }) => (
-                <>
-                  {days.map((day, dayIndex) => (
-                    <div key={day.dateTime} className="relative lg:pl-8">
-                      <DiamondIcon
-                        className={clsx(
-                          "absolute left-[-0.5px] top-[0.5625rem] hidden h-1.5 w-1.5 overflow-visible lg:block",
-                          dayIndex === selectedIndex
-                            ? "fill-teal-500 stroke-teal-500"
-                            : "fill-transparent stroke-teal-400",
-                        )}
-                      />
-                      <div className="relative">
-                        <div
-                          className={clsx(
-                            "font-mono text-sm",
-                            dayIndex === selectedIndex
-                              ? "text-teal-500"
-                              : "text-slate-500",
-                          )}
-                        >
-                          <Tab className="ui-not-focus-visible:outline-none">
-                            <span className="absolute inset-0 " />
-                            {day.name}
-                          </Tab>
-                        </div>
-                        <time
-                          dateTime={day.dateTime}
-                          className="mt-1.5 block text-2xl font-semibold tracking-tight text-teal-500"
-                        >
-                          {day.date}
-                        </time>
+          <Tab.List className="flex flex-col gap-4 lg:gap-6">
+            {({ selectedIndex }) => (
+              <>
+                {days.map((day, dayIndex) => (
+                  <Tab
+                    key={day.dateTime}
+                    className="ui-not-focus-visible:outline-none text-left"
+                  >
+                    <div
+                      className={clsx(
+                        "p-4 rounded-lg border transition-colors",
+                        dayIndex === selectedIndex
+                          ? "border-teal-500 bg-gray-800"
+                          : "border-gray-700 hover:border-gray-600",
+                      )}
+                    >
+                      <div className="font-mono text-sm text-gray-400 mb-1">
+                        {day.name}
                       </div>
+                      <time
+                        dateTime={day.dateTime}
+                        className="text-xl font-semibold text-teal-200"
+                      >
+                        {day.date}
+                      </time>
                     </div>
-                  ))}
-                </>
-              )}
-            </Tab.List>
-          </div>
+                  </Tab>
+                ))}
+              </>
+            )}
+          </Tab.List>
           <Tab.Panels className="lg:col-span-3">
             {days.map((day) => (
               <Tab.Panel
                 key={day.dateTime}
-                className="grid grid-cols-1 gap-x-8 gap-y-10 ui-not-focus-visible:outline-none sm:grid-cols-2 sm:gap-y-16 md:grid-cols-3"
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 ui-not-focus-visible:outline-none"
                 unmount={false}
               >
                 {day.speakers.map((speaker, speakerIndex) => (
-                  <div key={speakerIndex}>
-                    <div className="group relative h-[17.5rem] transform overflow-hidden rounded-4xl">
-                      <div
-                        className={clsx(
-                          "absolute bottom-6 left-0 right-4 top-0 rounded-4xl border transition duration-300 group-hover:scale-95 xl:right-6",
-                          [
-                            "border-teal-300",
-                            "border-teal-500",
-                            "border-teal-100",
-                          ][speakerIndex % 3],
-                        )}
+                  <div key={speakerIndex} className="text-center">
+                    <div className="mb-4">
+                      <img
+                        className="w-32 h-32 rounded-full mx-auto object-cover border-2 border-teal-500/50"
+                        src={speaker.image}
+                        alt={speaker.name}
                       />
-                      <div
-                        className="absolute inset-0 bg-indigo-50"
-                        style={{ clipPath: `url(#${id}-${speakerIndex % 3})` }}
-                      >
-                        <img
-                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-110"
-                          src={speaker.image}
-                          alt=""
-                          sizes="(min-width: 1280px) 17.5rem, (min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 50vw, 100vw"
-                        />
-                      </div>
                     </div>
-                    <h3 className="mt-8 font-display text-xl font-bold tracking-tight text-gray-200">
+                    <h3 className="font-semibold text-white mb-1">
                       {speaker.name}
                     </h3>
-                    <p className="mt-1 text-base tracking-tight text-slate-500">
+                    <p className="text-sm text-gray-400">
                       {speaker.role}
                     </p>
                   </div>
