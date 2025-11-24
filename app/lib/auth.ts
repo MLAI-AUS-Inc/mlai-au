@@ -6,14 +6,14 @@ export async function sendMagicLink(env: Env, body: {
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
 }) {
-    return backendFetch(env, "/api/v1/auth/send-magic-link", {
+    return backendFetch(env, "/api/v1/auth/send-magic-link/", {
         method: "POST",
         body: JSON.stringify(body),
     });
 }
 
 export async function getCurrentUser(env: Env) {
-    const res = await backendFetch(env, "/api/v1/auth/me", {
+    const res = await backendFetch(env, "/api/v1/auth/me/", {
         method: "GET",
     });
     if (res.status === 401) return null;
