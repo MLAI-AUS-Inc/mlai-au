@@ -28,7 +28,7 @@ export default function EsafetyAppDashboard() {
             <div className="md:flex md:items-center md:justify-between">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        {hackathon.name} Dashboard
+                        {(hackathon as any)?.name} Dashboard
                     </h2>
                 </div>
                 <div className="mt-4 flex md:ml-4 md:mt-0">
@@ -85,6 +85,22 @@ export default function EsafetyAppDashboard() {
                                 className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
                             >
                                 View Leaderboard <span aria-hidden="true">&rarr;</span>
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Resources Card */}
+                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
+                    <div className="p-6">
+                        <h3 className="text-base font-semibold leading-6 text-white">Resources & Challenges</h3>
+                        <p className="mt-2 text-sm text-gray-400">Access datasets, starter kits, and challenge details.</p>
+                        <div className="mt-6">
+                            <Link
+                                to="/esafety/app/resources"
+                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
+                            >
+                                View Resources <span aria-hidden="true">&rarr;</span>
                             </Link>
                         </div>
                     </div>

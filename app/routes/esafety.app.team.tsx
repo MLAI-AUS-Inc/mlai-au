@@ -15,7 +15,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     // For now, let's try to fetch all teams and see if the user is in one, or if there's a specific endpoint.
     // The plan said "GET /api/v1/hackathons/esafety/teams/ (maybe filtered to my teams by query param)"
 
-    const res = await backendFetch(env, "/api/v1/hackathons/esafety/teams/?member_id=" + user.id, { method: "GET" });
+    const res = await backendFetch(env, "/api/v1/hackathons/esafety/teams/?member_id=" + (user as any).id, { method: "GET" });
     // If the backend doesn't support filtering by member_id, we might get all teams.
     // Let's assume the backend returns a list.
 
@@ -47,13 +47,29 @@ export async function action({ request, context }: Route.ActionArgs) {
         });
 
         if (!res.ok) {
-            const err = await res.json();
+            const err = await res.json() as any;
             return { error: err.detail || "Failed to create team" };
         }
         return { success: true };
     }
 
-    // Join team logic could go here if needed (e.g. via invite code)
+    if (intent === "join_team") {
+        const code = formData.get("code")?.toString();
+        if (!code) return { error: "Team code/name is required" };
+
+        // Assuming the backend has an endpoint to join a team
+        // POST /api/v1/hackathons/esafety/teams/join/
+        const res = await backendFetch(env, "/api/v1/hackathons/esafety/teams/join/", {
+            method: "POST",
+            body: JSON.stringify({ code }), // or name, depending on backend
+        });
+
+        if (!res.ok) {
+            const err = await res.json() as any;
+            return { error: err.detail || "Failed to join team" };
+        }
+        return { success: true };
+    }
 
     return null;
 }
@@ -92,38 +108,77 @@ export default function EsafetyAppTeam() {
                 ) : (
                     <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
                         <div className="px-4 py-5 sm:p-6">
-                            <h3 className="text-base font-semibold leading-6 text-white">Create a Team</h3>
+                            <h3 className="text-base font-semibold leading-6 text-white">Create or Join a Team</h3>
                             {actionData?.error && (
                                 <div className="mt-2 rounded-md bg-red-500/10 p-2 text-sm text-red-400">
                                     {actionData.error}
                                 </div>
                             )}
-                            <Form method="POST" className="mt-4">
+
+                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                {/* Create Team Form */}
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium leading-6 text-white">
-                                        Team Name
-                                    </label>
-                                    <div className="mt-2">
-                                        <input
-                                            type="text"
-                                            name="name"
-                                            id="name"
-                                            required
-                                            className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
-                                        />
-                                    </div>
+                                    <h4 className="text-sm font-medium text-gray-300 mb-4">Create a new team</h4>
+                                    <Form method="POST">
+                                        <div>
+                                            <label htmlFor="name" className="block text-sm font-medium leading-6 text-white">
+                                                Team Name
+                                            </label>
+                                            <div className="mt-2">
+                                                <input
+                                                    type="text"
+                                                    name="name"
+                                                    id="name"
+                                                    required
+                                                    className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="mt-4">
+                                            <button
+                                                type="submit"
+                                                name="intent"
+                                                value="create_team"
+                                                className="rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+                                            >
+                                                Create Team
+                                            </button>
+                                        </div>
+                                    </Form>
                                 </div>
-                                <div className="mt-4">
-                                    <button
-                                        type="submit"
-                                        name="intent"
-                                        value="create_team"
-                                        className="rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
-                                    >
-                                        Create Team
-                                    </button>
+
+                                {/* Join Team Form */}
+                                <div className="border-t border-white/10 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                                    <h4 className="text-sm font-medium text-gray-300 mb-4">Join an existing team</h4>
+                                    <Form method="POST">
+                                        <div>
+                                            <label htmlFor="code" className="block text-sm font-medium leading-6 text-white">
+                                                Team Code / Name
+                                            </label>
+                                            <div className="mt-2">
+                                                <input
+                                                    type="text"
+                                                    name="code"
+                                                    id="code"
+                                                    required
+                                                    placeholder="Enter team name to join"
+                                                    className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="mt-4">
+                                            <button
+                                                type="submit"
+                                                name="intent"
+                                                value="join_team"
+                                                className="rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                                            >
+                                                Join Team
+                                            </button>
+                                        </div>
+                                    </Form>
                                 </div>
-                            </Form>
+                            </div>
                         </div>
                     </div>
                 )}

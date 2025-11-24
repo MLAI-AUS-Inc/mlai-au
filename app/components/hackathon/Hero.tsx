@@ -52,7 +52,7 @@ export function Hero() {
           </Button>
           <Button
             color="teal"
-            href="/platform/login?next=https://esafety.mlai.au/app"
+            href="/platform/login?next=/dashboard"
             className="mt-6 w-full sm:w-auto sm:ml-4"
           >
             Log into the eSafety app

@@ -3,7 +3,8 @@ export function backendFetch(
   path: string,
   init: RequestInit = {}
 ) {
-  const url = new URL(path, env.BACKEND_BASE_URL).toString();
+  const baseUrl = env.BACKEND_BASE_URL || "https://api.mlai.au";
+  const url = new URL(path, baseUrl).toString();
 
   return fetch(url, {
     ...init,

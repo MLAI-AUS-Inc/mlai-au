@@ -13,7 +13,7 @@ export async function sendMagicLink(env: Env, body: {
 }
 
 export async function getCurrentUser(env: Env) {
-    const res = await backendFetch(env, "/api/v1/users/me", {
+    const res = await backendFetch(env, "/api/v1/auth/me", {
         method: "GET",
     });
     if (res.status === 401) return null;
