@@ -1,4 +1,7 @@
+import { AboutEvent } from "~/components/hackathon/AboutEvent";
+import { AboutUnite } from "~/components/hackathon/AboutUnite";
 import { ExtendedInfo } from "~/components/hackathon/ExtendedInfo";
+import { EventOverview } from "~/components/hackathon/EventOverview";
 import { FAQ } from "~/components/hackathon/FAQ";
 import { GbhPeople } from "~/components/hackathon/gbhPeople";
 import { Hero } from "~/components/hackathon/Hero";
@@ -14,8 +17,11 @@ const HackathonPage = () => {
     <div className="relative min-h-screen">
       <div className="relative z-10">
         <Hero />
+        <AboutEvent />
+        <AboutUnite />
         <Sponsors />
         <SilverSponsors />
+        <EventOverview />
         <ExtendedInfo />
         <Speakers />
         <Schedule />

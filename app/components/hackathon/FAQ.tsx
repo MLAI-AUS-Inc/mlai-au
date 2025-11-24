@@ -55,7 +55,7 @@ const faqs: FAQItem[] = [
     {
         question: "How do I get tickets?",
         answer:
-            "You can get your tickets by clicking the 'Get your tickets' button on the hero section of this page. Make sure to register early as spots are limited!",
+            "You can register for the Team Formation Night and Hackathon Weekend through the registration links in the Event Overview section above, or click the 'Get your tickets' button in the hero section. Pitch Day invitations will be sent to finalists after the hackathon. Make sure to register early as spots are limited!",
     },
 ];
 

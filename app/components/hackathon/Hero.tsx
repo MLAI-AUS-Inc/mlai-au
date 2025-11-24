@@ -50,6 +50,13 @@ export function Hero() {
           >
             Get your tickets
           </Button>
+          <Button
+            color="teal"
+            href="/platform/login?next=https://esafety.mlai.au/app"
+            className="mt-6 w-full sm:w-auto sm:ml-4"
+          >
+            Log into the eSafety app
+          </Button>
           <dl className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-6 text-center p-5">
             {[
               ["Speakers", "11"],

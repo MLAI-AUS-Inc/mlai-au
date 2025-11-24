@@ -3,59 +3,100 @@ import clsx from "clsx";
 import { useEffect, useState } from "react";
 
 import { Container } from "./Container";
+import { LinkedInIcon } from "./LinkedInIcon";
 
-const days = [
+interface Speaker {
+  name: string;
+  role: string;
+  image: string;
+  linkedin?: string;
+}
+
+interface Day {
+  name: string;
+  date: string;
+  dateTime: string;
+  speakers: Speaker[];
+}
+
+const days: Day[] = [
   {
-    name: "Hack Day 1",
+    name: "eSafety Day 1",
     date: "Nov 29",
     dateTime: "2025-11-29",
     speakers: [
-      {
-        name: "David Gilmore",
-        role: "Cybersecurity Analyst & AI Researcher",
-        image: "/hackathon/avatars/david.jpeg",
-      },
-      {
-        name: "Alan Agon",
-        role: "Founder, Paxmod",
-        image: "/hackathon/avatars/alan.jpeg",
-      },
       {
         name: "Macken Murphy",
         role: "Scientist & Behavioural Researcher (PhD, University of Melbourne)",
         image: "/hackathon/avatars/macken.jpg",
       },
       {
+        name: "David Gilmore",
+        role: "Cybersecurity Analyst & AI Researcher",
+        image: "/hackathon/avatars/david.jpeg",
+        linkedin: "https://www.linkedin.com/in/david-gilmore-australia/",
+      },
+      {
+        name: "Campbell Wilson",
+        role: "Online Safety Expert",
+        image: "/hackathon/avatars/campbell.jpeg",
+        linkedin: "https://www.linkedin.com/in/campbellcwilson/",
+      },
+      {
+        name: "Sarah Davis-Gilmore",
+        role: "Safety & Connection Advocate",
+        image: "/hackathon/avatars/sarah.jpeg",
+        linkedin: "https://www.linkedin.com/in/sarah-davis-gilmore",
+      },
+      {
+        name: "Graham McCorkill",
+        role: "Speaker",
+        image: "/hackathon/avatars/graham.jpeg",
+        linkedin: "https://www.linkedin.com/in/graham-mccorkill/",
+      },
+      {
         name: "Manan Jaiswal",
         role: "Lyra",
         image: "/hackathon/avatars/manan.jpeg",
+        linkedin: "https://www.linkedin.com/in/manan-jaiswal/",
       },
-
-
     ],
   },
-
   {
-    name: "Hack Day 2",
+    name: "eSafety Day 2",
     date: "Nov 30",
     dateTime: "2025-11-30",
     speakers: [
       {
-        name: "Chistine De Kock",
+        name: "Maria Nguyen",
+        role: "eSafety Commissioner's Office",
+        image: "/hackathon/avatars/maria.png",
+        linkedin: "https://www.linkedin.com/in/mariaptnguyen/",
+      },
+      {
+        name: "Ellen O'Brien",
+        role: "eSafety Commissioner's Office",
+        image: "/hackathon/avatars/ellen.jpeg",
+        linkedin: "https://www.linkedin.com/in/ellen-o-brien-07b9b239/",
+      },
+      {
+        name: "Alan Agon",
+        role: "Founder, Paxmod",
+        image: "/hackathon/avatars/alan.jpeg",
+        linkedin: "https://www.linkedin.com/in/alanagon/",
+      },
+      {
+        name: "Scotty Alan",
+        role: "The Product Bus",
+        image: "/hackathon/avatars/scotty.jpeg",
+        linkedin: "https://www.linkedin.com/in/thescottyallen/",
+      },
+      {
+        name: "Christine de Kock",
         role: "Lecturer & NLP Researcher, University of Melbourne",
         image: "/hackathon/avatars/christine.jpeg",
+        linkedin: "https://www.linkedin.com/in/christine-de-kock/",
       },
-      {
-        name: "Rocky (TBC)",
-        role: "",
-        image: "/hackathon/avatars/.png",
-      },
-      {
-        name: "David's Wife (TBC)",
-        role: "",
-        image: "/hackathon/avatars/.png",
-      },
-
     ],
   },
 ];
@@ -151,9 +192,20 @@ export function Speakers() {
                     <h3 className="font-semibold text-white mb-1">
                       {speaker.name}
                     </h3>
-                    <p className="text-sm text-gray-400">
+                    <p className="text-sm text-gray-400 mb-3">
                       {speaker.role}
                     </p>
+                    {speaker.linkedin && (
+                      <a
+                        href={speaker.linkedin}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-teal-300 hover:text-teal-200 transition-colors"
+                      >
+                        <LinkedInIcon className="w-4 h-4" />
+                        LinkedIn
+                      </a>
+                    )}
                   </div>
                 ))}
               </Tab.Panel>

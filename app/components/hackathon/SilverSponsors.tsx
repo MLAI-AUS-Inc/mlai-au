@@ -2,17 +2,15 @@ import { Container } from "./Container";
 
 const sponsorssilver = [
   { name: "lyra", logo: "/hackathon/logos/lyra.png" },
-
+  { name: "aws", logo: "/hackathon/logos/aws2.png" },
+  { name: "lovable", logo: "/hackathon/logos/lovable.png" },
 ];
 
 const communitypartner = [
-  { name: "stoneandchalk", logo: "/hackathon/logos/stoneandchalk.png" },
-  { name: "aws", logo: "/hackathon/logos/aws2.png" },
   { name: "studynash", logo: "/hackathon/logos/studynash2.png" },
   { name: "aidg", logo: "/hackathon/logos/aidg.png" },
   { name: "luna", logo: "/hackathon/logos/luna.png" },
   { name: "16days", logo: "/hackathon/logos/16days3.png" },
-  { name: "lovable", logo: "/hackathon/logos/lovable.png" },
   { name: "gumnut", logo: "/hackathon/logos/gumnut1.png" },
 
 ];
@@ -32,12 +30,17 @@ export function SilverSponsors() {
           {sponsorssilver.map((sponsor) => (
             <div
               key={sponsor.name}
-              className="flex items-center justify-center w-1/3 sm:w-1/5"
+              className="flex items-center justify-center w-1/2 sm:w-1/3 md:w-1/5 p-2"
             >
               <img
                 src={sponsor.logo}
                 alt={sponsor.name}
-                className="w-full h-auto max-w-[200px]"
+                className={`w-full h-auto ${sponsor.name === "aws"
+                  ? "max-w-[140px] sm:max-w-[180px] rounded-lg border-2 border-white"
+                  : sponsor.name === "lovable"
+                    ? "max-w-[140px] sm:max-w-[180px] rounded-lg"
+                    : "max-w-[160px] sm:max-w-[200px]"
+                  }`}
               />
             </div>
           ))}
@@ -49,22 +52,19 @@ export function SilverSponsors() {
           {communitypartner.map((sponsor) => (
             <div
               key={sponsor.name}
-              className="flex items-center justify-center w-1/3 sm:w-1/6"
+              className="flex items-center justify-center w-1/2 sm:w-1/4 md:w-1/6 p-2"
             >
               <img
                 src={sponsor.logo}
                 alt={sponsor.name}
                 className={`h-auto ${sponsor.name === "studynash" ||
-                  sponsor.name === "lovable" ||
                   sponsor.name === "gumnut"
-                  ? "w-auto max-w-[130px]"
-                  : "w-full max-w-[100px]"
-                  } ${sponsor.name === "aws" ||
-                    sponsor.name === "stoneandchalk" ||
-                    sponsor.name === "gumnut" ||
+                  ? "w-auto max-w-[100px] sm:max-w-[130px]"
+                  : "w-full max-w-[80px] sm:max-w-[100px]"
+                  } ${sponsor.name === "gumnut" ||
                     sponsor.name === "16days"
                     ? "rounded-lg border-2 border-white"
-                    : sponsor.name === "lovable" || sponsor.name === "aidg"
+                    : sponsor.name === "aidg"
                       ? "rounded-lg"
                       : ""
                   }`}
