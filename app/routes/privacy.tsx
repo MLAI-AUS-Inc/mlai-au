@@ -1,4 +1,4 @@
-import type { MetaFunction } from "@react-router/node";
+import type { MetaFunction } from "react-router";
 import { Container } from "~/components/ui/Container";
 
 export const meta: MetaFunction = () => {
@@ -166,7 +166,7 @@ export default function Privacy() {
               <p className="mt-4 text-base leading-7 text-zinc-600">
                 If you have any questions about this Privacy Policy or our privacy practices, please contact us at:
               </p>
-              
+
               <div className="mt-4 bg-gray-50 p-6 rounded-lg">
                 <p className="mb-2 text-base leading-7 text-zinc-600"><strong>MLAI Aus Inc</strong></p>
                 <p className="mb-2 text-base leading-7 text-zinc-600">Email: hi@mlai.au</p>

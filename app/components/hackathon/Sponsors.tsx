@@ -2,11 +2,9 @@ import { H2 } from "~/components/ui/Typography";
 import { Container } from "./Container";
 
 const sponsors = [
-  { name: "unimelb", logo: "/hackathon/logos/melbourneconnect.png" },
-  { name: "CoM", logo: "/hackathon/logos/CoM_pad.png" },
-  { name: "v2", logo: "/hackathon/logos/v2_logo.png" },
-  { name: "aws", logo: "/hackathon/logos/aws_padd.png" },
-  { name: "amber", logo: "/hackathon/logos/amber.png" },
+  { name: "unimelb", logo: "/hackathon/logos/unimelb.png" },
+  { name: "eSafety", logo: "/hackathon/logos/esafety.png" },
+  { name: "Stone & Chalk", logo: "/hackathon/logos/stoneandchalk.png" },
 ];
 
 export function Sponsors() {
@@ -14,27 +12,30 @@ export function Sponsors() {
     <section
       id="sponsors"
       aria-label="Sponsors"
-      className="pt-96 pb-20 sm:pb-32 sm:pt-96 bg-gray-900"
+      className="py-16 sm:py-24 bg-gray-900"
     >
       <Container>
-        <H2 className="mx-auto justify-center max-w-2xl text-center text-teal-200 font-display tracking-tighter">
+        <H2 className="text-center text-teal-200 font-display tracking-tight mb-8">
           Gold Sponsors
         </H2>
-        <div className="flex justify-center items-center max-w-full mt-8">
-          <div className="flex flex-wrap justify-center gap-x-0 gap-y-12 mx-auto w-full">
-            {sponsors.map((sponsor) => (
-              <div
-                key={sponsor.name}
-                className="flex items-center justify-center w-1/2 sm:w-1/3 px-4"
-              >
-                <img
-                  src={sponsor.logo}
-                  alt={sponsor.name}
-                  style={{ width: "100%", height: "auto" }}
-                />
-              </div>
-            ))}
-          </div>
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-16">
+          {sponsors.map((sponsor) => (
+            <div
+              key={sponsor.name}
+              className="flex items-center justify-center w-full md:w-auto px-4"
+            >
+              <img
+                src={sponsor.logo}
+                alt={sponsor.name}
+                className={`h-auto ${sponsor.name === "eSafety"
+                  ? "max-w-[280px] sm:max-w-[400px]" // larger eSafety logo
+                  : sponsor.name === "Stone & Chalk"
+                    ? "max-w-[180px] sm:max-w-[220px] rounded-lg border-2 border-white" // Stone & Chalk styling
+                    : "max-w-[160px] sm:max-w-[200px]" // default size for others
+                  }`}
+              />
+            </div>
+          ))}
         </div>
       </Container>
     </section>

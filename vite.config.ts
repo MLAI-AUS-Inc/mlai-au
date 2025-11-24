@@ -11,4 +11,18 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
+  optimizeDeps: {
+    include: [
+      "@heroicons/react/20/solid",
+      "@heroicons/react/24/solid",
+      "@heroicons/react/24/outline",
+      "@headlessui/react",
+      "class-variance-authority",
+      "clsx",
+      "tailwind-merge",
+    ],
+  },
+  resolve: {
+    dedupe: ["react", "react-dom"],
+  },
 });

@@ -9,4 +9,15 @@ export default [
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
+
+  // Platform routes
+  route("/platform/login", "routes/platform.login.tsx"),
+  route("/platform/dashboard", "routes/platform.dashboard.tsx"),
+  route("/platform/logout", "routes/platform.logout.tsx"),
+
+  // eSafety App routes
+  route("/esafety/app", "routes/esafety.app.dashboard.tsx"),
+  route("/esafety/app/team", "routes/esafety.app.team.tsx"),
+  route("/esafety/app/submit", "routes/esafety.app.submit.tsx"),
+  route("/esafety/app/leaderboard", "routes/esafety.app.leaderboard.tsx"),
 ] satisfies RouteConfig;

@@ -1,256 +1,149 @@
-import { Tab } from "@headlessui/react";
-import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from "@headlessui/react";
+import { H2 } from "~/components/ui/Typography";
 import { Container } from "./Container";
-import GetTickets from "./GetTickets";
+import clsx from "clsx";
 
-interface Day {
-  date: React.ReactNode;
+interface Event {
+  title: string;
+  date: string;
   dateTime: string;
   summary: string;
+  locations: {
+    city: string;
+    venue: string;
+  }[];
   timeSlots: Array<{
     name: string;
-    description: string | null;
     start: string;
-    end: string;
+    end?: string;
   }>;
 }
 
-const schedule: Array<Day> = [
+const events: Event[] = [
   {
-    date: "April 6",
-    dateTime: "2022-04-04",
-    summary: "Team formation day (Melb & Syd)",
+    title: "eSafety Day 1",
+    date: "Saturday Nov 29",
+    dateTime: "2025-11-29",
+    summary: "The first day of the hackathon focused on eSafety challenges.",
+    locations: [
+      { city: "Melbourne", venue: "Stone & Chalk, 121 King St" },
+    ],
     timeSlots: [
-      {
-        name: "Introduction",
-        description: " ",
-        start: "10:00AM",
-        end: "10:30AM",
-      },
-      {
-        name: "Opening Talk",
-        description: "",
-        start: "10:40AM",
-        end: "10:30AM",
-      },
-      {
-        name: "Keynote 2",
-        description: "",
-        start: "10:30AM",
-        end: "12:00AM",
-      },
-      {
-        name: "Lunch",
-        description: "",
-        start: "12:00AM",
-        end: "1:00PM",
-      },
-      {
-        name: "Keynote",
-        description: "",
-        start: "1:00PM",
-        end: "1:30PM",
-      },
-      {
-        name: "Hacking",
-        description: "",
-        start: "1:30PM",
-        end: "5:00PM",
-      },
+      { name: "Registration opens", start: "10:00 am" },
+      { name: "Opening Ceremony", start: "10:30 am" },
+      { name: "Hacking begins!", start: "11:30 am" },
+      { name: "Macken Murphy - The Manosphere & Incel Ideology", start: "12:00 pm" },
+      { name: "Lunch", start: "1:00 pm" },
+      { name: "David Gilmore - Incel Radicalisation (Lived Experiences)", start: "2:00 pm" },
+      { name: "Campbell Wilson - Countering online child exploitation", start: "4:00 pm" },
+      { name: "Afternoon Snack", start: "5:00 pm" },
+      { name: "Sarah Davis-Gilmore - Lived Experience, Safety, and Connection Online", start: "6:00 pm" },
+      { name: "Dinner", start: "7:30 pm" },
+      { name: "Wrap up", start: "8:30 pm" },
+      { name: "Day 1 ends", start: "9:00 pm" },
     ],
   },
-
   {
-    date: "May 8",
-    dateTime: "2022-04-06",
-    summary: "Final Pitch Night (Melb & Syd)",
+    title: "eSafety Day 2",
+    date: "Sunday Nov 30",
+    dateTime: "2025-11-30",
+    summary: "The second day continues with more hacking and eSafety talks.",
+    locations: [
+      { city: "Melbourne", venue: "Stone & Chalk, 121 King St" },
+    ],
     timeSlots: [
-      {
-        name: "Networking",
-        description: "",
-        start: "5:00 PM",
-        end: "6:00 PM",
-      },
-      {
-        name: "Opening Speech - Deputy Lord Mayor Melbourne Nicholas Reece",
-        description: "",
-        start: "6:00 PM",
-        end: "6:15 PM",
-      },
-      {
-        name: "Pitches",
-        description: "",
-        start: "6:20 AM",
-        end: "6:40 PM",
-      },
-      {
-        name: "James Kahn - HAL Systems",
-        description: "",
-        start: "6:45 PM",
-        end: "7:10 PM",
-      },
-      {
-        name: "Pitches",
-        description: "",
-        start: "6:55 AM",
-        end: "7:10 PM",
-      },
-      {
-        name: "Keynote by Eduard Hovy - Director Melbourne Connect",
-        description: "",
-        start: "7:10 PM",
-        end: "7:25 PM",
-      },
-      {
-        name: "Announcement Winners",
-        description: "",
-        start: "7:35 PM",
-        end: "7:45 PM",
-      },
-      {
-        name: "End of Event",
-        description: "",
-        start: "8 PM",
-        end: "-",
-      },
+      { name: "Doors open", start: "10:00 am" },
+      { name: "Morning Tea", start: "10:00 am" },
+      { name: "Maria & Ellen (eSafety) - All About eSafety", start: "12:00 pm" },
+      { name: "Lunch", start: "1:00 pm" },
+      { name: "Alan Agon (PaxMod) - Gaming Lounge Moderation", start: "2:00 pm" },
+      { name: "Scotty (The Product Bus) - TBA", start: "4:00 pm" },
+      { name: "Afternoon Snacks", start: "5:00 pm" },
+      { name: "Dinner", start: "7:30 pm" },
+      { name: "Wrap up", start: "8:30 pm" },
+      { name: "Day 2 ends - [Optional] Teams can continue hacking through the week", start: "9:00 pm" },
+    ],
+  },
+  {
+    title: "Submission Deadline",
+    date: "Friday Dec 5",
+    dateTime: "2025-12-05",
+    summary: "Final deadline for all hackathon project submissions.",
+    locations: [],
+    timeSlots: [
+      { name: "Friday: Final submissions due", start: "11:59 pm" },
+      { name: "Finalists announced Sunday 7th December", start: "Sunday" },
+    ],
+  },
+  {
+    title: "Pitch Day",
+    date: "Thursday Dec 11",
+    dateTime: "2025-12-11",
+    summary: "The grand finale where finalists pitch their solutions.",
+    locations: [
+      { city: "Melbourne", venue: "Stone & Chalk, 121 King St" },
+    ],
+    timeSlots: [
+      { name: "Doors Open", start: "3:00 pm" },
+      { name: "Event opening", start: "3:10 pm" },
+      { name: "Pitches begin", start: "3:30 pm" },
+      { name: "Break & refreshments", start: "4:15 pm" },
+      { name: "Pitches continue", start: "4:30 pm" },
+      { name: "Startup Programs Presentation / Judges deliberate", start: "5:15 pm" },
+      { name: "Feedback", start: "5:20 pm" },
+      { name: "Winners announced", start: "5:30 pm" },
+      { name: "Networking & Drinks", start: "5:30 pm" },
+      { name: "Pitch day ends", start: "6:30 pm" },
     ],
   },
 ];
 
-import { useRef } from "react";
-
-function ScheduleTabbed() {
-  let [tabOrientation, setTabOrientation] = useState("horizontal");
-  const tabListRef = useRef(null); // Add this line
-
-  useEffect(() => {
-    let smMediaQuery = window.matchMedia("(min-width: 640px)");
-
-    function onMediaQueryChange({ matches }: { matches: boolean }) {
-      setTabOrientation(matches ? "vertical" : "horizontal");
-    }
-
-    onMediaQueryChange(smMediaQuery);
-    smMediaQuery.addEventListener("change", onMediaQueryChange);
-
-    return () => {
-      smMediaQuery.removeEventListener("change", onMediaQueryChange);
-    };
-  }, []);
-
+function ScheduleTab({ event }: { event: Event }) {
   return (
-    <Tab.Group
-      as="div"
-      className="mx-auto grid max-w-2xl grid-cols-1 gap-y-6 sm:grid-cols-2 lg:hidden overflow-hidden"
-      vertical={tabOrientation === "vertical"}
-    >
-      <Tab.List
-        ref={tabListRef}
-        className="-mx-4 flex gap-x-2 gap-y-10 overflow-x-auto pb-4 pl-4 sm:mx-0 sm:flex-col sm:pb-0 sm:pl-0 sm:pr-8"
-      >
-        {({ selectedIndex }) => (
-          <>
-            {schedule.map((day, dayIndex) => (
-              <div
-                key={day.dateTime}
-                className={clsx(
-                  "relative w-2/5 flex-none pr-4 sm:w-auto sm:pr-0 cursor-pointer",
-                  dayIndex !== selectedIndex && "opacity-70",
-                )}
-              >
-                <DaySummary
-                  day={{
-                    ...day,
-                    date: (
-                      <Tab className="ui-not-focus-visible:outline-none">
-                        <span className="absolute inset-0" />
-                        {day.date}
-                      </Tab>
-                    ),
-                  }}
-                />
+    <div className="flex flex-col items-center text-center">
+      <div className="mb-8">
+        <h3 className="text-2xl font-bold tracking-tight text-teal-200 mb-2">
+          {event.title}
+        </h3>
+        <time
+          dateTime={event.dateTime}
+          className="text-lg text-gray-300 font-medium block mb-2"
+        >
+          {event.date}
+        </time>
+        <p className="text-gray-400 text-sm max-w-xs mx-auto">
+          {event.summary}
+        </p>
+
+        {event.locations.length > 0 && (
+          <div className="mt-4 flex flex-wrap justify-center gap-x-6 gap-y-2 text-gray-400 text-sm">
+            {event.locations.map((location, locIndex) => (
+              <div key={locIndex}>
+                <span className="font-semibold text-teal-300">
+                  {location.city}:
+                </span>{" "}
+                {location.venue}
               </div>
             ))}
-          </>
+          </div>
         )}
-      </Tab.List>
-      <Tab.Panels>
-        {schedule.map((day) => (
-          <Tab.Panel
-            key={day.dateTime}
-            className="ui-not-focus-visible:outline-none"
+      </div>
+
+      <div className="w-full divide-y divide-gray-800 border-y border-gray-800">
+        {event.timeSlots.map((slot, slotIndex) => (
+          <div
+            key={slotIndex}
+            className="py-6 flex flex-col items-center text-center"
           >
-            <TimeSlots day={day} />
-          </Tab.Panel>
+            <div className="font-mono text-teal-300 text-xs mb-1">
+              {slot.start} {slot.end && `- ${slot.end}`}
+            </div>
+            <div className="text-base font-semibold text-white max-w-sm">
+              {slot.name}
+            </div>
+          </div>
         ))}
-      </Tab.Panels>
-    </Tab.Group>
-  );
-}
-
-function DaySummary({ day }: { day: Day }) {
-  return (
-    <>
-      <h3 className="text-2xl font-semibold tracking-tight text-teal-200">
-        <time dateTime={day.dateTime}>{day.date}</time>
-      </h3>
-      <p className="mt-1.5 text-base tracking-tight text-teal-200">
-        {day.summary}
-      </p>
-    </>
-  );
-}
-
-function TimeSlots({ day, className }: { day: Day; className?: string }) {
-  return (
-    <ol
-      role="list"
-      className={clsx(
-        className,
-        "relative space-y-8 bg-black px-10 py-14 text-center shadow-xl shadow-teal-900/5 backdrop-blur",
-      )}
-    >
-      {day.timeSlots.map((timeSlot, timeSlotIndex) => (
-        <li
-          key={timeSlot.start}
-          aria-label={`${timeSlot.name} talking about ${timeSlot.description} at ${timeSlot.start} - ${timeSlot.end} `}
-        >
-          {timeSlotIndex > 0 && (
-            <div className="mx-auto mb-8 h-px w-48 bg-teal-500/10" />
-          )}
-          <h4 className="text-lg font-semibold tracking-tight text-teal-200">
-            {timeSlot.name}
-          </h4>
-          {timeSlot.description && (
-            <p className="mt-1 tracking-tight text-teal-200">
-              {timeSlot.description}
-            </p>
-          )}
-          <p className="mt-1 font-mono text-sm text-slate-200">
-            <time dateTime={`${day.dateTime}T${timeSlot.start}-08:00`}>
-              {timeSlot.start}
-            </time>{" "}
-            -{" "}
-            <time dateTime={`${day.dateTime}T${timeSlot.end}-08:00`}>
-              {timeSlot.end}
-            </time>{" "}
-          </p>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function ScheduleStatic() {
-  return (
-    <div className="hidden lg:grid lg:grid-cols-3 lg:gap-x-8 overflow-hidden">
-      {schedule.map((day) => (
-        <section key={day.dateTime}>
-          <DaySummary day={day} />
-          <TimeSlots day={day} className="mt-10" />
-        </section>
-      ))}
+      </div>
     </div>
   );
 }
@@ -262,42 +155,84 @@ export function Schedule() {
       aria-label="Schedule"
       className="py-20 sm:py-32 bg-gray-900"
     >
-      <div
-        className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
-        aria-hidden="true"
-      >
-        <div
-          className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#80ffea] to-[#89bdfc] opacity-20 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
-          style={{
-            clipPath:
-              "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-          }}
-        />
-      </div>
-      <Container className="relative z-10">
-        <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-4xl lg:pr-24">
-          <h2 className="font-display text-4xl font-medium tracking-tighter text-teal-300 sm:text-5xl">
+      <Container>
+        <div className="mx-auto max-w-2xl text-center mb-16">
+          <H2 className="text-teal-200 font-display tracking-tight mb-4">
             What&apos;s happening when and where?
-          </h2>
-          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            The two main events of the hackathon are the &quot;Team Formation
-            Event (Hack Day)&quot; and the &quot;Final Pitch Night&quot;. Each
-            event happens in Melbourne and in Sydney.
-          </p>
-          <p className="mt-4 font-display text-2xl tracking-tight text-gray-200">
-            You can either join the event as a hacker and build a solution, or
-            just join the pitch night to see our awesome teams present.
+          </H2>
+          <p className="text-gray-300 text-lg">
+            The hackathon consists of two main events, each happening in both Melbourne and Sydney.
           </p>
         </div>
+
+        {/* Mobile View (< lg) */}
+        <div className="lg:hidden">
+          <TabGroup>
+            <TabList className="flex gap-x-4 overflow-x-auto pb-4 mb-8 snap-x">
+              {events.map((event, eventIndex) => (
+                <Tab
+                  key={eventIndex}
+                  className={({ selected }) =>
+                    clsx(
+                      "flex-none snap-start px-4 py-2 text-sm font-medium rounded-full transition-colors focus:outline-none",
+                      selected
+                        ? "bg-teal-500/10 text-teal-300 ring-1 ring-inset ring-teal-500/20"
+                        : "text-gray-400 hover:text-gray-200 hover:bg-gray-800"
+                    )
+                  }
+                >
+                  {event.title}
+                </Tab>
+              ))}
+            </TabList>
+            <TabPanels>
+              {events.map((event, eventIndex) => (
+                <TabPanel key={eventIndex} className="focus:outline-none">
+                  <ScheduleTab event={event} />
+                </TabPanel>
+              ))}
+            </TabPanels>
+          </TabGroup>
+        </div>
+
+        {/* Desktop View (>= lg) */}
+        <div className="hidden lg:grid lg:grid-cols-4 lg:gap-x-8">
+          {events.map((event, eventIndex) => (
+            <section key={eventIndex}>
+              <div className="mb-10 text-center">
+                <h3 className="text-xl font-bold tracking-tight text-teal-200 mb-2">
+                  {event.title}
+                </h3>
+                <time
+                  dateTime={event.dateTime}
+                  className="text-base text-gray-300 font-medium block mb-2"
+                >
+                  {event.date}
+                </time>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  {event.summary}
+                </p>
+              </div>
+
+              <div className="divide-y divide-gray-800 border-y border-gray-800 bg-gray-800/20 rounded-xl px-4 py-6">
+                {event.timeSlots.map((slot, slotIndex) => (
+                  <div
+                    key={slotIndex}
+                    className="py-4 flex flex-col items-center text-center first:pt-0 last:pb-0"
+                  >
+                    <div className="font-mono text-teal-300 text-xs mb-1">
+                      {slot.start} {slot.end && `- ${slot.end}`}
+                    </div>
+                    <div className="text-sm font-semibold text-white">
+                      {slot.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       </Container>
-      <GetTickets />
-      <div className="relative mt-14 sm:mt-24">
-        {/* <BackgroundImage position="right" className="-bottom-32 -top-40" /> */}
-        <Container className="relative">
-          <ScheduleTabbed />
-          <ScheduleStatic />
-        </Container>
-      </div>
     </section>
   );
 }

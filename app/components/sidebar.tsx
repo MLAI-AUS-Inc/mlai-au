@@ -10,6 +10,7 @@ import {
   UserGroupIcon,
   XMarkIcon,
   InformationCircleIcon,
+  CommandLineIcon,
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
@@ -40,6 +41,7 @@ const navigation = [
     icon: BookOpenIcon,
   },
   { name: "Members", href: "/members", icon: UserGroupIcon },
+  { name: "Login", href: "/platform/login", icon: CommandLineIcon },
 ];
 
 export default function Sidebar() {
@@ -61,9 +63,8 @@ export default function Sidebar() {
       </div>
       {/* Desktop sidebar */}
       <aside
-        className={`hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${
-          isExpanded ? "w-64" : "w-20"
-        }`}
+        className={`hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${isExpanded ? "w-64" : "w-20"
+          }`}
         onMouseEnter={() => setIsExpanded(true)}
         onMouseLeave={() => setIsExpanded(false)}
       >
@@ -91,15 +92,13 @@ export default function Sidebar() {
                 }
               >
                 <item.icon
-                  className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${
-                    isExpanded ? "mr-3" : "mr-0"
-                  }`}
+                  className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${isExpanded ? "mr-3" : "mr-0"
+                    }`}
                   aria-hidden="true"
                 />
                 <span
-                  className={`transition-all duration-300 ${
-                    isExpanded ? "opacity-100" : "opacity-0 w-0"
-                  } overflow-hidden whitespace-nowrap`}
+                  className={`transition-all duration-300 ${isExpanded ? "opacity-100" : "opacity-0 w-0"
+                    } overflow-hidden whitespace-nowrap`}
                 >
                   {item.name}
                 </span>
