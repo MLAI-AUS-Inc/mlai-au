@@ -2,12 +2,13 @@ import type { Route } from "./+types/esafety.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
 import { backendFetch } from "~/lib/backend.server";
 import { getCurrentUser } from "~/lib/auth";
+import Leaderboard from "~/components/Leaderboard";
 
 export async function loader({ context }: Route.LoaderArgs) {
     const env = context.cloudflare.env;
     const user = await getCurrentUser(env);
     if (!user) {
-        return redirect("/platform/login?next=https://esafety.mlai.au/app"); // Adjust domain if needed, or use relative
+        return redirect("/platform/login?next=/esafety/app/dashboard");
     }
 
     // Fetch hackathon details
@@ -24,88 +25,89 @@ export default function EsafetyAppDashboard() {
     const { user, hackathon } = useLoaderData<typeof loader>();
 
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="md:flex md:items-center md:justify-between">
-                <div className="min-w-0 flex-1">
-                    <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        {(hackathon as any)?.name} Dashboard
-                    </h2>
+        <div className="min-h-screen p-6 bg-gray-50">
+            <div className="w-full mx-auto space-y-6">
+                {/* First Row */}
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Column (7/12): Welcome Card */}
+                    <div className="w-full lg:w-7/12 space-y-6">
+                        <div className="relative w-full bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
+                                Welcome to MedHack!
+                            </h2>
+                            <p className="max-w-2xl text-balance text-xl tracking-tight text-gray-900 mt-4">
+                                Get ready to innovate in the healthcare space. Whether you're tackling AI for the first time
+                                or building a game-changing solution, we've got you covered.
+                            </p>
+                            <Leaderboard />
+                        </div>
+                    </div>
+
+                    {/* Right Column (5/12): Multiple Cards */}
+                    <div className="w-full lg:w-5/12 space-y-6">
+                        {/* Kaggle Competition Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition</h3>
+                            <p className="text-sm text-gray-700">
+                                Dive into our dataset and challenge yourself to build the best AI model. Compete on Kaggle!
+                            </p>
+                            <a
+                                href="https://www.kaggle.com/t/f1cbdfca97334325ae7147fe6d3a93e7"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
+                            >
+                                Go to Kaggle
+                            </a>
+                        </div>
+
+                        {/* Beginner Tract Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Beginner Tract</h3>
+                            <p className="text-sm text-gray-700">
+                                Learn AI step by step, even if you have zero coding experience, and build your first neural network!
+                            </p>
+                            <Link
+                                to="/beginner"
+                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
+                            >
+                                Go to Beginner Tract
+                            </Link>
+                        </div>
+
+                        {/* Advanced Tract Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Advanced Tract</h3>
+                            <p className="text-sm text-gray-700">
+                                Identify a real-world healthcare challenge, build a solution, and pitch your idea for a big prize!
+                            </p>
+                            <Link
+                                to="/advanced"
+                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
+                            >
+                                Go to Advanced Tract
+                            </Link>
+                        </div>
+
+                        {/* Submissions Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions</h3>
+                            <p className="text-sm text-gray-700">
+                                Ready to submit your project or AI model? Head to the submissions page here.
+                            </p>
+                            <Link
+                                to="/submissions"
+                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
+                            >
+                                Go to Submissions
+                            </Link>
+                        </div>
+                    </div>
                 </div>
-                <div className="mt-4 flex md:ml-4 md:mt-0">
-                    <Link
-                        to="/platform/dashboard"
-                        className="inline-flex items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
-                    >
-                        Back to Platform
-                    </Link>
-                </div>
+
+                {/* Second Row */}
+
             </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Team Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">My Team</h3>
-                        <p className="mt-2 text-sm text-gray-400">Manage your team members and details.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/team"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                Go to Team <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Submit Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Submit</h3>
-                        <p className="mt-2 text-sm text-gray-400">Upload your predictions for scoring.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/submit"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                Make a Submission <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Leaderboard Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Leaderboard</h3>
-                        <p className="mt-2 text-sm text-gray-400">See how you stack up against other teams.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/leaderboard"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                View Leaderboard <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Resources Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Resources & Challenges</h3>
-                        <p className="mt-2 text-sm text-gray-400">Access datasets, starter kits, and challenge details.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/resources"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                View Resources <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     );
 }

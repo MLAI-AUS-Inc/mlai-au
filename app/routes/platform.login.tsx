@@ -37,15 +37,22 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const next = searchParams.get("next") || "/platform/dashboard";
+    const error = searchParams.get("error");
     const submit = useSubmit();
 
     const [timeLeft, setTimeLeft] = useState(0);
 
+    // Map error codes to user-friendly messages
+    const errorMessages: Record<string, string> = {
+        invalid_link: "The verification link is invalid or missing. Please try logging in again.",
+        verification_failed: "Email verification failed. The link may have expired. Please try logging in again.",
+    };
+
     useEffect(() => {
         if (data?.sent) {
-            setTimeLeft(60);
+            setTimeLeft(30);
         }
-    }, [data?.sent]);
+    }, [data]);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -81,7 +88,7 @@ export default function PlatformLogin() {
                         </p>
                     </div>
 
-                    {data?.error && (
+                    {(data?.error || error) && (
                         <div className="mb-6 rounded-md bg-red-50 p-4">
                             <div className="flex">
                                 <div className="ml-3">
@@ -89,7 +96,7 @@ export default function PlatformLogin() {
                                         Error
                                     </h3>
                                     <div className="mt-2 text-sm text-red-700">
-                                        <p>{data.error}</p>
+                                        <p>{data?.error || (error && errorMessages[error]) || "An error occurred. Please try again."}</p>
                                     </div>
                                 </div>
                             </div>
@@ -111,7 +118,7 @@ export default function PlatformLogin() {
                                     <div className="mt-4">
                                         {timeLeft > 0 ? (
                                             <p className="text-sm text-gray-500">
-                                                Resend email in {timeLeft}s
+                                                Please wait {timeLeft}s
                                             </p>
                                         ) : (
                                             <button
@@ -119,7 +126,7 @@ export default function PlatformLogin() {
                                                 onClick={handleResend}
                                                 className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
                                             >
-                                                Resend Email
+                                                Resend Magic Link
                                             </button>
                                         )}
                                     </div>
@@ -171,8 +178,8 @@ export default function PlatformLogin() {
                                     name="intent"
                                     value={data?.userExists === false ? "create" : "check"}
                                     className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${data?.userExists === false
-                                            ? "bg-teal-600 hover:bg-teal-500 focus-visible:outline-teal-600"
-                                            : "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600"
+                                        ? "bg-teal-600 hover:bg-teal-500 focus-visible:outline-teal-600"
+                                        : "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600"
                                         }`}
                                 >
                                     {data?.userExists === false ? "Create new account" : "Continue"}

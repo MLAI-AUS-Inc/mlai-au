@@ -16,6 +16,7 @@ export default [
   route("/platform/login", "routes/platform.login.tsx"),
   route("/platform/dashboard", "routes/platform.dashboard.tsx"),
   route("/platform/logout", "routes/platform.logout.tsx"),
+  route("/verify-email", "routes/verify-email.tsx"),
 
   // eSafety App routes
   route("/esafety/app", "routes/esafety.app.dashboard.tsx"),
@@ -23,4 +24,10 @@ export default [
   route("/esafety/app/submit", "routes/esafety.app.submit.tsx"),
   route("/esafety/app/leaderboard", "routes/esafety.app.leaderboard.tsx"),
   route("/esafety/app/resources", "routes/esafety.app.resources.tsx"),
+
+  // AI Hospital App routes
+  route("/hospital/app", "routes/hospital.app.tsx", [
+    index("routes/hospital.app.dashboard.tsx"),
+  ]),
+
 ] satisfies RouteConfig;

@@ -1,0 +1,31 @@
+import type { Route } from "./+types/hospital.app";
+import { redirect, Outlet, useLoaderData } from "react-router";
+import { getCurrentUser } from "~/lib/auth";
+import HospitalAppLayout from "~/components/HospitalAppLayout";
+
+interface UserData {
+    email: string;
+    full_name: string;
+    avatar_url?: string;
+}
+
+export async function loader({ context }: Route.LoaderArgs) {
+    const env = context.cloudflare.env;
+    const user = await getCurrentUser(env);
+
+    if (!user) {
+        return redirect("/platform/login?next=/hospital/app/dashboard");
+    }
+
+    return { user: user as UserData };
+}
+
+export default function HospitalApp() {
+    const { user } = useLoaderData<typeof loader>();
+
+    return (
+        <HospitalAppLayout user={user}>
+            <Outlet />
+        </HospitalAppLayout>
+    );
+}
