@@ -1,6 +1,6 @@
 import type { Route } from "./+types/esafety.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
-import { backendFetch } from "~/lib/backend.server";
+import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import Leaderboard from "~/components/Leaderboard";
 
@@ -12,13 +12,12 @@ export async function loader({ context }: Route.LoaderArgs) {
     }
 
     // Fetch hackathon details
-    const res = await backendFetch(env, "/api/v1/hackathons/esafety/", { method: "GET" });
-    if (!res.ok) {
+    try {
+        const response = await axiosInstance.get("/api/v1/hackathons/esafety/");
+        return { user, hackathon: response.data };
+    } catch (error) {
         throw new Response("Hackathon not found", { status: 404 });
     }
-    const hackathon = await res.json();
-
-    return { user, hackathon };
 }
 
 export default function EsafetyAppDashboard() {

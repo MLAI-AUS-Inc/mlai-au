@@ -12,14 +12,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const res = await verifyMagicLink(context.cloudflare.env, token);
-
-        if (!res.ok) {
-            // Verification failed - redirect to login with error
-            return redirect("/platform/login?error=verification_failed");
-        }
-
-        const data = await res.json() as { user: any };
+        const data = await verifyMagicLink(context.cloudflare.env, token);
 
         // Successfully verified - redirect to dashboard
         // The backend sets the authentication cookie via Set-Cookie header

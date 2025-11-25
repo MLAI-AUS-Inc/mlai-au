@@ -2,6 +2,7 @@ import type { Route } from "./+types/esafety.app.submit";
 import { Form, useActionData, useLoaderData, redirect } from "react-router";
 
 import { getCurrentUser } from "~/lib/auth";
+import { axiosInstance } from "~/lib/api";
 
 export async function loader({ context }: Route.LoaderArgs) {
     const env = context.cloudflare.env;
@@ -19,29 +20,20 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { error: "Please upload a valid CSV file." };
     }
 
-    // Use fetch for file uploads with FormData
-    // In development, the /api path will be proxied by Vite to localhost:80
+    // We need to construct a FormData object to send to the backend
     const backendFormData = new FormData();
     backendFormData.append("file", file);
 
     try {
-        const response = await fetch('/api/v1/hackathons/esafety/submissions/', {
-            method: 'POST',
-            credentials: 'include',
-            body: backendFormData,
-            // Don't set Content-Type, let the browser set it with boundary for FormData
+        const response = await axiosInstance.post("/api/v1/hackathons/esafety/submissions/", backendFormData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
         });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            return { error: errorData.detail || "Submission failed" };
-        }
-
-        const result = await response.json();
-        return { success: true, result };
+        return { success: true, result: response.data };
     } catch (error: any) {
-        console.error('Submission error:', error);
-        return { error: "Submission failed" };
+        const errDetail = error.response?.data?.detail || "Submission failed";
+        return { error: errDetail };
     }
 }
 

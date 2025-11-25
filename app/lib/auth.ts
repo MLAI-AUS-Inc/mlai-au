@@ -1,4 +1,27 @@
-import { backendFetch } from "./backend.server";
+import { axiosInstance } from "./api";
+
+// Helper to handle axios errors and return a consistent response format
+// This mimics the fetch Response interface to keep compatibility with existing code where possible,
+// or we can adapt the calling code.
+// For now, let's try to return the data directly or a minimal object that mimics what the callers expect.
+// However, the callers (like loaders) often expect a Response object or similar.
+// Let's see how they are used.
+// verifyMagicLink returns a Response-like object in the loader: res.ok, res.json()
+// We should probably adapt the callers to use data directly, but to minimize changes,
+// let's return a Promise that resolves to the data or throws.
+
+// Actually, looking at the usage:
+// verify-email.tsx: const res = await verifyMagicLink(...); if (!res.ok) ... const data = await res.json();
+// platform.login.tsx: const res = await sendMagicLink(...); if (!res.ok) ... const data = await res.json();
+
+// We should update the callers to handle axios responses (which throw on error by default)
+// OR wrap axios to return { ok: boolean, json: () => Promise<any> }
+// The cleaner way is to update callers, but for a quick migration, a wrapper is safer.
+// BUT the user asked to "use axios in the way described here", which returns data directly.
+// The user's example:
+// export const sendMagicLink = async (data: any): Promise<any> => { ... return response.data; }
+
+// So I will update the functions to return data directly, and I will have to update the callers.
 
 export async function sendMagicLink(env: Env, body: {
     email: string;
@@ -6,28 +29,31 @@ export async function sendMagicLink(env: Env, body: {
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
 }) {
-    return backendFetch(env, "/api/v1/auth/send-magic-link/", {
-        method: "POST",
-        body: JSON.stringify(body),
-    });
+    // env is not needed for axiosInstance as it uses import.meta.env
+    const response = await axiosInstance.post("/api/v1/auth/send-magic-link/", body);
+    return response.data;
 }
 
 export async function verifyMagicLink(env: Env, token: string) {
-    return backendFetch(env, `/api/v1/auth/verify-magic-link/?token=${token}`, {
-        method: "GET",
-    });
+    const response = await axiosInstance.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    return response.data;
 }
 
 export async function getCurrentUser(env: Env) {
-    const res = await backendFetch(env, "/api/v1/auth/me/", {
-        method: "GET",
-    });
-    if (res.status === 401) return null;
-    return res.json();
+    try {
+        const response = await axiosInstance.get("/api/v1/auth/me/");
+        return response.data;
+    } catch (error: any) {
+        if (error.response && error.response.status === 401) {
+            return null;
+        }
+        throw error;
+    }
 }
 
 export async function logout(env: Env) {
-    return backendFetch(env, "/api/v1/auth/logout/", { method: "POST" });
+    const response = await axiosInstance.post("/api/v1/auth/logout");
+    return response.data;
 }
 
 export async function createUser(env: Env, body: {
@@ -38,21 +64,13 @@ export async function createUser(env: Env, body: {
     phone?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
 }) {
-    return backendFetch(env, "/api/v1/auth/create-user/", {
-        method: "POST",
-        body: JSON.stringify(body),
-    });
+    const response = await axiosInstance.post("/api/v1/auth/create-user/", body);
+    return response.data;
 }
 
 export async function getTeamNames(env: Env): Promise<string[]> {
-    const res = await backendFetch(env, "/api/v1/teams/", {
-        method: "GET",
-    });
-    if (!res.ok) {
-        throw new Error("Failed to fetch team names");
-    }
-    const data = await res.json() as { team_names?: string[] };
-    return data.team_names || [];
+    const response = await axiosInstance.get("/api/v1/teams/");
+    return response.data.team_names || [];
 }
 
 export async function updateUser(env: Env, body: {
@@ -60,10 +78,8 @@ export async function updateUser(env: Env, body: {
     team?: string;
     email?: string;
 }) {
-    return backendFetch(env, "/api/v1/auth/update-profile/", {
-        method: "PATCH",
-        body: JSON.stringify(body),
-    });
+    const response = await axiosInstance.patch("/api/v1/auth/update-profile/", body);
+    return response.data;
 }
 
 export async function getUser(env: Env) {
@@ -71,12 +87,6 @@ export async function getUser(env: Env) {
 }
 
 export async function getLeaderboardSubmissions(env: Env) {
-    const res = await backendFetch(env, "/api/v1/submissions/leaderboard/", {
-        method: "GET",
-    });
-    if (!res.ok) {
-        throw new Error("Failed to fetch leaderboard submissions");
-    }
-    return res.json();
+    const response = await axiosInstance.get("/api/v1/submissions/leaderboard/");
+    return response.data;
 }
-

@@ -11,15 +11,16 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:80',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
+  // server: {
+  //   proxy: {
+  //     '/api': {
+  //       target: 'http://localhost:80',
+  //       changeOrigin: true,
+  //       secure: false,
+  //       ws: true, // Handle websockets
+  //     },
+  //   },
+  // },
   optimizeDeps: {
     include: [
       "@heroicons/react/20/solid",

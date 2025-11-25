@@ -18,32 +18,31 @@ export async function action({ request, context }: Route.ActionArgs) {
         const lastName = formData.get("lastName")?.toString();
         const phone = formData.get("phone")?.toString();
 
-        const res = await createUser(context.cloudflare.env, {
-            email,
-            firstName,
-            lastName,
-            phone,
-            role
-        });
-        if (!res.ok) {
+        try {
+            await createUser(context.cloudflare.env, {
+                email,
+                firstName,
+                lastName,
+                phone,
+                role
+            });
+            return { sent: true, email };
+        } catch (error) {
             return { error: "Failed to create account. Please try again." };
         }
-        return { sent: true, email };
     }
 
-    const res = await sendMagicLink(context.cloudflare.env, { email, next });
+    try {
+        const data = await sendMagicLink(context.cloudflare.env, { email, next });
 
-    if (!res.ok) {
+        if (data.user_exists) {
+            return { sent: true, email };
+        }
+
+        return { userExists: false, email };
+    } catch (error) {
         return { error: "Failed to send magic link. Please try again." };
     }
-
-    const data = await res.json() as { user_exists: boolean };
-
-    if (data.user_exists) {
-        return { sent: true, email };
-    }
-
-    return { userExists: false, email };
 }
 
 export default function PlatformLogin() {

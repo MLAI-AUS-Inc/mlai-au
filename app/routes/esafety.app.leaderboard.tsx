@@ -1,6 +1,6 @@
 import type { Route } from "./+types/esafety.app.leaderboard";
 import { useLoaderData, redirect } from "react-router";
-import { backendFetch } from "~/lib/backend.server";
+import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -10,8 +10,13 @@ export async function loader({ context }: Route.LoaderArgs) {
     // Plan didn't explicitly say leaderboard is private, but it's part of the "app".
     // Let's allow public access but show user's team highlighted if logged in.
 
-    const res = await backendFetch(env, "/api/v1/hackathons/esafety/leaderboard/", { method: "GET" });
-    const leaderboard = await res.json();
+    let leaderboard = [];
+    try {
+        const response = await axiosInstance.get("/api/v1/hackathons/esafety/leaderboard/");
+        leaderboard = response.data;
+    } catch (error) {
+        console.error("Failed to fetch leaderboard:", error);
+    }
 
     return { user, leaderboard };
 }

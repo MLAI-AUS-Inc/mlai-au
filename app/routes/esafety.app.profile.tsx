@@ -4,7 +4,6 @@ import { redirect, useLoaderData, useNavigate } from "react-router";
 import { Menu } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { getTeamNames, updateUser, getUser, getCurrentUser } from '~/lib/auth';
-import { backendFetch } from "~/lib/backend.server";
 import { GradientBackground } from '~/components/GradientBackground';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 

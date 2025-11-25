@@ -1,6 +1,6 @@
 import type { Route } from "./+types/platform.dashboard";
 import { redirect, useLoaderData } from "react-router";
-import { backendFetch } from "~/lib/backend.server";
+import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 
 export async function loader({ context }: Route.LoaderArgs) {
@@ -8,8 +8,13 @@ export async function loader({ context }: Route.LoaderArgs) {
     const user = await getCurrentUser(env);
     if (!user) return redirect("/platform/login");
 
-    const res = await backendFetch(env, "/api/v1/hackathons/", { method: "GET" });
-    const hackathons = await res.json();
+    let hackathons = [];
+    try {
+        const response = await axiosInstance.get("/api/v1/hackathons/");
+        hackathons = response.data;
+    } catch (error) {
+        console.error("Failed to fetch hackathons:", error);
+    }
 
     return { user, hackathons };
 }
