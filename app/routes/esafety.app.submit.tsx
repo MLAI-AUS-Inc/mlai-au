@@ -19,31 +19,30 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { error: "Please upload a valid CSV file." };
     }
 
-    // We need to construct a FormData object to send to the backend
-    // Note: backendFetch sets Content-Type to application/json by default, 
-    // so we need to override it or use a raw fetch for file uploads.
-    // The backendFetch helper might not be suitable for FormData if it forces JSON.
-    // Let's use a raw fetch here or modify backendFetch. 
-    // For simplicity, I'll use raw fetch but reuse the logic for URL and credentials.
-
-    const url = new URL("/api/v1/hackathons/esafety/submissions/", env.BACKEND_BASE_URL).toString();
+    // Use fetch for file uploads with FormData
+    // In development, the /api path will be proxied by Vite to localhost:80
     const backendFormData = new FormData();
     backendFormData.append("file", file);
 
-    const res = await fetch(url, {
-        method: "POST",
-        credentials: "include",
-        body: backendFormData,
-        // Do NOT set Content-Type header when sending FormData, let the browser set it with boundary
-    });
+    try {
+        const response = await fetch('/api/v1/hackathons/esafety/submissions/', {
+            method: 'POST',
+            credentials: 'include',
+            body: backendFormData,
+            // Don't set Content-Type, let the browser set it with boundary for FormData
+        });
 
-    if (!res.ok) {
-        const err = await res.json();
-        return { error: err.detail || "Submission failed" };
+        if (!response.ok) {
+            const errorData = await response.json();
+            return { error: errorData.detail || "Submission failed" };
+        }
+
+        const result = await response.json();
+        return { success: true, result };
+    } catch (error: any) {
+        console.error('Submission error:', error);
+        return { error: "Submission failed" };
     }
-
-    const result = await res.json();
-    return { success: true, result };
 }
 
 export default function EsafetyAppSubmit() {

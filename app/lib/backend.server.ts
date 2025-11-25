@@ -3,10 +3,22 @@ export function backendFetch(
   path: string,
   init: RequestInit = {}
 ) {
-  const baseUrl = env.BACKEND_BASE_URL || "https://api.mlai.au";
-  const url = new URL(path, baseUrl).toString();
+  // In development (when running via Vite dev server), use relative URLs 
+  // which will be proxied to localhost:80 by Vite
+  // In production (Cloudflare Workers), use the full backend URL
+  const isDevelopment = typeof window !== 'undefined' || env.BACKEND_BASE_URL === 'http://localhost';
 
-  console.log(`[backendFetch] Requesting: ${url}`);
+  let url: string;
+  if (isDevelopment) {
+    // Use relative URL for proxy in development
+    url = path;
+  } else {
+    // Use full URL in production
+    const baseUrl = env.BACKEND_BASE_URL || "https://api.mlai.au";
+    url = new URL(path, baseUrl).toString();
+  }
+
+  console.log(`[backendFetch] Requesting: ${url} (dev mode: ${isDevelopment})`);
 
   return fetch(url, {
     ...init,
