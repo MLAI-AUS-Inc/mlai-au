@@ -1,21 +1,36 @@
 import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit } from "react-router";
-import { sendMagicLink } from "~/lib/auth";
+import { sendMagicLink, createUser } from "~/lib/auth";
 import { useEffect, useState } from "react";
 
 export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
+    const intent = formData.get("intent")?.toString() ?? "check";
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const next = formData.get("next")?.toString() ?? "/platform/dashboard";
 
-    const res = await sendMagicLink(context.cloudflare.env, { email, role, next });
+    if (intent === "create") {
+        const res = await createUser(context.cloudflare.env, { email, role });
+        if (!res.ok) {
+            return { error: "Failed to create account. Please try again." };
+        }
+        return { sent: true, email };
+    }
+
+    const res = await sendMagicLink(context.cloudflare.env, { email, next });
 
     if (!res.ok) {
         return { error: "Failed to send magic link. Please try again." };
     }
 
-    return { sent: true, email };
+    const data = await res.json() as { user_exists: boolean };
+
+    if (data.user_exists) {
+        return { sent: true, email };
+    }
+
+    return { userExists: false, email };
 }
 
 export default function PlatformLogin() {
@@ -113,6 +128,21 @@ export default function PlatformLogin() {
                         </div>
                     ) : (
                         <Form className="space-y-6" method="POST">
+                            {data?.userExists === false && (
+                                <div className="rounded-md bg-blue-50 p-4">
+                                    <div className="flex">
+                                        <div className="ml-3">
+                                            <h3 className="text-sm font-medium text-blue-800">
+                                                User does not exist
+                                            </h3>
+                                            <div className="mt-2 text-sm text-blue-700">
+                                                <p>We couldn't find an account with that email. Would you like to create one?</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div>
                                 <label
                                     htmlFor="email"
@@ -127,6 +157,7 @@ export default function PlatformLogin() {
                                         type="email"
                                         autoComplete="email"
                                         required
+                                        defaultValue={data?.email}
                                         className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     />
                                 </div>
@@ -137,9 +168,14 @@ export default function PlatformLogin() {
                             <div>
                                 <button
                                     type="submit"
-                                    className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                    name="intent"
+                                    value={data?.userExists === false ? "create" : "check"}
+                                    className={`flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 ${data?.userExists === false
+                                            ? "bg-teal-600 hover:bg-teal-500 focus-visible:outline-teal-600"
+                                            : "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-indigo-600"
+                                        }`}
                                 >
-                                    Send Email Link
+                                    {data?.userExists === false ? "Create new account" : "Continue"}
                                 </button>
                             </div>
                         </Form>

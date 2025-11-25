@@ -23,3 +23,14 @@ export async function getCurrentUser(env: Env) {
 export async function logout(env: Env) {
     return backendFetch(env, "/api/v1/auth/logout", { method: "POST" });
 }
+
+export async function createUser(env: Env, body: {
+    email: string;
+    fullName?: string;
+    role?: "participant" | "mentor" | "judge" | "organizer";
+}) {
+    return backendFetch(env, "/api/v1/auth/create-user/", {
+        method: "POST",
+        body: JSON.stringify(body),
+    });
+}

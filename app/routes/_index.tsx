@@ -2,8 +2,10 @@ import type { Route } from "./+types/_index";
 import { useLoaderData } from "react-router";
 import HackathonPage from "./hackathon";
 import HomePage from "./home";
+import { fetchSubstackPosts } from "~/lib/substack";
+import { fetchEvents } from "~/lib/events";
 
-export function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
     const url = new URL(request.url);
     const hostname = url.hostname;
 
@@ -13,15 +15,28 @@ export function loader({ request }: Route.LoaderArgs) {
     // - esafety.localhost (Local development)
     const isEsafety = hostname.startsWith("esafety.");
 
-    return { isEsafety };
+    let eventsPromise;
+    let substackPostsPromise;
+
+    if (!isEsafety) {
+        const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+        eventsPromise = fetchEvents(eventsApiKey);
+        substackPostsPromise = fetchSubstackPosts();
+    }
+
+    return {
+        isEsafety,
+        events: eventsPromise,
+        substackPosts: substackPostsPromise
+    };
 }
 
 export default function Index() {
-    const { isEsafety } = useLoaderData<typeof loader>();
+    const { isEsafety, events, substackPosts } = useLoaderData<typeof loader>();
 
     if (isEsafety) {
         return <HackathonPage />;
     }
 
-    return <HomePage />;
+    return <HomePage events={events as Promise<any>} substackPosts={substackPosts as Promise<any>} />;
 }
