@@ -1,30 +1,37 @@
-import type { Route } from "./+types/verify-email";
-import { redirect } from "react-router";
+import { useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { verifyMagicLink } from "~/lib/auth";
-import { getEnv } from "~/lib/env.server";
-
-export async function loader({ request, context }: Route.LoaderArgs) {
-    const url = new URL(request.url);
-    const token = url.searchParams.get("token");
-
-    if (!token) {
-        return { error: "Missing token" };
-    }
-
-    try {
-        const data = await verifyMagicLink(getEnv(context), token);
-
-        // Successfully verified - redirect to dashboard
-        // The backend sets the authentication cookie via Set-Cookie header
-        return redirect("/platform/dashboard");
-    } catch (error) {
-        console.error("Magic link verification error:", error);
-        return redirect("/platform/login?error=verification_failed");
-    }
-}
 
 export default function VerifyEmail() {
-    // This component only renders during the brief moment before redirect
+    const [searchParams] = useSearchParams();
+    const navigate = useNavigate();
+    const token = searchParams.get("token");
+    const verified = useRef(false);
+
+    useEffect(() => {
+        if (!token) {
+            navigate("/platform/login?error=missing_token");
+            return;
+        }
+
+        if (verified.current) return;
+        verified.current = true;
+
+        const verify = async () => {
+            try {
+                // Pass empty object as env since it's not used on client
+                await verifyMagicLink({} as any, token);
+                // Successfully verified - redirect to dashboard
+                navigate("/platform/dashboard");
+            } catch (error) {
+                console.error("Magic link verification error:", error);
+                navigate("/platform/login?error=verification_failed");
+            }
+        };
+
+        verify();
+    }, [token, navigate]);
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50">
             <div className="text-center">

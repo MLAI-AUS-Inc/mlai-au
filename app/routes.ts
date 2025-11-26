@@ -30,4 +30,7 @@ export default [
     index("routes/hospital.app.dashboard.tsx"),
   ]),
 
+  // Misc
+  route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
+
 ] satisfies RouteConfig;

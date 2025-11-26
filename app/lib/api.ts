@@ -12,12 +12,17 @@ const resolveApiBase = () => {
         const isLocalhost =
             hostname === 'localhost' ||
             hostname === '127.0.0.1' ||
-            hostname === '::1';
+            hostname === '::1' ||
+            hostname.endsWith('.localhost');
 
         if (isLocalhost) {
-            // Always proxy through the local Vite server in development so cookies stick to localhost
-            // This matches the proxy configuration we set up in vite.config.ts
-            return window.location.origin;
+            // If we are on esafety.localhost, point to the backend on port 80 with the same hostname
+            // This ensures cookies with Domain=.localhost are sent/received correctly
+            if (hostname === 'esafety.localhost') {
+                return 'http://esafety.localhost:80';
+            }
+            // Fallback for standard localhost or other local domains
+            return 'http://localhost:80';
         }
 
         return configured || window.location.origin;
