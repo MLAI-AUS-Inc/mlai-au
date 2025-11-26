@@ -1,18 +1,18 @@
 import type { Route } from "./+types/verify-email";
 import { redirect } from "react-router";
 import { verifyMagicLink } from "~/lib/auth";
+import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const url = new URL(request.url);
     const token = url.searchParams.get("token");
 
     if (!token) {
-        // No token provided - redirect to login with error
-        return redirect("/platform/login?error=invalid_link");
+        return { error: "Missing token" };
     }
 
     try {
-        const data = await verifyMagicLink(context.cloudflare.env, token);
+        const data = await verifyMagicLink(getEnv(context), token);
 
         // Successfully verified - redirect to dashboard
         // The backend sets the authentication cookie via Set-Cookie header

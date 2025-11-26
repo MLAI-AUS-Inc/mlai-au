@@ -2,9 +2,10 @@ import type { Route } from "./+types/esafety.app.leaderboard";
 import { useLoaderData, redirect } from "react-router";
 import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
+import { getEnv } from "~/lib/env.server";
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
     const user = await getCurrentUser(env);
     // Leaderboard might be public, but let's require login for now as per plan context (or maybe not?)
     // Plan didn't explicitly say leaderboard is private, but it's part of the "app".

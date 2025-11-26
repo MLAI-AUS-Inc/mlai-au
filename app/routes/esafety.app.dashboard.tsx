@@ -1,11 +1,12 @@
 import type { Route } from "./+types/esafety.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
 import { axiosInstance } from "~/lib/api";
+import { getEnv } from "~/lib/env.server";
 import { getCurrentUser } from "~/lib/auth";
 import Leaderboard from "~/components/Leaderboard";
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
     const user = await getCurrentUser(env);
     if (!user) {
         return redirect("/platform/login?next=/esafety/app/dashboard");

@@ -4,13 +4,14 @@ import type { Route } from "./+types/events";
 import UpcomingEvents from "~/components/UpcomingEvents";
 import EventsCalendar from "~/components/EventsCalendar";
 import { fetchEvents, type Event } from "~/lib/events";
+import { getEnv } from "~/lib/env.server";
 
 interface LoaderData {
   events: Promise<Event[]>;
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const apiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+  const apiKey = getEnv(context).PRIVATE_HUMANITIX_API_KEY;
 
   if (!apiKey) {
     console.error("PRIVATE_HUMANITIX_API_KEY environment variable is not set");

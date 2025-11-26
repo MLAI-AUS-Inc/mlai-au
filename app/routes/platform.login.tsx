@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
+import { getEnv } from "~/lib/env.server";
 
 export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
@@ -19,7 +20,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         const phone = formData.get("phone")?.toString();
 
         try {
-            await createUser(context.cloudflare.env, {
+            await createUser(getEnv(context), {
                 email,
                 firstName,
                 lastName,
@@ -33,7 +34,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     try {
-        const data = await sendMagicLink(context.cloudflare.env, { email, next });
+        const data = await sendMagicLink(getEnv(context), { email, next });
 
         if (data.user_exists) {
             return { sent: true, email };

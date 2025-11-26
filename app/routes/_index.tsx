@@ -4,6 +4,7 @@ import HackathonPage from "./hackathon";
 import HomePage from "./home";
 import { fetchSubstackPosts } from "~/lib/substack";
 import { fetchEvents } from "~/lib/events";
+import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const url = new URL(request.url);
@@ -19,7 +20,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     let substackPostsPromise;
 
     if (!isEsafety) {
-        const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
+        const eventsApiKey = getEnv(context).PRIVATE_HUMANITIX_API_KEY;
         eventsPromise = fetchEvents(eventsApiKey);
         substackPostsPromise = fetchSubstackPosts();
     }

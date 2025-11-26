@@ -2,9 +2,10 @@ import type { Route } from "./+types/platform.dashboard";
 import { redirect, useLoaderData } from "react-router";
 import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
+import { getEnv } from "~/lib/env.server";
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
     const user = await getCurrentUser(env);
     if (!user) return redirect("/platform/login");
 

@@ -2,6 +2,7 @@ import type { Route } from "./+types/hospital.app";
 import { redirect, Outlet, useLoaderData } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import HospitalAppLayout from "~/components/HospitalAppLayout";
+import { getEnv } from "~/lib/env.server";
 
 interface UserData {
     email: string;
@@ -9,8 +10,8 @@ interface UserData {
     avatar_url?: string;
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
     const user = await getCurrentUser(env);
 
     if (!user) {

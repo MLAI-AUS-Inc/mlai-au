@@ -6,6 +6,7 @@ import { ChevronDownIcon } from '@heroicons/react/24/outline'
 import { getTeamNames, updateUser, getUser, getCurrentUser } from '~/lib/auth';
 import { GradientBackground } from '~/components/GradientBackground';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
+import { getEnv } from "~/lib/env.server";
 
 interface TeamMember {
     full_name: string;
@@ -172,7 +173,7 @@ export default function ProfilePage() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setTeam(t)}
-                                                    className={`${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block w-full px-4 py-2 text-left text-sm`}
+                                                    className={`${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block w - full px - 4 py - 2 text - left text - sm`}
                                                 >
                                                     {t}
                                                 </button>
