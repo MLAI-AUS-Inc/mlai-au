@@ -9,6 +9,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const user = await getCurrentUser(env, request);
     if (!user) return redirect("/platform/login");
 
+    // Check for esafety subdomain and redirect to app dashboard
+    const url = new URL(request.url);
+    if (url.hostname.startsWith("esafety.")) {
+        return redirect("/esafety/app");
+    }
+
     let hackathons = [];
     try {
         const cookieHeader = request.headers.get("Cookie");

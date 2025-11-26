@@ -18,6 +18,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return redirect("/platform/login?next=/esafety/app/dashboard");
     }
 
+    // Enforce esafety subdomain
+    const url = new URL(request.url);
+    const hostname = url.hostname;
+    // Allow localhost for testing if needed, but primarily check for 'esafety.' prefix
+    // In production/dev with custom domains, this ensures we are on the right "app"
+    if (!hostname.startsWith("esafety.")) {
+        // Redirect to main platform dashboard if accessed via wrong domain
+        // You might want to show a 404 or a specific error page instead
+        return redirect("/platform/dashboard");
+    }
+
     return { user: user as UserData };
 }
 

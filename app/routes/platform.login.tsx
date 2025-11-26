@@ -1,11 +1,48 @@
 import type { Route } from "./+types/platform.login";
-import { Form, useActionData, useSearchParams, useSubmit, Link } from "react-router";
-import { createUser, sendMagicLink } from "~/lib/auth";
+import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
+import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
+
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const user = await getCurrentUser(env, request);
+
+    if (user) {
+        const url = new URL(request.url);
+        let next = url.searchParams.get("next") || "/platform/dashboard";
+        const app = url.searchParams.get("app");
+
+        // Fix next url if it points to the non-existent dashboard route
+        if (next === "/esafety/app/dashboard") {
+            next = "/esafety/app";
+        }
+
+        if (app === "esafety") {
+            // If on localhost, we need to handle the port
+            const port = url.port ? `:${url.port}` : "";
+            const protocol = url.protocol;
+            // Assuming the base domain is localhost or similar. 
+            // If we are already on esafety. subdomain, this logic is fine (it will just be esafety.esafety... if we are not careful, but we are on platform.login which is likely root or platform subdomain)
+            // Actually, platform.login is likely on root or www.
+            // Let's strip any existing subdomain just in case, or just assume we are on root/platform and want to go to esafety.
+            // Simplest for dev:
+            const hostname = url.hostname;
+            if (!hostname.startsWith("esafety.")) {
+                // Replace current hostname with esafety.hostname (if localhost -> esafety.localhost)
+                // This assumes we are on a "root" domain like localhost or mlai.au
+                const newHost = `esafety.${hostname}`;
+                return redirect(`${protocol}//${newHost}${port}${next}`);
+            }
+        }
+
+        return redirect(next);
+    }
+    return null;
+}
 
 export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
