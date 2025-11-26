@@ -13,6 +13,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const next = formData.get("next")?.toString() ?? "/platform/dashboard";
+    const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -25,7 +26,8 @@ export async function action({ request, context }: Route.ActionArgs) {
                 firstName,
                 lastName,
                 phone,
-                role
+                role,
+                app
             });
             return { sent: true, email };
         } catch (error) {
@@ -34,7 +36,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     try {
-        const data = await sendMagicLink(getEnv(context), { email, next });
+        const data = await sendMagicLink(getEnv(context), { email, next, app });
 
         if (data.user_exists) {
             return { sent: true, email };
@@ -50,6 +52,7 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const next = searchParams.get("next") || "/platform/dashboard";
+    const app = searchParams.get("app");
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -87,10 +90,17 @@ export default function PlatformLogin() {
             const formData = new FormData();
             formData.append("email", email);
             formData.append("next", next);
+            if (app) formData.append("app", app);
             // We use 'check' intent for resending magic link
             formData.append("intent", "check");
             submit(formData, { method: "post" });
         }
+    };
+
+    const getWelcomeText = () => {
+        if (app === "esafety") return "Sign in to eSafety Hackathon";
+        if (app === "hospital") return "Sign in to AI Hospital Hackathon";
+        return "Welcome!";
     };
 
     return (
@@ -109,7 +119,7 @@ export default function PlatformLogin() {
                                 />
                             </Link>
                         </div>
-                        <h1 className="mt-8 text-base/6 font-medium">Welcome!</h1>
+                        <h1 className="mt-8 text-base/6 font-medium">{getWelcomeText()}</h1>
                         <p className="mt-1 text-sm/5 text-gray-600">
                             Provide your email to create your account
                         </p>
@@ -221,6 +231,7 @@ export default function PlatformLogin() {
                                 )}
 
                                 <input type="hidden" name="next" value={next} />
+                                {app && <input type="hidden" name="app" value={app} />}
 
                                 <div className="mt-8">
                                     <button

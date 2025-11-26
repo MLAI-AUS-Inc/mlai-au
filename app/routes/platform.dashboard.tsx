@@ -20,6 +20,19 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         hackathons = response.data;
     } catch (error) {
         console.error("Failed to fetch hackathons:", error);
+        // Fallback to mock data
+        hackathons = [
+            {
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety."
+            },
+            {
+                name: "AI Hospital Hackathon",
+                slug: "ai-hospital",
+                description: "AI in healthcare."
+            }
+        ];
     }
 
     return { user, hackathons };

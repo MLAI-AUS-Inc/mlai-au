@@ -27,7 +27,7 @@ export default function Hackathons() {
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
                     {/* AI Hospital Hackathon Card */}
                     <Link
-                        to="/platform/login?next=/platform/dashboard"
+                        to="/platform/login?app=hospital&next=/hospital/app/dashboard"
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                         onMouseEnter={() => setHoveredCard("ai-hospital")}
                         onMouseLeave={() => setHoveredCard(null)}
@@ -48,7 +48,7 @@ export default function Hackathons() {
 
                     {/* eSafety Hackathon Card */}
                     <Link
-                        to="/platform/login?next=/esafety/app"
+                        to="/platform/login?app=esafety&next=/esafety/app/dashboard"
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                         onMouseEnter={() => setHoveredCard("esafety")}
                         onMouseLeave={() => setHoveredCard(null)}

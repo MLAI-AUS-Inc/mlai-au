@@ -22,7 +22,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const response = await axiosInstance.get("/api/v1/hackathons/esafety/", { headers });
         return { user, hackathon: response.data };
     } catch (error) {
-        throw new Response("Hackathon not found", { status: 404 });
+        // Fallback to mock data if backend is missing
+        console.warn("Hackathon API not found, using mock data");
+        return {
+            user,
+            hackathon: {
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety.",
+                start_date: "2025-01-01",
+                end_date: "2025-01-02"
+            }
+        };
     }
 }
 

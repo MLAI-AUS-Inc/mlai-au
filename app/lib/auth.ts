@@ -28,6 +28,7 @@ export async function sendMagicLink(env: Env, body: {
     fullName?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
+    app?: "esafety" | "hospital";
 }) {
     // env is not needed for axiosInstance as it uses import.meta.env
     const response = await axiosInstance.post("/api/v1/auth/send-magic-link/", body);
@@ -73,6 +74,7 @@ export async function createUser(env: Env, body: {
     fullName?: string;
     phone?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
+    app?: "esafety" | "hospital";
 }) {
     const response = await axiosInstance.post("/api/v1/auth/create-user/", body);
     return response.data;
