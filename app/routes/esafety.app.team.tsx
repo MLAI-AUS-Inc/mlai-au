@@ -6,13 +6,18 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     if (!user) return redirect("/platform/login");
 
     // Fetch user's team for this hackathon
     let myTeam = null;
     try {
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/teams/?member_id=" + (user as any).id);
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get("/api/v1/hackathons/esafety/teams/?member_id=" + (user as any).id, { headers });
         const teams = response.data;
 
         if (Array.isArray(teams) && teams.length > 0) {
@@ -30,12 +35,18 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent");
 
+    const cookieHeader = request.headers.get("Cookie");
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+    }
+
     if (intent === "create_team") {
         const name = formData.get("name")?.toString();
         if (!name) return { error: "Team name is required" };
 
         try {
-            await axiosInstance.post("/api/v1/hackathons/esafety/teams/", { name });
+            await axiosInstance.post("/api/v1/hackathons/esafety/teams/", { name }, { headers });
             return { success: true };
         } catch (error: any) {
             const errDetail = error.response?.data?.detail || "Failed to create team";
@@ -48,7 +59,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!code) return { error: "Team code/name is required" };
 
         try {
-            await axiosInstance.post("/api/v1/hackathons/esafety/teams/join/", { code });
+            await axiosInstance.post("/api/v1/hackathons/esafety/teams/join/", { code }, { headers });
             return { success: true };
         } catch (error: any) {
             const errDetail = error.response?.data?.detail || "Failed to join team";

@@ -22,9 +22,9 @@ interface UserData {
     };
 }
 
-export async function loader({ context }: Route.LoaderArgs) {
+export async function loader({ request, context }: Route.LoaderArgs) {
     const env = context.cloudflare.env;
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
 
     if (!user) {
         return redirect("/platform/login?next=/esafety/app/profile");
@@ -33,7 +33,7 @@ export async function loader({ context }: Route.LoaderArgs) {
     // Fetch available team names
     let teams: string[] = [];
     try {
-        teams = await getTeamNames(env);
+        teams = await getTeamNames(env, request);
     } catch (error) {
         console.error('Error loading teams', error);
     }

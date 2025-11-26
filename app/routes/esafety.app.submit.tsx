@@ -7,7 +7,7 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     if (!user) return redirect("/platform/login");
     return { user };
 }
@@ -25,11 +25,17 @@ export async function action({ request, context }: Route.ActionArgs) {
     const backendFormData = new FormData();
     backendFormData.append("file", file);
 
+    const cookieHeader = request.headers.get("Cookie");
+    const headers: Record<string, string> = {
+        "Content-Type": "multipart/form-data",
+    };
+    if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+    }
+
     try {
         const response = await axiosInstance.post("/api/v1/hackathons/esafety/submissions/", backendFormData, {
-            headers: {
-                "Content-Type": "multipart/form-data",
-            },
+            headers,
         });
         return { success: true, result: response.data };
     } catch (error: any) {

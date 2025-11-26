@@ -7,14 +7,19 @@ import Leaderboard from "~/components/Leaderboard";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     if (!user) {
         return redirect("/platform/login?next=/esafety/app/dashboard");
     }
 
     // Fetch hackathon details
     try {
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/");
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get("/api/v1/hackathons/esafety/", { headers });
         return { user, hackathon: response.data };
     } catch (error) {
         throw new Response("Hackathon not found", { status: 404 });

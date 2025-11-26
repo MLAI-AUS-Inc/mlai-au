@@ -6,14 +6,19 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     // Leaderboard might be public, but let's require login for now as per plan context (or maybe not?)
     // Plan didn't explicitly say leaderboard is private, but it's part of the "app".
     // Let's allow public access but show user's team highlighted if logged in.
 
     let leaderboard = [];
     try {
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/leaderboard/");
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get("/api/v1/hackathons/esafety/leaderboard/", { headers });
         leaderboard = response.data;
     } catch (error) {
         console.error("Failed to fetch leaderboard:", error);

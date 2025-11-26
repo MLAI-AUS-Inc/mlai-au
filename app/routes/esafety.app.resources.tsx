@@ -5,7 +5,7 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     if (!user) return redirect("/platform/login");
     return { user };
 }

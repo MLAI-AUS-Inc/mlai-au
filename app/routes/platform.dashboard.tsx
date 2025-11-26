@@ -6,12 +6,17 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env);
+    const user = await getCurrentUser(env, request);
     if (!user) return redirect("/platform/login");
 
     let hackathons = [];
     try {
-        const response = await axiosInstance.get("/api/v1/hackathons/");
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get("/api/v1/hackathons/", { headers });
         hackathons = response.data;
     } catch (error) {
         console.error("Failed to fetch hackathons:", error);

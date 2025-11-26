@@ -39,9 +39,19 @@ export async function verifyMagicLink(env: Env, token: string) {
     return response.data;
 }
 
-export async function getCurrentUser(env: Env) {
+export async function getCurrentUser(env: Env, request?: Request) {
+    const headers: Record<string, string> = {};
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+
     try {
-        const response = await axiosInstance.get("/api/v1/auth/me/");
+        const response = await axiosInstance.get("/api/v1/auth/me/", {
+            headers
+        });
         return response.data;
     } catch (error: any) {
         if (error.response && error.response.status === 401) {
@@ -68,8 +78,15 @@ export async function createUser(env: Env, body: {
     return response.data;
 }
 
-export async function getTeamNames(env: Env): Promise<string[]> {
-    const response = await axiosInstance.get("/api/v1/teams/");
+export async function getTeamNames(env: Env, request?: Request): Promise<string[]> {
+    const headers: Record<string, string> = {};
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+    const response = await axiosInstance.get("/api/v1/teams/", { headers });
     return response.data.team_names || [];
 }
 
@@ -77,8 +94,15 @@ export async function updateUser(env: Env, body: {
     full_name?: string;
     team?: string;
     email?: string;
-}) {
-    const response = await axiosInstance.patch("/api/v1/auth/update-profile/", body);
+}, request?: Request) {
+    const headers: Record<string, string> = {};
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+    const response = await axiosInstance.patch("/api/v1/auth/update-profile/", body, { headers });
     return response.data;
 }
 
@@ -86,7 +110,14 @@ export async function getUser(env: Env) {
     return getCurrentUser(env);
 }
 
-export async function getLeaderboardSubmissions(env: Env) {
-    const response = await axiosInstance.get("/api/v1/submissions/leaderboard/");
+export async function getLeaderboardSubmissions(env: Env, request?: Request) {
+    const headers: Record<string, string> = {};
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+    const response = await axiosInstance.get("/api/v1/submissions/leaderboard/", { headers });
     return response.data;
 }
