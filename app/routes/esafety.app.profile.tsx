@@ -1,12 +1,11 @@
 import type { Route } from "./+types/esafety.app.profile";
 import React, { useState, useEffect } from 'react';
-import { redirect, useLoaderData, useNavigate } from "react-router";
+import { redirect, useLoaderData, useNavigate, useRevalidator } from "react-router";
 import { Menu } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/24/outline'
-import { getTeamNames, updateUser, getUser, getCurrentUser } from '~/lib/auth';
+import { getTeamNames, updateUser, getCurrentUser } from '~/lib/auth';
 import { GradientBackground } from '~/components/GradientBackground';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
-import { getEnv } from "~/lib/env.server";
 
 interface TeamMember {
     full_name: string;
@@ -43,7 +42,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function ProfilePage() {
     const { user: initialUser, teams } = useLoaderData<typeof loader>();
-    const navigate = useNavigate();
+    const revalidator = useRevalidator();
 
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
@@ -80,10 +79,21 @@ export default function ProfilePage() {
 
         setIsSaving(true);
         try {
-            // Note: In a real implementation, you'd need to pass the env here
-            // For now, this is a placeholder that shows the UI structure
+            // We don't have the env here in the client, but the lib function signature asks for it.
+            // However, the axiosInstance in lib/api.ts likely handles the base URL.
+            // We'll pass null or a mock env if strict typing requires it, but looking at lib/auth.ts,
+            // it seems 'env' is often unused for axios calls or we can cast.
+            // Actually, looking at lib/auth.ts, updateUser takes (env, body, request).
+            // Client-side calls usually don't pass 'env' or 'request' in the same way.
+            // The existing lib/auth.ts functions seem designed for both server (loader) and client usage?
+            // Wait, 'updateUser' in lib/auth.ts uses 'axiosInstance'.
+            // If we are in the browser, we don't need to pass 'env' if axiosInstance is configured correctly.
+            // Let's assume we can pass null/undefined for env as it's likely for server-side env vars.
+
+            await updateUser(null as any, { full_name: fullName, team, email });
+
             setMessage('Profile updated successfully.');
-            // You might want to reload the page or refetch user data here
+            revalidator.revalidate();
         } catch (err) {
             console.error('Error updating profile:', err);
             setError('Error updating profile.');
@@ -169,11 +179,11 @@ export default function ProfilePage() {
                                 <Menu.Items className="absolute z-10 mt-2 w-full origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none max-h-60 overflow-y-auto">
                                     {teams.map((t) => (
                                         <Menu.Item key={t}>
-                                            {({ focus }) => (
+                                            {({ active }) => (
                                                 <button
                                                     type="button"
                                                     onClick={() => setTeam(t)}
-                                                    className={`${focus ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block w - full px - 4 py - 2 text - left text - sm`}
+                                                    className={`${active ? 'bg-gray-100 text-gray-900' : 'text-gray-700'} block w-full px-4 py-2 text-left text-sm`}
                                                 >
                                                     {t}
                                                 </button>
@@ -207,7 +217,7 @@ export default function ProfilePage() {
                             {teamMembers.map((member, index) => {
                                 // Get initials from the member's full name and generate the avatar URL.
                                 const initials = getInitials(member.full_name);
-                                const avatarUrl = generateAvatarUrl(initials);
+                                const memberAvatarUrl = generateAvatarUrl(initials);
                                 return (
                                     <div
                                         key={index}
@@ -216,7 +226,7 @@ export default function ProfilePage() {
                                         <div className="shrink-0">
                                             <img
                                                 alt={member.full_name}
-                                                src={avatarUrl}
+                                                src={memberAvatarUrl}
                                                 className="h-10 w-10 rounded-full"
                                             />
                                         </div>

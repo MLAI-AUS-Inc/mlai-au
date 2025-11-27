@@ -42,7 +42,7 @@ export default function Announcements({ announcements }: AnnouncementsProps) {
                                         </a>
                                     </p>
                                     <p className="text-sm text-gray-500">
-                                        <time dateTime={announcement.datetime}>{announcement.date}</time>
+                                        <time dateTime={announcement.datetime}>{timeAgo(announcement.datetime)}</time>
                                     </p>
                                 </div>
                                 <div className="flex shrink-0 self-center">
@@ -83,4 +83,32 @@ export default function Announcements({ announcements }: AnnouncementsProps) {
             </ul>
         </div>
     )
+}
+
+function timeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) {
+        return Math.floor(interval) + " years ago";
+    }
+    interval = seconds / 2592000;
+    if (interval > 1) {
+        return Math.floor(interval) + " months ago";
+    }
+    interval = seconds / 86400;
+    if (interval > 1) {
+        return Math.floor(interval) + " days ago";
+    }
+    interval = seconds / 3600;
+    if (interval > 1) {
+        return Math.floor(interval) + " hours ago";
+    }
+    interval = seconds / 60;
+    if (interval > 1) {
+        return Math.floor(interval) + " minutes ago";
+    }
+    return Math.floor(seconds) + " seconds ago";
 }

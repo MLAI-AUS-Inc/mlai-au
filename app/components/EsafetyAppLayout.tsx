@@ -36,11 +36,10 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
 
     const navigation = [
         { name: 'Dashboard', href: '/esafety/app', icon: HomeIcon },
-        { name: 'My Team', href: '/esafety/app/team', icon: UsersIcon },
+        { name: 'Profile', href: '/esafety/app/profile', icon: UserCircleIcon },
         { name: 'Leaderboard', href: '/esafety/app/leaderboard', icon: TrophyIcon },
         { name: 'Submit', href: '/esafety/app/submit', icon: DocumentArrowUpIcon },
         { name: 'Resources', href: '/esafety/app/resources', icon: BookOpenIcon },
-        { name: 'Profile', href: '/esafety/app/profile', icon: UserCircleIcon },
     ];
 
     const updatedNavigation = navigation.map(item => ({
@@ -191,8 +190,10 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6">
                         <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
                             <ImageWithFallback
-                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-32" : "w-10")}
-                                src={isExpanded ? "/MLAI-Logo.png" : "/MLAI-Logo-Icon.png"} // Assuming there's an icon version or just scaling
+                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-32" : "w-16")}
+                                src={isExpanded
+                                    ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
+                                    : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}
                                 alt="MLAI Logo"
                                 width={220}
                                 height={80}
