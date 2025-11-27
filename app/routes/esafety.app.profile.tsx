@@ -26,6 +26,7 @@ interface UserData {
     avatar_url?: string;
     team?: {
         team_name: string;
+        avatar_url?: string;
         members: TeamMember[];
     };
 }
@@ -101,12 +102,24 @@ export default function ProfilePage() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
+    const [teamAvatarFile, setTeamAvatarFile] = useState<File | null>(null);
+    const [previewTeamAvatarUrl, setPreviewTeamAvatarUrl] = useState<string | null>(null);
+    const [isTeamAvatarModalOpen, setIsTeamAvatarModalOpen] = useState(false);
+
     const handleAvatarSave = async (file: File) => {
         setAvatarFile(file);
         // Create a local URL for preview
         const objectUrl = URL.createObjectURL(file);
         setPreviewAvatarUrl(objectUrl);
         setIsAvatarModalOpen(false);
+    };
+
+    const handleTeamAvatarSave = async (file: File) => {
+        setTeamAvatarFile(file);
+        // Create a local URL for preview
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewTeamAvatarUrl(objectUrl);
+        setIsTeamAvatarModalOpen(false);
     };
 
     // Filter teams for combobox
@@ -158,6 +171,9 @@ export default function ProfilePage() {
         if (avatarFile) {
             formData.append('avatar', avatarFile);
         }
+        if (teamAvatarFile) {
+            formData.append('team_avatar', teamAvatarFile);
+        }
 
         fetcher.submit(formData, {
             method: "patch",
@@ -170,6 +186,7 @@ export default function ProfilePage() {
             if (fetcher.data.success) {
                 setMessage('Profile updated successfully.');
                 setAvatarFile(null);
+                setTeamAvatarFile(null);
                 // Revalidator is called automatically by Remix after action
             } else if (fetcher.data.error) {
                 setError(fetcher.data.error);
@@ -180,6 +197,7 @@ export default function ProfilePage() {
     const isSaving = fetcher.state !== "idle";
 
     const avatarUrl = previewAvatarUrl || initialUser.avatar_url || generateAvatarUrl(getInitials(initialUser.full_name || ''));
+    const teamAvatarUrl = previewTeamAvatarUrl || initialUser.team?.avatar_url || generateAvatarUrl(getInitials(selectedTeam || 'Team'));
     const coverImageUrl = 'https://images.unsplash.com/photo-1444628838545-ac4016a5418a?ixid=MXwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHw%3D&ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80';
 
     return (
@@ -320,82 +338,104 @@ export default function ProfilePage() {
                                             </div>
 
                                             <div className="sm:col-span-6">
-                                                <label className="block text-sm font-medium leading-6 text-gray-900">Team</label>
-                                                <div className="mt-2">
-                                                    <Combobox value={selectedTeam} onChange={(val) => setSelectedTeam(val || '')}>
-                                                        <div className="relative mt-1">
-                                                            <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-                                                                <Combobox.Input
-                                                                    className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
-                                                                    displayValue={(team: string) => team}
-                                                                    onChange={(event) => setQuery(event.target.value)}
-                                                                    placeholder="Select or create a team"
-                                                                />
-                                                                <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                                    <ChevronUpDownIcon
-                                                                        className="h-5 w-5 text-gray-400"
-                                                                        aria-hidden="true"
-                                                                    />
-                                                                </Combobox.Button>
-                                                            </div>
-                                                            <Transition
-                                                                as={React.Fragment}
-                                                                leave="transition ease-in duration-100"
-                                                                leaveFrom="opacity-100"
-                                                                leaveTo="opacity-0"
-                                                                afterLeave={() => setQuery('')}
+                                                <div className="flex items-start gap-x-6">
+                                                    <div className="shrink-0">
+                                                        <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">Team Avatar</label>
+                                                        <div className="relative">
+                                                            <img
+                                                                alt=""
+                                                                src={teamAvatarUrl}
+                                                                className="size-16 rounded-lg object-cover"
+                                                            />
+                                                            <span aria-hidden="true" className="absolute inset-0 rounded-lg shadow-inner" />
+                                                            <button
+                                                                type="button"
+                                                                className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                                                                onClick={() => setIsTeamAvatarModalOpen(true)}
                                                             >
-                                                                <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-10">
-                                                                    {query.length > 0 && (
-                                                                        <Combobox.Option
-                                                                            value={query}
-                                                                            className={({ active }) =>
-                                                                                `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
-                                                                                }`
-                                                                            }
-                                                                        >
-                                                                            Create "{query}"
-                                                                        </Combobox.Option>
-                                                                    )}
-                                                                    {filteredTeams.length === 0 && query !== '' ? (
-                                                                        <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                                                                            Nothing found.
-                                                                        </div>
-                                                                    ) : (
-                                                                        filteredTeams.map((team) => (
-                                                                            <Combobox.Option
-                                                                                key={team}
-                                                                                className={({ active }) =>
-                                                                                    `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
-                                                                                    }`
-                                                                                }
-                                                                                value={team}
-                                                                            >
-                                                                                {({ selected, active }) => (
-                                                                                    <>
-                                                                                        <span
-                                                                                            className={`block truncate ${selected ? 'font-medium' : 'font-normal'
-                                                                                                }`}
-                                                                                        >
-                                                                                            {team}
-                                                                                        </span>
-                                                                                        {selected ? (
-                                                                                            <span
-                                                                                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-indigo-600'
-                                                                                                    }`}
-                                                                                            >
-                                                                                                <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                                                                                            </span>
-                                                                                        ) : null}
-                                                                                    </>
-                                                                                )}
-                                                                            </Combobox.Option>
-                                                                        ))
-                                                                    )}
-                                                                </Combobox.Options>
-                                                            </Transition>
+                                                                <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                                                            </button>
                                                         </div>
-                                                    </Combobox>
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <label className="block text-sm font-medium leading-6 text-gray-900">Team Name</label>
+                                                        <div className="mt-2">
+                                                            <Combobox value={selectedTeam} onChange={(val) => setSelectedTeam(val || '')}>
+                                                                <div className="relative mt-1">
+                                                                    <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                                                        <Combobox.Input
+                                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
+                                                                            displayValue={(team: string) => team}
+                                                                            onChange={(event) => setQuery(event.target.value)}
+                                                                            placeholder="Select or create a team"
+                                                                        />
+                                                                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+                                                                            <ChevronUpDownIcon
+                                                                                className="h-5 w-5 text-gray-400"
+                                                                                aria-hidden="true"
+                                                                            />
+                                                                        </Combobox.Button>
+                                                                    </div>
+                                                                    <Transition
+                                                                        as={React.Fragment}
+                                                                        leave="transition ease-in duration-100"
+                                                                        leaveFrom="opacity-100"
+                                                                        leaveTo="opacity-0"
+                                                                        afterLeave={() => setQuery('')}
+                                                                    >
+                                                                        <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-10">
+                                                                            {query.length > 0 && (
+                                                                                <Combobox.Option
+                                                                                    value={query}
+                                                                                    className={({ active }) =>
+                                                                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
+                                                                                        }`
+                                                                                    }
+                                                                                >
+                                                                                    Create "{query}"
+                                                                                </Combobox.Option>
+                                                                            )}
+                                                                            {filteredTeams.length === 0 && query !== '' ? (
+                                                                                <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+                                                                                    Nothing found.
+                                                                                </div>
+                                                                            ) : (
+                                                                                filteredTeams.map((team) => (
+                                                                                    <Combobox.Option
+                                                                                        key={team}
+                                                                                        className={({ active }) =>
+                                                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
+                                                                                            }`
+                                                                                        }
+                                                                                        value={team}
+                                                                                    >
+                                                                                        {({ selected, active }) => (
+                                                                                            <>
+                                                                                                <span
+                                                                                                    className={`block truncate ${selected ? 'font-medium' : 'font-normal'
+                                                                                                        }`}
+                                                                                                >
+                                                                                                    {team}
+                                                                                                </span>
+                                                                                                {selected ? (
+                                                                                                    <span
+                                                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-indigo-600'
+                                                                                                            }`}
+                                                                                                    >
+                                                                                                        <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                                                                                                    </span>
+                                                                                                ) : null}
+                                                                                            </>
+                                                                                        )}
+                                                                                    </Combobox.Option>
+                                                                                ))
+                                                                            )}
+                                                                        </Combobox.Options>
+                                                                    </Transition>
+                                                                </div>
+                                                            </Combobox>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
@@ -464,6 +504,12 @@ export default function ProfilePage() {
                 onClose={() => setIsAvatarModalOpen(false)}
                 onSave={handleAvatarSave}
                 initialImage={avatarUrl}
+            />
+            <AvatarModal
+                isOpen={isTeamAvatarModalOpen}
+                onClose={() => setIsTeamAvatarModalOpen(false)}
+                onSave={handleTeamAvatarSave}
+                initialImage={teamAvatarUrl}
             />
         </div>
     );
