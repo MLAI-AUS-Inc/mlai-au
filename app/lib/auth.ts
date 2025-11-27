@@ -94,9 +94,13 @@ export async function getTeamNames(env: Env, request?: Request): Promise<string[
 
 export async function updateUser(env: Env, body: {
     full_name?: string;
+    first_name?: string;
+    last_name?: string;
     team?: string;
     email?: string;
-}, request?: Request) {
+    phone?: string;
+    about?: string;
+} | FormData, request?: Request) {
     const headers: Record<string, string> = {};
     if (request) {
         const cookieHeader = request.headers.get("Cookie");

@@ -19,7 +19,7 @@ const resolveApiBase = () => {
             // If we are on esafety.localhost, point to the backend on port 80 with the same hostname
             // This ensures cookies with Domain=.localhost are sent/received correctly
             if (hostname === 'esafety.localhost') {
-                return 'http://esafety.localhost:8000';
+                return 'http://localhost:80';
             }
             // Fallback for standard localhost or other local domains
             return 'http://localhost:8000';
@@ -29,7 +29,7 @@ const resolveApiBase = () => {
     }
 
     // Server-side (SSR) fallback
-    return configured || DEFAULT_SITE_URL;
+    return configured || 'http://localhost:80';
 };
 
 const API_URL = resolveApiBase();

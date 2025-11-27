@@ -29,6 +29,8 @@
     "lucide-react": "^0.535.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.8",
+    "react-easy-crop": "^5.5.5",
     "react-router": "^7.9.6",
     "tailwind-merge": "^3.4.0",
     "three": "^0.179.1"

@@ -25,6 +25,7 @@ export default [
     route("submit", "routes/esafety.app.submit.tsx"),
     route("leaderboard", "routes/esafety.app.leaderboard.tsx"),
     route("resources", "routes/esafety.app.resources.tsx"),
+    route("profile", "routes/esafety.app.profile.tsx"),
   ]),
 
   // AI Hospital App routes
