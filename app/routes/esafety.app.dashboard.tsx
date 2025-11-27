@@ -1,29 +1,95 @@
 import type { Route } from "./+types/esafety.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
-import { axiosInstance } from "~/lib/api";
+import axios from "axios";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser } from "~/lib/auth";
 import Leaderboard from "~/components/Leaderboard";
 
+import Announcements, { type Announcement } from "~/components/Announcements";
+
+import { getHackathon, getAnnouncements } from "~/services/hackathon";
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env, request);
-    if (!user) {
-        return redirect("/platform/login?next=/esafety/app/dashboard");
+    // 1. Extract the cookie header from the incoming browser request
+    const cookieHeader = request.headers.get("Cookie");
+
+    // 2. Forward it to the backend API call using axios
+    const response = await axios.get("http://esafety.localhost/api/v1/auth/me/", {
+        headers: {
+            // CRITICAL: Pass the cookies so the backend knows who we are
+            Cookie: cookieHeader || "",
+        },
+        // Ensure axios doesn't throw on 401 so we can handle it manually
+        validateStatus: (status) => status < 500,
+    });
+
+    if (response.status === 401) {
+        throw redirect("/platform/login?next=/esafety/app/dashboard");
     }
 
-    // Fetch hackathon details
-    try {
-        const cookieHeader = request.headers.get("Cookie");
-        const headers: Record<string, string> = {};
-        if (cookieHeader) {
-            headers["Cookie"] = cookieHeader;
+    const user = response.data;
+
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+    }
+
+    // Mock announcements data for fallback
+    const mockAnnouncements: Announcement[] = [
+        {
+            id: '1',
+            title: 'Welcome to the eSafety Hackathon!',
+            body: '<p>We are thrilled to have you here. Get ready to build innovative solutions for online safety. Check out the resources tab for datasets and guides.</p>',
+            date: 'Today at 9:00 AM',
+            datetime: new Date().toISOString(),
+            author: {
+                name: 'eSafety Team',
+                imageUrl: 'https://ui-avatars.com/api/?name=eSafety+Team&background=random',
+                href: '#',
+            },
+        },
+        {
+            id: '2',
+            title: 'Submission Guidelines',
+            body: '<p>Please ensure your submissions include a video demo and a link to your GitHub repository. The deadline is Sunday at 5 PM.</p>',
+            date: 'Yesterday',
+            datetime: new Date(Date.now() - 86400000).toISOString(),
+            author: {
+                name: 'Hackathon Admin',
+                imageUrl: 'https://ui-avatars.com/api/?name=Admin&background=random',
+                href: '#',
+            },
+        },
+        {
+            id: '3',
+            title: 'Mentor Sessions',
+            body: '<p>Mentors will be available in the main hall from 2 PM to 4 PM today. Don\'t miss this opportunity to get feedback on your ideas.</p>',
+            date: '2 days ago',
+            datetime: new Date(Date.now() - 172800000).toISOString(),
+            author: {
+                name: 'Community Manager',
+                imageUrl: 'https://ui-avatars.com/api/?name=Community&background=random',
+                href: '#',
+            },
         }
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/", { headers });
-        return { user, hackathon: response.data };
+    ];
+
+    try {
+        const [hackathon, announcements] = await Promise.all([
+            getHackathon("esafety", headers).catch(() => ({
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety.",
+                start_date: "2025-01-01",
+                end_date: "2025-01-02"
+            })),
+            getAnnouncements("esafety", headers).catch(() => mockAnnouncements)
+        ]);
+
+        return { user, hackathon, announcements };
     } catch (error) {
-        // Fallback to mock data if backend is missing
-        console.warn("Hackathon API not found, using mock data");
+        console.error("Failed to load dashboard data", error);
         return {
             user,
             hackathon: {
@@ -32,31 +98,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 description: "Develop AI solutions for online safety.",
                 start_date: "2025-01-01",
                 end_date: "2025-01-02"
-            }
+            },
+            announcements: mockAnnouncements
         };
     }
 }
 
 export default function EsafetyAppDashboard() {
-    const { user, hackathon } = useLoaderData<typeof loader>();
+    const { user, hackathon, announcements } = useLoaderData<typeof loader>();
 
     return (
         <div className="min-h-screen p-6 bg-gray-50">
             <div className="w-full mx-auto space-y-6">
                 {/* First Row */}
                 <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Left Column (7/12): Welcome Card */}
+                    {/* Left Column (7/12): Announcements */}
                     <div className="w-full lg:w-7/12 space-y-6">
-                        <div className="relative w-full bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                                Welcome to MedHack!
-                            </h2>
-                            <p className="max-w-2xl text-balance text-xl tracking-tight text-gray-900 mt-4">
-                                Get ready to innovate in the healthcare space. Whether you're tackling AI for the first time
-                                or building a game-changing solution, we've got you covered.
-                            </p>
-                            <Leaderboard />
-                        </div>
+                        <Announcements announcements={announcements} />
                     </div>
 
                     {/* Right Column (5/12): Multiple Cards */}

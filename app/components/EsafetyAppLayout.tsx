@@ -7,22 +7,17 @@ import {
     HomeIcon,
     MagnifyingGlassIcon,
     UserCircleIcon,
-    Cog6ToothIcon,
     XMarkIcon,
     UsersIcon,
     TrophyIcon,
     DocumentArrowUpIcon,
     BookOpenIcon,
+    ArrowLeftOnRectangleIcon,
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, Form } from 'react-router';
 import { ImageWithFallback } from './ImageWithFallback';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
-
-interface User {
-    email: string;
-    full_name: string;
-    avatar_url?: string;
-}
+import type { User } from '~/types/user';
 
 interface EsafetyAppLayoutProps {
     children: React.ReactNode;
@@ -35,6 +30,7 @@ function classNames(...classes: (string | undefined | boolean)[]) {
 
 export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
     const pathname = location.pathname;
 
@@ -163,17 +159,16 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                                                 </li>
 
                                                 <li className="mt-auto">
-                                                    <Link
-                                                        to="/esafety/app/settings"
+                                                    <a
+                                                        href="http://localhost:5173/"
                                                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200 ease-in-out"
-                                                        onClick={() => setSidebarOpen(false)}
                                                     >
-                                                        <Cog6ToothIcon
+                                                        <ArrowLeftOnRectangleIcon
                                                             className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 transition-colors duration-200"
                                                             aria-hidden="true"
                                                         />
-                                                        Settings
-                                                    </Link>
+                                                        Back to MLAI
+                                                    </a>
                                                 </li>
                                             </ul>
                                         </nav>
@@ -184,13 +179,20 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                     </Dialog>
                 </Transition.Root>
 
-                {/* Static sidebar for desktop */}
-                <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+                {/* Static sidebar for desktop with hover animation */}
+                <div
+                    className={classNames(
+                        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 ease-in-out",
+                        isExpanded ? "w-64" : "w-20"
+                    )}
+                    onMouseEnter={() => setIsExpanded(true)}
+                    onMouseLeave={() => setIsExpanded(false)}
+                >
                     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6">
-                        <div className="flex h-16 shrink-0 items-center mt-4">
+                        <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
                             <ImageWithFallback
-                                className="h-10 w-auto"
-                                src="/MLAI-Logo.png"
+                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-32" : "w-10")}
+                                src={isExpanded ? "/MLAI-Logo.png" : "/MLAI-Logo-Icon.png"} // Assuming there's an icon version or just scaling
                                 alt="MLAI Logo"
                                 width={220}
                                 height={80}
@@ -208,40 +210,59 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                                                         item.current
                                                             ? 'bg-indigo-700 text-white'
                                                             : 'text-white hover:bg-indigo-700 hover:text-white',
-                                                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
+                                                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
+                                                        isExpanded ? '' : 'justify-center'
                                                     )}
                                                 >
                                                     <item.icon
                                                         className={classNames(
                                                             item.current ? 'text-white' : 'text-white group-hover:text-white',
-                                                            'h-6 w-6 shrink-0',
+                                                            'h-6 w-6 shrink-0 transition-all duration-300',
+                                                            isExpanded ? 'mr-0' : 'mr-0'
                                                         )}
                                                         aria-hidden="true"
                                                     />
-                                                    {item.name}
+                                                    <span
+                                                        className={classNames(
+                                                            "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                                                            isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                                        )}
+                                                    >
+                                                        {item.name}
+                                                    </span>
                                                 </Link>
                                             </li>
                                         ))}
                                     </ul>
                                 </li>
                                 <li className="mt-auto mb-4">
-                                    <Link
-                                        to="/esafety/app/settings"
-                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white"
+                                    <a
+                                        href="http://localhost:5173/"
+                                        className={classNames(
+                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
+                                            isExpanded ? '' : 'justify-center'
+                                        )}
                                     >
-                                        <Cog6ToothIcon
+                                        <ArrowLeftOnRectangleIcon
                                             aria-hidden="true"
                                             className="h-6 w-6 shrink-0 text-white group-hover:text-white"
                                         />
-                                        Settings
-                                    </Link>
+                                        <span
+                                            className={classNames(
+                                                "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                                                isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                            )}
+                                        >
+                                            Back to MLAI
+                                        </span>
+                                    </a>
                                 </li>
                             </ul>
                         </nav>
                     </div>
                 </div>
 
-                <div className="lg:pl-72">
+                <div className={classNames("lg:pl-20 transition-all duration-300 ease-in-out", isExpanded ? "lg:pl-64" : "lg:pl-20")}>
                     {/* Header */}
                     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                         <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-700 lg:hidden">

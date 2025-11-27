@@ -1,13 +1,26 @@
 import type { Route } from "./+types/platform.dashboard";
 import { redirect, useLoaderData } from "react-router";
+import axios from "axios";
 import { axiosInstance } from "~/lib/api";
-import { getCurrentUser } from "~/lib/auth";
-import { getEnv } from "~/lib/env.server";
-
 export async function loader({ request, context }: Route.LoaderArgs) {
-    const env = getEnv(context);
-    const user = await getCurrentUser(env, request);
-    if (!user) return redirect("/platform/login");
+    // 1. Get cookies from the incoming browser request
+    const cookieHeader = request.headers.get("Cookie");
+
+    // 2. Pass them to the backend using axios
+    const authResponse = await axios.get("http://esafety.localhost/api/v1/auth/me/", {
+        headers: {
+            // CRITICAL: Forward the cookies so Django knows who we are
+            Cookie: cookieHeader || "",
+        },
+        // Ensure axios doesn't throw on 401 so we can handle it manually
+        validateStatus: (status) => status < 500,
+    });
+
+    if (authResponse.status === 401) {
+        throw redirect("/platform/login");
+    }
+
+    const user = authResponse.data;
 
     // Check for esafety subdomain and redirect to app dashboard
     const url = new URL(request.url);
