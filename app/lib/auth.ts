@@ -108,6 +108,42 @@ export async function updateUser(env: Env, body: {
             headers["Cookie"] = cookieHeader;
         }
     }
+
+    // Use dynamic import for form-data to avoid client-side bundling issues
+    // and to ensure we use the Node.js compatible FormData implementation for Axios
+    if (body instanceof FormData) {
+        try {
+            const { default: NodeFormData } = await import('form-data');
+            const form = new NodeFormData();
+
+            // Convert standard FormData to NodeFormData
+            // Note: FormData.entries() returns an iterator of [key, value]
+            for (const [key, value] of body.entries()) {
+                if (value instanceof File) {
+                    // Convert File to Buffer for form-data
+                    const buffer = Buffer.from(await value.arrayBuffer());
+                    form.append(key, buffer, {
+                        filename: value.name,
+                        contentType: value.type,
+                    });
+                } else {
+                    form.append(key, value);
+                }
+            }
+
+            const response = await axiosInstance.patch("/api/v1/auth/update-profile/", form, {
+                headers: {
+                    ...headers,
+                    ...form.getHeaders()
+                }
+            });
+            return response.data;
+        } catch (e) {
+            console.warn("Failed to load form-data or convert body, falling back to standard FormData", e);
+            // Fallback if dynamic import fails (e.g. on client, though this should be server-only)
+        }
+    }
+
     const response = await axiosInstance.patch("/api/v1/auth/update-profile/", body, { headers });
     return response.data;
 }

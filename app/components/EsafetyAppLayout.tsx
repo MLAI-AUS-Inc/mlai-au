@@ -187,10 +187,10 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
                 >
-                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-indigo-600 px-6">
+                    <div className="flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-indigo-600 px-6">
                         <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
                             <ImageWithFallback
-                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-32" : "w-16")}
+                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
                                 src={isExpanded
                                     ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
                                     : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}

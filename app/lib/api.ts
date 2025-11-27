@@ -32,7 +32,7 @@ const resolveApiBase = () => {
     return configured || 'http://localhost:80';
 };
 
-const API_URL = resolveApiBase();
+export const API_URL = resolveApiBase();
 
 export const axiosInstance = axios.create({
     baseURL: API_URL,
