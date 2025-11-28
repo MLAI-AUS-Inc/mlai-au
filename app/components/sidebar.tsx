@@ -41,7 +41,7 @@ const navigation = [
     icon: BookOpenIcon,
   },
   { name: "Members", href: "/members", icon: UserGroupIcon },
-  { name: "Hackathons", href: "/hackathons", icon: CommandLineIcon },
+  { name: "Login", href: "/platform/login", icon: CommandLineIcon },
 ];
 
 export default function Sidebar() {
