@@ -8,23 +8,6 @@ import Hero from "~/components/hero";
 import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
 import Testimonials from "~/components/testimonials";
-import { fetchSubstackPosts } from "~/lib/substack";
-import { fetchEvents } from "~/lib/events";
-import type { Route } from "./+types/home";
-
-export async function loader({ context }: Route.LoaderArgs) {
-  const eventsApiKey = context.cloudflare.env.PRIVATE_HUMANITIX_API_KEY;
-
-  // Return promises WITHOUT awaiting - enables streaming
-  // Fetch both APIs in parallel for better performance
-  const eventsPromise = fetchEvents(eventsApiKey);
-  const substackPostsPromise = fetchSubstackPosts();
-
-  return {
-    substackPosts: substackPostsPromise,
-    events: eventsPromise,
-  };
-}
 
 function UpcomingEventsSkeleton() {
   return (
@@ -61,8 +44,7 @@ function SubstackUpdatesSkeleton() {
   );
 }
 
-export default function Home({ loaderData }: Route.ComponentProps) {
-  const { substackPosts, events } = loaderData;
+export default function Home({ events, substackPosts }: { events: Promise<any>, substackPosts: Promise<any> }) {
 
   return (
     <main className="bg-white">

@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.team";
+import type { Route } from "./+types/hospital.app.team";
 import { Form, useActionData, useLoaderData, redirect } from "react-router";
 import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
@@ -17,7 +17,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         if (cookieHeader) {
             headers["Cookie"] = cookieHeader;
         }
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/teams/?member_id=" + (user as any).id, { headers });
+        const response = await axiosInstance.get("/api/v1/hackathons/hospital/teams/?member_id=" + (user as any).id, { headers });
         const teams = response.data;
 
         if (Array.isArray(teams) && teams.length > 0) {
@@ -46,7 +46,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!name) return { error: "Team name is required" };
 
         try {
-            await axiosInstance.post("/api/v1/hackathons/esafety/teams/", { name }, { headers });
+            await axiosInstance.post("/api/v1/hackathons/hospital/teams/", { name }, { headers });
             return { success: true };
         } catch (error: any) {
             const errDetail = error.response?.data?.detail || "Failed to create team";
@@ -59,7 +59,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (!code) return { error: "Team code/name is required" };
 
         try {
-            await axiosInstance.post("/api/v1/hackathons/esafety/teams/join/", { code }, { headers });
+            await axiosInstance.post("/api/v1/hackathons/hospital/teams/join/", { code }, { headers });
             return { success: true };
         } catch (error: any) {
             const errDetail = error.response?.data?.detail || "Failed to join team";
@@ -70,7 +70,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     return null;
 }
 
-export default function EsafetyAppTeam() {
+export default function HospitalAppTeam() {
     const { user, myTeam } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>();
 
@@ -79,7 +79,7 @@ export default function EsafetyAppTeam() {
             <div className="md:flex md:items-center md:justify-between">
                 <div className="min-w-0 flex-1">
                     <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        Team Management
+                        Team Management (AI Hospital)
                     </h2>
                 </div>
             </div>
