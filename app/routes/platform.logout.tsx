@@ -5,32 +5,40 @@ import { getEnv } from "~/lib/env.server";
 
 
 export async function loader({ context, request }: Route.LoaderArgs) {
-    const response = await logout(getEnv(context), request);
     const headers = new Headers();
-    if (response.headers['set-cookie']) {
-        // Axios headers can be an array or string, handle both
-        const cookies = response.headers['set-cookie'];
-        if (Array.isArray(cookies)) {
-            cookies.forEach(cookie => headers.append("Set-Cookie", cookie));
-        } else {
-            headers.append("Set-Cookie", cookies);
+    try {
+        const response = await logout(getEnv(context), request);
+        if (response.headers['set-cookie']) {
+            const cookies = response.headers['set-cookie'];
+            if (Array.isArray(cookies)) {
+                cookies.forEach(cookie => headers.append("Set-Cookie", cookie));
+            } else {
+                headers.append("Set-Cookie", cookies);
+            }
         }
+    } catch (error) {
+        console.error("Logout failed:", error);
+        // Even if logout fails (e.g. 401), we should still redirect the user
     }
-    return redirect("http://localhost:5173", { headers });
+    return redirect("/", { headers });
 }
 
 export async function action({ context, request }: Route.ActionArgs) {
-    const response = await logout(getEnv(context), request);
     const headers = new Headers();
-    if (response.headers['set-cookie']) {
-        const cookies = response.headers['set-cookie'];
-        if (Array.isArray(cookies)) {
-            cookies.forEach(cookie => headers.append("Set-Cookie", cookie));
-        } else {
-            headers.append("Set-Cookie", cookies);
+    try {
+        const response = await logout(getEnv(context), request);
+        if (response.headers['set-cookie']) {
+            const cookies = response.headers['set-cookie'];
+            if (Array.isArray(cookies)) {
+                cookies.forEach(cookie => headers.append("Set-Cookie", cookie));
+            } else {
+                headers.append("Set-Cookie", cookies);
+            }
         }
+    } catch (error) {
+        console.error("Logout failed:", error);
     }
-    return redirect("http://localhost:5173", { headers });
+    return redirect("/", { headers });
 }
 
 export default function PlatformLogout() {
