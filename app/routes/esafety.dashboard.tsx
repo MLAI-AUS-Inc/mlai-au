@@ -3,7 +3,7 @@ import { redirect, useLoaderData, Link } from "react-router";
 import axios from "axios";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser } from "~/lib/auth";
-import Leaderboard from "~/components/Leaderboard";
+
 
 import Announcements, { type Announcement } from "~/components/Announcements";
 

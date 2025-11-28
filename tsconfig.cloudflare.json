@@ -19,8 +19,7 @@
     "types": [
       "vite/client",
       "react",
-      "react-dom",
-      "node"
+      "react-dom"
     ],
     "target": "ES2022",
     "module": "ES2022",
