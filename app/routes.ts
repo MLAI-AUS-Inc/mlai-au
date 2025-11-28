@@ -1,7 +1,7 @@
 import { type RouteConfig, index, route } from "@react-router/dev/routes";
 
 export default [
-  index("routes/home.tsx"),
+  index("routes/_index.tsx"),
   route("/dashboard", "routes/dashboard.tsx"),
   route("/sponsors", "routes/sponsors.tsx"),
   route("/members", "routes/members.tsx"),
@@ -30,14 +30,14 @@ export default [
   ]),
 
   // AI Hospital App routes
-  // route("/hospital/app", "routes/hospital.app.tsx", [
-  //   index("routes/hospital.app.dashboard.tsx"),
-  //   route("team", "routes/hospital.app.team.tsx"),
-  //   route("submit", "routes/hospital.app.submit.tsx"),
-  //   route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
-  // ]),
+  route("/hospital/app", "routes/hospital.app.tsx", [
+    index("routes/hospital.app.dashboard.tsx"),
+    route("team", "routes/hospital.app.team.tsx"),
+    route("submit", "routes/hospital.app.submit.tsx"),
+    route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
+  ]),
 
   // Misc
-  // route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
+  route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
 
 ] satisfies RouteConfig;

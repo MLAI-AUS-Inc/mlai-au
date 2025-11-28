@@ -4,25 +4,26 @@ interface ImageWithFallbackProps extends React.ImgHTMLAttributes<HTMLImageElemen
     fallbackSrc?: string;
 }
 
-export function ImageWithFallback({ src, fallbackSrc, alt, ...props }: ImageWithFallbackProps) {
-    const [imgSrc, setImgSrc] = useState(src);
+export function ImageWithFallback({
+    src,
+    fallbackSrc = '/placeholder-avatar.png',
+    alt,
+    ...props
+}: ImageWithFallbackProps) {
+    const [hasError, setHasError] = useState(false);
 
     useEffect(() => {
-        setImgSrc(src);
+        setHasError(false);
     }, [src]);
-
-    const handleError = () => {
-        if (fallbackSrc) {
-            setImgSrc(fallbackSrc);
-        }
-    };
 
     return (
         <img
             {...props}
-            src={imgSrc}
+            src={hasError ? fallbackSrc : src}
             alt={alt}
-            onError={handleError}
+            onError={() => {
+                setHasError(true);
+            }}
         />
     );
 }
