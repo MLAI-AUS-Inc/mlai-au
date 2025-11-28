@@ -14,6 +14,7 @@ interface TeamMember {
     full_name: string;
     avatar_url?: string;
     role?: string;
+    personas?: string[];
 }
 
 interface UserData {
@@ -23,6 +24,7 @@ interface UserData {
     last_name?: string;
     phone?: string;
     about?: string;
+    personas?: string[];
     avatar_url?: string;
     team?: {
         team_name: string;
@@ -56,6 +58,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 
     try {
+        console.log("Profile Action: Received FormData");
+        for (const [key, value] of formData.entries()) {
+            console.log(`Profile Action: ${key} =`, value);
+        }
         await updateUser(env, formData, request);
         return { success: true };
     } catch (error) {
@@ -67,6 +73,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 function classNames(...classes: (string | boolean | undefined)[]) {
     return classes.filter(Boolean).join(' ')
 }
+
+const PERSONA_CONFIG: Record<string, { label: string; emoji: string; color: string; ring: string }> = {
+    hacker: { label: 'Hacker', emoji: '💻', color: 'bg-slate-50 text-slate-700', ring: 'ring-slate-600/20' },
+    hustler: { label: 'Hustler', emoji: '💼', color: 'bg-amber-50 text-amber-700', ring: 'ring-amber-600/20' },
+    hipster: { label: 'Hipster', emoji: '🎨', color: 'bg-rose-50 text-rose-700', ring: 'ring-rose-600/20' },
+};
 
 export default function ProfilePage() {
     const { user: initialUser, teams } = useLoaderData<typeof loader>();
@@ -89,11 +101,19 @@ export default function ProfilePage() {
     const [email, setEmail] = useState(initialUser.email || '');
     const [phone, setPhone] = useState(initialUser.phone || '');
     const [about, setAbout] = useState(initialUser.about || '');
+    const [personas, setPersonas] = useState<string[]>(initialUser.personas || []);
 
     // Team state
     const [selectedTeam, setSelectedTeam] = useState(initialUser.team?.team_name || '');
     const [query, setQuery] = useState('');
-    const [teamMembers, setTeamMembers] = useState<TeamMember[]>(initialUser.team?.members || []);
+    const [teamMembers, setTeamMembers] = useState<TeamMember[]>(
+        (initialUser.team?.members || []).map(m => {
+            if (m.full_name === initialUser.full_name) {
+                return { ...m, personas: initialUser.personas };
+            }
+            return m;
+        })
+    );
 
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
@@ -139,10 +159,16 @@ export default function ProfilePage() {
             setEmail(initialUser.email || '');
             setPhone(initialUser.phone || '');
             setAbout(initialUser.about || '');
+            setPersonas(initialUser.personas || []);
 
             if (initialUser.team) {
                 setSelectedTeam(initialUser.team.team_name || '');
-                setTeamMembers(initialUser.team.members || []);
+                setTeamMembers((initialUser.team.members || []).map(m => {
+                    if (m.full_name === initialUser.full_name) {
+                        return { ...m, personas: initialUser.personas };
+                    }
+                    return m;
+                }));
             } else {
                 setSelectedTeam('');
                 setTeamMembers([]);
@@ -169,6 +195,7 @@ export default function ProfilePage() {
         if (selectedTeam) formData.append('team', selectedTeam);
         if (phone) formData.append('phone', phone);
         if (about) formData.append('about', about);
+        personas.forEach(p => formData.append('personas', p));
         if (avatarFile) {
             formData.append('avatar', avatarFile);
         }
@@ -339,6 +366,54 @@ export default function ProfilePage() {
                                             </div>
 
                                             <div className="sm:col-span-6">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <label className="block text-sm font-medium leading-6 text-gray-900">
+                                                        My Persona
+                                                    </label>
+                                                    <div className="group relative flex items-center">
+                                                        <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
+                                                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-64 rounded bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block z-10">
+                                                            <p className="mb-1"><strong>Hacker:</strong> You build things. You love code and technical challenges.</p>
+                                                            <p className="mb-1"><strong>Hustler:</strong> You sell things. You focus on business, marketing, and growth.</p>
+                                                            <p><strong>Hipster:</strong> You design things. You care about UX, UI, and aesthetics.</p>
+                                                            <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {[
+                                                        { id: 'hacker', label: 'I am a Hacker', emoji: '💻' },
+                                                        { id: 'hustler', label: 'I am a Hustler', emoji: '💼' },
+                                                        { id: 'hipster', label: 'I am a Hipster', emoji: '🎨' }
+                                                    ].map((option) => (
+                                                        <div key={option.id} className="relative flex items-start">
+                                                            <div className="flex h-6 items-center">
+                                                                <input
+                                                                    id={option.id}
+                                                                    name="personas"
+                                                                    type="checkbox"
+                                                                    checked={personas.includes(option.id)}
+                                                                    onChange={(e) => {
+                                                                        if (e.target.checked) {
+                                                                            setPersonas([...personas, option.id]);
+                                                                        } else {
+                                                                            setPersonas(personas.filter(p => p !== option.id));
+                                                                        }
+                                                                    }}
+                                                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                                                />
+                                                            </div>
+                                                            <div className="ml-3 text-sm leading-6">
+                                                                <label htmlFor={option.id} className="font-medium text-gray-900">
+                                                                    {option.emoji} {option.label}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="sm:col-span-6">
                                                 <div className="flex items-start gap-x-6">
                                                     <div className="shrink-0 flex flex-col items-center">
                                                         <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">Team Avatar</label>
@@ -459,76 +534,105 @@ export default function ProfilePage() {
                     </div>
 
                     <section aria-labelledby="timeline-title" className="lg:col-span-1 lg:col-start-3">
-                        <div className="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6">
-                            <div className="flex flex-col items-center pb-6 border-b border-gray-200 relative">
-                                <div className="absolute top-0 right-0">
-                                    {(() => {
-                                        const size = teamMembers.length;
-                                        const isValid = size >= 2 && size <= 5;
-                                        return (
-                                            <div className="group relative flex items-center gap-1">
-                                                <span
-                                                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${isValid
-                                                        ? 'bg-green-50 text-green-700 ring-green-600/20'
-                                                        : 'bg-red-50 text-red-700 ring-red-600/10'
-                                                        }`}
-                                                >
-                                                    {isValid ? 'Team Ready' : 'Invalid Size'}
-                                                </span>
+                        <div className="bg-white shadow sm:rounded-lg">
+                            {(() => {
+                                const size = teamMembers.length;
+                                const isValid = size >= 2 && size <= 5;
+                                return (
+                                    <div className={`px-4 py-3 sm:px-6 rounded-t-lg border-b flex items-center justify-between ${isValid
+                                        ? 'bg-green-50 border-green-100'
+                                        : 'bg-gray-50 border-gray-200'
+                                        }`}>
+                                        <div className="flex items-center gap-2">
+                                            {isValid ? (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-2 w-2 rounded-full bg-green-600" />
+                                                    <span className="text-sm font-semibold text-green-900">Team Ready</span>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="flex h-2 w-2 rounded-full bg-yellow-500" />
+                                                    <span className="text-sm font-semibold text-gray-700">Forming Team</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                                            <span>{size}/5</span>
+                                            <span className="hidden sm:inline">members</span>
+                                            <div className="group relative flex items-center">
                                                 <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
-
-                                                {/* Tooltip */}
                                                 <div className="absolute bottom-full right-0 mb-2 hidden w-48 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block z-10">
                                                     Teams must have between 2 and 5 members.
-                                                    <div className="absolute top-full right-4 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
+                                                    <div className="absolute top-full right-1 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
                                                 </div>
                                             </div>
-                                        );
-                                    })()}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
+                            <div className="px-4 py-5 sm:px-6">
+                                <div className="flex flex-col items-center pb-6 border-b border-gray-200">
+                                    <img
+                                        className="h-24 w-24 rounded-lg object-cover mb-4"
+                                        src={teamAvatarUrl}
+                                        alt={selectedTeam || 'Team'}
+                                    />
+                                    <h2 id="timeline-title" className="text-xl font-bold text-gray-900 text-center">
+                                        {selectedTeam || 'No Team Selected'}
+                                    </h2>
                                 </div>
-                                <img
-                                    className="h-24 w-24 rounded-lg object-cover mb-4"
-                                    src={teamAvatarUrl}
-                                    alt={selectedTeam || 'Team'}
-                                />
-                                <h2 id="timeline-title" className="text-xl font-bold text-gray-900 text-center">
-                                    {selectedTeam || 'No Team Selected'}
-                                </h2>
-                            </div>
 
-                            <h3 className="mt-6 text-sm font-medium text-gray-500">Team Members</h3>
+                                <h3 className="mt-6 text-sm font-medium text-gray-500">Team Members</h3>
 
-                            {/* Team member list */}
-                            <div className="mt-4 flow-root">
-                                <ul role="list" className="-my-5 divide-y divide-gray-200">
-                                    {teamMembers.length > 0 ? (
-                                        teamMembers.map((member, index) => {
-                                            const memberInitials = getInitials(member.full_name);
-                                            const memberAvatarUrl = member.avatar_url || generateAvatarUrl(memberInitials);
-                                            return (
-                                                <li key={index} className="py-4">
-                                                    <div className="flex items-center space-x-4">
-                                                        <div className="shrink-0">
-                                                            <img
-                                                                className="h-8 w-8 rounded-full object-cover"
-                                                                src={memberAvatarUrl}
-                                                                alt={member.full_name}
-                                                            />
+                                {/* Team member list */}
+                                <div className="mt-4 flow-root">
+                                    <ul role="list" className="-my-5 divide-y divide-gray-200">
+                                        {teamMembers.length > 0 ? (
+                                            teamMembers.map((member, index) => {
+                                                const memberInitials = getInitials(member.full_name);
+                                                const memberAvatarUrl = member.avatar_url || generateAvatarUrl(memberInitials);
+                                                return (
+                                                    <li key={index} className="py-4">
+                                                        <div className="flex items-center space-x-4">
+                                                            <div className="shrink-0">
+                                                                <img
+                                                                    className="h-10 w-10 rounded-full object-cover"
+                                                                    src={memberAvatarUrl}
+                                                                    alt={member.full_name}
+                                                                />
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-sm font-medium text-gray-900">{member.full_name}</p>
+                                                                <div className="mt-1 flex flex-wrap gap-1">
+                                                                    {member.personas && member.personas.length > 0 ? (
+                                                                        member.personas.map(p => {
+                                                                            const config = PERSONA_CONFIG[p.toLowerCase()] || { label: p, emoji: '👤', color: 'bg-gray-50 text-gray-600', ring: 'ring-gray-500/10' };
+                                                                            return (
+                                                                                <span key={p} className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${config.color} ${config.ring}`}>
+                                                                                    <span className="mr-1">{config.emoji}</span>
+                                                                                    {config.label}
+                                                                                </span>
+                                                                            );
+                                                                        })
+                                                                    ) : (
+                                                                        <span className="text-xs text-gray-500 italic">
+                                                                            {member.role || 'Participant'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <div className="min-w-0 flex-1">
-                                                            <p className="truncate text-sm font-medium text-gray-900">{member.full_name}</p>
-                                                            <p className="truncate text-sm text-gray-500">{member.role || 'Member'}</p>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            );
-                                        })
-                                    ) : (
-                                        <li className="py-4">
-                                            <p className="text-sm text-gray-500">No team members yet.</p>
-                                        </li>
-                                    )}
-                                </ul>
+                                                    </li>
+                                                );
+                                            })
+                                        ) : (
+                                            <li className="py-4">
+                                                <p className="text-sm text-gray-500">No team members yet.</p>
+                                            </li>
+                                        )}
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </section>

@@ -19,17 +19,17 @@ const resolveApiBase = () => {
             // If we are on esafety.localhost, point to the backend on port 80 with the same hostname
             // This ensures cookies with Domain=.localhost are sent/received correctly
             if (hostname === 'esafety.localhost') {
-                return 'http://localhost:80';
+                return 'http://localhost';
             }
             // Fallback for standard localhost or other local domains
-            return 'http://localhost:8000';
+            return 'http://localhost';
         }
 
         return configured || window.location.origin;
     }
 
     // Server-side (SSR) fallback
-    return configured || 'http://localhost:80';
+    return configured || 'http://localhost';
 };
 
 export const API_URL = resolveApiBase();
@@ -69,6 +69,10 @@ axiosInstance.interceptors.request.use(
             // Set the CSRF token
             config.headers.set('X-CSRFToken', csrfToken);
         }
+        console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
+            headers: config.headers,
+            dataIsFormData: config.data instanceof FormData
+        });
         return config;
     },
     (error) => Promise.reject(error)

@@ -7,7 +7,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const cookieHeader = request.headers.get("Cookie");
 
     // 2. Pass them to the backend using axios
-    const authResponse = await axios.get("http://esafety.localhost/api/v1/auth/me/", {
+    const authResponse = await axios.get("http://localhost/api/v1/auth/me/", {
         headers: {
             // CRITICAL: Forward the cookies so Django knows who we are
             Cookie: cookieHeader || "",
@@ -24,9 +24,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     // Check for esafety subdomain and redirect to app dashboard
     const url = new URL(request.url);
-    if (url.hostname.startsWith("esafety.")) {
-        return redirect("/esafety");
-    }
+    // Subdomain logic removed as we are moving to path-based routing
+
 
     let hackathons = [];
     try {
@@ -98,7 +97,7 @@ export default function PlatformDashboard() {
                             <div className="flex-shrink-0">
                                 {h.slug === "esafety" && (
                                     <a
-                                        href="/esafety"
+                                        href="/esafety/dashboard"
                                         className="relative inline-flex items-center rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 z-10"
                                     >
                                         Open App

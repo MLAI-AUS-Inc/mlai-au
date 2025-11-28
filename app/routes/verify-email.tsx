@@ -19,7 +19,7 @@ export default function VerifyEmail() {
             try {
                 // CRITICAL: Ensure this URL matches your backend
                 // Note: Using port 80 (default) as per your docker config
-                const backendUrl = "http://esafety.localhost/api/v1/auth/verify-magic-link/";
+                const backendUrl = "http://localhost/api/v1/auth/verify-magic-link/";
                 console.log("Calling backend:", backendUrl);
 
                 const response = await axios.get(backendUrl, {
@@ -31,7 +31,8 @@ export default function VerifyEmail() {
                 setStatus("Success! Redirecting...");
 
                 // Wait a moment before redirecting to ensure cookies are set
-                setTimeout(() => navigate("/platform/dashboard"), 1000);
+                const next = searchParams.get("next") || "/esafety/dashboard";
+                setTimeout(() => navigate(next), 1000);
 
             } catch (error) {
                 console.error("Verification failed:", error);

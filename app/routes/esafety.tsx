@@ -12,7 +12,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const cookieHeader = request.headers.get("Cookie");
 
     // 2. Forward it to the backend API call
-    const response = await fetch("http://esafety.localhost/api/v1/auth/me/", {
+    const response = await fetch("http://localhost/api/v1/auth/me/", {
         headers: {
             "Content-Type": "application/json",
             // CRITICAL: Pass the cookies so the backend knows who we are

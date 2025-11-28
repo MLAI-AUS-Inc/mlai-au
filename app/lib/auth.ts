@@ -119,15 +119,14 @@ export async function updateUser(env: Env, body: {
     // Use dynamic import for form-data to avoid client-side bundling issues
     // and to ensure we use the Node.js compatible FormData implementation for Axios
     if (body instanceof FormData) {
+        console.log("updateUser: Body is FormData");
         try {
             const { default: NodeFormData } = await import('form-data');
             const form = new NodeFormData();
 
             // Convert standard FormData to NodeFormData
-            // Note: FormData.entries() returns an iterator of [key, value]
             for (const [key, value] of body.entries()) {
                 if (value instanceof File) {
-                    // Convert File to Buffer for form-data
                     const buffer = Buffer.from(await value.arrayBuffer());
                     form.append(key, buffer, {
                         filename: value.name,
@@ -138,17 +137,32 @@ export async function updateUser(env: Env, body: {
                 }
             }
 
-            const response = await axiosInstance.patch("/api/v1/auth/update-profile/", form, {
+            const formHeaders = form.getHeaders();
+            console.log("updateUser: Form headers", formHeaders);
+
+            // Convert form stream to buffer to avoid Axios/Bun stream issues
+            const buffer = await new Promise<Buffer>((resolve, reject) => {
+                const chunks: Buffer[] = [];
+                form.on('data', (chunk: any) => chunks.push(Buffer.from(chunk)));
+                form.on('end', () => resolve(Buffer.concat(chunks)));
+                form.on('error', reject);
+                form.resume();
+            });
+
+            console.log(`updateUser: Sending buffer of size ${buffer.length}`);
+
+            const response = await axiosInstance.patch("/api/v1/auth/update-profile/", buffer, {
                 headers: {
                     ...headers,
-                    ...form.getHeaders()
+                    ...formHeaders
                 }
             });
             return response.data;
         } catch (e) {
             console.warn("Failed to load form-data or convert body, falling back to standard FormData", e);
-            // Fallback if dynamic import fails (e.g. on client, though this should be server-only)
         }
+    } else {
+        console.log("updateUser: Body is NOT FormData", body);
     }
 
     const response = await axiosInstance.patch("/api/v1/auth/update-profile/", body, { headers });

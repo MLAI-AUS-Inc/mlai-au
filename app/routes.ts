@@ -20,7 +20,8 @@ export default [
 
   // eSafety App routes
   route("/esafety", "routes/esafety.tsx", [
-    index("routes/esafety.dashboard.tsx"),
+    index("routes/esafety._index.tsx"),
+    route("dashboard", "routes/esafety.dashboard.tsx"),
     route("team", "routes/esafety.team.tsx"),
     route("submit", "routes/esafety.submit.tsx"),
     route("leaderboard", "routes/esafety.leaderboard.tsx"),

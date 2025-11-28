@@ -13,30 +13,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     if (user) {
         const url = new URL(request.url);
-        let next = url.searchParams.get("next") || "/platform/dashboard";
         const app = url.searchParams.get("app");
+        let next = url.searchParams.get("next");
 
-        // Fix next url if it points to the non-existent dashboard route
-        if (next === "/esafety/dashboard") {
-            next = "/esafety";
-        }
-
-        if (app === "esafety") {
-            // If on localhost, we need to handle the port
-            const port = url.port ? `:${url.port}` : "";
-            const protocol = url.protocol;
-            // Assuming the base domain is localhost or similar. 
-            // If we are already on esafety. subdomain, this logic is fine (it will just be esafety.esafety... if we are not careful, but we are on platform.login which is likely root or platform subdomain)
-            // Actually, platform.login is likely on root or www.
-            // Let's strip any existing subdomain just in case, or just assume we are on root/platform and want to go to esafety.
-            // Simplest for dev:
-            const hostname = url.hostname;
-            if (!hostname.startsWith("esafety.")) {
-                // Replace current hostname with esafety.hostname (if localhost -> esafety.localhost)
-                // This assumes we are on a "root" domain like localhost or mlai.au
-                const newHost = `esafety.${hostname}`;
-                return redirect(`${protocol}//${newHost}${port}${next}`);
-            }
+        if (!next) {
+            next = (app === "esafety") ? "/esafety/dashboard" : "/platform/dashboard";
         }
 
         return redirect(next);
@@ -49,8 +30,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     const intent = formData.get("intent")?.toString() ?? "check";
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
-    const next = formData.get("next")?.toString() ?? "/platform/dashboard";
     const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
+    const next = formData.get("next")?.toString() ?? (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -88,8 +69,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
-    const next = searchParams.get("next") || "/platform/dashboard";
     const app = searchParams.get("app");
+    const next = searchParams.get("next") || (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
     const error = searchParams.get("error");
     const submit = useSubmit();
 

@@ -35,7 +35,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
     const pathname = location.pathname;
 
     const navigation = [
-        { name: 'Dashboard', href: '/esafety', icon: HomeIcon },
+        { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
         { name: 'Profile', href: '/esafety/profile', icon: UserCircleIcon },
         { name: 'Leaderboard', href: '/esafety/leaderboard', icon: TrophyIcon },
         { name: 'Submit', href: '/esafety/submit', icon: DocumentArrowUpIcon },
@@ -48,7 +48,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
     }));
 
     const userNavigation = [
-        { name: 'Dashboard', href: '/esafety' },
+        { name: 'Dashboard', href: '/esafety/dashboard' },
         { name: 'Profile', href: '/esafety/profile' },
     ];
 
@@ -112,7 +112,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                                     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
                                         <div className="flex h-16 shrink-0 items-center">
                                             <Link
-                                                to="/esafety"
+                                                to="/esafety/dashboard"
                                                 onClick={() => setSidebarOpen(false)}
                                             >
                                                 <ImageWithFallback
