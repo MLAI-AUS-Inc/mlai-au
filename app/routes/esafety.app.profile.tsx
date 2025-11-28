@@ -8,7 +8,7 @@ import { getTeamNames, updateUser, getCurrentUser } from '~/lib/auth';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 import { getEnv } from "~/lib/env.server";
 import AvatarModal from "~/components/AvatarModal";
-import { PencilIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 
 interface TeamMember {
     full_name: string;
@@ -53,6 +53,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const formData = await request.formData();
+
 
     try {
         await updateUser(env, formData, request);
@@ -339,9 +340,9 @@ export default function ProfilePage() {
 
                                             <div className="sm:col-span-6">
                                                 <div className="flex items-start gap-x-6">
-                                                    <div className="shrink-0">
+                                                    <div className="shrink-0 flex flex-col items-center">
                                                         <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">Team Avatar</label>
-                                                        <div className="relative">
+                                                        <div className="relative size-16">
                                                             <img
                                                                 alt=""
                                                                 src={teamAvatarUrl}
@@ -459,12 +460,46 @@ export default function ProfilePage() {
 
                     <section aria-labelledby="timeline-title" className="lg:col-span-1 lg:col-start-3">
                         <div className="bg-white px-4 py-5 shadow sm:rounded-lg sm:px-6">
-                            <h2 id="timeline-title" className="text-lg font-medium text-gray-900">
-                                Team Members
-                            </h2>
+                            <div className="flex flex-col items-center pb-6 border-b border-gray-200 relative">
+                                <div className="absolute top-0 right-0">
+                                    {(() => {
+                                        const size = teamMembers.length;
+                                        const isValid = size >= 2 && size <= 5;
+                                        return (
+                                            <div className="group relative flex items-center gap-1">
+                                                <span
+                                                    className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset ${isValid
+                                                        ? 'bg-green-50 text-green-700 ring-green-600/20'
+                                                        : 'bg-red-50 text-red-700 ring-red-600/10'
+                                                        }`}
+                                                >
+                                                    {isValid ? 'Team Ready' : 'Invalid Size'}
+                                                </span>
+                                                <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
+
+                                                {/* Tooltip */}
+                                                <div className="absolute bottom-full right-0 mb-2 hidden w-48 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block z-10">
+                                                    Teams must have between 2 and 5 members.
+                                                    <div className="absolute top-full right-4 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                                <img
+                                    className="h-24 w-24 rounded-lg object-cover mb-4"
+                                    src={teamAvatarUrl}
+                                    alt={selectedTeam || 'Team'}
+                                />
+                                <h2 id="timeline-title" className="text-xl font-bold text-gray-900 text-center">
+                                    {selectedTeam || 'No Team Selected'}
+                                </h2>
+                            </div>
+
+                            <h3 className="mt-6 text-sm font-medium text-gray-500">Team Members</h3>
 
                             {/* Team member list */}
-                            <div className="mt-6 flow-root">
+                            <div className="mt-4 flow-root">
                                 <ul role="list" className="-my-5 divide-y divide-gray-200">
                                     {teamMembers.length > 0 ? (
                                         teamMembers.map((member, index) => {
@@ -510,6 +545,7 @@ export default function ProfilePage() {
                 onClose={() => setIsTeamAvatarModalOpen(false)}
                 onSave={handleTeamAvatarSave}
                 initialImage={teamAvatarUrl}
+                title="Update Team Logo"
             />
         </div>
     );

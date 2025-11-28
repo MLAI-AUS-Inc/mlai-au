@@ -121,60 +121,18 @@ export default function EsafetyAppDashboard() {
                     <div className="w-full lg:w-5/12 space-y-6">
                         {/* Kaggle Competition Card */}
                         <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition (Coming Soon)</h3>
                             <p className="text-sm text-gray-700">
                                 Dive into our dataset and challenge yourself to build the best AI model. Compete on Kaggle!
                             </p>
-                            <a
-                                href="https://www.kaggle.com/t/f1cbdfca97334325ae7147fe6d3a93e7"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
-                            >
-                                Go to Kaggle
-                            </a>
-                        </div>
-
-                        {/* Beginner Tract Card */}
-                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Beginner Tract</h3>
-                            <p className="text-sm text-gray-700">
-                                Learn AI step by step, even if you have zero coding experience, and build your first neural network!
-                            </p>
-                            <Link
-                                to="/beginner"
-                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
-                            >
-                                Go to Beginner Tract
-                            </Link>
-                        </div>
-
-                        {/* Advanced Tract Card */}
-                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Advanced Tract</h3>
-                            <p className="text-sm text-gray-700">
-                                Identify a real-world healthcare challenge, build a solution, and pitch your idea for a big prize!
-                            </p>
-                            <Link
-                                to="/advanced"
-                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
-                            >
-                                Go to Advanced Tract
-                            </Link>
                         </div>
 
                         {/* Submissions Card */}
                         <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions (Coming Soon)</h3>
                             <p className="text-sm text-gray-700">
                                 Ready to submit your project or AI model? Head to the submissions page here.
                             </p>
-                            <Link
-                                to="/submissions"
-                                className="mt-3 inline-block text-indigo-600 font-semibold hover:underline"
-                            >
-                                Go to Submissions
-                            </Link>
                         </div>
                     </div>
                 </div>

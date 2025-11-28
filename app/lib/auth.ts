@@ -62,8 +62,15 @@ export async function getCurrentUser(env: Env, request?: Request) {
     }
 }
 
-export async function logout(env: Env) {
-    const response = await axiosInstance.post("/api/v1/auth/logout");
+export async function logout(env: Env, request?: Request) {
+    const headers: Record<string, string> = {};
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+    const response = await axiosInstance.post("/api/v1/auth/logout/", {}, { headers });
     return response.data;
 }
 

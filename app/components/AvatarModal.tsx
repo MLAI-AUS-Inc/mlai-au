@@ -10,9 +10,10 @@ interface AvatarModalProps {
     onClose: () => void;
     onSave: (file: File) => void;
     initialImage?: string;
+    title?: string;
 }
 
-export default function AvatarModal({ isOpen, onClose, onSave, initialImage }: AvatarModalProps) {
+export default function AvatarModal({ isOpen, onClose, onSave, initialImage, title }: AvatarModalProps) {
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
@@ -85,7 +86,7 @@ export default function AvatarModal({ isOpen, onClose, onSave, initialImage }: A
                                     </div>
                                     <div className="mt-3 text-center sm:mt-5">
                                         <Dialog.Title as="h3" className="text-base font-semibold leading-6 text-gray-900">
-                                            Update profile picture
+                                            {title || "Update profile picture"}
                                         </Dialog.Title>
                                     </div>
                                 </div>
