@@ -25,6 +25,11 @@ const resolveApiBase = () => {
             return 'http://localhost';
         }
 
+        // Production domain check
+        if (hostname === 'mlai.au' || hostname === 'www.mlai.au') {
+            return 'https://api.mlai.au';
+        }
+
         return configured || window.location.origin;
     }
 
