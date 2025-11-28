@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router";
-import axios from "axios";
+import { axiosInstance } from "~/lib/api";
 
 export default function VerifyEmail() {
     const [searchParams] = useSearchParams();
@@ -17,14 +17,8 @@ export default function VerifyEmail() {
         const verify = async () => {
             console.log("Starting verification for token:", token);
             try {
-                // CRITICAL: Ensure this URL matches your backend
-                // Note: Using port 80 (default) as per your docker config
-                const backendUrl = "http://localhost/api/v1/auth/verify-magic-link/";
-                console.log("Calling backend:", backendUrl);
-
-                const response = await axios.get(backendUrl, {
+                const response = await axiosInstance.get("/api/v1/auth/verify-magic-link/", {
                     params: { token },
-                    withCredentials: true, // IMPORTANT: Allows setting cookies
                 });
 
                 console.log("Verification success:", response.data);
