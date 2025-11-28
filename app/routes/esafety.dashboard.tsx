@@ -24,46 +24,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         headers["Cookie"] = cookieHeader;
     }
 
-    // Mock announcements data for fallback
-    const mockAnnouncements: Announcement[] = [
-        {
-            id: '1',
-            title: 'Welcome to the eSafety Hackathon!',
-            body: '<p>We are thrilled to have you here. Get ready to build innovative solutions for online safety. Check out the resources tab for datasets and guides.</p>',
-            date: 'Today at 9:00 AM',
-            datetime: new Date().toISOString(),
-            author: {
-                name: 'eSafety Team',
-                imageUrl: 'https://ui-avatars.com/api/?name=eSafety+Team&background=random',
-                href: '#',
-            },
-        },
-        {
-            id: '2',
-            title: 'Submission Guidelines',
-            body: '<p>Please ensure your submissions include a video demo and a link to your GitHub repository. The deadline is Sunday at 5 PM.</p>',
-            date: 'Yesterday',
-            datetime: new Date(Date.now() - 86400000).toISOString(),
-            author: {
-                name: 'Hackathon Admin',
-                imageUrl: 'https://ui-avatars.com/api/?name=Admin&background=random',
-                href: '#',
-            },
-        },
-        {
-            id: '3',
-            title: 'Mentor Sessions',
-            body: '<p>Mentors will be available in the main hall from 2 PM to 4 PM today. Don\'t miss this opportunity to get feedback on your ideas.</p>',
-            date: '2 days ago',
-            datetime: new Date(Date.now() - 172800000).toISOString(),
-            author: {
-                name: 'Community Manager',
-                imageUrl: 'https://ui-avatars.com/api/?name=Community&background=random',
-                href: '#',
-            },
-        }
-    ];
-
     try {
         const [hackathon, announcements] = await Promise.all([
             getHackathon("esafety", headers).catch(() => ({
@@ -73,7 +33,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 start_date: "2025-01-01",
                 end_date: "2025-01-02"
             })),
-            getAnnouncements("esafety", headers).catch(() => mockAnnouncements)
+            getAnnouncements("esafety", headers)
         ]);
 
         return { user, hackathon, announcements };
@@ -88,7 +48,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 start_date: "2025-01-01",
                 end_date: "2025-01-02"
             },
-            announcements: mockAnnouncements
+            announcements: []
         };
     }
 }
