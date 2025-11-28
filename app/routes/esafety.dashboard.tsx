@@ -8,6 +8,7 @@ import Leaderboard from "~/components/Leaderboard";
 import Announcements, { type Announcement } from "~/components/Announcements";
 
 import { getHackathon, getAnnouncements } from "~/services/hackathon";
+import Agenda from "~/components/Agenda";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -89,6 +90,7 @@ export default function EsafetyAppDashboard() {
                     {/* Left Column (7/12): Announcements */}
                     <div className="w-full lg:w-7/12 space-y-6">
                         <Announcements announcements={announcements} />
+                        <Agenda />
                     </div>
 
                     {/* Right Column (5/12): Multiple Cards */}
