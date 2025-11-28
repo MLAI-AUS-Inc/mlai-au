@@ -37,6 +37,9 @@
         "vite": "^6.4.1",
         "vite-tsconfig-paths": "^5.1.4",
       },
+      "optionalDependencies": {
+        "@rollup/rollup-linux-x64-gnu": "4.34.8",
+      },
     },
   },
   "overrides": {
@@ -186,6 +189,8 @@
     "@remix-run/node-fetch-server": ["@remix-run/node-fetch-server@0.8.1", "", {}, ""],
 
     "@rollup/rollup-darwin-arm64": ["@rollup/rollup-darwin-arm64@4.46.2", "", { "os": "darwin", "cpu": "arm64" }, ""],
+
+    "@rollup/rollup-linux-x64-gnu": ["@rollup/rollup-linux-x64-gnu@4.34.8", "", { "os": "linux", "cpu": "x64" }, "sha512-8y7ED8gjxITUltTUEJLQdgpbPh1sUQ0kMTmufRF/Ns5tI9TNMNlhWtmPKKHCU0SilX+3MJkZ0zERYYGIVBYHIA=="],
 
     "@rowanmanning/feed-parser": ["@rowanmanning/feed-parser@2.1.1", "", { "dependencies": { "fast-xml-parser": "^5.0.8", "html-entities": "^2.3.3" } }, ""],
 
