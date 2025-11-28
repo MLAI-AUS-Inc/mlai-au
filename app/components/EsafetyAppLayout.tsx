@@ -159,7 +159,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
 
                                                 <li className="mt-auto">
                                                     <a
-                                                        href="http://localhost:5173/"
+                                                        href="/"
                                                         className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200 ease-in-out"
                                                     >
                                                         <ArrowLeftOnRectangleIcon
@@ -238,7 +238,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                                 </li>
                                 <li className="mt-auto mb-4">
                                     <a
-                                        href="http://localhost:5173/"
+                                        href="/"
                                         className={classNames(
                                             "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
                                             isExpanded ? '' : 'justify-center'

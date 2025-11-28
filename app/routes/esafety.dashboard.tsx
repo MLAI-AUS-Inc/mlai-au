@@ -13,22 +13,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     // 1. Extract the cookie header from the incoming browser request
     const cookieHeader = request.headers.get("Cookie");
+    const user = await getCurrentUser(env, request);
 
-    // 2. Forward it to the backend API call using axios
-    const response = await axios.get("http://localhost/api/v1/auth/me/", {
-        headers: {
-            // CRITICAL: Pass the cookies so the backend knows who we are
-            Cookie: cookieHeader || "",
-        },
-        // Ensure axios doesn't throw on 401 so we can handle it manually
-        validateStatus: (status) => status < 500,
-    });
-
-    if (response.status === 401) {
+    if (!user) {
         throw redirect("/platform/login?next=/esafety/dashboard");
     }
-
-    const user = response.data;
 
     const headers: Record<string, string> = {};
     if (cookieHeader) {

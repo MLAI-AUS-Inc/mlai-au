@@ -30,8 +30,11 @@ export async function sendMagicLink(env: Env, body: {
     next?: string;
     app?: "esafety" | "hospital";
 }) {
+    // Derive app from next if not provided
+    const app = body.app || (body.next?.startsWith("/esafety") ? "esafety" : "hospital");
+
     // env is not needed for axiosInstance as it uses import.meta.env
-    const response = await axiosInstance.post("/api/v1/auth/send-magic-link/", body);
+    const response = await axiosInstance.post("/api/v1/auth/send-magic-link/", { ...body, app });
     return response.data;
 }
 
