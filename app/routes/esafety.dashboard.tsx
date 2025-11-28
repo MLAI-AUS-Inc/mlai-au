@@ -94,7 +94,7 @@ export default function EsafetyAppDashboard() {
                     {/* Right Column (5/12): Multiple Cards */}
                     <div className="w-full lg:w-5/12 space-y-6">
                         {/* Bot Social Card */}
-                        <a href="#" className="block group relative h-64 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                        <a href="https://botsocial.mlai.au/" target="_blank" rel="noopener noreferrer" className="block group relative h-64 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
                             <div className="absolute inset-0">
                                 <img
                                     src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504"
@@ -108,13 +108,32 @@ export default function EsafetyAppDashboard() {
                                 <p className="text-sm text-gray-200 font-medium">Fake Social Network</p>
                             </div>
                         </a>
-                        {/* Kaggle Competition Card */}
-                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition (Coming Soon)</h3>
+
+                        {/* Mini Challenge Tutorials Card */}
+                        <a
+                            href="https://www.kaggle.com/competitions/needle-in-the-hashtag"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6 hover:shadow-md transition-shadow group"
+                        >
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Mini Challenge Tutorials</h3>
                             <p className="text-sm text-gray-700">
                                 Dive into our dataset and challenge yourself to build the best AI model. Compete on Kaggle!
                             </p>
-                        </div>
+                        </a>
+
+                        {/* Download Full Dataset Card */}
+                        <a
+                            href="https://www.kaggle.com/competitions/needle-in-the-hashtag/data"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6 hover:shadow-md transition-shadow group"
+                        >
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Download Full Dataset</h3>
+                            <p className="text-sm text-gray-700">
+                                Access the complete dataset for the challenge.
+                            </p>
+                        </a>
 
                         {/* Submissions Card */}
                         <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
