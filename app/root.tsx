@@ -32,7 +32,7 @@ export default function Layout() {
   const location = useLocation();
 
   // Check if we're in the eSafety app routes or AI Hospital app routes
-  const isEsafetyApp = location.pathname.startsWith('/esafety/app');
+  const isEsafetyApp = location.pathname.startsWith('/esafety');
   const isHospitalApp = location.pathname.startsWith('/hospital/app');
   const isAppRoute = isEsafetyApp || isHospitalApp;
 

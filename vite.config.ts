@@ -23,7 +23,7 @@ export default defineConfig({
     reactRouter(),
     cloudflare({
       viteEnvironment: { name: "ssr" },
-      configPath: "./wrangler.toml",
+      configPath: "./wrangler.jsonc",
     }),
     tailwindcss(),
     tsconfigPaths(),

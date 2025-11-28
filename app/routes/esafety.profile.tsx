@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.profile";
+import type { Route } from "./+types/esafety.profile";
 import React, { useState, useEffect } from 'react';
 import { redirect, useLoaderData, useNavigate, useRevalidator, useFetcher } from "react-router";
 import { Combobox, Transition } from '@headlessui/react'
@@ -36,7 +36,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const user = await getCurrentUser(env, request);
 
     if (!user) {
-        return redirect("/platform/login?next=/esafety/app/profile");
+        return redirect("/platform/login?next=/esafety/profile");
     }
 
     // Fetch available team names

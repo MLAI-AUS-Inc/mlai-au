@@ -9,7 +9,7 @@ export function loader({ request }: Route.LoaderArgs) {
     const isEsafety = hostname.startsWith("esafety.");
 
     if (isEsafety) {
-        return redirect("/esafety/app");
+        return redirect("/esafety");
     }
 
     return redirect("/platform/dashboard");

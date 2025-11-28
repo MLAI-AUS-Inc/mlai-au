@@ -48,7 +48,7 @@ export default function Hackathons() {
 
                     {/* eSafety Hackathon Card */}
                     <Link
-                        to="/platform/login?app=esafety&next=/esafety/app/dashboard"
+                        to="/platform/login?app=esafety&next=/esafety/dashboard"
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                         onMouseEnter={() => setHoveredCard("esafety")}
                         onMouseLeave={() => setHoveredCard(null)}

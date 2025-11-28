@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.resources";
+import type { Route } from "./+types/esafety.resources";
 import { useLoaderData, redirect, Link } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";

@@ -17,8 +17,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const app = url.searchParams.get("app");
 
         // Fix next url if it points to the non-existent dashboard route
-        if (next === "/esafety/app/dashboard") {
-            next = "/esafety/app";
+        if (next === "/esafety/dashboard") {
+            next = "/esafety";
         }
 
         if (app === "esafety") {

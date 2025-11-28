@@ -19,13 +19,13 @@ export default [
   route("/verify-email", "routes/verify-email.tsx"),
 
   // eSafety App routes
-  route("/esafety/app", "routes/esafety.app.tsx", [
-    index("routes/esafety.app.dashboard.tsx"),
-    route("team", "routes/esafety.app.team.tsx"),
-    route("submit", "routes/esafety.app.submit.tsx"),
-    route("leaderboard", "routes/esafety.app.leaderboard.tsx"),
-    route("resources", "routes/esafety.app.resources.tsx"),
-    route("profile", "routes/esafety.app.profile.tsx"),
+  route("/esafety", "routes/esafety.tsx", [
+    index("routes/esafety.dashboard.tsx"),
+    route("team", "routes/esafety.team.tsx"),
+    route("submit", "routes/esafety.submit.tsx"),
+    route("leaderboard", "routes/esafety.leaderboard.tsx"),
+    route("resources", "routes/esafety.resources.tsx"),
+    route("profile", "routes/esafety.profile.tsx"),
   ]),
 
   // AI Hospital App routes

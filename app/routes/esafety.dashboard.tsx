@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.dashboard";
+import type { Route } from "./+types/esafety.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
 import axios from "axios";
 import { getEnv } from "~/lib/env.server";
@@ -25,7 +25,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     });
 
     if (response.status === 401) {
-        throw redirect("/platform/login?next=/esafety/app/dashboard");
+        throw redirect("/platform/login?next=/esafety/dashboard");
     }
 
     const user = response.data;

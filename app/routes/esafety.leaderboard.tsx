@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.leaderboard";
+import type { Route } from "./+types/esafety.leaderboard";
 import { useLoaderData, redirect } from "react-router";
 import { axiosInstance } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
