@@ -104,7 +104,7 @@ export default function EsafetyAppDashboard() {
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
                             </div>
                             <div className="relative h-full p-6 flex flex-col justify-end">
-                                <h3 className="text-xl font-bold text-white mb-1">Visit Bot Social</h3>
+                                <h3 className="text-xl font-bold text-white mb-1">🤖 Visit Bot Social</h3>
                                 <p className="text-sm text-gray-200 font-medium">Fake Social Network</p>
                             </div>
                         </a>
@@ -116,7 +116,7 @@ export default function EsafetyAppDashboard() {
                             rel="noopener noreferrer"
                             className="block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6 hover:shadow-md transition-shadow group"
                         >
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Mini Challenge Tutorials</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">🎓 Mini Challenge Tutorials</h3>
                             <p className="text-sm text-gray-700">
                                 Dive into our dataset and challenge yourself to build the best AI model. Compete on Kaggle!
                             </p>
@@ -129,15 +129,28 @@ export default function EsafetyAppDashboard() {
                             rel="noopener noreferrer"
                             className="block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6 hover:shadow-md transition-shadow group"
                         >
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">Download Full Dataset</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">💾 Download Full Dataset</h3>
                             <p className="text-sm text-gray-700">
                                 Access the complete dataset for the challenge.
                             </p>
                         </a>
 
+                        {/* Slack Chat Card */}
+                        <a
+                            href="https://mlai-aus.slack.com/archives/C09NGSZ2VHP"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6 hover:shadow-md transition-shadow group"
+                        >
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">💬 Join the hack chat</h3>
+                            <p className="text-sm text-gray-700">
+                                Connect with other participants and mentors on Slack.
+                            </p>
+                        </a>
+
                         {/* Submissions Card */}
                         <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions (Coming Soon)</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">📤 Submissions (Coming Soon)</h3>
                             <p className="text-sm text-gray-700">
                                 Ready to submit your project or AI model? Head to the submissions page here.
                             </p>
