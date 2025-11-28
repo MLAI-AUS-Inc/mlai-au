@@ -29,7 +29,7 @@ const HackathonPage = () => {
         <GbhPeople />
         <FAQ />
 
-        {/* <InfoForHackers /> */}
+        {/* <InfoForHackers x/> */}
       </div>
     </div>
   );
