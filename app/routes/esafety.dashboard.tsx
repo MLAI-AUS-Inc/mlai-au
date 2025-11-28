@@ -25,19 +25,36 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const [hackathon, announcements] = await Promise.all([
-            getHackathon("esafety", headers).catch(() => ({
-                name: "eSafety Hackathon",
+        console.log("Fetching dashboard data...");
+        const hackathonPromise = getHackathon("esafety", headers).then(data => {
+            console.log("getHackathon success");
+            return data;
+        }).catch(err => {
+            console.error("getHackathon failed", err.message);
+            return {
+                name: "eSafety Hackathon (Fallback)",
                 slug: "esafety",
                 description: "Develop AI solutions for online safety.",
                 start_date: "2025-01-01",
                 end_date: "2025-01-02"
-            })),
-            getAnnouncements("esafety", headers)
+            };
+        });
+
+        const announcementsPromise = getAnnouncements("esafety", headers).then(data => {
+            console.log("getAnnouncements success", data);
+            return data;
+        }).catch(err => {
+            console.error("getAnnouncements failed", err.message);
+            throw err; // Re-throw to be caught below
+        });
+
+        const [hackathon, announcements] = await Promise.all([
+            hackathonPromise,
+            announcementsPromise
         ]);
 
-        return { user, hackathon, announcements };
-    } catch (error) {
+        return { user, hackathon, announcements, error: null };
+    } catch (error: any) {
         console.error("Failed to load dashboard data", error);
         return {
             user,
@@ -48,17 +65,30 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 start_date: "2025-01-01",
                 end_date: "2025-01-02"
             },
-            announcements: []
+            announcements: [],
+            error: error.message || "Unknown error"
         };
     }
 }
 
 export default function EsafetyAppDashboard() {
-    const { user, hackathon, announcements } = useLoaderData<typeof loader>();
+    const { user, hackathon, announcements, error } = useLoaderData<typeof loader>();
 
     return (
         <div className="min-h-screen p-6 bg-gray-50">
             <div className="w-full mx-auto space-y-6">
+                {error && (
+                    <div className="rounded-md bg-red-50 p-4">
+                        <div className="flex">
+                            <div className="ml-3">
+                                <h3 className="text-sm font-medium text-red-800">Error loading data</h3>
+                                <div className="mt-2 text-sm text-red-700">
+                                    <p>{error}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {/* First Row */}
                 <div className="flex flex-col lg:flex-row gap-6">
                     {/* Left Column (7/12): Announcements */}
