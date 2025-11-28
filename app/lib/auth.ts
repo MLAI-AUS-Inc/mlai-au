@@ -64,7 +64,7 @@ export async function getCurrentUser(env: Env, request?: Request) {
 export async function logout(env: Env, request?: Request) {
     const client = getAxios(env, request);
     const response = await client.post("/api/v1/auth/logout/");
-    return response.data;
+    return response;
 }
 
 export async function createUser(env: Env, body: {
