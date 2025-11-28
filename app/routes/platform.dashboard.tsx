@@ -1,15 +1,58 @@
 import type { Route } from "./+types/platform.dashboard";
 import { redirect, useLoaderData } from "react-router";
-import { backendFetch } from "~/lib/backend.server";
-import { getCurrentUser } from "~/lib/auth";
+import axios from "axios";
+import { axiosInstance } from "~/lib/api";
+export async function loader({ request, context }: Route.LoaderArgs) {
+    // 1. Get cookies from the incoming browser request
+    const cookieHeader = request.headers.get("Cookie");
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
-    const user = await getCurrentUser(env);
-    if (!user) return redirect("/platform/login");
+    // 2. Pass them to the backend using axios
+    const authResponse = await axios.get("http://esafety.localhost/api/v1/auth/me/", {
+        headers: {
+            // CRITICAL: Forward the cookies so Django knows who we are
+            Cookie: cookieHeader || "",
+        },
+        // Ensure axios doesn't throw on 401 so we can handle it manually
+        validateStatus: (status) => status < 500,
+    });
 
-    const res = await backendFetch(env, "/api/v1/hackathons/", { method: "GET" });
-    const hackathons = await res.json();
+    if (authResponse.status === 401) {
+        throw redirect("/platform/login");
+    }
+
+    const user = authResponse.data;
+
+    // Check for esafety subdomain and redirect to app dashboard
+    const url = new URL(request.url);
+    if (url.hostname.startsWith("esafety.")) {
+        return redirect("/esafety/app");
+    }
+
+    let hackathons = [];
+    try {
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get("/api/v1/hackathons/", { headers });
+        hackathons = response.data;
+    } catch (error) {
+        console.error("Failed to fetch hackathons:", error);
+        // Fallback to mock data
+        hackathons = [
+            {
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety."
+            },
+            {
+                name: "AI Hospital Hackathon",
+                slug: "ai-hospital",
+                description: "AI in healthcare."
+            }
+        ];
+    }
 
     return { user, hackathons };
 }

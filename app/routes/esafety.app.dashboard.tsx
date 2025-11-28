@@ -1,95 +1,145 @@
 import type { Route } from "./+types/esafety.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
-import { backendFetch } from "~/lib/backend.server";
+import axios from "axios";
+import { getEnv } from "~/lib/env.server";
 import { getCurrentUser } from "~/lib/auth";
+import Leaderboard from "~/components/Leaderboard";
 
-export async function loader({ context }: Route.LoaderArgs) {
-    const env = context.cloudflare.env;
-    const user = await getCurrentUser(env);
-    if (!user) {
-        return redirect("/platform/login?next=https://esafety.mlai.au/app"); // Adjust domain if needed, or use relative
+import Announcements, { type Announcement } from "~/components/Announcements";
+
+import { getHackathon, getAnnouncements } from "~/services/hackathon";
+
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    // 1. Extract the cookie header from the incoming browser request
+    const cookieHeader = request.headers.get("Cookie");
+
+    // 2. Forward it to the backend API call using axios
+    const response = await axios.get("http://esafety.localhost/api/v1/auth/me/", {
+        headers: {
+            // CRITICAL: Pass the cookies so the backend knows who we are
+            Cookie: cookieHeader || "",
+        },
+        // Ensure axios doesn't throw on 401 so we can handle it manually
+        validateStatus: (status) => status < 500,
+    });
+
+    if (response.status === 401) {
+        throw redirect("/platform/login?next=/esafety/app/dashboard");
     }
 
-    // Fetch hackathon details
-    const res = await backendFetch(env, "/api/v1/hackathons/esafety/", { method: "GET" });
-    if (!res.ok) {
-        throw new Response("Hackathon not found", { status: 404 });
-    }
-    const hackathon = await res.json();
+    const user = response.data;
 
-    return { user, hackathon };
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
+    }
+
+    // Mock announcements data for fallback
+    const mockAnnouncements: Announcement[] = [
+        {
+            id: '1',
+            title: 'Welcome to the eSafety Hackathon!',
+            body: '<p>We are thrilled to have you here. Get ready to build innovative solutions for online safety. Check out the resources tab for datasets and guides.</p>',
+            date: 'Today at 9:00 AM',
+            datetime: new Date().toISOString(),
+            author: {
+                name: 'eSafety Team',
+                imageUrl: 'https://ui-avatars.com/api/?name=eSafety+Team&background=random',
+                href: '#',
+            },
+        },
+        {
+            id: '2',
+            title: 'Submission Guidelines',
+            body: '<p>Please ensure your submissions include a video demo and a link to your GitHub repository. The deadline is Sunday at 5 PM.</p>',
+            date: 'Yesterday',
+            datetime: new Date(Date.now() - 86400000).toISOString(),
+            author: {
+                name: 'Hackathon Admin',
+                imageUrl: 'https://ui-avatars.com/api/?name=Admin&background=random',
+                href: '#',
+            },
+        },
+        {
+            id: '3',
+            title: 'Mentor Sessions',
+            body: '<p>Mentors will be available in the main hall from 2 PM to 4 PM today. Don\'t miss this opportunity to get feedback on your ideas.</p>',
+            date: '2 days ago',
+            datetime: new Date(Date.now() - 172800000).toISOString(),
+            author: {
+                name: 'Community Manager',
+                imageUrl: 'https://ui-avatars.com/api/?name=Community&background=random',
+                href: '#',
+            },
+        }
+    ];
+
+    try {
+        const [hackathon, announcements] = await Promise.all([
+            getHackathon("esafety", headers).catch(() => ({
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety.",
+                start_date: "2025-01-01",
+                end_date: "2025-01-02"
+            })),
+            getAnnouncements("esafety", headers).catch(() => mockAnnouncements)
+        ]);
+
+        return { user, hackathon, announcements };
+    } catch (error) {
+        console.error("Failed to load dashboard data", error);
+        return {
+            user,
+            hackathon: {
+                name: "eSafety Hackathon",
+                slug: "esafety",
+                description: "Develop AI solutions for online safety.",
+                start_date: "2025-01-01",
+                end_date: "2025-01-02"
+            },
+            announcements: mockAnnouncements
+        };
+    }
 }
 
 export default function EsafetyAppDashboard() {
-    const { user, hackathon } = useLoaderData<typeof loader>();
+    const { user, hackathon, announcements } = useLoaderData<typeof loader>();
 
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="md:flex md:items-center md:justify-between">
-                <div className="min-w-0 flex-1">
-                    <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        {hackathon.name} Dashboard
-                    </h2>
+        <div className="min-h-screen p-6 bg-gray-50">
+            <div className="w-full mx-auto space-y-6">
+                {/* First Row */}
+                <div className="flex flex-col lg:flex-row gap-6">
+                    {/* Left Column (7/12): Announcements */}
+                    <div className="w-full lg:w-7/12 space-y-6">
+                        <Announcements announcements={announcements} />
+                    </div>
+
+                    {/* Right Column (5/12): Multiple Cards */}
+                    <div className="w-full lg:w-5/12 space-y-6">
+                        {/* Kaggle Competition Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition (Coming Soon)</h3>
+                            <p className="text-sm text-gray-700">
+                                Dive into our dataset and challenge yourself to build the best AI model. Compete on Kaggle!
+                            </p>
+                        </div>
+
+                        {/* Submissions Card */}
+                        <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-2">Submissions (Coming Soon)</h3>
+                            <p className="text-sm text-gray-700">
+                                Ready to submit your project or AI model? Head to the submissions page here.
+                            </p>
+                        </div>
+                    </div>
                 </div>
-                <div className="mt-4 flex md:ml-4 md:mt-0">
-                    <Link
-                        to="/platform/dashboard"
-                        className="inline-flex items-center rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20"
-                    >
-                        Back to Platform
-                    </Link>
-                </div>
+
+                {/* Second Row */}
+
             </div>
-
-            <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Team Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">My Team</h3>
-                        <p className="mt-2 text-sm text-gray-400">Manage your team members and details.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/team"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                Go to Team <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Submit Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Submit</h3>
-                        <p className="mt-2 text-sm text-gray-400">Upload your predictions for scoring.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/submit"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                Make a Submission <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Leaderboard Card */}
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Leaderboard</h3>
-                        <p className="mt-2 text-sm text-gray-400">See how you stack up against other teams.</p>
-                        <div className="mt-6">
-                            <Link
-                                to="/esafety/app/leaderboard"
-                                className="text-sm font-semibold leading-6 text-teal-400 hover:text-teal-300"
-                            >
-                                View Leaderboard <span aria-hidden="true">&rarr;</span>
-                            </Link>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+        </div>
     );
 }
