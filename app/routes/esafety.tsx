@@ -8,26 +8,10 @@ import type { User } from "~/types/user";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    // 1. Extract the cookie header from the incoming browser request
-    const cookieHeader = request.headers.get("Cookie");
-
-    // 2. Forward it to the backend API call
-    const response = await fetch("http://localhost/api/v1/auth/me/", {
-        headers: {
-            "Content-Type": "application/json",
-            // CRITICAL: Pass the cookies so the backend knows who we are
-            "Cookie": cookieHeader || "",
-        },
-    });
-
-    if (response.status === 401) {
-        throw redirect("/platform/login?next=/esafety/dashboard");
-    }
-
-    const user = await response.json();
+    const user = await getCurrentUser(env, request);
 
     if (!user) {
-        return redirect("/platform/login?next=/esafety/dashboard");
+        throw redirect("/platform/login?next=/esafety/dashboard");
     }
 
     return { user: user as User };
