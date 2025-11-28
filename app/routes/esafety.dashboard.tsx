@@ -19,14 +19,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         throw redirect("/platform/login?next=/esafety/dashboard");
     }
 
-    const headers: Record<string, string> = {};
-    if (cookieHeader) {
-        headers["Cookie"] = cookieHeader;
-    }
-
     try {
         console.log("Fetching dashboard data...");
-        const hackathonPromise = getHackathon("esafety", headers).then(data => {
+        const hackathonPromise = getHackathon(env, request, "esafety").then(data => {
             console.log("getHackathon success");
             return data;
         }).catch(err => {
@@ -40,7 +35,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             };
         });
 
-        const announcementsPromise = getAnnouncements("esafety", headers).then(data => {
+        const announcementsPromise = getAnnouncements(env, request, "esafety").then(data => {
             console.log("getAnnouncements success", data);
             return data;
         }).catch(err => {
@@ -98,6 +93,21 @@ export default function EsafetyAppDashboard() {
 
                     {/* Right Column (5/12): Multiple Cards */}
                     <div className="w-full lg:w-5/12 space-y-6">
+                        {/* Bot Social Card */}
+                        <a href="#" className="block group relative h-64 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                            <div className="absolute inset-0">
+                                <img
+                                    src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504"
+                                    alt="Bot Social"
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                            </div>
+                            <div className="relative h-full p-6 flex flex-col justify-end">
+                                <h3 className="text-xl font-bold text-white mb-1">Visit Bot Social</h3>
+                                <p className="text-sm text-gray-200 font-medium">Fake Social Network</p>
+                            </div>
+                        </a>
                         {/* Kaggle Competition Card */}
                         <div className="bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaggle Competition (Coming Soon)</h3>

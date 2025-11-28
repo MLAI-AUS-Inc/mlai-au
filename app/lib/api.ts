@@ -39,10 +39,71 @@ const resolveApiBase = () => {
 
 export const API_URL = resolveApiBase();
 
+// ... existing code ...
 export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true,
 });
+
+// Helper to get the base URL from the environment or fall back to the static config
+export function getBaseUrl(env: any): string {
+    return env?.BACKEND_BASE_URL || API_URL;
+}
+
+// Helper to create an axios instance for a specific request
+export function createApiClient(env: any, request?: Request) {
+    const baseURL = getBaseUrl(env);
+    const headers: Record<string, string> = {};
+
+    if (request) {
+        const cookieHeader = request.headers.get("Cookie");
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+    }
+
+    const client = axios.create({
+        baseURL,
+        withCredentials: true,
+        headers
+    });
+
+    // Add the same interceptors as the global instance
+    client.interceptors.request.use(
+        (config: InternalAxiosRequestConfig) => {
+            const csrfToken = getCSRFToken();
+            if (csrfToken) {
+                if (!config.headers) {
+                    config.headers = new AxiosHeaders();
+                }
+                config.headers.set('X-CSRFToken', csrfToken);
+            }
+            console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
+                baseURL: config.baseURL,
+                headers: config.headers,
+                dataIsFormData: config.data instanceof FormData
+            });
+            return config;
+        },
+        (error) => Promise.reject(error)
+    );
+
+    client.interceptors.response.use(
+        (response) => response,
+        async (error) => {
+            if (!error.response) {
+                return Promise.reject(error);
+            }
+            const { status } = error.response;
+            if (status === 403) {
+                return Promise.reject(error);
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return client;
+}
 
 // Helper to get CSRF token if it exists (placeholder for now if not using Django CSRF cookies directly)
 // If your backend sets a CSRF cookie, you might need to read it here.
