@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
 } from "react-router";
 import Footer from "~/components/footer";
 
@@ -28,6 +29,13 @@ export const links: Route.LinksFunction = () => [
 ];
 
 export default function Layout() {
+  const location = useLocation();
+
+  // Check if we're in the eSafety app routes or AI Hospital app routes
+  const isEsafetyApp = location.pathname.startsWith('/esafety');
+  const isHospitalApp = location.pathname.startsWith('/hospital/app');
+  const isAppRoute = isEsafetyApp || isHospitalApp;
+
   return (
     <html lang="en">
       <head>
@@ -123,14 +131,18 @@ export default function Layout() {
             src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
           />
         </noscript>
-        {/*<Header />*/}
-        <StickySlackButton />
-        <Sidebar />
-        <FloatingSocials />
-        <div className="lg:pl-20">
+        {/* Only show platform-wide components if NOT in specific apps */}
+        {!isAppRoute && (
+          <>
+            <StickySlackButton />
+            <Sidebar />
+            <FloatingSocials />
+          </>
+        )}
+        <div className={isAppRoute ? '' : 'lg:pl-20'}>
           <Outlet />
         </div>
-        <Footer />
+        {!isAppRoute && <Footer />}
         <ScrollRestoration />
         <Scripts />
       </body>

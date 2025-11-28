@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.submit";
+import type { Route } from "./+types/esafety.submit";
 import { Form, useActionData, useLoaderData, redirect } from "react-router";
 
 import { getCurrentUser } from "~/lib/auth";

@@ -1,4 +1,4 @@
-import type { Route } from "./+types/esafety.app.leaderboard";
+import type { Route } from "./+types/esafety.leaderboard";
 import { useLoaderData, redirect } from "react-router";
 import { backendFetch } from "~/lib/backend.server";
 import { getCurrentUser } from "~/lib/auth";
