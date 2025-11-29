@@ -1,16 +1,16 @@
 import React from 'react';
 
 const schedule = [
-    { time: '10:30 am', event: 'Opening Ceremony', speaker: '', title: '' },
-    { time: '11:30 am', event: 'Hacking begins!', speaker: '', title: '' },
-    { time: '12:00 pm', event: '', speaker: 'Macken Murphy', title: 'The Manosphere & Incel Ideology' },
+    { time: '10:00 am', event: 'Doors open', speaker: '', title: '' },
+    { time: '10:00 am', event: 'Morning Tea', speaker: '', title: '' },
+    { time: '12:00 pm', event: '', speaker: 'Maria & Ellen (eSafety)', title: 'All About eSafety' },
     { time: '1:00 pm', event: 'Lunch', speaker: '', title: '' },
-    { time: '2:00 pm', event: '', speaker: 'David Gilmore', title: 'Incel Radicalisation (Lived Experiences)' },
-    { time: '4:00 pm', event: '', speaker: 'Campbell Wilson', title: 'Countering online child exploitation' },
-    { time: '5:00 pm', event: 'Afternoon Snack', speaker: '', title: '' },
-    { time: '6:00 pm', event: '', speaker: 'Sarah Davis-Gilmore', title: 'Lived Experience, Safety, and Connection Online' },
+    { time: '2:00 pm', event: '', speaker: 'Alan Agon (PaxMod)', title: 'Gaming Lounge Moderation' },
+    { time: '4:00 pm', event: '', speaker: 'Scotty (The Product Bus)', title: 'How to choose a product people will actually use' },
+    { time: '5:00 pm', event: 'Afternoon Snacks', speaker: '', title: '' },
     { time: '7:30 pm', event: 'Dinner', speaker: '', title: '' },
     { time: '8:30 pm', event: 'Wrap up', speaker: '', title: '' },
+    { time: '9:00 pm', event: '', speaker: 'Day 2 ends', title: '[Optional] Teams can continue hacking through the week' },
 ];
 
 export default function Agenda() {
