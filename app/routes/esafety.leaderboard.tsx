@@ -27,16 +27,29 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { user, leaderboard };
 }
 
+import SubmissionForm from "~/components/esafety/SubmissionForm";
+import Leaderboard from "~/components/esafety/Leaderboard";
+
 export default function EsafetyAppLeaderboard() {
     const { user } = useLoaderData<typeof loader>();
 
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
             <div className="text-center">
                 <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Leaderboard</h2>
                 <p className="mt-4 text-lg leading-6 text-gray-500">
-                    Coming Soon
+                    View the current standings and submit your predictions.
                 </p>
+            </div>
+
+            <div className="bg-white shadow sm:rounded-lg">
+                <SubmissionForm onSubmissionSuccess={() => {
+                    window.location.reload();
+                }} />
+            </div>
+
+            <div className="bg-white shadow sm:rounded-lg">
+                <Leaderboard />
             </div>
         </main>
     );

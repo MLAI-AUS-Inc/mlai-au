@@ -156,8 +156,25 @@ export async function getUser(env: Env) {
     return getCurrentUser(env);
 }
 
-export async function getLeaderboardSubmissions(env: Env, request?: Request) {
-    const client = getAxios(env, request);
-    const response = await client.get("/api/v1/submissions/leaderboard/");
+export async function getLeaderboardSubmissions(env?: Env, request?: Request) {
+    if (env) {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/esafety/leaderboard/");
+        return response.data;
+    }
+    const response = await axiosInstance.get("/api/v1/hackathons/esafety/leaderboard/");
+    return response.data;
+}
+
+export async function submission(formData: FormData) {
+    return axiosInstance.post("/api/v1/hackathons/esafety/submissions/", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+}
+
+export async function getLatestSubmission() {
+    const response = await axiosInstance.get("/api/v1/hackathons/esafety/submission/");
     return response.data;
 }
