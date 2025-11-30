@@ -99,7 +99,7 @@ export default function TeamSubmissions({ user }: { user: User }) {
                                         <div className="group relative flex items-center gap-1 cursor-help">
                                             Score
                                             <InformationCircleIcon className="h-4 w-4 text-gray-400" />
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden w-64 rounded-md bg-gray-900 p-2 text-xs text-white shadow-lg group-hover:block z-50">
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 hidden w-64 rounded-md bg-gray-900 p-2 text-xs text-white shadow-lg group-hover:block z-50 whitespace-normal">
                                                 The Hybrid Score combines the Risk Tier F1 and Persona F1 scores.
                                                 <div className="absolute -top-1 left-1/2 -translate-x-1/2 border-4 border-transparent border-b-gray-900"></div>
                                             </div>
