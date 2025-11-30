@@ -3,8 +3,11 @@
 import React, { useEffect, useState } from 'react'
 import { timeAgo } from '~/lib/timeAgo'
 import type { Submission } from '~/types/submission'
+import type { User } from '~/types/user'
 import { getLeaderboardSubmissions } from '~/lib/auth'
 import { InformationCircleIcon } from '@heroicons/react/24/outline'
+
+// ... (helper functions unchanged) ...
 
 function getInitials(fullName = '') {
     if (!fullName) return 'NA'
@@ -18,70 +21,53 @@ function generateAvatarUrl(fullName = '') {
     return `https://api.dicebear.com/6.x/initials/svg?seed=${seed}`
 }
 
-export default function Leaderboard() {
-    const [leaderboardData, setLeaderboardData] = useState<Submission[]>([])
+export default function TeamSubmissions({ user }: { user: User }) {
+    const [submissions, setSubmissions] = useState<Submission[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         async function fetchData() {
             try {
+                // Use leaderboard endpoint as it contains all submissions
                 const data = await getLeaderboardSubmissions()
 
-                // 1. Group by team_id
-                const teamBestSubmissions = new Map<string, Submission>()
+                // Filter for user's team
+                const userTeamId = user.esafety_team?.team_id || user.team?.team_id
 
-                data.forEach((sub: Submission) => {
-                    if (!sub.team?.team_id) return
-
-                    const existing = teamBestSubmissions.get(sub.team.team_id)
-                    if (!existing) {
-                        teamBestSubmissions.set(sub.team.team_id, sub)
-                    } else {
-                        // Compare scores
-                        if (sub.score > existing.score) {
-                            teamBestSubmissions.set(sub.team.team_id, sub)
-                        } else if (sub.score === existing.score) {
-                            // Tie-breaker: most recent submission wins
-                            if (new Date(sub.submitted_at) > new Date(existing.submitted_at)) {
-                                teamBestSubmissions.set(sub.team.team_id, sub)
-                            }
-                        }
-                    }
+                const teamData = data.filter((sub: Submission) => {
+                    // Handle potential type mismatch between string/number IDs
+                    return String(sub.team?.team_id) === String(userTeamId)
                 })
 
-                // 2. Convert to array
-                const filteredData = Array.from(teamBestSubmissions.values())
-
-                // 3. Sort by score descending, then time
-                const sortedData = filteredData.sort((a: Submission, b: Submission) => {
-                    if (b.score !== a.score) {
-                        return b.score - a.score
-                    }
+                // Sort by submitted_at descending (most recent first)
+                const sortedData = teamData.sort((a: Submission, b: Submission) => {
                     return new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
                 })
-                setLeaderboardData(sortedData)
+                setSubmissions(sortedData)
             } catch (error) {
-                console.error('Error fetching leaderboard data', error)
+                console.error('Error fetching team submissions', error)
             } finally {
                 setLoading(false)
             }
         }
-        fetchData()
-    }, [])
+        if (user) {
+            fetchData()
+        }
+    }, [user])
 
     if (loading) {
         return (
             <div className="p-6 bg-white rounded-lg">
-                <h2 className="text-xl font-semibold text-gray-900">Leaderboard</h2>
-                <p className="text-gray-600 mt-2">Loading leaderboard...</p>
+                <h2 className="text-xl font-semibold text-gray-900">Your Team's Submissions</h2>
+                <p className="text-gray-600 mt-2">Loading submissions...</p>
             </div>
         )
     }
 
-    if (leaderboardData.length === 0) {
+    if (submissions.length === 0) {
         return (
             <div className="p-6 bg-white rounded-lg">
-                <h2 className="text-xl font-semibold text-gray-900">Leaderboard</h2>
+                <h2 className="text-xl font-semibold text-gray-900">Your Team's Submissions</h2>
                 <p className="text-gray-600 mt-2">No submissions found yet.</p>
             </div>
         )
@@ -89,9 +75,9 @@ export default function Leaderboard() {
 
     return (
         <div className="p-6 bg-white rounded-lg">
-            <h2 className="text-xl font-semibold text-gray-900">Leaderboard</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Your Team's Submissions</h2>
             <p className="text-gray-600 mt-2">
-                Showing the top-scoring submission from each team.
+                History of all submissions made by your team.
             </p>
 
             <div className="mt-6 flow-root">
@@ -100,17 +86,13 @@ export default function Leaderboard() {
                         <table className="min-w-full divide-y divide-gray-300">
                             <thead>
                                 <tr className="bg-gray-50">
-                                    {/* Rank Column */}
-                                    <th className="whitespace-nowrap py-4 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
-                                        Rank
-                                    </th>
                                     {/* Team Name */}
                                     <th className="whitespace-nowrap py-4 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
                                         Team
                                     </th>
                                     {/* Members Column */}
                                     <th className="whitespace-nowrap px-3 py-4 text-left text-sm font-semibold text-gray-900">
-                                        Members
+                                        Submitted By
                                     </th>
                                     {/* Score */}
                                     <th className="whitespace-nowrap px-3 py-4 text-left text-sm font-semibold text-gray-900">
@@ -134,35 +116,20 @@ export default function Leaderboard() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white">
-                                {leaderboardData.map((submission, index) => {
+                                {submissions.map((submission, index) => {
                                     if (!submission.team) return null
 
+                                    // For team submissions, we might want to show who specifically submitted it if available,
+                                    // but currently we iterate over team members.
+                                    // Let's just show the team members as usual for now.
                                     const memberList = submission.team.members || []
                                     const accuracyDisplay =
                                         typeof submission.accuracy === 'number'
                                             ? submission.accuracy.toFixed(4)
                                             : 'N/A'
 
-                                    const getScoreStyle = (idx: number) => {
-                                        if (idx === 0) return 'text-yellow-600 font-extrabold text-2xl' // Gold
-                                        if (idx === 1) return 'text-gray-500 font-extrabold text-2xl'   // Silver
-                                        if (idx === 2) return 'text-amber-700 font-extrabold text-2xl'  // Bronze
-                                        return 'text-gray-500'
-                                    }
-
-                                    const getScorePrefix = (idx: number) => {
-                                        if (idx === 0) return '🥇 '
-                                        if (idx === 1) return '🥈 '
-                                        if (idx === 2) return '🥉 '
-                                        return ''
-                                    }
-
                                     return (
-                                        <tr key={submission.team.team_id} className="hover:bg-gray-50">
-                                            {/* Rank */}
-                                            <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0 font-semibold">
-                                                {index + 1}
-                                            </td>
+                                        <tr key={submission.id || index} className="hover:bg-gray-50">
                                             {/* Team Name */}
                                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-gray-900 sm:pl-0 font-semibold">
                                                 {submission.team.team_name}
@@ -188,8 +155,7 @@ export default function Leaderboard() {
                                                 </dl>
                                             </td>
                                             {/* Score */}
-                                            <td className={`whitespace-nowrap px-3 py-4 text-sm ${getScoreStyle(index)}`}>
-                                                {getScorePrefix(index)}
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-semibold">
                                                 {typeof submission.score === 'number' ? submission.score.toFixed(4) : 'N/A'}
                                             </td>
                                             {/* Accuracy */}

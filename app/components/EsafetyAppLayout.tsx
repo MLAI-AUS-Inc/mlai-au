@@ -37,8 +37,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
     const navigation = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
         { name: 'Profile', href: '/esafety/profile', icon: UserCircleIcon },
-        { name: 'Submissions & Leaderboard', href: '/esafety/leaderboard', icon: TrophyIcon },
-        { name: 'Submit', href: '/esafety/submit', icon: DocumentArrowUpIcon },
+        { name: 'Submissions', href: '/esafety/leaderboard', icon: TrophyIcon },
         { name: 'Resources', href: '/esafety/resources', icon: BookOpenIcon },
     ];
 

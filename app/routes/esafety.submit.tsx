@@ -1,5 +1,5 @@
 import type { Route } from "./+types/esafety.submit";
-import { redirect } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import SubmissionForm from "~/components/esafety/SubmissionForm";
@@ -13,6 +13,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function EsafetyAppSubmit() {
+    const { user } = useLoaderData<typeof loader>();
     return (
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
             <div className="text-center">
@@ -23,10 +24,13 @@ export default function EsafetyAppSubmit() {
             </div>
 
             <div className="bg-white shadow sm:rounded-lg">
-                <SubmissionForm onSubmissionSuccess={() => {
-                    // Refresh leaderboard by reloading the page
-                    window.location.reload();
-                }} />
+                <SubmissionForm
+                    user={user}
+                    onSubmissionSuccess={() => {
+                        // Refresh leaderboard by reloading the page
+                        window.location.reload();
+                    }}
+                />
             </div>
 
             <div className="bg-white shadow sm:rounded-lg">

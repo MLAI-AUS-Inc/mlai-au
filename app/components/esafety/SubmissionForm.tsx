@@ -1,14 +1,18 @@
 "use client";
-import React, { useState, ChangeEvent, FormEvent, DragEvent } from "react";
+import React, { useState, type ChangeEvent, type FormEvent, type DragEvent } from "react";
 import { DocumentPlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { submission } from "~/lib/auth";
+import type { User } from "~/types/user";
+import { generateAvatarUrl } from "~/lib/avatar";
 
 interface SubmissionFormProps {
     onSubmissionSuccess?: () => void;
+    user: User;
 }
 
 export default function SubmissionForm({
     onSubmissionSuccess,
+    user,
 }: SubmissionFormProps): React.ReactElement {
     const [csvFile, setCsvFile] = useState<File | null>(null);
     const [score, setScore] = useState<number | null>(null);
@@ -118,6 +122,22 @@ export default function SubmissionForm({
 
         const formData = new FormData();
         formData.append("predictions_csv", csvFile);
+
+        // Add user details
+        if (user.full_name) formData.append("user_name", user.full_name);
+        if (user.avatar_url) {
+            formData.append("user_avatar", user.avatar_url);
+        } else if (user.full_name) {
+            formData.append("user_avatar", generateAvatarUrl(user.full_name));
+        }
+
+        // Add team details
+        const team = user.esafety_team || user.team;
+        if (team) {
+            formData.append("team_name", team.team_name);
+            // Generate a team avatar based on team name since we don't have one in the model
+            formData.append("team_avatar", generateAvatarUrl(team.team_name));
+        }
 
         try {
             const response = await submission(formData);

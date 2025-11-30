@@ -3,7 +3,7 @@ import { redirect, useLoaderData, Link } from "react-router";
 import axios from "axios";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser } from "~/lib/auth";
-import Leaderboard from "~/components/Leaderboard";
+import Leaderboard from "~/components/esafety/Leaderboard";
 
 import Announcements, { type Announcement } from "~/components/Announcements";
 
@@ -90,7 +90,7 @@ export default function EsafetyAppDashboard() {
                     {/* Left Column (7/12): Announcements */}
                     <div className="w-full lg:w-7/12 space-y-6">
                         <Announcements announcements={announcements} />
-                        <Agenda />
+                        <Leaderboard />
                     </div>
 
                     {/* Right Column (5/12): Multiple Cards */}

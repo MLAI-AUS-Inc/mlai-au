@@ -3,7 +3,9 @@
  * @param dateInput - Date string, Date object, or timestamp
  * @returns Human-readable time ago string (e.g., "2 hours ago", "just now")
  */
-export function timeAgo(dateInput: string | Date | number): string {
+export function timeAgo(dateInput: string | Date | number | null | undefined): string {
+    if (!dateInput) return 'N/A';
+
     const date = typeof dateInput === 'string' || typeof dateInput === 'number'
         ? new Date(dateInput)
         : dateInput;
