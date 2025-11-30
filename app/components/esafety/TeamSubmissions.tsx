@@ -123,10 +123,6 @@ export default function TeamSubmissions({ user }: { user: User }) {
                                     // but currently we iterate over team members.
                                     // Let's just show the team members as usual for now.
                                     const memberList = submission.team.members || []
-                                    const accuracyDisplay =
-                                        typeof submission.accuracy === 'number'
-                                            ? submission.accuracy.toFixed(4)
-                                            : 'N/A'
 
                                     return (
                                         <tr key={submission.id || index} className="hover:bg-gray-50">
@@ -156,11 +152,11 @@ export default function TeamSubmissions({ user }: { user: User }) {
                                             </td>
                                             {/* Score */}
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-900 font-semibold">
-                                                {typeof submission.score === 'number' ? submission.score.toFixed(4) : 'N/A'}
+                                                {typeof submission.score === 'number' ? `${submission.score.toFixed(2)} points` : 'N/A'}
                                             </td>
                                             {/* Accuracy */}
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                {accuracyDisplay}
+                                                {typeof submission.accuracy === 'number' ? `${(submission.accuracy * 100).toFixed(2)}%` : 'N/A'}
                                             </td>
                                             {/* Time Submitted */}
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
