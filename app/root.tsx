@@ -120,6 +120,9 @@ export default function Layout() {
           `,
           }}
         />
+
+        {/* Ahrefs Analytics */}
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="gpWL4pKb2ZPfqFtu60natQ" async></script>
       </head>
       <body>
         <noscript>
