@@ -7,7 +7,7 @@ import type { User } from '~/types/user'
 import { getLeaderboardSubmissions } from '~/lib/auth'
 import { InformationCircleIcon } from '@heroicons/react/24/outline'
 
-// ... (helper functions unchanged) ...
+// ... (helper functions unchanged) test ...
 
 function getInitials(fullName = '') {
     if (!fullName) return 'NA'
