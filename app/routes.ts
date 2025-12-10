@@ -40,4 +40,8 @@ export default [
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
 
+  // Article Routes
+  route("/articles", "routes/articles.index.tsx"),
+  route("/articles/*", "routes/articles.slug.tsx"),
+
 ] satisfies RouteConfig;

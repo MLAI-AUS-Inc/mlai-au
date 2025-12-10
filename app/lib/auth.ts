@@ -103,7 +103,7 @@ export async function updateUser(env: Env, body: {
     if (body instanceof FormData) {
         console.log("updateUser: Body is FormData");
         try {
-            const { default: NodeFormData } = await import('form-data');
+            const { default: NodeFormData } = await import('form-data' /* @vite-ignore */);
             const form = new NodeFormData();
 
             // Convert standard FormData to NodeFormData
