@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-find-a-cofounder': {
+        title: 'how-to-find-a-cofounder',
+        date: '2025-01-01',
+        description: '',
+        author: 'MLAI Team',
+        slug: 'featured/how-to-find-a-cofounder',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'how-to-find-a-cofounder',
+        hasContent: true,
+    },
     // Example Article
     'technology/introduction-to-mlai': {
         title: 'Introduction to MLAI',
