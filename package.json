@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "react-router build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
     "cf-typegen": "bunx --yes wrangler types",
     "deploy": "bun run build && bunx --yes wrangler deploy",
     "dev": "react-router dev",
@@ -28,8 +28,8 @@
     "isbot": "^5.1.32",
     "logrocket": "^10.1.1",
     "lucide-react": "^0.535.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
     "react-dropzone": "^14.3.8",
     "react-easy-crop": "^5.5.5",
     "react-markdown": "^10.1.0",
