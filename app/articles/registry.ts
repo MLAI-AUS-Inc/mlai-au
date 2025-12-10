@@ -77,6 +77,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/hackathon-melbourne': {
+        title: 'hackathon-melbourne',
+        date: '2025-01-01',
+        description: '',
+        author: 'MLAI Team',
+        slug: 'featured/hackathon-melbourne',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'hackathon-melbourne',
+        hasContent: true,
+    },
     // Example Article
     'technology/introduction-to-mlai': {
         title: 'Introduction to MLAI',
