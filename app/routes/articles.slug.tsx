@@ -34,23 +34,22 @@ export async function loader({ params }: Route.LoaderArgs) {
 }
 
 /**
- * Map of article slugs to their dynamically imported content components.
- * The content factory will add entries here when publishing new articles.
- * 
- * Format: 'category/article-slug': () => import('~/articles/content/category/article-slug')
+ * Automatically discover all article content modules using Vite's glob import.
+ * This eliminates the need for the PublisherAgent to manually register imports.
  */
-const articleContentModules: Record<string, () => Promise<{ default: React.ComponentType }>> = {
-    // Content factory will add entries like:
-    // 'featured/hackathon-melbourne': () => import('~/articles/content/featured/hackathon-melbourne'),
-    // 'technology/intro-to-ai': () => import('~/articles/content/technology/intro-to-ai'),
-};
+const articleModules = import.meta.glob<{ default: React.ComponentType }>('../articles/content/**/*.tsx');
 
 /**
  * Dynamically load and render the article content component if available.
  */
 function ArticleContent({ article }: { article: ArticleWithSlug }) {
     const ContentComponent = useMemo(() => {
-        const loader = articleContentModules[article.slug];
+        // Construct the expected file path key for the glob map
+        // article.slug is like 'featured/my-article'
+        // glob key is like '../articles/content/featured/my-article.tsx'
+        const globKey = `../articles/content/${article.slug}.tsx`;
+
+        const loader = articleModules[globKey];
         if (!loader) return null;
         return lazy(loader);
     }, [article.slug]);
