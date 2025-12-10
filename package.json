@@ -8,7 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "react-router build",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
     "cf-typegen": "bunx --yes wrangler types",
     "deploy": "bun run build && bunx --yes wrangler deploy",
     "dev": "react-router dev",

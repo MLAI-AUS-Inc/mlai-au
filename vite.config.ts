@@ -5,17 +5,19 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import fs from "node:fs";
 
-// Load .dev.vars into process.env
-try {
-  const devVars = fs.readFileSync(".dev.vars", "utf-8");
-  devVars.split("\n").forEach((line) => {
-    const [key, value] = line.split("=");
-    if (key && value) {
-      process.env[key.trim()] = value.trim().replace(/^"|"$/g, "");
-    }
-  });
-} catch (e) {
-  console.warn("Failed to load .dev.vars", e);
+// Load .dev.vars into process.env (only in local dev, not in CI)
+if (fs.existsSync(".dev.vars")) {
+  try {
+    const devVars = fs.readFileSync(".dev.vars", "utf-8");
+    devVars.split("\n").forEach((line) => {
+      const [key, value] = line.split("=");
+      if (key && value) {
+        process.env[key.trim()] = value.trim().replace(/^"|"$/g, "");
+      }
+    });
+  } catch (e) {
+    console.warn("Failed to load .dev.vars:", (e as Error).message);
+  }
 }
 
 export default defineConfig({
@@ -48,6 +50,14 @@ export default defineConfig({
       "clsx",
       "tailwind-merge",
     ],
+  },
+  build: {
+    rollupOptions: {
+      onwarn(warning, warn) {
+        if (warning.message.includes('dynamic import will not move module into another chunk')) return;
+        warn(warning);
+      }
+    }
   },
   resolve: {
     dedupe: ["react", "react-dom"],
