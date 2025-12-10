@@ -43,6 +43,7 @@ const articleContentModules: Record<string, () => Promise<{ default: React.Compo
     // Content factory will add entries like:
     // 'featured/hackathon-melbourne': () => import('~/articles/content/featured/hackathon-melbourne'),
     // 'technology/intro-to-ai': () => import('~/articles/content/technology/intro-to-ai'),
+    'featured/how-to-find-a-cofounder': () => import('~/articles/content/featured/how-to-find-a-cofounder'),
 };
 
 /**
