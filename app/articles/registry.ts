@@ -14,46 +14,33 @@ export type ArticleWithSlug = {
     dateModified?: string;
     lastUpdated?: string;
     downloads?: Array<{ name: string; url: string }>;
-    // Add other fields as needed
+    /** If true, this article has a content component at app/articles/content/{slug}.tsx */
+    hasContent?: boolean;
 };
 
-// Route Categories
+// Route Categories for MLAI
 export type ArticleRouteCategory =
-    | 'disability'
-    | 'aged-care'
-    | 'business'
     | 'featured'
-    | 'behaviour-support'
-    | 'disability-support-workers'
-    | 'occupational-therapy'
-    | 'physiotherapy'
-    | 'psychology'
-    | 'speech-pathology'
-    | 'support-coordinators'
-    | 'technology'; // Added generic category
+    | 'technology'
+    | 'ai-ml'
+    | 'startups'
+    | 'community'
+    | 'workshops'
+    | 'tutorials';
 
 const CATEGORY_SEGMENTS: ArticleRouteCategory[] = [
-    'disability',
-    'aged-care',
-    'business',
     'featured',
-    'behaviour-support',
-    'disability-support-workers',
-    'occupational-therapy',
-    'physiotherapy',
-    'psychology',
-    'speech-pathology',
-    'support-coordinators',
     'technology',
+    'ai-ml',
+    'startups',
+    'community',
+    'workshops',
+    'tutorials',
 ];
 
 const DEFAULT_ARTICLE_ROUTE_CATEGORY: ArticleRouteCategory = 'technology';
 
-// Overrides for specific slugs or sub-paths
-const CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {
-    // Example overrides
-    'aged-care': 'aged-care',
-};
+// Overrides for specific slugs or sub-paths\nconst CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {\n    // Add category overrides as needed\n};
 
 // Legacy mapping if needed
 const LEGACY_REGISTRY_TO_ROUTE_ALIASES: Record<string, string> = {

@@ -1,13 +1,12 @@
-
+import { Suspense, lazy, useMemo } from "react";
 import {
     getArticleBySlug,
     resolveArticleRouteSlug,
+    type ArticleWithSlug,
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
 import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
-// import ArticleContent from "~/components/articles/ArticleContent"; // You would implement this to render MDX or HTML
 import type { Route } from "./+types/articles.slug";
-import { redirect } from "react-router";
 
 export function meta({ data }: Route.MetaArgs) {
     if (!data?.article) {
@@ -31,13 +30,48 @@ export async function loader({ params }: Route.LoaderArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    // Optional: Redirect to canonical slug if it differs
-    //   const canonicalSlug = resolveArticleRouteSlug(article.slug);
-    //   if (slug !== canonicalSlug) {
-    //       // return redirect(`/articles/${canonicalSlug}`, 301);
-    //   }
-
     return { article };
+}
+
+/**
+ * Map of article slugs to their dynamically imported content components.
+ * The content factory will add entries here when publishing new articles.
+ * 
+ * Format: 'category/article-slug': () => import('~/articles/content/category/article-slug')
+ */
+const articleContentModules: Record<string, () => Promise<{ default: React.ComponentType }>> = {
+    // Content factory will add entries like:
+    // 'featured/hackathon-melbourne': () => import('~/articles/content/featured/hackathon-melbourne'),
+    // 'technology/intro-to-ai': () => import('~/articles/content/technology/intro-to-ai'),
+};
+
+/**
+ * Dynamically load and render the article content component if available.
+ */
+function ArticleContent({ article }: { article: ArticleWithSlug }) {
+    const ContentComponent = useMemo(() => {
+        const loader = articleContentModules[article.slug];
+        if (!loader) return null;
+        return lazy(loader);
+    }, [article.slug]);
+
+    if (!ContentComponent) {
+        // Fallback for articles without content components
+        return (
+            <div className="prose prose-lg prose-zinc dark:prose-invert mx-auto">
+                <p>{article.description}</p>
+                <p className="text-sm text-gray-500">
+                    By {article.author} on {article.date}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <Suspense fallback={<div className="animate-pulse h-96 bg-gray-100 rounded-lg" />}>
+            <ContentComponent />
+        </Suspense>
+    );
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
@@ -56,22 +90,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
         >
             <div className="relative">
                 <ArticleTocPlaceholder />
-                <div className="prose prose-lg prose-indigo mx-auto text-gray-500">
-                    {/* This is where your actual article content would go.
-                   For now, we just display the description again as a placeholder.
-                   In a real app, you might use MDX or dangerouslySetInnerHTML.
-                */}
-                    <p>
-                        {article.description}
-                    </p>
-                    <p>
-                        [Content for <strong>{article.title}</strong> would appear here...]
-                    </p>
-                    <hr />
-                    <p className="text-sm">
-                        By {article.author} on {article.date}
-                    </p>
-                </div>
+                <ArticleContent article={article} />
             </div>
         </ArticleLayout>
     );
