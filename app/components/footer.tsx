@@ -165,6 +165,8 @@ export default function Events() {
           <p className="flex justify-center mt-8 text-xs leading-5 text-gray-300 md:mt-0">
             &copy; 2025 MLAI Aus Inc. All rights reserved.{" "}
             <a href="/privacy" className="underline">Privacy Policy</a>
+            <span className="mx-2">&middot;</span>
+            <a href="/terms" className="underline">Terms of Service</a>
           </p>
         </div>
       </div>
