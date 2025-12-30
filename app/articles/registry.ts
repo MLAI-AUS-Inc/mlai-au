@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/find-technical-cofounder': {
+        title: 'Finding a Technical Cofounder in Australia (2025)',
+        date: '2025-12-30',
+        description: 'How to find a technical cofounder in Australia in 2025: practical routes, outreach scripts, equity norms, legal basics, and community pathways. From the MLAI team.',
+        author: 'MLAI Team',
+        slug: 'featured/find-technical-cofounder',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Finding a Technical Cofounder in Australia (2025)',
+        hasContent: true,
+    },
     'featured/how-to-find-a-cofounder': {
         title: 'how-to-find-a-cofounder',
         date: '2025-01-01',
