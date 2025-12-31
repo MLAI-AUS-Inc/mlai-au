@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ai-for-small-business-in-australia--practical-checklist-2025': {
+        title: 'AI for Small Business in Australia — Practical Checklist (2025)',
+        date: '2025-12-31',
+        description: 'A practical 2025 checklist for Australian small businesses using AI. Covers benefits, costs, privacy, tool selection, risks, and next steps. Built by MLAI.',
+        author: 'MLAI Team',
+        slug: 'featured/ai-for-small-business-in-australia--practical-checklist-2025',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'AI for Small Business in Australia — Practical Checklist (2025)',
+        hasContent: true,
+    },
     'featured/how-to-find-a-cofounder': {
         title: 'how-to-find-a-cofounder',
         date: '2025-01-01',
