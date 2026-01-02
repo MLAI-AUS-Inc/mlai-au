@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ai-adoption-roadmap-for-australian-small-businesses-2025': {
+        title: 'AI Adoption Roadmap for Australian Small Businesses (2025)',
+        date: '2026-01-02',
+        description: 'Practical AI adoption roadmap for Australian small businesses in 2025: use cases, costs, privacy and OAIC tips, tools, and a step-by-step plan. From MLAI.',
+        author: 'MLAI Team',
+        slug: 'featured/ai-adoption-roadmap-for-australian-small-businesses-2025',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'AI Adoption Roadmap for Australian Small Businesses (2025)',
+        hasContent: true,
+    },
     'featured/how-to-find-a-cofounder': {
         title: 'how-to-find-a-cofounder',
         date: '2025-01-01',
