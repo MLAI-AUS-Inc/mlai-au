@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo } from "react";
+import React, { Suspense, lazy, useMemo } from "react";
 import {
     getArticleBySlug,
     resolveArticleRouteSlug,
@@ -37,12 +37,19 @@ export async function loader({ params }: Route.LoaderArgs) {
  * Automatically discover all article content modules using Vite's glob import.
  * This eliminates the need for the PublisherAgent to manually register imports.
  */
-const articleModules = import.meta.glob<{ default: React.ComponentType }>('../articles/content/**/*.tsx');
+const articleModules = import.meta.glob<{ 
+    default: React.ComponentType;
+    summaryHighlights?: any;
+    faqItems?: any;
+}>('../articles/content/**/*.tsx');
 
 /**
  * Dynamically load and render the article content component if available.
  */
-function ArticleContent({ article }: { article: ArticleWithSlug }) {
+function ArticleContent({ article, onModuleLoad }: { 
+    article: ArticleWithSlug;
+    onModuleLoad?: (module: any) => void;
+}) {
     const ContentComponent = useMemo(() => {
         // Construct the expected file path key for the glob map
         // article.slug is like 'featured/my-article'
@@ -51,8 +58,13 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 
         const loader = articleModules[globKey];
         if (!loader) return null;
-        return lazy(loader);
-    }, [article.slug]);
+        
+        return lazy(async () => {
+            const module = await loader();
+            onModuleLoad?.(module);
+            return module;
+        });
+    }, [article.slug, onModuleLoad]);
 
     if (!ContentComponent) {
         // Fallback for articles without content components
@@ -75,6 +87,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
     const { article } = loaderData;
+    const [articleModule, setArticleModule] = React.useState<any>(null);
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -86,10 +99,15 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             article={article}
             breadcrumbItems={breadcrumbs}
             showHero={true}
+            summaryHighlights={articleModule?.summaryHighlights}
+            faqItems={articleModule?.faqItems}
         >
             <div className="relative">
                 <ArticleTocPlaceholder />
-                <ArticleContent article={article} />
+                <ArticleContent 
+                    article={article} 
+                    onModuleLoad={setArticleModule}
+                />
             </div>
         </ArticleLayout>
     );
