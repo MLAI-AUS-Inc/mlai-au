@@ -1,4 +1,3 @@
-"use client";
 import React, { useState, type ChangeEvent, type FormEvent, type DragEvent } from "react";
 import { DocumentPlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { submission } from "~/lib/auth";

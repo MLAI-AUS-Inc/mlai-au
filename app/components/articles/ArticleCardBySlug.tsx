@@ -1,5 +1,3 @@
-'use client'
-
 import ArticleCard, { type ArticleAuthor } from "./ArticleCard"
 import { getArticleBySlug, resolveArticleRouteSlug } from "~/articles/registry"
 import { getDefaultArticleAuthorDetails as getDefaultArticleAuthor } from "~/articles/authors"
