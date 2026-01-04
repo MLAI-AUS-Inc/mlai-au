@@ -15,6 +15,7 @@ const TOPIC = 'AI Strategy for Australian Startups'
 const CATEGORY = 'featured'
 const SLUG = 'ai-strategy-for-australian-startups'
 const AUTHOR = 'MLAI Editorial Team'
+const DATE = '2026-01-04'
 const DATE_MODIFIED = '2025-02-01'
 const DESCRIPTION =
   'Practical 2025 guide for Australian startups to plan AI strategy: where to start, costs, risks, governance, tools. Includes MLAI resources and AU privacy context.'
@@ -87,6 +88,7 @@ export const faqItems: ArticleFAQItem[] = [
 export default function AIStrategyForAustralianStartups2025() {
   const article = {
     title: `${TOPIC} (2025)`,
+    date: DATE,
     dateModified: DATE_MODIFIED,
     description: DESCRIPTION,
     author: AUTHOR,
