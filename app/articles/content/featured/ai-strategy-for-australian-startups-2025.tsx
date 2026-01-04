@@ -1,23 +1,14 @@
-// src/app/(informational)/articles/featured/ai-strategy-for-australian-startups/page.tsx
-import Link from 'next/link'
-import Image from 'next/image'
-import type { Metadata } from 'next'
+import { Link } from 'react-router'
 import type { ReactNode } from 'react'
-import { getFeaturedPeople } from '@server/backend'
-import { canonical } from '@/lib/seo'
-import { applyArticleRegistryDefaults } from '@/articles/articles-registry'
-import Breadcrumbs from '@/components/Breadcrumbs'
-import { ArticleLayout } from '../../../components/articles/ArticleLayout'
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../../../../data/types'
-
-// Ensure this page is rendered dynamically to avoid build-time network waits
-export const dynamic = 'force-dynamic'
-export const revalidate = 0
+import type { ArticleFAQItem } from '~/components/articles/ArticleFAQ'
+import type { ArticleSummaryConfig } from '~/components/articles/ArticleSummaryCard'
+import { ArticleLayout } from '~/components/articles/ArticleLayout'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
+import ArticleCompanyCTA from '~/components/articles/ArticleCompanyCTA'
+import { MLAITemplateResourceCTA } from '~/components/articles/MLAITemplateResourceCTA'
+import { ImageWithFallback } from '~/components/ImageWithFallback'
+import Breadcrumbs, { type BreadcrumbItem } from '~/components/Breadcrumbs'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI Strategy for Australian Startups'
@@ -31,45 +22,52 @@ const HERO_IMAGE = 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a
 const HERO_IMAGE_ALT = 'Australian startup team planning AI strategy on laptops'
 const FEATURED_FOCUS = 'ai'
 
-/** ===== FAQ ===== */
-interface FAQ {
-  id: number
-  question: string
-  answer: ReactNode
+export const summaryHighlights: ArticleSummaryConfig = {
+  heading: `Key facts: ${TOPIC}`,
+  intro:
+    'As at 2025, Australian startups are expected to align AI use with Privacy Act obligations, OAIC guidance, and transparent risk controls while proving customer value quickly.',
+  items: [
+    {
+      label: `What is ${TOPIC} in Australia?`,
+      description:
+        'A plan that links business goals to AI use cases, data safeguards, delivery approach, metrics, and compliance with Australian privacy and sector expectations.',
+    },
+    {
+      label: `Who usually needs ${TOPIC}?`,
+      description:
+        'Founders, product teams, and operators deciding where AI adds value, how to pick tools, and how to explain risks to customers, boards, and partners.',
+    },
+    {
+      label: `How does ${TOPIC} work and what does it cost in 2025?`,
+      description:
+        'Start with a 1–2 day draft using free resources; pilots often cost $0–$3k. Time increases if data cleaning, vendor reviews, or legal advice are required.',
+    },
+  ],
 }
 
-const faqs: FAQ[] = [
+export const faqItems: ArticleFAQItem[] = [
   {
-    id: 1,
-    question: 'What is an AI strategy for a startup in Australia?',
-    answer:
-      'It is a practical plan that links your business goals to AI use cases, data and privacy settings, delivery approach, and risk controls, aligned to Australian rules and customer needs.',
+    q: 'What is an AI strategy for a startup in Australia?',
+    a: 'It is a practical plan that links your business goals to AI use cases, data and privacy settings, delivery approach, and risk controls, aligned to Australian rules and customer needs.',
   },
   {
-    id: 2,
-    question: 'How much does it cost to start an AI pilot in 2025?',
-    answer:
-      'Many teams start with $0–$200 using free tiers and open resources. Paid workshops or vendor pilots often range $800–$3,000. Costs vary by data cleaning needs and vendor choice.',
+    q: 'How much does it cost to start an AI pilot in 2025?',
+    a: 'Many teams start with $0–$200 using free tiers and open resources. Paid workshops or vendor pilots often range $800–$3,000. Costs vary by data cleaning needs and vendor choice.',
   },
   {
-    id: 3,
-    question: 'How long does it take to create a lightweight AI strategy?',
-    answer:
-      'A concise starter strategy can be drafted in 1–2 days and iterated weekly. A deeper plan with governance and vendor selection often takes 2–4 weeks with stakeholder input.',
+    q: 'How long does it take to create a lightweight AI strategy?',
+    a: 'A concise starter strategy can be drafted in 1–2 days and iterated weekly. A deeper plan with governance and vendor selection often takes 2–4 weeks with stakeholder input.',
   },
   {
-    id: 4,
-    question: 'Do we need legal or privacy advice before using AI tools?',
-    answer:
-      'If you handle personal, health, financial, or client data, get advice on Privacy Act obligations and OAIC guidance. Avoid sharing sensitive data with tools until risks are understood.',
+    q: 'Do we need legal or privacy advice before using AI tools?',
+    a: 'If you handle personal, health, financial, or client data, get advice on Privacy Act obligations and OAIC guidance. Avoid sharing sensitive data with tools until risks are understood.',
   },
   {
-    id: 5,
-    question: 'How can we find mentors or programs for AI strategy?',
-    answer: (
+    q: 'How can we find mentors or programs for AI strategy?',
+    a: (
       <>
         You can start with local meetups or accelerators and ask for AI governance support. For tailored options, use the MLAI recommender at{' '}
-        <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+        <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
           /?mode=recommend
         </Link>
         .
@@ -77,55 +75,17 @@ const faqs: FAQ[] = [
     ),
   },
   {
-    id: 6,
-    question: 'What free resources exist for early-stage teams?',
-    answer:
-      'Use MLAI’s AI strategy checklist, OAIC privacy guidance, business.gov.au AI basics, and open-source prompt testing tools. Libraries and university innovation hubs often provide free sessions.',
+    q: 'What free resources exist for early-stage teams?',
+    a: 'Use MLAI's AI strategy checklist, OAIC privacy guidance, business.gov.au AI basics, and open-source prompt testing tools. Libraries and university innovation hubs often provide free sessions.',
   },
   {
-    id: 7,
-    question: 'How do we pick AI vendors safely?',
-    answer:
-      'Define your use case, data sensitivity, and budget first. Compare security, data handling, model provenance, pricing, and exit terms. Ask for a short pilot with metrics before annual contracts.',
+    q: 'How do we pick AI vendors safely?',
+    a: 'Define your use case, data sensitivity, and budget first. Compare security, data handling, model provenance, pricing, and exit terms. Ask for a short pilot with metrics before annual contracts.',
   },
 ]
 
-export const metadata: Metadata = {
-  title: `${TOPIC} (2025)`,
-  description: DESCRIPTION,
-  alternates: { canonical: canonical(`/articles/${CATEGORY}/${SLUG}`) },
-  openGraph: {
-    title: `${TOPIC} (2025)`,
-    description: DESCRIPTION,
-    url: canonical(`/articles/${CATEGORY}/${SLUG}`),
-    type: 'article',
-    images: [{ url: HERO_IMAGE, width: 1200, height: 630, alt: HERO_IMAGE_ALT }],
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: `${TOPIC} (2025)`,
-    description: DESCRIPTION,
-    images: [HERO_IMAGE],
-  },
-  keywords: ['AI strategy Australia', 'startup AI plan', 'AI governance 2025'],
-}
-
-async function getFeaturedPeopleSafe() {
-  try {
-    const timeoutMs = 2000
-    const result = await Promise.race<Awaited<ReturnType<typeof getFeaturedPeople>> | null>([
-      getFeaturedPeople(FEATURED_FOCUS as any, 8),
-      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
-    ])
-    return Array.isArray(result) ? result : []
-  } catch (error) {
-    console.error('Failed to fetch featured people', error)
-    return []
-  }
-}
-
-export default async function Page() {
-  const article = applyArticleRegistryDefaults({
+export default function AIStrategyForAustralianStartups2025() {
+  const article = {
     title: `${TOPIC} (2025)`,
     dateModified: DATE_MODIFIED,
     description: DESCRIPTION,
@@ -133,106 +93,30 @@ export default async function Page() {
     slug: SLUG,
     image: HERO_IMAGE,
     imageAlt: HERO_IMAGE_ALT,
-  })
-
-  // Featured people fetch with timeout + defensive mapping
-  const people = await getFeaturedPeopleSafe()
-  const featuredPeople: FeaturedPersonProfile[] = (people || []).map((p: any, idx: number) => ({
-    slug: p.slug || p.person_id || `person-${idx}`,
-    name:
-      (p.name && String(p.name).trim()) ||
-      `${p.first_name || ''} ${p.last_name || ''}`.trim() ||
-      'Community member',
-    first_name: p.first_name || undefined,
-    last_name: p.last_name || undefined,
-    headshot: p.avatar || p.avatar_url || p.blurred_avatar_url || '',
-    topics: p.topics || p.focus_areas || p.niches || [],
-    languages: p.languages || [],
-    focus: (() => {
-      const arr = Array.isArray(p.persona)
-        ? p.persona
-        : p.persona
-        ? String(p.persona)
-            .split(',')
-            .map((s: string) => s.trim())
-        : []
-      const first = (arr[0] || '').toLowerCase()
-      if (first === 'founder' || first === 'startup') return 'startups'
-      if (first === 'ai' || first === 'machine-learning' || first === 'ml') return 'ai'
-      if (first === 'product' || first === 'growth') return 'product'
-      if (first === 'funding' || first === 'investor' || first === 'legal') return 'funding'
-      return p.focus || FEATURED_FOCUS
-    })(),
-    headline: p.headline || p.role_title || '',
-    shortBio: p.shortBio || p.summary || '',
-    longBio: p.longBio || p.long_bio || '',
-    formats: p.formats || p.offers || [],
-    availability: p.availability || [],
-    online: !!p.online || !!p.remote || !!p.virtual,
-    inPerson: !!p.in_person || !!p.inPerson || !!p.local,
-    credentials: p.credentials || p.credBullets || [],
-    links: p.links || [],
-    city_suburb: p.city_suburb || p.city || '',
-    state_region: p.state_region || p.state || '',
-    latitude: p.latitude ?? (p.locations?.[0]?.latitude ?? null),
-    longitude: p.longitude ?? (p.locations?.[0]?.longitude ?? null),
-    place_id: p.place_id ?? (p.locations?.[0]?.place_id ?? null),
-    location_id: p.location_id ?? (p.locations?.[0]?.id ?? null),
-  })) as any
+  }
 
   return (
-    <>
-      {/* Inline social tags */}
-      <meta property="og:title" content={article.title} />
-      <meta property="og:description" content={article.description} />
-      <meta property="og:image" content={article.image} />
-      <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={article.title} />
-      <meta name="twitter:description" content={article.description} />
-      <meta name="twitter:image" content={article.image} />
-
-      <div className="bg-white">
-        <ArticleLayout
-          article={article}
-          faqItems={faqs}
-          featuredPeople={featuredPeople}
-          featuredPeopleTitle={`AI practitioners experienced in ${TOPIC}`}
-          summaryHighlights={{
-            heading: `Key facts: ${TOPIC}`,
-            intro:
-              'As at 2025, Australian startups are expected to align AI use with Privacy Act obligations, OAIC guidance, and transparent risk controls while proving customer value quickly.',
-            items: [
-              {
-                label: `What is ${TOPIC} in Australia?`,
-                description:
-                  'A plan that links business goals to AI use cases, data safeguards, delivery approach, metrics, and compliance with Australian privacy and sector expectations.',
-              },
-              {
-                label: `Who usually needs ${TOPIC}?`,
-                description:
-                  'Founders, product teams, and operators deciding where AI adds value, how to pick tools, and how to explain risks to customers, boards, and partners.',
-              },
-              {
-                label: `How does ${TOPIC} work and what does it cost in 2025?`,
-                description:
-                  'Start with a 1–2 day draft using free resources; pilots often cost $0–$3k. Time increases if data cleaning, vendor reviews, or legal advice are required.',
-              },
-            ],
-          }}
-          breadcrumb={
-            <Breadcrumbs
-              items={[
-                { label: 'Articles', href: '/articles' },
-                { label: TOPIC, current: true },
-              ]}
-            />
-          }
-        >
+    <div className="bg-white">
+      <ArticleLayout
+        article={article}
+        faqItems={faqItems}
+        featuredPeople={[]}
+        featuredPeopleTitle={`AI practitioners experienced in ${TOPIC}`}
+        summaryHighlights={summaryHighlights}
+        breadcrumb={
+          <Breadcrumbs
+            items={[
+              { label: 'Articles', href: '/articles' },
+              { label: TOPIC, current: true },
+            ]}
+          />
+        }
+      >
           {/* 1) Intro alert */}
           <div className="my-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
             <p className="text-sm text-indigo-900">
               This guide is part of our broader series on AI strategy. Prefer a quick primer?{' '}
-              <Link href="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
+              <Link to="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
                 Read the AI basics overview →
               </Link>
             </p>
@@ -283,13 +167,12 @@ export default async function Page() {
             </p>
 
             <div className="my-4 w-full">
-              <Image
+              <ImageWithFallback
                 src={HERO_IMAGE}
                 alt={HERO_IMAGE_ALT}
                 width={800}
                 height={600}
                 className="w-full rounded-2xl"
-                priority
               />
             </div>
 
@@ -367,7 +250,7 @@ export default async function Page() {
             </div>
 
             <div className="w-full">
-              <Image
+              <ImageWithFallback
                 src={HERO_IMAGE}
                 alt={`${HERO_IMAGE_ALT} — contextual`}
                 width={800}
@@ -382,11 +265,11 @@ export default async function Page() {
             <p>
               A clear strategy keeps teams focused on outcomes, not tools. It helps you communicate value to investors and customers, and it reduces rework by making privacy and security expectations explicit.
               You can also use the MLAI recommender to{' '}
-              <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+              <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
                 get personalised learning paths
               </Link>{' '}
               or browse the{' '}
-              <Link href="/articles/startups/startup-fundamentals" className="font-medium text-[#1028E0] hover:underline">
+              <Link to="/articles/startups/startup-fundamentals" className="font-medium text-[#1028E0] hover:underline">
                 startup fundamentals guide
               </Link>
               .
@@ -639,15 +522,15 @@ export default async function Page() {
             </p>
             <p>
               You can use{' '}
-              <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+              <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
                 MLAI's recommendations
               </Link>{' '}
               to discover resources, events, and learning paths for AI strategy. Also browse{' '}
-              <Link href="/resources" className="font-medium text-[#1028E0] hover:underline">
+              <Link to="/resources" className="font-medium text-[#1028E0] hover:underline">
                 the resource library
               </Link>{' '}
               and{' '}
-              <Link href="/events" className="font-medium text-[#1028E0] hover:underline">
+              <Link to="/events" className="font-medium text-[#1028E0] hover:underline">
                 upcoming events
               </Link>
               .
@@ -750,7 +633,7 @@ export default async function Page() {
                     <li>Pick one use case with clear user benefit.</li>
                     <li>
                       Use{' '}
-                      <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+                      <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
                         MLAI's recommendations
                       </Link>{' '}
                       to shortlist learning and tools.
@@ -791,14 +674,14 @@ export default async function Page() {
 
             {/* 15) FAQ + contact */}
             <div className="my-12">
-              <ArticleFAQ items={faqs} />
+              <ArticleFAQ items={faqItems} />
               <p className="mt-4 text-base text-gray-600">
                 If you still have questions after reading this guide, you&apos;re welcome to contact us via the{' '}
-                <Link href="/about" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
+                <Link to="/about" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
                   About page
                 </Link>{' '}
                 or get tailored recommendations through{' '}
-                <Link href="/?mode=recommend" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
+                <Link to="/?mode=recommend" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
                   MLAI&apos;s recommendations
                 </Link>
                 .
@@ -809,7 +692,7 @@ export default async function Page() {
             <div className="my-8 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
               <p className="text-sm text-indigo-900">
                 Ready for the next step?{' '}
-                <Link href="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
+                <Link to="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
                   Explore the AI basics follow-up guide →
                 </Link>
               </p>
@@ -819,7 +702,6 @@ export default async function Page() {
             <MLAITemplateResourceCTA />
           </div>
         </ArticleLayout>
-      </div>
-    </>
+    </div>
   )
 }
