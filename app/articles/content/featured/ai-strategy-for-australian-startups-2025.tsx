@@ -11,7 +11,6 @@ import { ArticleLayout } from '../../../components/articles/ArticleLayout'
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import ArticleCompanyHighlightCTA from '../../../components/articles/ArticleCompanyHighlightCTA'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
 import type { FeaturedPersonProfile } from '../../../../data/types'
@@ -127,7 +126,7 @@ async function getFeaturedPeopleSafe() {
 
 export default async function Page() {
   const article = applyArticleRegistryDefaults({
-    title: `${TOPIC} (2025)` ,
+    title: `${TOPIC} (2025)`,
     dateModified: DATE_MODIFIED,
     description: DESCRIPTION,
     author: AUTHOR,
