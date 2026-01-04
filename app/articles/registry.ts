@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ai-safety--governance-in-australia-2025': {
+        title: 'AI Safety & Governance in Australia (2025)',
+        date: '2026-01-04',
+        description: 'Practical 2025 guide to AI safety and governance in Australia: risk assessment, privacy, compliance, and workflows founders, teams, and community builders can use. MLAI’s plain-English playbook.',
+        author: 'MLAI Team',
+        slug: 'featured/ai-safety--governance-in-australia-2025',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'AI Safety & Governance in Australia (2025)',
+        hasContent: true,
+    },
     'featured/how-to-find-a-cofounder': {
         title: 'how-to-find-a-cofounder',
         date: '2025-01-01',
