@@ -16,6 +16,10 @@ import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITempla
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
 import type { FeaturedPersonProfile } from '../../../../data/types'
 
+// Ensure this page is rendered dynamically to avoid build-time network waits
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI Strategy for Australian Startups'
 const CATEGORY = 'featured'
@@ -107,9 +111,23 @@ export const metadata: Metadata = {
   keywords: ['AI strategy Australia', 'startup AI plan', 'AI governance 2025'],
 }
 
+async function getFeaturedPeopleSafe() {
+  try {
+    const timeoutMs = 2000
+    const result = await Promise.race<Awaited<ReturnType<typeof getFeaturedPeople>> | null>([
+      getFeaturedPeople(FEATURED_FOCUS as any, 8),
+      new Promise<null>((resolve) => setTimeout(() => resolve(null), timeoutMs)),
+    ])
+    return Array.isArray(result) ? result : []
+  } catch (error) {
+    console.error('Failed to fetch featured people', error)
+    return []
+  }
+}
+
 export default async function Page() {
   const article = applyArticleRegistryDefaults({
-    title: `${TOPIC} (2025)`,
+    title: `${TOPIC} (2025)` ,
     dateModified: DATE_MODIFIED,
     description: DESCRIPTION,
     author: AUTHOR,
@@ -118,8 +136,8 @@ export default async function Page() {
     imageAlt: HERO_IMAGE_ALT,
   })
 
-  // Featured people fetch + defensive mapping (copied from canonical north-star article)
-  const people = await getFeaturedPeople(FEATURED_FOCUS as any, 8)
+  // Featured people fetch with timeout + defensive mapping
+  const people = await getFeaturedPeopleSafe()
   const featuredPeople: FeaturedPersonProfile[] = (people || []).map((p: any, idx: number) => ({
     slug: p.slug || p.person_id || `person-${idx}`,
     name:
@@ -131,7 +149,7 @@ export default async function Page() {
     headshot: p.avatar || p.avatar_url || p.blurred_avatar_url || '',
     topics: p.topics || p.focus_areas || p.niches || [],
     languages: p.languages || [],
-    focus: ((): any => {
+    focus: (() => {
       const arr = Array.isArray(p.persona)
         ? p.persona
         : p.persona
@@ -204,10 +222,10 @@ export default async function Page() {
           }}
           breadcrumb={
             <Breadcrumbs
-              items={[
+              items=[
                 { label: 'Articles', href: '/articles' },
                 { label: TOPIC, current: true },
-              ]}
+              ]
             />
           }
         >
@@ -324,7 +342,7 @@ export default async function Page() {
             </div>
 
             <h2 id="when-needed">When do you need AI strategy?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-063d4526-67c6-4260-92cd-bc9002d931c1.jpg?alt=media&token=1b58725d-ef61-4753-bd4e-3cfe45f1f487" alt="Abstract illustration depicting the necessity of AI strategy in modern technology and business." className="w-full rounded-lg my-8" />
+            <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-063d4526-67c6-4260-92cd-bc9002d931c1.jpg?alt=media&token=1b58725d-ef61-4753-bd4e-3cfe45f1f487" alt="Abstract illustration depicting the necessity of AI strategy in modern technology and business." className="w-full rounded-lg my-8" />
 
             <p>
               It is most useful before you buy subscriptions, hire specialists, or commit to investor or customer promises. Use it whenever decisions about data, risk, and value are unclear.
@@ -360,7 +378,7 @@ export default async function Page() {
             </div>
 
             <h2>Why AI strategy matters</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6b40279c-d074-4c54-9cba-4aaa53294409.jpg?alt=media&token=c4ed1f4f-58e1-4d1f-9bf3-1fd75e6d0a93" alt="Abstract illustration highlighting the importance of AI strategy in modern technology and business processes." className="w-full rounded-lg my-8" />
+            <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6b40279c-d074-4c54-9cba-4aaa53294409.jpg?alt=media&token=c4ed1f4f-58e1-4d1f-9bf3-1fd75e6d0a93" alt="Abstract illustration highlighting the importance of AI strategy in modern technology and business processes." className="w-full rounded-lg my-8" />
 
             <p>
               A clear strategy keeps teams focused on outcomes, not tools. It helps you communicate value to investors and customers, and it reduces rework by making privacy and security expectations explicit.
