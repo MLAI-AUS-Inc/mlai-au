@@ -41,50 +41,11 @@ export const summaryHighlights: ArticleSummaryConfig = {
 export const faqItems: ArticleFAQItem[] = [
   {
     q: 'What laws and standards guide responsible AI in Australia?',
-    a: (
-      <>
-        The Australian Privacy Act 1988 and the Australian Privacy Principles (APPs) apply when personal information is
-        involved. The OAIC has guidance on AI and privacy, and organisations should consider safety, transparency and
-        fairness norms outlined by the National AI Centre. Sector rules can also apply (e.g. health, finance). See{' '}
-        <a
-          href="https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations/ai-and-privacy"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#1028E0] underline"
-        >
-          OAIC: AI and privacy
-        </a>{' '}
-        and{' '}
-        <a
-          href="https://www.csiro.au/en/work-with-us/industries/digital/national-ai-centre"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#1028E0] underline"
-        >
-          National AI Centre (CSIRO)
-        </a>
-        .
-      </>
-    ),
+    a: 'The Australian Privacy Act 1988 and the Australian Privacy Principles (APPs) apply when personal information is involved. The OAIC has guidance on AI and privacy, and organisations should consider safety, transparency and fairness norms outlined by the National AI Centre. Sector rules can also apply (e.g. health, finance). See the OAIC website for AI and privacy guidance.',
   },
   {
     q: 'Do we need consent to use customer data to train or fine‑tune models?',
-    a: (
-      <>
-        If data is reasonably identifiable, APPs apply. Under APP 6, you generally need consent for new purposes unless
-        a permitted exception applies. Consider de‑identification, purpose limitation, and transparency. Check the
-        provider's terms, data handling, and whether your use matches what customers reasonably expect. See{' '}
-        <a
-          href="https://www.oaic.gov.au/privacy/australian-privacy-principles-guidelines/chapter-6-app-6-use-or-disclosure-of-personal-information"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#1028E0] underline"
-        >
-          OAIC APP 6
-        </a>
-        .
-      </>
-    ),
+    a: 'If data is reasonably identifiable, APPs apply. Under APP 6, you generally need consent for new purposes unless a permitted exception applies. Consider de‑identification, purpose limitation, and transparency. Check the provider\'s terms, data handling, and whether your use matches what customers reasonably expect. See OAIC APP 6 guidelines.',
   },
   {
     q: 'How much does a "responsible AI" starter setup cost for a small team?',
@@ -93,16 +54,7 @@ export const faqItems: ArticleFAQItem[] = [
   },
   {
     q: 'What should we do first if we are just starting?',
-    a: (
-      <>
-        Start with a quick risk screen (what data, who is affected, where stored), draft a one‑page AI use policy, and
-        run a small, measurable test. You can use{' '}
-        <Link to="/?mode=recommend" className="text-[#1028E0] underline">
-          MLAI's recommendations
-        </Link>{' '}
-        to find a lightweight path.
-      </>
-    ),
+    a: 'Start with a quick risk screen (what data, who is affected, where stored), draft a one‑page AI use policy, and run a small, measurable test. You can use MLAI\'s recommendations at /?mode=recommend to find a lightweight path.',
   },
   {
     q: 'How long does it take to draft an AI use policy?',
@@ -116,21 +68,7 @@ export const faqItems: ArticleFAQItem[] = [
   },
   {
     q: 'How do we handle overseas AI tools and data storage?',
-    a: (
-      <>
-        Check data residency, cross‑border disclosure (APP 8), and vendor security. Prefer enterprise modes that avoid
-        training on your inputs. Document what goes where. See{' '}
-        <a
-          href="https://www.oaic.gov.au/privacy/australian-privacy-principles-guidelines/chapter-8-app-8-cross-border-disclosure-of-personal-information"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[#1028E0] underline"
-        >
-          OAIC APP 8
-        </a>
-        .
-      </>
-    ),
+    a: 'Check data residency, cross‑border disclosure (APP 8), and vendor security. Prefer enterprise modes that avoid training on your inputs. Document what goes where. See OAIC APP 8 guidelines.',
   },
   {
     q: 'How do we evaluate model outputs for safety and quality?',

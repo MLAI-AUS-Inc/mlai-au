@@ -2,8 +2,6 @@ import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 import type { ArticleFAQItem } from '~/components/articles/ArticleFAQ'
 import type { ArticleSummaryConfig } from '~/components/articles/ArticleSummaryCard'
-import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
-import { ArticleTocPlaceholder } from '~/components/articles/ArticleTocPlaceholder'
 import ArticleCompanyCTA from '~/components/articles/ArticleCompanyCTA'
 import { MLAITemplateResourceCTA } from '~/components/articles/MLAITemplateResourceCTA'
 import { ImageWithFallback } from '~/components/ImageWithFallback'
@@ -63,15 +61,7 @@ export const faqItems: ArticleFAQItem[] = [
   },
   {
     q: 'How can we find mentors or programs for AI strategy?',
-    a: (
-      <>
-        You can start with local meetups or accelerators and ask for AI governance support. For tailored options, use the MLAI recommender at{' '}
-        <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
-          /?mode=recommend
-        </Link>
-        .
-      </>
-    ),
+    a: 'You can start with local meetups or accelerators and ask for AI governance support. For tailored options, use the MLAI recommender at /?mode=recommend.',
   },
   {
     q: 'What free resources exist for early-stage teams?',
@@ -645,8 +635,7 @@ export default function ArticleBody() {
 
         {/* 15) FAQ + contact */}
         <div className="my-12">
-          <ArticleFAQ items={faqItems} />
-          <p className="mt-4 text-base text-gray-600">
+          <p className="text-base text-gray-600">
             If you still have questions after reading this guide, you&apos;re welcome to contact us via the{' '}
             <Link to="/about" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
               About page
