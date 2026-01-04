@@ -76,7 +76,7 @@ export const faqItems: ArticleFAQItem[] = [
   },
   {
     q: 'What free resources exist for early-stage teams?',
-    a: 'Use MLAI's AI strategy checklist, OAIC privacy guidance, business.gov.au AI basics, and open-source prompt testing tools. Libraries and university innovation hubs often provide free sessions.',
+    a: 'Use MLAI\'s AI strategy checklist, OAIC privacy guidance, business.gov.au AI basics, and open-source prompt testing tools. Libraries and university innovation hubs often provide free sessions.',
   },
   {
     q: 'How do we pick AI vendors safely?',
