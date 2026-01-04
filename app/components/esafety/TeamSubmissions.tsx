@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from 'react'
 import { timeAgo } from '~/lib/timeAgo'
 import type { Submission } from '~/types/submission'
