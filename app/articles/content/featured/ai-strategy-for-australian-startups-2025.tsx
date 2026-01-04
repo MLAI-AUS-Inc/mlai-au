@@ -222,10 +222,10 @@ export default async function Page() {
           }}
           breadcrumb={
             <Breadcrumbs
-              items=[
+              items={[
                 { label: 'Articles', href: '/articles' },
                 { label: TOPIC, current: true },
-              ]
+              ]}
             />
           }
         >
