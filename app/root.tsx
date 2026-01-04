@@ -90,6 +90,7 @@ export default function Layout() {
         <script
           id="google-analytics"
           async
+          suppressHydrationWarning={true}
           dangerouslySetInnerHTML={{
             __html: `
             window.dataLayer = window.dataLayer || [];
