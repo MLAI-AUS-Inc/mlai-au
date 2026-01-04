@@ -110,7 +110,7 @@ export const faqItems: ArticleFAQItem[] = [
       'Often 1–3 hours using a template and examples, then 1–2 iterations with team feedback. Update it as your tools and risks change.',
   },
   {
-    q: 'What's the difference between "responsible AI" and legal compliance?',
+    q: 'What\'s the difference between "responsible AI" and legal compliance?',
     a:
       'Compliance is the minimum required by law. Responsible AI adds practical safeguards—testing, monitoring, transparency, and user‑centred risk reduction—often going beyond the legal baseline.',
   },
