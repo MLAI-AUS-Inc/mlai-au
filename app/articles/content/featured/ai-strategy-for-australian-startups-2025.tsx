@@ -102,8 +102,8 @@ export default function AIStrategyForAustralianStartups2025() {
       <ArticleLayout
         article={article}
         faqItems={faqItems}
-        featuredPeople={[]}
-        featuredPeopleTitle={`AI practitioners experienced in ${TOPIC}`}
+        featuredProfessionals={[]}
+        featuredProfessionalsTitle={`AI practitioners experienced in ${TOPIC}`}
         summaryHighlights={summaryHighlights}
         breadcrumb={
           <Breadcrumbs
