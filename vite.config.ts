@@ -36,7 +36,7 @@ export default defineConfig({
         target: 'http://localhost',
         changeOrigin: true,
         secure: false,
-        ws: true, // Handle websockets
+        ws: true,
       },
     },
   },
