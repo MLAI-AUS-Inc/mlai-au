@@ -10,12 +10,5 @@ export type ArticleResource = {
 };
 
 export const articleResourcesByPage: Record<string, ArticleResource[]> = {
-    "technology/introduction-to-mlai": [
-        {
-            label: "MLAI Pitch Deck",
-            description: "Overview of the MLAI community and goals.",
-            href: null,
-            type: "PDF",
-        },
-    ],
+
 };

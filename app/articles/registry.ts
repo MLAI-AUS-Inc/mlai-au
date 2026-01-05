@@ -64,55 +64,7 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'featured/ai-strategy-for-australian-startups-2025': {
-        title: 'AI Strategy for Australian Startups (2025)',
-        date: '2026-01-04',
-        description: 'Practical 2025 guide for Australian startups to plan AI strategy: where to start, costs, risks, governance, tools. Includes MLAI resources and AU privacy context.',
-        author: 'MLAI Team',
-        slug: 'featured/ai-strategy-for-australian-startups-2025',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'AI Strategy for Australian Startups (2025)',
-        hasContent: true,
-    },
-    'featured/responsible-ai-for-australian-startups-2025': {
-        title: 'Responsible AI for Australian Startups (2025)',
-        date: '2026-01-03',
-        description: 'Plain‑English guide to responsible AI for Australian startups: privacy (OAIC), data handling, evaluation, governance, costs and practical steps. Evidence‑based, from MLAI.',
-        author: 'MLAI Team',
-        slug: 'featured/responsible-ai-for-australian-startups-2025',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'Responsible AI for Australian Startups (2025)',
-        hasContent: true,
-    },
-    'featured/how-to-find-a-cofounder': {
-        title: 'how-to-find-a-cofounder',
-        date: '2025-01-01',
-        description: '',
-        author: 'MLAI Team',
-        slug: 'featured/how-to-find-a-cofounder',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'how-to-find-a-cofounder',
-        hasContent: true,
-    },
-    // Example Article
-    'technology/introduction-to-mlai': {
-        title: 'Introduction to MLAI',
-        date: '2025-10-01',
-        description: 'An introduction to Machine Learning and AI in Australia.',
-        author: 'Dr Sam Donegan',
-        slug: 'technology/introduction-to-mlai',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'MLAI Intro',
-    },
-    'featured/community-guidelines': {
-        title: 'Community Guidelines',
-        date: '2025-01-15',
-        description: 'Guidelines for participating in the MLAI community.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/community-guidelines',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'Community Guidelines',
-    },
+
 };
 
 export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.keys(ARTICLE_REGISTRY);
