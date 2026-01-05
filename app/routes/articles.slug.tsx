@@ -1,12 +1,21 @@
 import React, { Suspense, lazy, useMemo } from "react";
 import {
     getArticleBySlug,
-    resolveArticleRouteSlug,
     type ArticleWithSlug,
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
 import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
 import type { Route } from "./+types/articles.slug";
+
+/**
+ * Automatically discover all article content modules using Vite's glob import.
+ * This eliminates the need for the PublisherAgent to manually register imports.
+ */
+const articleModules = import.meta.glob<{
+    default: React.ComponentType;
+    summaryHighlights?: any;
+    faqItems?: any;
+}>('../articles/content/**/*.tsx');
 
 export function meta({ data }: Route.MetaArgs) {
     if (!data?.article) {
@@ -30,26 +39,38 @@ export async function loader({ params }: Route.LoaderArgs) {
         throw new Response("Not Found", { status: 404 });
     }
 
-    return { article };
-}
+    // Load metadata from the content module if it exists
+    // This runs on the server (and client during navigation), ensuring metadata
+    // is available before render to avoid side-effects during hydration.
+    const globKey = `../articles/content/${article.slug}.tsx`;
+    const importer = articleModules[globKey];
+    let summaryHighlights = undefined;
+    let faqItems = undefined;
 
-/**
- * Automatically discover all article content modules using Vite's glob import.
- * This eliminates the need for the PublisherAgent to manually register imports.
- */
-const articleModules = import.meta.glob<{ 
-    default: React.ComponentType;
-    summaryHighlights?: any;
-    faqItems?: any;
-}>('../articles/content/**/*.tsx');
+    if (importer) {
+        try {
+            // Await the module to extract exports
+            // Note: This relies on the exports being serializable (e.g. basic objects/strings)
+            const module = await importer();
+            summaryHighlights = module.summaryHighlights;
+            faqItems = module.faqItems;
+        } catch (e) {
+            console.error(`Failed to load article metadata for ${slug}`, e);
+            // Non-fatal: we can still render the article body wrapper
+        }
+    }
+
+    return {
+        article,
+        summaryHighlights,
+        faqItems
+    };
+}
 
 /**
  * Dynamically load and render the article content component if available.
  */
-function ArticleContent({ article, onModuleLoad }: { 
-    article: ArticleWithSlug;
-    onModuleLoad?: (module: any) => void;
-}) {
+function ArticleContent({ article }: { article: ArticleWithSlug }) {
     const ContentComponent = useMemo(() => {
         // Construct the expected file path key for the glob map
         // article.slug is like 'featured/my-article'
@@ -58,13 +79,10 @@ function ArticleContent({ article, onModuleLoad }: {
 
         const loader = articleModules[globKey];
         if (!loader) return null;
-        
-        return lazy(async () => {
-            const module = await loader();
-            onModuleLoad?.(module);
-            return module;
-        });
-    }, [article.slug, onModuleLoad]);
+
+        // Purely return the lazy component without side-effects
+        return lazy(loader as any);
+    }, [article.slug]);
 
     if (!ContentComponent) {
         // Fallback for articles without content components
@@ -86,8 +104,7 @@ function ArticleContent({ article, onModuleLoad }: {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article } = loaderData;
-    const [articleModule, setArticleModule] = React.useState<any>(null);
+    const { article, summaryHighlights, faqItems } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -99,15 +116,12 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             article={article}
             breadcrumbItems={breadcrumbs}
             showHero={true}
-            summaryHighlights={articleModule?.summaryHighlights}
-            faqItems={articleModule?.faqItems}
+            summaryHighlights={summaryHighlights}
+            faqItems={faqItems}
         >
             <div className="relative">
                 <ArticleTocPlaceholder />
-                <ArticleContent 
-                    article={article} 
-                    onModuleLoad={setArticleModule}
-                />
+                <ArticleContent article={article} />
             </div>
         </ArticleLayout>
     );
