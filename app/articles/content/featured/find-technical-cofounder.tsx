@@ -1,5 +1,5 @@
 // app/routes/articles.$category.$slug.tsx
-import { Link } from '@remix-run/react'
+import { Link } from 'react-router'
 
 /** ========== INPUTS (FILL ALL) ========== */
 const TOPIC = 'How to Find a Technical Cofounder'
