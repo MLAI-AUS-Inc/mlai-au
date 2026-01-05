@@ -1,5 +1,5 @@
 // app/routes/articles.$category.$slug.tsx
-import Link from 'next/link'
+import { Link } from '@remix-run/react'
 
 /** ========== INPUTS (FILL ALL) ========== */
 const TOPIC = 'How to Find a Technical Cofounder'
@@ -42,7 +42,7 @@ export default function ArticlePage() {
       <nav aria-label="Breadcrumb" className="mb-6 text-sm">
         <ol className="flex flex-wrap items-center gap-1 text-gray-600">
           <li>
-            <Link href="/articles" className="hover:underline">
+            <Link to="/articles" className="hover:underline">
               Articles
             </Link>
           </li>
@@ -97,7 +97,7 @@ export default function ArticlePage() {
       {/* On-page ToC */}
       <aside className="mb-8 rounded-2xl border border-gray-200 bg-white p-4 sm:p-5">
         <h2 className="mb-2 text-base font-semibold">Table of contents</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-01c4792b-7059-4079-bc22-5de92bab0930.jpg?alt=media&token=c28e9f9d-a4e7-4159-843d-8a392a87752d" alt="Modern abstract illustration symbolizing a digital table of contents in a tech-inspired design." className="w-full rounded-lg my-8" />
+        <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-01c4792b-7059-4079-bc22-5de92bab0930.jpg?alt=media&token=c28e9f9d-a4e7-4159-843d-8a392a87752d" alt="Modern abstract illustration symbolizing a digital table of contents in a tech-inspired design." className="w-full rounded-lg my-8" />
 
         <ol className="list-decimal pl-5 text-sm text-gray-700">
           <li>
@@ -155,7 +155,7 @@ export default function ArticlePage() {
         </p>
 
         <h2 id="introduction">Introduction</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9f63d5e4-ab78-4e3f-8a25-64e4e55ddb1c.jpg?alt=media&token=2e368f6f-f3bc-4cab-a921-a0af653f15da" alt="Modern abstract illustration symbolizing technology and innovation in the introduction to technical concepts." className="w-full rounded-lg my-8" />
+        <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9f63d5e4-ab78-4e3f-8a25-64e4e55ddb1c.jpg?alt=media&token=2e368f6f-f3bc-4cab-a921-a0af653f15da" alt="Modern abstract illustration symbolizing technology and innovation in the introduction to technical concepts." className="w-full rounded-lg my-8" />
 
         <p>
           A great technical cofounder combines technical judgment, delivery pace, and product intuition. You do not need the most senior architect—you need someone who can learn, ship, and make trade-offs with you. The process here is designed to minimize time on mismatches and maximize learning through small, time-boxed trials.
@@ -245,7 +245,7 @@ export default function ArticlePage() {
         <h2 id="resources">Resources and next steps</h2>
         <p>
           Adapt this playbook to your context. For more depth on founder agreements, technical due diligence, and early-stage product loops, explore related guides in{' '}
-          <Link href="/articles" className="font-medium text-blue-600 hover:underline">
+          <Link to="/articles" className="font-medium text-blue-600 hover:underline">
             Articles
           </Link>
           .
@@ -258,7 +258,7 @@ export default function ArticlePage() {
         {featuredProfessionals.length === 0 ? (
           <p className="text-sm text-gray-600">
             Looking for practitioner feedback or guidance? Explore more guides in{' '}
-            <Link href="/articles" className="font-medium text-blue-600 hover:underline">
+            <Link to="/articles" className="font-medium text-blue-600 hover:underline">
               Articles
             </Link>
             .
