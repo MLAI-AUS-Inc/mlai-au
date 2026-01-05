@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/find-technical-cofounder': {
+        title: 'How to Find a Technical Cofounder in 2025: A Practical Playbook',
+        date: '2026-01-05',
+        description: 'Step-by-step guide to find, vet, and collaborate with a technical cofounder in 2025, including outreach templates, equity tips, and a 90-day plan.',
+        author: 'MLAI Team',
+        slug: 'featured/find-technical-cofounder',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to Find a Technical Cofounder in 2025: A Practical Playbook',
+        hasContent: true,
+    },
 
 };
 
