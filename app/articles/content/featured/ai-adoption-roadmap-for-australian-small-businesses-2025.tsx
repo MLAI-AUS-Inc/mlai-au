@@ -428,7 +428,7 @@ export default async function ArticlePage() {
 
           <h2 id="costs">Costs, access & time</h2>
           <p>
-            Costs vary by scope. As at 2025, most SMEs can pilot with <$1k in tool spend. Structured training or facilitated roadmaps can add $800–$3k. Custom integrations or multi-tool rollouts can reach $5k–$25k.
+            Costs vary by scope. As at 2025, most SMEs can pilot with &lt;$1k in tool spend. Structured training or facilitated roadmaps can add $800–$3k. Custom integrations or multi-tool rollouts can reach $5k–$25k.
           </p>
 
           <div className="my-6 border-l-4 border-green-400 bg-green-50 p-4">
