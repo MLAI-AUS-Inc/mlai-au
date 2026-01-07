@@ -64,36 +64,7 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'featured/ai-hackathons-and-events': {
-        title: 'AI Hackathons and Events in Australia (2025)',
-        date: '2026-01-07',
-        description: 'Plan AI hackathons and AI community events in Australia for 2025 with a practical guide to formats, costs, prep checklists, safety, and MLAI resources.',
-        author: 'MLAI Team',
-        slug: 'featured/ai-hackathons-and-events',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'AI Hackathons and Events in Australia (2025)',
-        hasContent: true,
-    },
-    'featured/ai-adoption-roadmap-for-australian-small-businesses-2025': {
-        title: 'AI adoption roadmap for Australian small businesses (2025)',
-        date: '2026-01-06',
-        description: 'Step-by-step AI adoption roadmap for Australian small businesses in 2025, covering costs, timelines, privacy, grants, and safe implementation tips. MLAI guide.',
-        author: 'MLAI Team',
-        slug: 'featured/ai-adoption-roadmap-for-australian-small-businesses-2025',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'AI adoption roadmap for Australian small businesses (2025)',
-        hasContent: true,
-    },
-    'featured/find-technical-cofounder': {
-        title: 'How to Find a Technical Cofounder in 2025: A Practical Playbook',
-        date: '2026-01-05',
-        description: 'Step-by-step guide to find, vet, and collaborate with a technical cofounder in 2025, including outreach templates, equity tips, and a 90-day plan.',
-        author: 'MLAI Team',
-        slug: 'featured/find-technical-cofounder',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to Find a Technical Cofounder in 2025: A Practical Playbook',
-        hasContent: true,
-    },
+
 
 };
 
