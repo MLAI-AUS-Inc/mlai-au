@@ -9,7 +9,7 @@ import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPl
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import ArticleCompanyHighlightCTA from '../../../components/articles/ArticleCompanyHighlightCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../../../data/types'
+import type { ClinicianProfile } from '../../../data/types'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI Hackathons and Events in Australia'
@@ -119,13 +119,13 @@ export async function loader(_args: LoaderFunctionArgs) {
     imageAlt: HERO_IMAGE_ALT,
   })
 
-  const featuredPeople: FeaturedPersonProfile[] = []
+  const featuredProfessionals: ClinicianProfile[] = []
 
-  return { article, featuredPeople }
+  return { article, featuredProfessionals }
 }
 
 export default function ArticlePage() {
-  const { article, featuredPeople } = useLoaderData<typeof loader>()
+  const { article, featuredProfessionals } = useLoaderData<typeof loader>()
 
   return (
     <>
@@ -141,8 +141,8 @@ export default function ArticlePage() {
         <ArticleLayout
           article={article}
           faqItems={faqs}
-          featuredPeople={featuredPeople}
-          featuredPeopleTitle={`AI practitioners experienced in ${TOPIC}`}
+          featuredProfessionals={featuredProfessionals}
+          featuredProfessionalsTitle={`AI practitioners experienced in ${TOPIC}`}
           summaryHighlights={{
             heading: `Key facts: ${TOPIC}`,
             intro:
@@ -598,11 +598,17 @@ export default function ArticlePage() {
 
             <div className="my-8">
               <ArticleCompanyHighlightCTA
-                eyebrow="On the calendar"
+                label="On the calendar"
                 title="See upcoming AI meetups and hackathons"
                 body="Browse community-led and partner events across Australia, updated regularly."
-                buttonHref="/events"
-                buttonText="View events"
+                primaryButton={{
+                  text: "View events",
+                  href: "/events"
+                }}
+                image={{
+                  src: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1400&q=80",
+                  alt: "Calendar showing upcoming AI events and meetups"
+                }}
               />
             </div>
 
