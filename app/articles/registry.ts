@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/responsible-ai-guidelines-for-australian-startups-2025': {
+        title: 'Responsible AI Guidelines for Australian Startups (2025)',
+        date: '2026-01-07',
+        description: 'Learn how Australian startups can implement responsible AI in 2025 with governance steps, risk controls, privacy, and compliance guidance tailored to local standards.',
+        author: 'MLAI Team',
+        slug: 'featured/responsible-ai-guidelines-for-australian-startups-2025',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Responsible AI Guidelines for Australian Startups (2025)',
+        hasContent: true,
+    },
     'featured/ai-hackathons-and-events': {
         title: 'AI Hackathons and Events in Australia (2025)',
         date: '2026-01-07',
