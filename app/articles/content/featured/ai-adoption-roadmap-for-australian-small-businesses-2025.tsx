@@ -73,7 +73,7 @@ const faqs: FAQ[] = [
     answer: (
       <>
         Use trusted hubs and ask for transparent outcomes. You can also use{' '}
-        <Link href="/?mode=recommend" className="font-semibold text-[#1028E0] hover:underline">
+        <Link to="/?mode=recommend" className="font-semibold text-[#1028E0] hover:underline">
           MLAI recommendations
         </Link>{' '}
         to filter by topic, format, and location.
@@ -152,7 +152,7 @@ export default function ArticlePage() {
         <div className="my-4 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
           <p className="text-sm text-indigo-900">
             This guide pairs well with our AI basics primer. Prefer to start there?{' '}
-            <Link href="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
+            <Link to="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
               Read the AI basics guide →
             </Link>
           </p>
@@ -307,11 +307,11 @@ export default function ArticlePage() {
           </p>
           <p>
             You can also use{' '}
-            <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+            <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
               MLAI&apos;s recommendations
             </Link>{' '}
             to find learning paths and tools that fit your stage, or explore foundational context in our{' '}
-            <Link href="/articles/ai/ai-basics" className="font-medium text-[#1028E0] hover:underline">
+            <Link to="/articles/ai/ai-basics" className="font-medium text-[#1028E0] hover:underline">
               AI basics guide
             </Link>
             .
@@ -556,7 +556,7 @@ export default function ArticlePage() {
           </p>
           <p>
             You can use{' '}
-            <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+            <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
               MLAI&apos;s recommendations
             </Link>{' '}
             to discover resources and community events that match your stage.
@@ -653,7 +653,7 @@ export default function ArticlePage() {
                   <li>Pick one workflow with low data sensitivity.</li>
                   <li>
                     Use{' '}
-                    <Link href="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
+                    <Link to="/?mode=recommend" className="font-medium text-[#1028E0] hover:underline">
                       MLAI&apos;s recommendations
                     </Link>{' '}
                     to shortlist tools or programs.
@@ -697,11 +697,11 @@ export default function ArticlePage() {
             <ArticleFAQ items={faqs} />
             <p className="mt-4 text-base text-gray-600">
               If you still have questions after reading this guide, you&apos;re welcome to contact us via the{' '}
-              <Link href="/about" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
+              <Link to="/about" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
                 About page
               </Link>{' '}
               or get tailored recommendations through{' '}
-              <Link href="/?mode=recommend" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
+              <Link to="/?mode=recommend" className="font-semibold text-[#1028E0] hover:text-[#1028E0]">
                 MLAI&apos;s recommendations
               </Link>
               .
@@ -712,7 +712,7 @@ export default function ArticlePage() {
           <div className="my-8 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
             <p className="text-sm text-indigo-900">
               Ready for the next step?{' '}
-              <Link href="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
+              <Link to="/articles/ai/ai-basics" className="font-semibold text-[#1028E0] hover:underline">
                 Explore the AI basics guide →
               </Link>
             </p>
