@@ -1,16 +1,13 @@
-import type { Metadata } from 'next'
-import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { getFeaturedPeople } from '../lib/backend.server'
-import { applyArticleRegistryDefaults } from '../articles/registry'
-import Breadcrumbs from '../components/Breadcrumbs'
-import { ArticleLayout } from '../components/articles/ArticleLayout'
-import { ArticleFAQ } from '../components/articles/ArticleFAQ'
-import { ArticleTocPlaceholder } from '../components/articles/ArticleTocPlaceholder'
-import ArticleCompanyCTA from '../components/articles/ArticleCompanyCTA'
-import ArticleCompanyHighlightCTA from '../components/articles/ArticleCompanyHighlightCTA'
-import { ImageWithFallback } from '../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../data/types'
+import { Link } from 'react-router'
+import { applyArticleRegistryDefaults } from '../../registry'
+import Breadcrumbs from '../../components/Breadcrumbs'
+import { ArticleLayout } from '../../components/articles/ArticleLayout'
+import { ArticleFAQ } from '../../components/articles/ArticleFAQ'
+import { ArticleTocPlaceholder } from '../../components/articles/ArticleTocPlaceholder'
+import ArticleCompanyCTA from '../../components/articles/ArticleCompanyCTA'
+import ArticleCompanyHighlightCTA from '../../components/articles/ArticleCompanyHighlightCTA'
+import { ImageWithFallback } from '../../components/ImageWithFallback'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI adoption roadmap for Australian small businesses'
@@ -31,24 +28,6 @@ const KEYWORDS: string[] = [
   'Australian SMEs AI',
 ]
 
-export const metadata: Metadata = {
-  title: `${TOPIC} (2025)`,
-  description: DESCRIPTION,
-  keywords: KEYWORDS,
-  openGraph: {
-    title: `${TOPIC} (2025)`,
-    description: DESCRIPTION,
-    images: [HERO_IMAGE],
-    url: `/articles/${SLUG}`,
-    type: 'article',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: `${TOPIC} (2025)`,
-    description: DESCRIPTION,
-    images: [HERO_IMAGE],
-  },
-}
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -115,7 +94,7 @@ const faqs: FAQ[] = [
   },
 ]
 
-export default async function ArticlePage() {
+export default function ArticlePage() {
   const article = applyArticleRegistryDefaults({
     title: `${TOPIC} (2025)`,
     dateModified: DATE_MODIFIED,
@@ -126,55 +105,11 @@ export default async function ArticlePage() {
     imageAlt: HERO_IMAGE_ALT,
   })
 
-  const people = await getFeaturedPeople(FEATURED_FOCUS as any, 8)
-  const featuredPeople: FeaturedPersonProfile[] = (people || []).map((p: any, idx: number) => ({
-    slug: p.slug || p.person_id || `person-${idx}`,
-    name:
-      (p.name && String(p.name).trim()) || `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Community member',
-    first_name: p.first_name || undefined,
-    last_name: p.last_name || undefined,
-    headshot: p.avatar || p.avatar_url || p.blurred_avatar_url || '',
-    topics: p.topics || p.focus_areas || p.niches || [],
-    languages: p.languages || [],
-    focus: ((): any => {
-      const arr = Array.isArray(p.persona)
-        ? p.persona
-        : p.persona
-        ? String(p.persona)
-            .split(',')
-            .map((s: string) => s.trim())
-        : []
-      const first = (arr[0] || '').toLowerCase()
-      if (first === 'founder' || first === 'startup') return 'startups'
-      if (first === 'ai' || first === 'machine-learning' || first === 'ml') return 'ai'
-      if (first === 'product' || first === 'growth') return 'product'
-      if (first === 'funding' || first === 'investor' || first === 'legal') return 'funding'
-      return p.focus || FEATURED_FOCUS
-    })(),
-    headline: p.headline || p.role_title || '',
-    shortBio: p.shortBio || p.summary || '',
-    longBio: p.longBio || p.long_bio || '',
-    formats: p.formats || p.offers || [],
-    availability: p.availability || [],
-    online: !!p.online || !!p.remote || !!p.virtual,
-    inPerson: !!p.in_person || !!p.inPerson || !!p.local,
-    credentials: p.credentials || p.credBullets || [],
-    links: p.links || [],
-    city_suburb: p.city_suburb || p.city || '',
-    state_region: p.state_region || p.state || '',
-    latitude: p.latitude ?? (p.locations?.[0]?.latitude ?? null),
-    longitude: p.longitude ?? (p.locations?.[0]?.longitude ?? null),
-    place_id: p.place_id ?? (p.locations?.[0]?.place_id ?? null),
-    location_id: p.location_id ?? (p.locations?.[0]?.id ?? null),
-  })) as any
-
   return (
     <div className="bg-white">
       <ArticleLayout
         article={article}
         faqItems={faqs}
-        featuredPeople={featuredPeople}
-        featuredPeopleTitle="AI practitioners experienced in small-business AI adoption"
         summaryHighlights={{
           heading: `Key facts: ${TOPIC}`,
           intro:
