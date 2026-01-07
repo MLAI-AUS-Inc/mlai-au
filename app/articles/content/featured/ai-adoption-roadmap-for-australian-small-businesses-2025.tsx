@@ -1,13 +1,13 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { applyArticleRegistryDefaults } from '../../registry'
-// import Breadcrumbs from '../../components/Breadcrumbs' // Removed to fix build error
-import { ArticleLayout } from '../../components/articles/ArticleLayout'
-import { ArticleFAQ } from '../../components/articles/ArticleFAQ'
-import { ArticleTocPlaceholder } from '../../components/articles/ArticleTocPlaceholder'
-import ArticleCompanyCTA from '../../components/articles/ArticleCompanyCTA'
-import ArticleCompanyHighlightCTA from '../../components/articles/ArticleCompanyHighlightCTA'
-import { ImageWithFallback } from '../../components/ImageWithFallback'
+// import Breadcrumbs from '../../../components/Breadcrumbs' // Removed to fix build error
+import { ArticleLayout } from '../../../components/articles/ArticleLayout'
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
+import ArticleCompanyHighlightCTA from '../../../components/articles/ArticleCompanyHighlightCTA'
+import { ImageWithFallback } from '../../../components/ImageWithFallback'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI adoption roadmap for Australian small businesses'
