@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { applyArticleRegistryDefaults } from '../../registry'
-import Breadcrumbs from '../../components/Breadcrumbs'
+// import Breadcrumbs from '../../components/Breadcrumbs' // Removed to fix build error
 import { ArticleLayout } from '../../components/articles/ArticleLayout'
 import { ArticleFAQ } from '../../components/articles/ArticleFAQ'
 import { ArticleTocPlaceholder } from '../../components/articles/ArticleTocPlaceholder'
@@ -133,12 +133,19 @@ export default function ArticlePage() {
           ],
         }}
         breadcrumb={
-          <Breadcrumbs
-            items={[
-              { label: 'Articles', href: '/articles' },
-              { label: TOPIC, current: true },
-            ]}
-          />
+          <nav aria-label="Breadcrumb" className="mb-6 text-sm">
+            <ol className="flex flex-wrap items-center gap-1 text-gray-600">
+              <li>
+                <Link to="/articles" className="hover:underline">
+                  Articles
+                </Link>
+              </li>
+              <li aria-hidden="true" className="px-1">
+                /
+              </li>
+              <li className="text-gray-900">{TOPIC}</li>
+            </ol>
+          </nav>
         }
       >
         {/* 1) Intro alert */}
