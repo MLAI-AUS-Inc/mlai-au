@@ -37,3 +37,10 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         internalLinks: [],
     },
 };
+
+export const canonical = (path: string) => {
+    const siteUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
+        ? process.env.NEXT_PUBLIC_SITE_URL
+        : 'https://www.supportsorted.com';
+    return `${siteUrl}${path}`;
+};
