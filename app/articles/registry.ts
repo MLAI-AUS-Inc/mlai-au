@@ -72,6 +72,14 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy',
         image: 'https://placehold.co/1200x630/png',
         imageAlt: 'How to Start a Startup and Use AI to Make It Easy (2025)',
+    'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
+        title: 'Weekly deep dive into AI and ML advancements: updates for 2025',
+        date: '2026-01-08',
+        description: 'Stay across this week\'s AI and ML advancements with Australian context: model updates, safety notes, regulation changes, tooling tips, and actions for teams.',
+        author: 'MLAI Team',
+        slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Weekly deep dive into AI and ML advancements: updates for 2025',
         hasContent: true,
     },
 

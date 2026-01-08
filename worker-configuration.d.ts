@@ -17,6 +17,20 @@ type StringifyValues<EnvType extends Record<string, unknown>> = {
 };
 declare namespace NodeJS {
     interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "VALUE_FROM_CLOUDFLARE" | "BACKEND_BASE_URL">> { }
+	interface GlobalProps {
+		mainModule: typeof import("./workers/app");
+	}
+	interface Env {
+		VALUE_FROM_CLOUDFLARE: "Hello from Cloudflare";
+		BACKEND_BASE_URL: "https://api.mlai.au";
+	}
+}
+interface Env extends Cloudflare.Env {}
+type StringifyValues<EnvType extends Record<string, unknown>> = {
+	[Binding in keyof EnvType]: EnvType[Binding] extends string ? EnvType[Binding] : string;
+};
+declare namespace NodeJS {
+	interface ProcessEnv extends StringifyValues<Pick<Cloudflare.Env, "VALUE_FROM_CLOUDFLARE" | "BACKEND_BASE_URL">> {}
 }
 
 // Begin runtime types
