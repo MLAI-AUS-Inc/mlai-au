@@ -72,6 +72,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/best-way-to-learn-about-ai-2026',
         image: 'https://placehold.co/1200x630/png',
         imageAlt: 'Best Way to Learn About AI in 2026 (Australia)',
+    },
     'featured/ai-hackathons-and-events-melbourne': {
         title: 'AI Hackathons and Events in Melbourne (2025 Guide)',
         date: '2026-01-08',
