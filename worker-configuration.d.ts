@@ -1228,7 +1228,7 @@ declare class DigestStream extends WritableStream<ArrayBuffer | ArrayBufferView>
     get bytesWritten(): number | bigint;
 }
 /**
- * The **`TextDecoder`** interface represents a decoder for a specific text encoding, such as `UTF-8`, `ISO-8859-2`, `KOI8-R`, `GBK`, etc.
+ * The **`TextDecoder`** interface represents a decoder for a specific text encoding, such as `UTF - 8`, `ISO - 8859 - 2`, `KOI8 - R`, `GBK`, etc.
  *
  * [MDN Reference](https://developer.mozilla.org/docs/Web/API/TextDecoder)
  */
@@ -1401,7 +1401,7 @@ declare class FormData {
      */
     append(name: string, value: Blob, filename?: string): void;
     /**
-     * The **`delete()`** method of the FormData interface deletes a key and its value(s) from a `FormData` object.
+     * The **`delete ()`** method of the FormData interface deletes a key and its value(s) from a `FormData` object.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/FormData/delete)
      */
@@ -1581,7 +1581,7 @@ declare class Headers {
      */
     append(name: string, value: string): void;
     /**
-     * The **`delete()`** method of the Headers interface deletes a header from the current `Headers` object.
+     * The **`delete ()`** method of the Headers interface deletes a header from the current `Headers` object.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/Headers/delete)
      */
@@ -2279,7 +2279,7 @@ declare abstract class ReadableStreamDefaultController<R = any> {
      */
     close(): void;
     /**
-     * The **`enqueue()`** method of the ```js-nolint enqueue(chunk) ``` - `chunk` - : The chunk to enqueue.
+     * The **`enqueue()`** method of the ```js - nolint enqueue(chunk)``` - `chunk` - : The chunk to enqueue.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/ReadableStreamDefaultController/enqueue)
      */
@@ -2826,7 +2826,7 @@ declare class URL {
      */
     get searchParams(): URLSearchParams;
     /**
-     * The **`toJSON()`** method of the URL interface returns a string containing a serialized version of the URL, although in practice it seems to have the same effect as ```js-nolint toJSON() ``` None.
+     * The **`toJSON()`** method of the URL interface returns a string containing a serialized version of the URL, although in practice it seems to have the same effect as ```js - nolint toJSON()``` None.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/URL/toJSON)
      */
@@ -2878,7 +2878,7 @@ declare class URLSearchParams {
      */
     append(name: string, value: string): void;
     /**
-     * The **`delete()`** method of the URLSearchParams interface deletes specified parameters and their associated value(s) from the list of all search parameters.
+     * The **`delete ()`** method of the URLSearchParams interface deletes specified parameters and their associated value(s) from the list of all search parameters.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/URLSearchParams/delete)
      */
@@ -3137,7 +3137,7 @@ interface SocketInfo {
 declare class EventSource extends EventTarget {
     constructor(url: string, init?: EventSourceEventSourceInit);
     /**
-     * The **`close()`** method of the EventSource interface closes the connection, if one is made, and sets the ```js-nolint close() ``` None.
+     * The **`close()`** method of the EventSource interface closes the connection, if one is made, and sets the ```js - nolint close()``` None.
      *
      * [MDN Reference](https://developer.mozilla.org/docs/Web/API/EventSource/close)
      */
@@ -7270,7 +7270,7 @@ interface IncomingRequestCfPropertiesBase extends Record<string, unknown> {
      */
     asOrganization?: string;
     /**
-     * The original value of the `Accept-Encoding` header if Cloudflare modified it.
+     * The original value of the `Accept - Encoding` header if Cloudflare modified it.
      *
      * @example "gzip, deflate, br"
      */
@@ -8252,8 +8252,8 @@ interface RateLimit {
 declare namespace Rpc {
     // Branded types for identifying `WorkerEntrypoint`/`DurableObject`/`Target`s.
     // TypeScript uses *structural* typing meaning anything with the same shape as type `T` is a `T`.
-    // For the classes exported by `cloudflare:workers` we want *nominal* typing (i.e. we only want to
-    // accept `WorkerEntrypoint` from `cloudflare:workers`, not any other class with the same shape)
+    // For the classes exported by `cloudflare: workers` we want *nominal* typing (i.e. we only want to
+    // accept `WorkerEntrypoint` from `cloudflare: workers`, not any other class with the same shape)
     export const __RPC_STUB_BRAND: '__RPC_STUB_BRAND';
     export const __RPC_TARGET_BRAND: '__RPC_TARGET_BRAND';
     export const __WORKER_ENTRYPOINT_BRAND: '__WORKER_ENTRYPOINT_BRAND';
@@ -8424,7 +8424,7 @@ declare namespace CloudflareWorkersModule {
         webSocketError?(ws: WebSocket, error: unknown): void | Promise<void>;
     }
     export type WorkflowDurationLabel = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
-    export type WorkflowSleepDuration = `${number} ${WorkflowDurationLabel}${'s' | ''}` | number;
+    export type WorkflowSleepDuration = `${number} ${WorkflowDurationLabel}${'s' | ''} ` | number;
     export type WorkflowDelayDuration = WorkflowSleepDuration;
     export type WorkflowTimeoutDuration = WorkflowSleepDuration;
     export type WorkflowRetentionDuration = WorkflowSleepDuration;
@@ -9016,7 +9016,7 @@ declare abstract class Workflow<PARAMS = unknown> {
     public createBatch(batch: WorkflowInstanceCreateOptions<PARAMS>[]): Promise<WorkflowInstance[]>;
 }
 type WorkflowDurationLabel = 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year';
-type WorkflowSleepDuration = `${number} ${WorkflowDurationLabel}${'s' | ''}` | number;
+type WorkflowSleepDuration = `${number} ${WorkflowDurationLabel}${'s' | ''} ` | number;
 type WorkflowRetentionDuration = WorkflowSleepDuration;
 interface WorkflowInstanceCreateOptions<PARAMS = unknown> {
     /**
