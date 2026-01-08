@@ -1,5 +1,4 @@
-import Link from 'next/link'
-import type { Metadata } from 'next'
+import { Link, type MetaFunction } from 'react-router'
 import type { ReactNode } from 'react'
 
 import { canonical } from '../../seo-config'
@@ -9,7 +8,7 @@ import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import { AuthorBio } from '../../../components/AuthorBio'
+import AuthorBio from '../../../components/AuthorBio'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'Best way to learn about AI in 2026'
@@ -44,7 +43,7 @@ const faqs: FAQ[] = [
 
 const article = applyArticleRegistryDefaults({
   title: `${TOPIC} (2025)`,
-  datePublished: DATE_PUBLISHED,
+  date: DATE_PUBLISHED,
   dateModified: DATE_MODIFIED,
   description: DESCRIPTION,
   author: AUTHOR,
@@ -59,25 +58,23 @@ const metaDescription = article?.description || DESCRIPTION
 const metaImage = article?.image || HERO_IMAGE
 const metaUrl = canonical(`/articles/${CATEGORY}/${SLUG}`)
 
-export const metadata: Metadata = {
-  title: metaTitle,
-  description: metaDescription,
-  alternates: { canonical: metaUrl },
-  openGraph: {
-    title: metaTitle,
-    description: metaDescription,
-    url: metaUrl,
-    type: 'article',
-    images: [{ url: metaImage }],
-    publishedTime: DATE_PUBLISHED,
-    modifiedTime: DATE_MODIFIED,
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: metaTitle,
-    description: metaDescription,
-    images: [metaImage],
-  },
+export const meta: MetaFunction = () => {
+  return [
+    { title: metaTitle },
+    { name: 'description', content: metaDescription },
+    { tagName: 'link', rel: 'canonical', href: metaUrl },
+    { property: 'og:title', content: metaTitle },
+    { property: 'og:description', content: metaDescription },
+    { property: 'og:url', content: metaUrl },
+    { property: 'og:type', content: 'article' },
+    { property: 'og:image', content: metaImage },
+    { property: 'article:published_time', content: DATE_PUBLISHED },
+    { property: 'article:modified_time', content: DATE_MODIFIED },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:title', content: metaTitle },
+    { name: 'twitter:description', content: metaDescription },
+    { name: 'twitter:image', content: metaImage },
+  ]
 }
 
 export default function ArticlePage() {
@@ -88,49 +85,11 @@ export default function ArticlePage() {
     avatarUrl: AUTHOR_AVATAR,
   }
 
-  const articleJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: metaTitle,
-    image: metaImage,
-    author: {
-      '@type': 'Person',
-      name: AUTHOR,
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'Company',
-      logo: {
-        '@type': 'ImageObject',
-        url: '/logo.png',
-      },
-    },
-    datePublished: DATE_PUBLISHED,
-    dateModified: DATE_MODIFIED,
-    description: metaDescription,
-  }
-
-  const faqJsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: typeof faq.answer === 'string' ? faq.answer : 'Refer to article content for details.',
-      },
-    })),
-  }
-
   return (
     <div className="bg-white">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
       <ArticleLayout
         article={article}
         // Sticky Sidebar Components
-        toc={<ArticleTocPlaceholder />}
         summaryHighlights={{
           heading: `Key facts: ${TOPIC}`,
           intro:
@@ -154,7 +113,7 @@ export default function ArticlePage() {
           <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-4">
             <ol className="flex items-center space-x-2">
               <li>
-                <Link href="/articles" className="hover:text-gray-900 transition-colors">
+                <Link to="/articles" className="hover:text-gray-900 transition-colors">
                   Articles
                 </Link>
               </li>
@@ -172,7 +131,7 @@ export default function ArticlePage() {
             <span className="text-xl">💡</span>
             <span>
               This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-              <Link href="/articles" className="font-semibold text-indigo-600 hover:underline">
+              <Link to="/articles" className="font-semibold text-indigo-600 hover:underline">
                 Browse related articles →
               </Link>
             </span>
@@ -335,7 +294,7 @@ export default function ArticlePage() {
 
         {/* Final Breadcrumb/Nav */}
         <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-          <Link href="/articles" className="hover:text-indigo-600 transition-colors">
+          <Link to="/articles" className="hover:text-indigo-600 transition-colors">
             ← Back to Articles
           </Link>
           <a href="#" className="hover:text-indigo-600 transition-colors">
