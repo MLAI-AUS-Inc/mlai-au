@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ai-hackathons-and-events-melbourne': {
+        title: 'AI Hackathons and Events in Melbourne (2025 Guide)',
+        date: '2026-01-08',
+        description: 'Discover 2025 AI hackathons and community events in Melbourne, including formats, venues, costs, and tips to prepare and pitch effectively.',
+        author: 'MLAI Team',
+        slug: 'featured/ai-hackathons-and-events-melbourne',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'AI Hackathons and Events in Melbourne (2025 Guide)',
+        hasContent: true,
+    },
     'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy': {
         title: 'How to Start a Startup and Use AI to Make It Easy (2025)',
         date: '2026-01-07',
