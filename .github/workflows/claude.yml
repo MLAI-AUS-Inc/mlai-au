@@ -47,7 +47,7 @@ jobs:
           assignee_trigger: "claude-bot"
 
           # Allow claude to run common commands
-          allowed_tools: "Bash(*),Bash(bun *),Bash(gh *)"
+          claude_args: '--allowedTools "Bash(*),Bash(bun *),Bash(gh *)"'
 
           # Optional: Configure Claude's behavior with CLI arguments
           # claude_args: |
