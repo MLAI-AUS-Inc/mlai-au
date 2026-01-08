@@ -10,7 +10,6 @@ import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPl
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
 import { AuthorBio } from '../../../components/AuthorBio'
-import type { FeaturedPersonProfile } from '../../../data/types'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'Best way to learn about AI in 2026'
@@ -119,8 +118,6 @@ export default function ArticlePage() {
       },
     })),
   }
-
-  const featuredPeople: FeaturedPersonProfile[] = []
 
   return (
     <div className="bg-white">
