@@ -38,7 +38,7 @@
     "three": "^0.179.1"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.15.2",
+    "@cloudflare/vite-plugin": "^1.20.1",
     "@react-router/dev": "^7.10.0",
     "@tailwindcss/vite": "^4.1.17",
     "@types/form-data": "^2.5.2",

@@ -50,7 +50,6 @@ const article = applyArticleRegistryDefaults({
   slug: SLUG,
   image: HERO_IMAGE,
   imageAlt: HERO_IMAGE_ALT,
-  featuredFocus: FEATURED_FOCUS,
 })
 
 const metaTitle = article?.title || `${TOPIC} (2025)`
