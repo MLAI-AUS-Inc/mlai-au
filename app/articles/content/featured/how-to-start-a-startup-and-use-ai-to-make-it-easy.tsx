@@ -1,16 +1,16 @@
 import { Link, useLoaderData } from '@remix-run/react'
 import type { MetaFunction, LoaderFunctionArgs } from '@remix-run/node'
 import type { ReactNode } from 'react'
-import { applyArticleRegistryDefaults } from '../articles/registry'
-import { ArticleLayout } from '../components/articles/ArticleLayout'
-import { ArticleFAQ } from '../components/articles/ArticleFAQ'
-import { ArticleTocPlaceholder } from '../components/articles/ArticleTocPlaceholder'
-import ArticleCompanyCTA from '../components/articles/ArticleCompanyCTA'
-import { ImageWithFallback } from '../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../data/types'
+import { applyArticleRegistryDefaults } from '../../registry'
+import { ArticleLayout } from '../../../components/articles/ArticleLayout'
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
+import { ImageWithFallback } from '../../../components/ImageWithFallback'
+import type { FeaturedPersonProfile } from '../../../data/types'
 
 // New Components
-import { AuthorBio } from '../components/AuthorBio'
+import { AuthorBio } from '../../../components/AuthorBio'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'How to start a startup and use AI to make it easy'
