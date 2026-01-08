@@ -6,7 +6,7 @@ export function backendFetch(
   // In development (when running via Vite dev server), use relative URLs 
   // which will be proxied to localhost:80 by Vite
   // In production (Cloudflare Workers), use the full backend URL
-  const isDevelopment = typeof window !== 'undefined' || env.BACKEND_BASE_URL === 'http://localhost';
+  const isDevelopment = typeof window !== 'undefined' || String(env.BACKEND_BASE_URL).startsWith('http://localhost');
 
   let url: string;
   if (isDevelopment) {

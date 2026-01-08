@@ -20,7 +20,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     let substackPostsPromise;
 
     if (!isEsafety) {
-        const eventsApiKey = getEnv(context).PRIVATE_HUMANITIX_API_KEY;
+        const env = getEnv(context) as unknown as Record<string, any>;
+        const eventsApiKey = env.PRIVATE_HUMANITIX_API_KEY;
         eventsPromise = fetchEvents(eventsApiKey);
         substackPostsPromise = fetchSubstackPosts();
     }
