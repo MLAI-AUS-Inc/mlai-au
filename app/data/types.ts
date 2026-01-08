@@ -6,3 +6,11 @@ export interface ClinicianProfile {
     inPerson?: string;
     state_region?: string;
 }
+
+export interface FeaturedPersonProfile {
+    name: string;
+    role?: string;
+    bio?: string;
+    avatarUrl?: string;
+    slug?: string;
+}
