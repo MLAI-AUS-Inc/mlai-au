@@ -19,6 +19,7 @@ const AUTHOR = 'Sophie Nguyen'
 const AUTHOR_ROLE = 'Editorial Team'
 const AUTHOR_BIO = 'Sophie covers practical AI literacy, workforce trends, and ethical adoption for Australian teams.'
 const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80'
+const DATE_PUBLISHED = '2025-01-15T00:00:00.000Z'
 const DATE_MODIFIED = '2025-01-15T00:00:00.000Z'
 const DESCRIPTION = 'A 2026-ready roadmap for Australians to learn AI: fundamentals, hands-on projects, ethics, and career moves tailored to local pathways.'
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1d8313de-82ba-4ddc-a776-52cee7f2fa1b.jpg?alt=media&token=e14f4ba6-f385-40ec-8453-017f0d7efffa"
@@ -43,6 +44,7 @@ const faqs: FAQ[] = [
 
 const article = applyArticleRegistryDefaults({
   title: `${TOPIC} (2025)`,
+  datePublished: DATE_PUBLISHED,
   dateModified: DATE_MODIFIED,
   description: DESCRIPTION,
   author: AUTHOR,
@@ -67,6 +69,8 @@ export const metadata: Metadata = {
     url: metaUrl,
     type: 'article',
     images: [{ url: metaImage }],
+    publishedTime: DATE_PUBLISHED,
+    modifiedTime: DATE_MODIFIED,
   },
   twitter: {
     card: 'summary_large_image',
@@ -101,7 +105,7 @@ export default function ArticlePage() {
         url: '/logo.png',
       },
     },
-    datePublished: DATE_MODIFIED,
+    datePublished: DATE_PUBLISHED,
     dateModified: DATE_MODIFIED,
     description: metaDescription,
   }
