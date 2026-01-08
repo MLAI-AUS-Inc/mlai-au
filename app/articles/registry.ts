@@ -64,6 +64,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy': {
+        title: 'How to Start a Startup and Use AI to Make It Easy (2025)',
+        date: '2026-01-07',
+        description: 'Practical 2025 guide for Australian founders on starting a startup and using AI safely to speed research, validation, and operations.',
+        author: 'MLAI Team',
+        slug: 'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to Start a Startup and Use AI to Make It Easy (2025)',
+        hasContent: true,
+    },
     'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
         title: 'Weekly deep dive into AI and ML advancements: updates for 2025',
         date: '2026-01-08',
