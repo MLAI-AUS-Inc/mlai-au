@@ -1,4 +1,5 @@
-import { Link, useLoaderData, type LoaderFunctionArgs, type MetaFunction } from 'react-router'
+import { Link, useLoaderData } from '@remix-run/react'
+import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
 import type { ReactNode } from 'react'
 
 // From app/articles/content/featured/how-to-get-started-with-ai-2026.tsx to app/articles/seo-config.ts
