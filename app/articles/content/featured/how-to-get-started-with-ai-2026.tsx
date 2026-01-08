@@ -250,7 +250,13 @@ export default function ArticlePage() {
           </p>
 
           <h2>Why it matters in 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6c812263-ca23-4cc5-8427-906358a3341b.jpg?alt=media&token=67b0bc14-ce62-4d41-b4f0-6a1c3719848f" alt="People in a 90s-inspired tech startup setting brainstorm and collaborate over laptops and coffee." className="w-full rounded-lg my-8" />
+          <ImageWithFallback
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6c812263-ca23-4cc5-8427-906358a3341b.jpg?alt=media&token=67b0bc14-ce62-4d41-b4f0-6a1c3719848f"
+            alt="People in a 90s-inspired tech startup setting brainstorm and collaborate over laptops and coffee."
+            width={1200}
+            height={800}
+            className="w-full rounded-lg my-8"
+          />
 
           <p>
             Model quality and cost curves are improving quarterly, and Australian organisations are being asked to prove responsible AI practices. Teams that learn safe prompting, evaluation, and data discipline now will move faster than those waiting for “perfect” regulation. Early pilots also uncover process debt—unclear inputs, missing labels, brittle handoffs—that must be fixed before automation or assistance can deliver value.
@@ -269,8 +275,13 @@ export default function ArticlePage() {
           </div>
 
           <h2>Step-by-Step Guide</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-1bd24b7a-1be6-4c0e-b079-e63768f9cf34.jpg?alt=media&token=996d3c47-8bbb-4990-86f0-3ef4c119d335" alt="Group of diverse professionals collaborating in a tech startup, captured with a nostalgic 90s film aesthetic." className="w-full rounded-lg my-8" />
-
+          <ImageWithFallback
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-1bd24b7a-1be6-4c0e-b079-e63768f9cf34.jpg?alt=media&token=996d3c47-8bbb-4990-86f0-3ef4c119d335"
+            alt="Group of diverse professionals collaborating in a tech startup, captured with a nostalgic 90s film aesthetic."
+            width={1200}
+            height={800}
+            className="w-full rounded-lg my-8"
+          />
           
           <h3>Step 1: Preparation</h3>
           <p>
