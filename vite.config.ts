@@ -22,12 +22,9 @@ if (fs.existsSync(".dev.vars")) {
 
 export default defineConfig({
   plugins: [
-    reactRouter(),
-    cloudflare({
-      viteEnvironment: { name: "ssr" },
-      configPath: "./wrangler.jsonc",
-    }),
+    cloudflare({ viteEnvironment: { name: "ssr" } }),
     tailwindcss(),
+    reactRouter(),
     tsconfigPaths(),
   ],
   server: {
@@ -50,14 +47,6 @@ export default defineConfig({
       "clsx",
       "tailwind-merge",
     ],
-  },
-  build: {
-    rollupOptions: {
-      onwarn(warning, warn) {
-        if (warning.message.includes('dynamic import will not move module into another chunk')) return;
-        warn(warning);
-      }
-    }
   },
   resolve: {
     dedupe: ["react", "react-dom"],
