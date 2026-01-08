@@ -1,5 +1,5 @@
-import { Link, useLoaderData } from '@remix-run/react'
-import type { LoaderFunctionArgs, MetaFunction } from '@remix-run/node'
+import Link from 'next/link'
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 // From app/articles/content/featured/how-to-get-started-with-ai-2026.tsx to app/articles/seo-config.ts
@@ -53,93 +53,97 @@ const faqs: FAQ[] = [
   { id: 6, question: 'How do I budget for AI in 2026?', answer: 'Plan for three buckets: (1) experimentation credits for API calls and pilots, (2) data preparation and evaluation, and (3) governance (policies, training, and vendor reviews). Track cost per successful task, not just cost per token.' },
 ]
 
-export const meta: MetaFunction<typeof loader> = ({ data }) => {
-  const { article } = data || {}
-  const title = article?.title || `${TOPIC} (2026)`
-  const description = article?.description || DESCRIPTION
-  const image = article?.image || HERO_IMAGE
+const article = applyArticleRegistryDefaults({
+  title: `${TOPIC} (2026)`,
+  datePublished: DATE_PUBLISHED,
+  dateModified: DATE_MODIFIED,
+  description: DESCRIPTION,
+  author: AUTHOR,
+  slug: SLUG,
+  image: HERO_IMAGE,
+  imageAlt: HERO_IMAGE_ALT,
+  featuredFocus: FEATURED_FOCUS,
+})
 
-  return [
-    { title },
-    { name: 'description', content: description },
-    { property: 'og:title', content: title },
-    { property: 'og:description', content: description },
-    { property: 'og:image', content: image },
-    { property: 'og:url', content: canonical(`/articles/${CATEGORY}/${SLUG}`) },
-    { property: 'og:type', content: 'article' },
-    { name: 'twitter:card', content: 'summary_large_image' },
-    { name: 'twitter:title', content: title },
-    { name: 'twitter:description', content: description },
-    { name: 'twitter:image', content: image },
-    // Structured Data (Schema.org)
-    {
-      'script:ld+json': {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: title,
-        image: image,
-        author: {
-           '@type': 'Person',
-           name: AUTHOR
-        },
-        publisher: {
-           '@type': 'Organization',
-           name: 'Company',
-           logo: {
-             '@type': 'ImageObject',
-             url: '/logo.png'
-           }
-        },
-        datePublished: DATE_PUBLISHED,
-        dateModified: DATE_MODIFIED,
-        description: description
-      }
-    },
-    {
-      'script:ld+json': {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqs.map(faq => ({
-          '@type': 'Question',
-          name: faq.question,
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: typeof faq.answer === 'string' ? faq.answer : 'Refer to article content for details.'
-          }
-        }))
-      }
-    }
-  ]
+export const metadata: Metadata = {
+  title: article.title,
+  description: article.description,
+  openGraph: {
+    title: article.title,
+    description: article.description,
+    url: canonical(`/articles/${CATEGORY}/${SLUG}`),
+    images: [
+      {
+        url: article.image || HERO_IMAGE,
+        alt: HERO_IMAGE_ALT,
+      },
+    ],
+    type: 'article',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: article.title,
+    description: article.description,
+    images: [article.image || HERO_IMAGE],
+  },
+  alternates: {
+    canonical: canonical(`/articles/${CATEGORY}/${SLUG}`),
+  },
 }
 
-export async function loader({ params }: LoaderFunctionArgs) {
-  const article = applyArticleRegistryDefaults({
-    title: `${TOPIC} (2026)`,
-    datePublished: DATE_PUBLISHED,
-    dateModified: DATE_MODIFIED,
-    description: DESCRIPTION,
-    author: AUTHOR,
-    slug: SLUG,
-    image: HERO_IMAGE,
-    imageAlt: HERO_IMAGE_ALT,
-    featuredFocus: FEATURED_FOCUS,
-  })
+const articleLdJson = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: article.title,
+  image: article.image,
+  author: {
+    '@type': 'Person',
+    name: AUTHOR,
+  },
+  publisher: {
+    '@type': 'Organization',
+    name: 'Company',
+    logo: {
+      '@type': 'ImageObject',
+      url: '/logo.png',
+    },
+  },
+  datePublished: DATE_PUBLISHED,
+  dateModified: DATE_MODIFIED,
+  description: DESCRIPTION,
+}
 
-  return { article }
+const faqLdJson = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.question,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: typeof faq.answer === 'string' ? faq.answer : 'Refer to article content for details.',
+    },
+  })),
 }
 
 export default function ArticlePage() {
-  const { article } = useLoaderData<typeof loader>()
-
   const authorDetails = {
     name: AUTHOR,
     role: AUTHOR_ROLE,
     bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR
+    avatarUrl: AUTHOR_AVATAR,
   }
 
   return (
     <div className="bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleLdJson) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLdJson) }}
+      />
       <ArticleLayout
         article={article}
         // Sticky Sidebar Components
@@ -168,7 +172,7 @@ export default function ArticlePage() {
           <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-4">
             <ol className="flex items-center space-x-2">
               <li>
-                <Link to="/articles" className="hover:text-gray-900 transition-colors">Articles</Link>
+                <Link href="/articles" className="hover:text-gray-900 transition-colors">Articles</Link>
               </li>
               <li>/</li>
               <li>
@@ -184,7 +188,7 @@ export default function ArticlePage() {
             <span className="text-xl">💡</span>
             <span>
               This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-              <Link to="/articles" className="font-semibold text-[--brand-ink] underline-offset-4 hover:underline">
+              <Link href="/articles" className="font-semibold text-[--brand-ink] underline-offset-4 hover:underline">
                 Browse related articles →
               </Link>
             </span>
@@ -340,7 +344,7 @@ export default function ArticlePage() {
         
         {/* Final Breadcrumb/Nav */}
         <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-           <Link to="/articles" className="hover:text-[--brand-ink] underline-offset-4 hover:underline">← Back to Articles</Link>
+           <Link href="/articles" className="hover:text-[--brand-ink] underline-offset-4 hover:underline">← Back to Articles</Link>
            <a href="#" className="hover:text-[--brand-ink] underline-offset-4 hover:underline">Top of page ↑</a>
         </div>
         
