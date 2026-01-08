@@ -64,6 +64,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/best-way-to-learn-about-ai-2026': {
+        title: 'Best Way to Learn About AI in 2026 (Australia)',
+        date: '2026-01-08',
+        description: 'A 2026 guide for Australians to learn AI: courses, portfolios, responsible use, and job market tips with practical next steps.',
+        author: 'MLAI Team',
+        slug: 'featured/best-way-to-learn-about-ai-2026',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Best Way to Learn About AI in 2026 (Australia)',
+    },
     'featured/ai-hackathons-and-events-melbourne': {
         title: 'AI Hackathons and Events in Melbourne (2025 Guide)',
         date: '2026-01-08',
