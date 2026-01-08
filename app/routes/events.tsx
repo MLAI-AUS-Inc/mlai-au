@@ -11,7 +11,7 @@ interface LoaderData {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const apiKey = getEnv(context).PRIVATE_HUMANITIX_API_KEY;
+  const apiKey = (getEnv(context) as unknown as Record<string, any>).PRIVATE_HUMANITIX_API_KEY;
 
   if (!apiKey) {
     console.error("PRIVATE_HUMANITIX_API_KEY environment variable is not set");
