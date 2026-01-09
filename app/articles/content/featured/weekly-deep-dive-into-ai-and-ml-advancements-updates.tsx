@@ -1,21 +1,12 @@
-
 import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 
-import AuthorBio from '../../../components/AuthorBio'
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../../../data/types'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
 const NEWSLETTER = 'AI Bits for Techies'
-
-const TOPIC = SERIES
-const CATEGORY = 'featured'
-const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates'
-const AUTHOR = 'MLAI Editorial Team'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -344,16 +335,6 @@ export default function ArticlePage() {
         </p>
 
         <hr className="my-8 border-gray-100" />
-
-        {/* <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_29_49%20PM.png?alt=media&token=5326cca2-88a8-40eb-bcba-8e30ec4fcbac"
-            alt="Abstract illustration representing the Turing Test concept"
-            width={1200}
-            height={630}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div> */}
 
         <h2>Geeky thought of the day</h2>
         <p className="font-semibold">
