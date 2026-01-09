@@ -13,18 +13,18 @@ import AuthorBio from '../../../components/AuthorBio'
 import type { FeaturedPersonProfile } from '../../../data/types'
 
 /** ========== INPUTS (replace all placeholders) ========== */
-const TOPIC = 'Weekly deep dive into AI and ML advancements'
-const CATEGORY = 'featured' // e.g. 'ai'
+const TOPIC = 'Weekly Deep Dive into AI and ML Advancements & Updates'
+const CATEGORY = 'featured'
 const SLUG = 'weekly-deep-dive-into-ai-and-ml-advancements-updates'
 const AUTHOR = 'MLAI Editorial Team'
 const AUTHOR_ROLE = 'Editorial Team'
 const AUTHOR_BIO = 'We monitor the Australian AI and machine learning ecosystem, translating technical shifts and policy updates into plain-English actions for founders, operators, and learners.'
 const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80'
-const DATE_MODIFIED = '2025-02-15T00:00:00.000Z'
-const DESCRIPTION = 'Stay across this week’s AI and ML advancements with Australian context: model updates, safety notes, regulation changes, tooling tips, and actions for teams.'
+const DATE_MODIFIED = '2026-01-08T00:00:00.000Z'
+const DESCRIPTION = 'Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.'
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1600&q=80'
 const HERO_IMAGE_ALT = 'Abstract data visualisation representing AI and machine learning signals'
-const FEATURED_FOCUS = 'ai' // 'startups' | 'ai' | 'product' | 'funding'
+const FEATURED_FOCUS = 'ai'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -34,13 +34,16 @@ interface FAQ {
 }
 
 const faqs: FAQ[] = [
-  // ≥6 items; AU context; evidence-forward; answers can be strings or JSX.
-  { id: 1, question: 'What are the biggest AI model updates this week?', answer: 'Frontier labs released incremental efficiency gains (e.g., longer context windows and cheaper inference tiers). No new state-changing frontier model is publicly available as at Feb 2025, but fine-tuned domain models for finance and health have improved safety guardrails.' },
-  { id: 2, question: 'How does this affect Australian startups?', answer: 'Lower inference pricing and longer context mean founders can pilot richer copilots (contracts, compliance, research summaries) with smaller budgets. Keep data residency in mind—choose AU or APAC regions where available and document where data is processed.' },
-  { id: 3, question: 'Do I need to change my privacy notices?', answer: 'If you introduce new AI features that process personal or sensitive information, update your privacy notice and consent flows. Reference the OAIC APPs and include a short, plain-English description of what the model does, inputs needed, retention, and human oversight.' },
-  { id: 4, question: 'What is the safest way to start a pilot?', answer: 'Begin with low-risk internal content (policies, FAQs), apply rate limits, log prompts/outputs, and perform red-team style testing. Use feature flags and role-based access. Run a DPIA/PIA if personal data is involved.' },
-  { id: 5, question: 'How should teams validate model performance?', answer: 'Create a small, labeled evaluation set that mirrors your domain. Track accuracy, hallucination rate, latency, and cost per request. Re-test after any model switch or prompt change, and record changes in a decision log.' },
-  { id: 6, question: 'Are there grants or programs in Australia for AI experiments?', answer: 'Check current state-based innovation vouchers, CSIRO Kick-Start, and university accelerator programs. Funding cycles shift—confirm eligibility windows and co-contribution rules before committing spend.' },
+  // Issue #1 Specifics
+  { id: 1, question: 'What is the "Journal Paper of the Week"?', answer: 'It discusses a paper on "Textual interpretation of transient image classifications," showing how Gemini can classify astronomical images with high accuracy using just 15 labelled examples and text instructions.' },
+  { id: 2, question: 'Which AI tools are worth checking out this week?', answer: 'We highlight MiniMax M2.1 for coding agents, SCP for scientific experimentation contexts, DeepFabric for synthetic data generation, and NVIDIA Nemotron 3 for scalable reasoning.' },
+  { id: 3, question: 'What book is recommended in this issue?', answer: 'Max Tegmark’s "Life 3.0", which explores the future impact of superintelligence on society, work, and humanity itself.' },
+
+  // Strategic / Framework Questions
+  { id: 4, question: 'Do I need to change my privacy notices for new AI features?', answer: 'If you introduce new AI features that process personal or sensitive information, update your privacy notice and consent flows. Reference the OAIC APPs and include a short, plain-English description of what the model does, inputs needed, retention, and human oversight.' },
+  { id: 5, question: 'What is the safest way to start a pilot?', answer: 'Begin with low-risk internal content (policies, FAQs), apply rate limits, log prompts/outputs, and perform red-team style testing. Use feature flags and role-based access. Run a DPIA/PIA if personal data is involved.' },
+  { id: 6, question: 'How should teams validate model performance?', answer: 'Create a small, labeled evaluation set that mirrors your domain. Track accuracy, hallucination rate, latency, and cost per request. Re-test after any model switch or prompt change, and record changes in a decision log.' },
+  { id: 7, question: 'Are there grants or programs in Australia for AI experiments?', answer: 'Check current state-based innovation vouchers, CSIRO Kick-Start, and university accelerator programs. Funding cycles shift—confirm eligibility windows and co-contribution rules before committing spend.' },
 ]
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
@@ -135,24 +138,24 @@ export default function ArticlePage() {
         article={article}
 
         summaryHighlights={{
-          heading: `Key facts: ${TOPIC}`,
+          heading: `Week 1: ${TOPIC}`,
           intro:
-            'Practical rundown for Australian founders, teams, and learners tracking weekly AI/ML changes, with emphasis on safety, costs, and compliance expectations in 2025.',
+            'This week: Gemini for science, MiniMax tools, and our evergreen framework for running your own weekly AI deep dives.',
           items: [
             {
-              label: `What is ${TOPIC}?`,
+              label: 'News: Issue #1',
               description:
-                'A weekly, evidence-led snapshot of model releases, pricing shifts, regulation, and practical tips that impact how Australians build and deploy AI/ML.',
+                'Breakdowns of the "Textual Interpretation" paper, MiniMax M2.1, and deep thoughts on the Turing Test.',
             },
             {
-              label: `Who needs it?`,
+              label: 'The Framework',
               description:
-                'Founders, product managers, engineers, students, and community facilitators who must keep products aligned with current capabilities and local privacy norms.',
+                'How to set up your own weekly "Deep Dive" ritual to track costs, safety, and compliance (Step-by-Step Guide included).',
             },
             {
-              label: `Cost & Effort (2025)`,
+              label: 'Strategic Focus',
               description:
-                'Expect 1–2 hours to scan, plus ~4 hours to trial changes. Many frontier APIs cut inference costs; still budget for evals, observability, and storage.',
+                'Advice on privacy notices, pilot safety, and validating model performance in an Australian context.',
             },
           ],
         }}
@@ -221,8 +224,97 @@ export default function ArticlePage() {
 
         {/* 3) Main content starts */}
         <div className="prose prose-lg prose-indigo max-w-none text-gray-600 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+          {/* --- ISSUE #1 CONTENT --- */}
+          <p className="lead font-semibold text-[--brand-ink]">
+            AI Bits for Techies | Issue #1 | 8 Jan 2026
+          </p>
+
+          <h2>Journal Paper of the Week</h2>
+          <h3>Title: Textual interpretation of transient image classifications from large language models</h3>
+
+          <h4>The Context</h4>
+          <p>Most ML in science still goes the hard route: thousands of labelled examples, custom architectures, and retraining every time the data shifts. This paper throws that playbook out the window.</p>
+
+          <h4>The Method & Results</h4>
+          <p>The authors take Google’s Gemini, feed it just 15 labelled examples and a short set of instructions, and ask it to classify astronomical images with no fine-tuning, no special model design. And it works. Across three datasets, Gemini hits around 93% accuracy, close to what you’d get from a dedicated CNN pipeline.</p>
+
+          <h4>Why It Matters</h4>
+          <p>The real kicker? Every prediction comes with a plain-English explanation of why it made that call, so humans can follow the reasoning. From an ML point of view, this makes a strong case for foundation models as flexible, low-data classifiers instead of one-trick specialists.</p>
+          <p>The open question is whether this kind of “prompted reasoning” scales to other scientific or engineering problems or if the future is hybrid pipelines, with small models doing the heavy lifting and LLMs handling the thinking. Either way, this one’s a compelling look at where applied ML could go next.</p>
+
           <p>
-            <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025 landscape.
+            <strong>Full Paper Link:</strong> <a href="https://arxiv.org/pdf/2510.06931" target="_blank" rel="noopener noreferrer">https://arxiv.org/pdf/2510.06931</a>
+          </p>
+
+          <hr className="my-8 border-gray-100" />
+
+          <h2>AI Tools Worth Checking Out</h2>
+
+          <h3>MiniMax M2.1</h3>
+          <p>A fast, low-cost model built for agents and coding workflows, with cleaner reasoning and stronger instruction following than its predecessor.</p>
+          <p>
+            <strong>Best for:</strong> multi-language code, app and web dev, and tool-driven agent setups without the heavyweight cost. <br />
+            <a href="https://www.minimax.io/news/minimax-m21" target="_blank" rel="noopener noreferrer">Link: https://www.minimax.io/news/minimax-m21</a>
+          </p>
+
+          <h3>SCP (Scientific Context Protocol)</h3>
+          <p>An open-source protocol for connecting AI agents with scientific tools, models, datasets, and even lab instruments through a single unified interface.</p>
+          <p>
+            <strong>Best for:</strong> Orchestrating end-to-end experiments from planning to execution which opens the door to collaborative, agent-driven scientific discovery at scale. <br />
+            <a href="https://github.com/InternScience/scp" target="_blank" rel="noopener noreferrer">Link: https://github.com/InternScience/scp</a>
+          </p>
+
+          <h3>DeepFabric</h3>
+          <p>An open-source framework for generating structured, synthetic datasets using LLMs.</p>
+          <p>
+            <strong>Best for:</strong> Training, evaluating, and stress-testing models when real data is scarce or expensive. <br />
+            <a href="https://github.com/always-further/deepfabric" target="_blank" rel="noopener noreferrer">Link: https://github.com/always-further/deepfabric</a>
+          </p>
+
+          <h3>NVIDIA Nemotron 3</h3>
+          <p>NVIDIA’s open family of large language models built for reasoning, long-context tasks, and agentic workflows.</p>
+          <p>
+            <strong>Best for:</strong> Teams needing models designed to be customised and deployed at scale. <br />
+            <a href="https://research.nvidia.com/labs/nemotron/Nemotron-3/" target="_blank" rel="noopener noreferrer">Link: https://research.nvidia.com/labs/nemotron/Nemotron-3/</a>
+          </p>
+
+          <hr className="my-8 border-gray-100" />
+
+          <h2>Thinking Beyond the Next Model</h2>
+          <h3>Book Recommendation: Life 3.0 by Max Tegmark</h3>
+          <p>Max Tegmark’s <em>Life 3.0</em> is a wake-up call for anyone who codes, builds, or bets on tech. It’s not about AI doing your laundry, it’s about AI that could outthink us, redesign itself, and change the rules of work, society, even life itself.</p>
+          <p>Tegmark walks you through the messy choices we’ll face: friendly co-pilots or runaway superintelligence, global coordination or chaos. It’s sharp, forward-looking, and makes you rethink what “building the next big thing” really means. If we get this right or botch it, Life 3.0 might be the last technology we invent.</p>
+
+          <hr className="my-8 border-gray-100" />
+
+          <h2>Geeky Thought of the Day</h2>
+          <p className="font-semibold">Have AI agents or LLMs really passed the Turing Test or are we still overestimating cleverness?</p>
+          <p>AI can fool us sometimes with chatbots that seem human, videos that trick our eyes, and text that sounds surprisingly natural. For a few moments, in narrow contexts, you might even be convinced it’s thinking like us.</p>
+          <p>But here’s the catch: predicting patterns isn’t understanding. LLMs don’t really know what they’re saying or seeing. Give them long, tricky conversations or unexpected twists, and the cracks show. Still, the fact that we’re fooled at all is wild as these systems are merely just astonishingly good pattern predictors. They may not think like humans yet, but they’re already reshaping work, creativity, and how we interact with tech.</p>
+
+          <div className="my-12">
+            <ArticleCompanyCTA
+              title="Join AI Bits for Techies"
+              body="Get these updates delivered to your inbox every week."
+              buttonText="Subscribe"
+              buttonHref="#"
+              note="Join other tech professionals staying ahead compared to the rest."
+            />
+          </div>
+
+          {/* --- TRANSITION TO ORIGINAL GUIDE --- */}
+          <hr className="my-12 border-gray-200" />
+
+          <div className="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-12">
+            <p className="font-semibold text-lg text-slate-800 mb-2">Want to run your own deep dives?</p>
+            <p className="text-slate-600">
+              Below is the framework we use to gather these updates. Use it to build your own team's habit of tracking AI advancements, costs, and safety.
+            </p>
+          </div>
+
+          <h2>The Deep Dive Framework</h2>
+          <p>
+            <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025/2026 landscape.
           </p>
 
           <div className="my-8 w-full">
