@@ -169,7 +169,7 @@ export default function ArticlePage() {
         </div>
 
         {/* 3) Main content starts */}
-        <div className="prose prose-lg prose-indigo max-w-none text-gray-600 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="">
           <p>
             <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025–2026 landscape, drawing on local privacy expectations and emerging AI safety guidance.
           </p>

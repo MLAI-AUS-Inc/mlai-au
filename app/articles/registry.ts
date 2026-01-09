@@ -109,7 +109,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         description: 'Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.',
         author: 'MLAI Editorial Team',
         slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates',
-        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1600&q=80',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_40_55%20PM%20(1).png?alt=media&token=dc0a3df1-837b-4549-be70-bc59ba215777',
         imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
         hasContent: true,
     },
