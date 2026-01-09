@@ -104,13 +104,13 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         hasContent: true,
     },
     'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
-        title: 'Weekly deep dive into AI and ML advancements: updates for 2025',
+        title: 'Weekly Deep Dive into AI and ML Advancements & Updates',
         date: '2026-01-08',
-        description: 'Stay across this week\'s AI and ML advancements with Australian context: model updates, safety notes, regulation changes, tooling tips, and actions for teams.',
-        author: 'MLAI Team',
+        description: 'Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.',
+        author: 'MLAI Editorial Team',
         slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'Weekly deep dive into AI and ML advancements: updates for 2025',
+        image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1600&q=80',
+        imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
         hasContent: true,
     },
 
