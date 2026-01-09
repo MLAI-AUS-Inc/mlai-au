@@ -5,16 +5,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useState } from "react";
 
-interface Event {
-  _id: string;
-  name: string;
-  startDate: string;
-  bannerImage?: { url: string };
-  eventLocation: {
-    address: string;
-  };
-  slug: string;
-}
+import { getEventUrl, type Event } from "~/lib/events";
 
 interface EventsCalendarProps {
   events: Event[];
@@ -93,9 +84,8 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
       days.push(
         <div
           key={day}
-          className={`min-h-[120px] p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${
-            isToday ? "bg-teal-50 border-teal-500" : ""
-          }`}
+          className={`min-h-[120px] p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${isToday ? "bg-teal-50 border-teal-500" : ""
+            }`}
         >
           <div
             className={`text-sm font-semibold mb-1 ${isToday ? "text-teal-600" : "text-gray-900"}`}
@@ -106,7 +96,7 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
             {dayEvents.slice(0, 2).map((event) => (
               <a
                 key={event._id}
-                href={`https://events.humanitix.com/${event.slug}`}
+                href={getEventUrl(event)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block text-xs p-1 bg-teal-600 text-white rounded hover:bg-teal-700 transition-colors truncate"
@@ -201,7 +191,7 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
         {upcomingEvents.map((event) => (
           <a
             key={event._id}
-            href={`https://events.humanitix.com/${event.slug}`}
+            href={getEventUrl(event)}
             target="_blank"
             rel="noopener noreferrer"
             className="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
@@ -273,21 +263,19 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
           <div className="inline-flex rounded-lg shadow-sm" role="group">
             <button
               onClick={() => setView("calendar")}
-              className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
-                view === "calendar"
+              className={`px-4 py-2 text-sm font-medium rounded-l-lg ${view === "calendar"
                   ? "bg-teal-600 text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
-              } transition-colors`}
+                } transition-colors`}
             >
               Calendar View
             </button>
             <button
               onClick={() => setView("list")}
-              className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
-                view === "list"
+              className={`px-4 py-2 text-sm font-medium rounded-r-lg ${view === "list"
                   ? "bg-teal-600 text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
-              } transition-colors`}
+                } transition-colors`}
             >
               List View
             </button>

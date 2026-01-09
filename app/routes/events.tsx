@@ -11,15 +11,20 @@ interface LoaderData {
 }
 
 export async function loader({ context }: Route.LoaderArgs) {
-  const apiKey = (getEnv(context) as unknown as Record<string, any>).PRIVATE_HUMANITIX_API_KEY;
+  const env = getEnv(context) as unknown as Record<string, any>;
+  const humanitixApiKey = env.PRIVATE_HUMANITIX_API_KEY;
+  const lumaApiKey = env.LUMA_API_KEY;
 
-  if (!apiKey) {
-    console.error("PRIVATE_HUMANITIX_API_KEY environment variable is not set");
+  if (!humanitixApiKey && !lumaApiKey) {
+    console.error("No event API keys are configured (PRIVATE_HUMANITIX_API_KEY or LUMA_API_KEY)");
     return { events: Promise.resolve([]) };
   }
 
   // Return promise WITHOUT awaiting - this enables streaming
-  const eventsPromise = fetchEvents(apiKey);
+  const eventsPromise = fetchEvents({
+    humanitixApiKey,
+    lumaApiKey,
+  });
 
   return {
     events: eventsPromise,

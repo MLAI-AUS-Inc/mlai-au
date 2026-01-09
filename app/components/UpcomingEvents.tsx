@@ -2,17 +2,7 @@ import { useState } from "react";
 import { Button } from "./ui/Button";
 import { Card, CardImage } from "./ui/Card";
 import { Container, Section } from "./ui/Container";
-
-interface Event {
-  _id: string;
-  name: string;
-  startDate: string;
-  bannerImage?: { url: string };
-  eventLocation: {
-    address: string;
-  };
-  slug: string;
-}
+import { getEventUrl, type Event } from "~/lib/events";
 
 export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
@@ -66,7 +56,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                           .map((event, eventIndex) => (
                             <a
                               key={event._id}
-                              href={`https://events.humanitix.com/${event.slug}`}
+                              href={getEventUrl(event)}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="block h-full transform transition-all duration-300 hover:scale-105 hover:-translate-y-1"

@@ -5,6 +5,8 @@ import {
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
 import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
+import { fetchEvents, type Event } from "~/lib/events";
+import { getEnv } from "~/lib/env.server";
 import type { Route } from "./+types/articles.slug";
 
 /**
@@ -27,7 +29,7 @@ export function meta({ data }: Route.MetaArgs) {
     ];
 }
 
-export async function loader({ params }: Route.LoaderArgs) {
+export async function loader({ params, context }: Route.LoaderArgs) {
     const slug = params["*"]; // Catch-all param
     if (!slug) {
         throw new Response("Not Found", { status: 404 });
@@ -60,10 +62,23 @@ export async function loader({ params }: Route.LoaderArgs) {
         }
     }
 
+    // Fetch upcoming events for the CTA
+    let upcomingEvents: Event[] = [];
+    try {
+        const env = getEnv(context) as unknown as Record<string, any>;
+        upcomingEvents = await fetchEvents({
+            humanitixApiKey: env.PRIVATE_HUMANITIX_API_KEY,
+            lumaApiKey: env.LUMA_API_KEY,
+        });
+    } catch (e) {
+        console.error('Failed to fetch events for article CTA', e);
+    }
+
     return {
         article,
         summaryHighlights,
-        faqItems
+        faqItems,
+        upcomingEvents,
     };
 }
 
@@ -104,7 +119,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article, summaryHighlights, faqItems } = loaderData;
+    const { article, summaryHighlights, faqItems, upcomingEvents } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -118,6 +133,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             showHero={true}
             summaryHighlights={summaryHighlights}
             faqItems={faqItems}
+            upcomingEvents={upcomingEvents}
         >
             <div className="relative">
                 <ArticleTocPlaceholder />
