@@ -36,11 +36,25 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
+        toc: true,
+        howTo: false,
+        mediaObject: true,
+        citations: true,
+        internalLinks: [
+            '/articles/featured/how-to-get-started-with-ai-2026',
+            '/articles/featured/best-way-to-learn-about-ai-2026',
+        ],
+        structuredData: {
+            article: true,
+            faq: { enabled: true },
+        },
+    },
 };
 
 export const canonical = (path: string) => {
     const siteUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
         ? process.env.NEXT_PUBLIC_SITE_URL
-        : 'https://www.supportsorted.com';
+        : 'https://www.mlai.au';
     return `${siteUrl}${path}`;
 };

@@ -7,6 +7,8 @@ export type ArticleWithSlug = {
     date: string; // YYYY-MM-DD
     description: string;
     author: string;
+    /** Optional array of author keys from authors.ts for multi-author articles */
+    authors?: string[];
     slug: string;
     image: string;
     imageAlt: string;
@@ -108,6 +110,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         date: '2026-01-08',
         description: 'Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.',
         author: 'MLAI Editorial Team',
+        authors: ['samDonegan', 'junKaiChang', 'juliaPonder'],
         slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_40_55%20PM%20(1).png?alt=media&token=dc0a3df1-837b-4549-be70-bc59ba215777',
         imageAlt: 'Abstract data visualisation representing AI and machine learning signals',

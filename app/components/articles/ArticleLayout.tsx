@@ -692,22 +692,22 @@ export async function ArticleLayout({
               />
               {hasProfessionals ? (
                 <div className="not-prose my-12">
-                  <ProfessionalsCarousel
+                  {/* <ProfessionalsCarousel
                     title={professionalsTitle}
                     profiles={professionals}
-                  />
+                  /> */}
                 </div>
               ) : null}
               <div data-article-content>{children}</div>
               {showDisclaimer ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
-                <FindProfessionalsCTA
+                {/* <FindProfessionalsCTA
                   id="find-professionals"
                   title="Need help finding NDIS providers who actually fit?"
                   subtitle="Share your goals and preferences — we’ll shortlist plan managers, support coordinators and therapists within 1–2 business days."
                   buttonText="Get matched now →"
                   description="Free matching, tailored to your suburb, budget and availability."
-                />
+                /> */}
               </div>
               {shouldShowNextArticle && nextArticleHref ? (
                 <div className="not-prose my-12">
@@ -723,11 +723,11 @@ export async function ArticleLayout({
                 </div>
               ) : null}
               <div className="not-prose my-12">
-                <AuthorBio
+                {/* <AuthorBio
                   pageTitle={article.title}
                   pageUrl={canonicalUrl}
                   datePublishedISO={article.date}
-                />
+                /> */}
               </div>
               {relatedArticleSlugs.length > 0 ? (
                 <div className="not-prose my-12">
@@ -761,7 +761,7 @@ export async function ArticleLayout({
             </Prose>
 
             {/* -------- Browse services by need (chips) --------- */}
-            <div className={`mx-auto ${resolvedContentMaxWidth} mt-12`}>
+            {/* <div className={`mx-auto ${resolvedContentMaxWidth} mt-12`}>
               <hr className="border-gray-200 my-6" />
               <h3 className="text-xl font-semibold text-zinc-800 mb-4">Browse services by need</h3>
               <div className="flex flex-wrap gap-3">
@@ -794,7 +794,7 @@ export async function ArticleLayout({
                   );
                 })}
               </div>
-            </div>
+            </div> */}
 
             {/* -------- Bottom CTA: Provider Matchmaker & Call -------- */}
             <div className={`mx-auto ${resolvedContentMaxWidth} mt-16 bg-indigo-50 rounded-2xl p-8 flex flex-col items-center gap-6 shadow`}>

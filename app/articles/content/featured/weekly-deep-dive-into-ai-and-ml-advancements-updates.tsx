@@ -1,6 +1,8 @@
+
 import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 
+import AuthorBio from '../../../components/AuthorBio'
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import { ImageWithFallback } from '../../../components/ImageWithFallback'
@@ -343,7 +345,7 @@ export default function ArticlePage() {
 
         <hr className="my-8 border-gray-100" />
 
-        <div className="my-12 max-w-3xl mx-auto">
+        {/* <div className="my-12 max-w-3xl mx-auto">
           <ImageWithFallback
             src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_29_49%20PM.png?alt=media&token=5326cca2-88a8-40eb-bcba-8e30ec4fcbac"
             alt="Abstract illustration representing the Turing Test concept"
@@ -351,7 +353,7 @@ export default function ArticlePage() {
             height={630}
             className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
           />
-        </div>
+        </div> */}
 
         <h2>Geeky thought of the day</h2>
         <p className="font-semibold">
@@ -375,9 +377,61 @@ export default function ArticlePage() {
           This is general information, not legal advice. If you ship user-facing AI, be transparent about
           where AI is used, what it cannot do, and where humans stay in the loop.
         </p>
-        <p>
-          <strong>Authorship:</strong> Written by the {AUTHOR} (AI-assisted drafting, human-edited).
-        </p>
+        {/* About the Authors */}
+        <div className="not-prose mt-12 rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <svg className="w-5 h-5 text-[--brand-ink]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+            About the Authors
+          </h3>
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Author 1: Dr Sam Donegan */}
+            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376"
+                alt="Dr Sam Donegan"
+                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
+              />
+              <h4 className="font-semibold text-gray-900">Dr Sam Donegan</h4>
+              <p className="text-sm text-[--brand-ink] font-medium mb-2">Founder & Lead Editor</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.
+              </p>
+            </div>
+
+            {/* Author 2: Jun Kai (Luc) Chang */}
+            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb"
+                alt="Jun Kai (Luc) Chang"
+                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
+              />
+              <h4 className="font-semibold text-gray-900">Jun Kai (Luc) Chang</h4>
+              <p className="text-sm text-[--brand-ink] font-medium mb-2">AI Software Developer</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He's pursuing a Master of AI at Monash and co-founding a startup in the event space.
+              </p>
+            </div>
+
+            {/* Author 3: Julia Ponder */}
+            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+              <img
+                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c"
+                alt="Julia Ponder"
+                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
+              />
+              <h4 className="font-semibold text-gray-900">Julia Ponder</h4>
+              <p className="text-sm text-[--brand-ink] font-medium mb-2">Technical Writer</p>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.
+              </p>
+            </div>
+          </div>
+          <p className="mt-6 text-xs text-gray-500 text-center">
+            AI-assisted drafting, human-edited and reviewed.
+          </p>
+        </div>
       </div>
 
       {/* FAQ Section */}
