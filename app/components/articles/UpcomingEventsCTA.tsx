@@ -17,9 +17,9 @@ export default function UpcomingEventsCTA({
     maxEvents = 3,
     className = '',
 }: UpcomingEventsCTAProps) {
-    // Filter to only include upcoming events and sort by ascending date
+    // Events are already filtered to upcoming on the server to avoid hydration mismatch
+    // Just sort and slice here
     const upcomingEvents = events
-        .filter((event) => new Date(event.startDate) >= new Date())
         .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
         .slice(0, maxEvents)
 
@@ -76,7 +76,7 @@ export default function UpcomingEventsCTA({
                             <div className="space-y-1 text-sm text-gray-600 mt-auto">
                                 <div className="flex items-center gap-2">
                                     <CalendarIcon className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                                    <span>
+                                    <span suppressHydrationWarning>
                                         {new Date(event.startDate).toLocaleDateString('en-AU', {
                                             weekday: 'short',
                                             day: 'numeric',
@@ -86,7 +86,7 @@ export default function UpcomingEventsCTA({
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <ClockIcon className="w-4 h-4 text-teal-600 flex-shrink-0" />
-                                    <span>
+                                    <span suppressHydrationWarning>
                                         {new Date(event.startDate).toLocaleTimeString('en-AU', {
                                             hour: 'numeric',
                                             minute: '2-digit',

@@ -7,9 +7,10 @@ import { getEventUrl, type Event } from "~/lib/events";
 export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
 
-  // Filter to only include upcoming events and sort by ascending date
+  // Events are already filtered to upcoming on the server to avoid hydration mismatch
+  // Just sort here
   const events = rawEvents
-    .filter((event: Event) => new Date(event.startDate) >= new Date())
+    .slice() // Create a copy to avoid mutating props
     .sort((a: Event, b: Event) => {
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
@@ -79,7 +80,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                                   />
                                 </div>
                                 <div className="flex flex-col flex-grow p-6 bg-gradient-to-b from-gray-800 to-gray-900">
-                                  <time className="text-sm text-gray-300 block mb-3 transition-colors duration-300">
+                                  <time className="text-sm text-gray-300 block mb-3 transition-colors duration-300" suppressHydrationWarning>
                                     {new Date(
                                       event.startDate,
                                     ).toLocaleDateString("en-GB", {
