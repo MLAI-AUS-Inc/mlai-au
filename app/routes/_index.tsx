@@ -21,8 +21,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     if (!isEsafety) {
         const env = getEnv(context) as unknown as Record<string, any>;
-        const eventsApiKey = env.PRIVATE_HUMANITIX_API_KEY;
-        eventsPromise = fetchEvents(eventsApiKey);
+        eventsPromise = fetchEvents({
+            humanitixApiKey: env.PRIVATE_HUMANITIX_API_KEY,
+            lumaApiKey: env.LUMA_API_KEY,
+        });
         substackPostsPromise = fetchSubstackPosts();
     }
 

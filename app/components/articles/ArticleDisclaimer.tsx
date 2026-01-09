@@ -14,18 +14,16 @@ export function ArticleDisclaimer({ className }: ArticleDisclaimerProps) {
       )}
     >
       <p className="m-0 text-sm text-slate-700">
-        <strong>Important:</strong>{' '}
-        This page provides general information. It does not replace advice from your clinician or school.
-        We avoid testimonials, superiority claims and guarantees in line with{' '}
+        <strong>Disclaimer:</strong> This article provides general information and is not legal or technical advice. For official guidelines on the safe and responsible use of AI, please refer to the{' '}
         <a
-          href="https://www.ahpra.gov.au/Publications/Advertising-resources/Resources-to-help-advertisers.aspx"
+          href="https://industry.gov.au/guidance-for-ai-adoption"
           target="_blank"
           rel="noopener noreferrer"
           className="text-indigo-700 underline hover:text-indigo-900"
         >
-          AHPRA advertising guidelines
+          Australian Government’s Guidance for AI Adoption
         </a>
-        . If you need urgent wellbeing support, contact your GP or local services.
+        .
       </p>
     </section>
   )

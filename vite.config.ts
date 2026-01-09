@@ -5,18 +5,29 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 import fs from "node:fs";
 
-// Load .dev.vars into process.env (only in local dev, not in CI)
-if (fs.existsSync(".dev.vars")) {
-  try {
-    const devVars = fs.readFileSync(".dev.vars", "utf-8");
-    devVars.split("\n").forEach((line) => {
-      const [key, value] = line.split("=");
-      if (key && value) {
-        process.env[key.trim()] = value.trim().replace(/^"|"$/g, "");
-      }
-    });
-  } catch (e) {
-    console.warn("Failed to load .dev.vars:", (e as Error).message);
+// Load environment variables from .dev.vars or .env.local (only in local dev, not in CI)
+const envFiles = [".dev.vars", ".env.local"];
+for (const envFile of envFiles) {
+  if (fs.existsSync(envFile)) {
+    try {
+      const devVars = fs.readFileSync(envFile, "utf-8");
+      devVars.split("\n").forEach((line) => {
+        // Handle KEY=VALUE format (with or without quotes)
+        const match = line.match(/^([^=]+)=(.*)$/);
+        if (match) {
+          const key = match[1].trim();
+          let value = match[2].trim();
+          // Remove surrounding quotes if present
+          value = value.replace(/^["']|["']$/g, "");
+          if (key && !process.env[key]) {
+            process.env[key] = value;
+          }
+        }
+      });
+      console.log(`Loaded environment variables from ${envFile}`);
+    } catch (e) {
+      console.warn(`Failed to load ${envFile}:`, (e as Error).message);
+    }
   }
 }
 

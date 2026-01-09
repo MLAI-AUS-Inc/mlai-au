@@ -9,6 +9,7 @@ declare namespace Cloudflare {
         VALUE_FROM_CLOUDFLARE: "Hello from Cloudflare";
         BACKEND_BASE_URL: string;
         PRIVATE_HUMANITIX_API_KEY: string;
+        LUMA_API_KEY: string;
     }
 }
 interface Env extends Cloudflare.Env { }

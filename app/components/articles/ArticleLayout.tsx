@@ -22,6 +22,8 @@ import AuthorBio from '../AuthorBio'
 import RelatedArticlesCarousel from '../RelatedArticlesCarousel'
 import ProfessionalsCarousel from '../ProfessionalsCarousel'
 import { ArticleDisclaimer } from './ArticleDisclaimer'
+import UpcomingEventsCTA from './UpcomingEventsCTA'
+import { type Event } from '~/lib/events'
 // import { loadArticleFeaturedProfessionals } from '@/lib/professionals/articleFeaturedProfessionals'
 import type { ClinicianProfile } from '~/data/types'
 import { ArticleSummaryCard, type ArticleSummaryConfig } from './ArticleSummaryCard'
@@ -359,14 +361,19 @@ function buildRelatedArticleSlugs(
 
 const DEFAULT_CITATIONS = [
   {
-    title: 'NDIS Official Guidance',
-    href: 'https://www.ndis.gov.au/',
-    description: 'Policy updates, eligibility and participant resources direct from the NDIA.',
+    title: "Australia's AI Ethics Principles",
+    href: 'https://www.industry.gov.au/publications/australias-artificial-intelligence-ethics-framework/australias-ai-ethics-principles',
+    description: 'Eight voluntary principles designed to ensure AI is safe, secure and reliable.',
   },
   {
-    title: 'NDIS Quality and Safeguards Commission',
-    href: 'https://www.ndiscommission.gov.au/',
-    description: 'Provider registration rules, audit guidance and practice standards.',
+    title: 'Policy for the Responsible Use of AI in Government',
+    href: 'https://www.digital.gov.au/policy/policy-responsible-use-ai-government',
+    description: 'Framework for accelerated and sustainable AI adoption by government agencies.',
+  },
+  {
+    title: 'National AI Centre (CSIRO)',
+    href: 'https://www.csiro.au/en/work-with-us/industries/technology/national-ai-centre',
+    description: 'Coordinating Australia’s AI expertise and capabilities to build a responsible AI ecosystem.',
   },
 ]
 
@@ -466,6 +473,7 @@ export async function ArticleLayout({
   contentMaxWidthClassName,
   containerClassName,
   containerInnerClassName,
+  upcomingEvents,
 }: {
   article: ArticleWithSlug
   children: React.ReactNode
@@ -486,6 +494,7 @@ export async function ArticleLayout({
   contentMaxWidthClassName?: string
   containerClassName?: string
   containerInnerClassName?: string
+  upcomingEvents?: Event[]
 }) {
   const registry = getArticleBySlug(article.slug)
   const headerImage = registry?.image ?? article.image
@@ -692,22 +701,22 @@ export async function ArticleLayout({
               />
               {hasProfessionals ? (
                 <div className="not-prose my-12">
-                  <ProfessionalsCarousel
+                  {/* <ProfessionalsCarousel
                     title={professionalsTitle}
                     profiles={professionals}
-                  />
+                  /> */}
                 </div>
               ) : null}
               <div data-article-content>{children}</div>
               {showDisclaimer ? <ArticleDisclaimer /> : null}
               <div className="not-prose my-12">
-                <FindProfessionalsCTA
+                {/* <FindProfessionalsCTA
                   id="find-professionals"
                   title="Need help finding NDIS providers who actually fit?"
                   subtitle="Share your goals and preferences — we’ll shortlist plan managers, support coordinators and therapists within 1–2 business days."
                   buttonText="Get matched now →"
                   description="Free matching, tailored to your suburb, budget and availability."
-                />
+                /> */}
               </div>
               {shouldShowNextArticle && nextArticleHref ? (
                 <div className="not-prose my-12">
@@ -723,11 +732,11 @@ export async function ArticleLayout({
                 </div>
               ) : null}
               <div className="not-prose my-12">
-                <AuthorBio
+                {/* <AuthorBio
                   pageTitle={article.title}
                   pageUrl={canonicalUrl}
                   datePublishedISO={article.date}
-                />
+                /> */}
               </div>
               {relatedArticleSlugs.length > 0 ? (
                 <div className="not-prose my-12">
@@ -761,7 +770,7 @@ export async function ArticleLayout({
             </Prose>
 
             {/* -------- Browse services by need (chips) --------- */}
-            <div className={`mx-auto ${resolvedContentMaxWidth} mt-12`}>
+            {/* <div className={`mx-auto ${resolvedContentMaxWidth} mt-12`}>
               <hr className="border-gray-200 my-6" />
               <h3 className="text-xl font-semibold text-zinc-800 mb-4">Browse services by need</h3>
               <div className="flex flex-wrap gap-3">
@@ -794,29 +803,14 @@ export async function ArticleLayout({
                   );
                 })}
               </div>
-            </div>
+            </div> */}
 
-            {/* -------- Bottom CTA: Provider Matchmaker & Call -------- */}
-            <div className={`mx-auto ${resolvedContentMaxWidth} mt-16 bg-indigo-50 rounded-2xl p-8 flex flex-col items-center gap-6 shadow`}>
-              <div className="text-center">
-                <h3 className="text-2xl font-semibold text-gray-900 mb-2">Need personalised help?</h3>
-                <p className="text-gray-700">We'll match you with the right professionals for your specific needs.</p>
-              </div>
-              <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-                <Link
-                  to="/?mode=recommend"
-                  className="inline-flex items-center justify-center rounded-full bg-[#1028E0] px-6 py-3 text-sm font-semibold text-white shadow hover:bg-[#0d1bbd] whitespace-nowrap"
-                >
-                  Use Provider Matchmaker&nbsp;→
-                </Link>
-                {/* <a
-                  to="tel:0370370344"
-                  className="inline-flex items-center justify-center rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow hover:bg-green-700 whitespace-nowrap"
-                >
-                  📞 Call us on 03 7037 0344
-                </a> */}
-              </div>
-            </div>
+            {/* -------- Bottom CTA: Upcoming Events -------- */}
+            <UpcomingEventsCTA
+              events={upcomingEvents ?? []}
+              maxEvents={3}
+              className={`mx-auto ${resolvedContentMaxWidth} mt-16`}
+            />
           </article>
         </div>
       </div>
