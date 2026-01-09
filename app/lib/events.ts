@@ -329,13 +329,20 @@ export async function fetchEvents(config: EventsConfig | string): Promise<Event[
   // Deduplicate (prefer Luma)
   const allEvents = deduplicateEvents(humanitixEvents, lumaEvents);
 
+  // Filter to only upcoming events (server-side to avoid hydration mismatch)
+  // Using a fixed timestamp captured at request time ensures consistency
+  const now = Date.now();
+  const upcomingEvents = allEvents.filter((event) => {
+    return new Date(event.startDate).getTime() >= now;
+  });
+
   // Sort by start date
-  const sortedEvents = allEvents.sort((a, b) => {
+  const sortedEvents = upcomingEvents.sort((a, b) => {
     return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
   });
 
   console.log(
-    `Total events: ${sortedEvents.length} ` +
+    `Total events: ${sortedEvents.length} upcoming ` +
     `(Humanitix: ${humanitixEvents.length - (humanitixEvents.length + lumaEvents.length - allEvents.length)}, ` +
     `Luma: ${lumaEvents.length}, ` +
     `Deduplicated: ${humanitixEvents.length + lumaEvents.length - allEvents.length})`

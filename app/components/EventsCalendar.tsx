@@ -86,9 +86,11 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
           key={day}
           className={`min-h-[120px] p-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors ${isToday ? "bg-teal-50 border-teal-500" : ""
             }`}
+          suppressHydrationWarning
         >
           <div
             className={`text-sm font-semibold mb-1 ${isToday ? "text-teal-600" : "text-gray-900"}`}
+            suppressHydrationWarning
           >
             {day}
           </div>
@@ -182,9 +184,8 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
   };
 
   const renderListView = () => {
-    const upcomingEvents = sortedEvents.filter(
-      (event) => new Date(event.startDate) >= new Date(),
-    );
+    // Events are already filtered to upcoming on the server
+    const upcomingEvents = sortedEvents;
 
     return (
       <div className="space-y-4">
@@ -211,7 +212,7 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
                 <div className="space-y-2 text-sm text-gray-600">
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="w-4 h-4" />
-                    <span>
+                    <span suppressHydrationWarning>
                       {new Date(event.startDate).toLocaleDateString("en-GB", {
                         weekday: "long",
                         day: "numeric",
@@ -222,7 +223,7 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
                   </div>
                   <div className="flex items-center gap-2">
                     <ClockIcon className="w-4 h-4" />
-                    <span>
+                    <span suppressHydrationWarning>
                       {new Date(event.startDate).toLocaleTimeString("en-US", {
                         hour: "numeric",
                         minute: "2-digit",
@@ -264,8 +265,8 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
             <button
               onClick={() => setView("calendar")}
               className={`px-4 py-2 text-sm font-medium rounded-l-lg ${view === "calendar"
-                  ? "bg-teal-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-teal-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
                 } transition-colors`}
             >
               Calendar View
@@ -273,8 +274,8 @@ export default function EventsCalendar({ events }: EventsCalendarProps) {
             <button
               onClick={() => setView("list")}
               className={`px-4 py-2 text-sm font-medium rounded-r-lg ${view === "list"
-                  ? "bg-teal-600 text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-teal-600 text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
                 } transition-colors`}
             >
               List View
