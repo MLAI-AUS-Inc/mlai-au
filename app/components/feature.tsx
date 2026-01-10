@@ -13,7 +13,7 @@ export default function Feature() {
             className="text-[var(--brutalist-border)] italic text-center"
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(5rem, 15vw, 12rem)', // Increased size
+              fontSize: 'clamp(4rem, 12vw, 10rem)', // Slightly reduced scaling
               fontWeight: 400,
               lineHeight: 1,
             }}
@@ -26,14 +26,15 @@ export default function Feature() {
         <div className="w-full h-px bg-[var(--brutalist-border)] opacity-30"></div>
 
         {/* Middle section - Vision text on left, MLAI on right */}
-        <div className="flex-1 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-16 py-8">
+        {/* Changed lg:flex-row to xl:flex-row to stack on smaller desktops */}
+        <div className="flex-1 flex flex-col xl:flex-row items-center justify-between gap-8 xl:gap-16 py-8">
           {/* Vision Statement - Left/Center */}
-          <div className="lg:w-1/2 text-center lg:text-left pl-4 lg:pl-12">
+          <div className="xl:w-1/2 text-center xl:text-left pl-4 xl:pl-12">
             <p
               className="text-[var(--brutalist-border)] leading-tight"
               style={{
                 fontFamily: "'Inter', sans-serif",
-                fontSize: 'clamp(1.5rem, 2.5vw, 2.5rem)', // Slightly larger
+                fontSize: 'clamp(1.5rem, 2vw, 2.25rem)', // Adjusted scaling
                 fontWeight: 400,
                 maxWidth: '600px',
               }}
@@ -43,12 +44,12 @@ export default function Feature() {
           </div>
 
           {/* MLAI - Right side, massive ORANGE */}
-          <div className="lg:w-1/2 flex justify-center lg:justify-end pr-4 lg:pr-12">
+          <div className="xl:w-1/2 flex justify-center xl:justify-end pr-4 xl:pr-12">
             <h3
               className="text-[var(--brutalist-orange)] leading-[0.8] tracking-tight"
               style={{
                 fontFamily: "'Oswald', sans-serif",
-                fontSize: 'clamp(10rem, 35vw, 28rem)', // Massive
+                fontSize: 'clamp(8rem, 18vw, 22rem)', // Significantly reduced scaling factor (35vw -> 18vw) to fit in half-width
                 fontWeight: 700,
               }}
             >

@@ -191,13 +191,6 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
             </button>
           </div>
         )}
-
-        {/* Decorative Star */}
-        <div className="absolute bottom-6 right-6 text-white/20 hidden lg:block pointer-events-none">
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 0L14.59 9.41L24 12L14.59 14.59L12 24L9.41 14.59L0 12L9.41 9.41L12 0Z" />
-          </svg>
-        </div>
       </div>
     </section>
   );

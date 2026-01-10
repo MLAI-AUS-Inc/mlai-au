@@ -15,6 +15,8 @@ export interface Event {
   slug: string;
   published: boolean;
   source: 'humanitix' | 'luma';
+  /** External URL to the event page */
+  url?: string;
   /** Used for deduplication - normalized name for comparison */
   normalizedName?: string;
 }
@@ -223,6 +225,7 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
           slug: slug,
           published: true,
           source: 'luma',
+          url: event.url, // Store the provided URL
           normalizedName: normalizeEventName(event.name),
         };
       });
@@ -402,6 +405,9 @@ export async function fetchEvents(config: EventsConfig | string): Promise<Event[
  * Helper to build the event URL based on source.
  */
 export function getEventUrl(event: Event): string {
+  if (event.url) {
+    return event.url;
+  }
   if (event.source === 'luma') {
     return `https://lu.ma/${event.slug}`;
   }
