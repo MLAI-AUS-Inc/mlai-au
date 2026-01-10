@@ -3,16 +3,27 @@ import {
   ClockIcon,
   MapPinIcon,
 } from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { getEventUrl, type Event } from "~/lib/events";
 
 interface EventsCalendarProps {
   events: Event[];
+  initialServerDate?: string;
 }
 
-export default function EventsCalendar({ events }: EventsCalendarProps) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date());
+export default function EventsCalendar({ events, initialServerDate }: EventsCalendarProps) {
+  // Initialize with server date to avoid hydration mismatch
+  const [selectedMonth, setSelectedMonth] = useState(
+    initialServerDate ? new Date(initialServerDate) : new Date()
+  );
+
+  useEffect(() => {
+    // Optionally sync to client's local time after hydration if desired,
+    // but usually keeping the server's notion of "current month" is fine for consistency.
+    // If we want to jump to client's "today", we can do:
+    setSelectedMonth(new Date());
+  }, []);
   const [view, setView] = useState<"calendar" | "list">("calendar");
 
   const sortedEvents = events.sort((a: Event, b: Event) => {

@@ -28,6 +28,7 @@ export async function loader({ context }: Route.LoaderArgs) {
 
   return {
     events: eventsPromise,
+    serverDate: new Date().toISOString(),
   };
 }
 
@@ -76,7 +77,7 @@ function EventsError() {
 }
 
 export default function EventsCalendarPage() {
-  const { events: eventsPromise } = useLoaderData<LoaderData>();
+  const { events: eventsPromise, serverDate } = useLoaderData<typeof loader>();
 
   return (
     <Suspense fallback={<EventsSkeleton />}>
@@ -97,7 +98,7 @@ export default function EventsCalendarPage() {
               </div>
 
               {/* Calendar Section */}
-              <EventsCalendar events={events} />
+              <EventsCalendar events={events} initialServerDate={serverDate} />
             </div>
           );
         }}
