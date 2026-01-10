@@ -127,9 +127,13 @@ interface LumaListEventsResponse {
 
 async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
   if (!apiKey) {
-    console.warn("Luma API key not provided");
+    console.warn("Luma API key not provided - skipping Luma events");
     return [];
   }
+
+  // Log that we're attempting to fetch (mask the key for security)
+  const maskedKey = apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4);
+  console.log(`[Luma] Attempting to fetch events with API key: ${maskedKey}`);
 
   const url = new URL("https://public-api.luma.com/v1/calendar/list-events");
 
@@ -142,10 +146,12 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
       },
     });
 
+    console.log(`[Luma] API Response status: ${response.status} ${response.statusText}`);
+
     const data: LumaListEventsResponse = await response.json();
 
     if (!response.ok) {
-      console.error("Failed to fetch Luma events:", data);
+      console.error("[Luma] Failed to fetch events:", JSON.stringify(data));
       return [];
     }
 
@@ -319,6 +325,9 @@ export async function fetchEvents(config: EventsConfig | string): Promise<Event[
     humanitixApiKey = config.humanitixApiKey;
     lumaApiKey = config.lumaApiKey;
   }
+
+  // Diagnostic logging for production debugging
+  console.log(`[Events] Fetching events - Humanitix key: ${humanitixApiKey ? 'present' : 'MISSING'}, Luma key: ${lumaApiKey ? 'present' : 'MISSING'}`);
 
   // Fetch from both sources in parallel
   const [humanitixEvents, lumaEvents] = await Promise.all([
