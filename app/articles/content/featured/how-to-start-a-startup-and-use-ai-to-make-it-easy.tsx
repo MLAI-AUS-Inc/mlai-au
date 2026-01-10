@@ -29,13 +29,42 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  // ≥6 items; AU context; evidence-forward; answers can be strings or JSX.
-  { id: 1, question: 'What is the first legal step for an Australian startup?', answer: 'Choose a business structure (sole trader, partnership, or Pty Ltd) and apply for an ABN through the Australian Business Register. For limited liability and future investment, most tech startups register as Pty Ltd with ASIC.' },
-  { id: 2, question: 'How can AI help with early customer research in Australia?', answer: 'Use AI to summarise interview notes, cluster themes, and draft problem statements. Always validate outputs with real customer conversations and comply with the Privacy Act 1988 when handling personal data.' },
-  { id: 3, question: 'Do I need funding before building an MVP?', answer: 'Not necessarily. Many Australian founders build a lean MVP using no-code tools and AI-assisted development to reduce cost. Seek grants (e.g., state innovation vouchers) or angel investment only after clear problem–solution fit signals.' },
-  { id: 4, question: 'How do I keep AI usage compliant with privacy rules?', answer: 'Avoid pasting personal or confidential client data into public AI tools. De-identify data, limit prompts to non-sensitive content, and review vendor terms. Where sensitive data is required, use enterprise-grade tools with data residency and audit controls.' },
-  { id: 5, question: 'What metrics should I track first?', answer: 'Start with activation (first meaningful action), retention (repeat use), and qualitative feedback volume. Add revenue metrics only once you have a clear value hypothesis and early pricing experiments.' },
-  { id: 6, question: 'How much does it typically cost to start in 2025?', answer: 'For a lean Australian tech startup: company setup and compliance ~$1.2k–$2.5k, basic tools ~$100–$300/month, AI-assisted no-code MVP build ~$1k–$5k depending on complexity. Validate these figures against your own vendors and state fees as at 02/2025.' },
+  {
+    id: 1,
+    question: 'Can AI write my business plan?',
+    answer:
+      'It can draft a solid baseline (market analysis, financial models, structure) in minutes, but you must validate the assumptions. In Australia, use it to format for grants or bank loans, but ensure you review it for local compliance and realistic market data.',
+  },
+  {
+    id: 2,
+    question: 'Best AI tools for Australian startups 2025',
+    answer:
+      'Focus on "lean stack" essentials: Perplexity/ChatGPT for research, Cursor/v0 for coding MVPs, and tools like Jasper/Canva for marketing. For verified local data (e.g., ATO rules), always cross-check AI outputs with official government sources.',
+  },
+  {
+    id: 3,
+    question: 'How to validate a startup idea with AI?',
+    answer:
+      'Use AI to simulate user interviews, analyse competitor reviews for pain points, and generate landing page variants for A/B testing. This speeds up "problem-solution fit" before you spend money on building.',
+  },
+  {
+    id: 4,
+    question: 'Is it hard to start an AI startup in Australia?',
+    answer:
+      'Technical barriers are lower than ever due to APIs, but "trust" barriers are higher. The challenge in 2025 is differentiation and governance—complying with privacy laws (Privacy Act) and building a defensible product that isn\'t just a wrapper.',
+  },
+  {
+    id: 5,
+    question: 'How much does it cost to build an AI MVP?',
+    answer:
+      'With AI coding assistants, a functional MVP can be built for $1k–$5k (mostly API costs and hosting) rather than $50k+. However, factor in ~$300/mo for AI subscriptions and potential legal advice if handling sensitive data.',
+  },
+  {
+    id: 6,
+    question: 'What are the risks of using AI for my startup?',
+    answer:
+      'The main risks are IP ownership (who owns the code?), data leakage (pasting customer info into public models), and hallucination. Mitigate this by keeping a "human in the loop" for all critical decisions and using enterprise-grade tools for sensitive data.',
+  },
 ]
 
 export const summaryHighlights = {
