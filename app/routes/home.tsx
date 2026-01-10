@@ -3,7 +3,6 @@ import { Await } from "react-router";
 import CTA from "~/components/CTA";
 import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
-import FlagshipEvents from "~/components/flagshipevents";
 import Hero from "~/components/hero";
 import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
@@ -47,134 +46,111 @@ function SubstackUpdatesSkeleton() {
 export default function Home({ events, substackPosts }: { events: Promise<any>, substackPosts: Promise<any> }) {
 
   return (
-    <main className="bg-white">
+    <main className="bg-[var(--brutalist-beige)]">
       {/* Hero section */}
       <Hero />
-      {/* Logo Cloud */}
-      <div id="logoCloud" className="bg-white py-16 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-5 lg:max-w-none">
-            {/* NAB Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/nab.png"
-              alt="NAB"
-            />
-            {/* V2 */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/v2digital.png"
-              alt="V2 Digital"
-            />
-            {/* AWS Startups Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/aws.png"
-              alt="AWS Startups"
-            />
-            {/* Mantel Group Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/mantel.png"
-              alt="Mantel Group"
-            />
-            {/* wilsonai Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/wilsonai.png"
-              alt="wilsonai"
-            />
-            {/* Humyn.ai Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/humyn.png"
-              alt="Humyn.ai"
-            />
-            {/* Cake Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/cake.png"
-              alt="Cake"
-            />
-            {/* Dropshipzone Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/dropshipzone.png"
-              alt="Dropshipzone"
-            />
-            {/* Microsoft Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/microsoft.png"
-              alt="Microsoft"
-            />
-            {/* Sirius Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/sirius.png"
-              alt="Sirius"
-            />
-            {/* Uom Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/uom.jpeg"
-              alt="Uom"
-            />
-            {/* Squarepeg Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/squarepeg.png"
-              alt="Squarepeg"
-            />
-            {/* AirTree Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/airtree.jpeg"
-              alt="AirTree"
-            />
-            {/* Blackbird Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/blackbird.png"
-              alt="Blackbird"
-            />
-            {/* Rampersand Logo */}
-            <img
-              className="h-8 w-auto object-contain mx-auto"
-              src="sponsor_logos/rampersand.png"
-              alt="Rampersand"
-            />
-          </div>
-          <div className="mt-16 flex justify-center">
-            <p className="relative rounded-full bg-gray-50 px-5 py-3 text-sm text-center leading-6 text-gray-600 ring-1 ring-inset ring-gray-900/5">
-              <span className=" md:inline">
-                Our events have been sponsored and supported by over 50 awesome
-                organisations across Australia.{" "}
-              </span>
-              <a href="/sponsors" className="font-semibold text-teal-500">
-                <span className="absolute inset-0" aria-hidden="true" />
-                Become a sponsor <span aria-hidden="true">&rarr;</span>
-              </a>
-            </p>
+      {/* Logo Cloud - Orange Background */}
+      <section className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
+        <div id="logoCloud" className="bg-[var(--brutalist-orange)] rounded-[2.5rem] py-12 lg:py-16 relative z-10">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-12 items-center justify-items-center opacity-100">
+              {/* Row 1 */}
+              <img
+                className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/nab.png"
+                alt="NAB"
+              />
+              <img
+                className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/v2digital.png"
+                alt="V2 Digital"
+              />
+              <div className="flex items-center gap-4">
+                <img
+                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/aws.png"
+                  alt="AWS Startups"
+                />
+                <img
+                  className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/mantel.png"
+                  alt="Mantel Group"
+                />
+              </div>
+
+              {/* Row 2 */}
+              <img
+                className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/humyn.png"
+                alt="Humyn.ai"
+              />
+              <img
+                className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/cake.png"
+                alt="Cake"
+              />
+              <img
+                className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/microsoft.png"
+                alt="Microsoft"
+              />
+
+              {/* Row 3 */}
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-white text-xs font-bold uppercase tracking-widest">Wilson A.I.</span>
+                <img
+                  className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/wilsonai.png"
+                  alt="wilsonai"
+                />
+              </div>
+              <img
+                className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/uom.jpeg"
+                alt="University of Melbourne"
+              />
+              <img
+                className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                src="sponsor_logos/squarepeg.png"
+                alt="Squarepeg"
+              />
+
+              {/* Row 4 */}
+              <div className="col-span-2 md:col-span-3 grid grid-cols-3 gap-12 items-center justify-items-center w-full mt-4">
+                <img
+                  className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/airtree.jpeg"
+                  alt="AirTree"
+                />
+                <img
+                  className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/blackbird.png"
+                  alt="Blackbird"
+                />
+                <img
+                  className="max-h-6 w-auto object-contain mix-blend-screen grayscale invert"
+                  src="sponsor_logos/rampersand.png"
+                  alt="Rampersand"
+                />
+              </div>
+            </div>
+
+            <div className="mt-12 flex justify-center">
+              <p className="text-sm text-center leading-6 text-white text-opacity-90">
+                <span className="md:inline">
+                  Our events have been sponsored and supported by over 50 awesome
+                  organisations across Australia.{" "}
+                </span>
+                <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
+                  Become a sponsor <span aria-hidden="true">&rarr;</span>
+                </a>
+              </p>
+            </div>
           </div>
         </div>
-      </div>
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
+      </section>
       {/* Feature section */}
       <Feature />
-      {/* Divider */}
-      <div className="relative">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-2/3 m-auto border-t border-gray-300" />
-        </div>
-      </div>
-      {/* Events section */}
-      <FlagshipEvents />
       {/* Upcoming Events section */}
       <Suspense fallback={<UpcomingEventsSkeleton />}>
         <Await resolve={events} errorElement={<div className="py-8 text-center text-gray-600">Unable to load events</div>}>

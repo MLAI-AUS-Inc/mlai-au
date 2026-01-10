@@ -1,52 +1,73 @@
 import { Dialog } from "@headlessui/react";
-import {
-  Bars3Icon,
-  BookOpenIcon,
-  BriefcaseIcon,
-  CalendarIcon,
-  EnvelopeIcon,
-  HandRaisedIcon,
-  HomeIcon,
-  UserGroupIcon,
-  XMarkIcon,
-  InformationCircleIcon,
-  CommandLineIcon,
-} from "@heroicons/react/24/outline";
-import { useState } from "react";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 
+// Navigation items
 const navigation = [
-  { name: "Home", href: "/", icon: HomeIcon },
-  { name: "About", href: "/#about", icon: InformationCircleIcon },
-  { name: "Events", href: "/events", icon: CalendarIcon },
   {
-    name: "Post a Bounty Job",
-    href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
-    target: "_blank",
-    rel: "noopener noreferrer",
-    icon: BriefcaseIcon,
+    number: "1",
+    name: "Hello",
+    href: "/",
+    color: "#ff3d00", // Orange
   },
   {
+    number: "2",
+    name: "Events",
+    href: "/events",
+    color: "#4b0db3", // Purple
+  },
+  {
+    number: "3",
+    name: "Bounties",
+    href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
+    target: "_blank",
+    color: "#1a1a1a", // Black
+  },
+  {
+    number: "4",
     name: "Volunteer",
     href: "https://forms.gle/GwZR49kwTMszLKtN8",
     target: "_blank",
-    rel: "noopener noreferrer",
-    icon: HandRaisedIcon,
+    color: "#3537dc", // Blue
   },
-  { name: "Contact", href: "/contact", icon: EnvelopeIcon },
   {
-    name: "Blog",
-    href: "https://mlaiaus.substack.com/archive",
-    target: "_blank",
-    rel: "noopener noreferrer",
-    icon: BookOpenIcon,
+    number: "5",
+    name: "Sponsor",
+    href: "/sponsors",
+    color: "#ff003d", // Crimson
   },
-  { name: "Members", href: "/members", icon: UserGroupIcon },
-  { name: "Hackathons", href: "/hackathons", icon: CommandLineIcon },
+  {
+    number: "6",
+    name: "Articles",
+    href: "/articles",
+    color: "#fefc22", // Yellow
+  },
+  {
+    number: "7",
+    name: "Login",
+    href: "/platform/login",
+    color: "#00ffd7", // Mint
+  },
 ];
 
 export default function Sidebar() {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 100);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isItemExpanded = (index: number) => {
+    if (!isScrolled) return true;
+    if (hoveredIndex !== null) return index === hoveredIndex;
+    return index === 0;
+  };
 
   return (
     <>
@@ -54,59 +75,70 @@ export default function Sidebar() {
       <div className="lg:hidden fixed top-4 left-4 z-50">
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-md p-2.5 text-white bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg"
+          className="inline-flex items-center justify-center rounded-lg p-2.5 bg-[var(--brutalist-beige)] border-2 border-[var(--brutalist-border)] shadow-md"
           onClick={() => setMobileMenuOpen(true)}
         >
           <span className="sr-only">Open main menu</span>
-          <Bars3Icon className="h-6 w-6" aria-hidden="true" />
+          <Bars3Icon className="h-6 w-6 text-[var(--brutalist-border)]" aria-hidden="true" />
         </button>
       </div>
-      {/* Desktop sidebar */}
-      <aside
-        className={`hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${isExpanded ? "w-64" : "w-20"
-          }`}
-        onMouseEnter={() => setIsExpanded(true)}
-        onMouseLeave={() => setIsExpanded(false)}
-      >
-        <div className="flex h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-20 items-center justify-center px-4">
-            <a href="/" className="flex items-center">
-              <img
-                className={`transition-all duration-300 ${isExpanded ? "h-8" : "h-10"}`}
-                src={isExpanded ? "/text_logo.png" : "/MLAI-Logo.png"}
-                alt="MLAI logo"
-              />
-            </a>
-          </div>
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 px-3 py-4">
-            {navigation.map((item) => (
+
+      {/* Desktop sidebar - 220px width */}
+      <aside className="hidden lg:flex fixed left-0 top-0 z-40 h-screen w-[220px] flex-col bg-[var(--brutalist-beige)] p-4 gap-2">
+        {/* Logo container - Mint background */}
+        <a
+          href="/"
+          className="block w-full aspect-[2/1] rounded-xl bg-[var(--brutalist-mint)] hover:scale-[1.02] transition-transform duration-200 relative group flex items-end justify-center z-50 mb-4"
+        >
+          {/* Kangaroo image - larger and aligned to bottom, overlapping top */}
+          <img
+            className="h-[110%] w-auto object-contain object-bottom transition-transform duration-500 group-hover:scale-110 -mt-[40%]"
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Roo_MLAI.png?alt=media&token=10e962dd-6636-4dcc-9b49-9de4c62ebc82"
+            alt="MLAI Kangaroo logo"
+          />
+        </a>
+
+        {/* Navigation items */}
+        <nav className="flex-1 flex flex-col gap-2">
+          {navigation.map((item, index) => {
+            const expanded = isItemExpanded(index);
+            const isYellow = item.color === "#fefc22";
+            const isMint = item.color === "#00ffd7";
+            const useDarkText = isYellow || isMint;
+
+            return (
               <a
                 key={item.name}
                 href={item.href}
-                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200"
                 target={item.target}
-                rel={
-                  item.target === "_blank" ? "noopener noreferrer" : undefined
-                }
+                rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+                className={`relative rounded-xl overflow-hidden transition-all duration-300 ease-out ${expanded ? "flex-1 min-h-[60px]" : "flex-none h-6"
+                  }`}
+                style={{ backgroundColor: item.color }}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
               >
-                <item.icon
-                  className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${isExpanded ? "mr-3" : "mr-0"
-                    }`}
-                  aria-hidden="true"
-                />
+                {/* Number label - Reduced weight (font-normal) */}
                 <span
-                  className={`transition-all duration-300 ${isExpanded ? "opacity-100" : "opacity-0 w-0"
-                    } overflow-hidden whitespace-nowrap`}
+                  className={`absolute top-2 left-3 text-lg font-normal transition-opacity duration-200 ${useDarkText ? "text-black" : "text-white"
+                    } ${expanded ? "opacity-100" : "opacity-0"}`}
+                >
+                  {item.number}
+                </span>
+
+                {/* Text label - Reduced weight (font-normal) */}
+                <span
+                  className={`absolute bottom-2 left-3 text-xl font-normal transition-opacity duration-200 ${useDarkText ? "text-black" : "text-white"
+                    } ${expanded ? "opacity-100" : "opacity-0"}`}
                 >
                   {item.name}
                 </span>
               </a>
-            ))}
-          </nav>
-        </div>
+            );
+          })}
+        </nav>
       </aside>
+
       {/* Mobile menu dialog */}
       <Dialog
         open={mobileMenuOpen}
@@ -114,49 +146,54 @@ export default function Sidebar() {
         className="lg:hidden"
       >
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50" />
-        <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-black bg-opacity-95 backdrop-filter backdrop-blur-lg px-6 py-6">
-          <div className="flex items-center justify-between">
-            <a href="/" className="-m-1.5 p-1.5">
-              <span className="sr-only">
-                MLAI - Empowering the Australian AI Community
-              </span>
+        <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-[var(--brutalist-beige)] px-4 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <a href="/" className="block w-16 h-16 rounded-lg bg-[var(--brutalist-mint)] overflow-hidden p-1 flex items-center justify-center">
               <img
-                className="h-8 w-auto"
-                src="/text_logo.png"
-                alt="MLAI text logo"
+                className="h-full w-auto object-contain"
+                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Roo_MLAI.png?alt=media&token=10e962dd-6636-4dcc-9b49-9de4c62ebc82"
+                alt="MLAI logo"
               />
             </a>
             <button
               type="button"
-              className="-m-2.5 rounded-md p-2.5 text-white"
+              className="rounded-lg p-2 border-2 border-[var(--brutalist-border)]"
               onClick={() => setMobileMenuOpen(false)}
             >
               <span className="sr-only">Close menu</span>
               <XMarkIcon className="h-6 w-6" aria-hidden="true" />
             </button>
           </div>
-          <div className="mt-6 flow-root">
-            <nav className="space-y-2">
-              {navigation.map((item) => (
+          <nav className="flex flex-col gap-2">
+            {navigation.map((item) => {
+              const isYellow = item.color === "#fefc22";
+              const isMint = item.color === "#00ffd7";
+              const useDarkText = isYellow || isMint;
+
+              return (
                 <a
                   key={item.name}
                   href={item.href}
-                  className="flex items-center rounded-lg px-3 py-2 text-base font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300"
                   target={item.target}
-                  rel={
-                    item.target === "_blank" ? "noopener noreferrer" : undefined
-                  }
+                  rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
+                  className="relative flex items-center rounded-lg px-4 py-4"
+                  style={{ backgroundColor: item.color }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <item.icon
-                    className="mr-3 h-6 w-6 flex-shrink-0"
-                    aria-hidden="true"
-                  />
-                  {item.name}
+                  <span
+                    className={`text-xs font-normal mr-3 ${useDarkText ? "text-black" : "text-white"}`}
+                  >
+                    {item.number}
+                  </span>
+                  <span
+                    className={`text-base font-normal ${useDarkText ? "text-black" : "text-white"}`}
+                  >
+                    {item.name}
+                  </span>
                 </a>
-              ))}
-            </nav>
-          </div>
+              );
+            })}
+          </nav>
         </Dialog.Panel>
       </Dialog>
     </>

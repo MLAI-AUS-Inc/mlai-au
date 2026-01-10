@@ -186,3 +186,87 @@ body {
     opacity: 0;
   }
 }
+
+/* ============================================
+   NEO-BRUTALIST THEME
+   ============================================ */
+
+:root {
+  /* Background Colors */
+  --brutalist-beige: #F5F0E6;
+  --brutalist-beige-dark: #EDE8DC;
+  --brutalist-border: #1a1a1a;
+
+  /* Sidebar Button Colors - Updated palette */
+  --brutalist-orange: #ff3d00;
+  --brutalist-purple: #4b0db3;
+  --brutalist-black: #1a1a1a;
+  --brutalist-blue: #3537dc;
+  --brutalist-crimson: #ff003d;
+  --brutalist-yellow: #fefc22;
+  --brutalist-mint: #00ffd7;
+  --brutalist-green: #00ff00;
+
+  /* Typography Accent */
+  --brutalist-accent: #ff3d00;
+}
+
+/* Neo-Brutalist Sidebar Styles */
+.brutalist-sidebar {
+  background-color: var(--brutalist-beige);
+}
+
+.brutalist-nav-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.brutalist-nav-item.expanded {
+  flex: 1;
+}
+
+.brutalist-nav-item.collapsed {
+  flex: 0 0 16px;
+}
+
+/* Card container style */
+.brutalist-card {
+  background-color: var(--brutalist-beige);
+  border: 2px solid var(--brutalist-border);
+  border-radius: 1.5rem;
+}
+
+/* Impact typography for hero numbers */
+.brutalist-number {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.85;
+}
+
+.brutalist-subtitle {
+  font-family: 'Anton', sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+/* Sidebar item hover effect */
+@keyframes sidebar-expand {
+  from {
+    flex: 0 0 16px;
+  }
+
+  to {
+    flex: 1;
+  }
+}
+
+@keyframes sidebar-collapse {
+  from {
+    flex: 1;
+  }
+
+  to {
+    flex: 0 0 16px;
+  }
+}

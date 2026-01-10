@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { Button } from "./ui/Button";
-import { Card, CardImage } from "./ui/Card";
 import { Container, Section } from "./ui/Container";
 import { getEventUrl, type Event } from "~/lib/events";
 
 export default function UpcomingEvents({ events: rawEvents }: { events: Event[] }) {
   const [currentPage, setCurrentPage] = useState(0);
+  const eventsPerPage = 3;
 
   // Events are already filtered to upcoming on the server to avoid hydration mismatch
   // Just sort here
@@ -15,8 +14,10 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
       return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
     });
 
+  const totalPages = Math.ceil(events.length / eventsPerPage);
+
   const handleNext = () => {
-    if (currentPage < Math.ceil(events.length / 4) - 1) {
+    if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -27,145 +28,172 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
     }
   };
 
+  const currentEvents = events.slice(
+    currentPage * eventsPerPage,
+    (currentPage + 1) * eventsPerPage
+  );
+
+  // Format date parts for the date box
+  const formatDateParts = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return {
+      day: date.getDate().toString(),
+      month: date.toLocaleDateString("en-US", { month: "short" }).toUpperCase(),
+      time: date.toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+    };
+  };
+
   return (
-    <Section id="upcoming-events">
-      <Container variant="narrow" className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Join us for upcoming events
-        </h2>
-        <p className="mt-2 text-lg leading-8 text-gray-600" />
-      </Container>
-      <Container variant="wide" className="mt-16 relative">
-        <div className="carousel bg-white relative overflow-hidden">
-          <div
-            className="carousel-inner relative w-full overflow-hidden"
-            style={{ minHeight: "480px" }}
-          >
+    <Section id="upcoming-events" className="bg-[var(--brutalist-beige)]">
+      <Container variant="wide" className="py-8 lg:py-12">
+        {/* Section container with rounded corners */}
+        <div className="bg-[var(--brutalist-beige)] rounded-[2rem] p-6 lg:p-10 border-4 border-[var(--brutalist-purple)] relative">
+          {/* Header */}
+          <h2 className="text-4xl lg:text-5xl font-bold text-[var(--brutalist-purple)] mb-8 lg:mb-10 font-display">
+            Upcoming Events
+          </h2>
+
+          {/* Events List */}
+          <div className="space-y-4 lg:space-y-6">
             {events.length === 0 ? (
-              <p className="text-center text-gray-900">No events available</p>
+              <p className="text-center text-gray-600 py-12">No upcoming events at this time</p>
             ) : (
-              <div
-                className="relative flex transition-transform duration-700 ease-out"
-                style={{ transform: `translateX(-${currentPage * 100}%)` }}
-              >
-                {Array.from({ length: Math.ceil(events.length / 4) }).map(
-                  (_, pageIndex) => (
-                    <div key={pageIndex} className="w-full flex-shrink-0">
-                      <div className="mx-auto mt-16 grid max-w-2xl grid-cols-1 gap-8 sm:mt-20 lg:mx-0 lg:max-w-none lg:grid-cols-4">
-                        {events
-                          .slice(pageIndex * 4, (pageIndex + 1) * 4)
-                          .map((event, eventIndex) => (
-                            <a
-                              key={event._id}
-                              href={getEventUrl(event)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="block h-full transform transition-all duration-300 hover:scale-105 hover:-translate-y-1"
-                              style={{
-                                transitionDelay: `${eventIndex * 50}ms`,
-                              }}
-                            >
-                              <Card
-                                variant="event"
-                                as="article"
-                                className="flex flex-col h-full min-h-[400px] overflow-hidden transition-shadow duration-300 hover:shadow-2xl"
-                              >
-                                <div className="relative h-48 sm:h-56 lg:h-48 flex-shrink-0 overflow-hidden">
-                                  <CardImage
-                                    src={event.bannerImage?.url || ""}
-                                    alt=""
-                                    overlay={false}
-                                    gradient={false}
-                                    className="rounded-t-3xl transition-transform duration-300 hover:scale-110"
-                                  />
-                                </div>
-                                <div className="flex flex-col flex-grow p-6 bg-gradient-to-b from-gray-800 to-gray-900">
-                                  <time className="text-sm text-gray-300 block mb-3 transition-colors duration-300" suppressHydrationWarning>
-                                    {new Date(
-                                      event.startDate,
-                                    ).toLocaleDateString("en-GB", {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                    ,{" "}
-                                    {new Date(
-                                      event.startDate,
-                                    ).toLocaleTimeString("en-US", {
-                                      hour: "numeric",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    })}
-                                  </time>
-                                  <h3 className="text-lg font-semibold leading-6 text-white mb-3 line-clamp-2 flex-grow transition-colors duration-300">
-                                    {event.name}
-                                  </h3>
-                                  <div className="flex items-start text-sm leading-6 text-gray-300 mt-auto transition-colors duration-300">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth={1.5}
-                                      stroke="currentColor"
-                                      className="w-5 h-5 mr-2 flex-shrink-0 mt-0.5"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                                      />
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
-                                      />
-                                    </svg>
-                                    <span className="line-clamp-2">
-                                      {event.eventLocation.address}
-                                    </span>
-                                  </div>
-                                </div>
-                              </Card>
-                            </a>
-                          ))}
+              currentEvents.map((event) => {
+                const dateParts = formatDateParts(event.startDate);
+                return (
+                  <div
+                    key={event._id}
+                    className="bg-[#F5EBD8] rounded-2xl p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 transition-all duration-300 hover:shadow-lg hover:scale-[1.01] border-2 border-transparent hover:border-[var(--brutalist-orange)]"
+                  >
+                    {/* Date Box */}
+                    <div className="flex-shrink-0 bg-[var(--brutalist-orange)] rounded-xl px-4 py-3 text-center min-w-[80px] lg:min-w-[90px] self-start lg:self-center">
+                      <div className="text-2xl lg:text-3xl font-bold text-white leading-none">
+                        {dateParts.day}
+                      </div>
+                      <div className="text-sm lg:text-base font-bold text-white uppercase tracking-wide">
+                        {dateParts.month}
+                      </div>
+                      <div className="text-xs text-white/90 mt-1">
+                        {dateParts.time}
                       </div>
                     </div>
-                  ),
-                )}
-              </div>
-            )}
-            <ol className="carousel-indicators flex justify-center hidden lg:flex mt-8">
-              {Array.from({ length: Math.ceil(events.length / 4) }).map(
-                (_, index) => (
-                  <li className="inline-block mr-3" key={index}>
-                    <button
-                      onClick={() => setCurrentPage(index)}
-                      className={`carousel-bullet cursor-pointer block text-4xl ${currentPage === index ? "text-gray-900" : "text-gray-400"} hover:text-gray-900`}
+
+                    {/* Event Details */}
+                    <div className="flex-grow min-w-0">
+                      <h3 className="text-lg lg:text-xl font-bold text-[var(--brutalist-purple)] leading-tight mb-2 line-clamp-2">
+                        {event.name}
+                      </h3>
+                      <div className="flex items-start gap-2 text-[var(--brutalist-purple)]">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                          className="w-5 h-5 flex-shrink-0 text-[var(--brutalist-orange)] mt-0.5"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="m11.54 22.351.07.04.028.016a.76.76 0 0 0 .723 0l.028-.015.071-.041a16.975 16.975 0 0 0 1.144-.742 19.58 19.58 0 0 0 2.683-2.282c1.944-1.99 3.963-4.98 3.963-8.827a8.25 8.25 0 0 0-16.5 0c0 3.846 2.02 6.837 3.963 8.827a19.58 19.58 0 0 0 2.682 2.282 16.975 16.975 0 0 0 1.145.742ZM12 13.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                        <span className="text-sm lg:text-base line-clamp-1">
+                          {event.eventLocation.address || "Location TBA"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Thumbnail - Shows below on mobile, inline on desktop */}
+                    {event.bannerImage?.url && (
+                      <div className="flex-shrink-0 w-full lg:w-32 h-24 lg:h-20 rounded-xl overflow-hidden order-last lg:order-none">
+                        <img
+                          src={event.bannerImage.url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {/* Register Button */}
+                    <a
+                      href={getEventUrl(event)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex-shrink-0 bg-[var(--brutalist-orange)] text-white font-bold px-6 py-3 rounded-xl text-center transition-all duration-200 hover:bg-[#E85D04] hover:scale-105 active:scale-95 self-start lg:self-center"
                     >
-                      •
-                    </button>
-                  </li>
-                ),
-              )}
-            </ol>
+                      Register
+                    </a>
+                  </div>
+                );
+              })
+            )}
           </div>
+
+          {/* Navigation & Pagination */}
+          {events.length > eventsPerPage && (
+            <div className="flex items-center justify-center gap-4 mt-8">
+              {/* Previous Button */}
+              <button
+                onClick={handlePrev}
+                disabled={currentPage === 0}
+                className="w-10 h-10 rounded-full bg-[var(--brutalist-purple)] text-white flex items-center justify-center transition-all duration-200 hover:bg-[#5B1A94] disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                aria-label="Previous events"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M7.72 12.53a.75.75 0 0 1 0-1.06l7.5-7.5a.75.75 0 1 1 1.06 1.06L9.31 12l6.97 6.97a.75.75 0 1 1-1.06 1.06l-7.5-7.5Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+
+              {/* Pagination Dots */}
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }).map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentPage(index)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${currentPage === index
+                        ? "bg-[var(--brutalist-purple)] scale-125"
+                        : "bg-[var(--brutalist-purple)]/30 hover:bg-[var(--brutalist-purple)]/50"
+                      }`}
+                    aria-label={`Go to page ${index + 1}`}
+                  />
+                ))}
+              </div>
+
+              {/* Next Button */}
+              <button
+                onClick={handleNext}
+                disabled={currentPage === totalPages - 1}
+                className="w-10 h-10 rounded-full bg-[var(--brutalist-purple)] text-white flex items-center justify-center transition-all duration-200 hover:bg-[#5B1A94] disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+                aria-label="Next events"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="w-5 h-5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.28 11.47a.75.75 0 0 1 0 1.06l-7.5 7.5a.75.75 0 0 1-1.06-1.06L14.69 12 7.72 5.03a.75.75 0 0 1 1.06-1.06l7.5 7.5Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
-        <Button
-          onClick={handlePrev}
-          variant="primary"
-          size="sm"
-          className="prev control w-12 h-12 -ml-6 absolute cursor-pointer text-3xl font-bold rounded-full bg-gray-900 text-white shadow-lg leading-tight text-center z-10 top-1/2 -translate-y-1/2 left-0 hidden lg:flex items-center justify-center hover:bg-gray-800"
-        >
-          ‹
-        </Button>
-        <Button
-          onClick={handleNext}
-          variant="primary"
-          size="sm"
-          className="next control w-12 h-12 -mr-6 absolute cursor-pointer text-3xl font-bold rounded-full bg-gray-900 text-white shadow-lg leading-tight text-center z-10 top-1/2 -translate-y-1/2 right-0 hidden lg:flex items-center justify-center hover:bg-gray-800"
-        >
-          ›
-        </Button>
       </Container>
     </Section>
   );
