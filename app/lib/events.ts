@@ -135,31 +135,66 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
   const maskedKey = apiKey.substring(0, 8) + '...' + apiKey.substring(apiKey.length - 4);
   console.log(`[Luma] Attempting to fetch events with API key: ${maskedKey}`);
 
-  const url = new URL("https://public-api.luma.com/v1/calendar/list-events");
+  const allEntries: LumaEventEntry[] = [];
+  let cursor: string | undefined = undefined;
+  let pageCount = 0;
+  const MAX_PAGES = 10; // Safety limit to prevent infinite loops
 
   try {
-    const response = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        "x-luma-api-key": apiKey,
-        "Content-Type": "application/json",
-      },
+    // Paginate through all pages
+    do {
+      pageCount++;
+      const url = new URL("https://public-api.luma.com/v1/calendar/list-events");
+
+      // Filter to only fetch events after today (reduces API response size and focuses on upcoming)
+      url.searchParams.set('after', new Date().toISOString());
+
+      if (cursor) {
+        url.searchParams.set('pagination_cursor', cursor);
+      }
+
+      const response = await fetch(url.toString(), {
+        method: "GET",
+        headers: {
+          "x-luma-api-key": apiKey,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log(`[Luma] Page ${pageCount} - API Response status: ${response.status} ${response.statusText}`);
+
+      const data: LumaListEventsResponse = await response.json();
+
+      if (!response.ok) {
+        console.error("[Luma] Failed to fetch events:", JSON.stringify(data));
+        break;
+      }
+
+      const entries = data.entries || [];
+      allEntries.push(...entries);
+      console.log(`[Luma] Page ${pageCount}: fetched ${entries.length} entries (total so far: ${allEntries.length})`);
+
+      // Check if there are more pages
+      cursor = data.has_more ? data.next_cursor : undefined;
+    } while (cursor && pageCount < MAX_PAGES);
+
+    console.log(`[Luma] Finished fetching. Total raw entries: ${allEntries.length} across ${pageCount} page(s)`);
+
+    // Diagnostic logging: show all events received
+    console.log(`[Luma] Raw entries received: ${allEntries.length}`);
+    allEntries.forEach((entry: LumaEventEntry, idx: number) => {
+      console.log(`[Luma] Event ${idx + 1}: "${entry.event.name}" | visibility: ${entry.event.visibility} | start: ${entry.event.start_at}`);
     });
 
-    console.log(`[Luma] API Response status: ${response.status} ${response.statusText}`);
-
-    const data: LumaListEventsResponse = await response.json();
-
-    if (!response.ok) {
-      console.error("[Luma] Failed to fetch events:", JSON.stringify(data));
-      return [];
-    }
-
-    const entries = data.entries || [];
-
     // Filter to only include public events and normalize to Event interface
-    const normalizedEvents: Event[] = entries
-      .filter((entry: LumaEventEntry) => entry.event.visibility === 'public')
+    const normalizedEvents: Event[] = allEntries
+      .filter((entry: LumaEventEntry) => {
+        const isPublic = entry.event.visibility === 'public';
+        if (!isPublic) {
+          console.log(`[Luma] FILTERED OUT (not public): "${entry.event.name}" - visibility: ${entry.event.visibility}`);
+        }
+        return isPublic;
+      })
       .map((entry: LumaEventEntry): Event => {
         const event = entry.event;
 
@@ -192,7 +227,10 @@ async function fetchLumaEvents(apiKey: string): Promise<Event[]> {
         };
       });
 
-    console.log(`Fetched ${normalizedEvents.length} public events from Luma`);
+    console.log(`[Luma] After visibility filter: ${normalizedEvents.length} public events`);
+    normalizedEvents.forEach((event, idx) => {
+      console.log(`[Luma] Public Event ${idx + 1}: "${event.name}" | date: ${event.startDate}`);
+    });
     return normalizedEvents;
   } catch (error: any) {
     console.error("Error fetching Luma events:", error);

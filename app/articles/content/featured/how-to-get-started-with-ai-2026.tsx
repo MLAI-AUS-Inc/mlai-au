@@ -245,7 +245,6 @@ export default function ArticlePage() {
 
       {/* FAQ Section */}
       <div className="mt-12">
-        <h2 className="mb-6 text-2xl font-bold text-gray-900">Frequently Asked Questions</h2>
         <ArticleFAQ items={faqItems} />
       </div>
 
