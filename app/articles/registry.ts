@@ -101,7 +101,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         description: 'Practical 2026 guide for Australian founders on starting a startup and using AI safely to speed research, validation, and operations.',
         author: 'MLAI Team',
         slug: 'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy',
-        image: 'https://placehold.co/1200x630/png',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2F7ebeaf16-d68f-42f9-b1a1-3a77d19d6c80%20(2).png?alt=media&token=70248355-2685-43f2-b855-57566e7146a7',
         imageAlt: 'How to Start a Startup and Use AI to Make It Easy (2026)',
         hasContent: true,
     },
