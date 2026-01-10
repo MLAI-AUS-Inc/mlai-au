@@ -68,24 +68,24 @@ export const faqItems: FAQ[] = [
 ]
 
 export const summaryHighlights = {
-  heading: `Key facts: ${TOPIC}`,
+  heading: 'Quick Look: Launching with AI',
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2025 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    'A snapshot of how artificial intelligence is changing the game for Australian founders in 2025—faster validation, lower costs, and smarter operations.',
   items: [
     {
-      label: `What is ${TOPIC}?`,
+      label: 'Why build with AI?',
       description:
-        'A practical approach to launching an Australian startup while using AI tools to speed research, prototyping, and operations without skipping governance.',
+        'It cuts validation time from months to weeks. AI tools allow you to research markets, draft compliance docs, and code an MVP without a large team or budget.',
     },
     {
-      label: `Who needs it?`,
+      label: 'Do I need technical skills?',
       description:
-        'First-time founders, students testing ideas, and community builders helping early teams validate and communicate value.',
+        'Less than ever. This guide targets non-technical founders and students, showing how to use tools like Cursor and v0 to build functional products without deep coding knowledge.',
     },
     {
-      label: `Cost & Effort (2025)`,
+      label: 'What does it cost?',
       description:
-        'Expect $1k–$5k for a lean AI-assisted MVP, plus ASIC/ABN setup and basic tools; 4–8 weeks for initial validation with disciplined scope.',
+        'You can now launch for $1k–$5k (including ASIC fees). The biggest savings come from swapping expensive agencies for AI assistants in the early MVP phase.',
     },
   ],
 }
