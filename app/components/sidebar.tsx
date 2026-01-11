@@ -64,14 +64,19 @@ export default function Sidebar() {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
 
-  // Handle scroll state
+  // Handle scroll state - only on home page
   useEffect(() => {
+    if (!isHomePage) {
+      setIsScrolled(false);
+      return;
+    }
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   // Set up Intersection Observer for section detection
   useEffect(() => {
@@ -138,6 +143,7 @@ export default function Sidebar() {
   }, [activeSection, isHomePage]);
 
   const isItemExpanded = (index: number) => {
+    if (!isHomePage) return true;
     if (!isScrolled) return true;
     if (hoveredIndex !== null) return index === hoveredIndex;
     // Expand item based on active section when scrolled
