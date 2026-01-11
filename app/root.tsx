@@ -11,6 +11,7 @@ import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 
 export const links: Route.LinksFunction = () => [
@@ -139,6 +140,7 @@ export default function Layout() {
         </noscript>
         {/* Only show platform-wide components if NOT in specific apps */}
         {!isAppRoute && <Sidebar />}
+        {!isAppRoute && <SectionMarkers />}
         <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
           <Outlet />
         </div>

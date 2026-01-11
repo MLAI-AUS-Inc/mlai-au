@@ -1,19 +1,22 @@
 import { Dialog } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router";
 
-// Navigation items
+// Navigation items with section IDs for scroll detection
 const navigation = [
   {
     number: "1",
     name: "Hello",
-    href: "/",
+    href: "/#hello",
+    sectionId: "hello", // Logo Cloud + "We Are MLAI" section
     color: "#ff3d00", // Orange
   },
   {
     number: "2",
     name: "Events",
-    href: "/events",
+    href: "/#events",
+    sectionId: "events", // Upcoming Events section
     color: "#4b0db3", // Purple
   },
   {
@@ -21,32 +24,34 @@ const navigation = [
     name: "Bounties",
     href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
     target: "_blank",
-    color: "#1a1a1a", // Black
+    color: "#1a1a1a", // Black (external link - no section)
   },
   {
     number: "4",
     name: "Volunteer",
-    href: "https://forms.gle/GwZR49kwTMszLKtN8",
-    target: "_blank",
+    href: "/#volunteer",
+    sectionId: "volunteer", // Testimonials + Team section
     color: "#3537dc", // Blue
   },
   {
     number: "5",
     name: "Sponsor",
     href: "/sponsors",
+    // No sectionId - navigates to /sponsors page
     color: "#ff003d", // Crimson
   },
   {
     number: "6",
     name: "Articles",
-    href: "/articles",
+    href: "/#articles",
+    sectionId: "articles", // Substack "Monthly updates" section
     color: "#fefc22", // Yellow
   },
   {
     number: "7",
     name: "Login",
     href: "/platform/login",
-    color: "#00ffd7", // Mint
+    color: "#00ffd7", // Mint (external route - no section)
   },
 ];
 
@@ -54,7 +59,12 @@ export default function Sidebar() {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>("hero");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
 
+  // Handle scroll state
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 100);
@@ -63,10 +73,75 @@ export default function Sidebar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Set up Intersection Observer for section detection
+  useEffect(() => {
+    if (!isHomePage) return;
+
+    // Get all sections that have IDs matching our navigation
+    const sectionIds = navigation
+      .filter((item) => item.sectionId)
+      .map((item) => item.sectionId!);
+
+    const observerOptions: IntersectionObserverInit = {
+      root: null,
+      rootMargin: "-30% 0px -50% 0px", // Trigger when section is in the middle-ish of viewport
+      threshold: 0,
+    };
+
+    observerRef.current = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.id);
+        }
+      });
+    }, observerOptions);
+
+    // Observe all sections
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observerRef.current?.observe(element);
+      }
+    });
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [isHomePage]);
+
+  // Handle smooth scroll navigation
+  const handleNavClick = useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, item: (typeof navigation)[0]) => {
+      // Only handle internal hash links on homepage
+      if (item.sectionId && isHomePage) {
+        e.preventDefault();
+        const element = document.getElementById(item.sectionId);
+        if (element) {
+          element.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+          // Update active section immediately for responsiveness
+          setActiveSection(item.sectionId);
+        }
+      }
+      // External links and non-homepage navigation handled by default behavior
+    },
+    [isHomePage]
+  );
+
+  // Get the index of the active section in navigation
+  const getActiveSectionIndex = useCallback(() => {
+    if (!isHomePage) return 0;
+    const index = navigation.findIndex((item) => item.sectionId === activeSection);
+    return index >= 0 ? index : 0;
+  }, [activeSection, isHomePage]);
+
   const isItemExpanded = (index: number) => {
     if (!isScrolled) return true;
     if (hoveredIndex !== null) return index === hoveredIndex;
-    return index === 0;
+    // Expand item based on active section when scrolled
+    return index === getActiveSectionIndex();
   };
 
   return (
@@ -117,6 +192,7 @@ export default function Sidebar() {
                 style={{ backgroundColor: item.color }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}
+                onClick={(e) => handleNavClick(e, item)}
               >
                 {/* Number label - Reduced weight (font-normal) */}
                 <span
@@ -178,7 +254,10 @@ export default function Sidebar() {
                   rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
                   className="relative flex items-center rounded-lg px-4 py-4"
                   style={{ backgroundColor: item.color }}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    setMobileMenuOpen(false);
+                    handleNavClick(e, item);
+                  }}
                 >
                   <span
                     className={`text-xs font-normal mr-3 ${useDarkText ? "text-black" : "text-white"}`}
