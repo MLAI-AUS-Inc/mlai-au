@@ -49,7 +49,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
   return (
     <section id="upcoming-events" className="w-full bg-[var(--brutalist-beige)] p-2 lg:p-3">
       {/* Full width container with rounded corners - Purple Background */}
-      <div className="w-full bg-[var(--brutalist-purple)] rounded-[2.5rem] p-6 lg:p-12 relative overflow-hidden shadow-2xl">
+      <div className="w-full bg-[var(--brutalist-purple)] rounded-[2.5rem] p-6 lg:p-12 relative overflow-hidden">
         {/* Header */}
         <h2 className="text-4xl lg:text-6xl font-bold text-white mb-8 lg:mb-12 font-display tracking-tight">
           Upcoming Events

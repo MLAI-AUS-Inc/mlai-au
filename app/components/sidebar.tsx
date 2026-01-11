@@ -28,9 +28,9 @@ const navigation = [
   },
   {
     number: "4",
-    name: "Volunteer",
-    href: "/#volunteer",
-    sectionId: "volunteer", // Testimonials + Team section
+    name: "People",
+    href: "/#people",
+    sectionId: "people", // Testimonials + Team section
     color: "#3537dc", // Blue
   },
   {

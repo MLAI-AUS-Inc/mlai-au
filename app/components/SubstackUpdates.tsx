@@ -22,7 +22,7 @@ export default function SubstackUpdates({ posts }: SubstackUpdatesProps) {
       <section className="bg-white py-24">
         <Container>
           <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Monthly updates from MLAI Aus
+            Weekly updates from MLAI Aus
           </h2>
           <div className="mt-12 text-center text-gray-600">
             <p>
@@ -41,7 +41,7 @@ export default function SubstackUpdates({ posts }: SubstackUpdatesProps) {
     <section className="bg-white py-24">
       <Container>
         <h2 className="text-center text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-          Monthly updates from MLAI Aus
+          Weekly updates from MLAI Aus
         </h2>
         <div className="mt-12 grid grid-cols-1 lg:grid-cols-6 gap-0">
           {/* Hero post embed: spans three columns on large */}

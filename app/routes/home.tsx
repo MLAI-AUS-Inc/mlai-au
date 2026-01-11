@@ -7,7 +7,7 @@ import Feature from "~/components/feature";
 import Hero from "~/components/hero";
 import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
-import Testimonials from "~/components/testimonials";
+import TetrisTestimonials from "~/components/TetrisTestimonials";
 
 function UpcomingEventsSkeleton() {
   return (
@@ -178,19 +178,19 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
       {/* ===== VOLUNTEER SECTION ===== */}
       {/* Starts at "We are proud to have worked with amazing people", ends at Articles */}
-      <section id="volunteer">
+      <section id="people">
         {/* Volunteer section divider - Blue */}
         <SectionDivider color="#3537dc" />
 
         {/* Testimonials */}
-        <Testimonials />
+        <TetrisTestimonials />
 
         {/* Team section - moved here directly under testimonials */}
         <Team />
       </section>
 
       {/* ===== ARTICLES SECTION ===== */}
-      {/* Starts at "Monthly updates from MLAI Aus", ends at footer */}
+      {/* Starts at "weekly updates from MLAI Aus", ends at footer */}
       <section id="articles">
         {/* Articles section divider - Yellow */}
         <SectionDivider color="#fefc22" />

@@ -74,6 +74,14 @@ const people = [
     linkedIn: "https://www.linkedin.com/in/ethan-lee-resume/",
     twitter: "",
   },
+  {
+    name: "Alisa Belova",
+    role: "Head of People",
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2FAlisa.jpeg?alt=media&token=9b7c4f50-867f-43db-99e2-7172a525105f",
+    pixelImageUrl: "",
+    linkedIn: "",
+    twitter: "",
+  },
 ];
 
 export default function Team() {
@@ -92,7 +100,7 @@ export default function Team() {
         {/* Main Content */}
         <div className="fighter-select-content">
           {/* Title */}
-          <h2 className="fighter-select-title">CHOOSE YOUR FIGHTER</h2>
+          <h2 className="fighter-select-title">OUR TEAM (CHOOSE YOUR FIGHTER)</h2>
 
           {/* Grid Container */}
           <div className="fighter-select-grid">
@@ -472,32 +480,35 @@ export default function Team() {
         }
 
         /* Press Start Button */
+        /* Press Start Button */
         .fighter-press-start {
           font-family: 'Press Start 2P', cursive;
-          font-size: 14px;
-          color: #1a1a4e;
-          background: linear-gradient(180deg, #ffffff 0%, #cccccc 100%);
-          border: 3px solid #888888;
-          border-radius: 6px;
-          padding: 16px 32px;
+          font-size: 24px;
+          color: #ffeb3b;
+          background: transparent;
+          border: none;
+          padding: 16px;
           text-decoration: none;
-          box-shadow: 
-            0 4px 0 #666666,
-            0 6px 10px rgba(0, 0, 0, 0.3);
-          transition: all 0.1s;
+          text-shadow: 
+            4px 4px 0 #1a1a8e,
+            -1px -1px 0 #1a1a8e,
+            1px -1px 0 #1a1a8e,
+            -1px 1px 0 #1a1a8e;
           animation: blink-text 1s step-end infinite;
+          cursor: pointer;
         }
 
         .fighter-press-start:hover {
-          transform: translateY(2px);
-          box-shadow: 
-            0 2px 0 #666666,
-            0 4px 6px rgba(0, 0, 0, 0.3);
+          transform: scale(1.1);
+          text-shadow: 
+            6px 6px 0 #1a1a8e,
+            -2px -2px 0 #1a1a8e,
+            2px -2px 0 #1a1a8e,
+            -2px 2px 0 #1a1a8e;
         }
 
         .fighter-press-start:active {
-          transform: translateY(4px);
-          box-shadow: 0 0 0 #666666;
+          transform: scale(0.95);
         }
 
         @keyframes blink-text {
