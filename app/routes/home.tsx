@@ -8,6 +8,7 @@ import Hero from "~/components/hero";
 import SubstackUpdates from "~/components/SubstackUpdates";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
+import { LogoShooter } from "~/components/logo-shooter";
 
 function UpcomingEventsSkeleton() {
   return (
@@ -57,90 +58,13 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         {/* Hello section divider - Orange */}
         <SectionDivider color="#ff3d00" />
 
-        {/* Logo Cloud - Orange Background */}
+        {/* Logo Cloud - Orange Background - Now with Shooter Game! */}
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
           <div id="logoCloud" className="bg-[var(--brutalist-orange)] rounded-[2.5rem] py-12 lg:py-16 relative z-10">
             <div className="mx-auto max-w-7xl px-6 lg:px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-12 items-center justify-items-center opacity-100">
-                {/* Row 1 */}
-                <img
-                  className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/nab.png"
-                  alt="NAB"
-                />
-                <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/v2digital.png"
-                  alt="V2 Digital"
-                />
-                <div className="flex items-center gap-4">
-                  <img
-                    className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/aws.png"
-                    alt="AWS Startups"
-                  />
-                  <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/mantel.png"
-                    alt="Mantel Group"
-                  />
-                </div>
-
-                {/* Row 2 */}
-                <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/humyn.png"
-                  alt="Humyn.ai"
-                />
-                <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/cake.png"
-                  alt="Cake"
-                />
-                <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/microsoft.png"
-                  alt="Microsoft"
-                />
-
-                {/* Row 3 */}
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-white text-xs font-bold uppercase tracking-widest">Wilson A.I.</span>
-                  <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/wilsonai.png"
-                    alt="wilsonai"
-                  />
-                </div>
-                <img
-                  className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/uom.jpeg"
-                  alt="University of Melbourne"
-                />
-                <img
-                  className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/squarepeg.png"
-                  alt="Squarepeg"
-                />
-
-                {/* Row 4 */}
-                <div className="col-span-2 md:col-span-3 grid grid-cols-3 gap-12 items-center justify-items-center w-full mt-4">
-                  <img
-                    className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/airtree.jpeg"
-                    alt="AirTree"
-                  />
-                  <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/blackbird.png"
-                    alt="Blackbird"
-                  />
-                  <img
-                    className="max-h-6 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/rampersand.png"
-                    alt="Rampersand"
-                  />
-                </div>
+              {/* Logo Shooter Game */}
+              <div className="min-h-[400px] md:min-h-[500px]">
+                <LogoShooter />
               </div>
 
               <div className="mt-12 flex justify-center">
