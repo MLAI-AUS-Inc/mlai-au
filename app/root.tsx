@@ -11,9 +11,8 @@ import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
-import FloatingSocials from "./components/floating-socials";
+import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
-import StickySlackButton from "./components/sticky-slack-button";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +25,10 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
   },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap",
+  },
 ];
 
 export default function Layout() {
@@ -37,7 +40,7 @@ export default function Layout() {
   const isAppRoute = isEsafetyApp || isHospitalApp;
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -136,14 +139,9 @@ export default function Layout() {
           />
         </noscript>
         {/* Only show platform-wide components if NOT in specific apps */}
-        {!isAppRoute && (
-          <>
-            <StickySlackButton />
-            <Sidebar />
-            <FloatingSocials />
-          </>
-        )}
-        <div className={isAppRoute ? '' : 'lg:pl-20'}>
+        {!isAppRoute && <Sidebar />}
+        {!isAppRoute && <SectionMarkers />}
+        <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
           <Outlet />
         </div>
         {!isAppRoute && <Footer />}

@@ -29,7 +29,9 @@ import type { ClinicianProfile } from '~/data/types'
 import { ArticleSummaryCard, type ArticleSummaryConfig } from './ArticleSummaryCard'
 import type { ArticleFAQItem } from './ArticleFAQ'
 
-const DEFAULT_SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.supportsorted.com'
+const DEFAULT_SITE_URL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL)
+  ? process.env.NEXT_PUBLIC_SITE_URL
+  : 'https://www.mlai.au'
 
 
 type ArticleHowToStep = {
@@ -453,7 +455,7 @@ function simplifyArticleBreadcrumbItems(
   return [normalizedRoot, normalizedLast]
 }
 
-export async function ArticleLayout({
+export function ArticleLayout({
   article,
   children,
   showHero = true,
@@ -473,7 +475,9 @@ export async function ArticleLayout({
   contentMaxWidthClassName,
   containerClassName,
   containerInnerClassName,
+  contentPaddingClassName,
   upcomingEvents,
+  showHeader = true,
 }: {
   article: ArticleWithSlug
   children: React.ReactNode
@@ -494,7 +498,9 @@ export async function ArticleLayout({
   contentMaxWidthClassName?: string
   containerClassName?: string
   containerInnerClassName?: string
+  contentPaddingClassName?: string
   upcomingEvents?: Event[]
+  showHeader?: boolean
 }) {
   const registry = getArticleBySlug(article.slug)
   const headerImage = registry?.image ?? article.image
@@ -590,6 +596,12 @@ export async function ArticleLayout({
   const resolvedContainerMaxWidth = containerMaxWidthClassName ?? 'max-w-5xl'
   const resolvedContentMaxWidth =
     contentMaxWidthClassName ?? resolvedContainerMaxWidth ?? 'max-w-4xl'
+  const resolvedContentPaddingClassName = [
+    'pt-12 pb-12',
+    contentPaddingClassName,
+  ]
+    .filter(Boolean)
+    .join(' ')
   const resolvedContainerClassName = [
     'py-16 lg:pt-20 lg:pb-32 bg-white',
     containerClassName,
@@ -629,68 +641,70 @@ export async function ArticleLayout({
       <div className="xl:relative">
         <div className={`mx-auto ${resolvedContentMaxWidth}`}>
           <article aria-labelledby={headingId}>
-            <header className="flex flex-col gap-6">
-              {/* Breadcrumb or Date */}
-              <div>
-                {resolvedBreadcrumbItems ? (
-                  <Breadcrumbs items={resolvedBreadcrumbItems} />
-                ) : breadcrumb ? (
-                  <div>{breadcrumb}</div>
-                ) : (
-                  showDate && (
-                    <time
-                      dateTime={article.date}
-                      className="flex items-center text-base text-zinc-400"
-                    >
-                      <span className="h-4 w-0.5 rounded-full bg-zinc-200" />
-                      <span className="ml-3" suppressHydrationWarning>{formatDate(article.date)}</span>
-                    </time>
-                  )
-                )}
-              </div>
-
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex-1 space-y-4">
-                  {/* Page title first for faster contentful paint */}
-                  <TitleTag
-                    className="text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl"
-                    {...headingProps}
-                  >
-                    {article.title}
-                  </TitleTag>
-                  {!isSemanticHeading && renderFallbackHeading ? (
-                    <h1 className="sr-only">{article.title}</h1>
-                  ) : null}
-                  {article.description ? (
-                    <p className="text-base text-zinc-600 sm:text-lg">
-                      {article.description}
-                    </p>
-                  ) : null}
+            {showHeader && (
+              <header className="flex flex-col gap-6">
+                {/* Breadcrumb or Date */}
+                <div>
+                  {resolvedBreadcrumbItems ? (
+                    <Breadcrumbs items={resolvedBreadcrumbItems} />
+                  ) : breadcrumb ? (
+                    <div>{breadcrumb}</div>
+                  ) : (
+                    showDate && (
+                      <time
+                        dateTime={article.date}
+                        className="flex items-center text-base text-zinc-400"
+                      >
+                        <span className="h-4 w-0.5 rounded-full bg-zinc-200" />
+                        <span className="ml-3" suppressHydrationWarning>{formatDate(article.date)}</span>
+                      </time>
+                    )
+                  )}
                 </div>
 
-                {/* Hero / OpenGraph image */}
-                {showHero && headerImage ? (
-                  <div className="w-full lg:w-auto lg:max-w-sm lg:flex-shrink-0 lg:self-center">
-                    <ImageWithFallback
-                      src={headerImage}
-                      alt={headerAlt}
-                      width={800}
-                      height={600}
-                      className="h-full w-full rounded-2xl object-cover"
-                      priority
-                      fetchPriority="high"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 360px"
-                    />
+                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex-1 space-y-4">
+                    {/* Page title first for faster contentful paint */}
+                    <TitleTag
+                      className="text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl"
+                      {...headingProps}
+                    >
+                      {article.title}
+                    </TitleTag>
+                    {!isSemanticHeading && renderFallbackHeading ? (
+                      <h1 className="sr-only">{article.title}</h1>
+                    ) : null}
+                    {article.description ? (
+                      <p className="text-base text-zinc-600 sm:text-lg">
+                        {article.description}
+                      </p>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-            </header>
+
+                  {/* Hero / OpenGraph image */}
+                  {showHero && headerImage ? (
+                    <div className="w-full lg:w-auto lg:max-w-sm lg:flex-shrink-0 lg:self-center">
+                      <ImageWithFallback
+                        src={headerImage}
+                        alt={headerAlt}
+                        width={800}
+                        height={600}
+                        className="h-full w-full rounded-2xl object-cover"
+                        priority
+                        fetchPriority="high"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 360px"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </header>
+            )}
             {summaryHighlights ? (
               <div className="mt-8">
                 <ArticleSummaryCard summary={summaryHighlights} />
               </div>
             ) : null}
-            <Prose id={contentId} className="pt-12 pb-12">
+            <Prose id={contentId} className={resolvedContentPaddingClassName}>
               <ArticleEnhancer
                 articleTitle={article.title}
                 articleDescription={article.description ?? registry?.description}
@@ -748,20 +762,20 @@ export async function ArticleLayout({
                 </div>
               ) : null}
               {showCitations ? (
-                <section className="not-prose mt-10 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Authoritative references</h2>
-                  <ul className="mt-3 space-y-3 text-sm text-slate-700">
+                <section className="not-prose mt-10 rounded-[24px] border border-gray-400 bg-transparent p-6 sm:p-8">
+                  <h2 className="text-base font-bold uppercase tracking-wide text-gray-700">Authoritative references</h2>
+                  <ul className="mt-4 space-y-4 text-sm text-gray-800">
                     {DEFAULT_CITATIONS.map((citation) => (
                       <li key={citation.href}>
                         <a
                           href={citation.href}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="font-semibold text-indigo-700 hover:underline"
+                          className="font-semibold text-[#4b1bd1] underline underline-offset-4 hover:text-[#3a0fa8]"
                         >
                           {citation.title}
                         </a>
-                        <p className="mt-1 text-slate-600">{citation.description}</p>
+                        <p className="mt-1 text-gray-800">{citation.description}</p>
                       </li>
                     ))}
                   </ul>

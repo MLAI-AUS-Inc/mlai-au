@@ -1,48 +1,31 @@
 
+import { useState } from "react";
 import {
-    applyArticleRegistryDefaults,
-    getArticleBySlug,
     getArticlesSortedNewestFirst,
-    getClusterCardsForPillar,
     resolveArticleRouteSlug,
 } from "~/articles/registry";
-// import { type BreadcrumbItem } from "~/components/Breadcrumbs";
 
-interface BreadcrumbItem {
-    label: string;
-    href: string;
-    current?: boolean;
-}
-
-import { ArticleLayout } from "~/components/articles/ArticleLayout";
-import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
-import ArticleCardBySlug from "~/components/articles/ArticleCardBySlug";
-import ArticleCalendarSection from "~/components/articles/ArticleCalendarSection";
-import PillarCard from "~/components/articles/PillarCard";
+import { Link } from "react-router";
+import FeaturedArticleCard, { type FeaturedCardColor } from "~/components/articles/FeaturedArticleCard";
+import ArticleListCard, { getAccentColorByIndex } from "~/components/articles/ArticleListCard";
+import ArticleSearchBar from "~/components/articles/ArticleSearchBar";
 import type { Route } from "./+types/articles.index";
 
-// Helper function to simulate what was in the user snippet
-function slugToTitle(slug: string) {
-    const lastSegment = slug.split('/').pop() ?? slug
-    return lastSegment
-        .split('-')
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
-}
-
+const PAGE_TITLE = 'Writing on AI, Machine Learning and Community.';
 const PAGE_DESCRIPTION =
     'Plain-English guides on AI, Machine Learning, and how to get started with the MLAI community.';
 
-const FALLBACK_IMAGE = 'https://placehold.co/1200x630/png'; // Placeholder
+const FALLBACK_IMAGE = 'https://placehold.co/1200x630/png';
 
-// NOTE: BreadcrumbItem type seems to be missing from provided files, so defining locally or using a simple object
-const BREADCRUMB_ITEMS: any[] = [{ label: 'Articles', href: '/articles', current: true }];
+// Person image for the first featured card
+const PERSON_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Pixel%20Team.png?alt=media&token=da7df43a-eafa-4ee5-a94d-260791a376b8';
 
-// These constants define the structure of your pillars. You can modify them as needed.
-const TECHNOLOGY_PILLAR_SLUGS = [
-    'technology/introduction-to-mlai',
-    // Add other slugs here
-] as const;
+// Color rotation for featured cards (first one is special with person image)
+const FEATURED_COLORS: FeaturedCardColor[] = ['coral-with-person', 'purple', 'black', 'blue'];
+
+function getFeaturedColor(index: number): FeaturedCardColor {
+    return FEATURED_COLORS[index % FEATURED_COLORS.length];
+}
 
 export function meta({ data }: Route.MetaArgs) {
     const pageNumber = data?.page ?? 1;
@@ -71,36 +54,11 @@ export async function loader({ request }: Route.LoaderArgs) {
 export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
     const { page } = loaderData;
     const sorted = getArticlesSortedNewestFirst();
-    const featured = sorted.filter((article) => article.slug.startsWith('featured/'));
+    const featured = sorted.filter((article) => article.slug.startsWith('featured/')).slice(0, 4);
 
-    const article = applyArticleRegistryDefaults({
-        title: 'Writing on AI, Machine Learning and Community.',
-        description: PAGE_DESCRIPTION,
-        author: 'MLAI Team',
-        slug: 'articles',
-        image: FALLBACK_IMAGE,
-        imageAlt: 'MLAI Articles',
-    });
-
-    const techPillars = TECHNOLOGY_PILLAR_SLUGS.map((slug) => {
-        const registryEntry = getArticleBySlug(slug);
-        const title = registryEntry?.title ?? slugToTitle(slug);
-        const childArticles = getClusterCardsForPillar(slug)
-            .slice(0, 3)
-            .map((child) => ({
-                title: child.title,
-                href: `/articles/${resolveArticleRouteSlug(child.slug)}`,
-            }));
-
-        return {
-            slug: resolveArticleRouteSlug(registryEntry?.slug ?? slug),
-            title,
-            description: registryEntry?.description ?? `Explore our ${title.toLowerCase()} guides and resources.`,
-            image: registryEntry?.image ?? FALLBACK_IMAGE,
-            imageAlt: registryEntry?.imageAlt ?? title,
-            children: childArticles,
-        };
-    });
+    // Search/filter state (UI only for now)
+    const [searchQuery, setSearchQuery] = useState("");
+    const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
     const pageSize = 10;
     const total = sorted.length;
@@ -113,72 +71,116 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
         title: currentArticle.title,
         description: currentArticle.description,
         date: currentArticle.date,
+        image: currentArticle.image,
     }));
-    const paginatedSummaries = articleSummaries.slice(start, start + pageSize);
+
+    // Filter articles based on search query (simple title match for now)
+    const filteredSummaries = searchQuery
+        ? articleSummaries.filter((a) =>
+            a.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : articleSummaries;
+
+    const paginatedSummaries = filteredSummaries.slice(start, start + pageSize);
 
     return (
-        <ArticleLayout
-            article={article}
-            breadcrumbItems={BREADCRUMB_ITEMS}
-            showHero={false}
-        // Provide dummy classNames if needed effectively, stripped for now to rely on internal styles
-        >
-            <div className="space-y-16 not-prose">
-                {/* <ArticleTocPlaceholder />  Optional: hide TOC on index page */}
+        <main className="min-h-screen bg-[var(--brutalist-beige)]">
+            {/* Yellow Hero Section (Title + Search Only) */}
+            <div className="p-2 lg:p-3">
+                <section className="articles-hero">
+                    <div className="max-w-6xl mx-auto">
+                        <div className="max-w-4xl">
+                            {/* Page Title */}
+                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 tracking-tight">
+                                {PAGE_TITLE}
+                            </h1>
+                            <p className="mt-4 text-base text-zinc-700">
+                                {PAGE_DESCRIPTION}
+                            </p>
 
-                <section id="featured-articles" className="space-y-6">
-                    <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">Featured articles</h2>
-                    <div className="not-prose">
-                        <ul
-                            role="list"
-                            className="list-none grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8"
-                        >
-                            {featured.map((featuredArticle) => (
-                                <li key={featuredArticle.slug} className="relative">
-                                    <ArticleCardBySlug slug={featuredArticle.slug} ctaText="Read article" variant="compact" />
-                                </li>
-                            ))}
-                            {featured.length === 0 && <p className="text-gray-500">No featured articles yet.</p>}
-                        </ul>
-                    </div>
-                </section>
-
-                <section id="tech-info-packs" className="py-12 bg-gray-50">
-                    <div className="max-w-6xl mx-auto px-4 space-y-6">
-                        <h2 className="text-2xl font-bold text-gray-900 text-center md:text-left">Technology Guides</h2>
-                        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-                            {techPillars.map((pillar) => (
-                                <PillarCard
-                                    key={pillar.slug}
-                                    href={`/articles/${pillar.slug}`}
-                                    title={pillar.title}
-                                    description={pillar.description}
-                                    image={pillar.image}
-                                    imageAlt={pillar.imageAlt}
-                                    fallbackImage={FALLBACK_IMAGE}
-                                    childLinks={pillar.children}
-                                    maxChildren={3}
+                            {/* Search Bar */}
+                            <div className="mt-8">
+                                <ArticleSearchBar
+                                    onSearch={setSearchQuery}
+                                    onFilterChange={setActiveFilters}
                                 />
-                            ))}
-                            {techPillars.length === 0 && <p className="text-gray-500">No guides defined yet.</p>}
+                            </div>
                         </div>
                     </div>
                 </section>
+            </div>
 
-                <section id="all-articles" className="not-prose">
-                    <ArticleCalendarSection
-                        id="all-articles"
-                        title="All articles"
-                        articles={articleSummaries}
-                        paginatedArticles={paginatedSummaries}
-                        currentPage={currentPage}
-                        totalPages={totalPages}
-                        pageSize={pageSize}
-                        paginationBasePath="/articles"
-                        paginationHash="#all-articles"
-                    />
+            {/* Featured Articles & All Articles Grid (On Beige Background) */}
+            <div className="max-w-6xl mx-auto px-4 lg:px-6">
+                {/* Featured Articles Grid */}
+                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {featured.map((article, index) => (
+                        <FeaturedArticleCard
+                            key={article.slug}
+                            href={`/articles/${resolveArticleRouteSlug(article.slug)}`}
+                            title={article.title}
+                            image={article.image ?? FALLBACK_IMAGE}
+                            color={getFeaturedColor(index)}
+                            personImage={index === 0 ? PERSON_IMAGE : undefined}
+                        />
+                    ))}
+                    {featured.length === 0 && (
+                        <p className="text-zinc-600 col-span-full">No featured articles yet.</p>
+                    )}
+                </div>
+
+                {/* All Articles Section */}
+                <section className="py-12">
+                    <h2 className="text-2xl font-bold text-zinc-900 mb-6">All Articles</h2>
+
+                    {/* Articles Grid - 2 columns on larger screens */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {paginatedSummaries.map((article, index) => (
+                            <ArticleListCard
+                                key={article.slug}
+                                href={`/articles/${resolveArticleRouteSlug(article.slug)}`}
+                                title={article.title}
+                                date={article.date}
+                                accentColor={getAccentColorByIndex(index)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Empty state */}
+                    {paginatedSummaries.length === 0 && (
+                        <p className="text-zinc-500 text-center py-8">
+                            {searchQuery ? `No articles found matching "${searchQuery}"` : "No articles available yet."}
+                        </p>
+                    )}
+
+                    {/* Pagination */}
+                    {totalPages > 1 && !searchQuery && (
+                        <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Pagination">
+                            {currentPage > 1 && (
+                                <Link
+                                    to={currentPage === 2 ? '/articles' : `/articles?page=${currentPage - 1}`}
+                                    className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
+                                >
+                                    ← Previous
+                                </Link>
+                            )}
+
+                            <span className="px-4 py-2 text-sm text-zinc-500">
+                                Page {currentPage} of {totalPages}
+                            </span>
+
+                            {currentPage < totalPages && (
+                                <Link
+                                    to={`/articles?page=${currentPage + 1}`}
+                                    className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
+                                >
+                                    Next →
+                                </Link>
+                            )}
+                        </nav>
+                    )}
                 </section>
             </div>
-        </ArticleLayout>
-    )
+        </main>
+    );
 }

@@ -6,7 +6,7 @@ const featuredTestimonial = {
   author: {
     name: "Kendra Vant",
     handle: "Director - Europalabs",
-    imageUrl: "photos/kendra.png",
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
     logoUrl: "",
   },
 };
@@ -18,7 +18,7 @@ const testimonials: any = [
         author: {
           name: "Eike Zeller",
           handle: "Ecosystems Director - Stone & Chalk",
-          imageUrl: "photos/eikezeller.jpg",
+          imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/eikezeller.jpg?alt=media&token=f184570d-27bf-4100-a53d-2a541d4f1fce",
         },
       },
     ],
@@ -29,7 +29,7 @@ const testimonials: any = [
         author: {
           name: "Xavier Andueza",
           handle: "Founding AI Engineer - Userdoc",
-          imageUrl: "photos/xavierandueza.jpg",
+          imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
         },
       },
     ],
