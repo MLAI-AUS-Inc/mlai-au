@@ -455,7 +455,7 @@ function simplifyArticleBreadcrumbItems(
   return [normalizedRoot, normalizedLast]
 }
 
-export async function ArticleLayout({
+export function ArticleLayout({
   article,
   children,
   showHero = true,
@@ -762,20 +762,20 @@ export async function ArticleLayout({
                 </div>
               ) : null}
               {showCitations ? (
-                <section className="not-prose mt-10 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-                  <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-700">Authoritative references</h2>
-                  <ul className="mt-3 space-y-3 text-sm text-slate-700">
+                <section className="not-prose mt-10 rounded-[24px] border border-gray-400 bg-transparent p-6 sm:p-8">
+                  <h2 className="text-base font-bold uppercase tracking-wide text-gray-700">Authoritative references</h2>
+                  <ul className="mt-4 space-y-4 text-sm text-gray-800">
                     {DEFAULT_CITATIONS.map((citation) => (
                       <li key={citation.href}>
                         <a
                           href={citation.href}
                           target="_blank"
                           rel="noreferrer noopener"
-                          className="font-semibold text-indigo-700 hover:underline"
+                          className="font-semibold text-[#4b1bd1] underline underline-offset-4 hover:text-[#3a0fa8]"
                         >
                           {citation.title}
                         </a>
-                        <p className="mt-1 text-slate-600">{citation.description}</p>
+                        <p className="mt-1 text-gray-800">{citation.description}</p>
                       </li>
                     ))}
                   </ul>

@@ -5,10 +5,11 @@ import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleResourceCTA } from '../../../components/articles/blocks/ArticleResourceCTA'
-import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
+import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
+import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'The Australian Founder Playbook for 2026: Start Lean, Use AI Wisely, Build Trust Fast'
@@ -21,15 +22,7 @@ const AUTHOR_BIO =
 const AUTHOR_AVATAR =
   'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376'
 
-const AUTHOR_2 = 'Jun Kai (Luc) Chang'
-const AUTHOR_2_ROLE = 'AI Software Developer'
-const AUTHOR_2_BIO = 'Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.'
-const AUTHOR_2_AVATAR = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb'
 
-const AUTHOR_3 = 'Julia Ponder'
-const AUTHOR_3_ROLE = 'Technical Writer'
-const AUTHOR_3_BIO = 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.'
-const AUTHOR_3_AVATAR = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c'
 const DATE_MODIFIED = '2026-01-10T00:00:00.000Z'
 const DESCRIPTION =
   'A 2026 playbook for Australian founders: a 30-day launch plan, a 90-day validation system, and responsible AI guardrails that keep customers and regulators onside.'
@@ -108,7 +101,7 @@ export const summaryHighlights = {
 
 /** When true, this article renders its own custom header and the default ArticleLayout header should be hidden */
 export const useCustomHeader = true
-
+export const useInlineToc = true
 
 export default function ArticlePage() {
   const authors = [
@@ -117,23 +110,11 @@ export default function ArticlePage() {
       role: AUTHOR_ROLE,
       bio: AUTHOR_BIO,
       avatarUrl: AUTHOR_AVATAR,
-    },
-    {
-      name: AUTHOR_2,
-      role: AUTHOR_2_ROLE,
-      bio: AUTHOR_2_BIO,
-      avatarUrl: AUTHOR_2_AVATAR,
-    },
-    {
-      name: AUTHOR_3,
-      role: AUTHOR_3_ROLE,
-      bio: AUTHOR_3_BIO,
-      avatarUrl: AUTHOR_3_AVATAR,
     }
   ]
 
   const breadcrumbs = [
-    { label: 'Home', href: '/', icon: Home },
+    { label: 'Home', href: '/articles', icon: Home },
     { label: 'How to Start a Startup and Use AI to Make It Easy (2026)', current: true }
   ]
 
@@ -153,6 +134,10 @@ export default function ArticlePage() {
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
+
+      <ArticleTocPlaceholder className="mb-12">
+        {/* Rendered via portal by ArticleEnhancer */}
+      </ArticleTocPlaceholder>
 
       <h2>What this playbook covers</h2>
       <p>

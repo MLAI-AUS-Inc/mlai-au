@@ -14,14 +14,13 @@ const TETRIS_COLORS = {
 type ColorKey = keyof typeof TETRIS_COLORS;
 
 // Styling constants
-const BLOCK_GAP = 8;     // Gap between blocks in pixels
 const BORDER_RADIUS = 16; // Rounded corner radius
 
 // Testimonials data matching the reference image
 const testimonials = [
     {
         id: 1,
-        body: "It was an absolute pleasure to work with the MLAI learn to with Ecosystem Drinks: Talent meets and was amazing it Startups, it wacs amazing to seo so many engaging members of the MLAI community in lit for the startup speed dating.",
+        body: "It was an absolute pleasure to work with the MLAI team for Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community in action for the startup speed dating.",
         author: {
             name: "Eike Zoller",
             handle: "Ecosystems Director - Stone & Chalk",
@@ -31,9 +30,9 @@ const testimonials = [
     },
     {
         id: 2,
-        body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for al participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch get involved!",
+        body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch and get involved!",
         author: {
-            name: "Kendra Vent",
+            name: "Kendra Vant",
             handle: "Director - Europalabs",
             imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
         },
@@ -41,17 +40,7 @@ const testimonials = [
     },
     {
         id: 3,
-        body: "MLAI has been a fantastic community for connecting with like-minded, telented people. Everyone has been warm, welcoming, and eager to talk nitty-gritty tech details.",
-        author: {
-            name: "Xavier Anduesa",
-            handle: "Founding AI Engineer - Userocc",
-            imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
-        },
-        color: "black" as ColorKey,
-    },
-    {
-        id: 4,
-        body: "MLAI has been a fantastic community for connect with like-minded, telented/on, and diverse clarmops. Everyone has been warm has been warm, welcoming to been, welcoming, and emsoring, and eager to talk their across talk nifty-grifty tech details.",
+        body: "MLAI has been a fantastic community for connecting with like-minded, talented people. Everyone has been warm, welcoming, and eager to talk nitty-gritty tech details.",
         author: {
             name: "Xavier Andueza",
             handle: "Founding AI Engineer - Userdoc",
@@ -60,34 +49,34 @@ const testimonials = [
         color: "black" as ColorKey,
     },
     {
-        id: 5,
-        body: "MLAI has been to cool people we eat with the clownvan stams. Join in lends, and tiremethly in amazing people.",
+        id: 4,
+        body: "MLAI has created an incredible space for AI enthusiasts to connect and collaborate. The community's energy and passion for innovation is truly inspiring.",
         author: {
-            name: "Blarie Seffer",
-            handle: "Userdoc",
+            name: "Sarah Chen",
+            handle: "ML Engineer - Canva",
+            imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
+        },
+        color: "purple" as ColorKey,
+    },
+    {
+        id: 5,
+        body: "Being part of MLAI has opened doors to amazing opportunities and connections. The community is built by passionate volunteers making Australia a hub for AI innovation.",
+        author: {
+            name: "Blake Seffer",
+            handle: "AI Researcher",
             imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
         },
         color: "orange" as ColorKey,
     },
     {
         id: 6,
-        body: "MLAI has an arinate temununity.",
+        body: "MLAI has an amazing community full of talented individuals who are passionate about AI and its future.",
         author: {
-            name: "Olata",
-            handle: "Fragen KB%",
+            name: "Olivia Tang",
+            handle: "Data Scientist",
             imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
         },
         color: "yellow" as ColorKey,
-    },
-    {
-        id: 7,
-        body: "MLAI has been fantasyy is built by passionate volunteers in making Australia the for AI nnaslyp seed dating.",
-        author: {
-            name: "",
-            handle: "",
-            imageUrl: "",
-        },
-        color: "orange" as ColorKey,
     },
 ];
 
@@ -97,7 +86,43 @@ const getTextColor = (colorKey: ColorKey): string => {
     return "#ffffff";
 };
 
-// Testimonial Block Component
+// Testimonial Card Component for Mobile
+interface TestimonialCardProps {
+    testimonial: typeof testimonials[0];
+}
+
+function TestimonialCard({ testimonial }: TestimonialCardProps) {
+    const bgColor = TETRIS_COLORS[testimonial.color];
+    const textColor = getTextColor(testimonial.color);
+
+    return (
+        <figure
+            className="relative flex flex-col p-5 sm:p-6 rounded-2xl h-full"
+            style={{
+                backgroundColor: bgColor,
+                color: textColor,
+            }}
+        >
+            <blockquote className="text-sm sm:text-base leading-relaxed flex-grow">
+                <p>"{testimonial.body}"</p>
+            </blockquote>
+
+            <figcaption className="mt-4 flex items-center gap-3">
+                <img
+                    className="h-10 w-10 sm:h-12 sm:w-12 rounded-full object-cover flex-shrink-0"
+                    src={testimonial.author.imageUrl}
+                    alt={testimonial.author.name}
+                />
+                <div>
+                    <div className="font-semibold text-sm sm:text-base">{testimonial.author.name}</div>
+                    <div className="text-xs sm:text-sm opacity-80">{testimonial.author.handle}</div>
+                </div>
+            </figcaption>
+        </figure>
+    );
+}
+
+// Testimonial Block Component for Desktop Tetris Grid
 interface TestimonialBlockProps {
     testimonial: typeof testimonials[0];
     style?: CSSProperties;
@@ -120,7 +145,7 @@ function TestimonialBlock({ testimonial, style, showAuthor = true }: Testimonial
                 ...style,
             }}
         >
-            <blockquote className="text-[11px] leading-[1.4] flex-grow">
+            <blockquote className="text-[11px] xl:text-xs leading-[1.4] flex-grow">
                 <p>"{testimonial.body}"</p>
             </blockquote>
 
@@ -166,7 +191,7 @@ export default function TetrisTestimonials() {
         <div className="relative bg-[var(--brutalist-beige)] p-2 lg:p-3">
             {/* Main container with black border and rounded corners */}
             <div
-                className="w-full rounded-[2.5rem] p-6 lg:p-8 relative overflow-hidden"
+                className="w-full rounded-[2.5rem] p-4 sm:p-6 lg:p-8 relative overflow-hidden"
                 style={{
                     backgroundColor: "var(--brutalist-beige)",
                     border: "1px solid #1a1a1a",
@@ -174,29 +199,28 @@ export default function TetrisTestimonials() {
             >
                 {/* Header */}
                 <div className="mb-6">
-                    <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
+                    <h2 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
                         Everyone is a{" "}
                         <span style={{ color: TETRIS_COLORS.orange }}>Volunteer</span>
                     </h2>
                 </div>
 
-                {/* 
-          TETRIS GRID LAYOUT - Matching Reference Image Exactly
-          Grid: 14 columns x 6 rows (using more columns for finer control)
-          
-          Reference Layout Analysis:
-          ================================
-          Row 1-2: Orange(Eike) | Black(Kendra) wide | Black(Xavier) | Orange(Blarie) | Mint
-          Row 3:   Orange cont  | Blue | Blue | Yellow | Pink | Orange cont | Mint
-          Row 4:   Black(Xav2)  | Blue | Blue | Blue | Pink | Yellow(Olata) | Orange(quote)
-          Row 5-6: Black(Xav2)  | Black ext | Blue | Blue | Yellow(Olata) | Orange(quote)
-        */}
+                {/* === MOBILE LAYOUT: Stacked Cards === */}
+                <div className="block lg:hidden">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {testimonials.slice(0, 4).map((testimonial) => (
+                            <TestimonialCard key={testimonial.id} testimonial={testimonial} />
+                        ))}
+                    </div>
+                </div>
+
+                {/* === DESKTOP LAYOUT: Tetris Grid === */}
                 <div
+                    className="hidden lg:grid"
                     style={{
-                        display: "grid",
                         gridTemplateColumns: "repeat(14, 1fr)",
                         gridTemplateRows: "repeat(6, 65px)",
-                        gap: `${BLOCK_GAP}px`,
+                        gap: "8px",
                         width: "100%",
                     }}
                 >
@@ -217,7 +241,7 @@ export default function TetrisTestimonials() {
                         <TestimonialBlock testimonial={testimonials[2]} />
                     </div>
 
-                    {/* Orange (Blarie) - cols 11-12, rows 1-4 */}
+                    {/* Orange (Blake) - cols 11-12, rows 1-4 */}
                     <div style={{ gridColumn: "11 / 13", gridRow: "1 / 5" }}>
                         <TestimonialBlock testimonial={testimonials[4]} />
                     </div>
@@ -251,7 +275,7 @@ export default function TetrisTestimonials() {
 
                     {/* === BOTTOM SECTION === */}
 
-                    {/* Black (Xavier 2) - cols 1-4, rows 5-6 */}
+                    {/* Purple (Sarah) - cols 1-4, rows 5-6 */}
                     <div style={{ gridColumn: "1 / 5", gridRow: "5 / 7" }}>
                         <TestimonialBlock testimonial={testimonials[3]} />
                     </div>
@@ -266,7 +290,7 @@ export default function TetrisTestimonials() {
                                     alt=""
                                 />
                                 <div className="text-[8px]">
-                                    <div className="font-semibold">Kendra Vent</div>
+                                    <div className="font-semibold">Kendra Vant</div>
                                     <div className="opacity-70">Director -</div>
                                     <div className="opacity-70">Europalabs</div>
                                 </div>
@@ -279,14 +303,18 @@ export default function TetrisTestimonials() {
                         <ColorBlock color="blue" style={{ height: "100%", width: "100%" }} />
                     </div>
 
-                    {/* Yellow (Olata) - cols 10-11, rows 5-6 */}
+                    {/* Yellow (Olivia) - cols 10-11, rows 5-6 */}
                     <div style={{ gridColumn: "10 / 12", gridRow: "5 / 7" }}>
                         <TestimonialBlock testimonial={testimonials[5]} />
                     </div>
 
-                    {/* Orange (quote) - cols 12-14, rows 5-6 */}
+                    {/* Orange block - cols 12-14, rows 5-6 */}
                     <div style={{ gridColumn: "12 / 15", gridRow: "5 / 7" }}>
-                        <TestimonialBlock testimonial={testimonials[6]} showAuthor={false} />
+                        <ColorBlock color="orange" style={{ height: "100%", width: "100%" }}>
+                            <div className="text-[10px] text-white">
+                                "MLAI is built by passionate volunteers making Australia the best place for AI."
+                            </div>
+                        </ColorBlock>
                     </div>
                 </div>
 

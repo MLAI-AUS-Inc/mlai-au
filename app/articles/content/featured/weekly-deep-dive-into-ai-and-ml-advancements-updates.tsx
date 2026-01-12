@@ -4,9 +4,12 @@ import { Home } from 'lucide-react'
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
-import { ArticleCallout } from '../../../components/articles/blocks/ArticleCallout'
-import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
+import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { AudienceGrid } from '../../../components/articles/AudienceGrid'
+import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
@@ -97,6 +100,7 @@ export const summaryHighlights = {
 }
 
 export const useCustomHeader = true
+export const useInlineToc = true
 
 export default function ArticlePage() {
   const authors = [
@@ -121,7 +125,7 @@ export default function ArticlePage() {
   ]
 
   const breadcrumbs = [
-    { label: 'Home', href: '/', icon: Home },
+    { label: 'Home', href: '/articles', icon: Home },
     { label: NEWSLETTER, current: true },
   ]
 
@@ -141,84 +145,74 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <ArticleCallout title="Quick note" icon={<span className="text-xl">💡</span>} variant="brand">
+      <QuoteBlock
+        variant="purple"
+        title="Quick note"
+        icon={<span className="text-xl">💡</span>}
+        className="my-6"
+      >
         This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
-        <a href="/articles" className="font-semibold text-[--brand-ink] underline-offset-4 hover:underline">
+        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
           Browse related articles →
         </a>
-      </ArticleCallout>
+      </QuoteBlock>
 
-      {/* Persona Grid */}
-      <div className="not-prose my-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Rocket */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84v4.8m7.381-5.84a14.926 14.926 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Founders & Teams</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For leaders validating ideas, seeking funding, or managing teams.
-          </p>
-        </div>
+      <ArticleTocPlaceholder className="mb-12">
+        {/* Rendered via portal by ArticleEnhancer */}
+      </ArticleTocPlaceholder>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Graduate */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Students & Switchers</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For those building portfolios, learning new skills, or changing careers.
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Community */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Community Builders</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For workshop facilitators, mentors, and ecosystem supporters.
-          </p>
-        </div>
-      </div>
+      <AudienceGrid
+        heading="Read this if you are:"
+        cards={[
+          {
+            title: 'Founders & Teams',
+            description: 'For leaders validating ideas, seeking funding, or managing teams.',
+            variant: 'orange',
+            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
+          },
+          {
+            title: 'Students & Switchers',
+            description: 'For those building portfolios, learning new skills, or changing careers.',
+            variant: 'purple',
+            icon: (
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
+                />
+              </svg>
+            ),
+          },
+          {
+            title: 'Community Builders',
+            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
+            variant: 'yellow',
+            icon: (
+              <svg
+                className="w-5 h-5 text-black"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                />
+              </svg>
+            ),
+          },
+        ]}
+        className="my-10"
+      />
 
       {/* Main content */}
       <div className="">

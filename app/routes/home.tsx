@@ -60,28 +60,28 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Logo Cloud - Orange Background */}
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
-          <div id="logoCloud" className="bg-[var(--brutalist-orange)] rounded-[2.5rem] py-12 lg:py-16 relative z-10">
-            <div className="mx-auto max-w-7xl px-6 lg:px-8">
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-12 gap-y-12 items-center justify-items-center opacity-100">
+          <div id="logoCloud" className="bg-[var(--brutalist-orange)] rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10">
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-10 md:gap-x-12 md:gap-y-12 items-center justify-items-center opacity-100">
                 {/* Row 1 */}
                 <img
-                  className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
                   src="sponsor_logos/nab.png"
                   alt="NAB"
                 />
                 <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
                   src="sponsor_logos/v2digital.png"
                   alt="V2 Digital"
                 />
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 sm:gap-4 col-span-2 sm:col-span-1">
                   <img
-                    className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/aws.png"
                     alt="AWS Startups"
                   />
                   <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/mantel.png"
                     alt="Mantel Group"
                   />
@@ -89,64 +89,64 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
                 {/* Row 2 */}
                 <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
                   src="sponsor_logos/humyn.png"
                   alt="Humyn.ai"
                 />
                 <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
                   src="sponsor_logos/cake.png"
                   alt="Cake"
                 />
                 <img
-                  className="max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert col-span-2 sm:col-span-1"
                   src="sponsor_logos/microsoft.png"
                   alt="Microsoft"
                 />
 
                 {/* Row 3 */}
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-white text-xs font-bold uppercase tracking-widest">Wilson A.I.</span>
+                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                  <span className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest">Wilson A.I.</span>
                   <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/wilsonai.png"
                     alt="wilsonai"
                   />
                 </div>
                 <img
-                  className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
                   src="sponsor_logos/uom.jpeg"
                   alt="University of Melbourne"
                 />
                 <img
-                  className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                  className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert col-span-2 sm:col-span-1"
                   src="sponsor_logos/squarepeg.png"
                   alt="Squarepeg"
                 />
 
-                {/* Row 4 */}
-                <div className="col-span-2 md:col-span-3 grid grid-cols-3 gap-12 items-center justify-items-center w-full mt-4">
+                {/* Row 4 - Full width on all screens */}
+                <div className="col-span-2 sm:col-span-3 grid grid-cols-3 gap-4 sm:gap-8 md:gap-12 items-center justify-items-center w-full mt-2 sm:mt-4">
                   <img
-                    className="max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/airtree.jpeg"
                     alt="AirTree"
                   />
                   <img
-                    className="max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/blackbird.png"
                     alt="Blackbird"
                   />
                   <img
-                    className="max-h-6 w-auto object-contain mix-blend-screen grayscale invert"
+                    className="max-h-5 sm:max-h-6 w-auto object-contain mix-blend-screen grayscale invert"
                     src="sponsor_logos/rampersand.png"
                     alt="Rampersand"
                   />
                 </div>
               </div>
 
-              <div className="mt-12 flex justify-center">
-                <p className="text-sm text-center leading-6 text-white text-opacity-90">
-                  <span className="md:inline">
+              <div className="mt-8 sm:mt-12 flex justify-center px-2">
+                <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
+                  <span className="block sm:inline">
                     Our events have been sponsored and supported by over 50 awesome
                     organisations across Australia.{" "}
                   </span>

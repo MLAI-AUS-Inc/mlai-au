@@ -58,97 +58,123 @@ export function ArticleEnhancer({
     }
 
     const contentRoot = container.querySelector('[data-article-content]') ?? container
-    const headingNodes = Array.from(
-      contentRoot.querySelectorAll<HTMLHeadingElement>('h2, h3'),
-    )
-    const seenIds = new Set<string>()
-    const items: TocItem[] = []
 
-    headingNodes.forEach((heading, index) => {
-      if (!heading.id) {
-        heading.id = slugify(heading.textContent ?? `section-${index + 1}`, `section-${index + 1}`, seenIds)
-      } else if (seenIds.has(heading.id)) {
-        heading.id = slugify(heading.textContent ?? heading.id, heading.id, seenIds)
-      } else {
-        seenIds.add(heading.id)
-      }
-
-      items.push({
-        id: heading.id,
-        title: heading.textContent ?? heading.id,
-        level: heading.tagName === 'H3' ? 3 : 2,
-      })
-    })
-
-    if (enableToc) {
-      setTocItems(items)
-
-      const explicitSlot = contentRoot.querySelector<HTMLElement>(
-        '[data-article-toc-placeholder]',
+    const scanHeadings = () => {
+      const headingNodes = Array.from(
+        contentRoot.querySelectorAll<HTMLHeadingElement>('h2, h3'),
       )
+      const seenIds = new Set<string>()
+      const items: TocItem[] = []
 
-      if (explicitSlot) {
-        setTocTarget(explicitSlot)
-      } else {
-        setTocTarget(null)
-      }
-    }
-
-    const origin = window.location.origin
-    const pathname = window.location.pathname
-    const pageUrl = `${origin}${pathname}`
-
-    if (enableHowTo && items.length) {
-      const limited = items.slice(0, DEFAULT_MAX_STEPS)
-      const steps = limited.map((item, idx) => ({
-        '@type': 'HowToStep',
-        position: idx + 1,
-        name: item.title,
-        url: `${pageUrl}#${item.id}`,
-      }))
-
-      const howTo = {
-        '@context': 'https://schema.org',
-        '@type': 'HowTo',
-        name: articleTitle,
-        description: articleDescription ?? `Step-by-step guide for ${articleTitle}`,
-        totalTime: 'PT0M',
-        estimatedCost: {
-          '@type': 'MonetaryAmount',
-          currency: 'AUD',
-          value: '0',
-        },
-        step: steps,
-      }
-
-      setHowToJson(JSON.stringify(howTo))
-    }
-
-    if (enableMediaObject) {
-      const pdfLinks = Array.from(
-        container.querySelectorAll<HTMLAnchorElement>('a[href$=".pdf" i]'),
-      )
-
-      if (pdfLinks.length) {
-        const mediaObjects = pdfLinks.map((link, idx) => {
-          const url = new URL(link.getAttribute('href') ?? '', pageUrl)
-          return {
-            '@type': 'MediaObject',
-            '@id': `${pageUrl}#download-${idx + 1}`,
-            name: link.textContent?.trim() || `Download ${idx + 1}`,
-            contentUrl: url.toString(),
-            encodingFormat: 'application/pdf',
-          }
-        })
-
-        const graph = {
-          '@context': 'https://schema.org',
-          '@graph': mediaObjects,
+      headingNodes.forEach((heading, index) => {
+        if (!heading.id) {
+          heading.id = slugify(heading.textContent ?? `section-${index + 1}`, `section-${index + 1}`, seenIds)
+        } else if (seenIds.has(heading.id)) {
+          heading.id = slugify(heading.textContent ?? heading.id, heading.id, seenIds)
+        } else {
+          seenIds.add(heading.id)
         }
 
-        setMediaJson(JSON.stringify(graph))
+        items.push({
+          id: heading.id,
+          title: heading.textContent ?? heading.id,
+          level: heading.tagName === 'H3' ? 3 : 2,
+        })
+      })
+
+      return items
+    }
+
+    // Initial scan
+    let items = scanHeadings()
+
+    // If no items found, it might be loading. Set up observer.
+    const observer = new MutationObserver(() => {
+      const newItems = scanHeadings()
+      // Simple equality check to avoid infinite loops if ids change but structure is same
+      if (JSON.stringify(newItems) !== JSON.stringify(items)) {
+        items = newItems
+        updateState(items)
+      }
+    })
+
+    observer.observe(contentRoot, { childList: true, subtree: true })
+
+    const updateState = (currentItems: TocItem[]) => {
+      if (enableToc) {
+        setTocItems(currentItems)
+
+        const explicitSlot = contentRoot.querySelector<HTMLElement>(
+          '[data-article-toc-placeholder]',
+        )
+
+        if (explicitSlot) {
+          setTocTarget(explicitSlot)
+        } else {
+          setTocTarget(null)
+        }
+      }
+
+      const origin = window.location.origin
+      const pathname = window.location.pathname
+      const pageUrl = `${origin}${pathname}`
+
+      if (enableHowTo && currentItems.length) {
+        const limited = currentItems.slice(0, DEFAULT_MAX_STEPS)
+        const steps = limited.map((item, idx) => ({
+          '@type': 'HowToStep',
+          position: idx + 1,
+          name: item.title,
+          url: `${pageUrl}#${item.id}`,
+        }))
+
+        const howTo = {
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: articleTitle,
+          description: articleDescription ?? `Step-by-step guide for ${articleTitle}`,
+          totalTime: 'PT0M',
+          estimatedCost: {
+            '@type': 'MonetaryAmount',
+            currency: 'AUD',
+            value: '0',
+          },
+          step: steps,
+        }
+
+        setHowToJson(JSON.stringify(howTo))
+      }
+
+      if (enableMediaObject) {
+        const pdfLinks = Array.from(
+          container.querySelectorAll<HTMLAnchorElement>('a[href$=".pdf" i]'),
+        )
+
+        if (pdfLinks.length) {
+          const mediaObjects = pdfLinks.map((link, idx) => {
+            const url = new URL(link.getAttribute('href') ?? '', pageUrl)
+            return {
+              '@type': 'MediaObject',
+              '@id': `${pageUrl}#download-${idx + 1}`,
+              name: link.textContent?.trim() || `Download ${idx + 1}`,
+              contentUrl: url.toString(),
+              encodingFormat: 'application/pdf',
+            }
+          })
+
+          const graph = {
+            '@context': 'https://schema.org',
+            '@graph': mediaObjects,
+          }
+
+          setMediaJson(JSON.stringify(graph))
+        }
       }
     }
+
+    updateState(items)
+
+    return () => observer.disconnect()
   }, [articleDescription, articleTitle, contentSelector, enableHowTo, enableMediaObject, enableToc])
 
   const hasToc = enableToc && tocItems.length > 1
@@ -158,30 +184,30 @@ export function ArticleEnhancer({
       {hasToc
         ? tocTarget
           ? createPortal(
-              <TableOfContents
-                items={tocItems.map((item) => ({
-                  href: `#${item.id}`,
-                  label: item.title,
-                  level: item.level,
-                }))}
-                title="In this guide:"
-                ariaLabel="Table of contents"
-                data-managed-by="article-enhancer"
-              />,
-              tocTarget,
-            )
+            <TableOfContents
+              items={tocItems.map((item) => ({
+                href: `#${item.id}`,
+                label: item.title,
+                level: item.level,
+              }))}
+              title="In this guide:"
+              ariaLabel="Table of contents"
+              data-managed-by="article-enhancer"
+            />,
+            tocTarget,
+          )
           : (
-              <TableOfContents
-                items={tocItems.map((item) => ({
-                  href: `#${item.id}`,
-                  label: item.title,
-                  level: item.level,
-                }))}
-                title="In this guide:"
-                ariaLabel="Table of contents"
-                data-managed-by="article-enhancer"
-              />
-            )
+            <TableOfContents
+              items={tocItems.map((item) => ({
+                href: `#${item.id}`,
+                label: item.title,
+                level: item.level,
+              }))}
+              title="In this guide:"
+              ariaLabel="Table of contents"
+              data-managed-by="article-enhancer"
+            />
+          )
         : null}
 
       {enableHowTo && howToJson ? (
