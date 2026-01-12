@@ -1,12 +1,22 @@
-import { Link } from 'react-router'
 import type { ReactNode } from 'react'
+import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
+import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { AudienceGrid } from '../../../components/articles/AudienceGrid'
+import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
 const NEWSLETTER = 'AI Bits for Techies'
+const TITLE = `${NEWSLETTER} | Issue #1 | 8 Jan 2026`
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
+const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -89,97 +99,124 @@ export const summaryHighlights = {
   ],
 }
 
+export const useCustomHeader = true
+export const useInlineToc = true
+
 export default function ArticlePage() {
+  const authors = [
+    {
+      name: 'Dr Sam Donegan',
+      role: 'Founder & Lead Editor',
+      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
+    },
+    {
+      name: 'Jun Kai (Luc) Chang',
+      role: 'AI Software Developer',
+      bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
+    },
+    {
+      name: 'Julia Ponder',
+      role: 'Technical Writer',
+      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
+    },
+  ]
+
+  const breadcrumbs = [
+    { label: 'Home', href: '/articles', icon: Home },
+    { label: NEWSLETTER, current: true },
+  ]
+
   return (
     <div>
-      {/* 1) Intro alert - Clean, neutral style */}
-      <div className="not-prose my-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-700 flex gap-2">
-          <span className="text-xl">💡</span>
-          <span>
-            This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand-ink] hover:underline">
-              Browse related articles →
-            </Link>
-          </span>
-        </p>
-      </div>
+      <ArticleHeroHeader
+        breadcrumbs={breadcrumbs}
+        title={TITLE}
+        titleHighlight="Issue #1"
+        headerBgColor="cyan"
+        summary={{
+          heading: summaryHighlights.heading,
+          intro: summaryHighlights.intro,
+          items: summaryHighlights.items,
+        }}
+        heroImage={HERO_IMAGE}
+        heroImageAlt={HERO_IMAGE_ALT}
+      />
 
-      {/* 2) Persona Grid - Clean Cards, No Heavy Colors */}
-      <div className="not-prose my-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Rocket */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84v4.8m7.381-5.84a14.926 14.926 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Founders & Teams</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For leaders validating ideas, seeking funding, or managing teams.
-          </p>
-        </div>
+      <QuoteBlock
+        variant="purple"
+        title="Quick note"
+        icon={<span className="text-xl">💡</span>}
+        className="my-6"
+      >
+        This guide is part of our broader series on {SERIES}. Prefer to jump ahead?{' '}
+        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
+          Browse related articles →
+        </a>
+      </QuoteBlock>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Graduate */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Students & Switchers</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For those building portfolios, learning new skills, or changing careers.
-          </p>
-        </div>
+      <ArticleTocPlaceholder className="mb-12">
+        {/* Rendered via portal by ArticleEnhancer */}
+      </ArticleTocPlaceholder>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-teal-50 flex items-center justify-center text-[--brand-ink]">
-            {/* Icon: Community */}
-            <svg
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-6 h-6"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Community Builders</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            For workshop facilitators, mentors, and ecosystem supporters.
-          </p>
-        </div>
-      </div>
+      <AudienceGrid
+        heading="Read this if you are:"
+        cards={[
+          {
+            title: 'Founders & Teams',
+            description: 'For leaders validating ideas, seeking funding, or managing teams.',
+            variant: 'orange',
+            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
+          },
+          {
+            title: 'Students & Switchers',
+            description: 'For those building portfolios, learning new skills, or changing careers.',
+            variant: 'purple',
+            icon: (
+              <svg
+                className="w-5 h-5 text-white"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
+                />
+              </svg>
+            ),
+          },
+          {
+            title: 'Community Builders',
+            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
+            variant: 'yellow',
+            icon: (
+              <svg
+                className="w-5 h-5 text-black"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                />
+              </svg>
+            ),
+          },
+        ]}
+        className="my-10"
+      />
 
-      {/* 3) Main content starts */}
+      {/* Main content */}
       <div className="">
-        <h2>{NEWSLETTER} | Issue #1 | 8 Jan 2026</h2>
+        <h2>{TITLE}</h2>
 
         <p>
           Your weekly Aussie-flavoured deep dive into what changed in AI/ML, what matters, and what to do
@@ -194,15 +231,7 @@ export default function ArticlePage() {
 
         <hr className="my-8 border-gray-100" />
 
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df"
-            alt="Scientific illustration of transient image classification"
-            width={1200}
-            height={630}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
 
         <h2>The one paper you should pretend you read at lunch</h2>
         <h3>Textual interpretation of transient image classifications from large language models</h3>
@@ -312,15 +341,10 @@ export default function ArticlePage() {
 
         <hr className="my-8 border-gray-100" />
 
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_01_56%20PM.png?alt=media&token=7aa355b9-1304-40cf-bba2-1808e9141a26"
-            alt="Book cover of Life 3.0 by Max Tegmark"
-            width={1200}
-            height={630}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_01_56%20PM.png?alt=media&token=7aa355b9-1304-40cf-bba2-1808e9141a26"
+          alt="Book cover of Life 3.0 by Max Tegmark"
+        />
 
         <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
         <h3>Life 3.0 (Max Tegmark)</h3>
@@ -358,77 +382,15 @@ export default function ArticlePage() {
           This is general information, not legal advice. If you ship user-facing AI, be transparent about
           where AI is used, what it cannot do, and where humans stay in the loop.
         </p>
-        {/* About the Authors */}
-        <div className="not-prose mt-12 rounded-2xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-8">
-          <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-            <svg className="w-5 h-5 text-[--brand-ink]" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
-            About the Authors
-          </h3>
-          <div className="grid gap-6 md:grid-cols-3">
-            {/* Author 1: Dr Sam Donegan */}
-            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <img
-                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376"
-                alt="Dr Sam Donegan"
-                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
-              />
-              <h4 className="font-semibold text-gray-900">Dr Sam Donegan</h4>
-              <p className="text-sm text-[--brand-ink] font-medium mb-2">Founder & Lead Editor</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.
-              </p>
-            </div>
 
-            {/* Author 2: Jun Kai (Luc) Chang */}
-            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <img
-                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb"
-                alt="Jun Kai (Luc) Chang"
-                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
-              />
-              <h4 className="font-semibold text-gray-900">Jun Kai (Luc) Chang</h4>
-              <p className="text-sm text-[--brand-ink] font-medium mb-2">AI Software Developer</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He's pursuing a Master of AI at Monash and co-founding a startup in the event space.
-              </p>
-            </div>
-
-            {/* Author 3: Julia Ponder */}
-            <div className="flex flex-col items-center text-center p-4 rounded-xl bg-white shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-              <img
-                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c"
-                alt="Julia Ponder"
-                className="w-20 h-20 rounded-full object-cover ring-2 ring-gray-100 mb-4"
-              />
-              <h4 className="font-semibold text-gray-900">Julia Ponder</h4>
-              <p className="text-sm text-[--brand-ink] font-medium mb-2">Technical Writer</p>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.
-              </p>
-            </div>
-          </div>
-          <p className="mt-6 text-xs text-gray-500 text-center">
-            AI-assisted drafting, human-edited and reviewed.
-          </p>
-        </div>
+        <AuthorBio authors={authors} className="mt-8" />
       </div>
 
-      {/* FAQ Section */}
       <div className="mt-12">
         <ArticleFAQ items={faqItems} />
       </div>
 
-      {/* Final Breadcrumb/Nav */}
-      <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-        <Link to="/articles" className="hover:text-[--brand-ink] transition-colors">
-          ← Back to Articles
-        </Link>
-        <a href="#" className="hover:text-[--brand-ink] transition-colors">
-          Top of page ↑
-        </a>
-      </div>
+      <ArticleFooterNav />
     </div>
   )
 }

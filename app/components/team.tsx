@@ -91,6 +91,14 @@ export default function Team() {
   // Default pixel character (Callum's pixel art as placeholder for all)
   const defaultPixelCharacter = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
 
+  const handlePrev = () => {
+    setSelectedIndex((prev) => (prev === 0 ? people.length - 1 : prev - 1));
+  };
+
+  const handleNext = () => {
+    setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <section className="fighter-select-wrapper">
       <div className="fighter-select-container">
@@ -100,26 +108,91 @@ export default function Team() {
         {/* Main Content */}
         <div className="fighter-select-content">
           {/* Title */}
-          <h2 className="fighter-select-title">OUR TEAM (CHOOSE YOUR FIGHTER)</h2>
+          <h2 className="fighter-select-title">OUR TEAM</h2>
+          <p className="fighter-select-subtitle">(CHOOSE YOUR FIGHTER)</p>
 
-          {/* Grid Container */}
-          <div className="fighter-select-grid">
-            {/* Left: Character Selection Grid */}
-            <div className="fighter-grid-left">
-              {/* Navigation Arrow Left */}
+          {/* === MOBILE LAYOUT === */}
+          <div className="fighter-mobile-layout">
+            {/* Character Preview */}
+            <div className="fighter-mobile-preview">
+              <img
+                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                alt={`${selectedPerson.name} pixel art`}
+                className="fighter-mobile-preview-image"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = defaultPixelCharacter;
+                }}
+              />
+            </div>
+
+            {/* Player Info */}
+            <div className="fighter-mobile-info">
+              <div className="fighter-mobile-player-label">PLAYER 1</div>
+              <div className="fighter-mobile-player-name">{selectedPerson.name.toUpperCase()}</div>
+              <div className="fighter-mobile-player-role">{selectedPerson.role.toUpperCase()}</div>
+            </div>
+
+            {/* Character Selection with Nav Arrows */}
+            <div className="fighter-mobile-selection">
               <button
-                className="fighter-nav-arrow fighter-nav-left"
-                onClick={() =>
-                  setSelectedIndex((prev) =>
-                    prev === 0 ? people.length - 1 : prev - 1
-                  )
-                }
+                className="fighter-mobile-nav-btn"
+                onClick={handlePrev}
                 aria-label="Previous character"
               >
                 ◀
               </button>
 
-              {/* 3x3 Grid */}
+              <div className="fighter-mobile-grid">
+                {people.map((person, index) => (
+                  <button
+                    key={person.name}
+                    className={`fighter-mobile-select-box ${index === selectedIndex ? "fighter-mobile-select-box-active" : ""}`}
+                    onClick={() => setSelectedIndex(index)}
+                    aria-label={`Select ${person.name}`}
+                  >
+                    <img
+                      src={person.imageUrl}
+                      alt={person.name}
+                      className="fighter-mobile-select-photo"
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="fighter-mobile-nav-btn"
+                onClick={handleNext}
+                aria-label="Next character"
+              >
+                ▶
+              </button>
+            </div>
+
+            {/* Press Start Button */}
+            <a
+              href={selectedPerson.linkedIn}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="fighter-mobile-press-start"
+            >
+              VIEW PROFILE
+            </a>
+          </div>
+
+          {/* === DESKTOP LAYOUT === */}
+          <div className="fighter-desktop-layout">
+            {/* Left: Character Selection Grid */}
+            <div className="fighter-grid-left">
+              {/* Navigation Arrow Left */}
+              <button
+                className="fighter-nav-arrow fighter-nav-left"
+                onClick={handlePrev}
+                aria-label="Previous character"
+              >
+                ◀
+              </button>
+
+              {/* 3x3+ Grid */}
               <div className="fighter-selection-grid">
                 {people.map((person, index) => (
                   <button
@@ -141,13 +214,11 @@ export default function Team() {
 
             {/* Center: Full Body Character Preview */}
             <div className="fighter-preview-center">
-              {/* Use pixel image if available, otherwise show placeholder */}
               <img
                 src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
                 alt={`${selectedPerson.name} pixel art`}
                 className="fighter-preview-image"
                 onError={(e) => {
-                  // Fallback to default character if pixel image doesn't exist
                   (e.target as HTMLImageElement).src = defaultPixelCharacter;
                 }}
               />
@@ -158,11 +229,7 @@ export default function Team() {
               {/* Navigation Arrow Right */}
               <button
                 className="fighter-nav-arrow fighter-nav-right"
-                onClick={() =>
-                  setSelectedIndex((prev) =>
-                    prev === people.length - 1 ? 0 : prev + 1
-                  )
-                }
+                onClick={handleNext}
                 aria-label="Next character"
               >
                 ▶
@@ -184,24 +251,12 @@ export default function Team() {
                       className="fighter-social-link"
                     >
                       <span className="fighter-social-icon">in</span>
-                      <span className="fighter-social-url">www.linkedin.com</span>
+                      <span className="fighter-social-url">linkedin.com</span>
                       <span className="fighter-social-action">
-                        <span className="fighter-twitter-icon">𝕏</span> VIEW PROFILE
+                        VIEW PROFILE
                       </span>
                     </a>
                   )}
-                  <a
-                    href={selectedPerson.linkedIn}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="fighter-social-link"
-                  >
-                    <span className="fighter-social-icon">✉</span>
-                    <span className="fighter-social-url">www.linkedin.com/</span>
-                    <span className="fighter-social-action">
-                      <span className="fighter-link-icon">🔗</span> VIEW PROFILE
-                    </span>
-                  </a>
                 </div>
               </div>
 
@@ -238,11 +293,26 @@ export default function Team() {
         .fighter-select-container {
           position: relative;
           width: 100%;
-          min-height: 500px;
+          min-height: 400px;
           background-color: #3537dc;
           overflow: hidden;
-          border-radius: 2.5rem;
-          padding: 24px 32px;
+          border-radius: 1.5rem;
+          padding: 16px;
+        }
+
+        @media (min-width: 640px) {
+          .fighter-select-container {
+            border-radius: 2rem;
+            padding: 20px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .fighter-select-container {
+            min-height: 500px;
+            border-radius: 2.5rem;
+            padding: 24px 32px;
+          }
         }
 
         .fighter-select-bg {
@@ -252,7 +322,7 @@ export default function Team() {
           background-size: cover;
           background-position: center;
           opacity: 0.9;
-          border-radius: 2.5rem;
+          border-radius: inherit;
         }
 
         .fighter-select-content {
@@ -260,32 +330,225 @@ export default function Team() {
           z-index: 10;
           display: flex;
           flex-direction: column;
-          gap: 24px;
           height: 100%;
         }
 
         .fighter-select-title {
           font-family: 'Press Start 2P', cursive;
-          font-size: clamp(24px, 4vw, 42px);
+          font-size: 16px;
           color: #ffeb3b;
           text-align: center;
           text-shadow: 
-            4px 4px 0 #1a1a8e,
+            2px 2px 0 #1a1a8e,
             -1px -1px 0 #1a1a8e,
             1px -1px 0 #1a1a8e,
             -1px 1px 0 #1a1a8e;
-          letter-spacing: 3px;
+          letter-spacing: 2px;
           margin: 0;
-          padding-top: 24px;
-          padding-bottom: 8px;
+          padding-top: 16px;
         }
 
-        .fighter-select-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 24px;
-          flex: 1;
+        @media (min-width: 640px) {
+          .fighter-select-title {
+            font-size: 24px;
+            letter-spacing: 3px;
+            padding-top: 20px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .fighter-select-title {
+            font-size: clamp(28px, 3.5vw, 42px);
+            padding-top: 24px;
+          }
+        }
+
+        .fighter-select-subtitle {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 10px;
+          color: #00e5ff;
+          text-align: center;
+          margin: 8px 0 16px;
+        }
+
+        @media (min-width: 640px) {
+          .fighter-select-subtitle {
+            font-size: 12px;
+          }
+        }
+
+        @media (min-width: 1024px) {
+          .fighter-select-subtitle {
+            display: none;
+          }
+        }
+
+        /* ========== MOBILE LAYOUT ========== */
+        .fighter-mobile-layout {
+          display: flex;
+          flex-direction: column;
           align-items: center;
+          gap: 16px;
+        }
+
+        @media (min-width: 1024px) {
+          .fighter-mobile-layout {
+            display: none;
+          }
+        }
+
+        .fighter-mobile-preview {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 140px;
+        }
+
+        @media (min-width: 640px) {
+          .fighter-mobile-preview {
+            height: 180px;
+          }
+        }
+
+        .fighter-mobile-preview-image {
+          height: 100%;
+          width: auto;
+          image-rendering: pixelated;
+          filter: drop-shadow(3px 3px 0 rgba(0, 0, 0, 0.3));
+        }
+
+        .fighter-mobile-info {
+          text-align: center;
+          background: linear-gradient(135deg, #1a1a6e 0%, #2a2a8e 100%);
+          border: 2px solid #00e5ff;
+          border-radius: 8px;
+          padding: 12px 20px;
+          width: 100%;
+          max-width: 280px;
+        }
+
+        .fighter-mobile-player-label {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 12px;
+          color: #ffeb3b;
+          margin-bottom: 8px;
+        }
+
+        .fighter-mobile-player-name {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 10px;
+          color: #ffffff;
+          margin-bottom: 4px;
+          line-height: 1.4;
+        }
+
+        .fighter-mobile-player-role {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 8px;
+          color: #aaaaff;
+        }
+
+        .fighter-mobile-selection {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          width: 100%;
+        }
+
+        .fighter-mobile-nav-btn {
+          background: transparent;
+          border: none;
+          color: #00e5ff;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 12px;
+          transition: transform 0.2s, color 0.2s;
+          min-width: 44px;
+          min-height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .fighter-mobile-nav-btn:hover,
+        .fighter-mobile-nav-btn:active {
+          color: #ffeb3b;
+          transform: scale(1.1);
+        }
+
+        .fighter-mobile-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 4px;
+        }
+
+        @media (min-width: 400px) {
+          .fighter-mobile-grid {
+            gap: 6px;
+          }
+        }
+
+        .fighter-mobile-select-box {
+          width: 40px;
+          height: 40px;
+          border: 2px solid #1a1a8e;
+          background: #2a2a6e;
+          border-radius: 4px;
+          padding: 0;
+          cursor: pointer;
+          overflow: hidden;
+          transition: all 0.2s ease;
+        }
+
+        @media (min-width: 400px) {
+          .fighter-mobile-select-box {
+            width: 48px;
+            height: 48px;
+          }
+        }
+
+        .fighter-mobile-select-box-active {
+          border-color: #00e5ff !important;
+          box-shadow: 0 0 8px #00e5ff;
+        }
+
+        .fighter-mobile-select-photo {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .fighter-mobile-press-start {
+          font-family: 'Press Start 2P', cursive;
+          font-size: 12px;
+          color: #1a1a1a;
+          background: #ffeb3b;
+          border: none;
+          border-radius: 8px;
+          padding: 14px 24px;
+          text-decoration: none;
+          cursor: pointer;
+          min-height: 44px;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        /* ========== DESKTOP LAYOUT ========== */
+        .fighter-desktop-layout {
+          display: none;
+        }
+
+        @media (min-width: 1024px) {
+          .fighter-desktop-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 24px;
+            flex: 1;
+            align-items: center;
+            margin-top: 24px;
+          }
         }
 
         /* Left: Character Selection Grid */
@@ -303,8 +566,8 @@ export default function Team() {
         }
 
         .fighter-select-box {
-          width: 96px;
-          height: 96px;
+          width: 80px;
+          height: 80px;
           border: 3px solid #1a1a8e;
           background: #2a2a6e;
           border-radius: 4px;
@@ -312,6 +575,13 @@ export default function Team() {
           cursor: pointer;
           overflow: hidden;
           transition: all 0.2s ease;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-select-box {
+            width: 96px;
+            height: 96px;
+          }
         }
 
         .fighter-select-box:hover {
@@ -350,6 +620,8 @@ export default function Team() {
           padding: 8px;
           transition: transform 0.2s, color 0.2s;
           z-index: 20;
+          min-width: 44px;
+          min-height: 44px;
         }
 
         .fighter-nav-arrow:hover {
@@ -358,13 +630,17 @@ export default function Team() {
         }
 
         .fighter-nav-left {
-          left: -10px;
+          left: -20px;
         }
 
         .fighter-nav-right {
-          right: 40px;
+          right: 20px;
           top: 50%;
           transform: translateY(-50%);
+        }
+
+        .fighter-nav-right:hover {
+          transform: translateY(-50%) scale(1.2);
         }
 
         /* Center: Character Preview */
@@ -372,19 +648,26 @@ export default function Team() {
           display: flex;
           align-items: center;
           justify-content: center;
-          min-height: 350px;
+          min-height: 300px;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-preview-center {
+            min-height: 350px;
+          }
         }
 
         .fighter-preview-image {
-          height: 400px;
+          height: 300px;
           width: auto;
           image-rendering: pixelated;
           filter: drop-shadow(4px 4px 0 rgba(0, 0, 0, 0.3));
         }
 
-        @keyframes character-idle {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
+        @media (min-width: 1280px) {
+          .fighter-preview-image {
+            height: 400px;
+          }
         }
 
         /* Right: Player Info Panel */
@@ -400,32 +683,60 @@ export default function Team() {
           background: linear-gradient(135deg, #1a1a6e 0%, #2a2a8e 100%);
           border: 3px solid #00e5ff;
           border-radius: 8px;
-          padding: 24px;
-          min-width: 360px;
+          padding: 20px;
+          width: 100%;
+          max-width: 320px;
           box-shadow: 0 0 20px #00e5ff30;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-player-box {
+            padding: 24px;
+            max-width: 360px;
+          }
         }
 
         .fighter-player-label {
           font-family: 'Press Start 2P', cursive;
-          font-size: 24px;
+          font-size: 18px;
           color: #ffeb3b;
-          margin-bottom: 16px;
+          margin-bottom: 12px;
           text-shadow: 2px 2px 0 #1a1a4e;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-player-label {
+            font-size: 24px;
+            margin-bottom: 16px;
+          }
         }
 
         .fighter-player-name {
           font-family: 'Press Start 2P', cursive;
-          font-size: 16px;
+          font-size: 12px;
           color: #ffffff;
           margin-bottom: 8px;
           line-height: 1.5;
         }
 
+        @media (min-width: 1280px) {
+          .fighter-player-name {
+            font-size: 16px;
+          }
+        }
+
         .fighter-player-role {
           font-family: 'Press Start 2P', cursive;
-          font-size: 12px;
+          font-size: 10px;
           color: #aaaaff;
-          margin-bottom: 24px;
+          margin-bottom: 20px;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-player-role {
+            font-size: 12px;
+            margin-bottom: 24px;
+          }
         }
 
         .fighter-social-links {
@@ -437,12 +748,20 @@ export default function Team() {
         .fighter-social-link {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
           font-family: 'Press Start 2P', cursive;
-          font-size: 10px;
+          font-size: 8px;
           color: #ffffff;
           text-decoration: none;
           transition: color 0.2s;
+          min-height: 44px;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-social-link {
+            font-size: 10px;
+            gap: 12px;
+          }
         }
 
         .fighter-social-link:hover {
@@ -469,21 +788,12 @@ export default function Team() {
 
         .fighter-social-action {
           color: #00e5ff;
-          display: flex;
-          align-items: center;
-          gap: 4px;
         }
 
-        .fighter-twitter-icon,
-        .fighter-link-icon {
-          font-size: 10px;
-        }
-
-        /* Press Start Button */
         /* Press Start Button */
         .fighter-press-start {
           font-family: 'Press Start 2P', cursive;
-          font-size: 24px;
+          font-size: 18px;
           color: #ffeb3b;
           background: transparent;
           border: none;
@@ -496,93 +806,22 @@ export default function Team() {
             -1px 1px 0 #1a1a8e;
           animation: blink-text 1s step-end infinite;
           cursor: pointer;
+          min-height: 44px;
+        }
+
+        @media (min-width: 1280px) {
+          .fighter-press-start {
+            font-size: 24px;
+          }
         }
 
         .fighter-press-start:hover {
           transform: scale(1.1);
-          text-shadow: 
-            6px 6px 0 #1a1a8e,
-            -2px -2px 0 #1a1a8e,
-            2px -2px 0 #1a1a8e,
-            -2px 2px 0 #1a1a8e;
-        }
-
-        .fighter-press-start:active {
-          transform: scale(0.95);
         }
 
         @keyframes blink-text {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-          .fighter-select-grid {
-            grid-template-columns: 1fr;
-            gap: 32px;
-          }
-
-          .fighter-preview-center {
-            order: -1;
-            min-height: 250px;
-          }
-
-          .fighter-preview-image {
-            max-height: 200px;
-          }
-
-          .fighter-info-right {
-            align-items: center;
-          }
-
-          .fighter-player-box {
-            min-width: auto;
-            width: 100%;
-            max-width: 300px;
-          }
-
-          .fighter-select-box {
-            width: 60px;
-            height: 60px;
-          }
-
-          .fighter-nav-left {
-            left: 0;
-          }
-
-          .fighter-nav-right {
-            right: 0;
-          }
-        }
-
-        @media (max-width: 640px) {
-          .fighter-select-container {
-            padding: 16px;
-            border-radius: 12px;
-          }
-
-          .fighter-select-title {
-            font-size: 14px;
-          }
-
-          .fighter-select-box {
-            width: 50px;
-            height: 50px;
-          }
-
-          .fighter-player-label {
-            font-size: 14px;
-          }
-
-          .fighter-player-name {
-            font-size: 9px;
-          }
-
-          .fighter-press-start {
-            font-size: 11px;
-            padding: 12px 24px;
-          }
         }
       `}</style>
     </section>

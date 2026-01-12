@@ -1,19 +1,24 @@
-import { Link } from 'react-router'
 import type { ReactNode } from 'react'
+import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
 import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { AudienceGrid } from '../../../components/articles/AudienceGrid'
+import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'Best way to learn about AI in 2026'
 const CATEGORY = 'featured'
 const SLUG = 'best-way-to-learn-about-ai-2026'
-const AUTHOR = 'Sophie Nguyen'
-const AUTHOR_ROLE = 'Editorial Team'
-const AUTHOR_BIO = 'Sophie covers practical AI literacy, workforce trends, and ethical adoption for Australian teams.'
-const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80'
+const AUTHOR = 'Dr Sam Donegan'
+const AUTHOR_ROLE = 'Medical Doctor, AI Startup Founder & Lead Editor'
+const AUTHOR_BIO = 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.'
+const AUTHOR_AVATAR = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376'
 const DATE_PUBLISHED = '2025-01-15T00:00:00.000Z'
 const DATE_MODIFIED = '2025-01-15T00:00:00.000Z'
 const DESCRIPTION = 'A 2026-ready roadmap for Australians to learn AI: fundamentals, hands-on projects, ethics, and career moves tailored to local pathways.'
@@ -40,7 +45,7 @@ export const faqItems: FAQ[] = [
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Brief, factual overview referencing current Australian context (e.g. 2025 ecosystem norms, official guidance, privacy expectations, or common pathways).',
+    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
       label: 'What is the fastest way to start learning AI in 2026?',
@@ -57,6 +62,9 @@ export const summaryHighlights = {
   ],
 }
 
+export const useCustomHeader = true
+export const useInlineToc = true
+
 export default function ArticlePage() {
   const authorDetails = {
     name: AUTHOR,
@@ -65,78 +73,72 @@ export default function ArticlePage() {
     avatarUrl: AUTHOR_AVATAR,
   }
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/articles', icon: Home },
+    { label: TOPIC, current: true },
+  ]
+
   return (
-    <div className="bg-white">
-      {/* 1) Intro alert - Clean, neutral style */}
-      <div className="my-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-700 flex gap-2">
-          <span className="text-xl">💡</span>
-          <span>
-            This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-indigo-600 hover:underline">
-              Browse related articles →
-            </Link>
-          </span>
-        </p>
-      </div>
+    <div>
+      <ArticleHeroHeader
+        breadcrumbs={breadcrumbs}
+        title={TOPIC}
+        headerBgColor="cyan"
+        summary={{
+          heading: summaryHighlights.heading,
+          intro: summaryHighlights.intro,
+          items: summaryHighlights.items,
+        }}
+        heroImage={HERO_IMAGE}
+        heroImageAlt={HERO_IMAGE_ALT}
+      />
 
-      {/* 2) Persona Grid - Clean Cards, No Heavy Colors */}
-      <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
-            {/* Icon: Rocket */}
-            <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84l4.8 0m7.381-5.84a14.926 14.926 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Founders & Teams</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">For leaders validating ideas, seeking funding, or managing teams.</p>
-        </div>
+      <QuoteBlock
+        variant="purple"
+        title="Quick note"
+        icon={<span className="text-xl">💡</span>}
+        className="my-6"
+      >
+        This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
+        <a href="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
+          Browse related articles →
+        </a>
+      </QuoteBlock>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-green-50 flex items-center justify-center text-green-600">
-            {/* Icon: Graduate */}
-            <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Students & Switchers</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">For those building portfolios, learning new skills, or changing careers.</p>
-        </div>
+      <ArticleTocPlaceholder className="mb-10" />
 
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-          <div className="mb-4 h-10 w-10 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
-            {/* Icon: Community */}
-            <svg fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
-              />
-            </svg>
-          </div>
-          <h3 className="mb-2 font-semibold text-gray-900">Community Builders</h3>
-          <p className="text-sm text-gray-600 leading-relaxed">For workshop facilitators, mentors, and ecosystem supporters.</p>
-        </div>
-      </div>
+      <AudienceGrid
+        heading="Read this if you are:"
+        cards={[
+          {
+            title: 'Founders & Teams',
+            description: 'For leaders validating ideas, seeking funding, or managing teams.',
+            variant: 'orange',
+            icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
+          },
+          {
+            title: 'Students & Switchers',
+            description: 'For those building portfolios, learning new skills, or changing careers.',
+            variant: 'purple',
+            icon: <AcademicCapIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
+          },
+          {
+            title: 'Community Builders',
+            description: 'For workshop facilitators, mentors, and ecosystem supporters.',
+            variant: 'yellow',
+            icon: <UsersIcon className="w-5 h-5 text-black" strokeWidth={1.8} />,
+          },
+        ]}
+        className="my-10"
+      />
 
-      {/* 3) Main content starts */}
+      {/* Main content */}
       <div className="">
         <p>
-          <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025 landscape.
+          <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2026 landscape.
         </p>
 
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10" />
-        </div>
+        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
         <h2>What is {TOPIC}?</h2>
         <p>
@@ -146,41 +148,33 @@ export default function ArticlePage() {
           In Australia, employers increasingly value demonstrable skills over titles. Whether you are in Brisbane, Sydney, or remote, the fastest path pairs online coursework with local communities—meetups, hackathons, and open-source contributions—so you can validate your skills with feedback.
         </p>
 
-        <h2>Why it matters in 2025</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-d0264b00-0aed-477b-b0f1-54e6c2ede32b.jpg?alt=media&token=39f07a8d-e29a-414c-af1e-6400562d29f4"
-            alt="People collaborating in a vibrant tech startup environment with a nostalgic 90s film aesthetic."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <h2>Why it matters in 2026</h2>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-d0264b00-0aed-477b-b0f1-54e6c2ede32b.jpg?alt=media&token=39f07a8d-e29a-414c-af1e-6400562d29f4"
+          alt="People collaborating in a vibrant tech startup environment with a nostalgic 90s film aesthetic."
+        />
 
         <p>
           Generative AI is now embedded in productivity stacks, customer support, and analytics. Ignoring it risks slower delivery, higher costs, and compliance gaps. Acting now matters because Australian organisations are formalising AI governance in procurement and vendor risk assessments. Being able to explain data lineage, consent, and evaluation metrics is becoming table stakes for roles across product, engineering, and operations.
         </p>
         <p>
-          The 2025 hiring market rewards candidates who can move from prototype to production responsibly. If you can show model comparisons (e.g., perplexity vs. cost), basic prompt evaluation, and a privacy-first approach, you will stand out without needing a decade of experience.
+          The 2026 hiring market rewards candidates who can move from prototype to production responsibly. If you can show model comparisons (e.g., perplexity vs. cost), basic prompt evaluation, and a privacy-first approach, you will stand out without needing a decade of experience.
         </p>
 
-        <div className="my-8 border-l-4 border-indigo-500 bg-indigo-50/50 pl-6 py-4 pr-4 rounded-r-lg">
-          <h4 className="font-semibold text-indigo-900 flex items-center gap-2">
-            <span className="text-xl">💡</span> Pro Tip
-          </h4>
-          <p className="mt-1 text-gray-700">Pair every course module with a tiny project (one notebook, one README) and publish it; shipping weekly beats cramming theory.</p>
-        </div>
+        <QuoteBlock
+          variant="purple"
+          title="Pro Tip"
+          icon={<span className="text-xl">💡</span>}
+          className="my-8"
+        >
+          Pair every course module with a tiny project (one notebook, one README) and publish it; shipping weekly beats cramming theory.
+        </QuoteBlock>
 
         <h2>Step-by-Step Guide</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e687e40d-6b11-44f4-83bf-4a8fd68b5cc9.jpg?alt=media&token=74c5bdbf-40aa-448b-b1d8-dd3fe3c3643c"
-            alt="People collaborating in a vibrant 90s tech startup, embodying innovation and creativity in a retro aesthetic."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e687e40d-6b11-44f4-83bf-4a8fd68b5cc9.jpg?alt=media&token=74c5bdbf-40aa-448b-b1d8-dd3fe3c3643c"
+          alt="People collaborating in a vibrant 90s tech startup, embodying innovation and creativity in a retro aesthetic."
+        />
 
         <h3>Step 1: Preparation</h3>
         <p>
@@ -209,26 +203,31 @@ export default function ArticlePage() {
           The best way to learn about AI in 2026 is to ship small, responsible projects, document your decisions, and stay anchored to Australian privacy and governance expectations. With steady practice and community feedback, you can reach hire-ready confidence without pausing your career for a full degree.
         </p>
 
-        <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
+        <QuoteBlock variant="purple" className="mt-8">
+          <h3 className="text-lg font-bold text-white mb-4">Your Next Steps</h3>
           <ul className="space-y-3">
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-              <span>Download the checklist mentioned above.</span>
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                1
+              </span>
+              <span>Set up your learning environment (Python, Git, hosted notebook) this week.</span>
             </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-              <span>Draft your initial goals based on the template.</span>
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                2
+              </span>
+              <span>Complete one introductory ML course module and ship a mini-project to GitHub.</span>
             </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-              <span>Discuss with your team or mentor.</span>
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                3
+              </span>
+              <span>Join a local AI meetup or online community for feedback and accountability.</span>
             </li>
           </ul>
-        </div>
+        </QuoteBlock>
 
-        <div className="my-12">
-          {/* Contextual CTA - Best placement for conversion */}
+        {/* <div className="my-12">
           <ArticleCompanyCTA
             title={`Need help with ${TOPIC}?`}
             body="Get practical recommendations based on your goals, time, and experience level."
@@ -236,29 +235,19 @@ export default function ArticlePage() {
             buttonHref="#"
             note="You can filter by topic, format (online/in‑person), and experience level."
           />
-        </div>
+        </div> */}
       </div>
 
-      {/* Author Bio & Footer */}
       <hr className="my-10 border-gray-100" />
 
-      <AuthorBio author={authorDetails} />
+      <AuthorBio authors={[authorDetails]} />
 
-      {/* FAQ Section */}
       <div className="mt-12">
         <ArticleFAQ items={faqItems} />
       </div>
 
-      {/* Final Breadcrumb/Nav */}
-      <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-        <Link to="/articles" className="hover:text-indigo-600 transition-colors">
-          ← Back to Articles
-        </Link>
-        <a href="#" className="hover:text-indigo-600 transition-colors">
-          Top of page ↑
-        </a>
-      </div>
+      <ArticleFooterNav />
 
-    </div>
+    </div >
   )
 }
