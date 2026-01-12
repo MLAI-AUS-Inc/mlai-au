@@ -17,6 +17,7 @@ const articleModules = import.meta.glob<{
     default: React.ComponentType;
     summaryHighlights?: any;
     faqItems?: any;
+    useCustomHeader?: boolean;
 }>('../articles/content/**/*.tsx');
 
 export function meta({ data }: Route.MetaArgs) {
@@ -48,6 +49,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     const importer = articleModules[globKey];
     let summaryHighlights = undefined;
     let faqItems = undefined;
+    let useCustomHeader = false;
 
     if (importer) {
         try {
@@ -56,6 +58,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             const module = await importer();
             summaryHighlights = module.summaryHighlights;
             faqItems = module.faqItems;
+            useCustomHeader = module.useCustomHeader ?? false;
         } catch (e) {
             console.error(`Failed to load article metadata for ${slug}`, e);
             // Non-fatal: we can still render the article body wrapper
@@ -79,6 +82,7 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         summaryHighlights,
         faqItems,
         upcomingEvents,
+        useCustomHeader,
     };
 }
 
@@ -119,7 +123,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article, summaryHighlights, faqItems, upcomingEvents } = loaderData;
+    const { article, summaryHighlights, faqItems, upcomingEvents, useCustomHeader } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -129,14 +133,17 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
     return (
         <ArticleLayout
             article={article}
-            breadcrumbItems={breadcrumbs}
-            showHero={true}
-            summaryHighlights={summaryHighlights}
+            breadcrumbItems={useCustomHeader ? undefined : breadcrumbs}
+            showHero={!useCustomHeader}
+            showHeader={!useCustomHeader}
+            containerClassName={useCustomHeader ? '!bg-transparent !pt-4 sm:!pt-6' : undefined}
+            contentPaddingClassName={useCustomHeader ? '!pt-0' : undefined}
+            summaryHighlights={useCustomHeader ? undefined : summaryHighlights}
             faqItems={faqItems}
             upcomingEvents={upcomingEvents}
         >
             <div className="relative">
-                <ArticleTocPlaceholder />
+                <ArticleTocPlaceholder noMargin={useCustomHeader} />
                 <ArticleContent article={article} />
             </div>
         </ArticleLayout>
