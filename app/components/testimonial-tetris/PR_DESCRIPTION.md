@@ -1,14 +1,14 @@
 # PR: Add Interactive Testimonial Tetris Game
 
-## 📋 Summary
+## Summary
 Transforms the testimonial section into an interactive Tetris game. Testimonials fall as Tetris pieces, visitors can play the game while discovering community feedback, and click blocks to read full testimonials.
 
-**Status:** ✅ Fully functional and tested  
+**Status:** Fully functional and tested  
 **Complexity:** High (Tetris game logic + testimonial integration)
 
 ---
 
-## 🎯 What's Changed
+## What's Changed
 
 ### New Feature: Testimonial Tetris
 - Complete Tetris gameplay in the testimonial section
@@ -43,7 +43,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🎮 Game Design
+## Game Design
 
 ### Tetris Mechanics
 - **Grid**: 10 columns × 20 rows
@@ -62,7 +62,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🎨 Design Decisions
+## Design Decisions
 
 ### Why Simplified (4 Shapes)?
 - **Faster Development**: Less rotation logic
@@ -83,7 +83,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🔧 Technical Details
+## Technical Details
 
 ### Technology Stack
 - **React Router v7** + **TypeScript**
@@ -105,7 +105,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🧪 Testing Checklist
+## Testing Checklist
 
 - [x] Pieces spawn and fall correctly
 - [x] Left/right movement works
@@ -128,7 +128,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 📝 How to Test
+## How to Test
 
 1. **Start dev server:** `npm run dev`
 2. **Navigate to:** Home page
@@ -146,9 +146,9 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🎥 Demo
+## Demo
 
-[TODO: Add video/GIF link here showing gameplay]
+- https://www.loom.com/share/9b2e7caa82b34f8c80ffd4292592fb51
 
 **What to show:**
 - Pieces falling
@@ -159,7 +159,7 @@ app/components/testimonial-tetris/
 
 ---
 
-## 🎯 Acceptance Criteria
+## Acceptance Criteria
 
 All requirements met:
 
@@ -200,7 +200,7 @@ All requirements met:
 
 ---
 
-## 🚀 Deployment Notes
+## Deployment Notes
 
 - **No Database**: All client-side, no backend needed
 - **No Assets**: No images/sounds to deploy
@@ -209,24 +209,13 @@ All requirements met:
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 Comprehensive documentation added:
 - **README.md**: Full feature docs + usage guide
 - **Inline Comments**: Clear explanations in code
 - **TypeScript**: All types documented
 - **Config**: Easy customization in `testimonialData.ts`
-
----
-
-## 🎁 Bonus Features
-
-Beyond requirements:
-- ✅ **Next Piece Preview**: Shows what's coming
-- ✅ **Stats Display**: Lines cleared, pieces placed
-- ✅ **Smooth Animations**: Line clear flash effect
-- ✅ **Reset Button**: Quick restart without refresh
-- ✅ **Instructions Panel**: Help text for controls
 
 ---
 
@@ -242,7 +231,7 @@ Not in scope, but possible additions:
 
 ---
 
-## 🙏 Notes for Reviewers
+## Notes for Reviewers
 
 - **Complexity**: This is significantly more complex than the Logo Shooter (Project 1)
 - **Code Quality**: Fully typed, well-commented, modular
@@ -254,7 +243,7 @@ Not in scope, but possible additions:
 
 ---
 
-## 📋 Merge Checklist
+## Merge Checklist
 
 - [ ] Code review approved
 - [ ] All tests pass
