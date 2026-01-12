@@ -455,7 +455,7 @@ function simplifyArticleBreadcrumbItems(
   return [normalizedRoot, normalizedLast]
 }
 
-export async function ArticleLayout({
+export function ArticleLayout({
   article,
   children,
   showHero = true,

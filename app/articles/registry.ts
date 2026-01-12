@@ -84,6 +84,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/best-way-to-learn-about-ai-2026',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1d8313de-82ba-4ddc-a776-52cee7f2fa1b.jpg?alt=media&token=e14f4ba6-f385-40ec-8453-017f0d7efffa',
         imageAlt: 'Best Way to Learn About AI in 2026 (Australia)',
+        hasContent: true,
     },
     'featured/ai-hackathons-and-events-melbourne': {
         title: 'AI Hackathons and Events in Melbourne (2026 Guide)',
