@@ -1,4 +1,4 @@
-import { ImageWithFallback } from '../../ImageWithFallback'
+import { ImageWithFallback } from '../ImageWithFallback'
 
 type ArticleImageBlockProps = {
     src: string
