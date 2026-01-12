@@ -1,12 +1,47 @@
 # Logo Shooter - Interactive Sponsor Section
 
-An ambient, interactive experience for the sponsor logo section. Logos fly toward the viewer in a space-shooter style, and visitors can click to "shoot" them (changing them from grayscale to full color with a glow effect).
+A **hover-activated** interactive experience for the sponsor logo section. When visitors hover over the sponsor area, the background smoothly transitions from orange to black, static logos fade out, and an immersive space-shooter game fades in where sponsor logos fly toward the viewer and can be clicked to "shoot" them.
 
 ## 🎮 Current Status
 
 **✅ FULLY FUNCTIONAL** - Currently using colored rectangle placeholders with sponsor names.
 
 **⏳ PENDING** - Waiting for actual logo images to be added.
+
+---
+
+## 🎨 Key Features
+
+### Hover-to-Activate Design
+- **Default State:** Orange background with static sponsor logos (grayscale, inverted)
+- **On Hover:** 
+  - Background smoothly transitions to black (0.5s)
+  - Cursor changes to crosshair
+  - Static logos fade out
+  - Game canvas fades in with flying logos
+- **On Mouse Leave or Scroll Away:**
+  - Background transitions back to orange (0.5s)
+  - Game fades out
+  - Static logos fade back in
+
+### Game Mechanics
+- ✅ **Space-shooter style:** Logos spawn far away and fly toward the viewer
+- ✅ **3-5 logos active** at any time
+- ✅ **Anti-clustering logic:** New logos spawn away from existing ones
+- ✅ **Boundary clamping:** Logos stay within visible area (5-95% range)
+- ✅ **Click/tap to shoot:** Hit logos change from white to green with glow
+- ✅ **Custom crosshair cursor**
+- ✅ **Auto-pause/resume:** Pauses when scrolled off-screen, resumes when back
+- ✅ **Fully responsive** (mobile & desktop)
+
+### Ambient Experience (No UI Clutter)
+The following UI elements are **commented out** for a cleaner, more ambient experience:
+- ❌ "Click to Play" overlay
+- ❌ HUD/Scoreboard (hits, accuracy)
+- ❌ Reset button
+- ❌ Game Over screen
+
+**To re-enable:** See inline comments in `GameControls.tsx`, `GameHUD.tsx`, `LogoShooter.tsx`, and `useGameState.ts`
 
 ---
 
@@ -39,58 +74,33 @@ public/sponsor_logos/
 
 #### Step 1: Enable Image Loading
 
-Find this section (around line 30-34):
+Find this section (around line 36-63):
 ```typescript
-// Load images - DISABLED FOR NOW, using text placeholders
 useEffect(() => {
-  // Skip image loading, we'll render text instead
+  // TEMPORARY: Skip image loading, using text placeholders
   setImageCache(new Map());
-}, [logos]);
-```
-
-**Replace with:**
-```typescript
-// Load images
-useEffect(() => {
+  
+  // UNCOMMENT THIS CODE BLOCK TO ENABLE ACTUAL LOGO IMAGES:
+  /*
   const uniqueLogos = Array.from(new Set(logos.map(l => l.imagePath)));
-  const loadPromises = uniqueLogos.map(async (path) => {
-    try {
-      const img = await loadImage(path);
-      return [path, img] as const;
-    } catch (error) {
-      console.error(`Failed to load image: ${path}`, error);
-      return null;
-    }
-  });
-
-  Promise.all(loadPromises).then((results) => {
-    const newCache = new Map<string, HTMLImageElement>();
-    results.forEach((result) => {
-      if (result) {
-        newCache.set(result[0], result[1]);
-      }
-    });
-    setImageCache(newCache);
-  });
+  ...
+  */
 }, [logos]);
 ```
+
+**Uncomment the image loading code block** inside the `useEffect`.
 
 #### Step 2: Update Render Function
 
-Find the `renderLogo` function (around line 150-224).
+Find the `renderLogo` function (around line 181-240).
 
-Find this section:
-```typescript
-// TEMPORARY: Using colored rectangles with text instead of images
-```
-
-**Replace the entire rectangle/text rendering block with:**
+**Replace the rectangle/text rendering section with:**
 ```typescript
 // Try to load image from cache
 const image = imageCache.get(logo.imagePath);
 
 if (image && image.complete) {
-  // Draw the image
+  // Draw the image with grayscale filter (unless hit)
   ctx.filter = logo.isHit 
     ? 'grayscale(0%) brightness(1.2)' 
     : 'grayscale(100%) brightness(0.8)';
@@ -119,40 +129,24 @@ if (image && image.complete) {
   ctx.font = `bold ${Math.max(10, size / 6)}px Arial`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText(logo.name, screenX, screenY, size * 0.9);
+  ctx.shadowBlur = 0;
+  
+  // Wrap text if needed
+  const maxWidth = size * 0.9;
+  const words = logo.name.split(' ');
+  if (words.length > 1 && ctx.measureText(logo.name).width > maxWidth) {
+    const lineHeight = size / 6;
+    words.forEach((word, index) => {
+      const yOffset = (index - words.length / 2 + 0.5) * lineHeight;
+      ctx.fillText(word, screenX, screenY + yOffset, maxWidth);
+    });
+  } else {
+    ctx.fillText(logo.name, screenX, screenY, maxWidth);
+  }
 }
 ```
 
 **That's it!** The game will now use actual logo images with grayscale filter, and flash to full color when hit.
-
----
-
-## 🎨 Features
-
-### Current Implementation
-- ✅ Ambient auto-start (no "Click to Play" button)
-- ✅ Logos fly from back to front continuously
-- ✅ 3-5 logos active at any time
-- ✅ Anti-clustering spawn logic
-- ✅ Click/tap to "shoot" logos
-- ✅ Visual feedback: white → green with glow ring
-- ✅ Custom crosshair cursor
-- ✅ Auto-pause when scrolled off-screen
-- ✅ Auto-resume when scrolled back
-- ✅ Responsive design (mobile & desktop)
-
-### Disabled Features (Commented Out)
-The following UI elements are disabled for a cleaner, more ambient experience:
-- ❌ "Click to Play" overlay
-- ❌ HUD/Scoreboard (hits, accuracy)
-- ❌ Reset button
-- ❌ Game Over screen
-
-**To re-enable:** See inline comments in:
-- `GameControls.tsx`
-- `GameHUD.tsx`
-- `LogoShooter.tsx`
-- `useGameState.ts`
 
 ---
 
@@ -170,7 +164,69 @@ app/components/logo-shooter/
 ├── logoData.ts                # Sponsor logo data & config
 ├── utils.ts                   # Helper functions
 ├── types.ts                   # TypeScript interfaces
-└── README.md                  # This file
+├── README.md                  # This file
+└── PR_DESCRIPTION.md          # Pull request template
+```
+
+---
+
+## 🚀 Integration
+
+**File:** `app/routes/home.tsx`
+
+The game is integrated into the Logo Cloud section with hover activation:
+
+```tsx
+import { useState, useEffect, useRef } from "react";
+import { LogoShooter } from "~/components/logo-shooter";
+
+export default function Home() {
+  const [isGameActive, setIsGameActive] = useState(false);
+  const logoCloudRef = useRef<HTMLDivElement>(null);
+  const [logoCloudIsVisible, setLogoCloudIsVisible] = useState(false);
+
+  // IntersectionObserver for scroll detection
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setLogoCloudIsVisible(entry.isIntersecting),
+      { threshold: 0.2 }
+    );
+    if (logoCloudRef.current) observer.observe(logoCloudRef.current);
+    return () => { if (logoCloudRef.current) observer.unobserve(logoCloudRef.current); };
+  }, []);
+
+  // Deactivate game when scrolled away
+  useEffect(() => {
+    if (!logoCloudIsVisible && isGameActive) {
+      setIsGameActive(false);
+    }
+  }, [logoCloudIsVisible, isGameActive]);
+
+  return (
+    <div
+      ref={logoCloudRef}
+      className={`transition-all duration-500 ${
+        isGameActive ? 'bg-black cursor-crosshair' : 'bg-[var(--brutalist-orange)] cursor-default'
+      }`}
+      onMouseEnter={() => setIsGameActive(true)}
+      onMouseLeave={() => setIsGameActive(false)}
+    >
+      {/* Static Logos - Fade out when game active */}
+      <div className={`transition-opacity duration-500 ${
+        isGameActive ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}>
+        {/* Static sponsor logo grid here */}
+      </div>
+
+      {/* Game - Fade in when active */}
+      {isGameActive && (
+        <div className="absolute inset-0 overflow-hidden">
+          <LogoShooter />
+        </div>
+      )}
+    </div>
+  );
+}
 ```
 
 ---
@@ -191,43 +247,50 @@ export const GAME_CONFIG = {
   DRIFT_X_MAX: 0.3,
   DRIFT_Y_MIN: -0.3,         // Vertical drift range
   DRIFT_Y_MAX: 0.3,
-  Z_FAR: 0,                  // Starting depth
-  Z_NEAR: 100,               // Disappear depth
+  Z_FAR: 0,                  // Starting depth (far away)
+  Z_NEAR: 100,               // Disappear depth (flew past viewer)
   SCALE_MIN: 0.3,            // Smallest logo size
   SCALE_MAX: 1.5,            // Largest logo size
   BASE_LOGO_SIZE: 80,        // Base size in pixels
 };
 ```
 
----
-
-## 🚀 Usage
-
-Already integrated in `app/routes/home.tsx`:
-
-```tsx
-import { LogoShooter } from "~/components/logo-shooter";
-
-<div className="min-h-[400px] md:min-h-[500px]">
-  <LogoShooter />
-</div>
-```
+**Note:** Logo positions are clamped to 5-95% range to prevent escaping the visible area.
 
 ---
 
 ## 🐛 Known Issues / Future Enhancements
 
 - [ ] Logo images not yet implemented (placeholders in use)
-- [ ] Could add sound effects when hitting logos
+- [ ] Could add sound effects when hitting logos (with mute toggle)
 - [ ] Could add particle effects on hit
+- [ ] Could add subtle score counter (fades in only on first hit)
 - [ ] Could add difficulty levels (speed variations)
 
 ---
 
-## 📝 Notes
+## 📝 Technical Notes
 
 - **No dependencies added** - Uses vanilla Canvas 2D API
-- **Performance optimized** - Uses `requestAnimationFrame` and pauses when off-screen
+- **Performance optimized** - Uses `requestAnimationFrame` and `IntersectionObserver`
 - **TypeScript** - Fully typed
-- **Responsive** - Canvas resizes automatically
+- **Responsive** - Canvas resizes automatically to fit container
+- **Accessibility** - Hover area is large, works with touch on mobile
+- **Smooth transitions** - 500ms CSS transitions for background and opacity
+- **Boundary safety** - Logos clamped to 5-95% range to prevent visual bugs
 
+---
+
+## 🔧 Troubleshooting
+
+**Q: Logos escaping the black area?**  
+A: Ensure `overflow-hidden` is applied to the game container in `home.tsx`, and boundary clamping is active in `useGameState.ts` (lines 105-106).
+
+**Q: Game not activating on hover?**  
+A: Check that `onMouseEnter` and `onMouseLeave` are properly attached to the Logo Cloud container in `home.tsx`.
+
+**Q: Background not transitioning smoothly?**  
+A: Ensure `transition-all duration-500` is applied to the main container in `home.tsx`.
+
+**Q: Game not pausing when scrolled away?**  
+A: Verify `IntersectionObserver` is properly set up and `logoCloudIsVisible` state is connected to the deactivation logic.

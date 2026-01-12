@@ -101,9 +101,9 @@ export function useGameState(): UseGameStateReturn {
           // Move logo toward screen
           const newZ = logo.z + logo.velocityZ * deltaTime;
           
-          // Apply drift
-          const newX = logo.x + logo.driftX * deltaTime;
-          const newY = logo.y + logo.driftY * deltaTime;
+          // Apply drift with boundary clamping
+          const newX = Math.max(5, Math.min(95, logo.x + logo.driftX * deltaTime));
+          const newY = Math.max(5, Math.min(95, logo.y + logo.driftY * deltaTime));
           
           // Calculate scale based on depth
           const newScale = mapRange(

@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Await } from "react-router";
 import CTA from "~/components/CTA";
 import SectionDivider from "~/components/SectionDivider";
@@ -46,6 +46,8 @@ function SubstackUpdatesSkeleton() {
 }
 
 export default function Home({ events, substackPosts }: { events: Promise<any>, substackPosts: Promise<any> }) {
+  // State for hover-to-activate Logo Shooter game
+  const [isGameActive, setIsGameActive] = useState(false);
 
   return (
     <main className="bg-[var(--brutalist-beige)]">
@@ -58,11 +60,24 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         {/* Hello section divider - Orange */}
         <SectionDivider color="#ff3d00" />
 
-        {/* Logo Cloud - Orange Background - Now with Shooter Game! */}
+        {/* Logo Cloud - Hover to Activate Shooter Game! */}
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
-          <div id="logoCloud" className="bg-[var(--brutalist-orange)] rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-10 md:gap-x-12 md:gap-y-12 items-center justify-items-center opacity-100">
+          <div 
+            id="logoCloud" 
+            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 ${
+              isGameActive 
+                ? 'bg-black cursor-crosshair' 
+                : 'bg-[var(--brutalist-orange)] cursor-default'
+            }`}
+            onMouseEnter={() => setIsGameActive(true)}
+            onMouseLeave={() => setIsGameActive(false)}
+          >
+            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+              {/* Static Logos - Fade out when game active */}
+              <div className={`transition-opacity duration-500 ${
+                isGameActive ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-10 md:gap-x-12 md:gap-y-12 items-center justify-items-center">
                 {/* Row 1 */}
                 <img
                   className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
@@ -155,6 +170,16 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
                   </a>
                 </p>
               </div>
+              </div>
+
+              {/* Logo Shooter Game - Fade in when active */}
+              {isGameActive && (
+                <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-500 animate-in fade-in-0 overflow-hidden">
+                  <div className="w-full h-full min-h-[400px] md:min-h-[500px]">
+                    <LogoShooter />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
