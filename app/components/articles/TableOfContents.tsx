@@ -69,17 +69,21 @@ export function TableOfContents({
   return (
     <nav
       aria-label={ariaLabel}
-      className={clsx('mb-8', className)}
+      className={clsx('text-gray-900', className)}
       data-article-toc-component="true"
       {...props}
     >
-      {title ? <h3 className="mb-3 text-sm font-semibold text-slate-900">{title}</h3> : null}
+      {title ? (
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-700">
+          {title}
+        </h3>
+      ) : null}
       <ol className="space-y-2" role="list" data-article-toc-collapsible="true">
         {displayGroups.map(({ heading }) => (
           <li key={heading.href} className="list-none">
             <a
               href={heading.href}
-              className="text-sm font-semibold text-indigo-700 underline-offset-4 hover:underline focus-visible:outline-none focus-visible:underline"
+              className="text-sm leading-5 font-medium text-indigo-700 underline underline-offset-4 hover:text-indigo-800 transition-colors"
             >
               {removeEmoji(heading.label)}
             </a>

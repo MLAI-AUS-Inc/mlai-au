@@ -153,10 +153,10 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-3 left-3 z-50">
         <button
           type="button"
-          className="inline-flex items-center justify-center rounded-lg p-2.5 bg-[var(--brutalist-beige)] border-2 border-[var(--brutalist-border)] shadow-md"
+          className="inline-flex items-center justify-center rounded-xl p-3 bg-[var(--brutalist-beige)] border-2 border-[var(--brutalist-border)] shadow-md min-w-[48px] min-h-[48px]"
           onClick={() => setMobileMenuOpen(true)}
         >
           <span className="sr-only">Open main menu</span>
@@ -227,7 +227,8 @@ export default function Sidebar() {
         onClose={setMobileMenuOpen}
         className="lg:hidden"
       >
-        <div className="fixed inset-0 z-50 bg-black bg-opacity-50" />
+        {/* 80% Transparent overlay - click to close */}
+        <div className="fixed inset-0 z-50 bg-black/20" onClick={() => setMobileMenuOpen(false)} />
         <Dialog.Panel className="fixed inset-y-0 left-0 z-50 w-full max-w-xs overflow-y-auto bg-[var(--brutalist-beige)] px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <a href="/" className="block w-16 h-16 rounded-lg bg-[var(--brutalist-mint)] overflow-hidden p-1 flex items-center justify-center">

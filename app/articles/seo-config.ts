@@ -50,6 +50,28 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             faq: { enabled: true },
         },
     },
+    '/articles/featured/how-to-start-a-startup-and-use-ai-to-make-it-easy': {
+        toc: true,
+        howTo: false,
+        mediaObject: true,
+        citations: true,
+        internalLinks: [],
+        structuredData: {
+            article: true,
+            faq: { enabled: true },
+        },
+    },
+    '/articles/featured/how-to-get-started-with-ai-2026': {
+        toc: true,
+        howTo: false,
+        mediaObject: true,
+        citations: true,
+        internalLinks: [],
+        structuredData: {
+            article: true,
+            faq: { enabled: true },
+        },
+    },
 };
 
 export const canonical = (path: string) => {

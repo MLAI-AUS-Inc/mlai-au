@@ -9,6 +9,7 @@ import { ArticleResourceCTA } from '../../../components/articles/blocks/ArticleR
 import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
 import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'The Australian Founder Playbook for 2026: Start Lean, Use AI Wisely, Build Trust Fast'
@@ -108,7 +109,7 @@ export const summaryHighlights = {
 
 /** When true, this article renders its own custom header and the default ArticleLayout header should be hidden */
 export const useCustomHeader = true
-
+export const useInlineToc = true
 
 export default function ArticlePage() {
   const authors = [
@@ -133,7 +134,7 @@ export default function ArticlePage() {
   ]
 
   const breadcrumbs = [
-    { label: 'Home', href: '/', icon: Home },
+    { label: 'Home', href: '/articles', icon: Home },
     { label: 'How to Start a Startup and Use AI to Make It Easy (2026)', current: true }
   ]
 
@@ -153,6 +154,10 @@ export default function ArticlePage() {
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
+
+      <ArticleTocPlaceholder className="mb-12">
+        {/* Rendered via portal by ArticleEnhancer */}
+      </ArticleTocPlaceholder>
 
       <h2>What this playbook covers</h2>
       <p>

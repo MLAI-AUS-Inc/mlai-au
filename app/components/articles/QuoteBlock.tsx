@@ -50,7 +50,7 @@ export function QuoteBlock({
           ) : null}
         </div>
       )}
-      <div className="text-base sm:text-lg leading-relaxed font-medium">{children}</div>
+      <div className="text-base leading-relaxed font-normal">{children}</div>
     </div>
   )
 }

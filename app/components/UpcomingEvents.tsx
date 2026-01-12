@@ -49,48 +49,48 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
   return (
     <section id="upcoming-events" className="w-full bg-[var(--brutalist-beige)] p-2 lg:p-3">
       {/* Full width container with rounded corners - Purple Background */}
-      <div className="w-full bg-[var(--brutalist-purple)] rounded-[2.5rem] p-6 lg:p-12 relative overflow-hidden">
+      <div className="w-full bg-[var(--brutalist-purple)] rounded-2xl sm:rounded-[2.5rem] p-4 sm:p-6 lg:p-12 relative overflow-hidden">
         {/* Header */}
-        <h2 className="text-4xl lg:text-6xl font-bold text-white mb-8 lg:mb-12 font-display tracking-tight">
+        <h2 className="text-2xl sm:text-4xl lg:text-6xl font-bold text-white mb-4 sm:mb-8 lg:mb-12 font-display tracking-tight">
           Upcoming Events
         </h2>
 
         {/* Events List */}
-        <div className="space-y-4 lg:space-y-6">
+        <div className="space-y-3 sm:space-y-4 lg:space-y-6">
           {events.length === 0 ? (
-            <p className="text-center text-white/80 py-12 text-lg">No upcoming events at this time</p>
+            <p className="text-center text-white/80 py-8 sm:py-12 text-base sm:text-lg">No upcoming events at this time</p>
           ) : (
             currentEvents.map((event) => {
               const dateParts = formatDateParts(event.startDate);
               return (
                 <div
                   key={event._id}
-                  className="group bg-transparent border border-white/20 rounded-2xl p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center gap-4 lg:gap-6 transition-all duration-300 hover:bg-white/5 hover:border-white/40 hover:shadow-lg"
+                  className="group bg-transparent border border-white/20 rounded-xl sm:rounded-2xl p-3 sm:p-4 lg:p-5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 lg:gap-6 transition-all duration-300 hover:bg-white/5 hover:border-white/40 hover:shadow-lg"
                 >
                   {/* Date Box */}
-                  <div className="flex-shrink-0 bg-[var(--brutalist-orange)] rounded-xl px-4 py-3 text-center min-w-[80px] lg:min-w-[95px] self-start lg:self-center shadow-md transform transition-transform group-hover:scale-105">
-                    <div className="text-2xl lg:text-3xl font-bold text-white leading-none font-display">
+                  <div className="flex-shrink-0 bg-[var(--brutalist-orange)] rounded-lg sm:rounded-xl px-3 py-2 sm:px-4 sm:py-3 text-center min-w-[70px] sm:min-w-[80px] lg:min-w-[95px] self-start sm:self-center shadow-md transform transition-transform group-hover:scale-105">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-bold text-white leading-none font-display">
                       {dateParts.day}
                     </div>
-                    <div className="text-sm lg:text-base font-bold text-white uppercase tracking-wide">
+                    <div className="text-xs sm:text-sm lg:text-base font-bold text-white uppercase tracking-wide">
                       {dateParts.month}
                     </div>
-                    <div className="text-xs text-white/90 mt-1 font-medium">
+                    <div className="text-[10px] sm:text-xs text-white/90 mt-0.5 sm:mt-1 font-medium">
                       {dateParts.time}
                     </div>
                   </div>
 
                   {/* Event Details */}
                   <div className="flex-grow min-w-0">
-                    <h3 className="text-lg lg:text-2xl font-bold text-white leading-tight mb-2 line-clamp-2 group-hover:text-[var(--brutalist-orange)] transition-colors">
+                    <h3 className="text-base sm:text-lg lg:text-2xl font-bold text-white leading-tight mb-1 sm:mb-2 line-clamp-2 group-hover:text-[var(--brutalist-orange)] transition-colors">
                       {event.name}
                     </h3>
-                    <div className="flex items-start gap-2 text-white/80">
+                    <div className="flex items-start gap-1.5 sm:gap-2 text-white/80">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-5 h-5 flex-shrink-0 text-[var(--brutalist-orange)] mt-0.5"
+                        className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0 text-[var(--brutalist-orange)] mt-0.5"
                       >
                         <path
                           fillRule="evenodd"
@@ -98,15 +98,15 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                           clipRule="evenodd"
                         />
                       </svg>
-                      <span className="text-sm lg:text-lg line-clamp-1 font-medium">
+                      <span className="text-xs sm:text-sm lg:text-lg line-clamp-1 font-medium">
                         {event.eventLocation.address || "Location TBA"}
                       </span>
                     </div>
                   </div>
 
-                  {/* Thumbnail - Shows below on mobile, inline on desktop */}
+                  {/* Thumbnail - Hidden on very small screens, shows on sm+ */}
                   {event.bannerImage?.url && (
-                    <div className="flex-shrink-0 w-full lg:w-40 h-32 lg:h-24 rounded-xl overflow-hidden order-last lg:order-none border border-white/10 shadow-sm group-hover:shadow-md transition-shadow">
+                    <div className="hidden sm:block flex-shrink-0 w-32 lg:w-40 h-20 lg:h-24 rounded-lg lg:rounded-xl overflow-hidden order-last lg:order-none border border-white/10 shadow-sm group-hover:shadow-md transition-shadow">
                       <img
                         src={event.bannerImage.url}
                         alt=""
@@ -120,7 +120,7 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                     href={getEventUrl(event)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex-shrink-0 bg-[var(--brutalist-orange)] text-white font-bold px-6 py-3 rounded-xl text-center transition-all duration-200 hover:bg-[#E85D04] hover:scale-105 active:scale-95 self-start lg:self-center shadow-md whitespace-nowrap"
+                    className="flex-shrink-0 bg-[var(--brutalist-orange)] text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-center text-sm sm:text-base transition-all duration-200 hover:bg-[#E85D04] hover:scale-105 active:scale-95 self-stretch sm:self-center shadow-md whitespace-nowrap min-h-[44px] flex items-center justify-center"
                   >
                     Register
                   </a>
@@ -132,12 +132,12 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
 
         {/* Navigation & Pagination */}
         {events.length > eventsPerPage && (
-          <div className="flex items-center justify-center gap-4 mt-8 lg:mt-12">
-            {/* Previous Button */}
+          <div className="flex items-center justify-center gap-3 sm:gap-4 mt-6 sm:mt-8 lg:mt-12">
+            {/* Previous Button - 44px touch target */}
             <button
               onClick={handlePrev}
               disabled={currentPage === 0}
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center transition-all duration-200 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+              className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-white/10 text-white flex items-center justify-center transition-all duration-200 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
               aria-label="Previous events"
             >
               <svg
@@ -154,13 +154,13 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
               </svg>
             </button>
 
-            {/* Pagination Dots */}
-            <div className="flex items-center gap-2">
+            {/* Pagination Dots - Larger on mobile for touch */}
+            <div className="flex items-center gap-2 sm:gap-2">
               {Array.from({ length: totalPages }).map((_, index) => (
                 <button
                   key={index}
                   onClick={() => setCurrentPage(index)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${currentPage === index
+                  className={`w-4 h-4 sm:w-3 sm:h-3 rounded-full transition-all duration-200 ${currentPage === index
                     ? "bg-white scale-125"
                     : "bg-white/30 hover:bg-white/50"
                     }`}
@@ -169,11 +169,11 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
               ))}
             </div>
 
-            {/* Next Button */}
+            {/* Next Button - 44px touch target */}
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages - 1}
-              className="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center transition-all duration-200 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
+              className="w-11 h-11 sm:w-10 sm:h-10 rounded-full bg-white/10 text-white flex items-center justify-center transition-all duration-200 hover:bg-white/20 disabled:opacity-30 disabled:cursor-not-allowed hover:scale-105 active:scale-95"
               aria-label="Next events"
             >
               <svg
