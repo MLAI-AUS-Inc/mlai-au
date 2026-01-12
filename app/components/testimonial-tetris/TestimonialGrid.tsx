@@ -131,7 +131,7 @@ export function TestimonialGrid({
         {/* Falling Piece */}
         {gameState.currentPiece && gameState.mode === 'playing' && (
           <TestimonialBlock
-            key="falling"
+            key={gameState.currentPiece.id}
             testimonial={gameState.currentPiece.testimonial}
             gridCol={gameState.currentPiece.x}
             gridRow={gameState.currentPiece.y}
