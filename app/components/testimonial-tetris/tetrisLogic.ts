@@ -3,15 +3,8 @@
  * Handles collision detection, rotation, line clearing
  */
 
-import type {
-  GameGrid,
-  GamePiece,
-  TetrominoShape,
-  TetrominoType,
-  LockedCell,
-  ColorKey,
-} from './types';
-import { GAME_CONFIG } from './testimonialData';
+import { GAME_CONFIG } from "./testimonialData";
+import type { GameGrid, GamePiece, TetrominoType } from "./types";
 
 // ============================================
 // TETROMINO SHAPES (Simplified - 4 shapes)
@@ -73,7 +66,7 @@ export function isPositionValid(
   offsetY = 0
 ): boolean {
   const shape = getRotatedShape(piece.shape.type, piece.rotation);
-  
+
   for (let row = 0; row < shape.length; row++) {
     for (let col = 0; col < shape[row].length; col++) {
       if (shape[row][col]) {
@@ -111,11 +104,13 @@ export function lockPiece(grid: GameGrid, piece: GamePiece): GameGrid {
       if (shape[row][col]) {
         const y = piece.y + row;
         const x = piece.x + col;
-        
+
         if (y >= 0 && y < GAME_CONFIG.GRID_ROWS) {
           newGrid[y][x] = {
             color: piece.shape.color,
             testimonialId: piece.testimonial.id,
+            pieceId: piece.id, // Store unique piece ID
+            rotation: piece.rotation, // Store rotation state
           };
         }
       }
@@ -163,7 +158,10 @@ export function clearLines(grid: GameGrid, linesToClear: number[]): GameGrid {
 /**
  * Get the shape matrix for a given rotation
  */
-export function getRotatedShape(type: TetrominoType, rotation: number): number[][] {
+export function getRotatedShape(
+  type: TetrominoType,
+  rotation: number
+): number[][] {
   const shapes = TETROMINO_SHAPES[type];
   const normalizedRotation = rotation % shapes.length;
   return shapes[normalizedRotation];
@@ -175,7 +173,7 @@ export function getRotatedShape(type: TetrominoType, rotation: number): number[]
 export function tryRotate(grid: GameGrid, piece: GamePiece): GamePiece | null {
   const shapes = TETROMINO_SHAPES[piece.shape.type];
   const newRotation = (piece.rotation + 1) % shapes.length;
-  
+
   const rotatedPiece = {
     ...piece,
     rotation: newRotation,
@@ -188,7 +186,7 @@ export function tryRotate(grid: GameGrid, piece: GamePiece): GamePiece | null {
 
   // Try wall kick (shift left or right if rotation fails)
   const kicks = [-1, 1, -2, 2]; // try left, right, further left, further right
-  
+
   for (const kick of kicks) {
     if (isPositionValid(grid, rotatedPiece, kick, 0)) {
       return {
@@ -221,4 +219,3 @@ export function getPieceWidth(piece: GamePiece): number {
   const shape = getRotatedShape(piece.shape.type, piece.rotation);
   return shape[0].length;
 }
-

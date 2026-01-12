@@ -3,8 +3,8 @@
  * Reusable testimonial card matching original design
  */
 
-import type { Testimonial } from './types';
-import { TETRIS_COLORS } from './testimonialData';
+import { TETRIS_COLORS } from "./testimonialData";
+import type { Testimonial } from "./types";
 
 interface TestimonialBlockProps {
   testimonial: Testimonial;
@@ -30,18 +30,27 @@ export function TestimonialBlock({
   const backgroundColor = TETRIS_COLORS[testimonial.color];
 
   // Determine text color based on background
-  const textColor = ['yellow', 'mint'].includes(testimonial.color)
-    ? '#1a1a1a'
-    : '#ffffff';
+  const textColor = ["yellow", "mint"].includes(testimonial.color)
+    ? "#1a1a1a"
+    : "#ffffff";
 
   // Check if this is a decorative block (no text)
   const isDecorative = !testimonial.body && !testimonial.author.name;
+  const isClickable = onClick && !isDecorative;
+
+  // Handle keyboard activation
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isClickable && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  };
 
   return (
     <div
       className={`absolute rounded-3xl shadow-lg transition-all ${
-        isAnimating ? 'duration-100' : 'duration-300'
-      } ${onClick && !isDecorative ? 'cursor-pointer hover:scale-[1.02]' : ''}`}
+        isAnimating ? "duration-100" : "duration-300"
+      } ${isClickable ? "cursor-pointer hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white" : ""}`}
       style={{
         left: `${left}px`,
         top: `${top}px`,
@@ -50,7 +59,15 @@ export function TestimonialBlock({
         backgroundColor,
         color: textColor,
       }}
-      onClick={!isDecorative ? onClick : undefined}
+      role={isClickable ? "button" : undefined}
+      tabIndex={isClickable ? 0 : undefined}
+      onClick={isClickable ? onClick : undefined}
+      onKeyDown={isClickable ? handleKeyDown : undefined}
+      aria-label={
+        isClickable
+          ? `View testimonial from ${testimonial.author.name}`
+          : undefined
+      }
     >
       {!isDecorative ? (
         <div className="p-2.5 h-full flex flex-col justify-between">
@@ -69,8 +86,12 @@ export function TestimonialBlock({
               />
             )}
             <div className="text-[10px] min-w-0">
-              <div className="font-semibold truncate">— {testimonial.author.name}</div>
-              <div className="opacity-80 truncate">{testimonial.author.handle}</div>
+              <div className="font-semibold truncate">
+                — {testimonial.author.name}
+              </div>
+              <div className="opacity-80 truncate">
+                {testimonial.author.handle}
+              </div>
             </div>
           </div>
         </div>
@@ -78,4 +99,3 @@ export function TestimonialBlock({
     </div>
   );
 }
-

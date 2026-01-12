@@ -2,9 +2,16 @@
  * Type definitions for Testimonial Tetris Game
  */
 
-export type GameMode = 'idle' | 'playing' | 'paused' | 'gameOver';
+export type GameMode = "idle" | "playing" | "paused" | "gameOver";
 
-export type ColorKey = 'orange' | 'purple' | 'black' | 'blue' | 'pink' | 'yellow' | 'mint';
+export type ColorKey =
+  | "orange"
+  | "purple"
+  | "black"
+  | "blue"
+  | "pink"
+  | "yellow"
+  | "mint";
 
 // Testimonial data structure
 export interface Testimonial {
@@ -21,7 +28,7 @@ export interface Testimonial {
 }
 
 // Tetromino shape types (simplified to 4 shapes)
-export type TetrominoType = 'I' | 'O' | 'T' | 'L';
+export type TetrominoType = "I" | "O" | "T" | "L";
 
 // Tetromino shape definition
 export interface TetrominoShape {
@@ -35,7 +42,7 @@ export interface GamePiece {
   shape: TetrominoShape;
   x: number; // grid column position
   y: number; // grid row position
-  rotation: number; // 0-3 (4 rotation states)
+  rotation: number; // 0 = normal, 1 = rotated 90° (swapped width/height)
   testimonial: Testimonial; // the testimonial this piece represents
   id: string; // Unique ID for this piece instance
 }
@@ -45,6 +52,7 @@ export interface LockedCell {
   color: ColorKey;
   testimonialId: number;
   pieceId: string; // Unique ID for each piece instance
+  rotation: number; // Rotation state when locked (0 = normal, 1 = rotated 90°)
 }
 
 // Game grid (2D array)
@@ -66,4 +74,3 @@ export interface GameState {
   stats: GameStats;
   isAnimatingClear: boolean;
 }
-

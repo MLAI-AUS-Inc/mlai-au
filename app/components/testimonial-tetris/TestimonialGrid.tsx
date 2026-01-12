@@ -3,10 +3,10 @@
  * Renders game state using positioned divs instead of canvas
  */
 
-import { useRef, useEffect, useState } from 'react';
-import type { GameState } from './types';
-import { GAME_CONFIG, TESTIMONIALS } from './testimonialData';
-import { TestimonialBlock } from './TestimonialBlock';
+import { useEffect, useRef, useState } from "react";
+import { TestimonialBlock } from "./TestimonialBlock";
+import { GAME_CONFIG, TESTIMONIALS } from "./testimonialData";
+import type { GameState } from "./types";
 
 interface TestimonialGridProps {
   gameState: GameState;
@@ -26,26 +26,36 @@ export function TestimonialGrid({
       if (!containerRef.current) return;
       const containerWidth = containerRef.current.clientWidth;
       const containerHeight = containerRef.current.clientHeight;
-      
+
       // Calculate max cell size that fits both width and height
-      const cellSizeByWidth = Math.floor(containerWidth / GAME_CONFIG.GRID_COLS);
-      const cellSizeByHeight = Math.floor(containerHeight / GAME_CONFIG.GRID_ROWS);
-      
+      const cellSizeByWidth = Math.floor(
+        containerWidth / GAME_CONFIG.GRID_COLS
+      );
+      const cellSizeByHeight = Math.floor(
+        containerHeight / GAME_CONFIG.GRID_ROWS
+      );
+
       // Use the smaller of the two to ensure everything fits
       const calculatedCellSize = Math.min(cellSizeByWidth, cellSizeByHeight);
       setCellSize(Math.min(calculatedCellSize, GAME_CONFIG.CELL_SIZE));
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const gridWidth = GAME_CONFIG.GRID_COLS * cellSize;
   const gridHeight = GAME_CONFIG.GRID_ROWS * cellSize;
 
   // Find all contiguous testimonial blocks by pieceId (prevents merging)
-  const lockedTestimonials: Array<{ testimonialId: number; col: number; row: number; key: string }> = [];
+  const lockedTestimonials: Array<{
+    testimonialId: number;
+    col: number;
+    row: number;
+    rotation: number;
+    key: string;
+  }> = [];
   const visited = new Set<string>();
 
   gameState.grid.forEach((row, rowIndex) => {
@@ -55,8 +65,11 @@ export function TestimonialGrid({
       // Found an unvisited cell - flood fill to find the entire piece
       const pieceId = cell.pieceId;
       const testimonialId = cell.testimonialId;
+      const rotation = cell.rotation; // Get rotation from the first cell
       const blockCells: Array<{ row: number; col: number }> = [];
-      const queue: Array<{ row: number; col: number }> = [{ row: rowIndex, col: colIndex }];
+      const queue: Array<{ row: number; col: number }> = [
+        { row: rowIndex, col: colIndex },
+      ];
 
       while (queue.length > 0) {
         const current = queue.shift()!;
@@ -84,12 +97,13 @@ export function TestimonialGrid({
 
       // Find top-left corner of this piece
       if (blockCells.length > 0) {
-        const minCol = Math.min(...blockCells.map(c => c.col));
-        const minRow = Math.min(...blockCells.map(c => c.row));
+        const minCol = Math.min(...blockCells.map((c) => c.col));
+        const minRow = Math.min(...blockCells.map((c) => c.row));
         lockedTestimonials.push({
           testimonialId,
           col: minCol,
           row: minRow,
+          rotation, // Store rotation state
           key: pieceId, // Use pieceId as key
         });
       }
@@ -97,7 +111,10 @@ export function TestimonialGrid({
   });
 
   return (
-    <div ref={containerRef} className="w-full h-full flex items-center justify-center">
+    <div
+      ref={containerRef}
+      className="w-full h-full flex items-center justify-center"
+    >
       <div
         className="relative overflow-hidden w-full h-full"
         style={{
@@ -113,13 +130,30 @@ export function TestimonialGrid({
             return a.col - b.col;
           })
           .map((block) => {
-            const testimonial = TESTIMONIALS.find((t) => t.id === block.testimonialId);
+            const testimonial = TESTIMONIALS.find(
+              (t) => t.id === block.testimonialId
+            );
             if (!testimonial) return null;
+
+            // Apply rotation to testimonial dimensions for rendering
+            const baseWidth = testimonial.gridWidth;
+            const baseHeight = testimonial.gridHeight;
+            const effectiveWidth =
+              block.rotation === 0 ? baseWidth : baseHeight;
+            const effectiveHeight =
+              block.rotation === 0 ? baseHeight : baseWidth;
+
+            // Create testimonial with rotated dimensions
+            const rotatedTestimonial = {
+              ...testimonial,
+              gridWidth: effectiveWidth,
+              gridHeight: effectiveHeight,
+            };
 
             return (
               <TestimonialBlock
                 key={block.key}
-                testimonial={testimonial}
+                testimonial={rotatedTestimonial}
                 gridCol={block.col}
                 gridRow={block.row}
                 cellSize={cellSize}
@@ -129,18 +163,37 @@ export function TestimonialGrid({
           })}
 
         {/* Falling Piece */}
-        {gameState.currentPiece && gameState.mode === 'playing' && (
-          <TestimonialBlock
-            key={gameState.currentPiece.id}
-            testimonial={gameState.currentPiece.testimonial}
-            gridCol={gameState.currentPiece.x}
-            gridRow={gameState.currentPiece.y}
-            cellSize={cellSize}
-            isAnimating
-          />
-        )}
+        {gameState.currentPiece &&
+          gameState.mode === "playing" &&
+          (() => {
+            const piece = gameState.currentPiece;
+            // Get rotated dimensions for rendering
+            const baseWidth = piece.testimonial.gridWidth;
+            const baseHeight = piece.testimonial.gridHeight;
+            const effectiveWidth =
+              piece.rotation === 0 ? baseWidth : baseHeight;
+            const effectiveHeight =
+              piece.rotation === 0 ? baseHeight : baseWidth;
+
+            // Create a temporary testimonial with rotated dimensions for rendering
+            const rotatedTestimonial = {
+              ...piece.testimonial,
+              gridWidth: effectiveWidth,
+              gridHeight: effectiveHeight,
+            };
+
+            return (
+              <TestimonialBlock
+                key={piece.id}
+                testimonial={rotatedTestimonial}
+                gridCol={piece.x}
+                gridRow={piece.y}
+                cellSize={cellSize}
+                isAnimating
+              />
+            );
+          })()}
       </div>
     </div>
   );
 }
-
