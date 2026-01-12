@@ -1,11 +1,14 @@
-import { Link } from 'react-router'
 import type { ReactNode } from 'react'
+import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../../../data/types'
 import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
+import { ArticleCallout } from '../../../components/articles/blocks/ArticleCallout'
+import { ArticleStepList } from '../../../components/articles/blocks/ArticleStepList'
+import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'AI hackathons and events in Melbourne'
@@ -64,6 +67,8 @@ export const summaryHighlights = {
   ],
 }
 
+export const useCustomHeader = true
+
 export default function ArticlePage() {
   const authorDetails = {
     name: AUTHOR,
@@ -72,25 +77,34 @@ export default function ArticlePage() {
     avatarUrl: AUTHOR_AVATAR
   }
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/', icon: Home },
+    { label: TOPIC, current: true }
+  ]
+
   return (
-    <div className="bg-white">
+    <div>
+      <ArticleHeroHeader
+        breadcrumbs={breadcrumbs}
+        title={TOPIC}
+        headerBgColor="cyan"
+        summary={{
+          heading: summaryHighlights.heading,
+          intro: summaryHighlights.intro,
+          items: summaryHighlights.items,
+        }}
+        heroImage={HERO_IMAGE}
+        heroImageAlt={HERO_IMAGE_ALT}
+      />
 
+      <ArticleCallout title="Quick note" icon={<span className="text-xl">💡</span>} variant="brand">
+        This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
+        <a href="/articles" className="font-semibold text-[--brand-ink] underline-offset-4 hover:underline">
+          Browse related articles →
+        </a>
+      </ArticleCallout>
 
-
-      {/* 1) Intro alert - Clean, neutral style */}
-      <div className="my-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-700 flex gap-2">
-          <span className="text-xl">💡</span>
-          <span>
-            This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-indigo-600 hover:underline">
-              Browse related articles →
-            </Link>
-          </span>
-        </p>
-      </div>
-
-      {/* 2) Persona Grid - Clean Cards, No Heavy Colors */}
+      {/* Persona Grid */}
       <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="mb-4 h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
@@ -132,9 +146,7 @@ export default function ArticlePage() {
           <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025 landscape.
         </p>
 
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10" />
-        </div>
+        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
         <h2>What is {TOPIC}?</h2>
         <p>
@@ -145,15 +157,10 @@ export default function ArticlePage() {
         </p>
 
         <h2>Why it matters in 2025</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9e2a2cc2-a4e5-40fb-952c-863d2c2455eb.jpg?alt=media&token=01dfdfd7-da95-4140-82e1-4e7e9a69bdcc"
-            alt="People collaborating in a retro tech startup setting, embodying the spirit of innovation in 2025."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9e2a2cc2-a4e5-40fb-952c-863d2c2455eb.jpg?alt=media&token=01dfdfd7-da95-4140-82e1-4e7e9a69bdcc"
+          alt="People collaborating in a retro tech startup setting, embodying the spirit of innovation in 2025."
+        />
 
         <p>
           Melbourne’s AI ecosystem is expanding with new university research centres, state-backed innovation grants, and an influx of applied AI roles in health, fintech, and logistics. Hackathons are a practical way to pressure-test ideas, meet collaborators, and gain feedback from engineers and domain experts. Ignoring these events can mean missing partnership opportunities, datasets, and early user validation.
@@ -162,25 +169,15 @@ export default function ArticlePage() {
           In 2025, organisers increasingly emphasise responsible AI: teams are asked to document data provenance, bias considerations, and evaluation steps. Events that surface well-documented, safety-aware prototypes tend to perform better with judges and potential partners.
         </p>
 
-        <div className="my-8 border-l-4 border-indigo-500 bg-indigo-50/50 pl-6 py-4 pr-4 rounded-r-lg">
-          <h4 className="font-semibold text-indigo-900 flex items-center gap-2">
-            <span className="text-xl">💡</span> Pro Tip
-          </h4>
-          <p className="mt-1 text-gray-700">
-            Arrive with a sketched user flow and pre-tested API keys so your team spends the first hour building, not debugging access.
-          </p>
-        </div>
+        <ArticleCallout title="Pro Tip" icon={<span className="text-xl">💡</span>} variant="brand">
+          Arrive with a sketched user flow and pre-tested API keys so your team spends the first hour building, not debugging access.
+        </ArticleCallout>
 
         <h2>Step-by-Step Guide</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e4e95bde-f9ee-41ea-918d-0a36a2f87325.jpg?alt=media&token=99c9450a-725d-48f6-b577-160176dccfe4"
-            alt="People collaborating in a vibrant tech startup, captured in a nostalgic 90s film aesthetic."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e4e95bde-f9ee-41ea-918d-0a36a2f87325.jpg?alt=media&token=99c9450a-725d-48f6-b577-160176dccfe4"
+          alt="People collaborating in a vibrant tech startup, captured in a nostalgic 90s film aesthetic."
+        />
 
 
         <h3>Step 1: Preparation</h3>
@@ -212,23 +209,15 @@ export default function ArticlePage() {
           AI hackathons and events in Melbourne offer fast feedback, credible mentors, and community connections. Prepare a balanced team, build a narrow but reliable slice, and foreground responsible AI choices. Doing so improves your odds of a strong demo and meaningful post-event opportunities.
         </p>
 
-        <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-          <ul className="space-y-3">
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-              <span>Download the checklist mentioned above.</span>
-            </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-              <span>Draft your initial goals based on the template.</span>
-            </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-              <span>Discuss with your team or mentor.</span>
-            </li>
-          </ul>
-        </div>
+        <ArticleStepList
+          title="Your Next Steps"
+          steps={[
+            'Download the checklist mentioned above.',
+            'Draft your initial goals based on the template.',
+            'Discuss with your team or mentor.',
+          ]}
+          accent="brand"
+        />
 
         <div className="my-12">
           {/* Contextual CTA - Best placement for conversion */}
@@ -242,22 +231,15 @@ export default function ArticlePage() {
         </div>
       </div>
 
-      {/* Author Bio & Footer */}
       <hr className="my-10 border-gray-100" />
 
-      <AuthorBio author={authorDetails} />
+      <AuthorBio authors={[authorDetails]} />
 
-      {/* FAQ Section */}
       <div className="mt-12">
         <ArticleFAQ items={faqItems} />
       </div>
 
-      {/* Final Breadcrumb/Nav */}
-      <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-        <Link to="/articles" className="hover:text-indigo-600 transition-colors">← Back to Articles</Link>
-        <a href="#" className="hover:text-indigo-600 transition-colors">Top of page ↑</a>
-      </div>
-
+      <ArticleFooterNav />
 
     </div>
   )

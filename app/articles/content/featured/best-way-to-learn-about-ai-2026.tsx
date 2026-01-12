@@ -1,10 +1,14 @@
-import { Link } from 'react-router'
 import type { ReactNode } from 'react'
+import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
 import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
+import { ArticleCallout } from '../../../components/articles/blocks/ArticleCallout'
+import { ArticleStepList } from '../../../components/articles/blocks/ArticleStepList'
+import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = 'Best way to learn about AI in 2026'
@@ -57,6 +61,8 @@ export const summaryHighlights = {
   ],
 }
 
+export const useCustomHeader = true
+
 export default function ArticlePage() {
   const authorDetails = {
     name: AUTHOR,
@@ -65,20 +71,32 @@ export default function ArticlePage() {
     avatarUrl: AUTHOR_AVATAR,
   }
 
+  const breadcrumbs = [
+    { label: 'Home', href: '/', icon: Home },
+    { label: TOPIC, current: true },
+  ]
+
   return (
-    <div className="bg-white">
-      {/* 1) Intro alert - Clean, neutral style */}
-      <div className="my-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <p className="text-sm text-gray-700 flex gap-2">
-          <span className="text-xl">💡</span>
-          <span>
-            This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-indigo-600 hover:underline">
-              Browse related articles →
-            </Link>
-          </span>
-        </p>
-      </div>
+    <div>
+      <ArticleHeroHeader
+        breadcrumbs={breadcrumbs}
+        title={TOPIC}
+        headerBgColor="cyan"
+        summary={{
+          heading: summaryHighlights.heading,
+          intro: summaryHighlights.intro,
+          items: summaryHighlights.items,
+        }}
+        heroImage={HERO_IMAGE}
+        heroImageAlt={HERO_IMAGE_ALT}
+      />
+
+      <ArticleCallout title="Quick note" icon={<span className="text-xl">💡</span>} variant="brand">
+        This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
+        <a href="/articles" className="font-semibold text-[--brand-ink] underline-offset-4 hover:underline">
+          Browse related articles →
+        </a>
+      </ArticleCallout>
 
       {/* 2) Persona Grid - Clean Cards, No Heavy Colors */}
       <div className="my-10 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -134,9 +152,7 @@ export default function ArticlePage() {
           <strong>{TOPIC}</strong> helps Australian founders and teams avoid common pitfalls. This guide is designed to be actionable, evidence-based, and tailored to the 2025 landscape.
         </p>
 
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10" />
-        </div>
+        <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
         <h2>What is {TOPIC}?</h2>
         <p>
@@ -147,15 +163,10 @@ export default function ArticlePage() {
         </p>
 
         <h2>Why it matters in 2025</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-d0264b00-0aed-477b-b0f1-54e6c2ede32b.jpg?alt=media&token=39f07a8d-e29a-414c-af1e-6400562d29f4"
-            alt="People collaborating in a vibrant tech startup environment with a nostalgic 90s film aesthetic."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-d0264b00-0aed-477b-b0f1-54e6c2ede32b.jpg?alt=media&token=39f07a8d-e29a-414c-af1e-6400562d29f4"
+          alt="People collaborating in a vibrant tech startup environment with a nostalgic 90s film aesthetic."
+        />
 
         <p>
           Generative AI is now embedded in productivity stacks, customer support, and analytics. Ignoring it risks slower delivery, higher costs, and compliance gaps. Acting now matters because Australian organisations are formalising AI governance in procurement and vendor risk assessments. Being able to explain data lineage, consent, and evaluation metrics is becoming table stakes for roles across product, engineering, and operations.
@@ -164,23 +175,15 @@ export default function ArticlePage() {
           The 2025 hiring market rewards candidates who can move from prototype to production responsibly. If you can show model comparisons (e.g., perplexity vs. cost), basic prompt evaluation, and a privacy-first approach, you will stand out without needing a decade of experience.
         </p>
 
-        <div className="my-8 border-l-4 border-indigo-500 bg-indigo-50/50 pl-6 py-4 pr-4 rounded-r-lg">
-          <h4 className="font-semibold text-indigo-900 flex items-center gap-2">
-            <span className="text-xl">💡</span> Pro Tip
-          </h4>
-          <p className="mt-1 text-gray-700">Pair every course module with a tiny project (one notebook, one README) and publish it; shipping weekly beats cramming theory.</p>
-        </div>
+        <ArticleCallout title="Pro Tip" icon={<span className="text-xl">💡</span>} variant="brand">
+          Pair every course module with a tiny project (one notebook, one README) and publish it; shipping weekly beats cramming theory.
+        </ArticleCallout>
 
         <h2>Step-by-Step Guide</h2>
-        <div className="my-12 max-w-3xl mx-auto">
-          <ImageWithFallback
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e687e40d-6b11-44f4-83bf-4a8fd68b5cc9.jpg?alt=media&token=74c5bdbf-40aa-448b-b1d8-dd3fe3c3643c"
-            alt="People collaborating in a vibrant 90s tech startup, embodying innovation and creativity in a retro aesthetic."
-            width={1200}
-            height={800}
-            className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-          />
-        </div>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e687e40d-6b11-44f4-83bf-4a8fd68b5cc9.jpg?alt=media&token=74c5bdbf-40aa-448b-b1d8-dd3fe3c3643c"
+          alt="People collaborating in a vibrant 90s tech startup, embodying innovation and creativity in a retro aesthetic."
+        />
 
         <h3>Step 1: Preparation</h3>
         <p>
@@ -209,23 +212,15 @@ export default function ArticlePage() {
           The best way to learn about AI in 2026 is to ship small, responsible projects, document your decisions, and stay anchored to Australian privacy and governance expectations. With steady practice and community feedback, you can reach hire-ready confidence without pausing your career for a full degree.
         </p>
 
-        <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-          <ul className="space-y-3">
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-              <span>Download the checklist mentioned above.</span>
-            </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-              <span>Draft your initial goals based on the template.</span>
-            </li>
-            <li className="flex gap-3 text-gray-700">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-              <span>Discuss with your team or mentor.</span>
-            </li>
-          </ul>
-        </div>
+        <ArticleStepList
+          title="Your Next Steps"
+          steps={[
+            'Download the checklist mentioned above.',
+            'Draft your initial goals based on the template.',
+            'Discuss with your team or mentor.',
+          ]}
+          accent="brand"
+        />
 
         <div className="my-12">
           {/* Contextual CTA - Best placement for conversion */}
@@ -239,25 +234,15 @@ export default function ArticlePage() {
         </div>
       </div>
 
-      {/* Author Bio & Footer */}
       <hr className="my-10 border-gray-100" />
 
-      <AuthorBio author={authorDetails} />
+      <AuthorBio authors={[authorDetails]} />
 
-      {/* FAQ Section */}
       <div className="mt-12">
         <ArticleFAQ items={faqItems} />
       </div>
 
-      {/* Final Breadcrumb/Nav */}
-      <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-        <Link to="/articles" className="hover:text-indigo-600 transition-colors">
-          ← Back to Articles
-        </Link>
-        <a href="#" className="hover:text-indigo-600 transition-colors">
-          Top of page ↑
-        </a>
-      </div>
+      <ArticleFooterNav />
 
     </div>
   )

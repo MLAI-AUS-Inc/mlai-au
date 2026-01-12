@@ -1,13 +1,13 @@
-import { Link } from 'react-router'
 import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
-import { ImageWithFallback } from '../../../components/ImageWithFallback'
-import type { FeaturedPersonProfile } from '../../../data/types'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleResourceCTA } from '../../../components/articles/blocks/ArticleResourceCTA'
+import { ArticleImageBlock } from '../../../components/articles/blocks/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/blocks/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 
 /** ========== INPUTS (replace all placeholders) ========== */
@@ -170,66 +170,21 @@ export default function ArticlePage() {
         </li>
       </ul>
 
-      {/* 4) Resource / Checklist CTA */}
-      <div className="my-12 relative overflow-hidden rounded-[36px] bg-[#2b0f70] p-8 sm:p-12 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.55)] not-prose">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_15%,rgba(0,255,215,0.16),transparent_32%),radial-gradient(circle_at_80%_5%,rgba(255,61,0,0.14),transparent_30%)]" />
-        <div className="relative z-10 grid items-center gap-10 lg:grid-cols-[1.4fr_1fr]">
-          <div className="space-y-5 text-white">
-            <p className="text-sm font-extrabold uppercase tracking-[0.2em] text-white">Free download</p>
-            <h3 className="text-3xl sm:text-4xl font-black leading-tight">
-              Founder validation kit <br /> Checklist &amp; Notes
-            </h3>
-            <p className="text-white/90 leading-relaxed text-lg max-w-xl">
-              Capture your hypothesis, data sensitivity, risks, and weekly decisions in one place. Includes a one-page
-              summary format you can share with mentors, advisors, and early customers.
-            </p>
-            <div className="pt-2">
-              <a
-                href="#"
-                className="inline-flex items-center justify-center rounded-full bg-white px-7 sm:px-8 py-3.5 text-lg font-black text-black shadow-[0_16px_40px_-18px_rgba(0,0,0,0.7)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#2b0f70]"
-              >
-                Download Checklist (PDF)
-              </a>
-            </div>
-          </div>
-
-          {/* Document Preview Cards - Tilted stack effect */}
-          <div className="relative flex items-end justify-center gap-6 lg:justify-end">
-            <div className="relative w-36 sm:w-44 md:w-48 aspect-[2/3] rounded-2xl bg-[#ff3d00] text-white shadow-[0_28px_70px_-20px_rgba(0,0,0,0.78),0_0_85px_-6px_rgba(255,61,0,0.75)] rotate-[-6deg] transition-transform duration-300 hover:-translate-y-1">
-              <div className="absolute inset-0 rounded-2xl border border-white/20" />
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-center px-4">
-                <div className="h-10 w-10 rounded-full border-2 border-white flex items-center justify-center">
-                  <span className="text-xl">🗒️</span>
-                </div>
-                <p className="text-lg font-bold leading-tight">Experiment Card</p>
-                <p className="text-sm font-semibold text-white/80">Preview</p>
-              </div>
-            </div>
-            <div className="relative w-36 sm:w-44 md:w-48 aspect-[2/3] rounded-2xl bg-[#00ffd7] text-black shadow-[0_28px_70px_-20px_rgba(0,0,0,0.7),0_0_110px_-10px_rgba(0,255,215,0.65)] rotate-[7deg] transition-transform duration-300 hover:-translate-y-1">
-              <div className="absolute inset-0 rounded-2xl border border-black/10" />
-              <div className="flex h-full flex-col items-center justify-center gap-3 text-center px-4">
-                <div className="h-10 w-10 rounded-full border-2 border-black flex items-center justify-center">
-                  <span className="text-xl">🧠</span>
-                </div>
-                <p className="text-lg font-bold leading-tight">Decision Log</p>
-                <p className="text-sm font-semibold text-black/75">Preview</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ArticleResourceCTA
+        eyebrow="Free download"
+        title={<>Founder validation kit <br /> Checklist &amp; Notes</>}
+        description="Capture your hypothesis, data sensitivity, risks, and weekly decisions in one place. Includes a one-page summary format you can share with mentors, advisors, and early customers."
+        buttonLabel="Download Checklist (PDF)"
+        buttonHref="#"
+        accent="purple"
+      />
 
 
       <h2>Why it matters in 2026</h2>
-      <div className="my-12 max-w-3xl mx-auto">
-        <ImageWithFallback
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%2010%2C%202026%2C%2002_58_26%20PM%20(1).png?alt=media&token=7893b797-dff8-43ed-a8d8-384e622884d1"
-          alt="Modern abstract technical illustration symbolising significance in 2026 and future innovations."
-          width={1200}
-          height={800}
-          className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-        />
-      </div>
+      <ArticleImageBlock
+        src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%2010%2C%202026%2C%2002_58_26%20PM%20(1).png?alt=media&token=7893b797-dff8-43ed-a8d8-384e622884d1"
+        alt="Modern abstract technical illustration symbolising significance in 2026 and future innovations."
+      />
 
       <p>
         Early-stage capital is still selective, and customers expect proof. AI can reduce time-to-learning by
@@ -389,15 +344,10 @@ export default function ArticlePage() {
         </li>
       </ul>
 
-      <div className="my-12 max-w-3xl mx-auto">
-        <ImageWithFallback
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%2010%2C%202026%2C%2002_56_32%20PM.png?alt=media&token=3c7a7ba2-04aa-4ce0-8c5e-900826b52bbc"
-          alt="Responsible AI practices illustration"
-          width={1200}
-          height={800}
-          className="w-full rounded-3xl shadow-2xl ring-1 ring-gray-900/10"
-        />
-      </div>
+      <ArticleImageBlock
+        src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%2010%2C%202026%2C%2002_56_32%20PM.png?alt=media&token=3c7a7ba2-04aa-4ce0-8c5e-900826b52bbc"
+        alt="Responsible AI practices illustration"
+      />
 
       <h2>Responsible AI for founders</h2>
       <p>
@@ -528,14 +478,7 @@ export default function ArticlePage() {
       </div>
 
       {/* Final Breadcrumb/Nav */}
-      <div className="mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between">
-        <Link to="/articles" className="hover:text-[--brand-ink] underline-offset-4 hover:underline">
-          ← Back to Articles
-        </Link>
-        <a href="#" className="hover:text-[--brand-ink] underline-offset-4 hover:underline">
-          Top of page ↑
-        </a>
-      </div>
+      <ArticleFooterNav />
     </div>
   )
 }
