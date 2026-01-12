@@ -29,7 +29,7 @@ export default function AuthorBio({ author, authors, className = '' }: AuthorBio
                 About the {authorList.length > 1 ? 'Authors' : 'Author'}
             </h3>
 
-            <div className={`grid gap-6 ${authorList.length > 1 ? 'md:grid-cols-3' : 'md:grid-cols-1 md:max-w-2xl'}`}>
+            <div className={`grid gap-6 ${authorList.length > 1 ? 'md:grid-cols-3' : 'md:grid-cols-1 max-w-sm mx-auto'}`}>
                 {authorList.map((person, idx) => (
                     <ComponentWrapper key={person.name + idx} href={person.url}>
                         <div className="flex flex-col h-full items-center text-center p-4 rounded-xl border border-black/30 bg-white/40 backdrop-blur-[1px] transition-all hover:-translate-y-1 hover:border-black">

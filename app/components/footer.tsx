@@ -164,7 +164,7 @@ export default function Events() {
               </div>
             </div>
             <p className="flex flex-col sm:flex-row justify-center items-center gap-1 sm:gap-0 mt-6 sm:mt-8 text-xs leading-5 text-gray-300 text-center">
-              <span>&copy; 2025 MLAI Aus Inc. All rights reserved.</span>
+              <span>&copy; 2026 MLAI Aus Inc. All rights reserved.</span>
               <span className="hidden sm:inline mx-2">&middot;</span>
               <span className="flex gap-2">
                 <a href="/privacy" className="underline hover:text-white">Privacy Policy</a>

@@ -2,11 +2,9 @@ import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
 import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
-import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
@@ -18,10 +16,10 @@ import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/2
 const TOPIC = 'How to get started with AI in Australia'
 const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'how-to-get-started-with-ai-2026'
-const AUTHOR = 'Casey Morgan'
-const AUTHOR_ROLE = 'Editorial Lead'
-const AUTHOR_BIO = 'Casey covers applied AI, policy shifts, and practical tooling for Australian founders and teams.'
-const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
+const AUTHOR = 'Dr Sam Donegan'
+const AUTHOR_ROLE = 'Medical Doctor, AI Startup Founder & Lead Editor'
+const AUTHOR_BIO = 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.'
+const AUTHOR_AVATAR = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376'
 const DATE_PUBLISHED = '2025-02-10'
 const DATE_MODIFIED = '2025-02-17'
 const DESCRIPTION = 'A practical 2026 playbook for Australians starting with AI—covering skills, tools, governance, and fast pilot ideas for teams and individuals.'
@@ -159,7 +157,7 @@ export default function ArticlePage() {
 
         <h2>Why it matters in 2026</h2>
         <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6c812263-ca23-4cc5-8427-906358a3341b.jpg?alt=media&token=67b0bc14-ce62-4d41-b4f0-6a1c3719848f"
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9e2a2cc2-a4e5-40fb-952c-863d2c2455eb.jpg?alt=media&token=01dfdfd7-da95-4140-82e1-4e7e9a69bdcc"
           alt="People in a 90s-inspired tech startup setting brainstorm and collaborate over laptops and coffee."
         />
 
@@ -214,26 +212,29 @@ export default function ArticlePage() {
           Starting with AI in 2026 is about disciplined experimentation: pick a contained workflow, measure against a baseline, and keep humans in the loop. By following Australia’s privacy and ethics guidance, teams can ship useful pilots quickly, learn from mistakes safely, and scale only when the value is proven.
         </p>
 
-        <ArticleStepList
-          title="Your Next Steps"
-          steps={[
-            'Download the checklist mentioned above.',
-            'Draft your initial goals based on the template.',
-            'Discuss with your team or mentor.',
-          ]}
-          accent="brand"
-        />
-
-        <div className="my-12">
-          {/* Contextual CTA - Best placement for conversion */}
-          <ArticleCompanyCTA
-            title={`Need help with ${TOPIC}?`}
-            body="Get practical recommendations based on your goals, time, and experience level."
-            buttonText="Get recommendations"
-            buttonHref="#"
-            note="You can filter by topic, format (online/in‑person), and experience level."
-          />
-        </div>
+        <QuoteBlock variant="purple" className="mt-8">
+          <h3 className="text-lg font-bold text-white mb-4">Your Next Steps</h3>
+          <ul className="space-y-3">
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                1
+              </span>
+              <span>Map one workflow where AI could help (meeting notes, FAQ drafts, data cleanup).</span>
+            </li>
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                2
+              </span>
+              <span>Run a 2-week pilot with clear metrics (time saved, error rate, cost per task).</span>
+            </li>
+            <li className="flex gap-3 text-white/90">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                3
+              </span>
+              <span>Review with your team, document lessons, and decide whether to scale or iterate.</span>
+            </li>
+          </ul>
+        </QuoteBlock>
       </div>
 
       <hr className="my-10 border-gray-100" />
