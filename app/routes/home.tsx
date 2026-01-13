@@ -62,16 +62,23 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
 
         {/* Logo Cloud - Hover to Activate Shooter Game! */}
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
-          <div 
-            id="logoCloud" 
-            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 ${
-              isGameActive 
-                ? 'bg-black cursor-crosshair' 
+          <div
+            id="logoCloud"
+            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 overflow-hidden min-h-[500px] sm:min-h-[600px] lg:min-h-[750px] ${
+              isGameActive
+                ? 'bg-black cursor-crosshair'
                 : 'bg-[var(--brutalist-orange)] cursor-default'
             }`}
             onMouseEnter={() => setIsGameActive(true)}
             onMouseLeave={() => setIsGameActive(false)}
           >
+            {/* Logo Shooter Game - Fade in when active - OUTSIDE max-w-7xl container */}
+            {isGameActive && (
+              <div className="absolute inset-0 z-20">
+                <LogoShooter />
+              </div>
+            )}
+
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
               {/* Static Logos - Fade out when game active */}
               <div className={`transition-opacity duration-500 ${
@@ -171,15 +178,6 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
                 </p>
               </div>
               </div>
-
-              {/* Logo Shooter Game - Fade in when active */}
-              {isGameActive && (
-                <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-500 animate-in fade-in-0 overflow-hidden">
-                  <div className="w-full h-full min-h-[400px] md:min-h-[500px]">
-                    <LogoShooter />
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

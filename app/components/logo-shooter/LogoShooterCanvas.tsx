@@ -5,13 +5,18 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Logo } from './types';
+import type { ParallaxOffset } from './useMouseParallax';
 import { GAME_CONFIG } from './logoData';
+
+// Parallax multiplier for logos (they're in the "mid-ground")
+const LOGO_PARALLAX_MULTIPLIER = 0.08;
 
 interface LogoShooterCanvasProps {
   logos: Logo[];
   isPlaying: boolean;
   onUpdate: (deltaTime: number) => void;
   onClick: (x: number, y: number, width: number, height: number) => void;
+  parallaxOffset: ParallaxOffset;
 }
 
 export function LogoShooterCanvas({
@@ -19,6 +24,7 @@ export function LogoShooterCanvas({
   isPlaying,
   onUpdate,
   onClick,
+  parallaxOffset,
 }: LogoShooterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -106,9 +112,13 @@ export function LogoShooterCanvas({
       // Clear canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+      // Calculate parallax offset for logos
+      const logoParallaxX = parallaxOffset.x * LOGO_PARALLAX_MULTIPLIER * canvas.width;
+      const logoParallaxY = parallaxOffset.y * LOGO_PARALLAX_MULTIPLIER * canvas.height;
+
       // Render logos
       logos.forEach((logo) => {
-        renderLogo(ctx, logo, canvas.width, canvas.height, imageCache);
+        renderLogo(ctx, logo, canvas.width, canvas.height, imageCache, logoParallaxX, logoParallaxY);
       });
 
       // Draw crosshair cursor if mouse is over canvas
@@ -126,7 +136,7 @@ export function LogoShooterCanvas({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, logos, onUpdate, imageCache, cursorPos]);
+  }, [isPlaying, logos, onUpdate, imageCache, cursorPos, parallaxOffset]);
 
   // Handle click
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -183,11 +193,13 @@ function renderLogo(
   logo: Logo,
   canvasWidth: number,
   canvasHeight: number,
-  imageCache: Map<string, HTMLImageElement>
+  imageCache: Map<string, HTMLImageElement>,
+  parallaxX: number = 0,
+  parallaxY: number = 0
 ) {
-  // Convert percentage position to screen coordinates
-  const screenX = (logo.x / 100) * canvasWidth;
-  const screenY = (logo.y / 100) * canvasHeight;
+  // Convert percentage position to screen coordinates with parallax offset
+  const screenX = (logo.x / 100) * canvasWidth - parallaxX;
+  const screenY = (logo.y / 100) * canvasHeight - parallaxY;
 
   // Calculate size based on scale
   const size = GAME_CONFIG.BASE_LOGO_SIZE * logo.scale;

@@ -1,14 +1,20 @@
 /**
  * Logo Shooter - Main Component
  * Ambient interactive experience for the logo cloud section
- * 
+ *
  * CURRENT MODE: Ambient Auto-Start Experience
  * ============================================
  * - Logos fly automatically when section enters viewport
  * - No start button, no scoreboard, no reset button
  * - Users discover they can click logos (delightful surprise!)
- * - Inspired by end credit sequences in films
- * 
+ * - Inspired by end credit sequences in films (Super Smash Bros N64 style!)
+ *
+ * SPACE BACKGROUND FEATURES:
+ * ============================================
+ * - Multi-layer parallax nebula background
+ * - Procedural starfield that flies toward the viewer
+ * - Mouse-controlled camera movement effect
+ *
  * TO SWITCH TO EXPLICIT GAME MODE:
  * ============================================
  * See inline comments in:
@@ -21,7 +27,10 @@
 import { useEffect, useRef } from 'react';
 import { useGameState } from './useGameState';
 import { useIntersectionPause } from './useIntersectionPause';
+import { useMouseParallax } from './useMouseParallax';
 import { LogoShooterCanvas } from './LogoShooterCanvas';
+import { SpaceBackground } from './SpaceBackground';
+import { StarfieldCanvas } from './StarfieldCanvas';
 import { GameHUD } from './GameHUD';
 import { GameControls } from './GameControls';
 
@@ -35,8 +44,14 @@ export function LogoShooter() {
     updateLogoPositions,
   } = useGameState();
 
-  const [containerRef, isVisible] = useIntersectionPause({ threshold: 0.2 });
+  const [intersectionRef, isVisible] = useIntersectionPause({ threshold: 0.2 });
   const hasBeenVisible = useRef(false);
+
+  // Mouse parallax for space background effect
+  const { containerRef: parallaxContainerRef, offset: parallaxOffset, handlers: parallaxHandlers } = useMouseParallax({
+    smoothing: 0.08,
+    enabled: isVisible,
+  });
 
   // ============================================
   // AUTO-START: Game begins automatically when section enters viewport
@@ -48,7 +63,7 @@ export function LogoShooter() {
   // 2. Uncomment the controls in GameControls.tsx
   // 3. Change initial mode in useGameState.ts from 'playing' to 'idle'
   // ============================================
-  
+
   // Track visibility
   useEffect(() => {
     if (isVisible) {
@@ -75,21 +90,57 @@ export function LogoShooter() {
 
   const isPlaying = gameState.mode === 'playing' && isVisible;
 
+  // Combine refs for intersection observer and parallax container
+  const setRefs = (el: HTMLDivElement | null) => {
+    // Set intersection observer ref (it's a RefObject, so assign to .current)
+    (intersectionRef as React.RefObject<HTMLDivElement | null>).current = el;
+    // Set parallax container ref
+    (parallaxContainerRef as React.RefObject<HTMLDivElement | null>).current = el;
+  };
+
   return (
     <div
-      ref={containerRef}
-      className="relative w-full h-[400px] md:h-[500px] overflow-hidden"
+      ref={setRefs}
+      className="relative w-full h-full overflow-hidden bg-black"
       id="logoShooterGame"
+      {...parallaxHandlers}
     >
-      {/* Canvas */}
-      <LogoShooterCanvas
-        logos={gameState.logos}
+      {/* Layer 0: Space nebula background with parallax */}
+      <SpaceBackground parallaxOffset={parallaxOffset} isPlaying={isPlaying} />
+
+      {/* Layer 1: Procedural starfield flying toward viewer */}
+      <StarfieldCanvas
         isPlaying={isPlaying}
-        onUpdate={updateLogoPositions}
-        onClick={handleShoot}
+        parallaxOffset={parallaxOffset}
+        starCount={250}
+        baseSpeed={0.002}
       />
 
-      {/* HUD */}
+      {/* Layer 2: Logo shooter canvas */}
+      <div className="absolute inset-0" style={{ zIndex: 2 }}>
+        <LogoShooterCanvas
+          logos={gameState.logos}
+          isPlaying={isPlaying}
+          onUpdate={updateLogoPositions}
+          onClick={handleShoot}
+          parallaxOffset={parallaxOffset}
+        />
+      </div>
+
+      {/* Layer 3: HUD image overlay */}
+      <div
+        className="absolute pointer-events-none"
+        style={{
+          zIndex: 3,
+          inset: '0', // Fill the container
+          backgroundImage: 'url(https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/HUD.png?alt=media&token=a93ef104-5723-4ebc-8190-e5b7da6a91ec)',
+          backgroundSize: 'cover', // Always fill the container, cropping height if needed
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+
+      {/* Layer 4: Game stats HUD */}
       {gameState.mode === 'playing' && (
         <GameHUD stats={gameState.stats} isPlaying={isPlaying} />
       )}
