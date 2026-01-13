@@ -66,6 +66,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-raise-money-for-my-startup-in-australia-2026': {
+        title: 'How to raise money for my startup in Australia (2026 guide)',
+        date: '2026-01-13',
+        description: 'Step-by-step 2026 guide for Australian founders on grants, angels, VC, and due diligence, with AU links and compliance tips.',
+        author: 'MLAI Team',
+        slug: 'featured/how-to-raise-money-for-my-startup-in-australia-2026',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to raise money for my startup in Australia (2026 guide)',
+        hasContent: true,
+    },
     'featured/how-to-get-started-with-ai-2026': {
         title: 'How to get started with AI in Australia (2026)',
         date: '2026-01-08',
