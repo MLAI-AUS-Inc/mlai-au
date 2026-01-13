@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+
 import type { ReactNode } from 'react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon, HomeIcon } from '@heroicons/react/24/outline'
 
@@ -27,24 +27,7 @@ const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-websit
 const HERO_IMAGE_ALT = 'Founder testing a mobile MVP with early users in a coworking space'
 const FEATURED_FOCUS = 'startups' // 'startups' | 'ai' | 'product' | 'funding'
 
-export const metadata: Metadata = {
-  title: TOPIC,
-  description: DESCRIPTION,
-  alternates: {
-    canonical: `/articles/${SLUG}`,
-  },
-  openGraph: {
-    title: TOPIC,
-    description: DESCRIPTION,
-    type: 'article',
-    url: `/articles/${SLUG}`,
-    publishedTime: DATE_PUBLISHED,
-    modifiedTime: DATE_MODIFIED,
-    images: [{ url: HERO_IMAGE, alt: HERO_IMAGE_ALT }],
-  },
-  authors: [{ name: AUTHOR }],
-  keywords: [CATEGORY, FEATURED_FOCUS, 'MVP', 'startup', 'product validation'],
-}
+
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -60,13 +43,15 @@ export const faqItems: FAQ[] = [
   { id: 3, question: 'How many users do I need to validate?', answer: 'Aim for 8–12 structured pilot users first. That’s usually enough to find ~80% of critical usability issues, provided you capture evidence and iterate weekly.' },
   { id: 4, question: 'Can I charge for a pilot?', answer: 'You can, but be transparent. A small fee or commitment (e.g. prepaid month) improves signal. For regulated sectors (health/finance), check if your pilot scope triggers licensing or clinical oversight.' },
   { id: 5, question: 'How do I collect feedback without bias?', answer: 'Use consistent prompts, record sessions (with consent), and separate “observation” from “interpretation.” Avoid leading questions; ask users to show how they’d complete tasks.' },
-  { id: 6, question: 'Where do I find my first Australian users?', answer: (
-    <ul className="list-disc pl-6 space-y-1">
-      <li>Existing LinkedIn contacts filtered by role and industry.</li>
-      <li>Local meetups (e.g. meetup.com) and university societies with aligned problems.</li>
-      <li>Communities like Fishburners, Stone & Chalk, and accelerator alumni channels.</li>
-    </ul>
-  ) },
+  {
+    id: 6, question: 'Where do I find my first Australian users?', answer: (
+      <ul className="list-disc pl-6 space-y-1">
+        <li>Existing LinkedIn contacts filtered by role and industry.</li>
+        <li>Local meetups (e.g. meetup.com) and university societies with aligned problems.</li>
+        <li>Communities like Fishburners, Stone & Chalk, and accelerator alumni channels.</li>
+      </ul>
+    )
+  },
 ]
 
 export const summaryHighlights = {
