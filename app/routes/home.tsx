@@ -6,6 +6,7 @@ import UpcomingEvents from "~/components/UpcomingEvents";
 import Feature from "~/components/feature";
 import Hero from "~/components/hero";
 import SubstackUpdates from "~/components/SubstackUpdates";
+import FeaturedArticles from "~/components/FeaturedArticles";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
 
@@ -201,6 +202,9 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
             {(resolvedPosts) => <SubstackUpdates posts={resolvedPosts} />}
           </Await>
         </Suspense>
+
+        {/* Featured Articles Grid */}
+        <FeaturedArticles />
       </section>
 
       {/* ===== SPONSOR SECTION (Placeholder) ===== */}
