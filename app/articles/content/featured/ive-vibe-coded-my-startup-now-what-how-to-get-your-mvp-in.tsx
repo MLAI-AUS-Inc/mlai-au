@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
@@ -18,7 +19,7 @@ const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in'
 const AUTHOR = 'Amelia Tran'
 const AUTHOR_ROLE = 'Product & Startup Editor'
-const AUTHOR_BIO = 'Amelia helps Australian founders move from build mode to validated traction, with a focus on ethical AI and lean testing.'   // e.g. 'Expert in...'
+const AUTHOR_BIO = 'Amelia helps Australian founders move from build mode to validated traction, with a focus on ethical AI and lean testing.' // e.g. 'Expert in...'
 const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80' // Optional
 const DATE_PUBLISHED = '2026-02-12'
 const DATE_MODIFIED = '2026-02-12'
@@ -26,6 +27,25 @@ const DESCRIPTION = 'A practical, Australian-focused guide to move your vibe-cod
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a8f7d8bc-9e4a-4112-8b69-729f16129e61.jpg?alt=media&token=4ba2d150-2aa5-4945-9c4a-69013546d9ba"
 const HERO_IMAGE_ALT = 'Founder testing a mobile MVP with early users in a coworking space'
 const FEATURED_FOCUS = 'startups' // 'startups' | 'ai' | 'product' | 'funding'
+
+export const metadata: Metadata = {
+  title: TOPIC,
+  description: DESCRIPTION,
+  alternates: {
+    canonical: `/articles/${SLUG}`,
+  },
+  openGraph: {
+    title: TOPIC,
+    description: DESCRIPTION,
+    type: 'article',
+    url: `/articles/${SLUG}`,
+    publishedTime: DATE_PUBLISHED,
+    modifiedTime: DATE_MODIFIED,
+    images: [{ url: HERO_IMAGE, alt: HERO_IMAGE_ALT }],
+  },
+  authors: [{ name: AUTHOR }],
+  keywords: [CATEGORY, FEATURED_FOCUS, 'MVP', 'startup', 'product validation'],
+}
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -120,14 +140,14 @@ export default function ArticlePage() {
 
           {/* SECTION PATTERN: Additional H2s (generate 3-6 more based on research) */}
           <h2>Set up consent, privacy, and reliability guardrails</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f4095424-42c2-4fe9-9456-90aeb986efba.jpg?alt=media&token=1f7865ee-1cd6-457d-a677-1849705be738" alt="People in a tech startup setting, showcasing 90s film aesthetic and collaboration on privacy and consent strategies." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f4095424-42c2-4fe9-9456-90aeb986efba.jpg?alt=media&token=1f7865ee-1cd6-457d-a677-1849705be738" alt="People in a tech startup setting, showcasing 90s film aesthetic and collaboration on privacy and consent strategies." className="w-full rounded-lg my-8" />
 
           <p>
             Before adding more features, ensure your pilot is safe to run. Publish clear Terms of Use and a Privacy Policy that match how you actually process data. If you use AI services, disclose the model provider and data flows. Avoid production secrets in client-side code, and keep logs minimal. For personal information, align with the Australian Privacy Principles (APPs) from the Office of the Australian Information Commissioner (OAIC). Reliability: add basic monitoring (uptime + errors), a single rollback path, and clear in-product status messaging.
           </p>
 
           <h2>Recruit 8–12 pilot users with structured sessions</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-32d7ab6a-f3ff-42b7-ad38-721f192cf8e2.jpg?alt=media&token=3bb0ee21-6ae1-48e9-9cb4-42897d5d54a9" alt="Diverse group collaborating in a 90s tech startup, preparing for structured user recruitment sessions." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-32d7ab6a-f3ff-42b7-ad38-721f192cf8e2.jpg?alt=media&token=3bb0ee21-6ae1-48e9-9cb4-42897d5d54a9" alt="Diverse group collaborating in a 90s tech startup, preparing for structured user recruitment sessions." className="w-full rounded-lg my-8" />
 
           <p>
             Start with warm networks: LinkedIn 2nd-degree searches, local meetups, and university clubs tied to your problem domain. Offer a short incentive (gift card or early pricing) and block 45-minute moderated sessions. Use a repeatable script: context questions, 2–3 core tasks, time-on-task measurement, and open feedback. Record sessions with consent. After each session, capture observations (what happened), interpretations (what it might mean), and decisions (what to change this week).
