@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // Team member data
 const people = [
@@ -6,7 +6,7 @@ const people = [
     name: "Xavier Andueza",
     role: "President",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
-    pixelImageUrl: "", // Will use default pixel character until individual art is added
+    pixelImageUrl: "/team-pixel-sprites/xavier_andueza_gif.gif",
     linkedIn: "https://www.linkedin.com/in/xavier-andueza/",
     twitter: "",
   },
@@ -14,7 +14,7 @@ const people = [
     name: "Michael Reitzenstein",
     role: "Vice President",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fmichael.png?alt=media&token=a8a3f7eb-784f-4392-814d-404d9e5aea85",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/michael_reitzenstein_gif.gif",
     linkedIn: "https://www.linkedin.com/in/michael-reitzenstein-5528024/",
     twitter: "",
   },
@@ -22,7 +22,7 @@ const people = [
     name: "Pegah Khaleghi",
     role: "Treasurer",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fpegah.png?alt=media&token=ad0f30bd-bf3b-49d6-827d-3998132a647d",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/pegah_khaleghi_gif.gif",
     linkedIn: "https://www.linkedin.com/in/pegah-khaleghi/",
     twitter: "",
   },
@@ -30,7 +30,7 @@ const people = [
     name: "Lukas Wesemann",
     role: "Secretary",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Flukas.png?alt=media&token=490ac923-dd87-4291-bc7d-3a02bdfac45e",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/lukas_wesemann_gif.gif",
     linkedIn: "https://www.linkedin.com/in/lukaswesemann/",
     twitter: "",
   },
@@ -38,7 +38,7 @@ const people = [
     name: "Dr Sam Donegan",
     role: "Head of Marketing",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/sam_donegan_gif.gif",
     linkedIn: "https://www.linkedin.com/in/samueldonegan/",
     twitter: "",
   },
@@ -46,7 +46,7 @@ const people = [
     name: "Callum Holt",
     role: "Head of Partnerships",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fcallum.png?alt=media&token=c4ca5617-42c0-424a-b13c-0b66a0c08b7a",
-    pixelImageUrl: "",
+    pixelImageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f",
     linkedIn: "https://www.linkedin.com/in/callumholt/",
     twitter: "",
   },
@@ -54,7 +54,7 @@ const people = [
     name: "Tom McKenzie",
     role: "Head of Technology",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftom.png?alt=media&token=b2e5357e-ca52-40d7-953c-b505b178225f",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/tom_mckenzie_gif.gif",
     linkedIn: "https://www.linkedin.com/in/tom-mckenzie-dev/",
     twitter: "",
   },
@@ -62,7 +62,7 @@ const people = [
     name: "Jasmine Raj",
     role: "Co-Head of Community",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fjasmine.png?alt=media&token=1574f699-b846-4198-b50d-7a8938177450",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/jasmine_raj_gif.gif",
     linkedIn: "https://www.linkedin.com/in/jasmine-raj-49000b21a/",
     twitter: "",
   },
@@ -70,7 +70,7 @@ const people = [
     name: "Ethan Lee",
     role: "Co-Head of Community",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fethan.png?alt=media&token=cbdb1fc0-c25a-4df8-8931-d2355b89b4ce",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/ethan_lee_gif.gif",
     linkedIn: "https://www.linkedin.com/in/ethan-lee-resume/",
     twitter: "",
   },
@@ -78,18 +78,20 @@ const people = [
     name: "Alisa Belova",
     role: "Head of People",
     imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2FAlisa.jpeg?alt=media&token=9b7c4f50-867f-43db-99e2-7172a525105f",
-    pixelImageUrl: "",
+    pixelImageUrl: "/team-pixel-sprites/alisa_belova_gif.gif",
     linkedIn: "",
     twitter: "",
   },
 ];
 
 export default function Team() {
-  const [selectedIndex, setSelectedIndex] = useState(5); // Start with Callum (matching reference)
+  const [selectedIndex, setSelectedIndex] = useState(0); // Start with Xavier (first member)
   const selectedPerson = people[selectedIndex];
+  const sectionRef = useRef<HTMLElement>(null);
 
-  // Default pixel character (Callum's pixel art as placeholder for all)
-  const defaultPixelCharacter = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitleddesign-ezgif.com-resize.gif?alt=media&token=d0444d83-e55f-4d56-ae80-0d0680fecd4f";
+  // Grid configuration (3 columns)
+  const GRID_COLS = 3;
+  const TOTAL_MEMBERS = people.length;
 
   const handlePrev = () => {
     setSelectedIndex((prev) => (prev === 0 ? people.length - 1 : prev - 1));
@@ -99,8 +101,98 @@ export default function Team() {
     setSelectedIndex((prev) => (prev === people.length - 1 ? 0 : prev + 1));
   };
 
+  // Grid navigation handlers
+  const handleGridNavigation = (direction: 'up' | 'down' | 'left' | 'right') => {
+    setSelectedIndex((currentIndex) => {
+      const currentRow = Math.floor(currentIndex / GRID_COLS);
+      const currentCol = currentIndex % GRID_COLS;
+
+      switch (direction) {
+        case 'right':
+          // Move to next member, wrap around at end
+          return (currentIndex + 1) % TOTAL_MEMBERS;
+
+        case 'left':
+          // Move to previous member, wrap around at start
+          return (currentIndex - 1 + TOTAL_MEMBERS) % TOTAL_MEMBERS;
+
+        case 'down': {
+          // Move down in same column
+          let nextIndex = currentIndex + GRID_COLS;
+          
+          // If we go past the last member, wrap to top of same column
+          if (nextIndex >= TOTAL_MEMBERS) {
+            nextIndex = currentCol; // Wrap to first row, same column
+          }
+          
+          return nextIndex;
+        }
+
+        case 'up': {
+          // Move up in same column
+          let nextIndex = currentIndex - GRID_COLS;
+          
+          // If we go before first member, wrap to bottom
+          if (nextIndex < 0) {
+            // Find the last row that has this column
+            const totalRows = Math.ceil(TOTAL_MEMBERS / GRID_COLS);
+            let targetRow = totalRows - 1;
+            nextIndex = targetRow * GRID_COLS + currentCol;
+            
+            // If that position doesn't exist (e.g., Alisa is alone in row 3)
+            if (nextIndex >= TOTAL_MEMBERS) {
+              // Go to previous row
+              nextIndex = (targetRow - 1) * GRID_COLS + currentCol;
+            }
+          }
+          
+          return nextIndex;
+        }
+
+        default:
+          return currentIndex;
+      }
+    });
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if Team section is in viewport
+      if (!sectionRef.current) return;
+      
+      const rect = sectionRef.current.getBoundingClientRect();
+      const isInViewport = rect.top < window.innerHeight && rect.bottom > 0;
+      
+      if (!isInViewport) return;
+
+      // Handle arrow key navigation
+      switch (e.key) {
+        case 'ArrowRight':
+          e.preventDefault();
+          handleGridNavigation('right');
+          break;
+        case 'ArrowLeft':
+          e.preventDefault();
+          handleGridNavigation('left');
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          handleGridNavigation('down');
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          handleGridNavigation('up');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <section className="fighter-select-wrapper">
+    <section ref={sectionRef} className="fighter-select-wrapper">
       <div className="fighter-select-container">
         {/* Pixel World Map Background */}
         <div className="fighter-select-bg" />
@@ -116,12 +208,9 @@ export default function Team() {
             {/* Character Preview */}
             <div className="fighter-mobile-preview">
               <img
-                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                src={selectedPerson.pixelImageUrl}
                 alt={`${selectedPerson.name} pixel art`}
                 className="fighter-mobile-preview-image"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                }}
               />
             </div>
 
@@ -215,12 +304,9 @@ export default function Team() {
             {/* Center: Full Body Character Preview */}
             <div className="fighter-preview-center">
               <img
-                src={selectedPerson.pixelImageUrl || defaultPixelCharacter}
+                src={selectedPerson.pixelImageUrl}
                 alt={`${selectedPerson.name} pixel art`}
                 className="fighter-preview-image"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).src = defaultPixelCharacter;
-                }}
               />
             </div>
 
@@ -587,6 +673,7 @@ export default function Team() {
         .fighter-select-box:hover {
           border-color: #00bcd4;
           transform: scale(1.05);
+          box-shadow: 0 0 10px rgba(0, 188, 212, 0.5);
         }
 
         .fighter-select-box-active {
