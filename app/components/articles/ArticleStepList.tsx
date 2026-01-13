@@ -9,17 +9,17 @@ type ArticleStepListProps = {
 
 const ACCENT_CLASSNAMES = {
     teal: {
-        container: 'bg-teal-50 border-teal-100',
+        container: 'bg-transparent border-gray-400',
         bulletBg: 'bg-[--brand]',
         bulletText: 'text-[--accent]',
     },
     brand: {
-        container: 'bg-[--soft] border-[--soft]',
+        container: 'bg-transparent border-gray-400',
         bulletBg: 'bg-[--brand]',
         bulletText: 'text-[--accent]',
     },
     indigo: {
-        container: 'bg-indigo-50 border-indigo-100',
+        container: 'bg-transparent border-gray-400',
         bulletBg: 'bg-indigo-100',
         bulletText: 'text-indigo-600',
     },

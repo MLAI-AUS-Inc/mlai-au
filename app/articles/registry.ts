@@ -77,6 +77,14 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
         image: 'https://placehold.co/1200x630/png',
         imageAlt: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+    'featured/how-to-raise-money-for-my-startup-in-australia-2026': {
+        title: 'How to raise money for my startup in Australia (2026 guide)',
+        date: '2026-01-13',
+        description: 'Step-by-step 2026 guide for Australian founders on grants, angels, VC, and due diligence, with AU links and compliance tips.',
+        author: 'MLAI Team',
+        slug: 'featured/how-to-raise-money-for-my-startup-in-australia-2026',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to raise money for my startup in Australia (2026 guide)',
         hasContent: true,
     },
     'featured/how-to-get-started-with-ai-2026': {

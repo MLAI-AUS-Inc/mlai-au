@@ -101,6 +101,17 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
             faq: { enabled: true },
         },
     },
+    '/articles/featured/how-to-raise-money-for-my-startup-in-australia-2026': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: false,
+        internalLinks: [],
+        structuredData: {
+            article: true,
+            faq: { enabled: true },
+        },
+    },
 };
 
 export const canonical = (path: string) => {
