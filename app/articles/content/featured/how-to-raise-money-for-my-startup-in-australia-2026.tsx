@@ -12,6 +12,7 @@ import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
+import { getAuthorProfile } from '../../authors'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
@@ -20,10 +21,6 @@ export const useInlineToc = true
 const TOPIC = 'How to raise money for my startup in Australia (2026 guide)'
 const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'how-to-raise-money-for-my-startup-in-australia-2026'
-const AUTHOR = 'Dr Sam Donegan'
-const AUTHOR_ROLE = 'Medical Doctor, AI Startup Founder & Lead Editor'
-const AUTHOR_BIO = 'Dr Sam leads the MLAI editorial team and supports founders navigating funding, governance, and compliance in Australia.'
-const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
 const DATE_PUBLISHED = '2025-01-10'
 const DATE_MODIFIED = '2025-01-10'
 const DESCRIPTION = 'A 2026-ready roadmap for Australian founders to raise capital, covering grants, angels, VC, revenue finance, and due diligence.'
@@ -104,12 +101,7 @@ const breadcrumbs = [
 ]
 
 export default function ArticlePage() {
-  const authorDetails = {
-    name: AUTHOR,
-    role: AUTHOR_ROLE,
-    bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
-  }
+  const authorDetails = getAuthorProfile('samDonegan')
 
   return (
     <article className="bg-transparent">
@@ -147,7 +139,7 @@ export default function ArticlePage() {
 
           {/* SECTION PATTERN: Additional H2s (generate 3-6 more based on research) */}
           <h2>Validate the right capital type: grants, equity, debt, and revenue finance</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-671ca2aa-27c3-437a-899f-dd4c881ec7d2.jpg?alt=media&token=4e75791c-075e-4aa5-a9e4-fbd3e2b1522f" alt="Group of diverse entrepreneurs collaborate in a 90s-inspired tech startup environment, discussing funding options." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-671ca2aa-27c3-437a-899f-dd4c881ec7d2.jpg?alt=media&token=4e75791c-075e-4aa5-a9e4-fbd3e2b1522f" alt="Group of diverse entrepreneurs collaborate in a 90s-inspired tech startup environment, discussing funding options." className="w-full rounded-lg my-8" />
 
           <p>
             Non-dilutive programs reduce risk and signal credibility. As at 2026, the Industry Growth Program and state-based innovation funds support MVP build and commercialisation for priority sectors. Angels and syndicates are best for speed and advice at pre-seed/seed; they usually want evidence of problem–solution fit and a clear plan to reach AU$1–3m ARR within 18–24 months. Venture debt and revenue-based finance become realistic once you have predictable monthly revenue and low churn.
@@ -169,7 +161,7 @@ export default function ArticlePage() {
           </p>
 
           <h2>Prepare investor-ready essentials (governance, ESIC, data)</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ecc283dd-8a63-4d9e-8c39-1b0d03eb7d66.jpg?alt=media&token=2fc2e7a0-9bcc-46cb-a48e-5c97b8f91cc0" alt="Tech-savvy professionals in a vibrant 90s film aesthetic brainstorm for investor-ready essentials." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ecc283dd-8a63-4d9e-8c39-1b0d03eb7d66.jpg?alt=media&token=2fc2e7a0-9bcc-46cb-a48e-5c97b8f91cc0" alt="Tech-savvy professionals in a vibrant 90s film aesthetic brainstorm for investor-ready essentials." className="w-full rounded-lg my-8" />
 
           <p>
             Clean governance reduces friction. Maintain signed IP assignments, a clear constitution/shareholders agreement, and a single source of truth for your cap table. If you qualify for ESIC, document it—many Australian angels prefer ESIC-eligible companies for tax reasons. For AI-enabled products, include a short model-use statement covering data sources, evaluation, privacy, and human-in-the-loop controls aligned to OAIC privacy principles.
