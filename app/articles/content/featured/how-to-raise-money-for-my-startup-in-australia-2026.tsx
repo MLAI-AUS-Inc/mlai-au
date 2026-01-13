@@ -11,8 +11,12 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
+import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 
 /** ========== INPUTS (replace all placeholders) ========== */
+export const useCustomHeader = true
+export const useInlineToc = true
+
 const TOPIC = 'How to raise money for my startup in Australia (2026 guide)'
 const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'how-to-raise-money-for-my-startup-in-australia-2026'
@@ -108,7 +112,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <article className="bg-white">
+    <article className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={TOPIC}
@@ -217,23 +221,16 @@ export default function ArticlePage() {
             Run a time-boxed raise (6–10 weeks), share concise updates, and keep one source of truth for metrics and documents. Use soft commits to build momentum, keep diligence responses dated, and avoid over-committing equity before you confirm your lead. Close with a clear use-of-funds plan and a path to the next evidence line.
           </p>
 
-          <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-            <ul className="space-y-3">
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-                <span>List your next 3 evidence milestones (e.g. pilots, MRR, security review) and size the raise to fund them.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-                <span>Prepare a dated data room: deck, financial model, cap table, ESIC notes, privacy and AI-use statements.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-                <span>Book 10–15 investor or grant conversations in one 4-week window and track outcomes in a simple CRM.</span>
-              </li>
-            </ul>
-          </div>
+          <ArticleStepList
+            title="Your Next Steps"
+            accent="indigo"
+            className="not-prose"
+            steps={[
+              'List your next 3 evidence milestones (e.g. pilots, MRR, security review) and size the raise to fund them.',
+              'Prepare a dated data room: deck, financial model, cap table, ESIC notes, privacy and AI-use statements.',
+              'Book 10–15 investor or grant conversations in one 4-week window and track outcomes in a simple CRM.',
+            ]}
+          />
 
           <div className="my-12 not-prose">
             <ArticleCompanyCTA
