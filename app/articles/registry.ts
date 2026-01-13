@@ -66,6 +66,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
+        title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        date: '2026-01-13',
+        description: 'Turn your vibe-coded build into a tested MVP. Learn how to validate with real users, ship safely, and prepare for pilots and investment in Australia.',
+        author: 'MLAI Team',
+        slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'I\\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        hasContent: true,
+    },
     'featured/how-to-get-started-with-ai-2026': {
         title: 'How to get started with AI in Australia (2026)',
         date: '2026-01-08',
