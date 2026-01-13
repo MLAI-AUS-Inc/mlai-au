@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { RocketLaunchIcon, AcademicCapIcon, UsersIcon, HomeIcon } from '@heroicons/react/24/outline'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
@@ -91,7 +90,7 @@ export const summaryHighlights = {
 }
 
 const breadcrumbs = [
-  { label: 'Home', href: '/', icon: Home },
+  { label: 'Home', href: '/', icon: HomeIcon },
   { label: 'Articles', href: '/articles' },
   { label: TOPIC, current: true },
 ]
@@ -176,7 +175,7 @@ export default function ArticlePage() {
           {/* SECTION PATTERN: Persona Grid using AudienceGrid */}
           <AudienceGrid
             heading="Who this helps"
-            cards={[
+            cards=[
               {
                 title: 'Founders & Teams',
                 description: 'For leaders validating ideas, seeking funding, or managing teams.',
@@ -195,7 +194,7 @@ export default function ArticlePage() {
                 icon: <UsersIcon className="h-6 w-6" />,
                 variant: 'yellow',
               },
-            ]}
+            ]
           />
 
           {/* SECTION PATTERN: Conclusion/Summary */}
