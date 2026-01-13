@@ -42,7 +42,10 @@ const CATEGORY_SEGMENTS: ArticleRouteCategory[] = [
 
 const DEFAULT_ARTICLE_ROUTE_CATEGORY: ArticleRouteCategory = 'technology';
 
-// Overrides for specific slugs or sub-paths\nconst CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {\n    // Add category overrides as needed\n};
+// Overrides for specific slugs or sub-paths
+const CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {
+    // Add category overrides as needed
+};
 
 // Legacy mapping if needed
 const LEGACY_REGISTRY_TO_ROUTE_ALIASES: Record<string, string> = {
@@ -66,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
+        title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        date: '2026-01-13',
+        description: 'Turn your vibe-coded build into a tested MVP. Learn how to validate with real users, ship safely, and prepare for pilots and investment in Australia.',
+        author: 'MLAI Team',
+        slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        hasContent: true,
+    },
     'featured/how-to-raise-money-for-my-startup-in-australia-2026': {
         title: 'How to raise money for my startup in Australia (2026 guide)',
         date: '2026-01-13',
@@ -127,8 +140,6 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
         hasContent: true,
     },
-
-
 };
 
 export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.keys(ARTICLE_REGISTRY);
