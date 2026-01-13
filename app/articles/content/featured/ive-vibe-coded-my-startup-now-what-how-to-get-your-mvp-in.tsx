@@ -175,7 +175,7 @@ export default function ArticlePage() {
           {/* SECTION PATTERN: Persona Grid using AudienceGrid */}
           <AudienceGrid
             heading="Who this helps"
-            cards=[
+            cards={[
               {
                 title: 'Founders & Teams',
                 description: 'For leaders validating ideas, seeking funding, or managing teams.',
@@ -194,7 +194,7 @@ export default function ArticlePage() {
                 icon: <UsersIcon className="h-6 w-6" />,
                 variant: 'yellow',
               },
-            ]
+            ]}
           />
 
           {/* SECTION PATTERN: Conclusion/Summary */}
