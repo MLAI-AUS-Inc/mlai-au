@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
+        title: 'How to price your product in Australia (2025)',
+        date: '2026-01-14',
+        description: 'Learn how to set product pricing in Australia using cost, value, and competitor signals, test willingness-to-pay, and stay compliant with ACCC rules.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-do-i-figure-out-how-much-my-product-should-cost',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to price your product in Australia (2025)',
+        hasContent: true,
+    },
     'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
         title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
         date: '2026-01-13',
