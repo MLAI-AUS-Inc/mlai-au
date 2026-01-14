@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
-import { Home } from 'lucide-react'
-import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
+import { Home, Rocket, GraduationCap, Users } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../../components/articles/ArticleCompanyCTA'
@@ -156,11 +155,11 @@ export default function ArticlePage() {
   return (
     <article className="article-content">
       <ArticleHeroHeader
-        breadcrumbs={[
+        breadcrumbs=[
           { label: 'Home', href: '/', icon: Home },
           { label: 'Articles', href: '/articles' },
           { label: TOPIC, current: true },
-        ]}
+        ]
         title={`${TOPIC} (2025)`}
         headerBgColor="purple"
         summary={summaryHighlights}
@@ -223,11 +222,11 @@ export default function ArticlePage() {
 
           <ArticleStepList
             title="Rapid pricing validation sprint (7–10 days)"
-            steps={[
+            steps=[
               'Map costs and margin floor; define a “good, better, best” tier hypothesis.',
               'Interview 8–10 target customers with live price cards and capture objection themes.',
               'Run a landing page or in-product prompt with two price variants; track conversion and churn signals.',
-            ]}
+            ]
             accent="indigo"
           />
 
@@ -294,26 +293,26 @@ export default function ArticlePage() {
           <ArticleSummaryCard summary={summaryHighlights} />
           <AudienceGrid
             heading="Who is this for?"
-            cards={[
+            cards=[
               {
                 title: 'Founders & teams',
                 description: 'Validating ideas, seeking funding, or managing product decisions.',
-                icon: <RocketLaunchIcon className="w-6 h-6" />,
+                icon: <Rocket className="w-6 h-6" />,
                 variant: 'orange',
               },
               {
                 title: 'Students & switchers',
                 description: 'Building portfolios, learning new skills, or changing careers.',
-                icon: <AcademicCapIcon className="w-6 h-6" />,
+                icon: <GraduationCap className="w-6 h-6" />,
                 variant: 'purple',
               },
               {
                 title: 'Community builders',
                 description: 'Facilitating workshops, mentoring, or supporting local ecosystems.',
-                icon: <UsersIcon className="w-6 h-6" />,
+                icon: <Users className="w-6 h-6" />,
                 variant: 'yellow',
               },
-            ]}
+            ]
           />
         </aside>
       </div>
