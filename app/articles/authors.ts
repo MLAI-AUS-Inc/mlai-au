@@ -70,6 +70,19 @@ const authorRegistry = {
         avatarAlt: 'Julia Ponder',
         knowsAbout: ['Technical Writing', 'Documentation', 'Product Testing'],
     },
+    shivangShekhar: {
+        personId: 'https://www.mlai.au/#shivang-shekhar',
+        name: 'Shivang Shekhar',
+        role: 'Technical Writer',
+        bio: 'Shivang graduated as a mechanical engineer with a masters in chemistry. Currently he is a final year master in AI student at Monash who is highly curious in keeping up to date on AI trends and Advancements',
+        affiliation: {
+            name: 'Monash University',
+            url: 'https://www.monash.edu/',
+        },
+        avatarUrl: 'https://placehold.co/400x400/png',
+        avatarAlt: 'Shivang Shekhar',
+        knowsAbout: ['AI Trends', 'Machine Learning', 'Mechanical Engineering', 'Chemistry'],
+    },
 } satisfies Record<string, AuthorRegistryEntry>;
 
 export type AuthorRegistryKey = keyof typeof authorRegistry;
