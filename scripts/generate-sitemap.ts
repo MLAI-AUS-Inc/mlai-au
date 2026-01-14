@@ -21,7 +21,12 @@ type SitemapEntry = {
     priority?: number;
 };
 
-const SITE_URL = (process.env.SITE_URL || process.env.VITE_SITE_URL || "https://mlai.au").replace(/\/$/, "");
+const SITE_URL = (
+    process.env.SITE_URL ||
+    process.env.VITE_SITE_URL ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://mlai.au"
+).replace(/\/$/, "");
 
 function normalizeDate(dateValue?: string) {
     if (!dateValue) return undefined;
@@ -50,6 +55,7 @@ function buildUrlElement(entry: SitemapEntry) {
 const staticPages: SitemapEntry[] = [
     { path: "/", changefreq: "weekly", priority: 1.0 },
     { path: "/articles", changefreq: "daily", priority: 0.9 },
+    { path: "/about", changefreq: "monthly", priority: 0.6 },
     { path: "/contact", changefreq: "monthly", priority: 0.6 },
     { path: "/events", changefreq: "weekly", priority: 0.7 },
     { path: "/hackathon", changefreq: "weekly", priority: 0.7 },
