@@ -22,6 +22,7 @@ const initialStats: GameStats = {
   totalShots: 0,
   startTime: 0,
   lastHitLogoName: null,
+  lastHitCategory: null,
   lastHitTime: null,
 };
 
@@ -177,6 +178,7 @@ export function useGameState(): UseGameStateReturn {
               hits: currentStats.hits + 1,
               totalShots: currentStats.totalShots + 1,
               lastHitLogoName: logo.name,
+              lastHitCategory: logo.category,
               lastHitTime: Date.now(),
             }));
             

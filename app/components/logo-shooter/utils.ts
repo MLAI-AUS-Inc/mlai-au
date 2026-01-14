@@ -91,6 +91,7 @@ export function createLogo(existingLogos: Logo[] = []): Logo {
     id: generateId(),
     name: sponsor.name,
     imagePath: sponsor.imagePath,
+    category: sponsor.category,
     x,
     y,
     z: GAME_CONFIG.Z_FAR,

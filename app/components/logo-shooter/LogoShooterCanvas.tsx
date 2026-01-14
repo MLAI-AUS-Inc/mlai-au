@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react';
-import type { Logo } from './types';
+import type { Logo, LaserBeam } from './types';
 import type { ParallaxOffset } from './useMouseParallax';
 import { GAME_CONFIG } from './logoData';
 
@@ -15,7 +15,7 @@ interface LogoShooterCanvasProps {
   logos: Logo[];
   isPlaying: boolean;
   onUpdate: (deltaTime: number) => void;
-  onClick: (x: number, y: number, width: number, height: number) => void;
+  onClick: (x: number, y: number, width: number, height: number) => boolean;
   parallaxOffset: ParallaxOffset;
 }
 
@@ -32,6 +32,7 @@ export function LogoShooterCanvas({
   const lastTimeRef = useRef<number>(0);
   const [imageCache, setImageCache] = useState<Map<string, HTMLImageElement>>(new Map());
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const [laserBeams, setLaserBeams] = useState<LaserBeam[]>([]);
 
   // ============================================
   // IMAGE LOADING - CURRENTLY DISABLED
@@ -121,6 +122,14 @@ export function LogoShooterCanvas({
         renderLogo(ctx, logo, canvas.width, canvas.height, imageCache, logoParallaxX, logoParallaxY);
       });
 
+      // Render laser beams
+      laserBeams.forEach((laser) => {
+        renderLaserBeam(ctx, laser);
+      });
+
+      // Cleanup old laser beams (fade out after 200ms - fast!)
+      setLaserBeams((prev) => prev.filter((laser) => Date.now() - laser.createdAt < 200));
+
       // Draw crosshair cursor if mouse is over canvas
       if (cursorPos) {
         drawCrosshair(ctx, cursorPos.x, cursorPos.y);
@@ -136,7 +145,7 @@ export function LogoShooterCanvas({
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, logos, onUpdate, imageCache, cursorPos, parallaxOffset]);
+  }, [isPlaying, logos, onUpdate, imageCache, cursorPos, parallaxOffset, laserBeams]);
 
   // Handle click
   const handleClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -147,7 +156,41 @@ export function LogoShooterCanvas({
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    onClick(x, y, canvas.width, canvas.height);
+    // Create DUAL laser beams from bottom corners converging at target
+    const bottomY = canvas.height * 0.95; // Near bottom of screen
+    const leftX = canvas.width * 0.15; // Bottom-left corner (15% from left)
+    const rightX = canvas.width * 0.85; // Bottom-right corner (85% from left)
+    
+    const wasHit = onClick(x, y, canvas.width, canvas.height);
+    
+    const timestamp = Date.now();
+    
+    // Left laser beam
+    const leftLaser: LaserBeam = {
+      id: `laser-left-${timestamp}-${Math.random()}`,
+      startX: leftX,
+      startY: bottomY,
+      endX: x,
+      endY: y,
+      createdAt: timestamp,
+      isHit: wasHit,
+    };
+    
+    // Right laser beam
+    const rightLaser: LaserBeam = {
+      id: `laser-right-${timestamp}-${Math.random()}`,
+      startX: rightX,
+      startY: bottomY,
+      endX: x,
+      endY: y,
+      createdAt: timestamp,
+      isHit: wasHit,
+    };
+    
+    setLaserBeams((prev) => [...prev, leftLaser, rightLaser]);
+    
+    // Play shoot sound
+    playShootSound(wasHit);
   };
 
   // Track cursor position
@@ -321,3 +364,148 @@ function drawCrosshair(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.restore();
 }
 
+ /**
+  * Render laser beam
+  */
+ function renderLaserBeam(ctx: CanvasRenderingContext2D, laser: LaserBeam) {
+   const age = Date.now() - laser.createdAt;
+   const fadeOutStart = 80; // Start fading after 80ms (faster!)
+   const totalDuration = 200; // Total duration 200ms (faster!)
+   
+   // Calculate opacity (full brightness for 80ms, then fade out)
+   let opacity = 1;
+   if (age > fadeOutStart) {
+     opacity = 1 - (age - fadeOutStart) / (totalDuration - fadeOutStart);
+   }
+   
+   if (opacity <= 0) return;
+   
+   ctx.save();
+   
+   // Use green for all laser shots (no distinction between hit/miss)
+   const laserColor = '#00ff88'; // Bright green for all shots
+  
+  // Draw outer glow
+  ctx.strokeStyle = laserColor;
+  ctx.lineWidth = 4;
+  ctx.globalAlpha = opacity * 0.3;
+  ctx.shadowColor = laserColor;
+  ctx.shadowBlur = 20;
+  
+  ctx.beginPath();
+  ctx.moveTo(laser.startX, laser.startY);
+  ctx.lineTo(laser.endX, laser.endY);
+  ctx.stroke();
+  
+  // Draw core beam (brighter, thinner)
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = opacity;
+  ctx.shadowBlur = 10;
+  
+  ctx.beginPath();
+  ctx.moveTo(laser.startX, laser.startY);
+  ctx.lineTo(laser.endX, laser.endY);
+  ctx.stroke();
+  
+   // Draw muzzle flash at start point (only for first 40ms - faster!)
+   if (age < 40) {
+     const flashOpacity = 1 - age / 40;
+     ctx.globalAlpha = flashOpacity * opacity;
+     ctx.fillStyle = laserColor;
+     ctx.shadowBlur = 25;
+     ctx.beginPath();
+     ctx.arc(laser.startX, laser.startY, 6, 0, Math.PI * 2);
+     ctx.fill();
+   }
+   
+   // Draw impact flash at end point (only for first 40ms on hits - faster!)
+   if (laser.isHit && age < 40) {
+     const flashOpacity = 1 - age / 40;
+     ctx.globalAlpha = flashOpacity * opacity;
+     ctx.fillStyle = laser.isHit ? '#00ff88' : laserColor;
+     ctx.shadowBlur = 35;
+     ctx.beginPath();
+     ctx.arc(laser.endX, laser.endY, 10, 0, Math.PI * 2);
+     ctx.fill();
+   }
+  
+  ctx.restore();
+}
+
+/**
+ * Play shoot sound effect
+ * Using Web Audio API to generate laser sound
+ */
+function playShootSound(isHit: boolean) {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create oscillator for laser sound
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    // Laser shoot sound: quick frequency sweep
+    oscillator.type = 'sawtooth';
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+    
+    // Volume envelope: quick attack and decay
+    gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.1);
+    
+    // Play hit sound if target was hit
+    if (isHit) {
+      setTimeout(() => playHitSound(), 50);
+    }
+  } catch (error) {
+    // Silently fail if Web Audio API is not supported
+    console.warn('Audio playback failed:', error);
+  }
+}
+
+/**
+ * Play hit/explosion sound effect
+ */
+function playHitSound() {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create noise for explosion effect
+    const bufferSize = audioContext.sampleRate * 0.2; // 200ms
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    // Generate noise that fades out
+    for (let i = 0; i < bufferSize; i++) {
+      const decay = 1 - i / bufferSize;
+      data[i] = (Math.random() * 2 - 1) * decay * 0.3;
+    }
+    
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    
+    // Add filter for more "explosion-like" sound
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(400, audioContext.currentTime);
+    
+    const gainNode = audioContext.createGain();
+    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+    
+    source.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    source.start(audioContext.currentTime);
+  } catch (error) {
+    // Silently fail if Web Audio API is not supported
+    console.warn('Audio playback failed:', error);
+  }
+}

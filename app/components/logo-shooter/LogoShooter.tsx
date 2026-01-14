@@ -140,7 +140,45 @@ export function LogoShooter() {
         }}
       />
 
-      {/* Layer 4: Game stats HUD */}
+      {/* Layer 3.5: Target Eliminated Text Display (Orange Panel) */}
+      {gameState.stats.lastHitLogoName && gameState.stats.lastHitTime && (
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            zIndex: 4,
+            bottom: '8%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            maxWidth: '50%',
+          }}
+        >
+          <div
+            className="transition-opacity duration-500"
+            style={{
+              opacity:
+                Date.now() - gameState.stats.lastHitTime < 2000
+                  ? 1
+                  : Math.max(0, 1 - (Date.now() - gameState.stats.lastHitTime - 2000) / 1000),
+            }}
+          >
+            <div className="font-mono text-white text-right">
+              <div className="text-3xl text-[#FF6B35] uppercase tracking-wider mb-3">
+                TARGET ELIMINATED
+              </div>
+              <div className="text-2xl font-bold drop-shadow-lg mb-2">
+                {gameState.stats.lastHitLogoName}
+              </div>
+              {gameState.stats.lastHitCategory && (
+                <div className="text-base font-medium drop-shadow-lg">
+                  <span className="text-xl text-[#FF6B35]">TYPE:</span> {gameState.stats.lastHitCategory}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Layer 5: Game stats HUD */}
       {gameState.mode === 'playing' && (
         <GameHUD stats={gameState.stats} isPlaying={isPlaying} />
       )}
