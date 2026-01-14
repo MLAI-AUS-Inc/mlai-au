@@ -20,7 +20,7 @@ export default function ArticleCompanyCTA({
     className = '',
 }: ArticleCompanyCTAProps) {
     return (
-        <section id={id} className={`my-12 bg-gray-50 rounded-2xl p-8 text-center ${className}`}>
+        <section id={id} className={`my-12 bg-transparent border border-gray-400 rounded-2xl p-8 text-center ${className}`}>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">{title}</h2>
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">{body}</p>
             <Link
