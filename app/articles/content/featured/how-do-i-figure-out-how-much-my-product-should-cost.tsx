@@ -1,21 +1,18 @@
-import type { Metadata } from 'next'
-import type { ReactNode } from 'react'
-import { Home, Rocket, GraduationCap, Users } from 'lucide-react'
 
-import { ArticleFAQ } from '../../../../components/articles/ArticleFAQ'
-import ArticleCompanyCTA from '../../../../components/articles/ArticleCompanyCTA'
-import AuthorBio from '../../../../components/AuthorBio'
-import { ArticleHeroHeader } from '../../../../components/articles/ArticleHeroHeader'
-import { ArticleImageBlock } from '../../../../components/articles/ArticleImageBlock'
-import { ArticleFooterNav } from '../../../../components/articles/ArticleFooterNav'
-import { QuoteBlock } from '../../../../components/articles/QuoteBlock'
-import { ArticleTocPlaceholder } from '../../../../components/articles/ArticleTocPlaceholder'
-import { AudienceGrid } from '../../../../components/articles/AudienceGrid'
-import { ArticleCallout } from '../../../../components/articles/ArticleCallout'
-import { ArticleStepList } from '../../../../components/articles/ArticleStepList'
-import { ArticleSummaryCard } from '../../../../components/articles/ArticleSummaryCard'
-import { ArticleResourceCTA } from '../../../../components/articles/ArticleResourceCTA'
-import { ArticleResourceList, type ArticleResource } from '../../../../components/articles/ArticleResourceList'
+import type { ReactNode } from 'react'
+import { Home } from 'lucide-react'
+
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
+import AuthorBio from '../../../components/AuthorBio'
+import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
+import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
+import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
+import { QuoteBlock } from '../../../components/articles/QuoteBlock'
+import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
+import { ArticleStepList } from '../../../components/articles/ArticleStepList'
+import { ArticleResourceCTA } from '../../../components/articles/ArticleResourceCTA'
+import { ArticleResourceList, type ArticleResource } from '../../../components/articles/ArticleResourceList'
 import { getDefaultArticleAuthorDetails } from '../../authors'
 
 /** ========== INPUTS (replace all placeholders) ========== */
@@ -39,28 +36,9 @@ const HERO_IMAGE =
 const HERO_IMAGE_ALT = 'Team reviewing pricing scenarios on laptops and whiteboard'
 const FEATURED_FOCUS = 'product' // 'startups' | 'ai' | 'product' | 'funding'
 
-export const metadata: Metadata = {
-  title: `${TOPIC} (2025)`,
-  description: DESCRIPTION,
-  keywords: [TOPIC, 'pricing strategy', 'Australia', FEATURED_FOCUS, CATEGORY],
-  alternates: {
-    canonical: `/articles/${SLUG}`,
-  },
-  authors: [{ name: AUTHOR }],
-  openGraph: {
-    title: `${TOPIC} (2025)`,
-    description: DESCRIPTION,
-    type: 'article',
-    publishedTime: DATE_PUBLISHED,
-    modifiedTime: DATE_MODIFIED,
-    images: [
-      {
-        url: HERO_IMAGE,
-        alt: HERO_IMAGE_ALT,
-      },
-    ],
-  },
-}
+export const useCustomHeader = true
+
+
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -155,11 +133,11 @@ export default function ArticlePage() {
   return (
     <article className="article-content">
       <ArticleHeroHeader
-        breadcrumbs=[
+        breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
           { label: 'Articles', href: '/articles' },
           { label: TOPIC, current: true },
-        ]
+        ]}
         title={`${TOPIC} (2025)`}
         headerBgColor="purple"
         summary={summaryHighlights}
@@ -167,7 +145,7 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
+      <div className="mt-10">
         <div className="prose prose-lg prose-indigo max-w-none text-gray-700 prose-headings:text-gray-900">
           <ArticleTocPlaceholder />
 
@@ -194,10 +172,10 @@ export default function ArticlePage() {
             and warranty provisions typical in Australia.
           </p>
 
-          <ArticleCallout variant="info" title="Keep GST clarity" icon={<span className="text-xl">💡</span>}>
+          <QuoteBlock variant="orange" title="Keep GST clarity" icon={<span>💡</span>} className="my-6">
             List consumer prices as GST-inclusive; for B2B, clearly mark if GST is excluded. Mislabelled pricing can
             breach ACCC guidance and frustrate customers.
-          </ArticleCallout>
+          </QuoteBlock>
 
           <h2>Blend three signals: cost, value, and competition</h2>
           <img
@@ -222,11 +200,11 @@ export default function ArticlePage() {
 
           <ArticleStepList
             title="Rapid pricing validation sprint (7–10 days)"
-            steps=[
+            steps={[
               'Map costs and margin floor; define a “good, better, best” tier hypothesis.',
               'Interview 8–10 target customers with live price cards and capture objection themes.',
               'Run a landing page or in-product prompt with two price variants; track conversion and churn signals.',
-            ]
+            ]}
             accent="indigo"
           />
 
@@ -288,33 +266,6 @@ export default function ArticlePage() {
 
           <ArticleFooterNav />
         </div>
-
-        <aside className="space-y-6 lg:sticky lg:top-6">
-          <ArticleSummaryCard summary={summaryHighlights} />
-          <AudienceGrid
-            heading="Who is this for?"
-            cards=[
-              {
-                title: 'Founders & teams',
-                description: 'Validating ideas, seeking funding, or managing product decisions.',
-                icon: <Rocket className="w-6 h-6" />,
-                variant: 'orange',
-              },
-              {
-                title: 'Students & switchers',
-                description: 'Building portfolios, learning new skills, or changing careers.',
-                icon: <GraduationCap className="w-6 h-6" />,
-                variant: 'purple',
-              },
-              {
-                title: 'Community builders',
-                description: 'Facilitating workshops, mentoring, or supporting local ecosystems.',
-                icon: <Users className="w-6 h-6" />,
-                variant: 'yellow',
-              },
-            ]
-          />
-        </aside>
       </div>
     </article>
   )

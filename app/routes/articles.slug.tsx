@@ -14,7 +14,6 @@ import type { Route } from "./+types/articles.slug";
  */
 const articleModules = import.meta.glob<{
     default: React.ComponentType;
-    summaryHighlights?: any;
     faqItems?: any;
     useCustomHeader?: boolean;
 }>('../articles/content/**/*.tsx');
@@ -46,7 +45,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     // is available before render to avoid side-effects during hydration.
     const globKey = `../articles/content/${article.slug}.tsx`;
     const importer = articleModules[globKey];
-    let summaryHighlights = undefined;
     let faqItems = undefined;
     let useCustomHeader = false;
 
@@ -55,7 +53,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             // Await the module to extract exports
             // Note: This relies on the exports being serializable (e.g. basic objects/strings)
             const module = await importer();
-            summaryHighlights = module.summaryHighlights;
             faqItems = module.faqItems;
             useCustomHeader = module.useCustomHeader ?? false;
         } catch (e) {
@@ -78,7 +75,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
 
     return {
         article,
-        summaryHighlights,
         faqItems,
         upcomingEvents,
         useCustomHeader,
@@ -122,7 +118,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article, summaryHighlights, faqItems, upcomingEvents, useCustomHeader } = loaderData;
+    const { article, faqItems, upcomingEvents, useCustomHeader } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -135,7 +131,6 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             breadcrumbItems={useCustomHeader ? undefined : breadcrumbs}
             containerClassName={useCustomHeader ? '!bg-transparent !pt-4 sm:!pt-6' : undefined}
             contentPaddingClassName={useCustomHeader ? '!pt-0' : undefined}
-            summaryHighlights={useCustomHeader ? undefined : summaryHighlights}
             faqItems={faqItems}
             upcomingEvents={upcomingEvents}
         >
