@@ -155,11 +155,20 @@ export function useGameState(): UseGameStateReturn {
         return currentLogos.map((logo) => {
           // Skip if already hit
           if (logo.isHit) return logo;
-          
-          // Convert logo position (percentage) to screen coordinates
-          const logoScreenX = (logo.x / 100) * canvasWidth;
-          const logoScreenY = (logo.y / 100) * canvasHeight;
-          
+
+          // Apply same perspective projection as rendering
+          const centerX = canvasWidth / 2;
+          const centerY = canvasHeight / 2;
+          const baseX = (logo.x / 100) * canvasWidth;
+          const baseY = (logo.y / 100) * canvasHeight;
+          const dirX = (baseX - centerX) / canvasWidth;
+          const dirY = (baseY - centerY) / canvasHeight;
+          const zNormalized = logo.z / GAME_CONFIG.Z_NEAR;
+          const perspectiveScale = 1 + Math.pow(zNormalized, 1.6) * 4;
+
+          const logoScreenX = centerX + dirX * canvasWidth * perspectiveScale;
+          const logoScreenY = centerY + dirY * canvasHeight * perspectiveScale;
+
           // Calculate hit radius based on current scale
           const logoSize = GAME_CONFIG.BASE_LOGO_SIZE * logo.scale;
           const hitRadius = logoSize / 2;

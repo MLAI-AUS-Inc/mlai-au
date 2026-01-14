@@ -227,7 +227,7 @@ export function LogoShooterCanvas({
 
 /**
  * Render a single logo on the canvas
- * 
+ *
  * CURRENT: Using colored rectangles with text (placeholders)
  * TODO: Switch to actual images when available - see README.md
  */
@@ -240,14 +240,37 @@ function renderLogo(
   parallaxX: number = 0,
   parallaxY: number = 0
 ) {
-  // Convert percentage position to screen coordinates with parallax offset
-  const screenX = (logo.x / 100) * canvasWidth - parallaxX;
-  const screenY = (logo.y / 100) * canvasHeight - parallaxY;
+  // Apply perspective projection - logos move outward from center as they approach
+  const centerX = canvasWidth / 2;
+  const centerY = canvasHeight / 2;
 
-  // Calculate size based on scale
+  // Base position (where the logo would be at z=0)
+  const baseX = (logo.x / 100) * canvasWidth;
+  const baseY = (logo.y / 100) * canvasHeight;
+
+  // Direction from center (normalized to canvas size)
+  const dirX = (baseX - centerX) / canvasWidth;
+  const dirY = (baseY - centerY) / canvasHeight;
+
+  // Perspective scale based on z (0 = far, 100 = close)
+  // Use exponential scaling for dramatic "fly past" effect
+  const zNormalized = logo.z / GAME_CONFIG.Z_NEAR; // 0 to 1
+  const perspectiveScale = 1 + Math.pow(zNormalized, 1.6) * 4;
+
+  // Apply perspective projection - logos accelerate outward from center
+  const screenX = centerX + dirX * canvasWidth * perspectiveScale - parallaxX;
+  const screenY = centerY + dirY * canvasHeight * perspectiveScale - parallaxY;
+
+  // Calculate size based on scale with more dramatic scaling
   const size = GAME_CONFIG.BASE_LOGO_SIZE * logo.scale;
 
+  // Depth-based opacity: fade in as logos approach
+  const depthOpacity = 0.3 + zNormalized * 0.7;
+
   ctx.save();
+
+  // Apply depth-based opacity (far logos are more transparent)
+  ctx.globalAlpha = depthOpacity;
 
   // Apply visual effects based on hit state
   if (logo.isHit) {
@@ -255,6 +278,7 @@ function renderLogo(
     ctx.fillStyle = '#00ff88';
     ctx.shadowColor = '#00ff88';
     ctx.shadowBlur = 20 * logo.scale;
+    ctx.globalAlpha = 1; // Full opacity for hit effect
   } else {
     // Normal state: white/light gray
     ctx.fillStyle = '#ffffff';

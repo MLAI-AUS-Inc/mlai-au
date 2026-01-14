@@ -31,6 +31,7 @@ import { useMouseParallax } from './useMouseParallax';
 import { LogoShooterCanvas } from './LogoShooterCanvas';
 import { SpaceBackground } from './SpaceBackground';
 import { StarfieldCanvas } from './StarfieldCanvas';
+import { HudOverlay } from './HudOverlay';
 import { GameHUD } from './GameHUD';
 import { GameControls } from './GameControls';
 
@@ -112,8 +113,8 @@ export function LogoShooter() {
       <StarfieldCanvas
         isPlaying={isPlaying}
         parallaxOffset={parallaxOffset}
-        starCount={250}
-        baseSpeed={0.002}
+        starCount={350}
+        baseSpeed={0.003}
       />
 
       {/* Layer 2: Logo shooter canvas */}
@@ -127,33 +128,23 @@ export function LogoShooter() {
         />
       </div>
 
-      {/* Layer 3: HUD image overlay */}
-      <div
-        className="absolute pointer-events-none"
-        style={{
-          zIndex: 3,
-          inset: '0', // Fill the container
-          backgroundImage: 'url(https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/HUD.png?alt=media&token=a93ef104-5723-4ebc-8190-e5b7da6a91ec)',
-          backgroundSize: 'cover', // Always fill the container, cropping height if needed
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
+      {/* Layer 3: HUD overlay (SVG/CSS-based for responsiveness) */}
+      <HudOverlay />
 
-      {/* Layer 3.5: Target Eliminated Text Display (Orange Panel) */}
+      {/* Layer 3.5: Sponsor Name Display (inside bottom panel) */}
       {gameState.stats.lastHitLogoName && gameState.stats.lastHitTime && (
         <div
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-none flex items-center justify-center"
           style={{
             zIndex: 4,
-            bottom: '8%',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            maxWidth: '50%',
+            bottom: 42,
+            left: '25%',
+            width: '50%',
+            height: 70,
           }}
         >
           <div
-            className="transition-opacity duration-500"
+            className="transition-opacity duration-500 text-center"
             style={{
               opacity:
                 Date.now() - gameState.stats.lastHitTime < 2000
@@ -161,18 +152,8 @@ export function LogoShooter() {
                   : Math.max(0, 1 - (Date.now() - gameState.stats.lastHitTime - 2000) / 1000),
             }}
           >
-            <div className="font-mono text-white text-right">
-              <div className="text-3xl text-[#FF6B35] uppercase tracking-wider mb-3">
-                TARGET ELIMINATED
-              </div>
-              <div className="text-2xl font-bold drop-shadow-lg mb-2">
-                {gameState.stats.lastHitLogoName}
-              </div>
-              {gameState.stats.lastHitCategory && (
-                <div className="text-base font-medium drop-shadow-lg">
-                  <span className="text-xl text-[#FF6B35]">TYPE:</span> {gameState.stats.lastHitCategory}
-                </div>
-              )}
+            <div className="font-mono text-white text-xl sm:text-2xl md:text-3xl font-bold drop-shadow-lg uppercase tracking-wide">
+              {gameState.stats.lastHitLogoName}
             </div>
           </div>
         </div>
