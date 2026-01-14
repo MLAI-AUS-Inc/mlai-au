@@ -1,11 +1,8 @@
 import React from 'react'
-import { Link } from 'react-router'
-import { ImageWithFallback } from '../ImageWithFallback'
 
 import { Container } from "~/components/Container"
 import { Prose } from '../Prose'
 import { type ArticleWithSlug } from "~/articles/registry"
-import { formatDate } from "~/lib/formatDate"
 import {
   getArticleBySlug,
   getNextArticleSlug, // implemented
@@ -458,67 +455,48 @@ function simplifyArticleBreadcrumbItems(
 export function ArticleLayout({
   article,
   children,
-  showHero = true,
-  showDate = true,
   showDisclaimer = true,
   breadcrumb,
   breadcrumbItems,
-  titleTag = 'h1',
   featuredProfessionals,
   featuredProfessionalsTitle,
   featuredProfessionalsPersona,
   faqItems,
   howTo,
   summaryHighlights,
-  renderFallbackHeading = true,
   containerMaxWidthClassName,
   contentMaxWidthClassName,
   containerClassName,
   containerInnerClassName,
   contentPaddingClassName,
   upcomingEvents,
-  showHeader = true,
 }: {
   article: ArticleWithSlug
   children: React.ReactNode
-  showHero?: boolean
-  showDate?: boolean
   showDisclaimer?: boolean
   breadcrumb?: React.ReactNode
   breadcrumbItems?: BreadcrumbItem[]
-  titleTag?: React.ElementType | string
   featuredProfessionals?: ClinicianProfile[]
   featuredProfessionalsTitle?: string
   featuredProfessionalsPersona?: string
   faqItems?: ArticleFAQItem[]
   howTo?: ArticleHowToConfig
   summaryHighlights?: ArticleSummaryConfig
-  renderFallbackHeading?: boolean
   containerMaxWidthClassName?: string
   contentMaxWidthClassName?: string
   containerClassName?: string
   containerInnerClassName?: string
   contentPaddingClassName?: string
   upcomingEvents?: Event[]
-  showHeader?: boolean
 }) {
   const registry = getArticleBySlug(article.slug)
-  const headerImage = registry?.image ?? article.image
-  const headerAlt = registry?.imageAlt ?? article.imageAlt ?? article.title
-  const resolvedTag = titleTag ?? 'h1'
-  const TitleTag = resolvedTag as React.ElementType;
-  const isSemanticHeading = typeof resolvedTag === 'string' && /^h[1-6]$/i.test(resolvedTag)
   const resolvedRouteSlug = resolveArticleRouteSlug(article.slug)
   const normalisedSlug = (resolvedRouteSlug || article.slug || 'article')
     .toString()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/(^-|-$)/g, '')
-  const headingId = `${normalisedSlug || 'article'}-title`
-  const headingProps = isSemanticHeading
-    ? ({ id: headingId, itemProp: 'headline' } as const)
-    : ({ id: headingId, role: 'heading', 'aria-level': 1, itemProp: 'headline' } as const)
-  const contentId = `${headingId}-content`
+  const contentId = `${normalisedSlug || 'article'}-content`
   const articlePath = buildArticlePath(resolvedRouteSlug || article.slug)
   const seoConfig = ARTICLE_SEO_CONFIG[articlePath] ?? {}
   const breadcrumbFromNode =
@@ -603,7 +581,7 @@ export function ArticleLayout({
     .filter(Boolean)
     .join(' ')
   const resolvedContainerClassName = [
-    'py-16 lg:pt-20 lg:pb-32 bg-white',
+    'py-16 lg:pt-20 lg:pb-32 bg-transparent',
     containerClassName,
   ]
     .filter(Boolean)
@@ -640,65 +618,7 @@ export function ArticleLayout({
       ) : null}
       <div className="xl:relative">
         <div className={`mx-auto ${resolvedContentMaxWidth}`}>
-          <article aria-labelledby={headingId}>
-            {showHeader && (
-              <header className="flex flex-col gap-6">
-                {/* Breadcrumb or Date */}
-                <div>
-                  {resolvedBreadcrumbItems ? (
-                    <Breadcrumbs items={resolvedBreadcrumbItems} />
-                  ) : breadcrumb ? (
-                    <div>{breadcrumb}</div>
-                  ) : (
-                    showDate && (
-                      <time
-                        dateTime={article.date}
-                        className="flex items-center text-base text-zinc-400"
-                      >
-                        <span className="h-4 w-0.5 rounded-full bg-zinc-200" />
-                        <span className="ml-3" suppressHydrationWarning>{formatDate(article.date)}</span>
-                      </time>
-                    )
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex-1 space-y-4">
-                    {/* Page title first for faster contentful paint */}
-                    <TitleTag
-                      className="text-4xl font-bold tracking-tight text-zinc-800 sm:text-5xl"
-                      {...headingProps}
-                    >
-                      {article.title}
-                    </TitleTag>
-                    {!isSemanticHeading && renderFallbackHeading ? (
-                      <h1 className="sr-only">{article.title}</h1>
-                    ) : null}
-                    {article.description ? (
-                      <p className="text-base text-zinc-600 sm:text-lg">
-                        {article.description}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  {/* Hero / OpenGraph image */}
-                  {showHero && headerImage ? (
-                    <div className="w-full lg:w-auto lg:max-w-sm lg:flex-shrink-0 lg:self-center">
-                      <ImageWithFallback
-                        src={headerImage}
-                        alt={headerAlt}
-                        width={800}
-                        height={600}
-                        className="h-full w-full rounded-2xl object-cover"
-                        priority
-                        fetchPriority="high"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 70vw, 360px"
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              </header>
-            )}
+          <article aria-label={article.title}>
             {summaryHighlights ? (
               <div className="mt-8">
                 <ArticleSummaryCard summary={summaryHighlights} />

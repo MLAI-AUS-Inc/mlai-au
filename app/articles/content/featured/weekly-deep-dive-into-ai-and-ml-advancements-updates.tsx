@@ -100,7 +100,6 @@ export const summaryHighlights = {
 }
 
 export const useCustomHeader = true
-export const useInlineToc = true
 
 export default function ArticlePage() {
   const authors = [

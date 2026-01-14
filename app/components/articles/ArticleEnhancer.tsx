@@ -177,37 +177,24 @@ export function ArticleEnhancer({
     return () => observer.disconnect()
   }, [articleDescription, articleTitle, contentSelector, enableHowTo, enableMediaObject, enableToc])
 
-  const hasToc = enableToc && tocItems.length > 1
+  const hasToc = enableToc && tocItems.length > 1 && tocTarget
 
   return (
     <>
-      {hasToc
-        ? tocTarget
-          ? createPortal(
-            <TableOfContents
-              items={tocItems.map((item) => ({
-                href: `#${item.id}`,
-                label: item.title,
-                level: item.level,
-              }))}
-              title="In this guide:"
-              ariaLabel="Table of contents"
-              data-managed-by="article-enhancer"
-            />,
-            tocTarget,
-          )
-          : (
-            <TableOfContents
-              items={tocItems.map((item) => ({
-                href: `#${item.id}`,
-                label: item.title,
-                level: item.level,
-              }))}
-              title="In this guide:"
-              ariaLabel="Table of contents"
-              data-managed-by="article-enhancer"
-            />
-          )
+      {hasToc && tocTarget
+        ? createPortal(
+          <TableOfContents
+            items={tocItems.map((item) => ({
+              href: `#${item.id}`,
+              label: item.title,
+              level: item.level,
+            }))}
+            title="In this guide:"
+            ariaLabel="Table of contents"
+            data-managed-by="article-enhancer"
+          />,
+          tocTarget,
+        )
         : null}
 
       {enableHowTo && howToJson ? (
