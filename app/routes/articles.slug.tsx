@@ -4,7 +4,6 @@ import {
     type ArticleWithSlug,
 } from "~/articles/registry";
 import { ArticleLayout } from "~/components/articles/ArticleLayout";
-import { ArticleTocPlaceholder } from "~/components/articles/ArticleTocPlaceholder";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
 import type { Route } from "./+types/articles.slug";
@@ -18,7 +17,6 @@ const articleModules = import.meta.glob<{
     summaryHighlights?: any;
     faqItems?: any;
     useCustomHeader?: boolean;
-    useInlineToc?: boolean;
 }>('../articles/content/**/*.tsx');
 
 export function meta({ data }: Route.MetaArgs) {
@@ -51,7 +49,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     let summaryHighlights = undefined;
     let faqItems = undefined;
     let useCustomHeader = false;
-    let useInlineToc = false;
 
     if (importer) {
         try {
@@ -61,7 +58,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
             summaryHighlights = module.summaryHighlights;
             faqItems = module.faqItems;
             useCustomHeader = module.useCustomHeader ?? false;
-            useInlineToc = module.useInlineToc ?? false;
         } catch (e) {
             console.error(`Failed to load article metadata for ${slug}`, e);
             // Non-fatal: we can still render the article body wrapper
@@ -86,7 +82,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
         faqItems,
         upcomingEvents,
         useCustomHeader,
-        useInlineToc,
     };
 }
 
@@ -127,7 +122,7 @@ function ArticleContent({ article }: { article: ArticleWithSlug }) {
 }
 
 export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
-    const { article, summaryHighlights, faqItems, upcomingEvents, useCustomHeader, useInlineToc } = loaderData;
+    const { article, summaryHighlights, faqItems, upcomingEvents, useCustomHeader } = loaderData;
 
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
@@ -138,8 +133,6 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
         <ArticleLayout
             article={article}
             breadcrumbItems={useCustomHeader ? undefined : breadcrumbs}
-            showHero={!useCustomHeader}
-            showHeader={!useCustomHeader}
             containerClassName={useCustomHeader ? '!bg-transparent !pt-4 sm:!pt-6' : undefined}
             contentPaddingClassName={useCustomHeader ? '!pt-0' : undefined}
             summaryHighlights={useCustomHeader ? undefined : summaryHighlights}
@@ -147,7 +140,6 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             upcomingEvents={upcomingEvents}
         >
             <div className="relative">
-                {useInlineToc ? null : <ArticleTocPlaceholder noMargin={useCustomHeader} />}
                 <ArticleContent article={article} />
             </div>
         </ArticleLayout>

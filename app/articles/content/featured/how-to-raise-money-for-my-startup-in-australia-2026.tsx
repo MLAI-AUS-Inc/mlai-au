@@ -16,7 +16,6 @@ import { getAuthorProfile } from '../../authors'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
-export const useInlineToc = true
 
 const TOPIC = 'How to raise money for my startup in Australia (2026 guide)'
 const CATEGORY = 'featured' // e.g. 'ai'

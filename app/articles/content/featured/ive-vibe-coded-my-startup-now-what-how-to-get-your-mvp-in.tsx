@@ -11,15 +11,16 @@ import { ArticleFooterNav } from '../../../components/articles/ArticleFooterNav'
 import { QuoteBlock } from '../../../components/articles/QuoteBlock'
 import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPlaceholder'
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
+import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 const TOPIC = "I've vibe-coded my startup—now what? How to get your MVP in front of users"
 const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in'
-const AUTHOR = 'Amelia Tran'
-const AUTHOR_ROLE = 'Product & Startup Editor'
-const AUTHOR_BIO = 'Amelia helps Australian founders move from build mode to validated traction, with a focus on ethical AI and lean testing.' // e.g. 'Expert in...'
-const AUTHOR_AVATAR = 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80' // Optional
+const AUTHOR = 'Dr Sam Donegan'
+const AUTHOR_ROLE = 'Medical Doctor, AI Startup Founder & Lead Editor'
+const AUTHOR_BIO = 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.'
+const AUTHOR_AVATAR = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376'
 const DATE_PUBLISHED = '2026-02-12'
 const DATE_MODIFIED = '2026-02-12'
 const DESCRIPTION = 'A practical, Australian-focused guide to move your vibe-coded build into a tested MVP, with user pilots, guardrails, and funding readiness.'
@@ -74,6 +75,8 @@ export const summaryHighlights = {
   ],
 }
 
+export const useCustomHeader = true
+
 const breadcrumbs = [
   { label: 'Home', href: '/', icon: HomeIcon },
   { label: 'Articles', href: '/articles' },
@@ -89,7 +92,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <article className="bg-white">
+    <article className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={TOPIC}
@@ -188,23 +191,16 @@ export default function ArticlePage() {
             Keep your MVP narrow, safe, and measurable. Run two pilot cycles, report progress weekly, and ship visible changes. With a clear win condition, evidence from 8–12 users, and transparent privacy practices, you will have the traction story needed for early revenue, partnerships, or a compelling pre-seed discussion.
           </p>
 
-          <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-            <ul className="space-y-3">
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">1</span>
-                <span>Write your one-sentence win condition and publish your pilot scope.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">2</span>
-                <span>Schedule 8–12 pilot sessions with a consistent script and consent flow.</span>
-              </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600">3</span>
-                <span>Ship weekly, publish a short pilot report, and update your MVP packet.</span>
-              </li>
-            </ul>
-          </div>
+          <ArticleStepList
+            title="Your Next Steps"
+            accent="indigo"
+            steps={[
+              'Write your one-sentence win condition and publish your pilot scope.',
+              'Schedule 8–12 pilot sessions with a consistent script and consent flow.',
+              'Ship weekly, publish a short pilot report, and update your MVP packet.',
+            ]}
+            className="not-prose"
+          />
 
           <div className="my-12 not-prose">
             <ArticleCompanyCTA
