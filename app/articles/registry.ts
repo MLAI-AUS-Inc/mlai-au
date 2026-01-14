@@ -69,14 +69,24 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
+        title: 'How to price your product in Australia (2025)',
+        date: '2026-01-14',
+        description: 'Learn how to set product pricing in Australia using cost, value, and competitor signals, test willingness-to-pay, and stay compliant with ACCC rules.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-do-i-figure-out-how-much-my-product-should-cost',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ff729998-0ce9-4822-89af-11bca3c17257.jpg?alt=media&token=7ab776b3-d45c-4ff5-9679-b9b169949d94',
+        imageAlt: 'Team reviewing pricing scenarios on laptops and whiteboard',
+        hasContent: true,
+    },
     'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
         title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
         date: '2026-01-13',
         description: 'Turn your vibe-coded build into a tested MVP. Learn how to validate with real users, ship safely, and prepare for pilots and investment in Australia.',
         author: 'Dr Sam Donegan',
         slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a8f7d8bc-9e4a-4112-8b69-729f16129e61.jpg?alt=media&token=4ba2d150-2aa5-4945-9c4a-69013546d9ba',
+        imageAlt: 'Founder testing a mobile MVP with early users in a coworking space',
         hasContent: true,
     },
     'featured/how-to-raise-money-for-my-startup-in-australia-2026': {

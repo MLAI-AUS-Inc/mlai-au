@@ -23,7 +23,6 @@ import UpcomingEventsCTA from './UpcomingEventsCTA'
 import { type Event } from '~/lib/events'
 // import { loadArticleFeaturedProfessionals } from '@/lib/professionals/articleFeaturedProfessionals'
 import type { ClinicianProfile } from '~/data/types'
-import { ArticleSummaryCard, type ArticleSummaryConfig } from './ArticleSummaryCard'
 import type { ArticleFAQItem } from './ArticleFAQ'
 
 const DEFAULT_SITE_URL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL)
@@ -463,7 +462,6 @@ export function ArticleLayout({
   featuredProfessionalsPersona,
   faqItems,
   howTo,
-  summaryHighlights,
   containerMaxWidthClassName,
   contentMaxWidthClassName,
   containerClassName,
@@ -481,7 +479,6 @@ export function ArticleLayout({
   featuredProfessionalsPersona?: string
   faqItems?: ArticleFAQItem[]
   howTo?: ArticleHowToConfig
-  summaryHighlights?: ArticleSummaryConfig
   containerMaxWidthClassName?: string
   contentMaxWidthClassName?: string
   containerClassName?: string
@@ -619,11 +616,6 @@ export function ArticleLayout({
       <div className="xl:relative">
         <div className={`mx-auto ${resolvedContentMaxWidth}`}>
           <article aria-label={article.title}>
-            {summaryHighlights ? (
-              <div className="mt-8">
-                <ArticleSummaryCard summary={summaryHighlights} />
-              </div>
-            ) : null}
             <Prose id={contentId} className={resolvedContentPaddingClassName}>
               <ArticleEnhancer
                 articleTitle={article.title}
