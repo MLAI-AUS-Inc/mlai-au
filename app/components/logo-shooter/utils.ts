@@ -127,11 +127,24 @@ export function formatTime(milliseconds: number): string {
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
+    const tryLoad = (useCors: boolean) => {
+      const img = new Image();
+      if (useCors) {
+        img.crossOrigin = 'anonymous';
+      }
+      img.onload = () => resolve(img);
+      img.onerror = (err) => {
+        // If CORS headers are missing, retry without crossOrigin
+        if (useCors) {
+          tryLoad(false);
+        } else {
+          reject(err);
+        }
+      };
+      img.src = src;
+    };
+
+    // First try with CORS (works for Firebase); retry without if blocked
+    tryLoad(true);
   });
 }
-
