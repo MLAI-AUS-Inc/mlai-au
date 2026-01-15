@@ -21,20 +21,20 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'Builders Club Wollongong: visitor and locals’ guide'
-const CATEGORY = 'featured' // e.g. 'ai'
+const TOPIC = 'Builders Club Wollongong visitor guide'
+const CATEGORY = 'featured'
 const SLUG = 'builders-club'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? 'Founder'
 const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
 const AUTHOR_AVATAR = AUTHOR_PROFILE.avatarUrl ?? 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-const DATE_PUBLISHED = '2026-02-15'
-const DATE_MODIFIED = '2026-02-15'
-const DESCRIPTION = 'What to know before visiting the Builders Club in Wollongong—hours, facilities, costs, parking, and booking tips for 2026.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3a55c106-d3f9-4e7a-affd-dbf0d00c4cfe.jpg?alt=media&token=db6e67ad-2959-4702-af33-bd00400739b6"
-const HERO_IMAGE_ALT = 'Modern club venue with bar seating and ambient lighting'
-const FEATURED_FOCUS = 'product' // 'startups' | 'ai' | 'product' | 'funding'
+const DATE_PUBLISHED = '2026-01-15'
+const DATE_MODIFIED = '2026-01-15'
+const DESCRIPTION = 'Plan your 2026 visit to The Builders Club in Wollongong with clear guidance on access, parking, dining, events, and booking options.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3a16db4a-9a7c-4f5d-bbed-ac0d93db5321.jpg?alt=media&token=970dcc1b-dae8-4004-9d23-61c8f22c5d05"
+const HERO_IMAGE_ALT = 'Exterior entrance of a modern Australian club at dusk'
+const FEATURED_FOCUS = 'product'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -44,12 +44,12 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: 'Is the Builders Club in Wollongong members-only?', answer: 'No. Visitors are welcome. Membership mainly provides discounts and member pricing on food, drinks, and selected events.' },
-  { id: 2, question: 'Do I need to book a table for weekends or live sport?', answer: 'Bookings are recommended for peak times (Friday–Sunday evenings and major live sport broadcasts). Walk-ins are usually accepted in the sports bar outside peak hours.' },
-  { id: 3, question: 'What is the typical dress code?', answer: 'Smart casual is expected. Avoid worksite gear, singlets, and thongs after 5pm. Club management can refuse entry if attire is unsafe or inappropriate.' },
-  { id: 4, question: 'Is there parking at the Builders Club?', answer: 'Yes. Onsite parking is available. Arrive early on event nights to secure a spot; street parking can fill quickly in central Wollongong.' },
-  { id: 5, question: 'Can families visit the club?', answer: 'Yes. Dining areas are family-friendly. Minors must be accompanied by a responsible adult and remain in permitted zones according to NSW club regulations.' },
-  { id: 6, question: 'What payment options are common?', answer: 'Most visitors use cards or digital wallets. Carry a physical ID and a card for membership-linked discounts and any age checks under NSW liquor rules.' },
+  { id: 1, question: 'Do I need membership to enter the Builders Club in Wollongong?', answer: 'Visitors can enter as guests when signed in under NSW club rules; bring government-issued photo ID for sign-in, and consider membership if you visit regularly for dining or events.' },
+  { id: 2, question: 'What is the dress code at the Builders Club?', answer: 'Smart-casual is generally expected: tidy footwear, no work hi-vis after certain hours, and venue staff may refuse entry for clothing deemed unsafe or inappropriate. Check the club’s latest notice before visiting.' },
+  { id: 3, question: 'Is parking available at the Builders Club?', answer: 'On-site parking is commonly available; arrive earlier on weekends or major event nights. If driving, plan for a safe trip home and avoid peak exit times when shows finish.' },
+  { id: 4, question: 'Can I book a space for a meetup or community event?', answer: 'Most clubs offer private or semi-private rooms; contact the venue’s events team with your group size, AV needs, and preferred dates. Ask about community rates if you are a not-for-profit group.' },
+  { id: 5, question: 'What dining options are there at the Builders Club?', answer: 'Expect a bistro with family-friendly menus, rotating specials, and coffee areas; menus and hours can change seasonally, so confirm online before you go.' },
+  { id: 6, question: 'Is there responsible gambling support on-site?', answer: 'Yes. NSW clubs must display responsible gambling information and provide self-exclusion support. Seek staff assistance if you or someone in your party needs help.' },
 ]
 
 export const summaryHighlights = {
@@ -58,16 +58,16 @@ export const summaryHighlights = {
     'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
-      label: 'Is the Builders Club open to visitors or members only?',
-      description: 'Visitors are welcome; membership mainly adds dining and drink discounts.',
+      label: 'Is the Builders Club in Wollongong open to visitors?',
+      description: 'Yes. Guests can sign in under NSW club rules with valid photo ID; membership is optional but speeds repeat visits.',
     },
     {
-      label: 'What facilities does the Builders Club in Wollongong offer?',
-      description: 'Sports bar screens, casual dining, and bookable function rooms with catering.',
+      label: 'Does the Builders Club have parking?',
+      description: 'On-site parking is typically available; arrive early on weekends or event nights to secure a spot.',
     },
     {
-      label: 'Do I need to book for weekends or major live sport nights?',
-      description: 'Bookings are recommended for Friday–Sunday evenings and marquee matches.',
+      label: 'What should I wear to the Builders Club?',
+      description: 'Smart-casual attire is expected—clean footwear and no offensive clothing; check venue notices for updates.',
     },
   ],
 }
@@ -81,7 +81,15 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div
+      className="bg-white"
+      data-category={CATEGORY}
+      data-slug={SLUG}
+      data-featured-focus={FEATURED_FOCUS}
+      data-published={DATE_PUBLISHED}
+      data-modified={DATE_MODIFIED}
+      data-description={DESCRIPTION}
+    >
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -113,20 +121,20 @@ export default function ArticlePage() {
         <AudienceGrid
           cards={[
             {
-              title: 'Local visitors & families',
-              description: 'Planning a first visit, looking for dining and live sport nights.',
+              title: 'Local visitors',
+              description: 'Planning a family meal, show night, or weekend catch-up.',
               icon: <RocketLaunchIcon className="h-6 w-6" />,
               variant: 'orange',
             },
             {
-              title: 'Students & new residents',
-              description: 'Exploring Wollongong venues, comparing costs and transport.',
+              title: 'Meetup organisers',
+              description: 'Scouting an accessible venue with AV, food, and parking.',
               icon: <AcademicCapIcon className="h-6 w-6" />,
               variant: 'purple',
             },
             {
-              title: 'Community organisers',
-              description: 'Scouting function spaces and accessibility for local meetups.',
+              title: 'Travellers',
+              description: 'Looking for relaxed dining near Wollongong CBD with clear entry rules.',
               icon: <UsersIcon className="h-6 w-6" />,
               variant: 'yellow',
             },
@@ -136,86 +144,107 @@ export default function ArticlePage() {
 
         <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
-            <strong>{TOPIC}</strong> – The Builders Club in Wollongong is a popular community venue that mixes a sports bar, dining, and function spaces. If you are planning a visit in 2026, here is what to know about access, costs, parking, and how to book, drawn from current NSW club norms and on-the-ground visitor expectations.
+            <strong>{TOPIC}</strong> – The Builders Club (61 Church Street, Wollongong) is a popular Illawarra venue for dining, live entertainment, and functions. This 2026 guide keeps things simple: how to get in, what to wear, where to park, and how to book spaces for a meetup or family night without surprises.
           </p>
 
           <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
-          <h2>Is the Builders Club members-only or open to visitors?</h2>
+          <h2>What to know before you arrive: sign-in, ID, and dress</h2>
           <p>
-            The club welcomes visitors. Membership is optional and typically offers discounted food and beverage pricing and occasional member promotions. Bring a valid photo ID; NSW liquor laws require proof of age checks, especially after 5pm. If you live within the local government area, some clubs request you sign in or join—staff will guide you on arrival.
+            NSW Registered Clubs require sign-in. Bring government-issued photo ID (driver licence or passport). Expect a smart-casual dress standard: clean footwear, no offensive logos, and limits on hi-vis or workwear after certain hours. If in doubt, call ahead—polite, brief confirmation avoids entry delays.
           </p>
 
           <ArticleResourceCTA
             title={`Download the ${TOPIC} checklist`}
             description="Access a structured template to apply the steps in this guide."
             buttonLabel="Get the checklist"
-            buttonHref="#"
+            buttonHref="/resources"
             accent="purple"
           />
 
           <ArticleCallout
-            title="Quick check on arrival"
+            title="Quick ID check"
             variant="brand"
             icon={<span className="text-xl">💡</span>}
             className="not-prose"
           >
             <p className="mt-1 text-gray-800">
-              Keep your ID handy at entry and ask staff whether a visitor sign-in or day membership is required—this speeds up access and ensures you receive any available pricing benefits.
+              Keep your ID handy at entry and when re-entering after stepping outside. Guests must be signed in; frequent visitors may save time by applying for membership.
             </p>
           </ArticleCallout>
 
-          <h2>Core facilities: dining, sports bar, and functions</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-7b029893-f307-4fcd-b565-86e174b72862.jpg?alt=media&token=508fd912-b71b-4b31-8fdf-676e031e40c3" alt="Vibrant 90s film aesthetic showcasing a lively tech startup space with people enjoying food and drinks." className="w-full rounded-lg my-8" />
+          <h2>Getting there: parking, public transport, accessibility</h2>
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0b786f22-e32e-4089-be9b-b19018f39727.jpg?alt=media&token=f6d082b0-c422-4c7a-a9d9-73791a76403d" alt="People discussing ideas in a tech startup setting with a nostalgic 90s film aesthetic, showcasing collaboration and innovation." className="w-full rounded-lg my-8" />
 
           <p>
-            The Builders Club is known for its sports bar screens, casual dining, and flexible function rooms. Most visitors split their time between the lounge, bistro, and live sport areas. If you are organising a meetup or family event, function rooms usually need advance booking, and catering packages may have minimum spends—confirm current rates directly with the venue.
+            The club sits near Wollongong CBD, a short walk from Crown Street. On-site parking is common, but spaces tighten during Friday and Saturday evenings or show nights. If you prefer public transport, Wollongong Station is nearby with local buses along Church Street. Ask staff about step-free access points and lift locations—most modern areas support mobility devices.
           </p>
 
-          <h3>When to book vs walk in</h3>
+          <h3>Arrival timing to avoid queues</h3>
           <p>
-            Weeknight dining is often available for walk-ins. For weekend dinners, large groups, or major matches (State of Origin, finals), bookings reduce wait times. Ask about any cover charges tied to special events; these are uncommon but can appear on headline nights.
+            Arrive 30–45 minutes before headliner shows or major sport broadcasts. This window makes sign-in smoother, lets you choose seating, and gives time to order before kitchens peak.
           </p>
 
           <ArticleStepList
             title="Practical steps"
             steps={[
-              { label: 'Call ahead for weekend or live-sport bookings' },
-              { label: 'Check function room minimum spends if hosting a group' },
-              { label: 'Arrive 20–30 minutes early on major event nights to secure seating' },
+              { label: 'Check event times and kitchen hours the morning of your visit.' },
+              { label: 'Carry photo ID; allow extra time on live-show nights.' },
+              { label: 'If driving, plan a safe trip home or set up a rideshare pickup spot.' },
             ]}
             accent="indigo"
           />
 
           <QuoteBlock title="Expert insight" variant="purple">
-            “For live sport nights, prioritise seating with a clear view and ask staff which screens will carry commentary—audio zones can differ across the floor.”
+            “Early arrival reduces wait times for meals and keeps your group together—especially if you need accessible seating near exits or lifts.”
           </QuoteBlock>
 
-          <h2>Costs, dress code, and entry expectations</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-818a8534-059c-4df4-ad3d-0321ece21b7e.jpg?alt=media&token=bf3b1046-bc35-4e4b-9aeb-5578d11d5853" alt="People in 90s tech attire collaborate in a vibrant startup office setting, embodying a retro film vibe." className="w-full rounded-lg my-8" />
+          <h2>Dining and bar options: menus, specials, and family groups</h2>
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-da8fd050-ce12-4f5f-8221-3cd80f62911f.jpg?alt=media&token=a86f000a-9ac5-481b-908b-ed7b6708879f" alt="Friends enjoying drinks and food in a vibrant tech startup environment with a nostalgic 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
-            Pricing is typical for NSW clubs: member and non-member rates differ slightly, with meals in the mid-range for Wollongong. Smart casual attire is expected; avoid high-vis workwear after hours, singlets, and thongs in the evening. If you are coming straight from site work, pack a spare shirt and enclosed shoes to avoid being turned away.
+            Expect a bistro-style menu with rotating weeknight specials, kids’ meals, and coffee/bar service. Menus can change seasonally, so check the venue site for current pricing and hours. For families, ask about highchairs and kids’ activity packs; for groups, preorder platters when available to minimise wait times.
           </p>
 
-          <h2>Getting there: parking, accessibility, and late-night options</h2>
+          <ArticleCallout title="Budget-friendly tips" variant="info">
+            <p className="text-gray-800">
+              Weeknight specials (e.g., pasta or schnitzel nights) are usually better value than peak Saturday slots. Confirm any member pricing—joining can offset costs if you visit regularly.
+            </p>
+          </ArticleCallout>
+
+          <h2>Live entertainment and sport: what’s on and how to book</h2>
           <p>
-            The venue sits close to central Wollongong, with onsite parking that can fill during peak events. Plan for street parking overflow and check local signage for time limits. Public transport connections include nearby bus stops; late-night options thin after 11pm, so rideshare is common for returns. Ask staff about accessibility entrances and lift access if needed—most modern NSW clubs maintain step-free routes.
+            The Builders Club regularly hosts tribute acts, comedy, and sport screenings. Check the club’s “What’s On” page for ticketing links and seating notes. For big matches, arrive early to secure a clear view of screens and avoid standing in walkways (a common reason staff may redirect you).
           </p>
 
-          <h2>When to go: live sport, weekends, and public holidays</h2>
+          <h3>Noise and seating considerations</h3>
           <p>
-            Live sport schedules drive crowd levels. Friday and Saturday evenings are busiest, followed by marquee match days. Public holidays can include adjusted hours; check the club’s site or call ahead in 2026 to confirm opening times and any surcharge or holiday menus.
+            If you prefer conversation-friendly areas, ask staff for sections away from speaker stacks. Families often sit near bistro edges; meetups might choose quieter corners with nearby power outlets for laptops or small AV setups.
           </p>
 
-          <h2>Alternatives and community-friendly options nearby</h2>
+          <h2>Booking spaces for meetups or community gatherings</h2>
           <p>
-            If the Builders Club is at capacity, Wollongong offers other community venues and pubs with screens and bistro dining. Compare parking, accessibility, and noise levels if you are bringing family or running a meetup. For community groups, ask about weekday afternoon slots when rooms are quieter and rates may be more flexible.
+            Function rooms and semi-private areas can typically be reserved. When you contact the events team, share your group size, desired layout, AV needs (projector, microphones), catering preferences, and whether you are a not-for-profit—many venues offer community-friendly rates. Confirm bump-in times and Wi-Fi details if you plan demos or hybrid calls.
           </p>
 
-          <h2>Plan your visit and enjoy the venue responsibly</h2>
+          <ArticleStepList
+            title="Checklist for organisers"
+            steps={[
+              { label: 'Send dates, headcount range, and seating style (theatre, cabaret, classroom).' },
+              { label: 'List AV needs and test HDMI/USB-C compatibility on arrival.' },
+              { label: 'Confirm catering cutoff times and any minimum spend requirements.' },
+            ]}
+            accent="teal"
+          />
+
+          <h2>Responsible gambling and safe visits</h2>
           <p>
-            A smooth visit comes down to timing, attire, and a quick call ahead for busy nights. Bring ID, consider a membership if you are local, and align your arrival with the event schedule to secure seats. Supporting local clubs keeps community venues vibrant—enjoy responsibly and plan your transport before the night begins.
+            As a NSW club, the venue must display responsible gambling materials and provide self-exclusion support. If gaming areas are part of your visit, set personal limits, avoid cash advances, and take regular breaks. Staff can direct you to assistance services if you or someone in your group needs help.
+          </p>
+
+          <h2>Plan your night: a simple run sheet</h2>
+          <p>
+            Keep plans light but structured: confirm the event time, arrive early, order before peak, and set a clear home trip plan. The outline below keeps everyone aligned and reduces last-minute stress.
           </p>
 
           <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
@@ -223,15 +252,15 @@ export default function ArticlePage() {
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">1</span>
-                <span>Call ahead to confirm opening hours and any event bookings.</span>
+                <span>Check the club site for tonight’s events, dining hours, and any dress updates.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">2</span>
-                <span>Plan transport: onsite parking plus a rideshare backup for late finishes.</span>
+                <span>Pack photo ID and decide on parking or a safe rideshare pickup spot.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">3</span>
-                <span>Pack smart casual attire to meet dress expectations after 5pm.</span>
+                <span>For meetups, email the events team with headcount, AV needs, and preferred times.</span>
               </li>
             </ul>
           </div>
@@ -242,10 +271,10 @@ export default function ArticlePage() {
             {/* Contextual CTA - Best placement for conversion */}
             <ArticleCompanyCTA
               title={`Need help with ${TOPIC}?`}
-              body="Join the MLAI community to collaborate with fellow AI practitioners and enthusiasts in Australia."
-              buttonText="Connect with MLAI"
+              body="MLAI is a not-for-profit community empowering the Australian AI community. If you’re hosting an AI meetup or want to connect with local practitioners, we can point you to venues and peers."
+              buttonText="Join the MLAI community"
               buttonHref="https://mlai.au/contact"
-              note="We are a not-for-profit community based in North Melbourne."
+              note="Community-first support, based in North Melbourne."
             />
           </div>
         </div>
