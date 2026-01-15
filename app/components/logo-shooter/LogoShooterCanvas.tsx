@@ -6,7 +6,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Logo, LaserBeam } from './types';
 import type { ParallaxOffset } from './useMouseParallax';
-import { GAME_CONFIG } from './logoData';
+import { GAME_CONFIG, SPONSOR_LOGOS } from './logoData';
+import { loadImage } from './utils';
+import type { SponsorLogoData } from './types';
 
 // Parallax multiplier for logos (they're in the "mid-ground")
 const LOGO_PARALLAX_MULTIPLIER = 0.08;
@@ -35,20 +37,19 @@ export function LogoShooterCanvas({
   const [laserBeams, setLaserBeams] = useState<LaserBeam[]>([]);
 
   // ============================================
-  // IMAGE LOADING - CURRENTLY DISABLED
-  // ============================================
-  // TODO: Uncomment this block when logo images are available in public/sponsor_logos/
-  // See README.md for detailed instructions
+  // IMAGE LOADING - LOAD ALL ON MOUNT
   // ============================================
   useEffect(() => {
-    // TEMPORARY: Skip image loading, using text placeholders
-    setImageCache(new Map());
-    
-    // UNCOMMENT THIS CODE BLOCK TO ENABLE ACTUAL LOGO IMAGES:
-    /*
-    const uniqueLogos = Array.from(new Set(logos.map(l => l.imagePath)));
-    const loadPromises = uniqueLogos.map(async (path) => {
+    // Get unique image paths from sponsor data
+    const uniquePaths = Array.from(new Set(SPONSOR_LOGOS.map((l: SponsorLogoData) => l.imagePath)));
+
+    const loadPromises = uniquePaths.map(async (path: string) => {
       try {
+        // Skip local placeholders that might be missing in production/dev
+        if (!path || path.startsWith('sponsor_logos/')) {
+          return null;
+        }
+
         const img = await loadImage(path);
         return [path, img] as const;
       } catch (error) {
@@ -58,16 +59,17 @@ export function LogoShooterCanvas({
     });
 
     Promise.all(loadPromises).then((results) => {
-      const newCache = new Map<string, HTMLImageElement>();
-      results.forEach((result) => {
-        if (result) {
-          newCache.set(result[0], result[1]);
-        }
+      setImageCache((prev) => {
+        const newCache = new Map(prev);
+        results.forEach((result) => {
+          if (result) {
+            newCache.set(result[0], result[1]);
+          }
+        });
+        return newCache;
       });
-      setImageCache(newCache);
     });
-    */
-  }, [logos]);
+  }, []); // Only run once on mount
 
   // Handle canvas resize
   useEffect(() => {
@@ -160,11 +162,11 @@ export function LogoShooterCanvas({
     const bottomY = canvas.height * 0.95; // Near bottom of screen
     const leftX = canvas.width * 0.15; // Bottom-left corner (15% from left)
     const rightX = canvas.width * 0.85; // Bottom-right corner (85% from left)
-    
+
     const wasHit = onClick(x, y, canvas.width, canvas.height);
-    
+
     const timestamp = Date.now();
-    
+
     // Left laser beam
     const leftLaser: LaserBeam = {
       id: `laser-left-${timestamp}-${Math.random()}`,
@@ -175,7 +177,7 @@ export function LogoShooterCanvas({
       createdAt: timestamp,
       isHit: wasHit,
     };
-    
+
     // Right laser beam
     const rightLaser: LaserBeam = {
       id: `laser-right-${timestamp}-${Math.random()}`,
@@ -186,9 +188,9 @@ export function LogoShooterCanvas({
       createdAt: timestamp,
       isHit: wasHit,
     };
-    
+
     setLaserBeams((prev) => [...prev, leftLaser, rightLaser]);
-    
+
     // Play shoot sound
     playShootSound(wasHit);
   };
@@ -227,9 +229,6 @@ export function LogoShooterCanvas({
 
 /**
  * Render a single logo on the canvas
- *
- * CURRENT: Using colored rectangles with text (placeholders)
- * TODO: Switch to actual images when available - see README.md
  */
 function renderLogo(
   ctx: CanvasRenderingContext2D,
@@ -272,47 +271,76 @@ function renderLogo(
   // Apply depth-based opacity (far logos are more transparent)
   ctx.globalAlpha = depthOpacity;
 
-  // Apply visual effects based on hit state
-  if (logo.isHit) {
-    // Hit state: bright color with glow
-    ctx.fillStyle = '#00ff88';
-    ctx.shadowColor = '#00ff88';
-    ctx.shadowBlur = 20 * logo.scale;
-    ctx.globalAlpha = 1; // Full opacity for hit effect
+  const img = imageCache.get(logo.imagePath);
+
+  if (img) {
+    // === RENDER IMAGE ===
+
+    if (logo.isHit) {
+      // Hit state: Glow effect behind image
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 30 * logo.scale;
+      ctx.globalAlpha = 1; // Full opacity for hit effect
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
+    // Draw the image centered at coordinates
+    // Ensure aspect ratio is preserved if needed, or simply fit to square
+    // For simplicity, we draw it as a square since logos are usually comparable
+    ctx.drawImage(
+      img,
+      screenX - size / 2,
+      screenY - size / 2,
+      size,
+      size
+    );
+
   } else {
-    // Normal state: white/light gray
-    ctx.fillStyle = '#ffffff';
+    // === RENDER PLACEHOLDER (Fallback) ===
+
+    // Apply visual effects based on hit state
+    if (logo.isHit) {
+      // Hit state: bright color with glow
+      ctx.fillStyle = '#00ff88';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 20 * logo.scale;
+      ctx.globalAlpha = 1; // Full opacity for hit effect
+    } else {
+      // Normal state: white/light gray
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowBlur = 0;
+    }
+
+    // Draw rectangle as logo placeholder
+    ctx.fillRect(
+      screenX - size / 2,
+      screenY - size / 2,
+      size,
+      size
+    );
+
+    // Draw logo name text
+    ctx.fillStyle = logo.isHit ? '#000000' : '#ff3d00';
+    ctx.font = `bold ${Math.max(10, size / 6)}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
     ctx.shadowBlur = 0;
-  }
 
-  // Draw rectangle as logo placeholder
-  ctx.fillRect(
-    screenX - size / 2,
-    screenY - size / 2,
-    size,
-    size
-  );
-
-  // Draw logo name text
-  ctx.fillStyle = logo.isHit ? '#000000' : '#ff3d00';
-  ctx.font = `bold ${Math.max(10, size / 6)}px Arial`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowBlur = 0;
-  
-  // Wrap text if too long
-  const maxWidth = size * 0.9;
-  const words = logo.name.split(' ');
-  if (words.length > 1 && ctx.measureText(logo.name).width > maxWidth) {
-    // Multi-line text
-    const lineHeight = size / 6;
-    words.forEach((word, index) => {
-      const yOffset = (index - words.length / 2 + 0.5) * lineHeight;
-      ctx.fillText(word, screenX, screenY + yOffset, maxWidth);
-    });
-  } else {
-    // Single line
-    ctx.fillText(logo.name, screenX, screenY, maxWidth);
+    // Wrap text if too long
+    const maxWidth = size * 0.9;
+    const words = logo.name.split(' ');
+    if (words.length > 1 && ctx.measureText(logo.name).width > maxWidth) {
+      // Multi-line text
+      const lineHeight = size / 6;
+      words.forEach((word, index) => {
+        const yOffset = (index - words.length / 2 + 0.5) * lineHeight;
+        ctx.fillText(word, screenX, screenY + yOffset, maxWidth);
+      });
+    } else {
+      // Single line
+      ctx.fillText(logo.name, screenX, screenY, maxWidth);
+    }
   }
 
   ctx.restore();
@@ -338,7 +366,7 @@ function renderLogo(
  */
 function drawCrosshair(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.save();
-  
+
   // Draw black outline for better visibility
   ctx.strokeStyle = '#000000';
   ctx.lineWidth = 3;
@@ -388,71 +416,71 @@ function drawCrosshair(ctx: CanvasRenderingContext2D, x: number, y: number) {
   ctx.restore();
 }
 
- /**
-  * Render laser beam
-  */
- function renderLaserBeam(ctx: CanvasRenderingContext2D, laser: LaserBeam) {
-   const age = Date.now() - laser.createdAt;
-   const fadeOutStart = 80; // Start fading after 80ms (faster!)
-   const totalDuration = 200; // Total duration 200ms (faster!)
-   
-   // Calculate opacity (full brightness for 80ms, then fade out)
-   let opacity = 1;
-   if (age > fadeOutStart) {
-     opacity = 1 - (age - fadeOutStart) / (totalDuration - fadeOutStart);
-   }
-   
-   if (opacity <= 0) return;
-   
-   ctx.save();
-   
-   // Use green for all laser shots (no distinction between hit/miss)
-   const laserColor = '#00ff88'; // Bright green for all shots
-  
+/**
+ * Render laser beam
+ */
+function renderLaserBeam(ctx: CanvasRenderingContext2D, laser: LaserBeam) {
+  const age = Date.now() - laser.createdAt;
+  const fadeOutStart = 80; // Start fading after 80ms (faster!)
+  const totalDuration = 200; // Total duration 200ms (faster!)
+
+  // Calculate opacity (full brightness for 80ms, then fade out)
+  let opacity = 1;
+  if (age > fadeOutStart) {
+    opacity = 1 - (age - fadeOutStart) / (totalDuration - fadeOutStart);
+  }
+
+  if (opacity <= 0) return;
+
+  ctx.save();
+
+  // Use green for all laser shots (no distinction between hit/miss)
+  const laserColor = '#00ff88'; // Bright green for all shots
+
   // Draw outer glow
   ctx.strokeStyle = laserColor;
   ctx.lineWidth = 4;
   ctx.globalAlpha = opacity * 0.3;
   ctx.shadowColor = laserColor;
   ctx.shadowBlur = 20;
-  
+
   ctx.beginPath();
   ctx.moveTo(laser.startX, laser.startY);
   ctx.lineTo(laser.endX, laser.endY);
   ctx.stroke();
-  
+
   // Draw core beam (brighter, thinner)
   ctx.lineWidth = 2;
   ctx.globalAlpha = opacity;
   ctx.shadowBlur = 10;
-  
+
   ctx.beginPath();
   ctx.moveTo(laser.startX, laser.startY);
   ctx.lineTo(laser.endX, laser.endY);
   ctx.stroke();
-  
-   // Draw muzzle flash at start point (only for first 40ms - faster!)
-   if (age < 40) {
-     const flashOpacity = 1 - age / 40;
-     ctx.globalAlpha = flashOpacity * opacity;
-     ctx.fillStyle = laserColor;
-     ctx.shadowBlur = 25;
-     ctx.beginPath();
-     ctx.arc(laser.startX, laser.startY, 6, 0, Math.PI * 2);
-     ctx.fill();
-   }
-   
-   // Draw impact flash at end point (only for first 40ms on hits - faster!)
-   if (laser.isHit && age < 40) {
-     const flashOpacity = 1 - age / 40;
-     ctx.globalAlpha = flashOpacity * opacity;
-     ctx.fillStyle = laser.isHit ? '#00ff88' : laserColor;
-     ctx.shadowBlur = 35;
-     ctx.beginPath();
-     ctx.arc(laser.endX, laser.endY, 10, 0, Math.PI * 2);
-     ctx.fill();
-   }
-  
+
+  // Draw muzzle flash at start point (only for first 40ms - faster!)
+  if (age < 40) {
+    const flashOpacity = 1 - age / 40;
+    ctx.globalAlpha = flashOpacity * opacity;
+    ctx.fillStyle = laserColor;
+    ctx.shadowBlur = 25;
+    ctx.beginPath();
+    ctx.arc(laser.startX, laser.startY, 6, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Draw impact flash at end point (only for first 40ms on hits - faster!)
+  if (laser.isHit && age < 40) {
+    const flashOpacity = 1 - age / 40;
+    ctx.globalAlpha = flashOpacity * opacity;
+    ctx.fillStyle = laser.isHit ? '#00ff88' : laserColor;
+    ctx.shadowBlur = 35;
+    ctx.beginPath();
+    ctx.arc(laser.endX, laser.endY, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
   ctx.restore();
 }
 
@@ -463,26 +491,26 @@ function drawCrosshair(ctx: CanvasRenderingContext2D, x: number, y: number) {
 function playShootSound(isHit: boolean) {
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+
     // Create oscillator for laser sound
     const oscillator = audioContext.createOscillator();
     const gainNode = audioContext.createGain();
-    
+
     oscillator.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     // Laser shoot sound: quick frequency sweep
     oscillator.type = 'sawtooth';
     oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
     oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
-    
+
     // Volume envelope: quick attack and decay
     gainNode.gain.setValueAtTime(0.15, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-    
+
     oscillator.start(audioContext.currentTime);
     oscillator.stop(audioContext.currentTime + 0.1);
-    
+
     // Play hit sound if target was hit
     if (isHit) {
       setTimeout(() => playHitSound(), 50);
@@ -499,34 +527,34 @@ function playShootSound(isHit: boolean) {
 function playHitSound() {
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
+
     // Create noise for explosion effect
     const bufferSize = audioContext.sampleRate * 0.2; // 200ms
     const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
     const data = buffer.getChannelData(0);
-    
+
     // Generate noise that fades out
     for (let i = 0; i < bufferSize; i++) {
       const decay = 1 - i / bufferSize;
       data[i] = (Math.random() * 2 - 1) * decay * 0.3;
     }
-    
+
     const source = audioContext.createBufferSource();
     source.buffer = buffer;
-    
+
     // Add filter for more "explosion-like" sound
     const filter = audioContext.createBiquadFilter();
     filter.type = 'lowpass';
     filter.frequency.setValueAtTime(400, audioContext.currentTime);
-    
+
     const gainNode = audioContext.createGain();
     gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
-    
+
     source.connect(filter);
     filter.connect(gainNode);
     gainNode.connect(audioContext.destination);
-    
+
     source.start(audioContext.currentTime);
   } catch (error) {
     // Silently fail if Web Audio API is not supported

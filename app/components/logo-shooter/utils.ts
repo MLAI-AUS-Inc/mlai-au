@@ -72,12 +72,12 @@ export function isTooClose(
  */
 export function createLogo(existingLogos: Logo[] = []): Logo {
   const sponsor = getRandomSponsorLogo();
-  
+
   // Try to find a position that's not too close to existing logos
   let x: number, y: number;
   let attempts = 0;
   const maxAttempts = 10;
-  
+
   do {
     x = random(15, 85); // Keep away from edges
     y = random(15, 85);
@@ -86,7 +86,7 @@ export function createLogo(existingLogos: Logo[] = []): Logo {
     attempts < maxAttempts &&
     isTooClose({ x, y }, existingLogos)
   );
-  
+
   return {
     id: generateId(),
     name: sponsor.name,
@@ -128,6 +128,7 @@ export function formatTime(milliseconds: number): string {
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = "anonymous";
     img.onload = () => resolve(img);
     img.onerror = reject;
     img.src = src;
