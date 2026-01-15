@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/builders-club': {
+        title: 'Builders Club Wollongong: visitor and locals’ guide (2026)',
+        date: '2026-01-15',
+        description: 'Plan your visit to the Builders Club in Wollongong—hours, facilities, costs, parking, booking tips, and what to expect in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/builders-club',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Builders Club Wollongong: visitor and locals’ guide (2026)',
+        hasContent: true,
+    },
     'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
         title: 'How to price your product in Australia (2025)',
         date: '2026-01-14',
