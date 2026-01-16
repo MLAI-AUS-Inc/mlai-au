@@ -26,6 +26,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useGameState } from './useGameState';
+import { useScore } from './useScore';
 import { useIntersectionPause } from './useIntersectionPause';
 import { useMouseParallax } from './useMouseParallax';
 import { LogoShooterCanvas } from './LogoShooterCanvas';
@@ -41,6 +42,8 @@ interface LogoShooterProps {
 }
 
 export function LogoShooter({ imageCache }: LogoShooterProps) {
+  const { score, highScore, incrementScore } = useScore();
+
   const {
     gameState,
     startGame,
@@ -48,7 +51,7 @@ export function LogoShooter({ imageCache }: LogoShooterProps) {
     resetGame,
     handleShoot,
     updateLogoPositions,
-  } = useGameState();
+  } = useGameState({ onHit: incrementScore });
 
   const [intersectionRef, isVisible] = useIntersectionPause({ threshold: 0.2 });
   const hasBeenVisible = useRef(false);
@@ -165,9 +168,9 @@ export function LogoShooter({ imageCache }: LogoShooterProps) {
         </div>
       )}
 
-      {/* Layer 5: Game stats HUD */}
+      {/* Layer 5: Score HUD */}
       {gameState.mode === 'playing' && (
-        <GameHUD stats={gameState.stats} isPlaying={isPlaying} />
+        <GameHUD score={score} highScore={highScore} />
       )}
 
       {/* Controls */}

@@ -11,6 +11,12 @@ import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
 import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
+import { LogoMarquee } from "~/components/LogoMarquee";
+
+// Split logos into 3 rows for marquee animation
+const ROW_1_LOGOS = SPONSOR_LOGOS.slice(0, 13);
+const ROW_2_LOGOS = SPONSOR_LOGOS.slice(13, 26);
+const ROW_3_LOGOS = SPONSOR_LOGOS.slice(26);
 
 type LogoCloudState = 'compact' | 'expanding' | 'playing';
 
@@ -113,16 +119,14 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
           <div
             id="logoCloud"
-            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 overflow-hidden ${
+            className={`rounded-2xl sm:rounded-[2.5rem] py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${
               isExpanded
                 ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
-                : 'min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]'
+                : 'min-h-[300px] sm:min-h-[350px]'
             } ${
               logoCloudState === 'playing'
                 ? 'bg-black cursor-crosshair'
-                : isExpanded
-                  ? 'bg-black cursor-default'
-                  : 'bg-[var(--brutalist-orange)] cursor-default'
+                : 'bg-[var(--brutalist-orange)] cursor-default'
             }`}
             onMouseEnter={handleActivate}
             onMouseLeave={handleDeactivate}
@@ -161,37 +165,26 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
               </button>
             )}
 
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-              {/* Static Logos - Fade out when not compact */}
-              <div className={`transition-opacity duration-500 ${
-                logoCloudState !== 'compact' ? 'opacity-0 pointer-events-none' : 'opacity-100'
-              }`}>
-                <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-10 md:gap-12 w-full px-4">
-                  {SPONSOR_LOGOS.map((logo) => (
-                    <img
-                      key={logo.name}
-                      className={`${logo.size === 'large' ? 'h-12 sm:h-14 lg:h-16' :
-                          logo.size === 'medium' ? 'h-9 sm:h-11 lg:h-12' :
-                            'h-7 sm:h-9 lg:h-10'
-                        } w-auto object-contain transition-all duration-300 hover:scale-105`}
-                      src={logo.imagePath}
-                      alt={logo.name}
-                      title={logo.name}
-                    />
-                  ))}
-                </div>
+            {/* Animated Logo Marquee - 3 rows with alternating directions */}
+            <div className={`transition-opacity duration-500 ${
+              logoCloudState !== 'compact' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}>
+              <div className="space-y-2 py-2">
+                <LogoMarquee logos={ROW_1_LOGOS} direction="left" duration={40} paused={isExpanded} />
+                <LogoMarquee logos={ROW_2_LOGOS} direction="right" duration={40} paused={isExpanded} />
+                <LogoMarquee logos={ROW_3_LOGOS} direction="left" duration={40} paused={isExpanded} />
+              </div>
 
-                <div className="mt-8 sm:mt-12 flex justify-center px-2">
-                  <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
-                    <span className="block sm:inline">
-                      Our events have been sponsored and supported by over 50 awesome
-                      organisations across Australia.{" "}
-                    </span>
-                    <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
-                      Become a sponsor <span aria-hidden="true">&rarr;</span>
-                    </a>
-                  </p>
-                </div>
+              <div className="mt-4 flex justify-center px-2">
+                <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
+                  <span className="block sm:inline">
+                    Our events have been sponsored and supported by over 50 awesome
+                    organisations across Australia.{" "}
+                  </span>
+                  <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
+                    Become a sponsor <span aria-hidden="true">&rarr;</span>
+                  </a>
+                </p>
               </div>
             </div>
           </div>

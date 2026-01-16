@@ -8,6 +8,10 @@ import type { GameState, GameStats, Logo, GameMode } from './types';
 import { GAME_CONFIG } from './logoData';
 import { createLogo, mapRange } from './utils';
 
+interface UseGameStateOptions {
+  onHit?: () => void;
+}
+
 interface UseGameStateReturn {
   gameState: GameState;
   startGame: () => void;
@@ -26,7 +30,8 @@ const initialStats: GameStats = {
   lastHitTime: null,
 };
 
-export function useGameState(): UseGameStateReturn {
+export function useGameState(options: UseGameStateOptions = {}): UseGameStateReturn {
+  const { onHit } = options;
   // ============================================
   // AUTO-START MODE: Starts as 'playing' for ambient experience
   // ============================================
@@ -181,7 +186,10 @@ export function useGameState(): UseGameStateReturn {
           if (distance < hitRadius) {
             // Hit!
             hitDetected = true;
-            
+
+            // Call onHit callback if provided
+            onHit?.();
+
             setStats((currentStats) => ({
               ...currentStats,
               hits: currentStats.hits + 1,
@@ -190,7 +198,7 @@ export function useGameState(): UseGameStateReturn {
               lastHitCategory: logo.category,
               lastHitTime: Date.now(),
             }));
-            
+
             return {
               ...logo,
               isHit: true,
@@ -212,7 +220,7 @@ export function useGameState(): UseGameStateReturn {
       
       return hitDetected;
     },
-    []
+    [onHit]
   );
 
   // Cleanup
