@@ -9,6 +9,7 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import FeaturedArticles from "~/components/FeaturedArticles";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
+import { TestimonialTetris } from "~/components/testimonial-tetris";
 import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
 import { LogoMarquee } from "~/components/LogoMarquee";
@@ -215,7 +216,16 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         <SectionDivider color="#3537dc" />
 
         {/* Testimonials */}
-        <TetrisTestimonials />
+        {/* ============================================
+            STATIC TESTIMONIALS - COMMENTED OUT
+            ============================================
+            Decision: Replaced with interactive Tetris game
+            To restore static layout: Uncomment below, remove TestimonialTetris
+            ============================================ */}
+        {/* <TetrisTestimonials /> */}
+        
+        {/* Interactive Tetris Game - Main Testimonial Section */}
+        <TestimonialTetris />
 
         {/* Team section - moved here directly under testimonials */}
         <Team />
