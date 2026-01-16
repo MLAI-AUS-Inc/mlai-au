@@ -19,6 +19,8 @@ interface LogoShooterCanvasProps {
   onUpdate: (deltaTime: number) => void;
   onClick: (x: number, y: number, width: number, height: number) => boolean;
   parallaxOffset: ParallaxOffset;
+  /** Pre-loaded image cache from parent (optional - will load internally if not provided) */
+  externalImageCache?: Map<string, HTMLImageElement>;
 }
 
 export function LogoShooterCanvas({
@@ -27,19 +29,30 @@ export function LogoShooterCanvas({
   onUpdate,
   onClick,
   parallaxOffset,
+  externalImageCache,
 }: LogoShooterCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | undefined>(undefined);
   const lastTimeRef = useRef<number>(0);
-  const [imageCache, setImageCache] = useState<Map<string, HTMLImageElement>>(new Map());
+  // Initialize with external cache if provided
+  const [imageCache, setImageCache] = useState<Map<string, HTMLImageElement>>(
+    () => externalImageCache ?? new Map()
+  );
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [laserBeams, setLaserBeams] = useState<LaserBeam[]>([]);
 
   // ============================================
-  // IMAGE LOADING - LOAD ALL ON MOUNT
+  // IMAGE LOADING - LOAD ALL ON MOUNT (skip if external cache provided)
   // ============================================
   useEffect(() => {
+    // Skip internal loading if external cache is provided and has images
+    if (externalImageCache && externalImageCache.size > 0) {
+      // Sync external cache to state if it changed
+      setImageCache(externalImageCache);
+      return;
+    }
+
     // Get unique image paths from sponsor data
     const uniquePaths = Array.from(new Set(SPONSOR_LOGOS.map((l: SponsorLogoData) => l.imagePath)));
 
@@ -69,7 +82,7 @@ export function LogoShooterCanvas({
         return newCache;
       });
     });
-  }, []); // Only run once on mount
+  }, [externalImageCache]); // Re-run if external cache changes
 
   // Handle canvas resize
   useEffect(() => {

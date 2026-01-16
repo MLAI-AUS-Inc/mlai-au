@@ -35,7 +35,12 @@ import { HudOverlay } from './HudOverlay';
 import { GameHUD } from './GameHUD';
 import { GameControls } from './GameControls';
 
-export function LogoShooter() {
+interface LogoShooterProps {
+  /** Pre-loaded image cache from parent (optional - will load internally if not provided) */
+  imageCache?: Map<string, HTMLImageElement>;
+}
+
+export function LogoShooter({ imageCache }: LogoShooterProps) {
   const {
     gameState,
     startGame,
@@ -125,6 +130,7 @@ export function LogoShooter() {
           onUpdate={updateLogoPositions}
           onClick={handleShoot}
           parallaxOffset={parallaxOffset}
+          externalImageCache={imageCache}
         />
       </div>
 

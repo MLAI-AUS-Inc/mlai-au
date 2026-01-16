@@ -1,4 +1,4 @@
-import { Suspense, useState } from "react";
+import { Suspense, useState, useRef, useEffect } from "react";
 import { Await } from "react-router";
 import CTA from "~/components/CTA";
 import SectionDivider from "~/components/SectionDivider";
@@ -9,7 +9,10 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import FeaturedArticles from "~/components/FeaturedArticles";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
-import { LogoShooter } from "~/components/logo-shooter";
+import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
+import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
+
+type LogoCloudState = 'compact' | 'expanding' | 'playing';
 
 function UpcomingEventsSkeleton() {
   return (
@@ -47,8 +50,53 @@ function SubstackUpdatesSkeleton() {
 }
 
 export default function Home({ events, substackPosts }: { events: Promise<any>, substackPosts: Promise<any> }) {
-  // State for hover-to-activate Logo Shooter game
-  const [isGameActive, setIsGameActive] = useState(false);
+  // State machine for logo cloud → logo shooter transition
+  const [logoCloudState, setLogoCloudState] = useState<LogoCloudState>('compact');
+  const [isHeightExpanded, setIsHeightExpanded] = useState(false);
+  const { preloadLogos, loadingState, imageCache } = useLogoPreloader();
+  const mouseLeaveTimeoutRef = useRef<number | null>(null);
+
+  // Transition to playing when both loading complete AND height expanded
+  useEffect(() => {
+    if (
+      logoCloudState === 'expanding' &&
+      loadingState.status === 'loaded' &&
+      isHeightExpanded
+    ) {
+      setLogoCloudState('playing');
+    }
+  }, [logoCloudState, loadingState.status, isHeightExpanded]);
+
+  const handleActivate = () => {
+    // Cancel any pending leave timeout
+    if (mouseLeaveTimeoutRef.current) {
+      clearTimeout(mouseLeaveTimeoutRef.current);
+      mouseLeaveTimeoutRef.current = null;
+    }
+
+    if (logoCloudState === 'compact') {
+      setLogoCloudState('expanding');
+      preloadLogos();
+    }
+  };
+
+  const handleDeactivate = () => {
+    // Small debounce to prevent flickering on rapid hover in/out
+    mouseLeaveTimeoutRef.current = window.setTimeout(() => {
+      setLogoCloudState('compact');
+      setIsHeightExpanded(false);
+    }, 100);
+  };
+
+  const handleTransitionEnd = (e: React.TransitionEvent) => {
+    // Detect when height transition completes
+    if (e.propertyName === 'min-height' && logoCloudState === 'expanding') {
+      setIsHeightExpanded(true);
+    }
+  };
+
+  // Determine if game should be visually active (for styling)
+  const isExpanded = logoCloudState !== 'compact';
 
   return (
     <main className="bg-[var(--brutalist-beige)]">
@@ -61,123 +109,89 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         {/* Hello section divider - Orange */}
         <SectionDivider color="#ff3d00" />
 
-        {/* Logo Cloud - Hover to Activate Shooter Game! */}
+        {/* Logo Cloud - Hover/Tap to Activate Shooter Game! */}
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
           <div
             id="logoCloud"
-            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 overflow-hidden min-h-[500px] sm:min-h-[600px] lg:min-h-[750px] ${
-              isGameActive
+            className={`rounded-2xl sm:rounded-[2.5rem] py-8 sm:py-12 lg:py-16 relative z-10 transition-all duration-500 overflow-hidden ${
+              isExpanded
+                ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
+                : 'min-h-[200px] sm:min-h-[250px] lg:min-h-[300px]'
+            } ${
+              logoCloudState === 'playing'
                 ? 'bg-black cursor-crosshair'
-                : 'bg-[var(--brutalist-orange)] cursor-default'
+                : isExpanded
+                  ? 'bg-black cursor-default'
+                  : 'bg-[var(--brutalist-orange)] cursor-default'
             }`}
-            onMouseEnter={() => setIsGameActive(true)}
-            onMouseLeave={() => setIsGameActive(false)}
+            onMouseEnter={handleActivate}
+            onMouseLeave={handleDeactivate}
+            onTouchStart={handleActivate}
+            onTransitionEnd={handleTransitionEnd}
           >
-            {/* Logo Shooter Game - Fade in when active - OUTSIDE max-w-7xl container */}
-            {isGameActive && (
+            {/* Loading overlay - shown during 'expanding' state */}
+            {logoCloudState === 'expanding' && (
+              <LoadingOverlay
+                loaded={loadingState.loaded}
+                total={loadingState.total}
+              />
+            )}
+
+            {/* Logo Shooter Game - Only mount when 'playing' */}
+            {logoCloudState === 'playing' && (
               <div className="absolute inset-0 z-20">
-                <LogoShooter />
+                <LogoShooter imageCache={imageCache} />
               </div>
             )}
 
+            {/* Close button for mobile - shown when playing */}
+            {logoCloudState === 'playing' && (
+              <button
+                className="absolute top-4 right-4 z-30 w-10 h-10 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors touch-action-manipulation"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLogoCloudState('compact');
+                  setIsHeightExpanded(false);
+                }}
+                aria-label="Close game"
+              >
+                <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
-              {/* Static Logos - Fade out when game active */}
+              {/* Static Logos - Fade out when not compact */}
               <div className={`transition-opacity duration-500 ${
-                isGameActive ? 'opacity-0 pointer-events-none' : 'opacity-100'
+                logoCloudState !== 'compact' ? 'opacity-0 pointer-events-none' : 'opacity-100'
               }`}>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-8 sm:gap-x-10 sm:gap-y-10 md:gap-x-12 md:gap-y-12 items-center justify-items-center">
-                {/* Row 1 */}
-                <img
-                  className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/nab.png"
-                  alt="NAB"
-                />
-                <img
-                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/v2digital.png"
-                  alt="V2 Digital"
-                />
-                <div className="flex items-center gap-2 sm:gap-4 col-span-2 sm:col-span-1">
-                  <img
-                    className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/aws.png"
-                    alt="AWS Startups"
-                  />
-                  <img
-                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/mantel.png"
-                    alt="Mantel Group"
-                  />
+                <div className="flex flex-wrap justify-center items-center gap-8 sm:gap-10 md:gap-12 w-full px-4">
+                  {SPONSOR_LOGOS.map((logo) => (
+                    <img
+                      key={logo.name}
+                      className={`${logo.size === 'large' ? 'h-12 sm:h-14 lg:h-16' :
+                          logo.size === 'medium' ? 'h-9 sm:h-11 lg:h-12' :
+                            'h-7 sm:h-9 lg:h-10'
+                        } w-auto object-contain transition-all duration-300 hover:scale-105`}
+                      src={logo.imagePath}
+                      alt={logo.name}
+                      title={logo.name}
+                    />
+                  ))}
                 </div>
 
-                {/* Row 2 */}
-                <img
-                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/humyn.png"
-                  alt="Humyn.ai"
-                />
-                <img
-                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/cake.png"
-                  alt="Cake"
-                />
-                <img
-                  className="max-h-7 sm:max-h-8 lg:max-h-10 w-auto object-contain mix-blend-screen grayscale invert col-span-2 sm:col-span-1"
-                  src="sponsor_logos/microsoft.png"
-                  alt="Microsoft"
-                />
-
-                {/* Row 3 */}
-                <div className="flex flex-col items-center gap-1 sm:gap-2">
-                  <span className="text-white text-[10px] sm:text-xs font-bold uppercase tracking-widest">Wilson A.I.</span>
-                  <img
-                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/wilsonai.png"
-                    alt="wilsonai"
-                  />
+                <div className="mt-8 sm:mt-12 flex justify-center px-2">
+                  <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
+                    <span className="block sm:inline">
+                      Our events have been sponsored and supported by over 50 awesome
+                      organisations across Australia.{" "}
+                    </span>
+                    <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
+                      Become a sponsor <span aria-hidden="true">&rarr;</span>
+                    </a>
+                  </p>
                 </div>
-                <img
-                  className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                  src="sponsor_logos/uom.jpeg"
-                  alt="University of Melbourne"
-                />
-                <img
-                  className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert col-span-2 sm:col-span-1"
-                  src="sponsor_logos/squarepeg.png"
-                  alt="Squarepeg"
-                />
-
-                {/* Row 4 - Full width on all screens */}
-                <div className="col-span-2 sm:col-span-3 grid grid-cols-3 gap-4 sm:gap-8 md:gap-12 items-center justify-items-center w-full mt-2 sm:mt-4">
-                  <img
-                    className="max-h-8 sm:max-h-10 lg:max-h-12 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/airtree.jpeg"
-                    alt="AirTree"
-                  />
-                  <img
-                    className="max-h-6 sm:max-h-7 lg:max-h-8 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/blackbird.png"
-                    alt="Blackbird"
-                  />
-                  <img
-                    className="max-h-5 sm:max-h-6 w-auto object-contain mix-blend-screen grayscale invert"
-                    src="sponsor_logos/rampersand.png"
-                    alt="Rampersand"
-                  />
-                </div>
-              </div>
-
-              <div className="mt-8 sm:mt-12 flex justify-center px-2">
-                <p className="text-xs sm:text-sm text-center leading-5 sm:leading-6 text-white text-opacity-90">
-                  <span className="block sm:inline">
-                    Our events have been sponsored and supported by over 50 awesome
-                    organisations across Australia.{" "}
-                  </span>
-                  <a href="/sponsors" className="font-semibold text-white hover:text-opacity-80 transition-opacity whitespace-nowrap">
-                    Become a sponsor <span aria-hidden="true">&rarr;</span>
-                  </a>
-                </p>
-              </div>
               </div>
             </div>
           </div>
