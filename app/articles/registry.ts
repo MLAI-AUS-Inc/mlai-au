@@ -42,7 +42,10 @@ const CATEGORY_SEGMENTS: ArticleRouteCategory[] = [
 
 const DEFAULT_ARTICLE_ROUTE_CATEGORY: ArticleRouteCategory = 'technology';
 
-// Overrides for specific slugs or sub-paths\nconst CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {\n    // Add category overrides as needed\n};
+// Overrides for specific slugs or sub-paths
+const CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {
+    // Add category overrides as needed
+};
 
 // Legacy mapping if needed
 const LEGACY_REGISTRY_TO_ROUTE_ALIASES: Record<string, string> = {
@@ -66,6 +69,36 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
+        title: 'How to price your product in Australia (2025)',
+        date: '2026-01-14',
+        description: 'Learn how to set product pricing in Australia using cost, value, and competitor signals, test willingness-to-pay, and stay compliant with ACCC rules.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-do-i-figure-out-how-much-my-product-should-cost',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ff729998-0ce9-4822-89af-11bca3c17257.jpg?alt=media&token=7ab776b3-d45c-4ff5-9679-b9b169949d94',
+        imageAlt: 'Team reviewing pricing scenarios on laptops and whiteboard',
+        hasContent: true,
+    },
+    'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
+        title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
+        date: '2026-01-13',
+        description: 'Turn your vibe-coded build into a tested MVP. Learn how to validate with real users, ship safely, and prepare for pilots and investment in Australia.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a8f7d8bc-9e4a-4112-8b69-729f16129e61.jpg?alt=media&token=4ba2d150-2aa5-4945-9c4a-69013546d9ba',
+        imageAlt: 'Founder testing a mobile MVP with early users in a coworking space',
+        hasContent: true,
+    },
+    'featured/how-to-raise-money-for-my-startup-in-australia-2026': {
+        title: 'How to raise money for my startup in Australia (2026 guide)',
+        date: '2026-01-13',
+        description: 'Step-by-step 2026 guide for Australian founders on grants, angels, VC, and due diligence, with AU links and compliance tips.',
+        author: 'MLAI Team',
+        slug: 'featured/how-to-raise-money-for-my-startup-in-australia-2026',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-00fbdc1f-4a2c-473f-a965-743fa8a2e728.jpg?alt=media&token=0451eb99-10d0-446d-a95d-01e22f54c831',
+        imageAlt: 'Founders reviewing funding documents in an Australian coworking space',
+        hasContent: true,
+    },
     'featured/how-to-get-started-with-ai-2026': {
         title: 'How to get started with AI in Australia (2026)',
         date: '2026-01-08',
@@ -117,8 +150,6 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
         hasContent: true,
     },
-
-
 };
 
 export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.keys(ARTICLE_REGISTRY);
