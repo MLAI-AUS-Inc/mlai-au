@@ -33,6 +33,7 @@ export default function Hero() {
               className="absolute bottom-0 left-1/2 -translate-x-1/2 h-[130%] w-auto object-contain"
               src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Roo_MLAI.png?alt=media&token=10e962dd-6636-4dcc-9b49-9de4c62ebc82"
               alt="MLAI Kangaroo logo"
+              fetchPriority="high"
             />
           </a>
 

@@ -9,7 +9,7 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import FeaturedArticles from "~/components/FeaturedArticles";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
-import { TestimonialTetris } from "~/components/testimonial-tetris";
+import { TestimonialCloud } from "~/components/testimonial-tetris";
 import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
 import { LogoMarquee } from "~/components/LogoMarquee";
@@ -212,17 +212,15 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         {/* Volunteer section divider - Blue */}
         <SectionDivider color="#3537dc" />
 
-        {/* Testimonials */}
+        {/* Testimonials - Hover to Play Tetris */}
         {/* ============================================
-            STATIC TESTIMONIALS - COMMENTED OUT
+            TESTIMONIAL CLOUD - Hover/Tap to Play
             ============================================
-            Decision: Replaced with interactive Tetris game
-            To restore static layout: Uncomment below, remove TestimonialTetris
+            Shows static testimonial cards by default.
+            On hover/tap: blue loading screen → Tetris game
+            Similar to logo shooter hover-to-play pattern.
             ============================================ */}
-        {/* <TetrisTestimonials /> */}
-
-        {/* Interactive Tetris Game - Main Testimonial Section */}
-        <TestimonialTetris />
+        <TestimonialCloud />
 
         {/* Team section - moved here directly under testimonials */}
         <Team />

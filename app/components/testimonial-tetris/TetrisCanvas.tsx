@@ -320,7 +320,7 @@ function drawPiece(
   piece: GamePiece,
   cellSize: number
 ) {
-  const shape = getRotatedShape(piece.shape.type, piece.rotation);
+  const shape = getRotatedShape(piece.testimonial.shapeType, piece.rotation);
   
   // Find the bounding box of the piece
   let minRow = Infinity, maxRow = -Infinity;

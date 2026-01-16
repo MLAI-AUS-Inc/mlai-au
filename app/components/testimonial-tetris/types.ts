@@ -13,6 +13,9 @@ export type ColorKey =
   | "yellow"
   | "mint";
 
+// Original Tetris shape types (I, O, T, S, Z, L, J)
+export type ShapeType = "I" | "O" | "T" | "S" | "Z" | "L" | "J";
+
 // Testimonial data structure
 export interface Testimonial {
   id: number;
@@ -25,10 +28,13 @@ export interface Testimonial {
   color: ColorKey;
   gridWidth: number; // How many grid columns this testimonial occupies
   gridHeight: number; // How many grid rows this testimonial occupies
+  shapeType: ShapeType; // One of the 7 original Tetris shapes
 }
 
-// Tetromino shape types (simplified to 4 shapes)
-export type TetrominoType = "I" | "O" | "T" | "L";
+// Tetromino shape types
+// Original rectangular shapes: I, O, T, L (solid rectangles)
+// Actual tetromino shapes: L_TETRIS, J_TETRIS (with empty cells)
+export type TetrominoType = "I" | "O" | "T" | "L" | "L_TETRIS" | "J_TETRIS";
 
 // Tetromino shape definition
 export interface TetrominoShape {
