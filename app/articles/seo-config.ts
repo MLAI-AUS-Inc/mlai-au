@@ -29,6 +29,20 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/how-do-i-figure-out-how-much-my-product-should-cost': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/technology/introduction-to-mlai': {
         toc: true,
         howTo: false,
@@ -88,6 +102,17 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         howTo: false,
         mediaObject: true,
         citations: true,
+        internalLinks: [],
+        structuredData: {
+            article: true,
+            faq: { enabled: true },
+        },
+    },
+    '/articles/featured/how-to-raise-money-for-my-startup-in-australia-2026': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: false,
         internalLinks: [],
         structuredData: {
             article: true,

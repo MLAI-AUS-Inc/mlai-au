@@ -101,7 +101,6 @@ export const summaryHighlights = {
 
 /** When true, this article renders its own custom header and the default ArticleLayout header should be hidden */
 export const useCustomHeader = true
-export const useInlineToc = true
 
 export default function ArticlePage() {
   const authors = [
