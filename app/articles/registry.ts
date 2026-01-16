@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-get-a-job-at-an-ai-startup-australia': {
+        title: 'How to Get a Job at an AI Startup in Australia (2026)',
+        date: '2026-01-16',
+        description: 'Practical 2026 guide to land AI startup roles in Australia: where to look, portfolio tactics, interview prep, and local work-rights tips.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-get-a-job-at-an-ai-startup-australia',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to Get a Job at an AI Startup in Australia (2026)',
+        hasContent: true,
+    },
     'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
         title: 'How to price your product in Australia (2025)',
         date: '2026-01-14',
