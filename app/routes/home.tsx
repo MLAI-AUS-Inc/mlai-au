@@ -121,8 +121,8 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
           <div
             id="logoCloud"
             className={`rounded-2xl sm:rounded-[2.5rem] py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${isExpanded
-                ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
-                : 'min-h-[300px] sm:min-h-[350px]'
+              ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
+              : 'min-h-[300px] sm:min-h-[350px]'
               } ${logoCloudState === 'playing'
                 ? 'bg-black cursor-crosshair'
                 : 'bg-[var(--brutalist-orange)] cursor-default'
