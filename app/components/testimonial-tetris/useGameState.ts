@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { GAME_CONFIG } from "./testimonialData";
-import { createEmptyGrid, getCompletedLines, isGameOver } from "./tetrisLogic";
+import { createEmptyGrid, getCompletedLines, isGameOver, TETROMINO_SHAPES, rotateMatrix90 } from "./tetrisLogic";
 import type {
   GameGrid,
   GameMode,
@@ -14,49 +14,93 @@ import type {
   GameStats,
   LockedCell,
   Testimonial,
-  TetrominoShape,
+  ShapeType,
 } from "./types";
 import { getRandomTestimonial } from "./utils";
 
-// Get effective dimensions based on rotation (0 = normal, 1 = rotated 90°)
+// Get effective dimensions based on rotation
+// Gets the rotated shape matrix and returns its dimensions
 function getEffectiveDimensions(piece: GamePiece): {
   width: number;
   height: number;
 } {
-  const baseWidth = piece.testimonial.gridWidth;
-  const baseHeight = piece.testimonial.gridHeight;
+  const shapeType = piece.testimonial.shapeType;
+  const normalizedRotation = piece.rotation % 4;
 
-  // Rotation 0 = normal, 1 = swapped (90°)
-  if (piece.rotation === 0) {
-    return { width: baseWidth, height: baseHeight };
-  } else {
-    return { width: baseHeight, height: baseWidth };
+  // O shape doesn't rotate
+  if (shapeType === "O") {
+    return { width: 2, height: 2 };
   }
+
+  // Get base matrix and apply rotation
+  let matrix = TETROMINO_SHAPES[shapeType];
+  for (let i = 0; i < normalizedRotation; i++) {
+    matrix = rotateMatrix90(matrix);
+  }
+
+  return {
+    width: matrix[0].length,
+    height: matrix.length,
+  };
 }
 
-// Simple collision check using testimonial dimensions (with rotation support)
+/**
+ * Get the shape matrix for a piece based on its shapeType
+ * Returns a 2D array where 1 = filled, 0 = empty
+ * Uses the TETROMINO_SHAPES matrices with rotation applied
+ */
+function getShapeMatrix(piece: GamePiece): number[][] {
+  const shapeType = piece.testimonial.shapeType;
+  const normalizedRotation = piece.rotation % 4;
+
+  // O shape doesn't rotate
+  if (shapeType === "O") {
+    return TETROMINO_SHAPES.O;
+  }
+
+  // Get base matrix and apply rotation
+  let matrix = TETROMINO_SHAPES[shapeType];
+  for (let i = 0; i < normalizedRotation; i++) {
+    matrix = rotateMatrix90(matrix);
+  }
+
+  return matrix;
+}
+
+// Collision check using shape matrix (supports L-shapes with empty cells)
+// Only checks boundaries and collisions for filled cells (1s), not the bounding box
 function isPositionValid(
   grid: GameGrid,
   piece: GamePiece,
   offsetX: number,
   offsetY: number
 ): boolean {
-  const newX = piece.x + offsetX;
-  const newY = piece.y + offsetY;
-  const { width, height } = getEffectiveDimensions(piece);
+  const shapeMatrix = getShapeMatrix(piece);
+  const height = shapeMatrix.length;
+  const width = shapeMatrix[0].length;
 
-  // Check boundaries
-  if (newX < 0 || newX + width > GAME_CONFIG.GRID_COLS) return false;
-  if (newY + height > GAME_CONFIG.GRID_ROWS) return false;
-
-  // Check collision with locked pieces
+  // Check boundaries AND collisions only for filled cells in shape
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const gridRow = newY + row;
-      const gridCol = newX + col;
+      // Only check for filled cells (1s in the matrix)
+      if (shapeMatrix[row][col] === 1) {
+        const gridCol = piece.x + offsetX + col;
+        const gridRow = piece.y + offsetY + row;
 
-      if (gridRow >= 0 && grid[gridRow]?.[gridCol]) {
-        return false; // Collision with locked piece
+        // Check left/right boundaries for this cell
+        if (gridCol < 0 || gridCol >= GAME_CONFIG.GRID_COLS) {
+          return false;
+        }
+
+        // Check bottom boundary for this cell
+        if (gridRow >= GAME_CONFIG.GRID_ROWS) {
+          return false;
+        }
+
+        // Check collision with locked pieces (allow pieces above grid while falling)
+        if (gridRow >= 0 && grid[gridRow]?.[gridCol]) {
+          return false;
+        }
       }
     }
   }
@@ -64,23 +108,28 @@ function isPositionValid(
   return true;
 }
 
-// Lock piece to grid using testimonial dimensions (with rotation support)
+// Lock piece to grid using shape matrix (supports L-shapes with empty cells)
 function lockPiece(grid: GameGrid, piece: GamePiece): GameGrid {
   const newGrid = grid.map((row) => [...row]);
-  const { width, height } = getEffectiveDimensions(piece);
+  const shapeMatrix = getShapeMatrix(piece);
+  const height = shapeMatrix.length;
+  const width = shapeMatrix[0].length;
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const gridRow = piece.y + row;
-      const gridCol = piece.x + col;
+      // Only lock filled cells (1s in the matrix)
+      if (shapeMatrix[row][col] === 1) {
+        const gridRow = piece.y + row;
+        const gridCol = piece.x + col;
 
-      if (gridRow >= 0 && gridRow < GAME_CONFIG.GRID_ROWS) {
-        newGrid[gridRow][gridCol] = {
-          color: piece.testimonial.color,
-          testimonialId: piece.testimonial.id,
-          pieceId: piece.id, // Store unique piece ID
-          rotation: piece.rotation, // Store rotation state
-        };
+        if (gridRow >= 0 && gridRow < GAME_CONFIG.GRID_ROWS) {
+          newGrid[gridRow][gridCol] = {
+            color: piece.testimonial.color,
+            testimonialId: piece.testimonial.id,
+            pieceId: piece.id, // Store unique piece ID
+            rotation: piece.rotation, // Store rotation state
+          };
+        }
       }
     }
   }
@@ -88,7 +137,7 @@ function lockPiece(grid: GameGrid, piece: GamePiece): GameGrid {
   return newGrid;
 }
 
-// Smart line clearing: removes entire blocks touching cleared rows, then drops blocks down as intact rectangles
+// Smart line clearing: removes entire blocks touching cleared rows, then drops blocks down as intact pieces
 function smartClearLines(grid: GameGrid, linesToClear: number[]): GameGrid {
   // Find all pieceIds that touch any of the cleared rows
   const pieceIdsToRemove = new Set<string>();
@@ -126,24 +175,27 @@ function smartClearLines(grid: GameGrid, linesToClear: number[]): GameGrid {
     }
   }
 
-  // Calculate bounding boxes for each piece and sort by bottom row (process bottom-up)
-  const piecesWithBounds = Array.from(pieceGroups.entries())
+  // Calculate info for each piece and sort by bottom row (process bottom-up)
+  const piecesWithInfo = Array.from(pieceGroups.entries())
     .map(([pieceId, cells]) => {
       const rows = cells.map((c) => c.row);
-      const cols = cells.map((c) => c.col);
-      const minRow = Math.min(...rows);
       const maxRow = Math.max(...rows);
-      const minCol = Math.min(...cols);
-      const maxCol = Math.max(...cols);
+      // Create a set of actual filled cell positions for collision checking
+      const filledCells = new Set(cells.map((c) => `${c.row},${c.col}`));
+      // Get the bottom-most cells (cells that could collide when falling)
+      const bottomCellsByCol = new Map<number, number>();
+      for (const cell of cells) {
+        const existing = bottomCellsByCol.get(cell.col);
+        if (existing === undefined || cell.row > existing) {
+          bottomCellsByCol.set(cell.col, cell.row);
+        }
+      }
       return {
         pieceId,
         cells,
-        minRow,
         maxRow,
-        minCol,
-        maxCol,
-        height: maxRow - minRow + 1,
-        width: maxCol - minCol + 1,
+        filledCells,
+        bottomCellsByCol, // Map of col -> bottommost row in that column
       };
     })
     .sort((a, b) => b.maxRow - a.maxRow); // Sort by bottom row, bottom-first
@@ -154,22 +206,24 @@ function smartClearLines(grid: GameGrid, linesToClear: number[]): GameGrid {
     .map(() => Array(GAME_CONFIG.GRID_COLS).fill(null));
 
   // For each piece, calculate how far it can fall
-  for (const piece of piecesWithBounds) {
-    // Find the lowest point this piece can fall to
+  for (const piece of piecesWithInfo) {
     let fallDistance = 0;
     let canFall = true;
 
     while (canFall) {
-      const newBottomRow = piece.maxRow + fallDistance + 1;
-      if (newBottomRow >= GAME_CONFIG.GRID_ROWS) {
-        canFall = false;
-        break;
-      }
-
-      // Check if all cells in the piece's width can move down
+      // Check each column's bottom cell to see if it can move down
       let collision = false;
-      for (let col = piece.minCol; col <= piece.maxCol; col++) {
-        const checkRow = newBottomRow;
+
+      for (const [col, bottomRow] of piece.bottomCellsByCol) {
+        const checkRow = bottomRow + fallDistance + 1;
+
+        // Check grid boundary
+        if (checkRow >= GAME_CONFIG.GRID_ROWS) {
+          collision = true;
+          break;
+        }
+
+        // Check collision with already-placed pieces (only check actual filled positions)
         if (droppedGrid[checkRow]?.[col] !== null) {
           collision = true;
           break;
@@ -248,18 +302,20 @@ export function useGameState(): UseGameStateReturn {
       recentTestimonialsRef.current = [...recentIds, testim.id].slice(-3);
     }
 
-    // Use testimonial's actual dimensions (no tetromino shapes!)
-    const shape: TetrominoShape = {
-      type: "I", // Dummy value, not used
-      matrix: [], // Not used
-      color: testim.color,
-    };
+    // Get piece dimensions from shape matrix
+    const shapeMatrix = TETROMINO_SHAPES[testim.shapeType];
+    const width = shapeMatrix[0].length;
+    const height = shapeMatrix.length;
 
     // Center the piece horizontally (always start unrotated)
     const piece: GamePiece = {
-      shape,
-      x: Math.floor((GAME_CONFIG.GRID_COLS - testim.gridWidth) / 2),
-      y: -testim.gridHeight, // Start above grid
+      shape: {
+        type: testim.shapeType as any, // Legacy field, kept for compatibility
+        matrix: shapeMatrix,
+        color: testim.color,
+      },
+      x: Math.floor((GAME_CONFIG.GRID_COLS - width) / 2),
+      y: -height, // Start above grid
       rotation: 0, // Start unrotated
       testimonial: testim,
       id: `piece-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Unique ID
@@ -367,12 +423,21 @@ export function useGameState(): UseGameStateReturn {
   // ============================================
 
   /**
-   * Try to rotate piece by swapping width/height (90° rotation)
+   * Try to rotate piece by 90° clockwise
    * Uses wall-kick to shift piece if rotation would cause collision
    */
-  const tryRotateRectangle = useCallback(
+  const tryRotatePiece = useCallback(
     (piece: GamePiece): GamePiece | null => {
-      const newRotation = piece.rotation === 0 ? 1 : 0; // Toggle between 0 and 1
+      const shapeType = piece.testimonial.shapeType;
+
+      // O shape doesn't rotate
+      if (shapeType === "O") {
+        return piece;
+      }
+
+      // All other shapes cycle through 4 rotations
+      const newRotation = (piece.rotation + 1) % 4;
+
       const rotatedPiece: GamePiece = {
         ...piece,
         rotation: newRotation,
@@ -403,11 +468,11 @@ export function useGameState(): UseGameStateReturn {
   const rotate = useCallback(() => {
     if (!currentPiece || mode !== "playing" || isAnimatingClear) return;
 
-    const rotated = tryRotateRectangle(currentPiece);
+    const rotated = tryRotatePiece(currentPiece);
     if (rotated) {
       setCurrentPiece(rotated);
     }
-  }, [currentPiece, mode, isAnimatingClear, tryRotateRectangle]);
+  }, [currentPiece, mode, isAnimatingClear, tryRotatePiece]);
 
   // ============================================
   // GAME CONTROLS

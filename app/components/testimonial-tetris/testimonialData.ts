@@ -2,7 +2,7 @@
  * Testimonial data extracted from existing TetrisTestimonials component
  */
 
-import type { Testimonial, ColorKey } from './types';
+import type { Testimonial, ColorKey, ShapeType } from './types';
 
 export const TETRIS_COLORS = {
   orange: '#ff3d00',
@@ -15,52 +15,45 @@ export const TETRIS_COLORS = {
 };
 
 /**
- * Auto-calculate testimonial block dimensions based on text length
- * 
- * HOW TO ADJUST SIZING:
- * - Change the threshold numbers (80, 150, 250, 350) to adjust when blocks get bigger
- * - Change the { width, height } values to make blocks wider/taller
- * - Lower thresholds = blocks get bigger sooner (more text fits)
- * - Higher thresholds = blocks stay smaller longer (more compact)
- * 
- * Returns { width, height } in grid cells
+ * Get dimensions for each Tetris shape type
+ * All shapes use original Tetris shapes:
+ * - I: 4x1 (long bar)
+ * - O: 2x2 (square)
+ * - T: 3x2 (T-shape)
+ * - S: 3x2 (S-shape)
+ * - Z: 3x2 (Z-shape)
+ * - L: 3x3 (L-shape with empty cells)
+ * - J: 3x3 (J-shape with empty cells)
  */
-function calculateDimensions(text: string, id: number): { width: number; height: number } {
-  const length = text.length;
-  
-  // Decorative blocks (no text) - variety based on ID
-  if (length === 0) {
-    const variants = [
-      { width: 1, height: 1 },
-      { width: 2, height: 1 },
-      { width: 1, height: 2 },
-    ];
-    return variants[id % variants.length];
+function getShapeDimensions(shapeType: ShapeType): { width: number; height: number } {
+  switch (shapeType) {
+    case 'I':
+      return { width: 4, height: 1 };
+    case 'O':
+      return { width: 2, height: 2 };
+    case 'T':
+    case 'S':
+    case 'Z':
+      return { width: 3, height: 2 };
+    case 'L':
+    case 'J':
+      return { width: 3, height: 3 };
+    default:
+      return { width: 2, height: 2 };
   }
-  
-  // Formula: longer text = bigger blocks
-  if (length < 80) {
-    return { width: 2, height: 2 };
-  }
-  
-  if (length < 150) {
-    return { width: 3, height: 2 };
-  }
-  
-  if (length < 250) {
-    return { width: 3, height: 3 };
-  }
-  
-  if (length < 350) {
-    return { width: 4, height: 3 };
-  }
-  
-  // Very long testimonials
-  return { width: 4, height: 4 };
 }
 
-// Base testimonial data (dimensions auto-calculated)
-const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
+// Base testimonial data with assigned Tetris shapes
+// Each testimonial gets one of the 7 original Tetris shapes: I, O, T, S, Z, L, J
+interface BaseTestimonial {
+  id: number;
+  body: string;
+  author: { name: string; handle: string; imageUrl: string };
+  color: ColorKey;
+  shapeType: ShapeType;
+}
+
+const BASE_TESTIMONIALS: BaseTestimonial[] = [
   {
     id: 1,
     body: "It was an absolute pleasure to work with the MLAI team at Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community in it for the startup speed dating.",
@@ -69,7 +62,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "Ecosystems Director - Stone & Chalk",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/eikezeller.jpg?alt=media&token=f184570d-27bf-4100-a53d-2a541d4f1fce",
     },
-    color: "orange" as ColorKey,
+    color: "orange",
+    shapeType: "L", // L-shaped
   },
   {
     id: 2,
@@ -79,7 +73,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "Director - Europalabs",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
     },
-    color: "black" as ColorKey,
+    color: "black",
+    shapeType: "I", // I-shaped (long bar)
   },
   {
     id: 3,
@@ -89,7 +84,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "Founding AI Engineer - Userdoc",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
     },
-    color: "purple" as ColorKey,
+    color: "purple",
+    shapeType: "T", // T-shaped
   },
   {
     id: 4,
@@ -99,7 +95,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "Userdoc",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
     },
-    color: "blue" as ColorKey,
+    color: "blue",
+    shapeType: "J", // J-shaped (mirror of L)
   },
   {
     id: 5,
@@ -109,7 +106,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "MLAI Volunteer",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
     },
-    color: "yellow" as ColorKey,
+    color: "yellow",
+    shapeType: "S", // S-shaped
   },
   {
     id: 6,
@@ -119,7 +117,8 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "MLAI Member",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
     },
-    color: "mint" as ColorKey,
+    color: "mint",
+    shapeType: "O", // O-shaped (square)
   },
   {
     id: 7,
@@ -129,32 +128,14 @@ const BASE_TESTIMONIALS: Omit<Testimonial, 'gridWidth' | 'gridHeight'>[] = [
       handle: "Community Volunteers",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/eikezeller.jpg?alt=media&token=f184570d-27bf-4100-a53d-2a541d4f1fce",
     },
-    color: "pink" as ColorKey,
-  },
-  // Small decorative blocks (no text)
-  {
-    id: 8,
-    body: "",
-    author: { name: "", handle: "", imageUrl: "" },
-    color: "yellow" as ColorKey,
-  },
-  {
-    id: 9,
-    body: "",
-    author: { name: "", handle: "", imageUrl: "" },
-    color: "pink" as ColorKey,
-  },
-  {
-    id: 10,
-    body: "",
-    author: { name: "", handle: "", imageUrl: "" },
-    color: "blue" as ColorKey,
+    color: "pink",
+    shapeType: "Z", // Z-shaped
   },
 ];
 
-// Auto-calculate dimensions and export processed testimonials
+// Export processed testimonials with dimensions based on shape type
 export const TESTIMONIALS: Testimonial[] = BASE_TESTIMONIALS.map(testimonial => {
-  const dimensions = calculateDimensions(testimonial.body, testimonial.id);
+  const dimensions = getShapeDimensions(testimonial.shapeType);
   return {
     ...testimonial,
     gridWidth: dimensions.width,
@@ -164,8 +145,8 @@ export const TESTIMONIALS: Testimonial[] = BASE_TESTIMONIALS.map(testimonial => 
 
 // Game configuration - Matching original bold aesthetic
 export const GAME_CONFIG = {
-  GRID_COLS: 18, // More columns for wider layout (matches overlay width)
-  GRID_ROWS: 8, // More rows now that we have full height
+  GRID_COLS: 10, // Standard Tetris width
+  GRID_ROWS: 14, // More rows to fill the vertical space
   CELL_SIZE: 150, // Much larger cells for readable text (3x2 = 450x300px)
   FALL_SPEED: 1500, // milliseconds per drop (slower for larger pieces)
   FAST_FALL_SPEED: 200, // when pressing down

@@ -4,42 +4,70 @@
  */
 
 import { GAME_CONFIG } from "./testimonialData";
-import type { GameGrid, GamePiece, TetrominoType } from "./types";
+import type { GameGrid, GamePiece, ShapeType } from "./types";
 
 // ============================================
-// TETROMINO SHAPES (Simplified - 4 shapes)
+// TETROMINO SHAPES - Original 7 Tetris pieces
+// Each shape includes base rotation (rotation handled separately)
 // ============================================
 
-export const TETROMINO_SHAPES: Record<TetrominoType, number[][][]> = {
-  // Small testimonial (3 wide x 2 tall) - no rotation
+export const TETROMINO_SHAPES: Record<ShapeType, number[][]> = {
+  // I-tetromino (long bar) - 4x1
+  // [X][X][X][X]
   I: [
-    [
-      [1, 1, 1],
-      [1, 1, 1],
-    ],
+    [1, 1, 1, 1],
   ],
-  // Medium testimonial (4 wide x 2 tall) - no rotation
+
+  // O-tetromino (square) - 2x2
+  // [X][X]
+  // [X][X]
   O: [
-    [
-      [1, 1, 1, 1],
-      [1, 1, 1, 1],
-    ],
+    [1, 1],
+    [1, 1],
   ],
-  // Large square testimonial (3 wide x 3 tall) - no rotation
+
+  // T-tetromino - 3x2
+  // [X][X][X]
+  // [ ][X][ ]
   T: [
-    [
-      [1, 1, 1],
-      [1, 1, 1],
-      [1, 1, 1],
-    ],
+    [1, 1, 1],
+    [0, 1, 0],
   ],
-  // Tall testimonial (2 wide x 3 tall) - no rotation
+
+  // S-tetromino - 3x2
+  // [ ][X][X]
+  // [X][X][ ]
+  S: [
+    [0, 1, 1],
+    [1, 1, 0],
+  ],
+
+  // Z-tetromino - 3x2
+  // [X][X][ ]
+  // [ ][X][X]
+  Z: [
+    [1, 1, 0],
+    [0, 1, 1],
+  ],
+
+  // L-tetromino - 3x3 (with empty cells)
+  // [X][ ][ ]
+  // [X][ ][ ]
+  // [X][X][X]
   L: [
-    [
-      [1, 1],
-      [1, 1],
-      [1, 1],
-    ],
+    [1, 0, 0],
+    [1, 0, 0],
+    [1, 1, 1],
+  ],
+
+  // J-tetromino (mirror of L) - 3x3
+  // [ ][ ][X]
+  // [ ][ ][X]
+  // [X][X][X]
+  J: [
+    [0, 0, 1],
+    [0, 0, 1],
+    [1, 1, 1],
   ],
 };
 
@@ -65,7 +93,7 @@ export function isPositionValid(
   offsetX = 0,
   offsetY = 0
 ): boolean {
-  const shape = getRotatedShape(piece.shape.type, piece.rotation);
+  const shape = getRotatedShape(piece.testimonial.shapeType, piece.rotation);
 
   for (let row = 0; row < shape.length; row++) {
     for (let col = 0; col < shape[row].length; col++) {
@@ -97,7 +125,7 @@ export function isPositionValid(
  */
 export function lockPiece(grid: GameGrid, piece: GamePiece): GameGrid {
   const newGrid = grid.map((row) => [...row]);
-  const shape = getRotatedShape(piece.shape.type, piece.rotation);
+  const shape = getRotatedShape(piece.testimonial.shapeType, piece.rotation);
 
   for (let row = 0; row < shape.length; row++) {
     for (let col = 0; col < shape[row].length; col++) {
@@ -107,10 +135,10 @@ export function lockPiece(grid: GameGrid, piece: GamePiece): GameGrid {
 
         if (y >= 0 && y < GAME_CONFIG.GRID_ROWS) {
           newGrid[y][x] = {
-            color: piece.shape.color,
+            color: piece.testimonial.color,
             testimonialId: piece.testimonial.id,
-            pieceId: piece.id, // Store unique piece ID
-            rotation: piece.rotation, // Store rotation state
+            pieceId: piece.id,
+            rotation: piece.rotation,
           };
         }
       }
@@ -156,23 +184,60 @@ export function clearLines(grid: GameGrid, linesToClear: number[]): GameGrid {
 // ============================================
 
 /**
+ * Rotate a matrix 90 degrees clockwise
+ */
+export function rotateMatrix90(matrix: number[][]): number[][] {
+  const rows = matrix.length;
+  const cols = matrix[0].length;
+  const rotated: number[][] = [];
+
+  for (let col = 0; col < cols; col++) {
+    const newRow: number[] = [];
+    for (let row = rows - 1; row >= 0; row--) {
+      newRow.push(matrix[row][col]);
+    }
+    rotated.push(newRow);
+  }
+
+  return rotated;
+}
+
+/**
  * Get the shape matrix for a given rotation
+ * Applies 90° clockwise rotation for each rotation step
  */
 export function getRotatedShape(
-  type: TetrominoType,
+  type: ShapeType,
   rotation: number
 ): number[][] {
-  const shapes = TETROMINO_SHAPES[type];
-  const normalizedRotation = rotation % shapes.length;
-  return shapes[normalizedRotation];
+  let matrix = TETROMINO_SHAPES[type];
+  const normalizedRotation = rotation % 4;
+
+  // O shape doesn't rotate (always looks the same)
+  if (type === "O") {
+    return matrix;
+  }
+
+  // Apply rotations
+  for (let i = 0; i < normalizedRotation; i++) {
+    matrix = rotateMatrix90(matrix);
+  }
+
+  return matrix;
 }
 
 /**
  * Attempt to rotate piece (with basic wall kick)
  */
 export function tryRotate(grid: GameGrid, piece: GamePiece): GamePiece | null {
-  const shapes = TETROMINO_SHAPES[piece.shape.type];
-  const newRotation = (piece.rotation + 1) % shapes.length;
+  const shapeType = piece.testimonial.shapeType;
+
+  // O shape doesn't rotate
+  if (shapeType === "O") {
+    return piece;
+  }
+
+  const newRotation = (piece.rotation + 1) % 4;
 
   const rotatedPiece = {
     ...piece,
@@ -216,6 +281,6 @@ export function isGameOver(grid: GameGrid): boolean {
  * Get piece width for centering
  */
 export function getPieceWidth(piece: GamePiece): number {
-  const shape = getRotatedShape(piece.shape.type, piece.rotation);
+  const shape = getRotatedShape(piece.testimonial.shapeType, piece.rotation);
   return shape[0].length;
 }

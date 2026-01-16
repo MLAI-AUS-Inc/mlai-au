@@ -38,6 +38,7 @@ export function LogoMarquee({
             src={logo.imagePath}
             alt={logo.name}
             title={logo.name}
+            loading="lazy"
             className="h-20 sm:h-24 w-auto object-contain flex-shrink-0"
           />
         ))}
@@ -48,6 +49,7 @@ export function LogoMarquee({
             src={logo.imagePath}
             alt={logo.name}
             title={logo.name}
+            loading="lazy"
             className="h-20 sm:h-24 w-auto object-contain flex-shrink-0"
           />
         ))}

@@ -9,7 +9,7 @@ import SubstackUpdates from "~/components/SubstackUpdates";
 import FeaturedArticles from "~/components/FeaturedArticles";
 import Team from "~/components/team";
 import TetrisTestimonials from "~/components/TetrisTestimonials";
-import { TestimonialTetris } from "~/components/testimonial-tetris";
+import { TestimonialCloud } from "~/components/testimonial-tetris";
 import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
 import { LogoMarquee } from "~/components/LogoMarquee";
@@ -120,15 +120,13 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         <div className="bg-[var(--brutalist-beige)] p-2 lg:p-3">
           <div
             id="logoCloud"
-            className={`rounded-2xl sm:rounded-[2.5rem] py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${
-              isExpanded
-                ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
-                : 'min-h-[300px] sm:min-h-[350px]'
-            } ${
-              logoCloudState === 'playing'
+            className={`rounded-2xl sm:rounded-[2.5rem] py-6 sm:py-8 relative z-10 transition-all duration-500 overflow-hidden ${isExpanded
+              ? 'min-h-[500px] sm:min-h-[600px] lg:min-h-[750px]'
+              : 'min-h-[300px] sm:min-h-[350px]'
+              } ${logoCloudState === 'playing'
                 ? 'bg-black cursor-crosshair'
                 : 'bg-[var(--brutalist-orange)] cursor-default'
-            }`}
+              }`}
             onMouseEnter={handleActivate}
             onMouseLeave={handleDeactivate}
             onTouchStart={handleActivate}
@@ -167,9 +165,8 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
             )}
 
             {/* Animated Logo Marquee - 3 rows with alternating directions */}
-            <div className={`transition-opacity duration-500 ${
-              logoCloudState !== 'compact' ? 'opacity-0 pointer-events-none' : 'opacity-100'
-            }`}>
+            <div className={`transition-opacity duration-500 ${logoCloudState !== 'compact' ? 'opacity-0 pointer-events-none' : 'opacity-100'
+              }`}>
               <div className="space-y-2 py-2">
                 <LogoMarquee logos={ROW_1_LOGOS} direction="left" duration={40} paused={isExpanded} />
                 <LogoMarquee logos={ROW_2_LOGOS} direction="right" duration={40} paused={isExpanded} />
@@ -215,17 +212,15 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
         {/* Volunteer section divider - Blue */}
         <SectionDivider color="#3537dc" />
 
-        {/* Testimonials */}
+        {/* Testimonials - Hover to Play Tetris */}
         {/* ============================================
-            STATIC TESTIMONIALS - COMMENTED OUT
+            TESTIMONIAL CLOUD - Hover/Tap to Play
             ============================================
-            Decision: Replaced with interactive Tetris game
-            To restore static layout: Uncomment below, remove TestimonialTetris
+            Shows static testimonial cards by default.
+            On hover/tap: blue loading screen → Tetris game
+            Similar to logo shooter hover-to-play pattern.
             ============================================ */}
-        {/* <TetrisTestimonials /> */}
-        
-        {/* Interactive Tetris Game - Main Testimonial Section */}
-        <TestimonialTetris />
+        <TestimonialCloud />
 
         {/* Team section - moved here directly under testimonials */}
         <Team />

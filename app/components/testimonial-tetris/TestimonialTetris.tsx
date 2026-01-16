@@ -12,7 +12,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import TetrisTestimonials from "../TetrisTestimonials";
-import { NowDropping } from "./NowDropping";
+import { NextBlockPanel } from "./NextBlockPanel";
 import { TESTIMONIALS, TETRIS_COLORS } from "./testimonialData";
 import { TestimonialGrid } from "./TestimonialGrid";
 import { TestimonialModal } from "./TestimonialModal";
@@ -127,84 +127,134 @@ export function TestimonialTetris() {
           border: "1px solid #1a1a1a",
         }}
       >
-        {/* Header - Matching Original */}
-        <div className="mb-3 mx-2">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-gray-900">
-            Everyone is a{" "}
-            <span style={{ color: TETRIS_COLORS.orange }}>Volunteer</span>
-          </h2>
-          <p className="text-sm text-gray-600 mt-2">
-            Play Tetris with testimonials! Use arrow keys or buttons below.
-          </p>
-        </div>
+        {/* Desktop Layout - Side by Side */}
+        <div className="hidden lg:flex gap-4 items-stretch" style={{ height: "min(80vh, 750px)" }}>
+          {/* Game Area - Left Side */}
+          <div className="relative h-full min-w-0 flex-1 overflow-visible">
+            <TestimonialGrid
+              gameState={gameState}
+              onTestimonialClick={handleCellClick}
+            />
 
-        {/* Now Dropping Panel - Shows current falling testimonial */}
-        {gameState.currentPiece && gameState.mode === "playing" && (
-          <div className="mb-4">
-            <NowDropping piece={gameState.currentPiece} />
-          </div>
-        )}
-
-        {/* Game Area - Fully Responsive Height */}
-        <div className="relative w-full" style={{ height: "min(75vh, 700px)" }}>
-          <TestimonialGrid
-            gameState={gameState}
-            onTestimonialClick={handleCellClick}
-          />
-
-          {/* Start/Game Over Overlay */}
-          {gameState.mode === "idle" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
-              <button
-                onClick={startGame}
-                className="bg-white text-[#ff3d00] font-bold text-xl px-6 py-3 rounded-2xl shadow-2xl hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff3d00]"
-              >
-                🎮 Start Game
-              </button>
-            </div>
-          )}
-
-          {gameState.mode === "gameOver" && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-2xl">
-              <div
-                className="rounded-2xl p-10 text-center shadow-2xl max-w-sm mx-4 transform transition-all"
-                style={{
-                  backgroundColor: TETRIS_COLORS.blue,
-                }}
-              >
-                <h3 className="text-5xl font-bold text-white mb-6">
-                  Game Over!
-                </h3>
-
-                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 mb-6">
-                  <p className="text-white/90 text-sm font-semibold mb-2">
-                    Lines Cleared
-                  </p>
-                  <p className="text-white text-7xl font-bold">
-                    {gameState.stats.linesCleared}
-                  </p>
-                </div>
-
+            {/* Start/Game Over Overlay */}
+            {gameState.mode === "idle" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
                 <button
-                  onClick={resetGame}
-                  className="w-full bg-white text-[#3537dc] font-bold text-xl px-8 py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+                  onClick={startGame}
+                  className="bg-white text-[#ff3d00] font-bold text-xl px-6 py-3 rounded-2xl shadow-2xl hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff3d00]"
                 >
-                  🎮 Play Again
+                  Start Game
                 </button>
               </div>
-            </div>
-          )}
+            )}
+
+            {gameState.mode === "gameOver" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-2xl">
+                <div
+                  className="rounded-2xl p-10 text-center shadow-2xl max-w-sm mx-4 transform transition-all"
+                  style={{
+                    backgroundColor: TETRIS_COLORS.blue,
+                  }}
+                >
+                  <h3 className="text-5xl font-bold text-white mb-6">
+                    Game Over!
+                  </h3>
+
+                  <div className="bg-white/20 backdrop-blur-sm rounded-xl p-6 mb-6">
+                    <p className="text-white/90 text-sm font-semibold mb-2">
+                      Lines Cleared
+                    </p>
+                    <p className="text-white text-7xl font-bold">
+                      {gameState.stats.linesCleared}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={resetGame}
+                    className="w-full bg-white text-[#3537dc] font-bold text-xl px-8 py-4 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+                  >
+                    Play Again
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Right Side Panel - Next Block Preview (Desktop) */}
+          <div className="w-72 flex-shrink-0 h-full">
+            <NextBlockPanel nextPiece={gameState.nextPiece} />
+          </div>
         </div>
 
-        {/* Mobile Controls */}
-        <div className="mt-4 lg:hidden">
-          <TetrisControls
-            onMoveLeft={moveLeft}
-            onMoveRight={moveRight}
-            onSoftDrop={moveDown}
-            onRotate={rotate}
-            disabled={!isPlaying}
-          />
+        {/* Mobile Layout - Stacked */}
+        <div className="lg:hidden flex flex-col">
+          {/* Game Area - Top */}
+          <div className="relative overflow-visible" style={{ height: "min(60vh, 500px)" }}>
+            <TestimonialGrid
+              gameState={gameState}
+              onTestimonialClick={handleCellClick}
+              isMobile={true}
+            />
+
+            {/* Start/Game Over Overlay (Mobile) */}
+            {gameState.mode === "idle" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-sm rounded-2xl">
+                <button
+                  onClick={startGame}
+                  className="bg-white text-[#ff3d00] font-bold text-lg px-5 py-2 rounded-xl shadow-2xl hover:scale-105 transition-transform focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff3d00]"
+                >
+                  Start Game
+                </button>
+              </div>
+            )}
+
+            {gameState.mode === "gameOver" && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm rounded-2xl">
+                <div
+                  className="rounded-xl p-6 text-center shadow-2xl max-w-xs mx-4 transform transition-all"
+                  style={{
+                    backgroundColor: TETRIS_COLORS.blue,
+                  }}
+                >
+                  <h3 className="text-3xl font-bold text-white mb-4">
+                    Game Over!
+                  </h3>
+
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg p-4 mb-4">
+                    <p className="text-white/90 text-xs font-semibold mb-1">
+                      Lines Cleared
+                    </p>
+                    <p className="text-white text-4xl font-bold">
+                      {gameState.stats.linesCleared}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={resetGame}
+                    className="w-full bg-white text-[#3537dc] font-bold text-base px-6 py-3 rounded-lg hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
+                  >
+                    Play Again
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Controls - Right below game area */}
+          <div className="mt-3">
+            <TetrisControls
+              onMoveLeft={moveLeft}
+              onMoveRight={moveRight}
+              onSoftDrop={moveDown}
+              onRotate={rotate}
+              disabled={!isPlaying}
+            />
+          </div>
+
+          {/* Next Block Panel - Below controls on mobile */}
+          <div className="mt-4">
+            <NextBlockPanel nextPiece={gameState.nextPiece} isMobile={true} />
+          </div>
         </div>
 
         {/* Desktop Controls Hint */}
