@@ -21,20 +21,20 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'Australian founders'
-const CATEGORY = 'featured'
+const TOPIC = 'Australian founders: from colonial beginnings to startup builders'
+const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'australian-founders'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? 'Founder'
 const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
 const AUTHOR_AVATAR = AUTHOR_PROFILE.avatarUrl ?? 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-const DATE_PUBLISHED = '2026-02-20'
-const DATE_MODIFIED = '2026-02-20'
-const DESCRIPTION = 'How Australian founders connect, research origins, and navigate funding and regulation in 2026.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-da8e6472-08c2-4ea6-86a3-47b53259af22.jpg?alt=media&token=539bb9c3-0d88-4fc7-9e5a-7719cf67fb7a"
-const HERO_IMAGE_ALT = 'Group of Australian founders collaborating in a bright workspace'
-const FEATURED_FOCUS = 'startups'
+const DATE_PUBLISHED = '2026-01-15'
+const DATE_MODIFIED = '2026-01-15'
+const DESCRIPTION = 'A 2026 guide to how “Australian founders” are understood—from colonial figures to today’s startup leaders, with hubs, funding, and community pathways.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-4ad6f4bb-7daf-483f-9011-70292f8e493e.jpg?alt=media&token=fd644fd0-5792-4824-acb2-4bb873b075d8"
+const HERO_IMAGE_ALT = 'Australian founders collaborating in a modern workspace'
+const FEATURED_FOCUS = 'startups' // 'startups' | 'ai' | 'product' | 'funding'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -44,42 +44,13 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'What is the Aussie Founders Network and who can join?',
-    answer:
-      'Aussie Founders Network is a member-led community connecting Australian founders globally. Australians building or investing in startups can apply; check the latest criteria on their site before joining.',
-  },
-  {
-    id: 2,
-    question: 'How do Australian founders secure early funding in 2026?',
-    answer:
-      'Most begin with customer revenue and grants (e.g. Accelerating Commercialisation) before angels. State-based funds (LaunchVic, NSW MVP Ventures) and sector accelerators (Cicada for deep tech) remain active as at Feb 2026.',
-  },
-  {
-    id: 3,
-    question: 'Where can I research early Australian founders or settlers in my family?',
-    answer:
-      'Use archival sources such as Trove newspapers, Findmypast, and state archives. Cross-check names with passenger lists and land records to validate lineage.',
-  },
-  {
-    id: 4,
-    question: 'Which cities are strongest for founders right now?',
-    answer:
-      'Sydney and Melbourne lead for capital and talent density; Brisbane and Perth show momentum via sector hubs (climate, mining tech). Regional hubs use coworking grants and university incubators.',
-  },
-  {
-    id: 5,
-    question: 'Are there compliance or director requirements unique to Australia?',
-    answer:
-      'Yes—directors must obtain a Director ID, maintain ASIC records, and follow Corporations Act duties. For AI products, add privacy (APPs), consumer law, and sector-specific guidance (e.g. TGA for medtech).',
-  },
-  {
-    id: 6,
-    question: 'How does MLAI support Australian founders?',
-    answer:
-      'MLAI is a not-for-profit community that connects AI practitioners and learners across Australia. It offers a home to meet peers, share learnings, and discover local opportunities.',
-  },
+  // ≥6 items; AU context; evidence-forward; answers can be strings or JSX.
+  { id: 1, question: 'Who are historically referred to as the “founders” of Australia?', answer: 'The term often refers to early colonial leaders around the 1788 First Fleet and figures leading to Federation in 1901, but it is contested because it overlooks First Nations custodianship. Contemporary usage is shifting to acknowledge Indigenous sovereignty and avoid implying ownership.' },
+  { id: 2, question: 'How is “Australian founder” used in startups today?', answer: 'It typically means someone who establishes and leads an Australian-based company, often backed by local investors or headquartered in major hubs like Sydney or Melbourne. The focus is on value creation, compliance with Australian law, and contribution to the local economy.' },
+  { id: 3, question: 'Which hubs matter most for founders in 2026?', answer: 'Sydney, Melbourne, and Brisbane remain the largest, with growing activity in Perth and Adelaide. University-linked precincts and sector clusters (fintech in Sydney, AI/health in Melbourne/Brisbane) provide accelerators, labs, and meetups.' },
+  { id: 4, question: 'What funding routes are common for Australian founders?', answer: 'Angel syndicates, early-stage VCs, industry-linked accelerators, the R&D Tax Incentive, Export Market Development Grants, and equity crowdfunding. Each has eligibility rules; founders should check current guidance as at 2026 on government sites.' },
+  { id: 5, question: 'Can overseas founders base themselves in Australia?', answer: 'Yes, but they must meet visa requirements (e.g., Global Talent visa or Temporary Skill Shortage streams) and set up compliant entities. Legal advice and migration guidance are recommended to ensure status and payroll obligations are met.' },
+  { id: 6, question: 'Where can AI-focused founders find community?', answer: 'Sector meetups (e.g., AI/ML groups), university innovation hubs, Aussie Founders Network for general networking, and not-for-profit communities like MLAI for practitioners and enthusiasts across Australia.' },
 ]
 
 export const summaryHighlights = {
@@ -88,16 +59,16 @@ export const summaryHighlights = {
     'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
-      label: 'Who supports Australian founders in 2026?',
-      description: 'Aussie Founders Network, state hubs like LaunchVic and Tech Central, and sector labs such as Cicada or Stone & Chalk lead community support.',
+      label: 'Who were the founders of modern Australia?',
+      description: 'Colonial leaders of the 1788 First Fleet and federation figures, though usage now notes Indigenous custodianship and avoids implying ownership.',
     },
     {
-      label: 'Where can I research early Australian founders or settlers?',
-      description: 'Start with Trove, state archives, and platforms like Findmypast; cross-check names against passenger lists and land records.',
+      label: 'What defines an Australian company founder today?',
+      description: 'Someone establishing and leading an Australian-based firm with compliant structures, local presence, and contribution to the economy.',
     },
     {
-      label: 'How are founders funding early stages now?',
-      description: 'Lean on customer pilots, state grants (e.g. MVP Ventures), and the R&D Tax Incentive before larger angel or VC rounds.',
+      label: 'Where do Australian founders get funding in 2026?',
+      description: 'Angels, early-stage VCs, accelerators, R&D Tax Incentive, Export Market Development Grants, and equity crowdfunding.',
     },
   ],
 }
@@ -166,14 +137,14 @@ export default function ArticlePage() {
 
         <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
-            <strong>{TOPIC}</strong> touches both the country’s founding story and the present startup scene. In 2026, founders navigate a tight funding environment, evolving AI guidance, and growing community support networks that connect capital-city hubs with regional talent.
+            <strong>{TOPIC}</strong> – Modern search results blur colonial history, company creation, and startup life. This 2026 guide separates those threads: acknowledging First Nations custodianship, outlining how “founder” is used in today’s startup economy, and mapping the Australian ecosystems where builders gather.
           </p>
 
           <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
-          <h2>How Australia defines “founder”: from early settlers to today’s startups</h2>
+          <h2>Who gets called a “founder” of Australia? From 1788 to federation</h2>
           <p>
-            Search results split between historical founders of the nation and modern company builders. That dual meaning shapes intent: some readers want lineage research, others want startup pathways. In 2026, founders typically set up as proprietary limited companies, obtain a Director ID, and comply with Corporations Act duties. For AI products, add privacy (Australian Privacy Principles), consumer law, and sector rules such as TGA for medtech or APRA/APG 230 for financial services.
+            Early colonial accounts often labelled First Fleet leaders and Federation architects as “founders”, but that framing overlooks more than 65,000 years of First Nations custodianship. In 2026, historians and community organisations increasingly emphasise that colonisation is not “founding”; instead, it marks the start of British settlement and the path to the 1901 Commonwealth. When using the term “founder”, be explicit about whether you mean colonial office-holders, federation framers, or modern company creators—and respect Indigenous sovereignty in your language.
           </p>
 
           <ArticleResourceCTA
@@ -185,77 +156,68 @@ export default function ArticlePage() {
           />
 
           <ArticleCallout
-            title="Context: lineage vs. startup goals"
+            title="Phrase with care"
             variant="brand"
             icon={<span className="text-xl">💡</span>}
             className="not-prose"
           >
             <p className="mt-1 text-gray-800">
-              If you are researching family history, focus on archival sources and naming conventions. If you are building a company, prioritise compliance setup, market validation, and community ties for credibility.
+              When discussing colonial figures, pair terms like “Governor Phillip” or “colonial administrators” instead of “founders”. For company builders, “startup founder” or “Australian company founder” is clearer and avoids historical ambiguity.
             </p>
           </ArticleCallout>
 
-          <h2>What networks support Australian founders in 2026?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-893dc24f-4773-4a64-99f0-5b5cd984b2df.jpg?alt=media&token=dd65c246-490b-4dc8-8c57-0c341932fecd" alt="Group of diverse founders collaborating in a vibrant tech startup space, capturing a 90s film vibe." className="w-full rounded-lg my-8" />
+          <h2>Networks uniting Australian founders in 2026</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-c198b610-9621-43dc-938b-98f98231b211.jpg?alt=media&token=e27b0109-6a3b-4a6d-a3fd-d20952aaa083" alt="A vibrant 90s film-style scene with diverse Australian founders collaborating in a tech startup environment." className="w-full rounded-lg my-8" />
 
           <p>
-            The Aussie Founders Network continues to connect Australian entrepreneurs globally. Locally, hubs such as LaunchVic (Melbourne), Tech Central (Sydney), and sector labs like Cicada (deep tech) or Stone & Chalk offer programs and coworking. University incubators and state-backed innovation precincts add mentoring and lab access. MLAI contributes as a not-for-profit community for AI practitioners and learners across Australia, connecting engineers, designers, and AI-curious builders.
+            Today’s founders lean on community: Aussie Founders Network offers broad networking; university precincts host accelerators; sector-specific meetups (fintech, climate, AI) provide peer reviews and demo days. Not-for-profit groups—such as MLAI for AI practitioners—fill the gap for skills-sharing and local accountability, especially outside capital cities.
           </p>
 
-          <QuoteBlock title="Expert insight" variant="purple">
-            “Communities remain the fastest way to validate ideas, meet collaborators, and hear how others navigated grants or procurement in Australia.”
-          </QuoteBlock>
-
-          <h2>Notable Australian tech founders shaping 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-daf8f0f2-55d0-4ffa-8a7c-3f0fc7fa730c.jpg?alt=media&token=defcbbfa-1b0b-41e9-b8dd-96d32e898d60" alt="Australian tech founders in a retro 90s film aesthetic, collaborating in a vibrant startup environment." className="w-full rounded-lg my-8" />
-
+          <h3>What founders look for in a network</h3>
           <p>
-            Current search interest centres on AI, climate, and fintech founders. Companies like Canva (Melanie Perkins, Cliff Obrecht), Atlassian (Mike Cannon-Brookes, Scott Farquhar), and emerging AI toolmakers signal paths from local to global markets. Newer founders often leverage remote-first teams, R&D Tax Incentive eligibility, and early customer revenue before significant venture rounds.
+            Founders prioritise access to mentors, investor office hours, lightweight legal/accounting templates, and trusted referrals. In 2026, many hubs add responsible-AI guidance, data privacy primers, and export-readiness sessions to match evolving regulation.
           </p>
 
           <ArticleStepList
             title="Practical steps"
             steps={[
-              { label: 'Map your sector fit (AI, climate, fintech, deep tech) and relevant compliance pathways.' },
-              { label: 'Join two communities: one domain-specific (e.g. MLAI for AI) and one general founder network.' },
-              { label: 'Line up a grant or customer pilot before pitching angels to reduce dilution.' },
+              { label: 'Map 3–5 active communities in your city (general + sector + stage-specific).' },
+              { label: 'Attend two events this month; schedule follow-ups with one mentor and one peer founder.' },
+              { label: 'Join one values-aligned non-profit community (e.g., MLAI for AI builders) to keep learning affordably.' },
             ]}
             accent="indigo"
           />
 
-          <h3>Balancing capital efficiency and speed</h3>
+          <QuoteBlock title="Expert insight" variant="purple">
+            “Communities reduce founder isolation and sharpen judgment. A small, consistent peer circle often beats a long list of loose connections.”
+          </QuoteBlock>
+
+          <h2>Startup pathways: funding, visas, and compliance for new founders</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-7ebdacea-8e7f-4524-ac4f-62bebd24797c.jpg?alt=media&token=ad904359-2eef-4264-bb18-4a4f0903caf5" alt="Tech entrepreneurs collaborating in a vibrant 90s-inspired startup workspace, embodying innovation and creativity." className="w-full rounded-lg my-8" />
+
           <p>
-            With venture capital more selective in 2026, Australian founders emphasise paid pilots, export-friendly pricing, and hybrid funding (grants + angels). Revenue discipline and clear governance help retain optionality for later rounds.
+            Australian founders in 2026 typically mix angel capital, early-stage VCs, and government support. The R&D Tax Incentive remains central for tech-heavy builds, while Export Market Development Grants help outbound growth. Equity crowdfunding suits consumer-facing products with engaged audiences. Overseas founders considering Australia should assess visa options (e.g., Global Talent visa) and set up entities compliant with the Corporations Act, Fair Work obligations, and privacy rules (including the Privacy Act and sector-specific guidance for health or finance).
           </p>
 
-          <h2>How to trace early Australian founders and family records</h2>
-          <p>
-            Genealogy queries lead to sources like Findmypast, Trove, and state archives. Start with known surnames, cross-check against passenger lists, land grants, and newspaper notices. Use variant spellings common in colonial records. Verify with multiple sources to avoid conflating similarly named settlers, and note the record year to avoid anachronisms.
-          </p>
-
-          <ArticleCallout
-            title="Research safeguard"
-            variant="info"
-            icon={<span className="text-xl">🗂️</span>}
-            className="not-prose"
-          >
-            <p className="mt-1 text-gray-800">
-              Keep a log of sources (archive, call number, URL) and note the date accessed. When uncertain, treat lineage links as hypotheses until corroborated.
+          <ArticleCallout variant="info">
+            <p className="text-sm text-gray-800">
+              Always verify funding and visa settings on official Australian Government sites as at 2026; programs and thresholds can change year to year.
             </p>
           </ArticleCallout>
 
-          <h2>Funding, grants, and governance for founders (Australia, 2026)</h2>
+          <h2>Notable sectors and Australian company founders to watch</h2>
           <p>
-            The R&D Tax Incentive remains the anchor for technical work. State grants such as LaunchVic’s programs and NSW MVP Ventures support early builds. Export-focused businesses can explore Austrade support. For governance, maintain a board cadence, director duties, and privacy-by-design for AI data. Transparent model and data provenance helps with procurement, especially in government and regulated sectors.
+            Software remains strong—Atlassian (Mike Cannon-Brookes, Scott Farquhar) set an enduring playbook. Design-led tools like Canva (Melanie Perkins, Cliff Obrecht, Cameron Adams) showed global reach from Australia. SafetyCulture (Luke Anear) expanded industrial SaaS. In AI, newer companies focus on model evaluation, safety, and domain-specific copilots; health and climate AI ventures gain attention thanks to university research pipelines. Use these examples to benchmark governance, hiring pace, and capital efficiency rather than copy valuation narratives.
           </p>
 
-          <QuoteBlock title="Key takeaway" variant="orange">
-            “Pair grants and revenue with lean burn; governance and privacy-by-design build trust faster than pitch decks alone.”
-          </QuoteBlock>
-
-          <h2>Building inclusive founder communities across Australia’s states</h2>
+          <h3>Signals of resilient Australian founders</h3>
           <p>
-            Inclusion is a gap in many search results. Regional founders often lack proximity to capital but gain from sector clusters (agrifood in WA/SA, climate in QLD). Online meetups and hybrid events bridge time zones. Community codes of conduct, transparent moderation, and clear pathways for newcomers make spaces safer and more sustainable.
+            Look for disciplined burn, transparent governance, compliance-ready data practices, and early customer validation. These traits matter more than headline valuations in 2026’s funding climate.
+          </p>
+
+          <h2>Move from research to action in the Australian ecosystem</h2>
+          <p>
+            Whether you’re clarifying historical language or mapping startup supports, anchor on evidence: official guidance for compliance, peer-reviewed community knowledge, and mentor feedback from local hubs. Small, consistent steps—joining a community, shipping a pilot, and tracking customer proof—beat waiting for perfect conditions.
           </p>
 
           <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
@@ -267,11 +229,11 @@ export default function ArticlePage() {
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">2</span>
-                <span>Join a founder network plus one domain community (e.g. MLAI for AI builders).</span>
+                <span>Draft your initial goals based on the template.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">3</span>
-                <span>Align funding: pick one grant, one customer pilot, and set governance basics.</span>
+                <span>Discuss with your team or mentor.</span>
               </li>
             </ul>
           </div>
@@ -283,9 +245,9 @@ export default function ArticlePage() {
             <ArticleCompanyCTA
               title={`Need help with ${TOPIC}?`}
               body="Join the MLAI community to collaborate with fellow AI practitioners in Australia."
-              buttonText="Connect with MLAI"
+              buttonText="Get recommendations"
               buttonHref="https://mlai.au/contact"
-              note="We’re a not-for-profit community empowering the Australian AI community."
+              note="You can filter by topic, format (online/in‑person), and experience level."
             />
           </div>
         </div>
