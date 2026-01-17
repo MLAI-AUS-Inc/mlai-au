@@ -21,10 +21,10 @@ const navigation = [
   },
   {
     number: "3",
-    name: "Bounties",
-    href: "https://mlaiau.notion.site/2619c67419c880ad8654df2ec0998a74?pvs=105",
-    target: "_blank",
-    color: "#1a1a1a", // Black (external link - no section)
+    name: "Founder Tools",
+    href: "/#founder-tools",
+    sectionId: "founder-tools", // Founder Tools section
+    color: "#1a1a1a", // Black
   },
   {
     number: "4",
@@ -52,6 +52,7 @@ const navigation = [
     name: "Login",
     href: "/platform/login",
     color: "#00ffd7", // Mint (external route - no section)
+    target: "_blank",
   },
 ];
 

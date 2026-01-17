@@ -77,6 +77,14 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/australian-founders',
         image: 'https://placehold.co/1200x630/png',
         imageAlt: 'Australian founders',
+    'featured/startup-incubator-melbourne': {
+        title: 'Startup incubator Melbourne (2026)',
+        date: '2026-01-17',
+        description: 'Current overview of Melbourne startup incubators and accelerators—programs, eligibility, equity, timelines, and how to choose. As at Jan 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/startup-incubator-melbourne',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Startup incubator Melbourne (2026)',
         hasContent: true,
     },
     'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
