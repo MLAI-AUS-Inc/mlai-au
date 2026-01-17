@@ -69,6 +69,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/australian-founders': {
+        title: 'Australian founders',
+        date: '2026-01-16',
+        description: 'Explore how Australian founders connect, find records, and access funding in 2026—covering networks, history sources, and inclusive community steps.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/australian-founders',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Australian founders',
+    },
     'featured/startup-incubator-melbourne': {
         title: 'Startup incubator Melbourne (2026)',
         date: '2026-01-17',
