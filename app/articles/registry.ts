@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/accelerator-startup-programs': {
+        title: 'Accelerator startup programs in Australia (2026)',
+        date: '2026-01-17',
+        description: 'How accelerators work in Australia in 2026: eligibility, equity, timelines, and how to choose the right program. Links to LaunchVic, Startmate and Google for Startups.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/accelerator-startup-programs',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Accelerator startup programs in Australia (2026)',
+        hasContent: true,
+    },
     'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
         title: 'How to price your product in Australia (2025)',
         date: '2026-01-14',
