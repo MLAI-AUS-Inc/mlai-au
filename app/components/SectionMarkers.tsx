@@ -14,8 +14,13 @@ const sectionMarkers = [
         color: "#4b0db3", // Purple
     },
     {
-        sectionId: "volunteer",
-        name: "Volunteer",
+        sectionId: "founder-tools",
+        name: "Founder Tools",
+        color: "#1a1a1a", // Black
+    },
+    {
+        sectionId: "people",
+        name: "People",
         color: "#3537dc", // Blue
     },
     {

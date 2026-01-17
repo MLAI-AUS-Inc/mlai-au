@@ -13,6 +13,7 @@ import { TestimonialCloud } from "~/components/testimonial-tetris";
 import { LogoShooter, useLogoPreloader, LoadingOverlay } from "~/components/logo-shooter";
 import { SPONSOR_LOGOS } from "~/components/logo-shooter/logoData";
 import { LogoMarquee } from "~/components/LogoMarquee";
+import FounderTools from "~/components/FounderTools";
 
 // Split logos into 3 rows for marquee animation
 const ROW_1_LOGOS = SPONSOR_LOGOS.slice(0, 13);
@@ -193,7 +194,7 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
       </section>
 
       {/* ===== EVENTS SECTION ===== */}
-      {/* Starts at "Upcoming Events", ends at Volunteer */}
+      {/* Starts at "Upcoming Events", ends at Founder Tools */}
       <section id="events">
         {/* Events section divider - Purple */}
         <SectionDivider color="#4b0db3" />
@@ -204,6 +205,16 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
             {(resolvedEvents) => <UpcomingEvents events={resolvedEvents} />}
           </Await>
         </Suspense>
+      </section>
+
+      {/* ===== FOUNDER TOOLS SECTION ===== */}
+      {/* Starts at "Get templates and checklists", ends at People */}
+      <section id="founder-tools">
+        {/* Founder Tools section divider - Black */}
+        <SectionDivider color="#1a1a1a" />
+
+        {/* Founder Tools Component */}
+        <FounderTools />
       </section>
 
       {/* ===== VOLUNTEER SECTION ===== */}
@@ -247,12 +258,6 @@ export default function Home({ events, substackPosts }: { events: Promise<any>, 
       {/* Hidden placeholder for future sponsor content */}
       <section id="sponsor" className="hidden" aria-hidden="true">
         {/* Placeholder for future sponsor section content */}
-      </section>
-
-      {/* ===== BOUNTIES SECTION (Placeholder) ===== */}
-      {/* Hidden placeholder - bounties link goes to external Notion page */}
-      <section id="bounties" className="hidden" aria-hidden="true">
-        {/* Placeholder for future bounties section content */}
       </section>
 
       {/* CTA section */}
