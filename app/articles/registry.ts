@@ -77,6 +77,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/australian-founders',
         image: 'https://placehold.co/1200x630/png',
         imageAlt: 'Australian founders',
+    },
     'featured/startup-incubator-melbourne': {
         title: 'Startup incubator Melbourne (2026)',
         date: '2026-01-17',
