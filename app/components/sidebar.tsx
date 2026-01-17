@@ -52,6 +52,7 @@ const navigation = [
     name: "Login",
     href: "/platform/login",
     color: "#00ffd7", // Mint (external route - no section)
+    target: "_blank",
   },
 ];
 
