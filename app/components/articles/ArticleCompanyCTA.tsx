@@ -25,7 +25,7 @@ export default function ArticleCompanyCTA({
             <p className="text-gray-600 mb-6 max-w-2xl mx-auto">{body}</p>
             <Link
                 to={buttonHref}
-                className="inline-block rounded-full bg-[#1028E0] px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-[#1028E0]/90 transition-colors"
+                className="inline-block rounded-full bg-purple-600 px-8 py-3 text-sm font-semibold text-white shadow-sm hover:bg-purple-700 transition-colors"
             >
                 {buttonText}
             </Link>

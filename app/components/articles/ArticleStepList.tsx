@@ -34,7 +34,7 @@ export function ArticleStepList({
     const styles = ACCENT_CLASSNAMES[accent]
 
     return (
-        <div className={`mt-8 rounded-xl p-6 border ${styles.container} ${className}`}>
+        <div className={`mt-8 mb-8 rounded-3xl p-6 border ${styles.container} ${className}`}>
             {title && <h3 className="text-lg font-bold text-gray-900 mb-4">{title}</h3>}
             <ul className="space-y-3">
                 {steps.map((step, idx) => {
