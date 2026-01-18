@@ -128,7 +128,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },

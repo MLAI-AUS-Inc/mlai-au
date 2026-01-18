@@ -20,7 +20,7 @@ const summaryHighlights = {
 
 export default function FeaturedArticlesPage() {
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
