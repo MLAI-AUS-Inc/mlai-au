@@ -1,21 +1,23 @@
 import clsx from "clsx"
 import type { ReactNode } from "react"
+import { Badge, type BadgeVariant } from "./Badge"
 
-const BADGE_TONES = {
-  slate: "bg-slate-100 text-slate-700",
-  emerald: "bg-emerald-100 text-emerald-700",
-  sky: "bg-sky-100 text-sky-700",
-  blue: "bg-blue-100 text-blue-700",
-  indigo: "bg-indigo-100 text-indigo-700",
-  amber: "bg-amber-100 text-amber-900",
-  rose: "bg-rose-100 text-rose-700",
-  purple: "bg-violet-100 text-violet-700",
-} as const
+// Map legacy tone names to new Badge variants (4 colors only: red, purple, black, yellow)
+const TONE_TO_VARIANT: Record<string, BadgeVariant> = {
+  slate: "black",      // gray → black
+  emerald: "purple",   // emerald → purple
+  sky: "purple",       // sky → purple
+  blue: "purple",      // blue → purple
+  indigo: "purple",    // indigo → purple
+  amber: "yellow",     // amber → yellow
+  rose: "red",         // rose → red
+  purple: "purple",    // purple → purple
+}
 
-const DEFAULT_TYPE_TONE = "slate"
-const DEFAULT_STATUS_TONE = "emerald"
+const DEFAULT_TYPE_TONE = "yellow"  // Guide badge → yellow
+const DEFAULT_STATUS_TONE = "purple"  // Official badge → purple
 
-export type ResourceBadgeTone = keyof typeof BADGE_TONES
+export type ResourceBadgeTone = BadgeVariant
 
 export type ResourceBadge =
   | string
@@ -76,7 +78,7 @@ export function ArticleResourceList({
   return (
     <ul
       className={clsx(
-        "not-prose mt-3 divide-y divide-slate-200 overflow-hidden rounded-lg border border-slate-200 bg-white",
+        "not-prose mt-3 divide-y divide-gray-200 overflow-hidden rounded-2xl border border-gray-300 bg-transparent",
         className,
       )}
     >
@@ -107,15 +109,12 @@ export function ArticleResourceList({
               {badges.length > 0 ? (
                 <div className="mt-2 flex flex-wrap gap-2">
                   {badges.map((badge) => (
-                    <span
+                    <Badge
                       key={`${badge.label}-${badge.tone}`}
-                      className={clsx(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-                        BADGE_TONES[badge.tone],
-                      )}
+                      variant={TONE_TO_VARIANT[badge.tone] || badge.tone}
                     >
                       {badge.label}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               ) : null}
@@ -125,13 +124,13 @@ export function ArticleResourceList({
                 href={item.href}
                 target={item.openInNewTab === false ? undefined : "_blank"}
                 rel={item.openInNewTab === false ? undefined : "noopener"}
-                className="inline-flex items-center justify-center self-start rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-800 no-underline transition hover:bg-slate-50 sm:self-auto"
+                className="inline-flex items-center justify-center gap-1.5 self-start rounded-full bg-indigo-600 px-6 py-2 text-sm font-semibold text-white no-underline transition hover:bg-indigo-700 sm:self-auto"
               >
                 <span>{item.ctaLabel ?? defaultCtaLabel}</span>
-                {item.ctaIcon ? <span className="ml-1.5 flex items-center">{item.ctaIcon}</span> : null}
+                {item.ctaIcon ? <span className="flex items-center">{item.ctaIcon}</span> : <span>→</span>}
               </a>
             ) : (
-              <span className="inline-flex items-center justify-center self-start rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-500 sm:self-auto">
+              <span className="inline-flex items-center justify-center self-start rounded-full border border-dashed border-slate-300 px-6 py-2 text-sm font-medium text-slate-500 sm:self-auto">
                 {item.ctaLabel ?? "Coming soon"}
               </span>
             )}

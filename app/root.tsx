@@ -84,6 +84,27 @@ export default function Layout() {
         <Meta />
         <Links />
 
+
+      </head>
+      <body>
+        <noscript>
+          <img
+            alt=""
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
+          />
+        </noscript>
+        {/* Only show platform-wide components if NOT in specific apps */}
+        {!isAppRoute && <Sidebar />}
+        {!isAppRoute && <SectionMarkers />}
+        <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
+          <Outlet />
+        </div>
+        {!isAppRoute && <Footer />}
+        <ScrollRestoration />
+
         {/* Google Analytics */}
         <script
           async
@@ -127,25 +148,6 @@ export default function Layout() {
 
         {/* Ahrefs Analytics */}
         <script src="https://analytics.ahrefs.com/analytics.js" data-key="gpWL4pKb2ZPfqFtu60natQ" async></script>
-      </head>
-      <body>
-        <noscript>
-          <img
-            alt=""
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
-          />
-        </noscript>
-        {/* Only show platform-wide components if NOT in specific apps */}
-        {!isAppRoute && <Sidebar />}
-        {!isAppRoute && <SectionMarkers />}
-        <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
-          <Outlet />
-        </div>
-        {!isAppRoute && <Footer />}
-        <ScrollRestoration />
         <Scripts />
       </body>
     </html>
