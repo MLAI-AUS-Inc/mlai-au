@@ -1,6 +1,3 @@
-/**
- * Featured articles landing page (React Router v7)
- */
 import { Home } from 'lucide-react'
 import { Link } from 'react-router'
 
