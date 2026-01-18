@@ -69,6 +69,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-an-ai-agent-orchestrator-and-how-can-i-become-one-20': {
+        title: 'What is an AI Agent Orchestrator and How Can I Become One (2026)?',
+        date: '2026-01-16',
+        description: 'Understand the AI agent orchestrator role, 2026 skills, Australian demand, and a practical path to become one.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-an-ai-agent-orchestrator-and-how-can-i-become-one-20',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What is an AI Agent Orchestrator and How Can I Become One (2026)?',
+    },
     'featured/how-to-get-a-job-at-an-ai-startup-australia': {
         title: 'How to Get a Job at an AI Startup in Australia (2026)',
         date: '2026-01-16',
