@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-venture-capital': {
+        title: 'What is venture capital? (2026)',
+        date: '2026-01-18',
+        description: 'Plain-English guide to venture capital for Australia: how VC works, stages, pros and cons, and local options in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-venture-capital',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What is venture capital? (2026)',
+        hasContent: true,
+    },
     'featured/accelerator-startup-programs': {
         title: 'Accelerator startup programs in Australia (2026)',
         date: '2026-01-17',
