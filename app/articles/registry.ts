@@ -69,6 +69,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-are-startups': {
+        title: 'What are startups?',
+        date: '2026-01-18',
+        description: 'A plain-English guide to what a startup is, how it differs from a small business, funding, stages and the Australian context in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-are-startups',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What are startups?',
+    },
     'featured/what-is-venture-capital': {
         title: 'What is venture capital? (2026)',
         date: '2026-01-18',
