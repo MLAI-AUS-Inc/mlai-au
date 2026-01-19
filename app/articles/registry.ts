@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-machine-learning': {
+        title: 'What is Machine Learning? (2026)',
+        date: '2026-01-19',
+        description: 'Plain-English guide: what machine learning is, how it works, main types, examples, risks, and how to get started in Australia (2026).',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-machine-learning',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What is Machine Learning? (2026)',
+        hasContent: true,
+    },
     'featured/what-are-startups': {
         title: 'What are startups?',
         date: '2026-01-18',
