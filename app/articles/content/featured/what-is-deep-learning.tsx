@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
@@ -105,7 +105,7 @@ export default function ArticlePage() {
         <ArticleCallout variant='info'>
           <p className='text-sm text-gray-800'>
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link href='/articles' className='font-semibold text-[--brand] underline-offset-4 hover:underline'>
+            <Link to='/articles' className='font-semibold text-[--brand] underline-offset-4 hover:underline'>
               Browse related articles →
             </Link>
           </p>
@@ -202,7 +202,7 @@ export default function ArticlePage() {
           <p>
             • Convolutional Neural Networks (CNNs): efficient for images and spatial patterns.<br />
             • Recurrent networks (historical) and Transformers: sequence modelling for text, code, audio and more; attention mechanisms capture long‑range dependencies.<br />
-            • Diffusion models: state‑of‑the‑art generative models for images, audio and other modalities, trained by denoising steps.<br />
+            • Diffusion models: state‑of‑the-art generative models for images, audio and other modalities, trained by denoising steps.<br />
             • Autoencoders and VAEs: compress representations; useful for anomaly detection and pretraining.<br />
             • GANs: adversarial training for generation; still relevant in some niches.
           </p>
