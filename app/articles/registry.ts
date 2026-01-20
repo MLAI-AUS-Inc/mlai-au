@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-artificial-general-intelligence': {
+        title: 'What is Artificial General Intelligence',
+        date: '2026-01-20',
+        description: 'Evidence‑based explainer of AGI: how it differs from today’s AI, proposed evaluations, timelines, risks, and what it could mean for AI careers in Australia.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-artificial-general-intelligence',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What is Artificial General Intelligence',
+        hasContent: true,
+    },
     'featured/what-is-machine-learning': {
         title: 'What is Machine Learning? (2026)',
         date: '2026-01-19',

@@ -123,19 +123,19 @@ export default function ArticlePage() {
             {
               title: 'Founders & Teams',
               description: 'For leaders validating ideas, seeking funding, or managing teams.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />, 
+              icon: <RocketLaunchIcon className="h-6 w-6" />,
               variant: 'orange',
             },
             {
               title: 'Students & Switchers',
               description: 'For those building portfolios, learning new skills, or changing careers.',
-              icon: <AcademicCapIcon className="h-6 w-6" />, 
+              icon: <AcademicCapIcon className="h-6 w-6" />,
               variant: 'purple',
             },
             {
               title: 'Community Builders',
               description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-              icon: <UsersIcon className="h-6 w-6" />, 
+              icon: <UsersIcon className="h-6 w-6" />,
               variant: 'yellow',
             },
           ]}
