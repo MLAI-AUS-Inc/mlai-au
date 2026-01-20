@@ -16,16 +16,14 @@ import { ArticleResourceCTA } from '../../../components/articles/ArticleResource
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
-import { ArticleReferences } from '../../../components/articles/ArticleReferences'
-import { ArticleDisclaimer } from '../../../components/articles/ArticleDisclaimer'
 import { getDefaultArticleAuthorDetails } from '../../authors'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'How to get venture capital in Australia'
-const CATEGORY = 'featured' // e.g. 'ai'
-const SLUG = 'how-to-get-venture-capital'
+const TOPIC = 'What is deep learning'
+const CATEGORY = 'learn-ai'
+const SLUG = 'what-is-deep-learning'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? 'Founder'
@@ -35,10 +33,10 @@ const AUTHOR_AVATAR =
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
 const DATE_PUBLISHED = '2026-01-20'
 const DATE_MODIFIED = '2026-01-20'
-const DESCRIPTION = 'A practical 2026 guide for Australian founders raising venture capital: investor fit, metrics, process, term sheets, due diligence, and alternatives.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-580e89c1-855d-4835-baa3-8eab4f785974.jpg?alt=media&token=8a2a0190-3a1b-43b6-a90e-88d8b730a7ef"
-const HERO_IMAGE_ALT = 'Founder pitching to a room of venture capital investors'
-const FEATURED_FOCUS = 'funding' // 'startups' | 'ai' | 'product' | 'funding'
+const DESCRIPTION = 'A practical 2026 guide to deep learning for Australia: how neural networks work, when to use them, risks, and how to start.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-fef423f7-5afd-43d4-8138-1ae684a7e707.jpg?alt=media&token=896544bb-34c2-4267-a999-af50a0f5dd60"
+const HERO_IMAGE_ALT = 'Abstract neural network visual with nodes and connections'
+const FEATURED_FOCUS = 'ai'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -48,48 +46,12 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  {
-    id: 1,
-    question: 'How much equity do VCs typically take at seed in Australia?',
-    answer:
-      'As at 2026, dilution of 10–25% for a priced seed round is common, depending on round size, valuation, and the size of your option pool. SAFEs or convertible notes defer pricing but still dilute when they convert.'
-  },
-  {
-    id: 2,
-    question: 'Do I need revenue to raise venture capital?',
-    answer:
-      'Not always at pre-seed. For seed and beyond, investors typically want evidence of demand (e.g., early revenue, pilots, meaningful active users, strong waitlists, or design partner traction). The later the round, the more metrics matter.'
-  },
-  {
-    id: 3,
-    question: 'Can I cold email Australian VCs?',
-    answer:
-      <>Yes. Keep it short: what you do, the problem, early traction, why now, and a clear ask. Include a one‑page overview or deck link. A warm intro via advisors, founders, or community (e.g., MLAI) often improves response rates.</>
-  },
-  {
-    id: 4,
-    question: 'What legal structure should I have before raising?',
-    answer:
-      'Most Australian VCs expect a Pty Ltd company with a clean cap table, a shareholders agreement, and an employee option plan (ESOP) either in place or planned. Get independent legal advice to suit your situation.'
-  },
-  {
-    id: 5,
-    question: 'SAFE vs convertible note vs priced round—what’s the difference?',
-    answer:
-      'A SAFE is a simple agreement for future equity that converts later, typically with a valuation cap/discount. A convertible note adds interest/maturity. A priced round sets valuation now and issues shares. Speak to a lawyer—terms have real dilution and control implications.'
-  },
-  {
-    id: 6,
-    question: 'How long does a raise take?',
-    answer:
-      'From first meetings to money in the bank, 6–16 weeks is common if you have materials ready and momentum. Include extra time for due diligence and legal docs. Start with at least 6 months runway remaining.'
-  },
-  {
-    id: 7,
-    question: 'Are there alternatives to VC in Australia?',
-    answer:
-      'Yes—R&D Tax Incentive, grants via business.gov.au, angel investors, crowdfunding (ASIC CSF), revenue‑based financing, and bootstrapping. VC fits high‑growth businesses seeking to scale quickly.'
-  }
+  { id: 1, question: 'Is deep learning the same as AI or machine learning?', answer: 'Deep learning is a subset of machine learning (which itself is a subset of AI). It uses multi‑layer neural networks to learn representations from data, often excelling when there is a lot of labelled data or pretraining available.' },
+  { id: 2, question: 'Do I need a GPU to learn or use deep learning?', answer: <>No. You can learn core ideas on a CPU with small models and datasets. A GPU becomes important when you train larger models or want faster experiments. Cloud rentals or lab access can be used later when needed. </> },
+  { id: 3, question: 'How much data do I need?', answer: 'It depends on the task and model size. Classical tabular problems may work with thousands of rows; vision or speech models often benefit from tens of thousands or more. Transfer learning (starting from a pretrained model) can reduce the data you need for your specific task.' },
+  { id: 4, question: 'When should I use traditional ML instead of deep learning?', answer: 'If your problem is tabular, data is limited, or interpretability is critical, tree‑based models (e.g., gradient boosting) can be simpler, cheaper, and strong baselines. Use deep learning when unstructured data (images, audio, text) or large‑scale patterns are central.' },
+  { id: 5, question: 'Which framework should I learn first in 2026?', answer: 'PyTorch remains a popular starting point for research and prototyping; TensorFlow/Keras is common in production and education. Pick one, learn the fundamentals (tensors, autograd, training loops), then explore the other if your stack/team prefers it.' },
+  { id: 6, question: 'What about responsible use in Australia?', answer: <>Follow Australian Privacy Principles (APPs) for personal data and be transparent about data use. Assess bias and fairness, document limitations, and review relevant state and federal guidance as at 2026. Seek independent review for high‑risk applications.</> },
 ]
 
 export const summaryHighlights = {
@@ -98,18 +60,18 @@ export const summaryHighlights = {
     'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
-      label: 'What do VCs look for at seed in Australia?',
-      description: 'Team–market fit, early traction (revenue/users/pilots), clear GTM, capital efficiency, and a credible path to scale.'
+      label: 'Is deep learning the same as machine learning?',
+      description: 'No. Deep learning is a subset of ML that uses multi‑layer neural networks to learn representations from data.',
     },
     {
-      label: 'How long does a seed raise take?',
-      description: 'Typically 6–16 weeks from first meetings to close if materials are ready; start with 6+ months runway.'
+      label: 'Do I need a GPU to start with deep learning?',
+      description: 'Not initially. You can learn on CPU with small models; GPUs help when training larger models or speeding experiments.',
     },
     {
-      label: 'How much equity is typical to give up?',
-      description: 'Commonly 10–25% per priced round; SAFEs/notes convert later. Dilution varies by valuation, round size, and option pool.'
-    }
-  ]
+      label: 'What models are common in 2026?',
+      description: 'Transformers for sequences, CNNs for images, and diffusion models for generative tasks—choice depends on your data and goal.',
+    },
+  ],
 }
 
 export default function ArticlePage() {
@@ -117,33 +79,33 @@ export default function ArticlePage() {
     name: AUTHOR,
     role: AUTHOR_ROLE,
     bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR
+    avatarUrl: AUTHOR_AVATAR,
   }
 
   return (
-    <div className="bg-white">
+    <div className='bg-white'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
           { label: 'Articles', href: '/articles' },
-          { label: TOPIC, current: true }
+          { label: TOPIC, current: true },
         ]}
         title={TOPIC}
-        titleHighlight="(2026)"
-        headerBgColor="cyan"
+        titleHighlight='(2026)'
+        headerBgColor='cyan'
         summary={summaryHighlights}
         heroImage={HERO_IMAGE}
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant="info">
-          <p className="text-sm text-gray-800">
+        <ArticleCallout variant='info'>
+          <p className='text-sm text-gray-800'>
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to='/articles' className='font-semibold text-[--brand] underline-offset-4 hover:underline'>
               Browse related articles →
             </Link>
           </p>
@@ -155,238 +117,165 @@ export default function ArticlePage() {
             {
               title: 'Founders & Teams',
               description: 'For leaders validating ideas, seeking funding, or managing teams.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
-              variant: 'orange'
+              icon: <RocketLaunchIcon className='h-6 w-6' />,
+              variant: 'orange',
             },
             {
               title: 'Students & Switchers',
               description: 'For those building portfolios, learning new skills, or changing careers.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
-              variant: 'purple'
+              icon: <AcademicCapIcon className='h-6 w-6' />,
+              variant: 'purple',
             },
             {
               title: 'Community Builders',
               description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-              icon: <UsersIcon className="h-6 w-6" />,
-              variant: 'yellow'
-            }
+              icon: <UsersIcon className='h-6 w-6' />,
+              variant: 'yellow',
+            },
           ]}
-          className="my-10"
+          className='my-10'
         />
 
-        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
-            <strong>{TOPIC}</strong> — If you’re building a high‑growth startup in Australia, venture capital (VC) can accelerate product, hiring, and go‑to‑market. As at 2026, investors emphasise clear traction, capital efficiency, and clean governance. This guide distils what leading resources cover (e.g., investor fit, materials, process) and adds AU‑specific notes on timelines, diligence, and alternatives.
+            <strong>{TOPIC}</strong> — Deep learning uses multi‑layer neural networks to learn useful representations directly from data. In practice, that means models can handle images, audio, text and more with minimal manual feature engineering. This guide covers how it works, when to use it, what to watch for in Australia as at 2026, and a simple path to start.
           </p>
 
           <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
-          <h2>Is venture capital right for your startup?</h2>
+          {/* SECTION: Derived from competitor patterns — clarify the concept beyond definition */}
+          <h2>From features to representations: what ‘deep’ really means</h2>
           <p>
-            VC suits companies aiming for outsized outcomes within 7–10 years. In practice, that means a large addressable market, strong founder–market fit, and evidence your product can scale. If your growth is steady but not explosive, grants, revenue‑based finance, or angels may be better than institutional VC. Before engaging investors, be clear on why you need capital now, how it extends runway, and the milestones it funds (e.g., shipping v1, 10 enterprise pilots, or $1m ARR).
-          </p>
-          <p>
-            Signals of VC readiness include: weekly active users trending upward; paid pilots or LOIs; a repeatable way to acquire and retain customers; and a defensible edge (in AI, this can be proprietary data, model performance on meaningful evaluations, or distribution advantages).
+            Traditional machine learning often depends on hand‑crafted features. Deep learning learns these features automatically as <em>representations</em> across multiple layers: early layers capture simple patterns, deeper layers compose them into higher‑level concepts. Depth (number of layers) and width (neurons per layer) let models approximate complex functions when trained with enough data and regularisation.
           </p>
 
           <ArticleResourceCTA
             title={`Download the ${TOPIC} checklist`}
-            description="Access a structured template to apply the steps in this guide."
-            buttonLabel="Get the checklist"
-            buttonHref="#"
-            accent="purple"
+            description='Access a structured template to apply the steps in this guide.'
+            buttonLabel='Get the checklist'
+            buttonHref='#'
+            accent='purple'
           />
 
-          <ArticleCallout title="Quick fit check" variant="brand" icon={<span className="text-xl">💡</span>} className="not-prose">
-            <p className="mt-1 text-gray-800">
-              If you can’t describe how $1–3m would turn into a clear, testable milestone within 12–18 months, you may be too early for institutional VC. Consider angels or grants while you de‑risk.
+          <ArticleCallout
+            title='Start tiny to learn fast'
+            variant='brand'
+            icon={<span className='text-xl'>💡</span>}
+            className='not-prose'
+          >
+            <p className='mt-1 text-gray-800'>
+              Use a small dataset (e.g., 1k–10k examples) and a tiny model to iterate quickly. You will learn more from ten short experiments than one long training run that fails overnight.
             </p>
           </ArticleCallout>
 
-          <h2>What Australian investors look for in 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2d12f2f1-b63b-49e1-9e3e-9408162c59a6.jpg?alt=media&token=70ff7c10-fc47-4d1f-8121-00915505b875" alt="Investors discuss startups in a vibrant 90s film aesthetic tech setting, showcasing innovation and collaboration." className="w-full rounded-lg my-8" />
+          {/* SECTION: How it works — activations, gradients, loss */}
+          <h2>How neural networks learn: activations, gradients and loss</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-57fc6133-87b5-4b4a-80d5-c1dfafc219fe.jpg?alt=media&token=da5d3372-d413-498a-9cf4-96d9d2491726" alt="90s tech startup scene with people discussing neural networks, capturing a retro film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
-            Across Stripe’s guidance and AU investor pages, common themes emerge: strong team, evidence of demand, capital efficiency, and a credible plan to a large outcome. Translate that into metrics: retention cohorts, growth rate, unit economics (LTV/CAC), sales velocity, and a bottom‑up go‑to‑market model. For AI startups, expect extra scrutiny on data rights, model licensing, evals tied to real‑world tasks, and safety/observability in production.
+            A neural network composes linear layers with non‑linear activations (e.g., ReLU, GELU). During training, the model predicts an output, compares it to the ground truth via a loss function, and adjusts weights using gradient descent with backpropagation. Optimisers (such as Adam) and techniques like normalisation, dropout and early stopping help models generalise rather than memorise.
           </p>
-          <ul>
-            <li>Team: founder‑market fit, execution pace, clear roles, and reliable references.</li>
-            <li>Traction: paying users or pilots, expanding usage, and credible pipeline.</li>
-            <li>Economics: gross margins, early CAC signals, and a plan for efficient scale.</li>
-            <li>Governance: clean cap table, ESOP, basic policies (privacy, security), and simple terms.</li>
-            <li>AI specifics: data provenance, model/IP licences, benchmarked performance, and safety processes.</li>
-          </ul>
 
-          <QuoteBlock title="Expert insight" variant="purple">
-            “Investors back momentum and clarity. A concise plan that shows how new capital converts into specific, measurable milestones will outperform a long story every time.”
-          </QuoteBlock>
-
-          <h2>Prepare your materials: deck, model, and data room</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67ecd405-ff66-49c1-bcf6-344fe3e00b31.jpg?alt=media&token=acc4eb2a-97f1-41f1-9e05-41e7bd8b47b7" alt="Team collaborating in a retro 90s tech space, preparing materials for a startup project." className="w-full rounded-lg my-8" />
-
+          <h3>Training loop in plain English</h3>
           <p>
-            Most AU funds expect a 10–14 slide deck: problem, solution, product demo, traction, market, business model, go‑to‑market, competition/edge, roadmap/milestones, team, and the raise (amount, use of funds, round mechanics). Keep it visual and specific—screenshots, charts, credible numbers.
+            Batches of data flow forward to produce predictions; the loss quantifies errors; gradients flow backward to update the weights; the loop repeats for several epochs until validation metrics stop improving. Save checkpoints and keep a simple experiment log so results are reproducible.
           </p>
-          <h3>Data room essentials</h3>
-          <ul>
-            <li>Corporate: constitution, shareholders agreement, cap table, ESOP details.</li>
-            <li>Financial: historicals, 18–24 month forecast, assumptions, cash plan.</li>
-            <li>Commercial: pipeline, key contracts, LOIs, churn/retention metrics.</li>
-            <li>Product/Tech: architecture, security practices, uptime/observability.</li>
-            <li>AI: data sources and rights, model licences, evaluation methodology, safety controls.</li>
-            <li>Legal/Compliance: privacy policy, terms of use, IP ownership, any regulatory approvals.</li>
-          </ul>
 
           <ArticleStepList
-            title="Practical steps"
+            title='Practical steps'
             steps={[
-              { label: 'Draft a tight 12‑slide deck with a real product demo' },
-              { label: 'Build a bottoms‑up model and milestone plan' },
-              { label: 'Assemble a data room with legal, financial, and product docs' },
-              { label: 'Line up 2–3 customer references ready to speak' },
-              { label: 'Dry‑run Q&A with trusted founders or mentors' }
+              { label: 'Define your task and metric (e.g., accuracy, F1, RMSE).' },
+              { label: 'Start with a small baseline model and sanity‑check overfitting on a tiny subset.' },
+              { label: 'Scale data and model gradually; track validation and test performance.' },
             ]}
-            accent="indigo"
+            accent='indigo'
           />
 
-          <h2>Find and research investors (AU and abroad)</h2>
-          <p>
-            Start with funds that match your stage, cheque size, and sector. Map portfolios to identify who understands your space. Build a list from Australian Investment Council member directories, fund websites, and community intel. Use warm intros where possible (founders in portfolio companies, ecosystem mentors, or MLAI). Cold emails can work when they are focused and respectful.
-          </p>
-          <ul>
-            <li>Targeting: stage fit (pre‑seed, seed, Series A), typical round sizes, geography, and lead vs follow‑on behaviour.</li>
-            <li>Signals: recent fund size (dry powder), partner interests, and relevant portfolio outcomes.</li>
-            <li>Channels: events, demo days, community meetups, and direct outreach.</li>
-          </ul>
+          <QuoteBlock title='Expert insight' variant='purple'>
+            ‘Strong baselines and careful evaluation beat big models without discipline. Measure, iterate, and document your choices.’
+          </QuoteBlock>
 
-          <ArticleCallout title="Outreach tip" variant="brand" icon={<span className="text-xl">📬</span>} className="not-prose">
-            <p className="mt-1 text-gray-800">
-              A concise note + one‑pager beats a heavy deck on first contact. Lead with the problem, traction, and “why now.” Include the specific ask (e.g., “seeking a $2m seed with 18‑month runway to hit $1m ARR”).
-            </p>
-          </ArticleCallout>
+          {/* SECTION: Architectures */}
+          <h2>Architectures you will meet in 2026</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5548b498-0f92-411a-acd1-579ba985ed33.jpg?alt=media&token=cafb719b-c965-4846-bb34-b5dfaf675f3a" alt="People collaborating in a vibrant tech startup, captured in a nostalgic 90s film aesthetic, showcasing future architectures." className="w-full rounded-lg my-8" />
 
-          <h2>Run a tight fundraising process</h2>
           <p>
-            Treat fundraising like a product launch: create a target list, time‑box outreach (e.g., 2–3 weeks for first meetings), and keep momentum with clear updates. Track conversations in a simple CRM. Share progress (new pilot signed, metric moved) to build urgency. Aim to identify a lead investor who anchors terms and helps fill the round.
-          </p>
-          <h3>Typical Australian timelines and round sizes (indicative, 2026)</h3>
-          <ul>
-            <li>Pre‑seed: A$250k–A$1.5m; timeline 4–12 weeks once materials are ready.</li>
-            <li>Seed: A$1m–A$5m; plan 6–16 weeks including diligence and legals.</li>
-            <li>Series A: A$5m–A$20m+; deeper diligence, longer cycles. Ranges vary by sector and market conditions.</li>
-          </ul>
-          <p>
-            Instruments often include SAFEs/notes at early stages and priced rounds from seed/Series A. Keep terms simple; complexity slows processes and can deter follow‑on investors.
+            • Convolutional Neural Networks (CNNs): efficient for images and spatial patterns.<br />
+            • Recurrent networks (historical) and Transformers: sequence modelling for text, code, audio and more; attention mechanisms capture long‑range dependencies.<br />
+            • Diffusion models: state‑of‑the-art generative models for images, audio and other modalities, trained by denoising steps.<br />
+            • Autoencoders and VAEs: compress representations; useful for anomaly detection and pretraining.<br />
+            • GANs: adversarial training for generation; still relevant in some niches.
           </p>
 
-          <h2>Term sheets, valuation, and dilution basics</h2>
+          {/* SECTION: DL vs ML — decision framing from PAA */}
+          <h2>Deep learning vs traditional ML — choosing the right tool</h2>
           <p>
-            Key terms to understand: valuation (pre/post‑money), option pool size, liquidation preference (often 1x non‑participating), pro‑rata rights, board structure, and information rights. Model dilution across multiple rounds so you know what the cap table looks like at Series A/B if you hit plan.
-          </p>
-          <ul>
-            <li>Model the option pool “pre vs post” impact—investors may ask to top up before closing.</li>
-            <li>Ensure vesting and IP assignment are in place for all team members.</li>
-            <li>Use plain‑English summaries for major clauses alongside the legal docs.</li>
-          </ul>
-
-          <h2>Due diligence: what to expect</h2>
-          <p>
-            Diligence typically covers corporate, financial, commercial, technical, and legal tracks. Be ready with clean documents, fast responses, and customer references who can speak to value. For AI companies, expect deeper review of data provenance, model evaluation, and safety/observability practices. Align your privacy and security posture with Australian expectations (note: privacy law reforms may update obligations—check the latest official guidance).
-          </p>
-          <h3>AI‑specific diligence checklist (AU)</h3>
-          <ul>
-            <li>Data rights and provenance for training/evaluation; third‑party licences documented.</li>
-            <li>Model evaluations tied to real user tasks; reproducible results and monitoring.</li>
-            <li>Risk management: abuse/harm controls, red‑teaming, and incident response.</li>
-            <li>Privacy and security: clear policies, role‑based access, and audit trails.</li>
-            <li>R&D Tax: ensure evidence for any claims aligns with program requirements.</li>
-          </ul>
-
-          <h2>Alternatives to venture capital in Australia</h2>
-          <p>
-            VC is not the only path. Many Australian teams combine non‑dilutive support with early angel funding to reach stronger traction before approaching VCs. Explore the federal R&D Tax Incentive, grants (via business.gov.au), crowd‑sourced funding (ASIC‑regulated), revenue‑based finance, and strategic partnerships.
+            Use deep learning when unstructured data is central or when pretraining gives a clear advantage (vision, speech, NLP). If your data is tabular, limited, or heavily regulated for explainability, tree‑based models can be easier to train, cheaper to serve, and easier to explain. Always compare against a strong non‑DL baseline before committing.
           </p>
 
-          <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Your Next Steps</h3>
-            <ul className="space-y-3">
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">1</span>
-                <span>Decide if VC is the right fit for your goals and runway.</span>
+          {/* SECTION: Data/compute/cost */}
+          <h2>Data, compute and cost: planning your stack</h2>
+          <p>
+            Training efficiency depends on batch size, precision (e.g., FP16/bfloat16), and I/O. GPUs or specialised accelerators speed up training; CPUs can be sufficient for small models and inference. For sensitive data, consider privacy, governance and data residency. Keep an eye on total cost: storage, training time, and monitoring for drift in production.
+          </p>
+
+          {/* SECTION: Evaluation & reliability */}
+          <h2>Evaluation and reliability beyond the leaderboard</h2>
+          <p>
+            Match metrics to the task: accuracy/F1 for classification, BLEU/BERTScore for translation/summary quality (with human review), AUROC for imbalance, and latency/cost for serving constraints. Test on out‑of‑distribution samples, stress rare cases, and adopt simple monitoring (data quality checks, performance dashboards) to catch drift.
+          </p>
+
+          {/* SECTION: Responsible use in AU */}
+          <h2>Responsible use in Australia: privacy, bias and transparency</h2>
+          <p>
+            As at 2026, align projects with Australian Privacy Principles (APPs) when handling personal information. Minimise data, document consents, and enable deletion where appropriate. Assess and mitigate bias, publish model cards or similar documentation, and seek expert review for high‑risk contexts (e.g., employment, health, finance). This article is general information, not legal advice — check official guidance for updates.
+          </p>
+
+          {/* SECTION: Action‑oriented close */}
+          <h2>Turn understanding into a small pilot</h2>
+          <p>
+            Start with a scoped problem, a clear metric, and a simple baseline. When the baseline is solid, try a pretrained model, measure fairly, and only then consider scaling. Keep experiments short and documented, and invite peer review to catch blind spots early.
+          </p>
+
+          <div className='mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose'>
+            <h3 className='text-lg font-bold text-gray-900 mb-4'>Your Next Steps</h3>
+            <ul className='space-y-3'>
+              <li className='flex gap-3 text-gray-700'>
+                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]'>1</span>
+                <span>Download the checklist mentioned above.</span>
               </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">2</span>
-                <span>Create a 12‑slide deck, build a simple model, and assemble a data room.</span>
+              <li className='flex gap-3 text-gray-700'>
+                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]'>2</span>
+                <span>Draft your initial goals based on the template.</span>
               </li>
-              <li className="flex gap-3 text-gray-700">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">3</span>
-                <span>Build a targeted investor list and time‑box outreach to 2–3 weeks.</span>
+              <li className='flex gap-3 text-gray-700'>
+                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]'>3</span>
+                <span>Discuss with your team or mentor.</span>
               </li>
             </ul>
           </div>
 
           <MLAITemplateResourceCTA />
 
-          <ArticleReferences
-            heading="Sources"
-            description="Selected references for further reading (check for updates as at 2026)."
-            headingId="references"
-            references={[
-              {
-                id: 1,
-                href: 'https://stripe.com/au/resources/more/how-to-get-venture-capital-funding',
-                title: 'How to Get Venture Capital Funding',
-                publisher: 'Stripe',
-                category: 'guide',
-                description: 'Overview of preparing, pitching, and closing VC rounds.'
-              },
-              {
-                id: 2,
-                href: 'https://asic.gov.au/regulatory-resources/crowd-sourced-funding/',
-                title: 'Crowd‑sourced funding (CSF)',
-                publisher: 'ASIC',
-                category: 'government',
-                description: 'Regulatory information on CSF as an alternative to VC.'
-              },
-              {
-                id: 3,
-                href: 'https://www.business.gov.au/grants-and-programs/research-and-development-tax-incentive',
-                title: 'Research and Development (R&D) Tax Incentive',
-                publisher: 'Australian Government',
-                category: 'government',
-                description: 'Non‑dilutive support that many startups combine with early funding.'
-              },
-              {
-                id: 4,
-                href: 'https://www.ycombinator.com/documents',
-                title: 'SAFE Financing Documents',
-                publisher: 'Y Combinator',
-                category: 'guide',
-                description: 'Widely used early‑stage financing docs (seek local legal advice).'
-              }
-            ]}
-          />
-
-          <div className="my-12 not-prose">
+          <div className='my-12 not-prose'>
+            {/* Contextual CTA - Best placement for conversion */}
             <ArticleCompanyCTA
-              title={`Need help with ${TOPIC}?`}
-              body="Join the MLAI community to connect with peers and mentors in Australia."
-              buttonText="Get recommendations"
-              buttonHref="/contact"
-              note="Friendly, community‑first support—no hard sell."
+              title={`Build your deep learning skills with others`}
+              body='Join the MLAI community to collaborate with fellow AI practitioners in Australia.'
+              buttonText='Connect with MLAI'
+              buttonHref='/contact'
+              note='We are a not‑for‑profit community based in North Melbourne.'
             />
           </div>
-
-          <ArticleDisclaimer />
         </div>
 
         <AuthorBio author={authorDetails} />
 
-        <div className="mt-12">
+        <div className='mt-12'>
           <ArticleFAQ items={faqItems} />
         </div>
 
-        <ArticleFooterNav backHref="/articles" topHref="#" />
+        <ArticleFooterNav backHref='/articles' topHref='#' />
       </div>
     </div>
   )
