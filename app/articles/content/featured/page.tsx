@@ -16,14 +16,16 @@ import { ArticleResourceCTA } from '../../../components/articles/ArticleResource
 import { ArticleStepList } from '../../../components/articles/ArticleStepList'
 import { ArticleCallout } from '../../../components/articles/ArticleCallout'
 import { MLAITemplateResourceCTA } from '../../../components/articles/MLAITemplateResourceCTA'
+import { ArticleReferences } from '../../../components/articles/ArticleReferences'
+import { ArticleDisclaimer } from '../../../components/articles/ArticleDisclaimer'
 import { getDefaultArticleAuthorDetails } from '../../authors'
 
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'What is machine learning?'
-const CATEGORY = 'learn-ai-australia' // e.g. 'ai'
-const SLUG = 'what-is-machine-learning'
+const TOPIC = 'What is Artificial General Intelligence'
+const CATEGORY = 'ai-careers-australia'
+const SLUG = 'what-is-artificial-general-intelligence'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? 'Founder'
@@ -31,12 +33,12 @@ const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
 const AUTHOR_AVATAR =
   AUTHOR_PROFILE.avatarUrl ??
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-const DATE_PUBLISHED = '2026-01-19'
-const DATE_MODIFIED = '2026-01-19'
-const DESCRIPTION = 'Plain‑English guide to machine learning: how it works, key types, examples, risks, and how to begin in Australia (2026).'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-150b6b2a-5bd3-466b-a1c0-2fcf9943e0d2.jpg?alt=media&token=932800b0-6893-4c22-b272-df8ef2ce06f4"
-const HERO_IMAGE_ALT = 'Abstract network of nodes and connections representing machine learning models'
-const FEATURED_FOCUS = 'ai' // 'startups' | 'ai' | 'product' | 'funding'
+const DATE_PUBLISHED = '2026-01-20'
+const DATE_MODIFIED = '2026-01-20'
+const DESCRIPTION = 'A clear, evidence-based explainer of artificial general intelligence (AGI), how it differs from today’s AI, proposed evaluations, timelines, risks, and what it could mean for AI careers in Australia.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3107979b-03f2-423c-b960-ae4b26850b72.jpg?alt=media&token=2817e525-d314-4127-852d-f609133af31c"
+const HERO_IMAGE_ALT = 'Abstract neural network lines representing general intelligence across domains'
+const FEATURED_FOCUS = 'ai'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -46,50 +48,30 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  // ≥6 items; AU context; evidence-forward; answers can be strings or JSX.
-  { id: 1, question: 'Is machine learning the same as AI?', answer: 'No. Machine learning (ML) is a subset of AI focused on systems that learn patterns from data instead of following hand‑coded rules. Deep learning and today\'s generative models are approaches within ML.' },
-  { id: 2, question: 'What are the main types of machine learning?', answer: (
-    <>
-      <ul>
-        <li><strong>Supervised:</strong> learn from labelled examples (e.g., spam vs not‑spam).</li>
-        <li><strong>Unsupervised:</strong> find structure in unlabelled data (e.g., customer clustering).</li>
-        <li><strong>Reinforcement:</strong> learn via trial and reward (e.g., game‑playing agents).</li>
-      </ul>
-      <p className="mt-2">Variants you\'ll see include self‑supervised learning and transfer learning.</p>
-    </>
-  ) },
-  { id: 3, question: 'Do I need advanced maths to start?', answer: 'You can begin with Python, basic statistics, and scikit‑learn. Over time, linear algebra and calculus help you reason about optimisation and model behaviour—useful for deeper roles.' },
-  { id: 4, question: 'How is ML regulated or guided in Australia?', answer: (
-    <>
-      <p>As at 2026, privacy and fairness expectations are shaped by the Privacy Act 1988 and guidance from the Office of the Australian Information Commissioner (OAIC). See the OAIC\'s resources for privacy and AI:</p>
-      <p><a className="underline text-[--brand-ink]" href="https://www.oaic.gov.au/" target="_blank" rel="noreferrer">oaic.gov.au</a>. Also review Australian AI ethics guidance on <a className="underline text-[--brand-ink]" href="https://www.industry.gov.au/" target="_blank" rel="noreferrer">industry.gov.au</a>.</p>
-    </>
-  ) },
-  { id: 5, question: 'Where can I find beginner‑friendly datasets (including Australian sources)?', answer: (
-    <>
-      <p>Try <a className="underline text-[--brand-ink]" href="https://www.kaggle.com/datasets" target="_blank" rel="noreferrer">Kaggle Datasets</a>, <a className="underline text-[--brand-ink]" href="https://archive.ics.uci.edu/" target="_blank" rel="noreferrer">UCI ML Repository</a>, and Australian open data on <a className="underline text-[--brand-ink]" href="https://data.gov.au/" target="_blank" rel="noreferrer">data.gov.au</a>.</p>
-    </>
-  ) },
-  { id: 6, question: 'What is overfitting and how do I avoid it?', answer: 'Overfitting occurs when a model memorises training data but performs poorly on new data. Mitigate with a proper train/validation/test split, cross‑validation, simpler models, regularisation, and early stopping.' },
-  { id: 7, question: 'Which tools should I learn first?', answer: 'Python, NumPy, pandas, scikit‑learn, and Jupyter notebooks. Add PyTorch or TensorFlow once you are comfortable with fundamentals.' },
+  { id: 1, question: 'Is AGI real today?', answer: 'No. As at 2026, there is no peer‑reviewed consensus that any system has achieved artificial general intelligence. Frontier models demonstrate strong capabilities across many benchmarks, but remain brittle, inconsistent off‑distribution, and dependent on human scaffolding or tools.' },
+  { id: 2, question: 'Is GPT‑4 an AGI?', answer: 'No. GPT‑4‑class systems are impressive at language, coding, and reasoning tasks under constraints, but they do not reliably exhibit robust open‑world autonomy, long‑horizon planning, grounded causal understanding, or self‑directed goal pursuit with verifiable alignment.' },
+  { id: 3, question: 'How would we measure AGI?', answer: <>There is no single test. Researchers propose multi‑domain evaluations that combine reasoning (e.g., MMLU/Math), abstract problem‑solving (e.g., ARC), long‑horizon tasks, embodied control or simulated environments, tool use, and safe operation under uncertainty. Independent replication and adversarial testing are essential.</> },
+  { id: 4, question: 'When might AGI arrive?', answer: 'Forecasts vary widely, from “in the next decade” to “many decades or never.” Treat timelines as uncertain and scenario‑based; focus on practical skills, governance literacy, and responsible deployment that are valuable regardless of timeline.' },
+  { id: 5, question: 'What would AGI mean for jobs in Australia?', answer: 'Likely more task automation and augmentation, plus growth in roles across AI safety, governance, data, model evaluation, human‑computer interaction, and AI product integration. Impacts will depend on industry, regulation, and organisational adoption choices.' },
+  { id: 6, question: 'Who regulates AI in Australia?', answer: <>As at 2024–25, privacy is overseen by the OAIC, online harms by the eSafety Commissioner, and the Australian Government has proposed guardrails for higher‑risk AI under its Safe and Responsible AI agenda. Always check the latest official guidance.</> },
 ]
 
 export const summaryHighlights = {
   heading: `Key facts: ${TOPIC}`,
   intro:
-    'Snapshot for Australia (2026): ML is widely embedded in consumer apps and public services; privacy is guided by the Privacy Act; most beginners start with Python and scikit‑learn before exploring deep learning.',
+    'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
-      label: 'Is machine learning part of AI or different?',
-      description: 'Machine learning is a subset of AI: systems learn patterns from data rather than following fixed rules.',
+      label: 'Is AGI real today?',
+      description: 'No—there’s no consensus that any system has reached AGI as at 2026; current models are powerful but narrow and unreliable off‑distribution.',
     },
     {
-      label: 'What are the main types of machine learning?',
-      description: 'Supervised, unsupervised, and reinforcement learning (with self‑supervised/transfer as variants).',
+      label: 'How is AGI different from today’s AI?',
+      description: 'AGI would generalise across tasks, learn efficiently, plan over long horizons and operate autonomously; today’s systems excel mainly in narrow domains.',
     },
     {
-      label: 'Where is machine learning used day to day?',
-      description: 'Recommendations, spam/phishing filters, speech‑to‑text, fraud detection, maps/traffic, and medical triage tools.',
+      label: 'How would we know we’ve built AGI?',
+      description: 'No single test; researchers propose multi‑domain evals combining reasoning, transfer, real‑world autonomy and safety alignment with independent replication.',
     },
   ],
 }
@@ -124,9 +106,13 @@ export default function ArticlePage() {
         {/* Intro alert - Clean, neutral style */}
         <ArticleCallout variant="info">
           <p className="text-sm text-gray-800">
-            This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
+            This guide is part of our broader series on {TOPIC}. For a career‑oriented overview, see our{' '}
+            <Link to="/articles/ai-careers-australia" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+              AI careers in Australia guide
+            </Link>
+            . Prefer to browse?{' '}
             <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
-              Browse related articles →
+              Explore more articles →
             </Link>
           </p>
         </ArticleCallout>
@@ -143,13 +129,13 @@ export default function ArticlePage() {
             {
               title: 'Students & Switchers',
               description: 'For those building portfolios, learning new skills, or changing careers.',
-              icon: <AcademicCapIcon className="h-6 w-6" />,
+              icon: <AcademicCapIcon className="h-6 w-6" />, 
               variant: 'purple',
             },
             {
               title: 'Community Builders',
               description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-              icon: <UsersIcon className="h-6 w-6" />,
+              icon: <UsersIcon className="h-6 w-6" />, 
               variant: 'yellow',
             },
           ]}
@@ -158,26 +144,14 @@ export default function ArticlePage() {
 
         <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
-            <strong>{TOPIC}</strong> – Machine learning shows up when your phone transcribes speech, a map updates travel time, or a bank flags a suspicious transaction. In 2026, Australians interact with ML daily—often invisibly. This guide explains how ML works, the main learning paradigms, practical examples, key risks, and a simple pathway to get started responsibly.
+            <strong>{TOPIC}</strong> describes a hypothetical class of AI systems that can learn, reason and adapt across a wide range of tasks—more like a capable generalist than a single‑skill specialist. Top explainers from encyclopaedic and industry sources converge on three ideas: breadth (many domains), transfer (learning that carries over), and autonomy (goal‑directed behaviour with reliable control and safety).
           </p>
 
           <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
-          {/* SECTION 1 */}
-          <h2>Machine learning in one sentence (and how it differs from AI)</h2>
+          <h2>AGI versus today’s AI: scope, autonomy and transfer</h2>
           <p>
-            Machine learning is a way of building systems that learn patterns from data to make predictions or decisions with minimal explicit rules. It sits inside the broader field of artificial intelligence. Deep learning is a family of ML techniques using neural networks; generative AI (e.g., text or image generation) is a capability typically powered by deep learning models.
-          </p>
-
-          {/* SECTION 2 */}
-          <h2>How machine learning works: data, features, and training</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-88f286e1-d28c-4b24-a86c-6b49f65774c6.jpg?alt=media&token=c114e32e-be0f-43e9-9a83-6fbc591107e3" alt="People collaborating in a tech startup, blending retro 90s vibes with modern machine learning discussions." className="w-full rounded-lg my-8" />
-
-          <p>
-            Most ML projects follow a repeatable loop: define the problem, gather and prepare data, select a baseline model, train on historical examples, evaluate on unseen data, then iterate. For a tabular task (say, predicting whether an email is spam), you would create features (e.g., word counts), split your data into train/validation/test sets, train a simple model (like logistic regression), measure performance (accuracy, precision/recall, ROC‑AUC), and use error analysis to guide the next change.
-          </p>
-          <p>
-            Good hygiene matters: keep a hold‑out test set for final checks; prefer cross‑validation when data is limited; document assumptions and risks alongside metrics. This helps future you—and anyone reviewing your work—understand trade‑offs.
+            Most deployed systems are “narrow AI” built to excel at specific tasks (e.g., recognising images, drafting text, or recommending content). By contrast, AGI would generalise: it would learn new tasks with limited data, transfer prior knowledge, plan over long horizons, and operate with a degree of autonomy—while remaining aligned with human goals and safety constraints. Modern foundation models blur lines by performing well on diverse benchmarks, but they still rely on scaffolding, frequent human oversight, and careful prompting; performance degrades in unfamiliar or open‑ended settings.
           </p>
 
           <ArticleResourceCTA
@@ -189,81 +163,86 @@ export default function ArticlePage() {
           />
 
           <ArticleCallout
-            title="Start simple: a strong baseline beats fragile complexity"
+            title="Tip: separate capability claims from system behaviour"
             variant="brand"
             icon={<span className="text-xl">💡</span>}
             className="not-prose"
           >
             <p className="mt-1 text-gray-800">
-              Try a shallow model first (logistic regression, decision tree). If a complex model only wins by a hair and is hard to explain, prefer the simpler option—especially when privacy and safety reviews are required.
+              Ask what the model can do <em>reliably</em> without hidden human help, how it behaves under adversarial tests, and whether independent evaluations reproduce the result.
             </p>
           </ArticleCallout>
 
-          {/* SECTION 3 */}
-          <h2>The main learning paradigms: supervised, unsupervised, reinforcement</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0c82f8b2-7802-493e-add4-d91948cc56cb.jpg?alt=media&token=9a2f5a83-305d-4b0e-9474-577daae238d7" alt="People collaborating in a tech startup, embodying 90s film aesthetics, illustrating learning paradigms in AI." className="w-full rounded-lg my-8" />
+          <h2>What capabilities would qualify as AGI?</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-cc18daf3-4852-4ca4-9190-74f7a03c26f4.jpg?alt=media&token=69c2054f-2e4a-4181-baa2-8f8327ab6777" alt="People in a 90s tech startup setting, brainstorming ideas for artificial general intelligence (AGI) capabilities." className="w-full rounded-lg my-8" />
 
           <p>
-            Supervised learning maps inputs to known labels (e.g., classify phishing emails). Unsupervised learning finds patterns without labels (e.g., cluster customers by behaviour). Reinforcement learning trains an agent to act via rewards (e.g., recommendation ranking through simulated feedback). Variants such as self‑supervised and transfer learning help when labels are scarce or you want to reuse a pre‑trained model for a new task.
+            There is no universally agreed checklist, but common proposals emphasise:
+          </p>
+          <ul>
+            <li><strong>Generalisation and transfer:</strong> learning and applying concepts across domains, not just pattern‑matching within benchmarks.</li>
+            <li><strong>Sample‑efficient learning:</strong> improving quickly from few examples, including from interaction.</li>
+            <li><strong>Robust reasoning and planning:</strong> handling long‑horizon, multi‑step goals under uncertainty.</li>
+            <li><strong>Grounding and causality:</strong> modelling cause‑and‑effect, not only correlations.</li>
+            <li><strong>Tool use and embodiment:</strong> using tools or actuators to achieve goals safely.</li>
+            <li><strong>Alignment and oversight:</strong> predictable, controllable behaviour aligned with human intent and law.</li>
+          </ul>
+
+          <h3>Generalisation and transfer across domains</h3>
+          <p>
+            True generality shows up when systems succeed on new tasks <em>without</em> extensive task‑specific fine‑tuning, maintain performance under distribution shift, and can explain <em>why</em> a solution works. Today’s strongest models push in this direction, but often rely on tool‑calling, retrieval, or human‑written scaffolds to reach high reliability.
           </p>
 
           <ArticleStepList
-            title="Practical steps"
+            title="Practical steps for evaluating AGI claims"
             steps={[
-              { label: 'Frame a narrow, testable question with a clear metric (e.g., recall ≥ 90%).' },
-              { label: 'Create a clean train/validation/test split; keep the test set untouched.' },
-              { label: 'Train a simple baseline; record results and errors.' },
-              { label: 'Iterate features and models; compare fairly with the same split.' },
-              { label: 'Document risks (bias, privacy) alongside performance.' },
+              { label: 'Check the definition: does the claim mean broad generalisation, autonomy, and alignment—or just a benchmark win?' },
+              { label: 'Look for independent, multi‑domain evaluations (reasoning, transfer, long‑horizon tasks, safety) with reproducible protocols.' },
+              { label: 'Assess real‑world constraints: data access, guardrails, oversight, and failure modes under stress tests.' },
             ]}
             accent="indigo"
           />
 
           <QuoteBlock title="Expert insight" variant="purple">
-            “Strong fundamentals—clean data, clear metrics, and honest evaluation—compound faster than chasing the newest model.”
+            “AGI isn’t a single score—it’s a moving frontier across capability, reliability, and alignment. Treat bold claims as hypotheses that need careful evaluation.”
           </QuoteBlock>
 
-          {/* SECTION 4 */}
-          <h2>Everyday examples you already use</h2>
+          <h2>How would we know we’ve reached AGI? Proposed evaluations</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-60ebb893-d745-4b9f-bddc-844dbf045ea6.jpg?alt=media&token=c045e78b-8679-4691-939b-0cda6faf78dd" alt="Tech professionals brainstorm in a retro 90s film aesthetic, contemplating evaluations for achieving AGI." className="w-full rounded-lg my-8" />
+
           <p>
-            Common ML‑powered experiences include email spam and phishing detection, speech‑to‑text on phones, maps and traffic estimates, personalised recommendations, fraud alerts from banks, and assistive tools in word processors. In the public sector, ML increasingly supports triage and queueing, with privacy and fairness safeguards expected under Australian guidance.
+            Classic ideas like the Turing Test are too coarse for modern systems. Contemporary proposals combine multiple lenses: knowledge and reasoning (e.g., broad academic tests), abstract problem‑solving (e.g., ARC‑style), coding and maths, grounded or simulated tasks that require planning, and safe autonomy under uncertainty. Crucially, safety‑relevant evaluations—like honesty under pressure, resistance to jailbreaks, and robustness to adversarial prompts—must sit alongside capability metrics. No single benchmark suffices; the standard will evolve as systems improve.
           </p>
 
-          {/* SECTION 5 */}
-          <h2>Key risks and limits: bias, overfitting, and privacy</h2>
+          <h2>Where are we now in 2026? Frontier systems, strengths and gaps</h2>
           <p>
-            Models reflect their data. Bias can emerge when training data under‑represents groups; overfitting occurs when a model memorises patterns that don’t generalise; data drift slowly degrades performance as the world changes. In Australia, practitioners should assess privacy impacts and align with the Privacy Act 1988 and OAIC guidance (as at 2026). When in doubt, limit data collection, minimise retention, and explain model behaviour to stakeholders.
-          </p>
-          <p>
-            Useful starting points: {" "}
-            <a className="underline text-[--brand-ink]" href="https://www.oaic.gov.au/" target="_blank" rel="noreferrer">OAIC</a>{' '}privacy resources and high‑level AI guidance on {" "}
-            <a className="underline text-[--brand-ink]" href="https://www.industry.gov.au/" target="_blank" rel="noreferrer">industry.gov.au</a>.
+            Today’s large models demonstrate impressive versatility: drafting, coding, analysis, translation, and tool use. Yet they still show hallucinations, inconsistent reasoning, and brittleness when tasks deviate from training distributions. Autonomy remains narrow and heavily scaffolded by humans or orchestrators. In short: we see <em>general‑looking</em> behaviour in many contexts, but not the reliable, aligned competence across open‑ended tasks that most researchers would call AGI.
           </p>
 
-          <ArticleCallout title="Check consent before you train" variant="warning">
-            Always confirm you have a lawful basis to use data, especially for personal or sensitive information. When sharing a project publicly, avoid uploading raw personal data.
-          </ArticleCallout>
-
-          {/* SECTION 6 */}
-          <h2>ML vs deep learning vs generative AI (quick comparison)</h2>
+          <h2>Timelines and debate: uncertainty is the headline</h2>
           <p>
-            Think of ML as the umbrella. Deep learning is an ML approach using neural networks with many layers, well‑suited to images, audio, and text. Generative AI refers to models that create new content (text, images, code). Many practical problems—especially with tabular data—are still best solved with classic ML (trees, linear models) because they are efficient, robust, and easier to explain.
+            Surveys of researchers have reported wide ranges for when AGI‑like capability might emerge—spanning the next decade to several decades or more. Methodologies and definitions differ, and selection effects can distort results. A pragmatic approach is to plan for multiple scenarios: accelerate capability‑neutral skills, strengthen safety and governance capacity, and invest in evaluation infrastructure that benefits Australia regardless of timing.
           </p>
 
-          {/* SECTION 7 */}
-          <h2>Getting started in Australia: a simple, ethical pathway</h2>
+          <h2>Careers and skills in Australia if AGI emerges</h2>
           <p>
-            Start with Python, pandas, and scikit‑learn; pick a small, meaningful dataset (e.g., an open dataset from{' '}
-            <a className="underline text-[--brand-ink]" href="https://data.gov.au/" target="_blank" rel="noreferrer">data.gov.au</a>) and frame a binary classification or regression task. Define a metric that matches the impact (for safety or fraud, recall and precision matter more than raw accuracy). Keep notes on what you tried, what worked, and why.
+            For students, practitioners, and decision‑makers, the most durable moves are capability‑neutral: focus on fundamentals, verifiable practice, and community. Roles likely to grow include model evaluation, AI safety and governance, data engineering, MLOps, human‑AI interaction, and domain‑specific AI product work. Cross‑functional literacy—policy, privacy, security, and ethics—will matter.
           </p>
+          <ul>
+            <li><strong>Strengthen fundamentals:</strong> statistics, optimisation, software engineering, data practices.</li>
+            <li><strong>Build evaluation skills:</strong> design and run robust tests; interpret uncertainty; communicate limits.</li>
+            <li><strong>Focus on governance:</strong> privacy by design, risk assessment, documentation, and incident response.</li>
+            <li><strong>Engage locally:</strong> Australian context, standards, and networks matter. See our{' '}<Link to="/articles/ai-careers-australia">AI careers in Australia guide</Link>.</li>
+          </ul>
+
+          <h2>Responsible development and governance in Australia</h2>
           <p>
-            When you’re ready, share your notebook and short write‑up. If you want feedback or peers, the MLAI community is a not‑for‑profit home for Australian practitioners and the AI‑curious.
+            Australian organisations should track official guidance on safe and responsible AI, privacy, and online harms. As at 2024–25, the Office of the Australian Information Commissioner (OAIC) leads privacy oversight, the eSafety Commissioner addresses online harms, and the Federal Government has proposed targeted guardrails for higher‑risk AI. For teams experimenting with frontier models, embed risk assessments, human oversight, red‑teaming, and documentation from the start.
           </p>
 
-          {/* SECTION 8 (Closing) */}
-          <h2>Choose a small problem and ship a baseline this week</h2>
+          <h2>Make it practical: your action plan</h2>
           <p>
-            Pick one dataset, set a success metric, and train a baseline today. Evaluate honestly, write down risks, and iterate once. That single loop teaches more than weeks of passive learning—and positions you to contribute to real projects.
+            You don’t need a settled AGI definition to make progress. Prioritise durable skills, responsible practices, and community support that hold across scenarios.
           </p>
 
           <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
@@ -271,15 +250,15 @@ export default function ArticlePage() {
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">1</span>
-                <span>Download the checklist mentioned above.</span>
+                <span>Download the checklist mentioned above and map your current evaluation and governance gaps.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">2</span>
-                <span>Draft your initial goals based on the template.</span>
+                <span>Build a small, documented pilot with clear success criteria and safety tests.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">3</span>
-                <span>Discuss with your team or mentor.</span>
+                <span>Connect with a local community or mentor to review results and iterate.</span>
               </li>
             </ul>
           </div>
@@ -290,19 +269,69 @@ export default function ArticlePage() {
             {/* Contextual CTA - Best placement for conversion */}
             <ArticleCompanyCTA
               title={`Need help with ${TOPIC}?`}
-              body="Join the MLAI community to collaborate with fellow AI practitioners in Australia."
+              body="Join the MLAI community to collaborate with fellow AI practitioners in Australia and get practical, peer‑tested guidance."
               buttonText="Get recommendations"
               buttonHref="/contact"
-              note="We’re a not‑for‑profit community based in North Melbourne."
+              note="We’re a not‑for‑profit community based in Australia."
             />
           </div>
         </div>
 
         <AuthorBio author={authorDetails} />
 
+        <ArticleReferences
+          heading="Sources"
+          description="Curated references for further reading (as at 2024–25)."
+          headingId="references"
+          references={[
+            {
+              id: 1,
+              href: 'https://en.wikipedia.org/wiki/Artificial_general_intelligence',
+              title: 'Artificial general intelligence',
+              publisher: 'Wikipedia',
+              category: 'guide',
+              description: 'Neutral overview with history, definitions, and debates.'
+            },
+            {
+              id: 2,
+              href: 'https://www.ibm.com/think/topics/artificial-general-intelligence',
+              title: 'What is Artificial General Intelligence (AGI)?',
+              publisher: 'IBM',
+              category: 'guide',
+              description: 'Industry explainer covering definitions and differences from narrow AI.'
+            },
+            {
+              id: 3,
+              href: 'https://cloud.google.com/discover/what-is-artificial-general-intelligence',
+              title: 'What is Artificial General Intelligence?',
+              publisher: 'Google Cloud',
+              category: 'guide',
+              description: 'High‑level overview of concepts, challenges, and outlook.'
+            },
+            {
+              id: 4,
+              href: 'https://industry.gov.au/guidance-for-ai-adoption',
+              title: 'Guidance for AI Adoption',
+              publisher: 'Australian Government',
+              category: 'government',
+              description: 'Official Australian guidance on responsible AI adoption.'
+            },
+            {
+              id: 5,
+              href: 'https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations/artificial-intelligence',
+              title: 'Artificial intelligence and privacy',
+              publisher: 'OAIC',
+              category: 'government',
+              description: 'Privacy considerations for organisations using AI in Australia.'
+            }
+          ]}
+        />
+
         <div className="mt-12">
           <ArticleFAQ items={faqItems} />
         </div>
+
+        <ArticleDisclaimer />
 
         <ArticleFooterNav backHref="/articles" topHref="#" />
       </div>
