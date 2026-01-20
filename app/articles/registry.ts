@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-percent-of-startups-fail': {
+        title: 'What percent of startups fail? (Australia, 2026)',
+        date: '2026-01-20',
+        description: 'Latest evidence on startup failure rates in 2026, what “failure” means, timelines (1–5 years), and the Australian context—plus ways to reduce risk.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-percent-of-startups-fail',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What percent of startups fail? (Australia, 2026)',
+        hasContent: true,
+    },
     'featured/what-is-deep-learning': {
         title: 'What Is Deep Learning? A 2026 Guide for Australia',
         date: '2026-01-20',
