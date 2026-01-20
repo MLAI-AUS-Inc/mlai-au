@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-get-venture-capital': {
+        title: 'How to Get Venture Capital in Australia (2026 Guide)',
+        date: '2026-01-20',
+        description: 'A practical 2026 guide for Australian founders: what VCs look for, how to pitch, typical round sizes, timelines, due diligence, and alternatives to venture capital.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-get-venture-capital',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to Get Venture Capital in Australia (2026 Guide)',
+        hasContent: true,
+    },
     'featured/what-is-artificial-general-intelligence': {
         title: 'What is Artificial General Intelligence',
         date: '2026-01-20',

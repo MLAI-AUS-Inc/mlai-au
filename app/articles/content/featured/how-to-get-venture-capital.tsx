@@ -155,7 +155,7 @@ export default function ArticlePage() {
             {
               title: 'Founders & Teams',
               description: 'For leaders validating ideas, seeking funding, or managing teams.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />,
+              icon: <RocketLaunchIcon className="h-6 w-6" />, 
               variant: 'orange'
             },
             {
