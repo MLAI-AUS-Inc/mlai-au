@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Link } from 'react-router'
+import Link from 'next/link'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
@@ -24,7 +24,6 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 export const useCustomHeader = true
 
 const TOPIC = 'How to get venture capital in Australia'
-const CATEGORY = 'featured' // e.g. 'ai'
 const SLUG = 'how-to-get-venture-capital'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
@@ -33,12 +32,8 @@ const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
 const AUTHOR_AVATAR =
   AUTHOR_PROFILE.avatarUrl ??
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-const DATE_PUBLISHED = '2026-01-20'
-const DATE_MODIFIED = '2026-01-20'
-const DESCRIPTION = 'A practical 2026 guide for Australian founders raising venture capital: investor fit, metrics, process, term sheets, due diligence, and alternatives.'
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-580e89c1-855d-4835-baa3-8eab4f785974.jpg?alt=media&token=8a2a0190-3a1b-43b6-a90e-88d8b730a7ef"
 const HERO_IMAGE_ALT = 'Founder pitching to a room of venture capital investors'
-const FEATURED_FOCUS = 'funding' // 'startups' | 'ai' | 'product' | 'funding'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -123,11 +118,11 @@ export default function ArticlePage() {
   return (
     <div className="bg-white">
       <ArticleHeroHeader
-        breadcrumbs={[
+        breadcrumbs=[
           { label: 'Home', href: '/', icon: Home },
           { label: 'Articles', href: '/articles' },
           { label: TOPIC, current: true }
-        ]}
+        ]
         title={TOPIC}
         titleHighlight="(2026)"
         headerBgColor="cyan"
