@@ -23,9 +23,9 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'What is Artificial General Intelligence'
-const CATEGORY = 'ai-careers-australia'
-const SLUG = 'what-is-artificial-general-intelligence'
+const TOPIC = 'How to get venture capital in Australia'
+const CATEGORY = 'featured' // e.g. 'ai'
+const SLUG = 'how-to-get-venture-capital'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? 'Founder'
@@ -35,10 +35,10 @@ const AUTHOR_AVATAR =
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
 const DATE_PUBLISHED = '2026-01-20'
 const DATE_MODIFIED = '2026-01-20'
-const DESCRIPTION = 'A clear, evidence-based explainer of artificial general intelligence (AGI), how it differs from today’s AI, proposed evaluations, timelines, risks, and what it could mean for AI careers in Australia.'
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-3107979b-03f2-423c-b960-ae4b26850b72.jpg?alt=media&token=2817e525-d314-4127-852d-f609133af31c"
-const HERO_IMAGE_ALT = 'Abstract neural network lines representing general intelligence across domains'
-const FEATURED_FOCUS = 'ai'
+const DESCRIPTION = 'A practical 2026 guide for Australian founders raising venture capital: investor fit, metrics, process, term sheets, due diligence, and alternatives.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-580e89c1-855d-4835-baa3-8eab4f785974.jpg?alt=media&token=8a2a0190-3a1b-43b6-a90e-88d8b730a7ef"
+const HERO_IMAGE_ALT = 'Founder pitching to a room of venture capital investors'
+const FEATURED_FOCUS = 'funding' // 'startups' | 'ai' | 'product' | 'funding'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -48,12 +48,48 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: 'Is AGI real today?', answer: 'No. As at 2026, there is no peer‑reviewed consensus that any system has achieved artificial general intelligence. Frontier models demonstrate strong capabilities across many benchmarks, but remain brittle, inconsistent off‑distribution, and dependent on human scaffolding or tools.' },
-  { id: 2, question: 'Is GPT‑4 an AGI?', answer: 'No. GPT‑4‑class systems are impressive at language, coding, and reasoning tasks under constraints, but they do not reliably exhibit robust open‑world autonomy, long‑horizon planning, grounded causal understanding, or self‑directed goal pursuit with verifiable alignment.' },
-  { id: 3, question: 'How would we measure AGI?', answer: <>There is no single test. Researchers propose multi‑domain evaluations that combine reasoning (e.g., MMLU/Math), abstract problem‑solving (e.g., ARC), long‑horizon tasks, embodied control or simulated environments, tool use, and safe operation under uncertainty. Independent replication and adversarial testing are essential.</> },
-  { id: 4, question: 'When might AGI arrive?', answer: 'Forecasts vary widely, from “in the next decade” to “many decades or never.” Treat timelines as uncertain and scenario‑based; focus on practical skills, governance literacy, and responsible deployment that are valuable regardless of timeline.' },
-  { id: 5, question: 'What would AGI mean for jobs in Australia?', answer: 'Likely more task automation and augmentation, plus growth in roles across AI safety, governance, data, model evaluation, human‑computer interaction, and AI product integration. Impacts will depend on industry, regulation, and organisational adoption choices.' },
-  { id: 6, question: 'Who regulates AI in Australia?', answer: <>As at 2024–25, privacy is overseen by the OAIC, online harms by the eSafety Commissioner, and the Australian Government has proposed guardrails for higher‑risk AI under its Safe and Responsible AI agenda. Always check the latest official guidance.</> },
+  {
+    id: 1,
+    question: 'How much equity do VCs typically take at seed in Australia?',
+    answer:
+      'As at 2026, dilution of 10–25% for a priced seed round is common, depending on round size, valuation, and the size of your option pool. SAFEs or convertible notes defer pricing but still dilute when they convert.'
+  },
+  {
+    id: 2,
+    question: 'Do I need revenue to raise venture capital?',
+    answer:
+      'Not always at pre-seed. For seed and beyond, investors typically want evidence of demand (e.g., early revenue, pilots, meaningful active users, strong waitlists, or design partner traction). The later the round, the more metrics matter.'
+  },
+  {
+    id: 3,
+    question: 'Can I cold email Australian VCs?',
+    answer:
+      <>Yes. Keep it short: what you do, the problem, early traction, why now, and a clear ask. Include a one‑page overview or deck link. A warm intro via advisors, founders, or community (e.g., MLAI) often improves response rates.</>
+  },
+  {
+    id: 4,
+    question: 'What legal structure should I have before raising?',
+    answer:
+      'Most Australian VCs expect a Pty Ltd company with a clean cap table, a shareholders agreement, and an employee option plan (ESOP) either in place or planned. Get independent legal advice to suit your situation.'
+  },
+  {
+    id: 5,
+    question: 'SAFE vs convertible note vs priced round—what’s the difference?',
+    answer:
+      'A SAFE is a simple agreement for future equity that converts later, typically with a valuation cap/discount. A convertible note adds interest/maturity. A priced round sets valuation now and issues shares. Speak to a lawyer—terms have real dilution and control implications.'
+  },
+  {
+    id: 6,
+    question: 'How long does a raise take?',
+    answer:
+      'From first meetings to money in the bank, 6–16 weeks is common if you have materials ready and momentum. Include extra time for due diligence and legal docs. Start with at least 6 months runway remaining.'
+  },
+  {
+    id: 7,
+    question: 'Are there alternatives to VC in Australia?',
+    answer:
+      'Yes—R&D Tax Incentive, grants via business.gov.au, angel investors, crowdfunding (ASIC CSF), revenue‑based financing, and bootstrapping. VC fits high‑growth businesses seeking to scale quickly.'
+  }
 ]
 
 export const summaryHighlights = {
@@ -62,18 +98,18 @@ export const summaryHighlights = {
     'Brief, factual overview referencing current Australian context (e.g. 2026 ecosystem norms, official guidance, privacy expectations, or common pathways).',
   items: [
     {
-      label: 'Is AGI real today?',
-      description: 'No—there’s no consensus that any system has reached AGI as at 2026; current models are powerful but narrow and unreliable off‑distribution.',
+      label: 'What do VCs look for at seed in Australia?',
+      description: 'Team–market fit, early traction (revenue/users/pilots), clear GTM, capital efficiency, and a credible path to scale.'
     },
     {
-      label: 'How is AGI different from today’s AI?',
-      description: 'AGI would generalise across tasks, learn efficiently, plan over long horizons and operate autonomously; today’s systems excel mainly in narrow domains.',
+      label: 'How long does a seed raise take?',
+      description: 'Typically 6–16 weeks from first meetings to close if materials are ready; start with 6+ months runway.'
     },
     {
-      label: 'How would we know we’ve built AGI?',
-      description: 'No single test; researchers propose multi‑domain evals combining reasoning, transfer, real‑world autonomy and safety alignment with independent replication.',
-    },
-  ],
+      label: 'How much equity is typical to give up?',
+      description: 'Commonly 10–25% per priced round; SAFEs/notes convert later. Dilution varies by valuation, round size, and option pool.'
+    }
+  ]
 }
 
 export default function ArticlePage() {
@@ -81,7 +117,7 @@ export default function ArticlePage() {
     name: AUTHOR,
     role: AUTHOR_ROLE,
     bio: AUTHOR_BIO,
-    avatarUrl: AUTHOR_AVATAR,
+    avatarUrl: AUTHOR_AVATAR
   }
 
   return (
@@ -90,7 +126,7 @@ export default function ArticlePage() {
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
           { label: 'Articles', href: '/articles' },
-          { label: TOPIC, current: true },
+          { label: TOPIC, current: true }
         ]}
         title={TOPIC}
         titleHighlight="(2026)"
@@ -106,13 +142,9 @@ export default function ArticlePage() {
         {/* Intro alert - Clean, neutral style */}
         <ArticleCallout variant="info">
           <p className="text-sm text-gray-800">
-            This guide is part of our broader series on {TOPIC}. For a career‑oriented overview, see our{' '}
-            <Link to="/articles/ai-careers-australia" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
-              AI careers in Australia guide
-            </Link>
-            . Prefer to browse?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
-              Explore more articles →
+            This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
+            <Link href="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+              Browse related articles →
             </Link>
           </p>
         </ArticleCallout>
@@ -123,35 +155,38 @@ export default function ArticlePage() {
             {
               title: 'Founders & Teams',
               description: 'For leaders validating ideas, seeking funding, or managing teams.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />, 
-              variant: 'orange',
+              icon: <RocketLaunchIcon className="h-6 w-6" />,
+              variant: 'orange'
             },
             {
               title: 'Students & Switchers',
               description: 'For those building portfolios, learning new skills, or changing careers.',
-              icon: <AcademicCapIcon className="h-6 w-6" />, 
-              variant: 'purple',
+              icon: <AcademicCapIcon className="h-6 w-6" />,
+              variant: 'purple'
             },
             {
               title: 'Community Builders',
               description: 'For workshop facilitators, mentors, and ecosystem supporters.',
-              icon: <UsersIcon className="h-6 w-6" />, 
-              variant: 'yellow',
-            },
+              icon: <UsersIcon className="h-6 w-6" />,
+              variant: 'yellow'
+            }
           ]}
           className="my-10"
         />
 
         <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
-            <strong>{TOPIC}</strong> describes a hypothetical class of AI systems that can learn, reason and adapt across a wide range of tasks—more like a capable generalist than a single‑skill specialist. Top explainers from encyclopaedic and industry sources converge on three ideas: breadth (many domains), transfer (learning that carries over), and autonomy (goal‑directed behaviour with reliable control and safety).
+            <strong>{TOPIC}</strong> — If you’re building a high‑growth startup in Australia, venture capital (VC) can accelerate product, hiring, and go‑to‑market. As at 2026, investors emphasise clear traction, capital efficiency, and clean governance. This guide distils what leading resources cover (e.g., investor fit, materials, process) and adds AU‑specific notes on timelines, diligence, and alternatives.
           </p>
 
           <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} width={1200} height={630} />
 
-          <h2>AGI versus today’s AI: scope, autonomy and transfer</h2>
+          <h2>Is venture capital right for your startup?</h2>
           <p>
-            Most deployed systems are “narrow AI” built to excel at specific tasks (e.g., recognising images, drafting text, or recommending content). By contrast, AGI would generalise: it would learn new tasks with limited data, transfer prior knowledge, plan over long horizons, and operate with a degree of autonomy—while remaining aligned with human goals and safety constraints. Modern foundation models blur lines by performing well on diverse benchmarks, but they still rely on scaffolding, frequent human oversight, and careful prompting; performance degrades in unfamiliar or open‑ended settings.
+            VC suits companies aiming for outsized outcomes within 7–10 years. In practice, that means a large addressable market, strong founder–market fit, and evidence your product can scale. If your growth is steady but not explosive, grants, revenue‑based finance, or angels may be better than institutional VC. Before engaging investors, be clear on why you need capital now, how it extends runway, and the milestones it funds (e.g., shipping v1, 10 enterprise pilots, or $1m ARR).
+          </p>
+          <p>
+            Signals of VC readiness include: weekly active users trending upward; paid pilots or LOIs; a repeatable way to acquire and retain customers; and a defensible edge (in AI, this can be proprietary data, model performance on meaningful evaluations, or distribution advantages).
           </p>
 
           <ArticleResourceCTA
@@ -162,87 +197,114 @@ export default function ArticlePage() {
             accent="purple"
           />
 
-          <ArticleCallout
-            title="Tip: separate capability claims from system behaviour"
-            variant="brand"
-            icon={<span className="text-xl">💡</span>}
-            className="not-prose"
-          >
+          <ArticleCallout title="Quick fit check" variant="brand" icon={<span className="text-xl">💡</span>} className="not-prose">
             <p className="mt-1 text-gray-800">
-              Ask what the model can do <em>reliably</em> without hidden human help, how it behaves under adversarial tests, and whether independent evaluations reproduce the result.
+              If you can’t describe how $1–3m would turn into a clear, testable milestone within 12–18 months, you may be too early for institutional VC. Consider angels or grants while you de‑risk.
             </p>
           </ArticleCallout>
 
-          <h2>What capabilities would qualify as AGI?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-cc18daf3-4852-4ca4-9190-74f7a03c26f4.jpg?alt=media&token=69c2054f-2e4a-4181-baa2-8f8327ab6777" alt="People in a 90s tech startup setting, brainstorming ideas for artificial general intelligence (AGI) capabilities." className="w-full rounded-lg my-8" />
+          <h2>What Australian investors look for in 2026</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2d12f2f1-b63b-49e1-9e3e-9408162c59a6.jpg?alt=media&token=70ff7c10-fc47-4d1f-8121-00915505b875" alt="Investors discuss startups in a vibrant 90s film aesthetic tech setting, showcasing innovation and collaboration." className="w-full rounded-lg my-8" />
 
           <p>
-            There is no universally agreed checklist, but common proposals emphasise:
+            Across Stripe’s guidance and AU investor pages, common themes emerge: strong team, evidence of demand, capital efficiency, and a credible plan to a large outcome. Translate that into metrics: retention cohorts, growth rate, unit economics (LTV/CAC), sales velocity, and a bottom‑up go‑to‑market model. For AI startups, expect extra scrutiny on data rights, model licensing, evals tied to real‑world tasks, and safety/observability in production.
           </p>
           <ul>
-            <li><strong>Generalisation and transfer:</strong> learning and applying concepts across domains, not just pattern‑matching within benchmarks.</li>
-            <li><strong>Sample‑efficient learning:</strong> improving quickly from few examples, including from interaction.</li>
-            <li><strong>Robust reasoning and planning:</strong> handling long‑horizon, multi‑step goals under uncertainty.</li>
-            <li><strong>Grounding and causality:</strong> modelling cause‑and‑effect, not only correlations.</li>
-            <li><strong>Tool use and embodiment:</strong> using tools or actuators to achieve goals safely.</li>
-            <li><strong>Alignment and oversight:</strong> predictable, controllable behaviour aligned with human intent and law.</li>
+            <li>Team: founder‑market fit, execution pace, clear roles, and reliable references.</li>
+            <li>Traction: paying users or pilots, expanding usage, and credible pipeline.</li>
+            <li>Economics: gross margins, early CAC signals, and a plan for efficient scale.</li>
+            <li>Governance: clean cap table, ESOP, basic policies (privacy, security), and simple terms.</li>
+            <li>AI specifics: data provenance, model/IP licences, benchmarked performance, and safety processes.</li>
           </ul>
 
-          <h3>Generalisation and transfer across domains</h3>
+          <QuoteBlock title="Expert insight" variant="purple">
+            “Investors back momentum and clarity. A concise plan that shows how new capital converts into specific, measurable milestones will outperform a long story every time.”
+          </QuoteBlock>
+
+          <h2>Prepare your materials: deck, model, and data room</h2>
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67ecd405-ff66-49c1-bcf6-344fe3e00b31.jpg?alt=media&token=acc4eb2a-97f1-41f1-9e05-41e7bd8b47b7" alt="Team collaborating in a retro 90s tech space, preparing materials for a startup project." className="w-full rounded-lg my-8" />
+
           <p>
-            True generality shows up when systems succeed on new tasks <em>without</em> extensive task‑specific fine‑tuning, maintain performance under distribution shift, and can explain <em>why</em> a solution works. Today’s strongest models push in this direction, but often rely on tool‑calling, retrieval, or human‑written scaffolds to reach high reliability.
+            Most AU funds expect a 10–14 slide deck: problem, solution, product demo, traction, market, business model, go‑to‑market, competition/edge, roadmap/milestones, team, and the raise (amount, use of funds, round mechanics). Keep it visual and specific—screenshots, charts, credible numbers.
           </p>
+          <h3>Data room essentials</h3>
+          <ul>
+            <li>Corporate: constitution, shareholders agreement, cap table, ESOP details.</li>
+            <li>Financial: historicals, 18–24 month forecast, assumptions, cash plan.</li>
+            <li>Commercial: pipeline, key contracts, LOIs, churn/retention metrics.</li>
+            <li>Product/Tech: architecture, security practices, uptime/observability.</li>
+            <li>AI: data sources and rights, model licences, evaluation methodology, safety controls.</li>
+            <li>Legal/Compliance: privacy policy, terms of use, IP ownership, any regulatory approvals.</li>
+          </ul>
 
           <ArticleStepList
-            title="Practical steps for evaluating AGI claims"
+            title="Practical steps"
             steps={[
-              { label: 'Check the definition: does the claim mean broad generalisation, autonomy, and alignment—or just a benchmark win?' },
-              { label: 'Look for independent, multi‑domain evaluations (reasoning, transfer, long‑horizon tasks, safety) with reproducible protocols.' },
-              { label: 'Assess real‑world constraints: data access, guardrails, oversight, and failure modes under stress tests.' },
+              { label: 'Draft a tight 12‑slide deck with a real product demo' },
+              { label: 'Build a bottoms‑up model and milestone plan' },
+              { label: 'Assemble a data room with legal, financial, and product docs' },
+              { label: 'Line up 2–3 customer references ready to speak' },
+              { label: 'Dry‑run Q&A with trusted founders or mentors' }
             ]}
             accent="indigo"
           />
 
-          <QuoteBlock title="Expert insight" variant="purple">
-            “AGI isn’t a single score—it’s a moving frontier across capability, reliability, and alignment. Treat bold claims as hypotheses that need careful evaluation.”
-          </QuoteBlock>
-
-          <h2>How would we know we’ve reached AGI? Proposed evaluations</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-60ebb893-d745-4b9f-bddc-844dbf045ea6.jpg?alt=media&token=c045e78b-8679-4691-939b-0cda6faf78dd" alt="Tech professionals brainstorm in a retro 90s film aesthetic, contemplating evaluations for achieving AGI." className="w-full rounded-lg my-8" />
-
+          <h2>Find and research investors (AU and abroad)</h2>
           <p>
-            Classic ideas like the Turing Test are too coarse for modern systems. Contemporary proposals combine multiple lenses: knowledge and reasoning (e.g., broad academic tests), abstract problem‑solving (e.g., ARC‑style), coding and maths, grounded or simulated tasks that require planning, and safe autonomy under uncertainty. Crucially, safety‑relevant evaluations—like honesty under pressure, resistance to jailbreaks, and robustness to adversarial prompts—must sit alongside capability metrics. No single benchmark suffices; the standard will evolve as systems improve.
-          </p>
-
-          <h2>Where are we now in 2026? Frontier systems, strengths and gaps</h2>
-          <p>
-            Today’s large models demonstrate impressive versatility: drafting, coding, analysis, translation, and tool use. Yet they still show hallucinations, inconsistent reasoning, and brittleness when tasks deviate from training distributions. Autonomy remains narrow and heavily scaffolded by humans or orchestrators. In short: we see <em>general‑looking</em> behaviour in many contexts, but not the reliable, aligned competence across open‑ended tasks that most researchers would call AGI.
-          </p>
-
-          <h2>Timelines and debate: uncertainty is the headline</h2>
-          <p>
-            Surveys of researchers have reported wide ranges for when AGI‑like capability might emerge—spanning the next decade to several decades or more. Methodologies and definitions differ, and selection effects can distort results. A pragmatic approach is to plan for multiple scenarios: accelerate capability‑neutral skills, strengthen safety and governance capacity, and invest in evaluation infrastructure that benefits Australia regardless of timing.
-          </p>
-
-          <h2>Careers and skills in Australia if AGI emerges</h2>
-          <p>
-            For students, practitioners, and decision‑makers, the most durable moves are capability‑neutral: focus on fundamentals, verifiable practice, and community. Roles likely to grow include model evaluation, AI safety and governance, data engineering, MLOps, human‑AI interaction, and domain‑specific AI product work. Cross‑functional literacy—policy, privacy, security, and ethics—will matter.
+            Start with funds that match your stage, cheque size, and sector. Map portfolios to identify who understands your space. Build a list from Australian Investment Council member directories, fund websites, and community intel. Use warm intros where possible (founders in portfolio companies, ecosystem mentors, or MLAI). Cold emails can work when they are focused and respectful.
           </p>
           <ul>
-            <li><strong>Strengthen fundamentals:</strong> statistics, optimisation, software engineering, data practices.</li>
-            <li><strong>Build evaluation skills:</strong> design and run robust tests; interpret uncertainty; communicate limits.</li>
-            <li><strong>Focus on governance:</strong> privacy by design, risk assessment, documentation, and incident response.</li>
-            <li><strong>Engage locally:</strong> Australian context, standards, and networks matter. See our{' '}<Link to="/articles/ai-careers-australia">AI careers in Australia guide</Link>.</li>
+            <li>Targeting: stage fit (pre‑seed, seed, Series A), typical round sizes, geography, and lead vs follow‑on behaviour.</li>
+            <li>Signals: recent fund size (dry powder), partner interests, and relevant portfolio outcomes.</li>
+            <li>Channels: events, demo days, community meetups, and direct outreach.</li>
           </ul>
 
-          <h2>Responsible development and governance in Australia</h2>
+          <ArticleCallout title="Outreach tip" variant="brand" icon={<span className="text-xl">📬</span>} className="not-prose">
+            <p className="mt-1 text-gray-800">
+              A concise note + one‑pager beats a heavy deck on first contact. Lead with the problem, traction, and “why now.” Include the specific ask (e.g., “seeking a $2m seed with 18‑month runway to hit $1m ARR”).
+            </p>
+          </ArticleCallout>
+
+          <h2>Run a tight fundraising process</h2>
           <p>
-            Australian organisations should track official guidance on safe and responsible AI, privacy, and online harms. As at 2024–25, the Office of the Australian Information Commissioner (OAIC) leads privacy oversight, the eSafety Commissioner addresses online harms, and the Federal Government has proposed targeted guardrails for higher‑risk AI. For teams experimenting with frontier models, embed risk assessments, human oversight, red‑teaming, and documentation from the start.
+            Treat fundraising like a product launch: create a target list, time‑box outreach (e.g., 2–3 weeks for first meetings), and keep momentum with clear updates. Track conversations in a simple CRM. Share progress (new pilot signed, metric moved) to build urgency. Aim to identify a lead investor who anchors terms and helps fill the round.
+          </p>
+          <h3>Typical Australian timelines and round sizes (indicative, 2026)</h3>
+          <ul>
+            <li>Pre‑seed: A$250k–A$1.5m; timeline 4–12 weeks once materials are ready.</li>
+            <li>Seed: A$1m–A$5m; plan 6–16 weeks including diligence and legals.</li>
+            <li>Series A: A$5m–A$20m+; deeper diligence, longer cycles. Ranges vary by sector and market conditions.</li>
+          </ul>
+          <p>
+            Instruments often include SAFEs/notes at early stages and priced rounds from seed/Series A. Keep terms simple; complexity slows processes and can deter follow‑on investors.
           </p>
 
-          <h2>Make it practical: your action plan</h2>
+          <h2>Term sheets, valuation, and dilution basics</h2>
           <p>
-            You don’t need a settled AGI definition to make progress. Prioritise durable skills, responsible practices, and community support that hold across scenarios.
+            Key terms to understand: valuation (pre/post‑money), option pool size, liquidation preference (often 1x non‑participating), pro‑rata rights, board structure, and information rights. Model dilution across multiple rounds so you know what the cap table looks like at Series A/B if you hit plan.
+          </p>
+          <ul>
+            <li>Model the option pool “pre vs post” impact—investors may ask to top up before closing.</li>
+            <li>Ensure vesting and IP assignment are in place for all team members.</li>
+            <li>Use plain‑English summaries for major clauses alongside the legal docs.</li>
+          </ul>
+
+          <h2>Due diligence: what to expect</h2>
+          <p>
+            Diligence typically covers corporate, financial, commercial, technical, and legal tracks. Be ready with clean documents, fast responses, and customer references who can speak to value. For AI companies, expect deeper review of data provenance, model evaluation, and safety/observability practices. Align your privacy and security posture with Australian expectations (note: privacy law reforms may update obligations—check the latest official guidance).
+          </p>
+          <h3>AI‑specific diligence checklist (AU)</h3>
+          <ul>
+            <li>Data rights and provenance for training/evaluation; third‑party licences documented.</li>
+            <li>Model evaluations tied to real user tasks; reproducible results and monitoring.</li>
+            <li>Risk management: abuse/harm controls, red‑teaming, and incident response.</li>
+            <li>Privacy and security: clear policies, role‑based access, and audit trails.</li>
+            <li>R&D Tax: ensure evidence for any claims aligns with program requirements.</li>
+          </ul>
+
+          <h2>Alternatives to venture capital in Australia</h2>
+          <p>
+            VC is not the only path. Many Australian teams combine non‑dilutive support with early angel funding to reach stronger traction before approaching VCs. Explore the federal R&D Tax Incentive, grants (via business.gov.au), crowd‑sourced funding (ASIC‑regulated), revenue‑based finance, and strategic partnerships.
           </p>
 
           <div className="mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100 not-prose">
@@ -250,88 +312,79 @@ export default function ArticlePage() {
             <ul className="space-y-3">
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">1</span>
-                <span>Download the checklist mentioned above and map your current evaluation and governance gaps.</span>
+                <span>Decide if VC is the right fit for your goals and runway.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">2</span>
-                <span>Build a small, documented pilot with clear success criteria and safety tests.</span>
+                <span>Create a 12‑slide deck, build a simple model, and assemble a data room.</span>
               </li>
               <li className="flex gap-3 text-gray-700">
                 <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[--soft] text-xs font-bold text-[--brand]">3</span>
-                <span>Connect with a local community or mentor to review results and iterate.</span>
+                <span>Build a targeted investor list and time‑box outreach to 2–3 weeks.</span>
               </li>
             </ul>
           </div>
 
           <MLAITemplateResourceCTA />
 
+          <ArticleReferences
+            heading="Sources"
+            description="Selected references for further reading (check for updates as at 2026)."
+            headingId="references"
+            references={[
+              {
+                id: 1,
+                href: 'https://stripe.com/au/resources/more/how-to-get-venture-capital-funding',
+                title: 'How to Get Venture Capital Funding',
+                publisher: 'Stripe',
+                category: 'guide',
+                description: 'Overview of preparing, pitching, and closing VC rounds.'
+              },
+              {
+                id: 2,
+                href: 'https://asic.gov.au/regulatory-resources/crowd-sourced-funding/',
+                title: 'Crowd‑sourced funding (CSF)',
+                publisher: 'ASIC',
+                category: 'government',
+                description: 'Regulatory information on CSF as an alternative to VC.'
+              },
+              {
+                id: 3,
+                href: 'https://www.business.gov.au/grants-and-programs/research-and-development-tax-incentive',
+                title: 'Research and Development (R&D) Tax Incentive',
+                publisher: 'Australian Government',
+                category: 'government',
+                description: 'Non‑dilutive support that many startups combine with early funding.'
+              },
+              {
+                id: 4,
+                href: 'https://www.ycombinator.com/documents',
+                title: 'SAFE Financing Documents',
+                publisher: 'Y Combinator',
+                category: 'guide',
+                description: 'Widely used early‑stage financing docs (seek local legal advice).'
+              }
+            ]}
+          />
+
           <div className="my-12 not-prose">
-            {/* Contextual CTA - Best placement for conversion */}
             <ArticleCompanyCTA
               title={`Need help with ${TOPIC}?`}
-              body="Join the MLAI community to collaborate with fellow AI practitioners in Australia and get practical, peer‑tested guidance."
+              body="Join the MLAI community to connect with peers and mentors in Australia."
               buttonText="Get recommendations"
               buttonHref="/contact"
-              note="We’re a not‑for‑profit community based in Australia."
+              note="Friendly, community‑first support—no hard sell."
             />
           </div>
+
+          <ArticleDisclaimer />
         </div>
 
         <AuthorBio author={authorDetails} />
 
-        <ArticleReferences
-          heading="Sources"
-          description="Curated references for further reading (as at 2024–25)."
-          headingId="references"
-          references={[
-            {
-              id: 1,
-              href: 'https://en.wikipedia.org/wiki/Artificial_general_intelligence',
-              title: 'Artificial general intelligence',
-              publisher: 'Wikipedia',
-              category: 'guide',
-              description: 'Neutral overview with history, definitions, and debates.'
-            },
-            {
-              id: 2,
-              href: 'https://www.ibm.com/think/topics/artificial-general-intelligence',
-              title: 'What is Artificial General Intelligence (AGI)?',
-              publisher: 'IBM',
-              category: 'guide',
-              description: 'Industry explainer covering definitions and differences from narrow AI.'
-            },
-            {
-              id: 3,
-              href: 'https://cloud.google.com/discover/what-is-artificial-general-intelligence',
-              title: 'What is Artificial General Intelligence?',
-              publisher: 'Google Cloud',
-              category: 'guide',
-              description: 'High‑level overview of concepts, challenges, and outlook.'
-            },
-            {
-              id: 4,
-              href: 'https://industry.gov.au/guidance-for-ai-adoption',
-              title: 'Guidance for AI Adoption',
-              publisher: 'Australian Government',
-              category: 'government',
-              description: 'Official Australian guidance on responsible AI adoption.'
-            },
-            {
-              id: 5,
-              href: 'https://www.oaic.gov.au/privacy/privacy-guidance-for-organisations/artificial-intelligence',
-              title: 'Artificial intelligence and privacy',
-              publisher: 'OAIC',
-              category: 'government',
-              description: 'Privacy considerations for organisations using AI in Australia.'
-            }
-          ]}
-        />
-
         <div className="mt-12">
           <ArticleFAQ items={faqItems} />
         </div>
-
-        <ArticleDisclaimer />
 
         <ArticleFooterNav backHref="/articles" topHref="#" />
       </div>
