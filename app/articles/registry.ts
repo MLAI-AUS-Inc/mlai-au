@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-deep-learning': {
+        title: 'What Is Deep Learning? A 2026 Guide for Australia',
+        date: '2026-01-20',
+        description: 'Understand deep learning: how neural networks work, key architectures, when to use it, and practical steps to get started in Australia (2026).',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-deep-learning',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What Is Deep Learning? A 2026 Guide for Australia',
+        hasContent: true,
+    },
     'featured/what-is-difference-between-artificial-intelligence-and-machi': {
         title: 'What’s the difference between artificial intelligence and machine learning?',
         date: '2026-01-20',
