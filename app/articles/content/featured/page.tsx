@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import Link from 'next/link'
+import { Link } from 'react-router'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
@@ -143,7 +143,7 @@ export default function ArticlePage() {
         <ArticleCallout variant="info">
           <p className="text-sm text-gray-800">
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link href="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
               Browse related articles →
             </Link>
           </p>
