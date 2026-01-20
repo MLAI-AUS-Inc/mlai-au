@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-difference-between-artificial-intelligence-and-machi': {
+        title: 'What’s the difference between artificial intelligence and machine learning?',
+        date: '2026-01-20',
+        description: 'Understand the difference between artificial intelligence and machine learning, including deep learning, examples, and careers in Australia (2026).',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-is-difference-between-artificial-intelligence-and-machi',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What’s the difference between artificial intelligence and machine learning?',
+        hasContent: true,
+    },
     'featured/how-to-get-venture-capital': {
         title: 'How to Get Venture Capital in Australia (2026 Guide)',
         date: '2026-01-20',
