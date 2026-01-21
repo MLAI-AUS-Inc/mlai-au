@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-invest-in-startups-india': {
+        title: 'How to invest in startups in India: a guide for Australians',
+        date: '2026-01-21',
+        description: 'Australians investing in Indian startups: routes (syndicates, AIFs, direct), KYC/PAN, documents, tax basics and due diligence. General info only; as at Jan 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-invest-in-startups-india',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to invest in startups in India: a guide for Australians',
+        hasContent: true,
+    },
     'featured/what-percent-of-startups-fail': {
         title: 'What percent of startups fail? (Australia, 2026)',
         date: '2026-01-20',
