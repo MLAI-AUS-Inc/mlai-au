@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/why-is-artificial-intelligence-bad': {
+        title: 'Why is artificial intelligence bad?',
+        date: '2026-01-21',
+        description: 'AI has real downsides—bias, privacy breaches, misinformation, job impacts. Here’s a plain‑English guide to the risks and how Australia can manage them in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/why-is-artificial-intelligence-bad',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'Why is artificial intelligence bad?',
+        hasContent: true,
+    },
     'featured/what-are-artificial-intelligence': {
         title: 'What is Artificial Intelligence (AI)?',
         date: '2026-01-21',
