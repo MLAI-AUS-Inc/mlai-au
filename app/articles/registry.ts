@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-can-i-learn-artificial-intelligence': {
+        title: 'How can I learn artificial intelligence? (Australia, 2026)',
+        date: '2026-01-21',
+        description: 'A practical Australian path to learn AI: foundations, maths/coding, study options, projects, privacy, costs, timelines, and communities. Clear steps and FAQs.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-can-i-learn-artificial-intelligence',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How can I learn artificial intelligence? (Australia, 2026)',
+        hasContent: true,
+    },
     'featured/how-to-invest-in-startups-india': {
         title: 'How to invest in startups in India: a guide for Australians',
         date: '2026-01-21',
