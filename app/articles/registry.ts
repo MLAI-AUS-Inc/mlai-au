@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-are-artificial-intelligence': {
+        title: 'What is Artificial Intelligence (AI)?',
+        date: '2026-01-21',
+        description: 'A clear, Australian‑context explainer of AI: how it works, types, examples, risks and ethics, plus practical steps to explore responsibly in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/what-are-artificial-intelligence',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'What is Artificial Intelligence (AI)?',
+        hasContent: true,
+    },
     'featured/how-can-i-learn-artificial-intelligence': {
         title: 'How can I learn artificial intelligence? (Australia, 2026)',
         date: '2026-01-21',
