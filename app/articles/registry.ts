@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-become-a-data-science': {
+        title: 'How to become a data scientist in Australia (2026 guide)',
+        date: '2026-01-21',
+        description: 'Australian pathways to become a data scientist in 2026: degree vs bootcamp, essential skills, timelines, portfolio tips, and where to find entry‑level roles.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-become-a-data-science',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to become a data scientist in Australia (2026 guide)',
+        hasContent: true,
+    },
     'featured/why-is-artificial-intelligence-bad': {
         title: 'Why is artificial intelligence bad?',
         date: '2026-01-21',
