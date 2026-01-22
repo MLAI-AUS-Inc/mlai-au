@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-get-into-venture-capital': {
+        title: 'How to get into venture capital (Australia, 2026)',
+        date: '2026-01-22',
+        description: 'A practical, AU-focused guide to breaking into VC: what firms hire for, real entry paths, track‑record tips, and a 90‑day plan. Updated 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-get-into-venture-capital',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to get into venture capital (Australia, 2026)',
+        hasContent: true,
+    },
     'featured/how-to-network-at-networking-events': {
         title: 'How to network at networking events (2026)',
         date: '2026-01-22',
