@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-network-at-networking-events': {
+        title: 'How to network at networking events (2026)',
+        date: '2026-01-22',
+        description: 'Practical, AU-focused tips to introduce yourself, start conversations, add value and follow up after networking events—templates included.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-network-at-networking-events',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to network at networking events (2026)',
+        hasContent: true,
+    },
     'featured/how-to-become-a-data-science': {
         title: 'How to become a data scientist in Australia (2026 guide)',
         date: '2026-01-21',
