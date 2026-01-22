@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-vcs-value-startups': {
+        title: 'How VCs value startups (Australia, 2026)',
+        date: '2026-01-22',
+        description: 'How venture capital investors value startups in 2026: methods, metrics, and term‑sheet mechanics with context for Australian founders and AI teams.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-vcs-value-startups',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How VCs value startups (Australia, 2026)',
+        hasContent: true,
+    },
     'featured/how-to-get-into-venture-capital': {
         title: 'How to get into venture capital (Australia, 2026)',
         date: '2026-01-22',
