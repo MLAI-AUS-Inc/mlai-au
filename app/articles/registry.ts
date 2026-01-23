@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-become-machine-learning-engineer': {
+        title: 'How to become a Machine Learning Engineer (Australia, 2026)',
+        date: '2026-01-23',
+        description: 'Skills, pathways, portfolio projects, certifications, and a 90‑day plan to become an ML engineer in Australia in 2026—practical, evidence‑based guidance.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-become-machine-learning-engineer',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to become a Machine Learning Engineer (Australia, 2026)',
+        hasContent: true,
+    },
     'featured/how-vcs-value-startups': {
         title: 'How VCs value startups (Australia, 2026)',
         date: '2026-01-22',
