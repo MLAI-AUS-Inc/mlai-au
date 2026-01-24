@@ -79,6 +79,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: 'How much do data scientists make in Australia (2026)',
         hasContent: true,
     },
+    'featured/how-does-machine-learning-work': {
+        title: 'How does machine learning work? A practical 2026 guide',
+        date: '2026-01-23',
+        description: 'Plain-English explainer of the ML training loop, learning types, evaluation and deployment—with Australian privacy context and practical steps.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-does-machine-learning-work',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How does machine learning work? A practical 2026 guide',
+    },
     'featured/how-to-do-machine-learning': {
         title: 'How To Do Machine Learning',
         date: '2026-01-23',

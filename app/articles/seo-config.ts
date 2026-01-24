@@ -36,6 +36,13 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/how-does-machine-learning-work': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-to-do-machine-learning': {
         toc: true,
         howTo: false,
