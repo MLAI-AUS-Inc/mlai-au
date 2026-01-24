@@ -29,7 +29,7 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
-    '/articles/featured/how-to-machine-learning': {
+    '/articles/featured/how-to-do-machine-learning': {
         toc: true,
         howTo: false,
         mediaObject: false,

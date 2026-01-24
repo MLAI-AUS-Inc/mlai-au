@@ -28,9 +28,9 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'How to learn machine learning'
+const TOPIC = 'How To Do Machine Learning'
 export const CATEGORY = 'learn-ai' // e.g. 'ai'
-export const SLUG = 'how-to-machine-learning'
+export const SLUG = 'how-to-do-machine-learning'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
