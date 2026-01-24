@@ -333,7 +333,7 @@ export default function ArticlePage() {
 
           <ArticleCompanyCTA
             title={`Need help with ${TOPIC}?`}
-            body='MLAI is a not‑for‑profit community for Australia\'s AI builders and learners. Connect with the community for practical guidance and support.'
+            body={`MLAI is a not‑for‑profit community for Australia's AI builders and learners. Connect with the community for practical guidance and support.`}
             buttonText='Connect with the MLAI community'
             buttonHref='/contact'
             note='Friendly, community‑first support — no hard sell.'

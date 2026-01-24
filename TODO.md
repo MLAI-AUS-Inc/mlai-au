@@ -3,3 +3,4 @@
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
 - [x] Update article title/slug constants and registry metadata
 - [x] Adjust SEO config path for the new slug
+- [x] Fix JSX string literal in data science salary article to unblock production build
