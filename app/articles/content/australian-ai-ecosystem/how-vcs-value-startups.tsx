@@ -146,12 +146,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
-        </div>
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleTocPlaceholder />
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
             <strong>{TOPIC}</strong> — If you are preparing a round in Australia, valuation is best understood as ownership math anchored by risk and traction. This guide covers the methods investors use in 2026, the metrics that move your multiple, and the term‑sheet mechanics that change the effective price. For broader context on local trends, browse <Link to='/articles' className='underline underline-offset-4'>our articles</Link>.
           </p>
@@ -192,7 +190,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>The methods investors actually use</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f8f462e1-6a49-41eb-be0c-b37af381e970.jpg?alt=media&token=a20b6cfd-fb9d-4f79-beb0-58b6fb53c899" alt="Team collaborating in a retro tech startup, showcasing 90s film aesthetics and innovative investment strategies." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f8f462e1-6a49-41eb-be0c-b37af381e970.jpg?alt=media&token=a20b6cfd-fb9d-4f79-beb0-58b6fb53c899" alt="Team collaborating in a retro tech startup, showcasing 90s film aesthetics and innovative investment strategies." className="w-full rounded-lg my-8" />
 
           <p>
             No single model decides the price. Most rounds are triangulated across comparables, a VC‑method back‑solve, and qualitative risk adjustments. Here is how each lens is applied.
@@ -219,7 +217,7 @@ export default function ArticlePage() {
           </p>
 
           <h2>Metrics that move the multiple in 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ec1009d5-85f4-47eb-928a-31991f34a593.jpg?alt=media&token=e63fb825-b804-4671-90d5-f8820cb31e2a" alt="Tech-savvy team collaborating in a vibrant 90s aesthetic, exploring metrics for startup growth in 2026." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ec1009d5-85f4-47eb-928a-31991f34a593.jpg?alt=media&token=e63fb825-b804-4671-90d5-f8820cb31e2a" alt="Tech-savvy team collaborating in a vibrant 90s aesthetic, exploring metrics for startup growth in 2026." className="w-full rounded-lg my-8" />
 
           <p>
             The same headline ARR can command very different prices. Investors examine the health of growth and unit economics:
@@ -314,9 +312,6 @@ export default function ArticlePage() {
             note='Community‑run; we aim to reply within 2 business days.'
           />
         </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleReferences
           heading='Sources'
           description='Selected resources to sanity‑check methods, metrics, and local context (as at 2026).'

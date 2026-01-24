@@ -203,12 +203,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="relative">
-        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
-          <ArticleTocPlaceholder />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <ArticleTocPlaceholder />
 
-        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
             <strong>{TOPIC}</strong> — This guide focuses on what actually moves the needle: defining a measurable outcome, structuring your data pipeline, validating choices with evidence, and shipping a model you can monitor. It reflects Australian expectations around privacy and responsible AI as at Jan 2026.
           </p>
@@ -244,7 +242,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Source, consent and access: data you can legally use in Australia</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8d394a69-02ba-4edd-b74c-93830c2848c8.jpg?alt=media&token=688e9776-b173-4ff3-a2fa-90c9c53699f0" alt="Diverse team collaborating in a tech startup, surrounded by retro 90s decor and modern technology." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8d394a69-02ba-4edd-b74c-93830c2848c8.jpg?alt=media&token=688e9776-b173-4ff3-a2fa-90c9c53699f0" alt="Diverse team collaborating in a tech startup, surrounded by retro 90s decor and modern technology." className="w-full rounded-lg my-8" />
 
           <p>
             Before modelling, confirm your data rights. Under the Privacy Act 1988 and the Australian Privacy Principles (APPs), organisations must collect, use and disclose personal information lawfully and securely. If data leaves Australia, APP 8 (overseas disclosure) makes you responsible for ensuring equivalent protections. De‑identify where feasible, minimise fields, and document consent or lawful basis.
@@ -254,7 +252,7 @@ export default function ArticlePage() {
           </p>
 
           <h2>Prepare features and create robust splits</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-61aaf0bc-018e-4cec-94f1-7bb9e918aaa1.jpg?alt=media&token=fa15b645-9f31-477f-87c0-428c7af9cbed" alt="Tech professionals brainstorming in a vibrant 90s film aesthetic, embodying startup culture and innovation." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-61aaf0bc-018e-4cec-94f1-7bb9e918aaa1.jpg?alt=media&token=fa15b645-9f31-477f-87c0-428c7af9cbed" alt="Tech professionals brainstorming in a vibrant 90s film aesthetic, embodying startup culture and innovation." className="w-full rounded-lg my-8" />
 
           <p>
             Build a pipeline that imputes, encodes and scales within cross‑validation folds to avoid leakage. For classification, stratify splits; for time series, use rolling or walk‑forward validation. Keep a final, untouched test set for a single, honest estimate.
@@ -368,9 +366,6 @@ export default function ArticlePage() {
             note="You can filter by topic, format (online/in-person), and experience level."
           />
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <ArticleDisclaimer className="mt-8" />
 
         <ArticleReferences references={references} />

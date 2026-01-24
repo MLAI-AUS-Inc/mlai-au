@@ -145,12 +145,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
-        </div>
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleTocPlaceholder />
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
             <strong>{TOPIC}</strong> — Australia’s VC teams are small and roles open infrequently. Your advantage is a visible body of work: crisp memos, a focused thesis, and genuine founder empathy. This guide distils common hiring signals, Australian entry paths, and a 90‑day plan you can start today.
           </p>
@@ -188,7 +186,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Entry paths that actually work in Australia</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-94dc3c22-e744-4ba1-85ab-c70faddc97e1.jpg?alt=media&token=c1758f7b-a1d4-4b1f-a588-b697ad10dfe9" alt="People collaborating in a vibrant 90s tech startup setting, showcasing innovative entry paths in Australia." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-94dc3c22-e744-4ba1-85ab-c70faddc97e1.jpg?alt=media&token=c1758f7b-a1d4-4b1f-a588-b697ad10dfe9" alt="People collaborating in a vibrant 90s tech startup setting, showcasing innovative entry paths in Australia." className="w-full rounded-lg my-8" />
 
           <p>
             There isn’t one doorway into VC. In Australia, successful candidates typically come through one of four routes. Choose the path that aligns to your current experience and make your progress easy to verify.
@@ -211,7 +209,7 @@ export default function ArticlePage() {
           </p>
 
           <h2>Build a track record without writing a cheque</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8cade6f7-dfa0-416a-a8e7-40fad83ce82d.jpg?alt=media&token=4c60e24a-0a2e-4fa2-a691-eebccfc209f0" alt="Nostalgic 90s film vibe featuring diverse people collaborating in a dynamic tech startup environment." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8cade6f7-dfa0-416a-a8e7-40fad83ce82d.jpg?alt=media&token=4c60e24a-0a2e-4fa2-a691-eebccfc209f0" alt="Nostalgic 90s film vibe featuring diverse people collaborating in a dynamic tech startup environment." className="w-full rounded-lg my-8" />
 
           <p>
             You don’t need a fund title to demonstrate judgment. Show your work: structured memos, a small pipeline, and founder conversations. Quality beats quantity.
@@ -317,9 +315,6 @@ export default function ArticlePage() {
             note='You can filter by topic, format (online/in-person), and experience level.'
           />
         </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleFAQ items={faqItems} />
 
         <ArticleReferences

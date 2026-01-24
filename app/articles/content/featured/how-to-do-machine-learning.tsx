@@ -185,12 +185,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="relative">
-        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
-          <ArticleTocPlaceholder />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <ArticleTocPlaceholder />
 
-        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
             <strong>{TOPIC}</strong> — If you can write basic Python and read a confusion matrix, you can build useful models quickly. This guide distils top tutorials (Google Crash Course, scikit‑learn docs) into an Australian, practice‑first path you can follow over weeks, not years.
           </p>
@@ -230,7 +228,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Prerequisites */}
           <h2>Prerequisites: Python and the maths you actually need</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9fbfdf69-df9d-42ec-87f2-11aba007c35a.jpg?alt=media&token=62d18657-9391-425c-801b-9832983a4d73" alt="Group of diverse individuals collaborating in a tech startup, vintage 90s film aesthetic enhances the retro vibe." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9fbfdf69-df9d-42ec-87f2-11aba007c35a.jpg?alt=media&token=62d18657-9391-425c-801b-9832983a4d73" alt="Group of diverse individuals collaborating in a tech startup, vintage 90s film aesthetic enhances the retro vibe." className="w-full rounded-lg my-8" />
 
           <p>
             You don’t need advanced calculus to start. The most useful skills early on are practical: writing clean Python, manipulating arrays and tables, and understanding basic probability and linear algebra.
@@ -258,7 +256,7 @@ export default function ArticlePage() {
 
           {/* SECTION: First hands-on model */}
           <h2>Hands‑on: your first model in scikit‑learn</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-84852793-d791-40d2-aaac-4fda3ae9fef2.jpg?alt=media&token=e82c9afe-3b06-4d2c-b7b8-4dd50d633265" alt="Tech enthusiasts collaborate in a vibrant 90s film aesthetic startup environment, ready to learn scikit-learn." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-84852793-d791-40d2-aaac-4fda3ae9fef2.jpg?alt=media&token=e82c9afe-3b06-4d2c-b7b8-4dd50d633265" alt="Tech enthusiasts collaborate in a vibrant 90s film aesthetic startup environment, ready to learn scikit-learn." className="w-full rounded-lg my-8" />
 
           <p>
             Classic ML in Python is approachable thanks to <code>Pipeline</code>s and sensible defaults. This example trains a simple classifier on the Iris dataset.
@@ -385,9 +383,6 @@ print('f1 (weighted):', f1_score(y_te, y_pred, average='weighted'))
             note="We’ll point you to community resources and upcoming activities."
           />
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <ArticleDisclaimer className="mt-8" />
 
         <ArticleReferences references={references} />

@@ -170,12 +170,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="relative">
-        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
-          <ArticleTocPlaceholder />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <ArticleTocPlaceholder />
 
-        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
             <strong>{TOPIC}</strong> — In simple terms, ML finds patterns in data by optimising a model to minimise error on examples. Below is a practical, evidence‑based walkthrough of how the learning loop works, the main learning types, how to evaluate models, and what to watch for in an Australian context.
           </p>
@@ -210,7 +208,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Learning paradigms compared: supervised, unsupervised, reinforcement</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e0b765e6-f0cb-460a-b584-9c8168004781.jpg?alt=media&token=8b18c4f6-d9b1-4c24-ad76-3670eb3ce4dc" alt="Group of diverse individuals brainstorming in a retro tech startup environment, embodying 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e0b765e6-f0cb-460a-b584-9c8168004781.jpg?alt=media&token=8b18c4f6-d9b1-4c24-ad76-3670eb3ce4dc" alt="Group of diverse individuals brainstorming in a retro tech startup environment, embodying 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             Supervised learning uses labelled examples (inputs with known outputs). It includes regression (predicting a number) and classification (predicting a category). Unsupervised learning has no labels and focuses on structure discovery (clustering, dimensionality reduction). Reinforcement learning optimises actions via rewards across time.
@@ -235,7 +233,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Avoiding overfitting: validation, cross‑validation and regularisation</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-847fc0de-6d61-40ec-aa2c-403bd460930a.jpg?alt=media&token=2ccf6c36-50cc-4130-8059-3b6ea7df56c4" alt="People collaborating in a tech startup, surrounded by retro 90s film aesthetic and modern gadgets." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-847fc0de-6d61-40ec-aa2c-403bd460930a.jpg?alt=media&token=2ccf6c36-50cc-4130-8059-3b6ea7df56c4" alt="People collaborating in a tech startup, surrounded by retro 90s film aesthetic and modern gadgets." className="w-full rounded-lg my-8" />
 
           <p>
             Overfitting appears when a model captures noise instead of signal. Symptoms include excellent training metrics but poor validation/test performance. Remedies: keep a held‑out validation set, use k‑fold cross‑validation when data is scarce, apply regularisation (L1/L2, dropout for neural networks), and stop training when validation loss plateaus (early stopping).
@@ -327,9 +325,6 @@ export default function ArticlePage() {
 
           <MLAITemplateResourceCTA />
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <ArticleDisclaimer className="mt-8" />
 
         <ArticleReferences references={references} />

@@ -203,12 +203,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
-        </div>
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleTocPlaceholder />
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
             <strong>{TOPIC}</strong> – In 2026, Australian teams expect ML engineers to ship reliable systems: data pipelines, model APIs, monitoring, and cost‑aware lifecycles. This guide focuses on what hiring managers here actually look for—and a practical path to get there.
           </p>
@@ -365,9 +363,6 @@ export default function ArticlePage() {
             note='MLAI is a not‑for‑profit community empowering the Australian AI community.'
           />
         </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleDisclaimer className='mt-8' />
 
         <ArticleReferences references={references} />

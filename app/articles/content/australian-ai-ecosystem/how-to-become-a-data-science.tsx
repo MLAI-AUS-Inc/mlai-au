@@ -155,12 +155,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="relative">
-        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
-          <ArticleTocPlaceholder />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <ArticleTocPlaceholder />
 
-        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
           <p>
             <strong>{TOPIC}</strong> – If you typed “how to become a data science”, you almost certainly mean “data scientist”. In Australia (2026), hiring teams value clear, reproducible evidence of core skills over buzzwords. This guide maps a realistic, AU‑specific pathway, with links to official sources and practical next steps.
             {' '}<Link to="/articles" className="underline underline-offset-4">Explore more in our Australian AI Ecosystem series</Link>.
@@ -200,7 +198,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Do you need a degree? Australian pathways compared</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-1b88a997-ab31-4295-9567-3b03cd30ff60.jpg?alt=media&token=6107cbcc-471a-4835-9f46-d298a6e19b33" alt="Group of diverse individuals collaborating in a tech startup, capturing a vibrant 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-1b88a997-ab31-4295-9567-3b03cd30ff60.jpg?alt=media&token=6107cbcc-471a-4835-9f46-d298a6e19b33" alt="Group of diverse individuals collaborating in a tech startup, capturing a vibrant 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             Degrees help for research‑heavy roles, but many junior hires come via portfolios, internships, and analyst roles. Compare effort, cost, and your timeline: a Bachelor/Master builds theory and signalling; bootcamps and micro‑credentials compress practice; self‑study can work if you ship quality projects and get feedback. As at 2026, employers still prioritise demonstrable skills and clear communication.
@@ -235,7 +233,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Core skills and tools employers list in 2026 job ads</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9820c594-854c-4167-aa7a-6cf7ba4caaec.jpg?alt=media&token=5c101b9e-8e5c-4038-a818-4946c3d10a4f" alt="People collaborating in a vibrant tech startup, embodying 90s film aesthetics and modern creativity." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-9820c594-854c-4167-aa7a-6cf7ba4caaec.jpg?alt=media&token=5c101b9e-8e5c-4038-a818-4946c3d10a4f" alt="People collaborating in a vibrant tech startup, embodying 90s film aesthetics and modern creativity." className="w-full rounded-lg my-8" />
 
           <p>
             Core: Python (pandas, NumPy, scikit‑learn), SQL, exploratory analysis, statistics (sampling, testing, bias), and data storytelling. Often requested: Jupyter, Git, cloud basics (AWS/GCP/Azure), dashboards (e.g., Plotly/Power BI), and ML practices (validation, leakage checks, feature importance). Alternatives appear too (R, PySpark, dbt) depending on stack.
@@ -328,9 +326,6 @@ export default function ArticlePage() {
             note="Response within 2 business days."
           />
         </div>
-      </div>
-
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <ArticleReferences
           heading="Sources"
           description="Curated references for further reading (as at 2026)."
