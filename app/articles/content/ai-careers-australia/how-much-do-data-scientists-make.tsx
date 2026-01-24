@@ -181,12 +181,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
-        </div>
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleTocPlaceholder />
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
             <strong>{TOPIC}</strong> Short answer: in 2026, many full‑time data scientist roles in Australia land around $110k–$150k base, with higher totals where bonuses or equity apply. The longer answer depends on experience, city, industry and whether you ship production ML. This guide explains how offers are structured locally and how to compare “plus super” vs “total package”. For broader role pathways, explore our{' '}
             <Link to='/articles' className='underline underline-offset-4 text-[--brand-ink]'>AI Career Pathways</Link>.
@@ -349,9 +347,6 @@ export default function ArticlePage() {
             note='Friendly, community‑first support — no hard sell.'
           />
         </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleDisclaimer className='mt-8' />
 
         <ArticleReferences references={references} />

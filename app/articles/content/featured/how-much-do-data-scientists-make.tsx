@@ -179,12 +179,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
-        </div>
+      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
+        <ArticleTocPlaceholder />
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
+        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
           <p>
             <strong>{TOPIC}</strong> Short answer: in 2026, many full‑time data scientist roles in Australia land around $110k–$150k base, with higher totals where bonuses or equity apply. The longer answer depends on experience, city, industry and whether you ship production ML. This guide explains how offers are structured locally and how to compare \u201cplus super\u201d vs \u201ctotal package\u201d. For broader role pathways, explore our{' '}
             <Link to='/articles' className='underline underline-offset-4 text-[--brand-ink]'>AI Career Pathways</Link>.
@@ -226,7 +224,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Experience bands: what moves you from junior to senior pay</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e2270f17-828e-47a9-a111-f080b47c2785.jpg?alt=media&token=97375866-e772-4f89-8a0b-2725068a123f" alt="Colorful 90s film aesthetic showcasing a diverse tech team collaborating in a vibrant startup environment." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e2270f17-828e-47a9-a111-f080b47c2785.jpg?alt=media&token=97375866-e772-4f89-8a0b-2725068a123f" alt="Colorful 90s film aesthetic showcasing a diverse tech team collaborating in a vibrant startup environment." className="w-full rounded-lg my-8" />
 
           <p>Employers typically anchor salary to demonstrated impact, not just years served. Signals that move candidates up a band include:</p>
           <ul>
@@ -252,7 +250,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Location check: Sydney, Melbourne, Brisbane, Perth</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ebbe453e-d4f3-4edd-818c-49fc7ee44d3b.jpg?alt=media&token=f1edef9c-d88a-4708-85c1-9ae93ad6e529" alt="Group of diverse individuals collaborating in a vibrant tech startup, capturing a retro 90s film aesthetic in Sydney." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ebbe453e-d4f3-4edd-818c-49fc7ee44d3b.jpg?alt=media&token=f1edef9c-d88a-4708-85c1-9ae93ad6e529" alt="Group of diverse individuals collaborating in a vibrant tech startup, capturing a retro 90s film aesthetic in Sydney." className="w-full rounded-lg my-8" />
 
           <p>Sydney often pays the highest (finance, consulting, high cost‑of‑living). Melbourne is close behind, with strong product and research roles. Brisbane and Perth show healthy demand in resources, health and government. Remote/hybrid can compress the gap, but on‑site expectations for secure data or regulated environments still matter.</p>
 
@@ -339,9 +337,6 @@ export default function ArticlePage() {
             note='Friendly, community‑first support — no hard sell.'
           />
         </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleDisclaimer className='mt-8' />
 
         <ArticleReferences references={references} />
