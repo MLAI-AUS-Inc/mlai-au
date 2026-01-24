@@ -204,10 +204,12 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='container mx-auto px-4 sm:px-6 lg:px-8'>
-        <ArticleTocPlaceholder />
+      <div className='relative'>
+        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
+          <ArticleTocPlaceholder />
+        </div>
 
-        <div className='prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]'>
+        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
           <p>
             <strong>{TOPIC}</strong> – In 2026, Australian teams expect ML engineers to ship reliable systems: data pipelines, model APIs, monitoring, and cost‑aware lifecycles. This guide focuses on what hiring managers here actually look for—and a practical path to get there.
           </p>
@@ -243,7 +245,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Skills that matter in 2026: from Python to MLOps</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0f045db0-bc6b-4396-856b-71ad6803c957.jpg?alt=media&token=c46e4a29-acc4-4eab-bb2f-d903b2cdfc65" alt="Tech professionals collaborating in a retro 90s aesthetic, reflecting future skills like Python and MLOps." className="w-full rounded-lg my-8" />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-0f045db0-bc6b-4396-856b-71ad6803c957.jpg?alt=media&token=c46e4a29-acc4-4eab-bb2f-d903b2cdfc65" alt="Tech professionals collaborating in a retro 90s aesthetic, reflecting future skills like Python and MLOps." className="w-full rounded-lg my-8" />
 
           <p>
             The stack evolves, but core competencies stay consistent. Prioritise the following and tie each skill to a shipped artifact (repo, demo, or write‑up):
@@ -257,7 +259,7 @@ export default function ArticlePage() {
           </ul>
 
           <h2>Australian pathways: degree, VET, or self‑taught?</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-4e12a5b6-b273-4af2-a992-80c63392324f.jpg?alt=media&token=c6004614-07a1-429b-9839-8a6402ac77e8" alt="Group of diverse individuals collaborating in a vibrant tech startup space with a retro 90s film aesthetic." className="w-full rounded-lg my-8" />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-4e12a5b6-b273-4af2-a992-80c63392324f.jpg?alt=media&token=c6004614-07a1-429b-9839-8a6402ac77e8" alt="Group of diverse individuals collaborating in a vibrant tech startup space with a retro 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             There is no single path. In Australia, successful ML engineers come from CS/software degrees, maths/stats backgrounds, VET/bootcamps plus strong portfolios, and internal transfers from software/data roles. Hiring signals that consistently help: demonstrable projects, cloud fluency, and clear thinking about trade‑offs and safety.
@@ -364,6 +366,9 @@ export default function ArticlePage() {
             note='MLAI is a not‑for‑profit community empowering the Australian AI community.'
           />
         </div>
+      </div>
+
+      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleDisclaimer className='mt-8' />
 
         <ArticleReferences references={references} />

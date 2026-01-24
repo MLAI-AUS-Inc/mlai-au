@@ -100,10 +100,12 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <ArticleTocPlaceholder />
+      <div className="relative">
+        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
+          <ArticleTocPlaceholder />
+        </div>
 
-        <div className="prose prose-lg max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand]">
+        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
           <p>
             <strong>{TOPIC}</strong> is less about collecting contacts and more about starting useful conversations you can continue later. The approach below is tailored to AU tech/AI meetups in 2026—short intros, question‑led chats, and privacy‑aware follow‑ups.
             {' '}
@@ -142,7 +144,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Conversation starters that work at tech and AI meetups</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8777a4e0-86e6-4bc0-a7bb-a6bb87bab79a.jpg?alt=media&token=624d4812-c501-4b3a-b08c-68eee2c149f1" alt="Diverse group of professionals networking at a tech meetup with a nostalgic 90s film aesthetic." className="w-full rounded-lg my-8" />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8777a4e0-86e6-4bc0-a7bb-a6bb87bab79a.jpg?alt=media&token=624d4812-c501-4b3a-b08c-68eee2c149f1" alt="Diverse group of professionals networking at a tech meetup with a nostalgic 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             Keep openers short, specific, and kind. Five that travel well in AU events:
@@ -176,7 +178,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>If you\'re shy or new: low‑pressure ways to join</h2>
-          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-be9809ab-ca93-4437-ac14-3ed94fec8f43.jpg?alt=media&token=308e9e75-f2c3-493f-b1eb-5ad8a03d79fe" alt="Diverse individuals in a 90s tech workspace, fostering connection in a relaxed, friendly atmosphere." className="w-full rounded-lg my-8" />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-be9809ab-ca93-4437-ac14-3ed94fec8f43.jpg?alt=media&token=308e9e75-f2c3-493f-b1eb-5ad8a03d79fe" alt="Diverse individuals in a 90s tech workspace, fostering connection in a relaxed, friendly atmosphere." className="w-full rounded-lg my-8" />
 
           <p>
             Start with open groups, speaker lines, or tables with spare seats. Ask practical questions (“Is there a Slack for this group?”, “Where do project posts go?”). Consider volunteering on the door for a future event—you\'ll meet everyone naturally.
@@ -266,6 +268,9 @@ export default function ArticlePage() {
             note="Community‑first, no hard sell—just people helping people."
           />
         </div>
+      </div>
+
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
         <ArticleFAQ items={faqItems} />
 
         <AuthorBio author={authorDetails} />
