@@ -1,2 +1,5 @@
 - [x] Populate this list
 - [x] Keep TODO.md updated when multi-step changes, and update as steps are completed
+- [x] Rename the featured article slug/file to how-to-do-machine-learning
+- [x] Update article title/slug constants and registry metadata
+- [x] Adjust SEO config path for the new slug
