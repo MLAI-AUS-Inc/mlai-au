@@ -69,6 +69,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-much-do-data-scientists-make': {
+        title: "How Much Do Data Scientists Make?'",
+        date: '2026-01-24',
+        description: 'Salary ranges for data scientists in Australia in 2026—entry, mid, senior and lead. City and industry differences, skills that lift pay, and negotiation tips.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-much-do-data-scientists-make',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: "How Much Do Data Scientists Make?'",
+    },
     'featured/how-to-build-a-model-in-data-science': {
         title: 'How to build a model in data science (2026)',
         date: '2026-01-24',
