@@ -23,24 +23,22 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-export const TOPIC = 'How much do data scientists make in Australia?'
+const TOPIC = "How Much Do Data Scientists Make?'"
 export const CATEGORY = 'ai-careers-australia'
-export const SLUG = 'how-much-do-data-science-make'
+export const SLUG = 'how-much-do-data-scientists-make'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
-export const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
-export const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
-export const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
-export const AUTHOR_AVATAR =
+const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
+const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
+const AUTHOR_BIO = AUTHOR_PROFILE.bio ?? ''
+const AUTHOR_AVATAR =
   AUTHOR_PROFILE.avatarUrl ??
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=256&q=80'
-export const DATE_PUBLISHED = '2026-01-24'
-export const DATE_MODIFIED = '2026-01-24'
-export const DESCRIPTION =
-  '2026 salary ranges for data scientists in Australia — entry to principal, by city and industry, skills that lift pay, and fair negotiation tips.'
-export const HERO_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-efc07de1-b4f1-46b2-8245-211ce8e1dd64.jpg?alt=media&token=ad15ab6a-efa7-4176-ba33-9908ed9a2d2e'
-export const HERO_IMAGE_ALT = 'Data scientist reviewing charts on a laptop in an Australian office'
-export const FEATURED_FOCUS = 'ai'
+const DATE_PUBLISHED = '2026-01-24'
+const DATE_MODIFIED = '2026-01-24'
+const DESCRIPTION = '2026 salary ranges for data scientists in Australia — entry to principal, by city and industry, skills that lift pay, and fair negotiation tips.'
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-efc07de1-b4f1-46b2-8245-211ce8e1dd64.jpg?alt=media&token=ad15ab6a-efa7-4176-ba33-9908ed9a2d2e"
+const HERO_IMAGE_ALT = 'Data scientist reviewing charts on a laptop in an Australian office'
+const FEATURED_FOCUS = 'ai'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -124,7 +122,7 @@ const references = [
   {
     id: 1,
     href: 'https://studyonline.rmit.edu.au/blog/data-scientist-salary-australia',
-    title: "A data scientist's salary in Australia — what you need to know",
+    title: 'A data scientist\'s salary in Australia — what you need to know',
     publisher: 'RMIT University',
     description: 'Overview of data scientist roles and salary context in Australia (general guidance).',
     category: 'guide'
@@ -188,7 +186,7 @@ export default function ArticlePage() {
 
         <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
           <p>
-            <strong>{TOPIC}</strong> Short answer: in 2026, many full‑time data scientist roles in Australia land around $110k–$150k base, with higher totals where bonuses or equity apply. The longer answer depends on experience, city, industry and whether you ship production ML. This guide explains how offers are structured locally and how to compare “plus super” vs “total package”. For broader role pathways, explore our{' '}
+            <strong>{TOPIC}</strong> Short answer: in 2026, many full‑time data scientist roles in Australia land around $110k–$150k base, with higher totals where bonuses or equity apply. The longer answer depends on experience, city, industry and whether you ship production ML. This guide explains how offers are structured locally and how to compare \u201cplus super\u201d vs \u201ctotal package\u201d. For broader role pathways, explore our{' '}
             <Link to='/articles' className='underline underline-offset-4 text-[--brand-ink]'>AI Career Pathways</Link>.
           </p>
 
@@ -228,11 +226,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>Experience bands: what moves you from junior to senior pay</h2>
-          <img
-            src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e2270f17-828e-47a9-a111-f080b47c2785.jpg?alt=media&token=97375866-e772-4f89-8a0b-2725068a123f'
-            alt='Colorful 90s film aesthetic showcasing a diverse tech team collaborating in a vibrant startup environment.'
-            className='w-full rounded-lg my-8'
-          />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e2270f17-828e-47a9-a111-f080b47c2785.jpg?alt=media&token=97375866-e772-4f89-8a0b-2725068a123f" alt="Colorful 90s film aesthetic showcasing a diverse tech team collaborating in a vibrant startup environment." className="w-full rounded-lg my-8" />
 
           <p>Employers typically anchor salary to demonstrated impact, not just years served. Signals that move candidates up a band include:</p>
           <ul>
@@ -258,11 +252,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Location check: Sydney, Melbourne, Brisbane, Perth</h2>
-          <img
-            src='https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ebbe453e-d4f3-4edd-818c-49fc7ee44d3b.jpg?alt=media&token=f1edef9c-d88a-4708-85c1-9ae93ad6e529'
-            alt='Group of diverse individuals collaborating in a vibrant tech startup, capturing a retro 90s film aesthetic in Sydney.'
-            className='w-full rounded-lg my-8'
-          />
+<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ebbe453e-d4f3-4edd-818c-49fc7ee44d3b.jpg?alt=media&token=f1edef9c-d88a-4708-85c1-9ae93ad6e529" alt="Group of diverse individuals collaborating in a vibrant tech startup, capturing a retro 90s film aesthetic in Sydney." className="w-full rounded-lg my-8" />
 
           <p>Sydney often pays the highest (finance, consulting, high cost‑of‑living). Melbourne is close behind, with strong product and research roles. Brisbane and Perth show healthy demand in resources, health and government. Remote/hybrid can compress the gap, but on‑site expectations for secure data or regulated environments still matter.</p>
 
@@ -343,7 +333,7 @@ export default function ArticlePage() {
 
           <ArticleCompanyCTA
             title={`Need help with ${TOPIC}?`}
-            body="MLAI is a not‑for‑profit community for Australia's AI builders and learners. Connect with the community for practical guidance and support."
+            body={`MLAI is a not‑for‑profit community for Australia's AI builders and learners. Connect with the community for practical guidance and support.`}
             buttonText='Connect with the MLAI community'
             buttonHref='/contact'
             note='Friendly, community‑first support — no hard sell.'
