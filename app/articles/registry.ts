@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-get-data-science-job': {
+        title: 'How to get a data science job in Australia (2026)',
+        date: '2026-01-24',
+        description: 'AU‑focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-get-data-science-job',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to get a data science job in Australia (2026)',
+        hasContent: true,
+    },
     'featured/how-to-build-a-model-in-data-science': {
         title: 'How to build a model in data science (2026)',
         date: '2026-01-24',
