@@ -19,37 +19,43 @@ import { ImageWithFallback } from './ImageWithFallback';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 import type { User } from '~/types/user';
 
-interface EsafetyAppLayoutProps {
+interface AuthenticatedLayoutProps {
     children: React.ReactNode;
     user: User;
+    navigation?: { name: string; href: string; icon: any }[];
+    userNavigation?: { name: string; href: string }[];
 }
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutProps) {
+export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
     const pathname = location.pathname;
 
-    const navigation = [
+    const defaultNavigation = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
         { name: 'Profile', href: '/esafety/profile', icon: UserCircleIcon },
         { name: 'Submissions', href: '/esafety/leaderboard', icon: TrophyIcon },
         { name: 'Resources', href: '/esafety/resources', icon: BookOpenIcon },
     ];
 
+    const navigation = customNavigation || defaultNavigation;
+
     const updatedNavigation = navigation.map(item => ({
         ...item,
         current: pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
     }));
 
-    const userNavigation = [
+    const defaultUserNavigation = [
         { name: 'Dashboard', href: '/esafety/dashboard' },
         { name: 'Profile', href: '/esafety/profile' },
     ];
+
+    const userNavigation = customUserNavigation || defaultUserNavigation;
 
     const avatarUrl = user?.avatar_url || generateAvatarUrl(getInitials(user?.full_name || ''));
     const fullName = user?.full_name || 'User';

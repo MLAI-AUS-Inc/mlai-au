@@ -35,9 +35,11 @@ export default function Layout() {
   const location = useLocation();
 
   // Check if we're in the eSafety app routes or AI Hospital app routes
+  /* Check if we're in the eSafety app, Hospital app, or Valley app routes */
   const isEsafetyApp = location.pathname.startsWith('/esafety');
   const isHospitalApp = location.pathname.startsWith('/hospital/app');
-  const isAppRoute = isEsafetyApp || isHospitalApp;
+  const isValleyApp = location.pathname.startsWith('/valley');
+  const isAppRoute = isEsafetyApp || isHospitalApp || isValleyApp;
 
   return (
     <html lang="en" suppressHydrationWarning>

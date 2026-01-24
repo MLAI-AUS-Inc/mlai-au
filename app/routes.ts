@@ -45,4 +45,12 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
+  // Valley App routes
+  route("/valley", "routes/valley.tsx", [
+    index("routes/valley._index.tsx"),
+    route("create-update", "routes/valley.create-update.tsx"),
+    route("discover", "routes/valley.investors.tsx"), // Placeholder for next step
+  ]),
+  route("/valley/logout", "routes/valley.logout.tsx"),
+
 ] satisfies RouteConfig;

@@ -1,7 +1,7 @@
 import type { Route } from "./+types/esafety";
 import { redirect, Outlet, useLoaderData } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
-import EsafetyAppLayout from "~/components/EsafetyAppLayout";
+import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import { getEnv } from "~/lib/env.server";
 
 import type { User } from "~/types/user";
@@ -21,8 +21,8 @@ export default function EsafetyApp() {
     const { user } = useLoaderData<typeof loader>();
 
     return (
-        <EsafetyAppLayout user={user}>
+        <AuthenticatedLayout user={user}>
             <Outlet />
-        </EsafetyAppLayout>
+        </AuthenticatedLayout>
     );
 }
