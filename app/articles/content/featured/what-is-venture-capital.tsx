@@ -153,7 +153,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -245,7 +245,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Stages & instruments */}
           <h2>Funding stages and instruments: pre-seed to Series C</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5a097628-e492-4f35-a14d-5b40936ff308.jpg?alt=media&token=5d3504a8-47f1-4c24-843a-59e5d4d98d7a" alt="People collaborating in a tech startup workspace, captured in a vibrant 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5a097628-e492-4f35-a14d-5b40936ff308.jpg?alt=media&token=5d3504a8-47f1-4c24-843a-59e5d4d98d7a" alt="People collaborating in a tech startup workspace, captured in a vibrant 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             Rounds generally progress from pre-seed/seed (finding fit) to Series A/B (scaling) and beyond (growth). Instruments include SAFEs or convertible notes (deferring price discovery) and priced equity rounds. Later stages often use priced equity with investor protections aligned to risk.
@@ -257,7 +257,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Comparing capital sources */}
           <h2>VC vs angels, private equity and crowdfunding</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ad173a5e-95fd-46ef-a998-13575a6833ea.jpg?alt=media&token=7541cc12-e4be-4d5f-babd-2fba91d8b981" alt="Tech entrepreneurs collaborate in a vibrant 90s film aesthetic, highlighting VC vs. angel investing and crowdfunding." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ad173a5e-95fd-46ef-a998-13575a6833ea.jpg?alt=media&token=7541cc12-e4be-4d5f-babd-2fba91d8b981" alt="Tech entrepreneurs collaborate in a vibrant 90s film aesthetic, highlighting VC vs. angel investing and crowdfunding." className="w-full rounded-lg my-8" />
 
           <p>
             Angels invest earlier with smaller cheques and may move faster. VC brings larger capital and a portfolio of support but has higher growth expectations. Private equity usually targets later-stage, profitable businesses with different control terms. Crowdfunding can validate demand but adds investor management overhead. Choose the path that fits risk, speed, and governance preferences.

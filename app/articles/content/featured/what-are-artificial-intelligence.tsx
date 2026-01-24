@@ -120,7 +120,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -200,7 +200,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>How AI works: data, models, training and inference</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-a60aeb05-b909-416f-840f-b541e8acfb2d.jpg?alt=media&token=80e76b0c-b68e-447e-ac59-f5c08a619336" alt="People collaborating in a 90s tech startup, surrounded by computers, illustrating AI concepts and innovation." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-a60aeb05-b909-416f-840f-b541e8acfb2d.jpg?alt=media&token=80e76b0c-b68e-447e-ac59-f5c08a619336" alt="People collaborating in a 90s tech startup, surrounded by computers, illustrating AI concepts and innovation." className="w-full rounded-lg my-8" />
 
           <p>
             Modern AI relies on data, algorithms and compute. During <strong>training</strong>, a model learns patterns from examples (images, text, audio, tabular data). During <strong>inference</strong>, the trained model applies what it learned to new inputs — classifying, predicting, or generating outputs. For generative models, prompts and safeguards (filters, retrieval, system instructions) shape behaviour.
@@ -225,7 +225,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Types of AI you’ll hear about (including generative AI)</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-46d58cee-3b92-47d5-8f37-3ca62b92e39a.jpg?alt=media&token=5fee8c5a-317d-4298-9326-628968754b2e" alt="People collaborating in a retro tech startup setting, showcasing the rise of AI and innovation." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-46d58cee-3b92-47d5-8f37-3ca62b92e39a.jpg?alt=media&token=5fee8c5a-317d-4298-9326-628968754b2e" alt="People collaborating in a retro tech startup setting, showcasing the rise of AI and innovation." className="w-full rounded-lg my-8" />
 
           <p>
             You’ll commonly see three practical buckets:

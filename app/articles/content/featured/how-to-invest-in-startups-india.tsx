@@ -147,7 +147,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -246,7 +246,7 @@ export default function ArticlePage() {
 
           {/* SECTION 2 */}
           <h2>Syndicates, AIFs, or direct — which route suits you?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-7945cbb4-d987-4203-8bde-a6686cd6974c.jpg?alt=media&token=fe34313b-85af-45a5-9cf5-5007505a8655" alt="Tech-savvy entrepreneurs collaborate in a retro 90s film aesthetic, exploring investment routes for startups." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-7945cbb4-d987-4203-8bde-a6686cd6974c.jpg?alt=media&token=fe34313b-85af-45a5-9cf5-5007505a8655" alt="Tech-savvy entrepreneurs collaborate in a retro 90s film aesthetic, exploring investment routes for startups." className="w-full rounded-lg my-8" />
 
           <p>
             Australians typically choose between three pathways. The right option depends on cheque size, time
@@ -271,7 +271,7 @@ export default function ArticlePage() {
 
           {/* SECTION 3 */}
           <h2>KYC, PAN, and bank accounts — what Australians need</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-586beed3-c329-4afe-92f6-21f6ad0243bc.jpg?alt=media&token=543b0255-4a1a-482a-a09f-ce8626f92df8" alt="People in a tech startup setting, discussing KYC, PAN, and banking essentials for Australians, 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-586beed3-c329-4afe-92f6-21f6ad0243bc.jpg?alt=media&token=543b0255-4a1a-482a-a09f-ce8626f92df8" alt="People in a tech startup setting, discussing KYC, PAN, and banking essentials for Australians, 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             Onboarding is similar to other private-market platforms, with India-specific nuances:

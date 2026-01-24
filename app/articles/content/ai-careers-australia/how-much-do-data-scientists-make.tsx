@@ -170,7 +170,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={`${TOPIC} (2026)`}

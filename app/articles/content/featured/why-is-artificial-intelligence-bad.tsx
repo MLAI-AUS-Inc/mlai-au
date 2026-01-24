@@ -147,7 +147,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -237,7 +237,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Competitor pattern — risks list */}
           <h2>What are the biggest risks right now?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-15c7e783-7498-45e8-98eb-315e5624a333.jpg?alt=media&token=644cd72c-1009-4168-9220-f16699472dde" alt="Vibrant 90s film aesthetic capturing a dynamic tech startup team in an innovative workspace." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-15c7e783-7498-45e8-98eb-315e5624a333.jpg?alt=media&token=644cd72c-1009-4168-9220-f16699472dde" alt="Vibrant 90s film aesthetic capturing a dynamic tech startup team in an innovative workspace." className="w-full rounded-lg my-8" />
 
           <p>
             Bias and discrimination: models learn from data that reflect society\'s historical patterns. Without careful curation and testing, outputs can skew against protected groups. Use diverse evaluation sets, document limitations, and require human review for high-stakes decisions.
@@ -281,7 +281,7 @@ export default function ArticlePage() {
 
           {/* SECTION: PAA-derived */}
           <h2>Will AI take jobs in Australia?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6b96f637-e3ea-4a68-b97c-523b23cb22a0.jpg?alt=media&token=763364f1-81d9-46aa-ae40-815889390b15" alt="90s film-style photo of diverse professionals collaborating in a tech startup office setting." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6b96f637-e3ea-4a68-b97c-523b23cb22a0.jpg?alt=media&token=763364f1-81d9-46aa-ae40-815889390b15" alt="90s film-style photo of diverse professionals collaborating in a tech startup office setting." className="w-full rounded-lg my-8" />
 
           <p>
             In the near term, AI reassigns tasks more than it removes entire occupations. Roles heavy on routine information processing are most exposed; roles centred on interpersonal work, safety-critical judgement, or hands-on care see augmentation first. Organisations that pair AI with training and job redesign usually see better outcomes than \"replace-first\" approaches.

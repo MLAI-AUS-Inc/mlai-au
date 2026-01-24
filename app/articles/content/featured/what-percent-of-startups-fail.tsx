@@ -121,7 +121,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -213,12 +213,12 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>So, what percent of startups fail?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-c23ba06b-c950-49d3-82e0-01cd49d772df.jpg?alt=media&token=2151b3f1-97ea-42f9-82e6-743185748880" alt="Tech professionals in a 90s film aesthetic discuss startup challenges and failure rates." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-c23ba06b-c950-49d3-82e0-01cd49d772df.jpg?alt=media&token=2151b3f1-97ea-42f9-82e6-743185748880" alt="Tech professionals in a 90s film aesthetic discuss startup challenges and failure rates." className="w-full rounded-lg my-8" />
 
           <p>
             The widely cited global figure is <strong>~90% fail overall</strong>—a directional statement that aligns with long‑run outcomes for
             venture‑style startups. In the <strong>first year</strong>, failure is closer to <strong>~10–20%</strong>. By <strong>five years</strong>, roughly <strong>half of new
-            businesses</strong> survive; for high‑growth tech startups, survival can be lower because the bar for “success” is higher than
+              businesses</strong> survive; for high‑growth tech startups, survival can be lower because the bar for “success” is higher than
             simply remaining registered.
           </p>
           <p>
@@ -249,7 +249,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Where in the journey do most startups fail?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-4ef0b9f1-096e-4afc-88d9-267e223038e5.jpg?alt=media&token=ccfb074e-26bc-452f-bd4f-1640a3cbc53f" alt="Nostalgic 90s film aesthetic, showcasing a tech startup team brainstorming and collaborating." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-4ef0b9f1-096e-4afc-88d9-267e223038e5.jpg?alt=media&token=ccfb074e-26bc-452f-bd4f-1640a3cbc53f" alt="Nostalgic 90s film aesthetic, showcasing a tech startup team brainstorming and collaborating." className="w-full rounded-lg my-8" />
 
           <p>
             Most failures concentrate <strong>before product‑market fit</strong> (pre‑seed through seed) when teams are still validating demand,

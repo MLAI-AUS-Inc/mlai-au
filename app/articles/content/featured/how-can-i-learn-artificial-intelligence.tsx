@@ -129,7 +129,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -226,7 +226,7 @@ export default function ArticlePage() {
 
           {/* SECTION: PAA — Do I need maths or coding? */}
           <h2>Do I need maths or coding to learn AI?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-af337c0c-b67e-4790-bb6c-77f76de5fa02.jpg?alt=media&token=06faa127-111b-44dc-8750-fed1bbde6dcf" alt="Group of diverse individuals collaborating in a retro tech startup environment with vintage 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-af337c0c-b67e-4790-bb6c-77f76de5fa02.jpg?alt=media&token=06faa127-111b-44dc-8750-fed1bbde6dcf" alt="Group of diverse individuals collaborating in a retro tech startup environment with vintage 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             You can start without both, but the more technical your goal, the more you’ll rely on them. For non‑technical roles (e.g., product or operations), focus on data literacy, evaluation, and safe tool use. For technical roles, learn Python and a little linear algebra and statistics alongside projects.
@@ -258,7 +258,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Choose a learning path */}
           <h2>Choose your path: self‑paced vs Australian qualifications</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-031434c3-6229-4046-a050-4bdf000b7c7b.jpg?alt=media&token=cd22c3a9-a966-41a8-a318-869a9be1d29f" alt="People in a tech startup collaborate, embodying the exploration of self-paced vs Australian qualifications. 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-031434c3-6229-4046-a050-4bdf000b7c7b.jpg?alt=media&token=cd22c3a9-a966-41a8-a318-869a9be1d29f" alt="People in a tech startup collaborate, embodying the exploration of self-paced vs Australian qualifications. 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             You have three common routes in Australia (as at 2026):

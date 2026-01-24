@@ -83,7 +83,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -170,7 +170,7 @@ export default function ArticlePage() {
 
           {/* SECTION: How it works — activations, gradients, loss */}
           <h2>How neural networks learn: activations, gradients and loss</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-57fc6133-87b5-4b4a-80d5-c1dfafc219fe.jpg?alt=media&token=da5d3372-d413-498a-9cf4-96d9d2491726" alt="90s tech startup scene with people discussing neural networks, capturing a retro film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-57fc6133-87b5-4b4a-80d5-c1dfafc219fe.jpg?alt=media&token=da5d3372-d413-498a-9cf4-96d9d2491726" alt="90s tech startup scene with people discussing neural networks, capturing a retro film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             A neural network composes linear layers with non‑linear activations (e.g., ReLU, GELU). During training, the model predicts an output, compares it to the ground truth via a loss function, and adjusts weights using gradient descent with backpropagation. Optimisers (such as Adam) and techniques like normalisation, dropout and early stopping help models generalise rather than memorise.
@@ -197,7 +197,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Architectures */}
           <h2>Architectures you will meet in 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5548b498-0f92-411a-acd1-579ba985ed33.jpg?alt=media&token=cafb719b-c965-4846-bb34-b5dfaf675f3a" alt="People collaborating in a vibrant tech startup, captured in a nostalgic 90s film aesthetic, showcasing future architectures." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-5548b498-0f92-411a-acd1-579ba985ed33.jpg?alt=media&token=cafb719b-c965-4846-bb34-b5dfaf675f3a" alt="People collaborating in a vibrant tech startup, captured in a nostalgic 90s film aesthetic, showcasing future architectures." className="w-full rounded-lg my-8" />
 
           <p>
             • Convolutional Neural Networks (CNNs): efficient for images and spatial patterns.<br />

@@ -85,7 +85,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -174,7 +174,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>What capabilities would qualify as AGI?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-cc18daf3-4852-4ca4-9190-74f7a03c26f4.jpg?alt=media&token=69c2054f-2e4a-4181-baa2-8f8327ab6777" alt="People in a 90s tech startup setting, brainstorming ideas for artificial general intelligence (AGI) capabilities." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-cc18daf3-4852-4ca4-9190-74f7a03c26f4.jpg?alt=media&token=69c2054f-2e4a-4181-baa2-8f8327ab6777" alt="People in a 90s tech startup setting, brainstorming ideas for artificial general intelligence (AGI) capabilities." className="w-full rounded-lg my-8" />
 
           <p>
             There is no universally agreed checklist, but common proposals emphasise:
@@ -208,7 +208,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>How would we know we’ve reached AGI? Proposed evaluations</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-60ebb893-d745-4b9f-bddc-844dbf045ea6.jpg?alt=media&token=c045e78b-8679-4691-939b-0cda6faf78dd" alt="Tech professionals brainstorm in a retro 90s film aesthetic, contemplating evaluations for achieving AGI." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-60ebb893-d745-4b9f-bddc-844dbf045ea6.jpg?alt=media&token=c045e78b-8679-4691-939b-0cda6faf78dd" alt="Tech professionals brainstorm in a retro 90s film aesthetic, contemplating evaluations for achieving AGI." className="w-full rounded-lg my-8" />
 
           <p>
             Classic ideas like the Turing Test are too coarse for modern systems. Contemporary proposals combine multiple lenses: knowledge and reasoning (e.g., broad academic tests), abstract problem‑solving (e.g., ARC‑style), coding and maths, grounded or simulated tasks that require planning, and safe autonomy under uncertainty. Crucially, safety‑relevant evaluations—like honesty under pressure, resistance to jailbreaks, and robustness to adversarial prompts—must sit alongside capability metrics. No single benchmark suffices; the standard will evolve as systems improve.

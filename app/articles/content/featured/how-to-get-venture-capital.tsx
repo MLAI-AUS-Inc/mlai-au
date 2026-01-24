@@ -121,7 +121,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -155,7 +155,7 @@ export default function ArticlePage() {
             {
               title: 'Founders & Teams',
               description: 'For leaders validating ideas, seeking funding, or managing teams.',
-              icon: <RocketLaunchIcon className="h-6 w-6" />, 
+              icon: <RocketLaunchIcon className="h-6 w-6" />,
               variant: 'orange'
             },
             {
@@ -204,7 +204,7 @@ export default function ArticlePage() {
           </ArticleCallout>
 
           <h2>What Australian investors look for in 2026</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2d12f2f1-b63b-49e1-9e3e-9408162c59a6.jpg?alt=media&token=70ff7c10-fc47-4d1f-8121-00915505b875" alt="Investors discuss startups in a vibrant 90s film aesthetic tech setting, showcasing innovation and collaboration." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2d12f2f1-b63b-49e1-9e3e-9408162c59a6.jpg?alt=media&token=70ff7c10-fc47-4d1f-8121-00915505b875" alt="Investors discuss startups in a vibrant 90s film aesthetic tech setting, showcasing innovation and collaboration." className="w-full rounded-lg my-8" />
 
           <p>
             Across Stripe’s guidance and AU investor pages, common themes emerge: strong team, evidence of demand, capital efficiency, and a credible plan to a large outcome. Translate that into metrics: retention cohorts, growth rate, unit economics (LTV/CAC), sales velocity, and a bottom‑up go‑to‑market model. For AI startups, expect extra scrutiny on data rights, model licensing, evals tied to real‑world tasks, and safety/observability in production.
@@ -222,7 +222,7 @@ export default function ArticlePage() {
           </QuoteBlock>
 
           <h2>Prepare your materials: deck, model, and data room</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67ecd405-ff66-49c1-bcf6-344fe3e00b31.jpg?alt=media&token=acc4eb2a-97f1-41f1-9e05-41e7bd8b47b7" alt="Team collaborating in a retro 90s tech space, preparing materials for a startup project." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67ecd405-ff66-49c1-bcf6-344fe3e00b31.jpg?alt=media&token=acc4eb2a-97f1-41f1-9e05-41e7bd8b47b7" alt="Team collaborating in a retro 90s tech space, preparing materials for a startup project." className="w-full rounded-lg my-8" />
 
           <p>
             Most AU funds expect a 10–14 slide deck: problem, solution, product demo, traction, market, business model, go‑to‑market, competition/edge, roadmap/milestones, team, and the raise (amount, use of funds, round mechanics). Keep it visual and specific—screenshots, charts, credible numbers.
