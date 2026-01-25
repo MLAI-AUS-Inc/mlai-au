@@ -191,7 +191,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={`${TOPIC} (2026)`}
@@ -202,12 +202,10 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className="relative">
-        <div className="lg:absolute lg:right-0 lg:top-0 lg:w-72">
-          <ArticleTocPlaceholder />
-        </div>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <ArticleTocPlaceholder />
 
-        <div className="prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
+        <div className="prose prose-lg prose-indigo max-w-none text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]">
           <p>
             <strong>{TOPIC}</strong> is less about a “perfect” template and more about telling a crisp, de‑risked story. Top lists like Slidebean and Failory showcase great examples, but the pattern that wins in 2026 is consistent: one problem, one audience, clear traction, and a specific ask—delivered in 3–5 minutes.
           </p>
@@ -237,12 +235,12 @@ export default function ArticlePage() {
             accent="purple"
           />
 
-          <ArticleCallout title="Two versions win" variant="brand" icon={<span className="text-xl">💡</span>}>
+          <QuoteBlock title="Two versions win" variant="purple" icon={<span className="text-xl">💡</span>}>
             Maintain a concise live deck (visual, 10–12 slides) and a self‑contained email deck (annotated, ~12–15 slides). The former supports your narrative; the latter must survive forwarding without you.
-          </ArticleCallout>
+          </QuoteBlock>
 
           <h2>Investor‑validated structure: the 12‑slide flow</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-66a7f9bf-370f-4830-a630-d91009a58e79.jpg?alt=media&token=e0341765-316f-4b19-b047-caa45e3ca173" alt="Vibrant 90s tech scene featuring diverse individuals collaborating in a startup environment." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-66a7f9bf-370f-4830-a630-d91009a58e79.jpg?alt=media&token=e0341765-316f-4b19-b047-caa45e3ca173" alt="Vibrant 90s tech scene featuring diverse individuals collaborating in a startup environment." className="w-full rounded-lg my-8" />
 
           <p>
             A structure adapted from widely used investor templates (e.g., Sequoia) works across most sectors:
@@ -295,7 +293,7 @@ export default function ArticlePage() {
           <MLAITemplateResourceCTA />
 
           <h2>Formats and timing: slides, minutes, and file type</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f6b7cf59-6964-4301-93fa-f123a3742617.jpg?alt=media&token=a80ad5ed-844c-4e99-a3c6-98f50ca366c2" alt="90s film aesthetic scene showing diverse team collaborating in a tech startup office, surrounded by gadgets and notes." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f6b7cf59-6964-4301-93fa-f123a3742617.jpg?alt=media&token=a80ad5ed-844c-4e99-a3c6-98f50ca366c2" alt="90s film aesthetic scene showing diverse team collaborating in a tech startup office, surrounded by gadgets and notes." className="w-full rounded-lg my-8" />
 
           <p>
             For live sessions, 10–12 slides and ~10 minutes is a safe default; demo days often compress to 3–5 minutes. The classic 10/20/30 guideline remains useful: ~10 slides, ≤20 minutes, ≥30‑point text for readability. Share a PDF (16:9, under 10 MB) and carry an editable backup for live.
