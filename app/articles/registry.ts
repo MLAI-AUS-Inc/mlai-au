@@ -71,12 +71,32 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'careers/how-much-do-data-scientists-make': {
+    'featured/the-best-startup-pitch-deck-ever': {
+        title: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
+        date: '2026-01-25',
+        description: 'Investors’ 2026 expectations, the 12‑slide structure, AU‑specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/the-best-startup-pitch-deck-ever',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
+        hasContent: true,
+    },
+    'featured/how-to-get-data-science-job': {
+        title: 'How to get a data science job in Australia (2026)',
+        date: '2026-01-24',
+        description: 'AU‑focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-get-data-science-job',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How to get a data science job in Australia (2026)',
+        hasContent: true,
+    },
+    'featured/how-much-do-data-scientists-make': {
         title: "How Much Do Data Scientists Make?'",
         date: '2026-01-24',
         description: 'Salary ranges for data scientists in Australia in 2026—entry, mid, senior and lead. City and industry differences, skills that lift pay, and negotiation tips.',
         author: 'Dr Sam Donegan',
-        slug: 'careers/how-much-do-data-scientists-make',
+        slug: 'featured/how-much-do-data-scientists-make',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-efc07de1-b4f1-46b2-8245-211ce8e1dd64.jpg?alt=media&token=ad15ab6a-efa7-4176-ba33-9908ed9a2d2e',
         imageAlt: "How Much Do Data Scientists Make?'",
     },
