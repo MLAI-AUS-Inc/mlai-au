@@ -434,6 +434,28 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
         hasContent: true,
     },
+    'community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2': {
+        title: 'AI Bits for Techies | Issue #2 | 19 Jan 2026',
+        date: '2026-01-19',
+        description: 'Issue #2: Weekly deep dive into AI and ML advancements and updates.',
+        author: 'MLAI Editorial Team',
+        authors: ['samDonegan', 'junKaiChang', 'juliaPonder'],
+        slug: 'community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df',
+        imageAlt: 'Scientific illustration of transient image classification',
+        hasContent: true,
+    },
+    'community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3': {
+        title: 'AI Bits for Techies | Issue #3 | 26 Jan 2026',
+        date: '2026-01-26',
+        description: 'Issue #3: Weekly deep dive into AI and ML advancements and updates.',
+        author: 'MLAI Editorial Team',
+        authors: ['samDonegan', 'junKaiChang', 'juliaPonder'],
+        slug: 'community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df',
+        imageAlt: 'Scientific illustration of transient image classification',
+        hasContent: true,
+    },
 };
 
 export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.keys(ARTICLE_REGISTRY);

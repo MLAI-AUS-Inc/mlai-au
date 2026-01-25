@@ -14,7 +14,7 @@ import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 /** ========== INPUTS (replace all placeholders) ========== */
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
 const NEWSLETTER = 'AI Bits for Techies'
-const TITLE = `${NEWSLETTER} | Issue #1 | 8 Jan 2026`
+const TITLE = `${NEWSLETTER} | Issue #3 | 26 Jan 2026`
 const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
 const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
 
@@ -26,47 +26,52 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  // Issue #1 Specifics
   {
     id: 1,
-    question: 'What is the "Journal Paper of the Week"?',
+    question: 'Does a "Thinking" model use more electricity?',
     answer:
-      'It discusses a paper on "Textual interpretation of transient image classifications," showing how Gemini can classify astronomical images with high accuracy using just 15 labelled examples and text instructions.',
+      'Yes, significantly. For a medium-length query, GPT-5\'s average energy consumption ranges from 2.33 Wh for minimal reasoning to 17.15 Wh for high reasoning—a more than seven-fold increase.',
   },
   {
     id: 2,
-    question: 'Which AI tools are worth checking out this week?',
+    question: 'How does one AI query compare to a Google search?',
     answer:
-      'We highlight MiniMax M2.1 for coding agents, SCP for scientific experimentation contexts, DeepFabric for synthetic data generation, and NVIDIA Nemotron 3 for scalable reasoning.',
+      'A single short GPT-4o query consumes 0.42 Wh, which exceeds the footprint of a traditional Google search (0.30 Wh) by approximately 40%.',
   },
   {
     id: 3,
-    question: 'What book is recommended in this issue?',
+    question: 'Why is water usage a factor in AI?',
     answer:
-      'Max Tegmark’s "Life 3.0", which explores the future impact of superintelligence on society, work, and humanity itself.',
+      'Data centers require massive amounts of water for cooling and off-site electricity generation. GPT-4o alone is projected to evaporate enough freshwater to fill over 500 Olympic-sized pools annually.',
+  },
+  {
+    id: 4,
+    question: 'Can developers reduce this impact?',
+    answer:
+      'Yes. Improving batch sizes is one of the most effective levers; moving from a batch size of 4 to 8 can reduce the energy per prompt by approximately 45%.',
   },
 
   // Strategic / Framework Questions
   {
-    id: 4,
+    id: 5,
     question: 'Do I need to change my privacy notices for new AI features?',
     answer:
       'If you introduce new AI features that process personal or sensitive information, update your privacy notice and consent flows. Reference the OAIC APPs and include a short, plain-English description of what the model does, inputs needed, retention, and human oversight.',
   },
   {
-    id: 5,
+    id: 6,
     question: 'What is the safest way to start a pilot?',
     answer:
       'Begin with low-risk internal content (policies, FAQs), apply rate limits, log prompts/outputs, and perform red-team style testing. Use feature flags and role-based access. Run a DPIA/PIA if personal data is involved.',
   },
   {
-    id: 6,
+    id: 7,
     question: 'How should teams validate model performance?',
     answer:
       'Create a small, labeled evaluation set that mirrors your domain. Track accuracy, hallucination rate, latency, and cost per request. Re-test after any model switch or prompt change, and record changes in a decision log.',
   },
   {
-    id: 7,
+    id: 8,
     question: 'Are there grants or programs in Australia for AI experiments?',
     answer:
       'Check current state-based innovation vouchers, CSIRO Kick-Start, and university accelerator programs. Funding cycles shift, so confirm eligibility windows and co-contribution rules before committing spend.',
@@ -74,27 +79,27 @@ export const faqItems: FAQ[] = [
 ]
 
 export const summaryHighlights = {
-  heading: `${NEWSLETTER} | Issue #1`,
+  heading: `${NEWSLETTER} | Issue #3`,
   intro:
     'Three questions people are hammering into search and chat right now, plus the short answers you can steal.',
   items: [
     {
       label:
-        'Can Gemini (or other LLMs) really classify scientific images with almost no training data?',
+        'Do "thinking" models use significantly more electricity?',
       description:
-        'Yes. In this week’s paper, Gemini is given 15 labelled examples plus instructions and still hits around 93% accuracy across multiple astronomy datasets, with readable explanations for each call.',
+        'Yes. GPT-5\'s energy consumption ranges from 2.33 Wh for minimal reasoning to 17.15 Wh for high reasoning—a more than seven-fold increase. The most energy-hungry models can exceed ~33 Wh per long prompt, which is 70x+ more than efficient deployments.',
     },
     {
       label:
-        "What is an AI agent, and why are 'agentic coding' models suddenly everywhere?",
+        'Is "Model Quality" actually just "Infrastructure Efficiency"?',
       description:
-        'Agents are systems that can plan, use tools, and run multi-step work (not just answer one prompt). That is why models tuned for coding and tool-driven workflows are getting so much attention.',
+        'This week\'s research suggests a model\'s "goodness" is an emergent property of the data center it lives in. The same model can use 70% less energy and water by switching infrastructure, meaning "quality" isn\'t just about weights and biases—it\'s about the grid, cooling, and hardware.',
     },
     {
       label:
-        'If we are using GenAI at work in Australia, do we need to update our privacy notice or collection notice?',
+        'Can developers reduce AI\'s environmental impact?',
       description:
-        'Often, yes. If you start processing new kinds of personal data, using new vendors, or changing how outputs are used, your notices and comms should match reality in plain English.',
+        'Yes. Improving batch sizes from 4 to 8 can reduce energy per prompt by approximately 45%. The real question for builders: are you optimizing for capability only, or for capability per watt, per litre, per tonne of CO₂ at the scale your product is heading?',
     },
   ],
 }
@@ -139,7 +144,7 @@ export default function ArticlePage() {
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={TITLE}
-        titleHighlight="Issue #1"
+        titleHighlight="Issue #3"
         headerBgColor="cyan"
         summary={{
           heading: summaryHighlights.heading,
@@ -229,9 +234,7 @@ export default function ArticlePage() {
         </p>
 
         <p>
-          <strong>This week in one breath:</strong> Gemini doing science with basically no training data,
-          MiniMax shipping an agent-friendly model, and an evergreen ritual you can steal for your team so
-          you stop getting surprised by costs, policy, and silent model updates.
+          <strong>This week in one breath:</strong> A paper benchmarking the energy, water, and carbon footprint of LLM inference showing 70x+ differences between models, tools for local image generation and multilingual translation, and a shift in thinking: "model quality" might actually be "infrastructure efficiency"—the same model can use 70% less energy just by switching infrastructure.
         </p>
 
         <hr className="my-8 border-gray-100" />
@@ -239,47 +242,37 @@ export default function ArticlePage() {
         <ArticleImageBlock src={HERO_IMAGE} alt={HERO_IMAGE_ALT} />
 
         <h2>The one paper you should pretend you read at lunch</h2>
-        <h3>Textual interpretation of transient image classifications from large language models</h3>
+        <h3>How Hungry is AI? Benchmarking Energy, Water, and Carbon Footprint of LLM Inference</h3>
 
         <h4>What is the setup?</h4>
         <p>
-          A lot of scientific ML still looks like: label a mountain of data, build a custom model, retrain
-          when the universe changes its mind. This paper tries a different trick: use a foundation model
-          like Gemini as a low-data classifier.
+          Everyone argues about training being expensive, but the real day-to-day bill is inference: the prompts you send all day, every day. The paper's point is simple: we still lack clean, standardised, prompt-level numbers that factor in infrastructure, not just "the model."
         </p>
 
         <h4>What they did (yes, really)</h4>
         <p>
-          They gave Gemini <strong>15 labelled examples</strong> plus a short instruction set, then asked
-          it to classify astronomical images. No fine-tuning. No custom architecture. No “we trained for
-          three weeks on a GPU that costs more than my car.”
+          They benchmarked 30 models using public API performance data, then layered on infrastructure multipliers like PUE and regional carbon intensity, with hardware configurations inferred statistically. They also use a probabilistic (Monte Carlo) approach and rank "eco-efficiency" with cross-efficiency DEA.
         </p>
 
         <h4>What happened</h4>
         <p>
-          Across three datasets, they report <strong>around 93% accuracy</strong>, which is in the same
-          ballpark as a traditional CNN pipeline.
+          The spread is massive. The most energy-hungry models (they call out o3 and DeepSeek-R1) can exceed ~33 Wh per long prompt, which is 70x+ more than much smaller/efficient deployments. At the other end, they note a single short GPT-4o query at about 0.43 Wh, which looks tiny until you scale it.
         </p>
 
         <h4>Why it is interesting (beyond the number)</h4>
         <p>
-          The model also gives a plain-English explanation for each prediction. That means you can audit
-          what it thinks it is doing, instead of staring at a probability score like it is going to
-          confess its sins.
+          Because "same model" does not mean "same footprint." Datacentre overhead and where the workload runs can swing the outcome dramatically. In other words: model choice matters, but infrastructure choice is right behind it.
         </p>
 
         <h4>The real question</h4>
         <p>
-          Does this “prompted reasoning + tiny labelled set” approach generalise, or do we end up with
-          hybrid systems where smaller models do the heavy lifting and LLMs handle orchestration and
-          explanation? Either way, it is a strong signal that “LLMs in science” is graduating from vibes
-          to workflows.
+          If per-query costs keep getting cheaper and faster, usage will explode anyway (Jevons vibes). So the real builder question becomes: are you optimising for capability only, or for capability per watt, per litre, per tonne of CO₂, at the scale your product is heading?
         </p>
 
         <p>
           <strong>Full paper:</strong>{' '}
-          <a href="https://arxiv.org/pdf/2510.06931" target="_blank" rel="noopener noreferrer">
-            https://arxiv.org/pdf/2510.06931
+          <a href="https://arxiv.org/abs/2505.09598" target="_blank" rel="noopener noreferrer">
+            https://arxiv.org/abs/2505.09598
           </a>
         </p>
 
@@ -287,97 +280,82 @@ export default function ArticlePage() {
 
         <h2>Tools worth poking this week (in a sandbox first)</h2>
 
-        <h3>MiniMax M2.1</h3>
+        <h3>FLUX.2 [klein] (Black Forest Labs)</h3>
         <p>
-          Fast, cheaper, geared for agent and coding workflows, with stronger instruction-following than
-          the previous version.
-        </p>
-        <p>
-          <strong>Best for:</strong> tool-using agents, multi-language code, app/web dev without paying
-          enterprise-sadness prices.
+          <strong>Best for:</strong> Developers and creators with consumer-grade hardware. These compressed models allow for
+          professional-grade image generation and multi-reference editing directly on local GPUs (like the RTX
+          3090/4090) with sub-second response times.
           <br />
-          <a href="https://www.minimax.io/news/minimax-m21" target="_blank" rel="noopener noreferrer">
-            https://www.minimax.io/news/minimax-m21
+          <a href="https://blackforestlabs.ai/" target="_blank" rel="noopener noreferrer">
+            https://blackforestlabs.ai/
           </a>
         </p>
 
-        <h3>SCP (Scientific Context Protocol)</h3>
+        <h3>TranslateGemma (Google)</h3>
         <p>
-          A protocol for connecting agents to scientific tools, datasets, models, and even lab
-          instruments behind a unified interface.
-        </p>
-        <p>
-          <strong>Best for:</strong> orchestrating end-to-end experiments from planning to execution with
-          fewer glue scripts held together by hope.
+          <strong>Best for:</strong> Building low-latency, multilingual applications. These open-weights models are optimized for
+          speed and accuracy across 55 languages, fitting on everything from H100 GPUs down to mobile devices
+          while maintaining high-fidelity translation.
           <br />
-          <a href="https://github.com/InternScience/scp" target="_blank" rel="noopener noreferrer">
-            https://github.com/InternScience/scp
+          <a href="https://ai.google.dev/gemma" target="_blank" rel="noopener noreferrer">
+            https://ai.google.dev/gemma
           </a>
         </p>
 
-        <h3>DeepFabric</h3>
-        <p>Generate structured synthetic datasets using LLMs.</p>
+        <h3>GLM-Image (Zhipu AI)</h3>
         <p>
-          <strong>Best for:</strong> training and stress-testing when real data is scarce, expensive, or
-          legally annoying.
+          <strong>Best for:</strong> Designers requiring precise text rendering and multi-subject consistency. This hybrid model
+          combines autoregressive and diffusion techniques to excel at complex tasks like style transfer and
+          generating high-resolution images with legible text.
           <br />
-          <a href="https://github.com/always-further/deepfabric" target="_blank" rel="noopener noreferrer">
-            https://github.com/always-further/deepfabric
+          <a href="https://github.com/THUDM/GLM-Image" target="_blank" rel="noopener noreferrer">
+            https://github.com/THUDM/GLM-Image
           </a>
         </p>
-
-        <h3>NVIDIA Nemotron 3</h3>
-        <p>
-          An open family of large language models designed for reasoning, long context, and agentic
-          workflows.
-        </p>
-        <p>
-          <strong>Best for:</strong> teams that want customisable models and control over deployment at
-          scale.
-          <br />
-          <a
-            href="https://research.nvidia.com/labs/nemotron/Nemotron-3/"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            https://research.nvidia.com/labs/nemotron/Nemotron-3/
-          </a>
-        </p>
-
-        <hr className="my-8 border-gray-100" />
 
         <ArticleImageBlock
           src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_01_56%20PM.png?alt=media&token=7aa355b9-1304-40cf-bba2-1808e9141a26"
-          alt="Book cover of Life 3.0 by Max Tegmark"
+          alt="Book cover"
         />
 
         <h2>Book recommendation (because your brain deserves more than changelogs)</h2>
-        <h3>Life 3.0 (Max Tegmark)</h3>
+        <h3>The Atlas of AI – Kate Crawford</h3>
         <p>
-          This is not “AI will fold your laundry” optimism. It is “what happens if we build systems that
-          can outthink us, redesign themselves, and change the rules” seriousness, explained in a way
-          that does not feel like a policy briefing.
+          Crawford's work is the grounding counterweight to this week's paper. It zooms out and maps the physical
+          stuff AI is actually made of.
         </p>
         <p>
-          If you build products, invest, or lead teams, this book forces one uncomfortable but useful
-          thought: even if your roadmap is boring, the underlying game board might not be.
+          Her core argument is blunt: AI is neither artificial nor intelligent. It is an extractive industry. One that runs
+          on lithium mines, exploited labour, and relentless data harvesting.
+        </p>
+        <p>
+          Where this week's paper measures the operational hunger of LLMs, Crawford exposes the deeper,
+          structural costs. The supply chains, the labour, the land.
+        </p>
+        <p>
+          The "cloud" stops looking fluffy very quickly. In her framing, it is a planetary-scale industrial system that
+          centralises power and steadily drains natural resources.
+        </p>
+        <p>
+          Same story. Different layers.
         </p>
 
         <hr className="my-8 border-gray-100" />
 
         <h2>Geeky thought of the day</h2>
         <p className="font-semibold">
-          Have LLMs passed the Turing Test, or are we just extremely easy to impress?
+          Is "Model Quality" actually just "Infrastructure Efficiency"?
         </p>
         <p>
-          LLMs can convincingly impersonate a human in short bursts, especially when the conversation
-          stays on rails. But pattern prediction is not the same thing as understanding, and long, messy
-          conversations still expose cracks.
+          We often treat an AI's intelligence as a fixed property, but this research suggests that a model's
+          "goodness" is actually an emergent property of the data center it lives in. If the same model uses 70%
+          less energy and water simply by switching from a proprietary server to a highly optimized cloud provider,
+          then a model's "quality" isn't just about weights and biases—it's about the grid, the cooling, and the
+          hardware.
         </p>
         <p>
-          Still, the wild part is not whether they are “human.” It is that they are already changing
-          work, creativity, support, coding, research, and how people make decisions. The bar is not “is
-          it conscious?” The bar is “is it useful, safe, and correctly governed for this job?”
+          In an era of adaptive routing, we have to stop asking "How smart is this AI?" and start asking
+          "How effectively can this infrastructure support its reasoning?"
         </p>
 
         <hr className="my-10 border-gray-100" />
