@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 
 import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { getAuthorProfile } from '../../authors'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
 import { ArticleImageBlock } from '../../../components/articles/ArticleImageBlock'
@@ -139,30 +140,10 @@ export const useCustomHeader = true
 
 export default function ArticlePage() {
   const authors = [
-    {
-      name: 'Dr Sam Donegan',
-      role: 'Founder & Lead Editor',
-      bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
-    },
-    {
-      name: 'Jun Kai (Luc) Chang',
-      role: 'AI Software Developer',
-      bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
-    },
-    {
-      name: 'Julia Ponder',
-      role: 'Technical Writer',
-      bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
-    },
-    {
-      name: 'Shivang Shekhar',
-      role: 'Technical Writer',
-      bio: 'Shivang graduated as a mechanical engineer with a masters in chemistry. Currently he is a final year master in AI student at Monash who is highly curious in keeping up to date on AI trends and Advancements',
-      avatarUrl: 'https://placehold.co/400x400/png',
-    },
+    getAuthorProfile('samDonegan'),
+    getAuthorProfile('junKaiChang'),
+    getAuthorProfile('juliaPonder'),
+    getAuthorProfile('shivangShekhar'),
   ]
 
   const breadcrumbs = [
