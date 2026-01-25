@@ -69,6 +69,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/the-best-startup-pitch-deck-ever': {
+        title: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
+        date: '2026-01-25',
+        description: 'Investors’ 2026 expectations, the 12‑slide structure, AU‑specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/the-best-startup-pitch-deck-ever',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
+        hasContent: true,
+    },
     'featured/how-to-get-data-science-job': {
         title: 'How to get a data science job in Australia (2026)',
         date: '2026-01-24',
