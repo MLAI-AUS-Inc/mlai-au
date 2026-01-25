@@ -104,18 +104,20 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant="info">
-          <p className="text-sm text-gray-800">
+        <QuoteBlock variant='purple' icon={<span className='text-xl'>💡</span>}>
+          <p className='text-sm text-white'>
+            
             This guide is part of our broader series on {TOPIC}. For a career‑oriented overview, see our{' '}
-            <Link to="/articles/ai-careers-australia" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles/ai-careers-australia" className="font-semibold text-white underline-offset-4 hover:underline">
               AI careers in Australia guide
             </Link>
             . Prefer to browse?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
               Explore more articles →
             </Link>
+          
           </p>
-        </ArticleCallout>
+        </QuoteBlock>
 
         {/* Persona Grid */}
         <AudienceGrid

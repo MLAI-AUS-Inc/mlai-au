@@ -137,14 +137,16 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant="info">
-          <p className="text-sm text-gray-800">
+        <QuoteBlock variant='purple' icon={<span className='text-xl'>💡</span>}>
+          <p className='text-sm text-white'>
+            
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
               Browse related articles →
             </Link>
+          
           </p>
-        </ArticleCallout>
+        </QuoteBlock>
 
         {/* Persona Grid */}
         <AudienceGrid
