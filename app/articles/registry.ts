@@ -441,7 +441,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         author: 'MLAI Editorial Team',
         authors: ['samDonegan', 'junKaiChang', 'juliaPonder', 'shivangShekhar'],
         slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2',
-        image: 'https://placehold.co/1200x600/png?text=AI+Bits+for+Techies+Issue+%232',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268',
         imageAlt: 'AI and ML advancements visualization',
         hasContent: true,
     },

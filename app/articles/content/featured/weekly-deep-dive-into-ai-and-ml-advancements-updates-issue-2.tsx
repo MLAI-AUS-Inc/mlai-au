@@ -16,7 +16,7 @@ import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
 const NEWSLETTER = 'AI Bits for Techies'
 const TITLE = `${NEWSLETTER} | Issue #2 | 15 Jan 2026`
-const HERO_IMAGE = 'https://placehold.co/1200x600/png?text=AI+Bits+for+Techies+Issue+%232'
+const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268'
 const HERO_IMAGE_ALT = 'AI and ML advancements visualization'
 
 /** ===== FAQ ===== */

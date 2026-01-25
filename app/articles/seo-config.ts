@@ -253,7 +253,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
-    '/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
+    '/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
         toc: true,
         howTo: false,
         mediaObject: true,
