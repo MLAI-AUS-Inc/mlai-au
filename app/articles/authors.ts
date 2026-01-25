@@ -98,6 +98,7 @@ export function getAuthorProfile(key: AuthorRegistryKey): AuthorRegistryEntry {
 export function getDefaultArticleAuthorDetails(): {
     name: string;
     role?: string;
+    credentials?: string;
     bio?: string;
     avatarUrl?: string;
     avatarAlt?: string;
@@ -108,6 +109,7 @@ export function getDefaultArticleAuthorDetails(): {
     return {
         name: author?.name ?? fallbackName,
         role: author?.role,
+        credentials: author?.credentials,
         bio: author?.bio,
         avatarUrl: author?.avatarUrl ?? DEFAULT_AUTHOR_AVATAR_FALLBACK_URL,
         avatarAlt: author?.avatarAlt ?? author?.name ?? fallbackName,
