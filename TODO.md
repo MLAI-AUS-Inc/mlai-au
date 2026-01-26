@@ -5,3 +5,5 @@
 - [x] Adjust SEO config path for the new slug
 - [x] Fix JSX string literal in data science salary article to unblock production build
 - [x] Update the data scientist salary article title and slug to match "How Much Do Data Scientists Make?'"
+- [x] Update pricing article FAQ import to use the app alias for build stability
+- [x] Fix JSX string quoting in the VC firm article CTA body
