@@ -173,7 +173,7 @@ export const meta: MetaFunction<typeof loader> = ({ data }) => {
 export async function loader({ params }: LoaderFunctionArgs) {
   const article = applyArticleRegistryDefaults({
     title: `${TOPIC} (2026)`,
-    datePublished: DATE_PUBLISHED,
+    date: DATE_PUBLISHED,
     dateModified: DATE_MODIFIED,
     description: DESCRIPTION,
     author: AUTHOR,
@@ -199,28 +199,7 @@ export default function ArticlePage() {
     <div className="bg-transparent">
       <ArticleLayout
         article={article}
-        // Sticky Sidebar Components
-        toc={<ArticleTocPlaceholder />}
         
-        summaryHighlights={{
-          heading: `Key facts: ${TOPIC}`,
-          intro:
-            'Singapore’s accelerator/incubator landscape changes each year. Use ranges, verify activity (2025/2026), and check terms before you apply.',
-          items: [
-            {
-              label: 'How many accelerators and incubators are in Singapore in 2026?',
-              description: 'Roughly 60–80 active programmes, depending on definitions and cohort activity; many roundups list ~65.',
-            },
-            {
-              label: 'Why do different sources list different counts?',
-              description: 'Scope differs (accelerators vs incubators vs studios), plus duplicates, paused brands, and renames.',
-            },
-            {
-              label: 'How can I check a programme is active now?',
-              description: 'Look for 2025/2026 cohorts, updated portfolios, clear terms (equity/fees), and speak to 2–3 alumni.',
-            },
-          ],
-        }}
         breadcrumb={
           <nav aria-label="Breadcrumb" className="text-sm text-gray-500 mb-4">
             <ol className="flex items-center space-x-2">
@@ -235,6 +214,27 @@ export default function ArticlePage() {
           </nav>
         }
       >
+        <ArticleTocPlaceholder />
+        <section className="my-8 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900">{`Key facts: ${TOPIC}`}</h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Singapore’s accelerator/incubator landscape changes each year. Use ranges, verify activity (2025/2026), and check terms before you apply.
+          </p>
+          <dl className="mt-4 space-y-4">
+            <div>
+              <dt className="font-semibold text-gray-900">How many accelerators and incubators are in Singapore in 2026?</dt>
+              <dd className="text-sm text-gray-600">Roughly 60–80 active programmes, depending on definitions and cohort activity; many roundups list ~65.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-gray-900">Why do different sources list different counts?</dt>
+              <dd className="text-sm text-gray-600">Scope differs (accelerators vs incubators vs studios), plus duplicates, paused brands, and renames.</dd>
+            </div>
+            <div>
+              <dt className="font-semibold text-gray-900">How can I check a programme is active now?</dt>
+              <dd className="text-sm text-gray-600">Look for 2025/2026 cohorts, updated portfolios, clear terms (equity/fees), and speak to 2–3 alumni.</dd>
+            </div>
+          </dl>
+        </section>
         {/* 1) Intro alert - Clean, neutral style */}
         <div className="my-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <p className="text-sm text-gray-700 flex gap-2">
