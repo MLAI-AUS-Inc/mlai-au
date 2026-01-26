@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-many-startup-accelerators-and-incubators-are-there-in-si': {
+        title: 'How many startup accelerators and incubators are there in Singapore? (2026)',
+        date: '2026-01-26',
+        description: 'Short answer: about 60–80 active accelerators/incubators in Singapore in 2026, depending on definitions. Learn how counts are built and how to verify programmes.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-many-startup-accelerators-and-incubators-are-there-in-si',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-765a4937-d602-4779-9250-982df5058a4b.jpg?alt=media&token=cae4b2b5-76fd-48f2-bb4d-c018c943c150',
+        imageAlt: 'Diverse group of entrepreneurs discussing ideas in a vibrant 90s film-inspired tech workspace.',
+        hasContent: true,
+    },
     'featured/how-does-a-venture-capital-firm-work': {
         title: 'How Does a Venture Capital Firm Work? (2026 Guide)',
         date: '2026-01-25',

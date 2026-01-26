@@ -7,3 +7,4 @@
 - [x] Update the data scientist salary article title and slug to match "How Much Do Data Scientists Make?'"
 - [x] Update pricing article FAQ import to use the app alias for build stability
 - [x] Fix JSX string quoting in the VC firm article CTA body
+- [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
