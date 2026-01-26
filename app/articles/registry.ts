@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-much-venture-capital-was-invested-in-2023': {
+        title: 'How much venture capital was invested in 2023?',
+        date: '2026-01-26',
+        description: 'Global VC funding in 2023 ranged between ~US$248B and ~US$285B depending on source. Why estimates differ, sector trends (AI), and what it means for Australia.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-much-venture-capital-was-invested-in-2023',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c930b949-7cad-4fe3-b144-e118eca0cfd1.jpg?alt=media&token=d69d7730-2e33-4055-b69e-b2cc47e40ad4',
+        imageAlt: 'Colorful 90s aesthetic photo of diverse tech professionals collaborating in a startup environment.',
+        hasContent: true,
+    },
     'featured/how-many-startup-accelerators-and-incubators-are-there-in-si': {
         title: 'How many startup accelerators and incubators are there in Singapore? (2026)',
         date: '2026-01-26',
