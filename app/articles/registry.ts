@@ -87,7 +87,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         description: 'Understand VC firm structure, LPs vs GPs, fund lifecycle, how VCs make money, the investment process, and what founders in Australia should know in 2026.',
         author: 'Dr Sam Donegan',
         slug: 'featured/how-does-a-venture-capital-firm-work',
-        image: 'https://placehold.co/1200x630/png',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aab7aebb-f326-4ee4-b06c-48702edb6ddf.jpg?alt=media&token=fc7e98eb-7918-4997-a2e0-26a4964b64e6',
         imageAlt: 'How Does a Venture Capital Firm Work? (2026 Guide)',
         hasContent: true,
     },
