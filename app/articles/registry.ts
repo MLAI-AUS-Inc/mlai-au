@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-does-a-venture-capital-firm-work': {
+        title: 'How Does a Venture Capital Firm Work? (2026 Guide)',
+        date: '2026-01-25',
+        description: 'Understand VC firm structure, LPs vs GPs, fund lifecycle, how VCs make money, the investment process, and what founders in Australia should know in 2026.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-does-a-venture-capital-firm-work',
+        image: 'https://placehold.co/1200x630/png',
+        imageAlt: 'How Does a Venture Capital Firm Work? (2026 Guide)',
+        hasContent: true,
+    },
     'featured/the-best-startup-pitch-deck-ever': {
         title: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
         date: '2026-01-25',
