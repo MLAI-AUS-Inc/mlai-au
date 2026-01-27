@@ -11,4 +11,5 @@
 - [x] Update collaboration tools article slug/title to "what-are-collaboration-tools"
 - [x] Align collaboration tools registry/SEO paths and content filename with new slug
 - [x] Normalize featured article ArticleFAQ imports to use app alias for build stability
+- [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
 - [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors
