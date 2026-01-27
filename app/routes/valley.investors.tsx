@@ -1,5 +1,6 @@
 import { Link, useLoaderData } from "react-router";
-import type { Route } from "./+types/valley.investors";
+import type { LoaderFunctionArgs } from "react-router";
+
 import { requireFounder } from "~/lib/valley-session";
 import {
     SparklesIcon,
@@ -12,7 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
-export async function loader({ request }: Route.LoaderArgs) {
+export async function loader({ request }: LoaderFunctionArgs) {
     const user = requireFounder(request);
 
     // Mock Founder Stats (Derived from latest update)

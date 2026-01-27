@@ -24,20 +24,27 @@ interface AuthenticatedLayoutProps {
     user: User;
     navigation?: { name: string; href: string; icon: any }[];
     userNavigation?: { name: string; href: string }[];
+    homePath?: string;
 }
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation }: AuthenticatedLayoutProps) {
+export default function AuthenticatedLayout({
+    children,
+    user,
+    navigation: customNavigation,
+    userNavigation: customUserNavigation,
+    homePath = "/esafety/dashboard"
+}: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
     const pathname = location.pathname;
 
     const defaultNavigation = [
-        { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
+        { name: 'Dashboard', href: homePath, icon: HomeIcon },
         { name: 'Profile', href: '/esafety/profile', icon: UserCircleIcon },
         { name: 'Submissions', href: '/esafety/leaderboard', icon: TrophyIcon },
         { name: 'Resources', href: '/esafety/resources', icon: BookOpenIcon },
@@ -47,11 +54,11 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
     const updatedNavigation = navigation.map(item => ({
         ...item,
-        current: pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
+        current: pathname === item.href || (item.href !== '/' && item.href !== '/esafety' && pathname.startsWith(item.href)),
     }));
 
     const defaultUserNavigation = [
-        { name: 'Dashboard', href: '/esafety/dashboard' },
+        { name: 'Dashboard', href: homePath },
         { name: 'Profile', href: '/esafety/profile' },
     ];
 
@@ -117,7 +124,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                     <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
                                         <div className="flex h-16 shrink-0 items-center">
                                             <Link
-                                                to="/esafety/dashboard"
+                                                to={homePath}
                                                 onClick={() => setSidebarOpen(false)}
                                             >
                                                 <ImageWithFallback
@@ -194,15 +201,17 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                 >
                     <div className="flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-indigo-600 px-6">
                         <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
-                            <ImageWithFallback
-                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
-                                src={isExpanded
-                                    ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
-                                    : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}
-                                alt="MLAI Logo"
-                                width={220}
-                                height={80}
-                            />
+                            <Link to={homePath}>
+                                <ImageWithFallback
+                                    className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
+                                    src={isExpanded
+                                        ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
+                                        : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}
+                                    alt="MLAI Logo"
+                                    width={220}
+                                    height={80}
+                                />
+                            </Link>
                         </div>
                         <nav className="flex flex-1 flex-col">
                             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -242,8 +251,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                     </ul>
                                 </li>
                                 <li className="mt-auto mb-4">
-                                    <a
-                                        href="/"
+                                    <Link
+                                        to="/"
                                         className={classNames(
                                             "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
                                             isExpanded ? '' : 'justify-center'
@@ -261,7 +270,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                         >
                                             Back to MLAI
                                         </span>
-                                    </a>
+                                    </Link>
                                 </li>
                             </ul>
                         </nav>

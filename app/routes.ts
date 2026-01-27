@@ -49,7 +49,10 @@ export default [
   route("/valley", "routes/valley.tsx", [
     index("routes/valley._index.tsx"),
     route("create-update", "routes/valley.create-update.tsx"),
-    route("discover", "routes/valley.investors.tsx"), // Placeholder for next step
+    route("discover", "routes/valley.discover.tsx"),
+    route("connections", "routes/valley.connections.tsx"),
+    route("history/:company", "routes/valley.history.$company.tsx"),
+    route("chat/:connectionId", "routes/valley.chat.$connectionId.tsx"),
   ]),
   route("/valley/logout", "routes/valley.logout.tsx"),
 

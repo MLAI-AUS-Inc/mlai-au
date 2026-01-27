@@ -51,7 +51,7 @@ export function clearValleySessionCookie(): string {
 export function requireValleyAuth(request: Request): ValleyUser {
     const user = getValleyUser(request);
     if (!user) {
-        throw redirect("/valley/login");
+        throw redirect("/valley");
     }
     return user;
 }
@@ -60,7 +60,7 @@ export function requireValleyAuth(request: Request): ValleyUser {
 export function requireFounder(request: Request): ValleyUser {
     const user = requireValleyAuth(request);
     if (user.role !== "founder") {
-        throw redirect("/valley/login");
+        throw redirect("/valley");
     }
     return user;
 }
@@ -68,7 +68,7 @@ export function requireFounder(request: Request): ValleyUser {
 export function requireInvestor(request: Request): ValleyUser {
     const user = requireValleyAuth(request);
     if (user.role !== "investor") {
-        throw redirect("/valley/login");
+        throw redirect("/valley");
     }
     return user;
 }

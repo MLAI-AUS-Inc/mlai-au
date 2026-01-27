@@ -5,6 +5,7 @@ import { useState } from "react";
 const navigation = [
   { name: "About", href: "/#about" },
   { name: "Events", href: "/#upcoming-events" },
+  { name: "Valley", href: "/valley" },
   {
     name: "Volunteer",
     href: "https://forms.gle/GwZR49kwTMszLKtN8",

@@ -1,0 +1,21 @@
+[
+    {
+        "id": "mock-1",
+        "companyName": "TechFlow",
+        "founderName": "Sarah Chen",
+        "title": "December 2025 Update",
+        "month": "December",
+        "year": 2025,
+        "date": "2025-12-01T00:00:00.000Z",
+        "metrics": {
+            "revenue": "45,000",
+            "growth": "23%",
+            "users": "1,250"
+        },
+        "highlights": "Reached product-market fit in the enterprise segment. Major partnership signed with Global Solutions Ltd.",
+        "challenges": "Hiring engineering talent is slower than expected.",
+        "asks": "Intros to senior react developers.",
+        "likes": 4,
+        "comments": 2
+    }
+]

@@ -28,18 +28,23 @@ export async function loader({ request }: Route.LoaderArgs) {
 
     let existingData = null;
     if (editId) {
-        // Mock existing data (matching the Test update on dashboard)
-        existingData = {
-            projectIntro: "Valley - Connect founders with investors through monthly updates.",
-            month: "January",
-            year: 2026,
-            revenue: "127500",
-            growth: "18",
-            activeUsers: "3420",
-            highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
-            challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket."
-        };
+        const { getUpdateById } = await import("~/lib/storage.server");
+        const savedUpdate = await getUpdateById(editId);
+
+        if (savedUpdate) {
+            existingData = {
+                id: savedUpdate.id,
+                projectIntro: savedUpdate.projectIntro,
+                month: savedUpdate.month,
+                year: savedUpdate.year,
+                revenue: savedUpdate.metrics.revenue,
+                growth: savedUpdate.metrics.growth,
+                activeUsers: savedUpdate.metrics.users,
+                highlights: savedUpdate.highlights,
+                challenges: savedUpdate.challenges,
+                asks: savedUpdate.asks
+            };
+        }
     }
 
     return { user, existingData, isEdit: !!editId };
@@ -71,9 +76,36 @@ export async function action({ request }: Route.ActionArgs) {
         };
     }
 
+
     if (intent === "publish") {
-        console.log("Publishing update:", updates);
-        // Mock success with a persistence cookie for the dashboard
+        const user = requireFounder(request);
+        const { getUpdates, saveUpdate } = await import("~/lib/storage.server");
+
+        // Construct the update object
+        const newUpdate = {
+            id: updates.id ? updates.id.toString() : Date.now().toString(),
+            companyName: user.companyName,
+            founderName: user.fullName,
+            title: `${updates.month} ${updates.year} Update`,
+            month: updates.month.toString(),
+            year: parseInt(updates.year.toString()),
+            date: new Date().toISOString(),
+            metrics: {
+                revenue: updates.revenue?.toString() || "0",
+                growth: updates.growth?.toString() || "0%",
+                users: updates.activeUsers?.toString() || "0"
+            },
+            highlights: updates.highlights?.toString() || "",
+            challenges: updates.challenges?.toString() || "",
+            asks: updates.asks?.toString() || "",
+            projectIntro: updates.projectIntro?.toString() || "",
+            likes: [],
+            comments: []
+        };
+
+        await saveUpdate(newUpdate);
+
+        // Set persistence cookie for dashboard UX
         return redirect("/valley", {
             headers: {
                 "Set-Cookie": "valley_submitted=true; Path=/; Max-Age=3600; SameSite=Lax"

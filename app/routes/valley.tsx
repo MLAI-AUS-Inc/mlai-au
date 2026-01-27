@@ -15,7 +15,7 @@ const FOUNDER_NAVIGATION = [
 
 const INVESTOR_NAVIGATION = [
     { name: 'Portfolio Updates', href: '/valley', icon: DocumentTextIcon },
-    { name: 'Connections', href: '/valley/discover', icon: MagnifyingGlassIcon },
+    { name: 'Connections', href: '/valley/connections', icon: MagnifyingGlassIcon },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -196,7 +196,12 @@ export default function ValleyApp() {
     const nav = valleyUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
 
     return (
-        <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]}>
+        <AuthenticatedLayout
+            user={platformUser}
+            navigation={nav}
+            userNavigation={[]}
+            homePath="/valley"
+        >
             {valleyUser ? <Outlet /> : <LoginForm />}
         </AuthenticatedLayout>
     );

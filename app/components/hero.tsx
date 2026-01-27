@@ -61,6 +61,20 @@ export default function Hero() {
           >
             AUSTRALIAN STARTUPS
           </p>
+
+          {/* Valley CTA Button */}
+          <div className="mt-8 sm:mt-12">
+            <a
+              href="/valley"
+              className="inline-flex items-center gap-3 px-8 py-4 bg-[var(--brutalist-orange)] text-white text-xl font-bold rounded-xl border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transition-all active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+              style={{ fontFamily: "'Oswald', sans-serif" }}
+            >
+              GO TO VALLEY
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
         </div>
       </div>
     </section>

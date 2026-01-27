@@ -38,7 +38,7 @@ export default defineConfig({
     reactRouter(),
     tsconfigPaths(),
   ],
-  server: {
+  /* server: {
     proxy: {
       '/api': {
         target: 'http://localhost',
@@ -47,7 +47,7 @@ export default defineConfig({
         ws: true,
       },
     },
-  },
+  }, */
   optimizeDeps: {
     include: [
       "@heroicons/react/20/solid",
