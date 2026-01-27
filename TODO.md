@@ -9,3 +9,4 @@
 - [x] Fix JSX string quoting in the VC firm article CTA body
 - [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
 - [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
+- [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors

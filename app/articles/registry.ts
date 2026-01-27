@@ -79,6 +79,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/how-technology-is-shaping-learning-in-higher-education',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6d1a2d84-8b4e-4540-969a-efedb4ed79d0.jpg?alt=media&token=40754573-bde6-4fe3-991d-f9b37be9cb08',
         imageAlt: 'A retro-inspired scene showcasing diverse individuals collaborating in a tech startup environment.',
+    },
+    'featured/venture-capital-how-does-it-work': {
+        title: 'Venture capital: how it works (2026)',
+        date: '2026-01-26',
+        description: 'Plain‑English guide to how venture capital works in 2026: fund mechanics, rounds, dilution, term sheets, and Australian considerations. For founders and learners.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/venture-capital-how-does-it-work',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9dce8514-cb13-4930-b27d-d1f5dbefd41e.jpg?alt=media&token=10c631f0-44c2-4421-9a86-a5505a3d0383',
+        imageAlt: 'Team collaborating in a retro 90s tech startup office amidst brainstorming and innovation.',
         hasContent: true,
     },
     'featured/how-many-startup-accelerators-and-incubators-are-there-in-si': {
