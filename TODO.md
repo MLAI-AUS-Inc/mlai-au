@@ -9,3 +9,4 @@
 - [x] Fix JSX string quoting in the VC firm article CTA body
 - [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
 - [x] Align pricing article FAQ import path with other featured articles to fix CI build resolution
+- [x] Switch sitemap generation scripts to use bunx so tsx is available in CI
