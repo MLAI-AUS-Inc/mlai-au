@@ -10,3 +10,8 @@
 - [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
 - [x] Align pricing article FAQ import path with other featured articles to fix CI build resolution
 - [x] Switch sitemap generation scripts to use bunx so tsx is available in CI
+- [x] Update collaboration tools article slug/title to "what-are-collaboration-tools"
+- [x] Align collaboration tools registry/SEO paths and content filename with new slug
+- [x] Normalize featured article ArticleFAQ imports to use app alias for build stability
+- [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
+- [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors
