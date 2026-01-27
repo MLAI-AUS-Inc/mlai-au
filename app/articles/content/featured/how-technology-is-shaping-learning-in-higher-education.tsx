@@ -174,11 +174,16 @@ export default function ArticleContent() {
         </p>
 
         {/* Hero Image - Use ArticleImageBlock, not raw img */}
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="Hybrid‑first learning: recorded lectures, active seminars, and digital assessments coexist in 2026."
-        />
+        <figure className="my-12">
+          <ArticleImageBlock
+            src={HERO_IMAGE}
+            alt={HERO_IMAGE_ALT}
+            containerClassName="my-0"
+          />
+          <figcaption className="mt-4 text-center text-sm text-gray-500">
+            Hybrid‑first learning: recorded lectures, active seminars, and digital assessments coexist in 2026.
+          </figcaption>
+        </figure>
 
         {/* WHO IS THIS FOR - Use AudienceGrid, not raw HTML divs */}
         <AudienceGrid

@@ -174,11 +174,16 @@ export default function ArticleContent() {
         </p>
 
         {/* Hero Image - Use ArticleImageBlock, not raw img */}
-        <ArticleImageBlock
-          src={HERO_IMAGE}
-          alt={HERO_IMAGE_ALT}
-          caption="Hybrid‑first learning: recorded lectures, active seminars, and digital assessments coexist in 2026."
-        />
+        <figure className="my-12">
+          <ArticleImageBlock
+            src={HERO_IMAGE}
+            alt={HERO_IMAGE_ALT}
+            containerClassName="my-0"
+          />
+          <figcaption className="mt-4 text-center text-sm text-gray-500">
+            Hybrid‑first learning: recorded lectures, active seminars, and digital assessments coexist in 2026.
+          </figcaption>
+        </figure>
 
         {/* WHO IS THIS FOR - Use AudienceGrid, not raw HTML divs */}
         <AudienceGrid
@@ -220,11 +225,16 @@ export default function ArticleContent() {
         </QuoteBlock>
 
         <h2>AI in the classroom: personalisation, feedback, and integrity</h2>
-        <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-b18e8f62-7706-4dc6-b3ae-f40897239931.jpg?alt=media&token=d4fc9cf8-3710-4463-91fa-735a34c159a1"
-          alt="Diverse team in a retro tech setting collaborates on AI-driven education solutions, capturing 90s film vibes."
-          caption="Teaching teams prototyping AI-enabled learning support and assessment approaches."
-        />
+        <figure className="my-12">
+          <ArticleImageBlock
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-b18e8f62-7706-4dc6-b3ae-f40897239931.jpg?alt=media&token=d4fc9cf8-3710-4463-91fa-735a34c159a1"
+            alt="Diverse team in a retro tech setting collaborates on AI-driven education solutions, capturing 90s film vibes."
+            containerClassName="my-0"
+          />
+          <figcaption className="mt-4 text-center text-sm text-gray-500">
+            Teaching teams prototyping AI-enabled learning support and assessment approaches.
+          </figcaption>
+        </figure>
 
         <p>
           Generative AI can scaffold ideas, offer draft feedback, and simulate interview
@@ -248,11 +258,16 @@ export default function ArticleContent() {
         </QuoteBlock>
 
         <h2>Assessments are evolving: authentic tasks and open‑AI policies</h2>
-        <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-dcc535fb-c9bb-468b-ba57-b3ccd4f41cee.jpg?alt=media&token=1e84bca8-2e45-4a34-9f3b-f04a93559d34"
-          alt="A vibrant 90s tech startup scene showcasing diverse individuals collaborating on innovative projects."
-          caption="Assessment formats are shifting toward collaborative, authentic project work that becomes portfolio evidence."
-        />
+        <figure className="my-12">
+          <ArticleImageBlock
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-dcc535fb-c9bb-468b-ba57-b3ccd4f41cee.jpg?alt=media&token=1e84bca8-2e45-4a34-9f3b-f04a93559d34"
+            alt="A vibrant 90s tech startup scene showcasing diverse individuals collaborating on innovative projects."
+            containerClassName="my-0"
+          />
+          <figcaption className="mt-4 text-center text-sm text-gray-500">
+            Assessment formats are shifting toward collaborative, authentic project work that becomes portfolio evidence.
+          </figcaption>
+        </figure>
 
         <p>
           As open‑book and open‑AI norms grow, assessments lean towards real‑world
