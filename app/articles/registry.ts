@@ -71,12 +71,12 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'featured/what-is-a-collaboration-tools': {
-        title: 'What are collaboration tools?',
+    'featured/what-are-collaboration-tools': {
+        title: 'What are collaboration tools',
         date: '2026-01-26',
         description: 'A plain-English guide to collaboration tools: definition, types, benefits, examples, and how to choose for Australian teams.',
         author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-a-collaboration-tools',
+        slug: 'featured/what-are-collaboration-tools',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c642a28-660d-4dee-b077-ee0c5181aa24.jpg?alt=media&token=188443b2-3bf5-4caa-b39f-68e465028cf4',
         imageAlt: 'Team brainstorming in a vibrant tech startup, showcasing collaboration tools in a retro 90s film aesthetic.',
         hasContent: true,

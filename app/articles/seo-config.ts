@@ -29,7 +29,7 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
-    '/articles/featured/what-is-a-collaboration-tools': {
+    '/articles/featured/what-are-collaboration-tools': {
         toc: true,
         howTo: false,
         mediaObject: false,

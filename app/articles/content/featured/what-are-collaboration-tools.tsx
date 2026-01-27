@@ -21,9 +21,9 @@ import { getDefaultArticleAuthorDetails } from '../../authors'
 /** ========== INPUTS (replace all placeholders) ========== */
 export const useCustomHeader = true
 
-const TOPIC = 'What are collaboration tools?'
+const TOPIC = 'What are collaboration tools'
 export const CATEGORY = 'featured'
-export const SLUG = 'what-is-a-collaboration-tools'
+export const SLUG = 'what-are-collaboration-tools'
 const AUTHOR_PROFILE = getDefaultArticleAuthorDetails()
 const AUTHOR = AUTHOR_PROFILE.name ?? 'Dr Sam Donegan'
 const AUTHOR_ROLE = AUTHOR_PROFILE.role ?? AUTHOR_PROFILE.credentials ?? 'Founder'
