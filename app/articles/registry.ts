@@ -71,6 +71,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-technology-is-shaping-learning-in-higher-education': {
+        title: 'How technology is shaping learning in higher education (2026)',
+        date: '2026-01-27',
+        description: 'How hybrid learning, AI, analytics and micro‑credentials are reshaping Australian higher education in 2026, with practical steps for students and educators.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-technology-is-shaping-learning-in-higher-education',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6d1a2d84-8b4e-4540-969a-efedb4ed79d0.jpg?alt=media&token=40754573-bde6-4fe3-991d-f9b37be9cb08',
+        imageAlt: 'A retro-inspired scene showcasing diverse individuals collaborating in a tech startup environment.',
+    },
     'featured/venture-capital-how-does-it-work': {
         title: 'Venture capital: how it works (2026)',
         date: '2026-01-26',
