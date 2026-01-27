@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-modern-technology-affects-education-today-and-in-the-fut': {
+        title: 'How modern technology affects education today and in the future (2026)',
+        date: '2026-01-27',
+        description: 'A practical Australian view: benefits, risks and what’s next for AI, privacy and inclusion—plus steps to pilot edtech responsibly.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-modern-technology-affects-education-today-and-in-the-fut',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b',
+        imageAlt: 'People collaborating in a retro tech startup setting, reflecting modern education\'s evolution and future impact.',
+        hasContent: true,
+    },
     'featured/how-technology-has-changed-education': {
         title: 'How technology has changed education (2026)',
         date: '2026-01-27',
