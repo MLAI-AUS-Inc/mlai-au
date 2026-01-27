@@ -33,7 +33,7 @@ for (const envFile of envFiles) {
 
 export default defineConfig({
   plugins: [
-    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    cloudflare({ viteEnvironment: { name: "ssr" }, configPath: "./wrangler.dev.jsonc" }),
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
