@@ -71,6 +71,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-technology-has-changed-education': {
+        title: 'How technology has changed education (2026)',
+        date: '2026-01-27',
+        description: 'A practical Australian look at how technology reshaped learning, teaching and assessment—covering access, personalisation, collaboration, risks, and next steps.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-technology-has-changed-education',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0536c018-0450-4ef6-bc45-46686799945c.jpg?alt=media&token=f79f1f9d-f5b6-41ca-8df5-35f1dce4af2f',
+        imageAlt: 'Diverse team collaborating in a tech startup, showcasing retro 90s film aesthetic in an innovative education setting.',
+    },
     'featured/how-much-venture-capital-was-invested-in-2023': {
         title: 'How much venture capital was invested in 2023?',
         date: '2026-01-26',
