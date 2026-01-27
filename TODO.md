@@ -12,6 +12,8 @@
 - [x] Run `bun run build`
 - [x] Standardize ArticleFAQ imports to use the app alias to prevent CI resolution failures
 - [x] Re-run `bun run build`
+- [x] Align pricing article FAQ import path with other featured articles to fix CI build resolution
+- [x] Switch sitemap generation scripts to use bunx so tsx is available in CI
 - [x] Update collaboration tools article slug/title to "what-are-collaboration-tools"
 - [x] Align collaboration tools registry/SEO paths and content filename with new slug
 - [x] Normalize featured article ArticleFAQ imports to use app alias for build stability

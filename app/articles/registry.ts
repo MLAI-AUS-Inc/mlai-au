@@ -80,6 +80,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0536c018-0450-4ef6-bc45-46686799945c.jpg?alt=media&token=f79f1f9d-f5b6-41ca-8df5-35f1dce4af2f',
         imageAlt: 'Diverse team collaborating in a tech startup, showcasing retro 90s film aesthetic in an innovative education setting.',
     },
+    'featured/how-much-venture-capital-was-invested-in-2023': {
+        title: 'How much venture capital was invested in 2023?',
+        date: '2026-01-26',
+        description: 'Global VC funding in 2023 ranged between ~US$248B and ~US$285B depending on source. Why estimates differ, sector trends (AI), and what it means for Australia.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-much-venture-capital-was-invested-in-2023',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c930b949-7cad-4fe3-b144-e118eca0cfd1.jpg?alt=media&token=d69d7730-2e33-4055-b69e-b2cc47e40ad4',
+        imageAlt: 'Colorful 90s aesthetic photo of diverse tech professionals collaborating in a startup environment.',
+    },
     'featured/what-are-collaboration-tools': {
         title: 'What are collaboration tools',
         date: '2026-01-26',

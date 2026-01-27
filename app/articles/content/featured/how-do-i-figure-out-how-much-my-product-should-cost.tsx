@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 import { Home } from 'lucide-react'
 
-import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
+import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '~/components/articles/ArticleCompanyCTA'
 import AuthorBio from '~/components/AuthorBio'
 import { ArticleHeroHeader } from '~/components/articles/ArticleHeroHeader'
