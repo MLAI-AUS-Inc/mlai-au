@@ -79,6 +79,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: 'featured/what-are-collaboration-tools',
         image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c642a28-660d-4dee-b077-ee0c5181aa24.jpg?alt=media&token=188443b2-3bf5-4caa-b39f-68e465028cf4',
         imageAlt: 'Team brainstorming in a vibrant tech startup, showcasing collaboration tools in a retro 90s film aesthetic.',
+    },
+    'featured/venture-capital-how-does-it-work': {
+        title: 'Venture capital: how it works (2026)',
+        date: '2026-01-26',
+        description: 'Plain‑English guide to how venture capital works in 2026: fund mechanics, rounds, dilution, term sheets, and Australian considerations. For founders and learners.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/venture-capital-how-does-it-work',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9dce8514-cb13-4930-b27d-d1f5dbefd41e.jpg?alt=media&token=10c631f0-44c2-4421-9a86-a5505a3d0383',
+        imageAlt: 'Team collaborating in a retro 90s tech startup office amidst brainstorming and innovation.',
         hasContent: true,
     },
     'featured/how-many-startup-accelerators-and-incubators-are-there-in-si': {
