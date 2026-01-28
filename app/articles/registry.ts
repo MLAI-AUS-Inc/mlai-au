@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-find-networking-events': {
+        title: 'How to find networking events in Australia (2026)',
+        date: '2026-01-28',
+        description: 'Practical ways to find networking events in Australia: where to look, how to filter by industry and city, and tips for online and in‑person meetups.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-find-networking-events',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-12562886-6a00-40c3-bd65-734cd91f9fb4.jpg?alt=media&token=d1df7641-6648-4366-a06e-630ccc6043c7',
+        imageAlt: 'Group of diverse professionals networking in a vibrant tech startup setting, evoking a nostalgic 90s film aesthetic.',
+        hasContent: true,
+    },
     'featured/how-technology-has-changed-education': {
         title: 'How technology has changed education (2026)',
         date: '2026-01-27',
