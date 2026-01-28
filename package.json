@@ -8,8 +8,8 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",
-    "prebuild": "bunx --yes tsx scripts/generate-sitemap.ts",
+    "generate:sitemap": "npx tsx scripts/generate-sitemap.ts",
+    "prebuild": "npx tsx scripts/generate-sitemap.ts",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
     "cf-typegen": "bunx --yes wrangler types",
     "deploy": "bun run build && bunx --yes wrangler deploy",
