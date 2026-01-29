@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-small-business-owners-can-get-started-with-ai-2026': {
+        title: 'How small business owners can get started with AI (2026)',
+        date: '2026-01-29',
+        description: 'Starter plan for Australian small business owners to adopt AI in 2026: practical use cases, a 30‑day pilot, privacy and security basics, and ROI tips.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-small-business-owners-can-get-started-with-ai-2026',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e8d91d69-4aa4-49a0-b1e4-a8b32d3f54ab.jpg?alt=media&token=3d3573bf-5a7d-416f-a7be-61be2dd87a04',
+        imageAlt: 'Retro 90s tech startup scene with diverse individuals brainstorming and collaborating in a creative workspace.',
+        hasContent: true,
+    },
     'featured/how-technology-has-changed-education': {
         title: 'How technology has changed education (2026)',
         date: '2026-01-27',
