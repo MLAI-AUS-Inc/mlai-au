@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-foster-community-engagement': {
+        title: 'How to foster community engagement (2026)',
+        date: '2026-01-29',
+        description: 'Practical, Australian-focused guide to foster community engagement: set purpose, include diverse voices, pick methods, close the loop, and measure what matters.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-foster-community-engagement',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-bf106b26-0a88-42db-9c1f-6ac3e8d53a9f.jpg?alt=media&token=633f122e-d0b9-4188-aac7-8f1da80c0a63',
+        imageAlt: 'People collaborating in a tech startup environment with a nostalgic 90s film aesthetic.',
+        hasContent: true,
+    },
     'featured/how-technology-has-changed-education': {
         title: 'How technology has changed education (2026)',
         date: '2026-01-27',
