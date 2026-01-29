@@ -1,22 +1,23 @@
 import type { Route } from "./+types/valley";
 import { useState } from "react";
-import { Outlet, useLoaderData, Link, Form, redirect, useNavigation } from "react-router";
+import { Outlet, useLoaderData, Link, Form, redirect, useNavigation, useLocation } from "react-router";
 import { getValleyUser, createValleySessionCookie, type ValleyUser } from "~/lib/valley-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, DocumentTextIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import {
+    BuildingOffice2Icon,
+    ChartBarIcon,
+    DocumentTextIcon,
+    MagnifyingGlassIcon,
+    HomeIcon,
+    EyeIcon,
+    ArrowPathIcon,
+    ArrowLeftOnRectangleIcon,
+    UserIcon,
+    InformationCircleIcon
+} from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 
 type Role = "founder" | "investor";
-
-const FOUNDER_NAVIGATION = [
-    { name: 'My Updates', href: '/valley', icon: DocumentTextIcon },
-    { name: 'Discover Investors', href: '/valley/discover', icon: MagnifyingGlassIcon },
-];
-
-const INVESTOR_NAVIGATION = [
-    { name: 'Portfolio Updates', href: '/valley', icon: DocumentTextIcon },
-    { name: 'Connections', href: '/valley/connections', icon: MagnifyingGlassIcon },
-];
 
 export async function loader({ request }: Route.LoaderArgs) {
     const user = getValleyUser(request);
@@ -173,6 +174,12 @@ function LoginForm() {
 
 export default function ValleyApp() {
     const { user: valleyUser } = useLoaderData<typeof loader>();
+    const location = useLocation();
+    const searchParams = new URLSearchParams(location.search);
+
+    const isLandingView = searchParams.get("view") === "landing";
+    const isLoginView = searchParams.get("view") === "login";
+    const isRootPath = location.pathname === "/valley" || location.pathname === "/valley/";
 
     // Map to Platform User type or Guest
     const platformUser: User = valleyUser ? {
@@ -193,7 +200,77 @@ export default function ValleyApp() {
         avatar_url: null
     };
 
-    const nav = valleyUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
+    const nav = [
+        ...(!valleyUser ? [{ name: 'Login', href: '/valley?view=login', icon: UserIcon }] : []),
+        { name: 'Monthly Update', href: '/valley', icon: DocumentTextIcon },
+        {
+            name: 'Connections',
+            href: valleyUser?.role === 'investor' ? '/valley/connections' : '/valley/discover',
+            icon: MagnifyingGlassIcon
+        },
+        { name: 'About Valley', href: '/valley?view=landing', icon: InformationCircleIcon },
+    ];
+
+    function classNames(...classes: (string | undefined | boolean)[]) {
+        return classes.filter(Boolean).join(' ');
+    }
+
+    const SidebarFooter = ({ isExpanded }: { isExpanded: boolean }) => (
+        <div className="space-y-1">
+            {valleyUser && (
+                <Form action="/valley/logout" method="post">
+                    <button
+                        type="submit"
+                        className={classNames(
+                            "group flex w-full items-center rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200 ease-in-out",
+                            isExpanded ? '-mx-2 gap-x-3' : 'justify-center gap-x-0'
+                        )}
+                    >
+                        <ArrowPathIcon
+                            className="h-6 w-6 shrink-0 text-white group-hover:text-white transition-colors duration-200"
+                            aria-hidden="true"
+                        />
+                        <span
+                            className={classNames(
+                                "transition-all duration-300 overflow-hidden whitespace-nowrap text-left",
+                                isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                            )}
+                        >
+                            Start Over / Switch Role
+                        </span>
+                    </button>
+                </Form>
+            )}
+            <a
+                href="/"
+                className={classNames(
+                    "group flex items-center rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200 ease-in-out",
+                    isExpanded ? '-mx-2 gap-x-3' : 'justify-center gap-x-0'
+                )}
+            >
+                <ArrowLeftOnRectangleIcon
+                    className="h-6 w-6 shrink-0 text-white group-hover:text-white transition-colors duration-200"
+                    aria-hidden="true"
+                />
+                <span
+                    className={classNames(
+                        "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                        isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                    )}
+                >
+                    Back to MLAI
+                </span>
+            </a>
+        </div>
+    );
+
+    // Logic: 
+    // If logged in -> show Outlet (always).
+    // If guest:
+    //   - on /valley?view=login -> show LoginForm.
+    //   - on root path /valley and NOT view=login -> show Outlet (Landing Page).
+    //   - on sub-paths (discover/connections) -> show LoginForm.
+    const showOutlet = valleyUser || (isRootPath && !isLoginView);
 
     return (
         <AuthenticatedLayout
@@ -201,8 +278,9 @@ export default function ValleyApp() {
             navigation={nav}
             userNavigation={[]}
             homePath="/valley"
+            sidebarFooter={SidebarFooter}
         >
-            {valleyUser ? <Outlet /> : <LoginForm />}
+            {showOutlet ? <Outlet /> : <LoginForm />}
         </AuthenticatedLayout>
     );
 }

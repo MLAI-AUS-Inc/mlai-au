@@ -21,10 +21,11 @@ import type { User } from '~/types/user';
 
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
-    user: User;
+    user: User | any;
     navigation?: { name: string; href: string; icon: any }[];
     userNavigation?: { name: string; href: string }[];
     homePath?: string;
+    sidebarFooter?: React.ReactNode | ((props: { isExpanded: boolean }) => React.ReactNode);
 }
 
 function classNames(...classes: (string | undefined | boolean)[]) {
@@ -36,7 +37,8 @@ export default function AuthenticatedLayout({
     user,
     navigation: customNavigation,
     userNavigation: customUserNavigation,
-    homePath = "/esafety/dashboard"
+    homePath = "/esafety/dashboard",
+    sidebarFooter
 }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -170,16 +172,18 @@ export default function AuthenticatedLayout({
                                                 </li>
 
                                                 <li className="mt-auto">
-                                                    <a
-                                                        href="/"
-                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200 ease-in-out"
-                                                    >
-                                                        <ArrowLeftOnRectangleIcon
-                                                            className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 transition-colors duration-200"
-                                                            aria-hidden="true"
-                                                        />
-                                                        Back to MLAI
-                                                    </a>
+                                                    {(typeof sidebarFooter === 'function' ? sidebarFooter({ isExpanded: true }) : sidebarFooter) || (
+                                                        <a
+                                                            href="/"
+                                                            className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200 ease-in-out"
+                                                        >
+                                                            <ArrowLeftOnRectangleIcon
+                                                                className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 transition-colors duration-200"
+                                                                aria-hidden="true"
+                                                            />
+                                                            Back to MLAI
+                                                        </a>
+                                                    )}
                                                 </li>
                                             </ul>
                                         </nav>
@@ -225,8 +229,8 @@ export default function AuthenticatedLayout({
                                                         item.current
                                                             ? 'bg-indigo-700 text-white'
                                                             : 'text-white hover:bg-indigo-700 hover:text-white',
-                                                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
-                                                        isExpanded ? '' : 'justify-center'
+                                                        'group flex rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
+                                                        isExpanded ? '-mx-2 gap-x-3' : 'justify-center gap-x-0'
                                                     )}
                                                 >
                                                     <item.icon
@@ -251,26 +255,28 @@ export default function AuthenticatedLayout({
                                     </ul>
                                 </li>
                                 <li className="mt-auto mb-4">
-                                    <Link
-                                        to="/"
-                                        className={classNames(
-                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
-                                            isExpanded ? '' : 'justify-center'
-                                        )}
-                                    >
-                                        <ArrowLeftOnRectangleIcon
-                                            aria-hidden="true"
-                                            className="h-6 w-6 shrink-0 text-white group-hover:text-white"
-                                        />
-                                        <span
+                                    {(typeof sidebarFooter === 'function' ? sidebarFooter({ isExpanded }) : sidebarFooter) || (
+                                        <Link
+                                            to="/"
                                             className={classNames(
-                                                "transition-all duration-300 overflow-hidden whitespace-nowrap",
-                                                isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                                "group flex rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
+                                                isExpanded ? '-mx-2 gap-x-3' : 'justify-center gap-x-0'
                                             )}
                                         >
-                                            Back to MLAI
-                                        </span>
-                                    </Link>
+                                            <ArrowLeftOnRectangleIcon
+                                                aria-hidden="true"
+                                                className="h-6 w-6 shrink-0 text-white group-hover:text-white"
+                                            />
+                                            <span
+                                                className={classNames(
+                                                    "transition-all duration-300 overflow-hidden whitespace-nowrap",
+                                                    isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                                )}
+                                            >
+                                                Back to MLAI
+                                            </span>
+                                        </Link>
+                                    )}
                                 </li>
                             </ul>
                         </nav>
