@@ -143,7 +143,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         description: 'Investors’ 2026 expectations, the 12‑slide structure, AU‑specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.',
         author: 'Dr Sam Donegan',
         slug: 'featured/the-best-startup-pitch-deck-ever',
-        image: 'https://placehold.co/1200x630/png',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e50e5db0-d45f-42af-bbe1-fa732bdd1ffb.jpg?alt=media&token=cee71a66-a4bf-48d9-81b0-a662965f714a',
         imageAlt: 'The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide',
         hasContent: true,
     },
