@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-measure-community-engagement': {
+        title: 'How to measure community engagement (2026)',
+        date: '2026-01-29',
+        description: 'A practical, Australian-focused guide to measuring community engagement—combining participation metrics with quality signals, ethical data, and simple reporting.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-measure-community-engagement',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-56a69653-25ee-4655-8801-f0fc0f450e80.jpg?alt=media&token=c2d66679-100c-45fd-996b-e478c9012f1b',
+        imageAlt: '90s film aesthetic scene showing diverse people collaborating in a tech startup environment, emphasizing community engagement.',
+        hasContent: true,
+    },
     'featured/how-technology-has-changed-education': {
         title: 'How technology has changed education (2026)',
         date: '2026-01-27',
