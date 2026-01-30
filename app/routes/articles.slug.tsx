@@ -135,7 +135,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             upcomingEvents={upcomingEvents}
         >
             <div className="relative">
-                <ArticleContent article={article} />
+                <ArticleContent key={article.slug} article={article} />
             </div>
         </ArticleLayout>
     );

@@ -18,6 +18,11 @@ mlai-frontend/.next/
 mlai-frontend/next-env.d.ts
 mlai-frontend/package-lock.json
 
+# Python virtual environment
+venv/
+env/
+.venv/
+
 # General ignore patterns
 *.log
 .env

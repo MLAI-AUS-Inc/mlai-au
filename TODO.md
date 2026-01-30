@@ -5,3 +5,20 @@
 - [x] Adjust SEO config path for the new slug
 - [x] Fix JSX string literal in data science salary article to unblock production build
 - [x] Update the data scientist salary article title and slug to match "How Much Do Data Scientists Make?'"
+- [x] Update pricing article FAQ import to use the app alias for build stability
+- [x] Fix JSX string quoting in the VC firm article CTA body
+- [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
+- [x] Update education article imports to use app alias paths for build consistency
+- [x] Run `bun run build`
+- [x] Standardize ArticleFAQ imports to use the app alias to prevent CI resolution failures
+- [x] Re-run `bun run build`
+- [x] Align pricing article FAQ import path with other featured articles to fix CI build resolution
+- [x] Switch sitemap generation scripts to use bunx so tsx is available in CI
+- [x] Update collaboration tools article slug/title to "what-are-collaboration-tools"
+- [x] Align collaboration tools registry/SEO paths and content filename with new slug
+- [x] Normalize featured article ArticleFAQ imports to use app alias for build stability
+- [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
+- [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors
+- [x] Switch pricing article ArticleFAQ import to the app alias to resolve CI build resolution errors
+- [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
+- [x] Fix JSX string quoting in the education negatives article CTA body to unblock CI builds

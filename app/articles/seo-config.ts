@@ -29,6 +29,104 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/how-technology-affects-education-negatively': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/learn-ai-melbourne': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-small-business-owners-can-get-started-with-ai-2026': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-foster-community-engagement': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/startup-accelerator-australia': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-find-networking-events': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-technology-has-changed-education': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-much-venture-capital-was-invested-in-2023': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/what-are-collaboration-tools': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-technology-is-shaping-learning-in-higher-education': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/venture-capital-how-does-it-work': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-many-startup-accelerators-and-incubators-are-there-in-si': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-does-a-venture-capital-firm-work': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/the-best-startup-pitch-deck-ever': {
         toc: true,
         howTo: false,
@@ -253,7 +351,7 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
-    '/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
+    '/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
         toc: true,
         howTo: false,
         mediaObject: true,

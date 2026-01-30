@@ -11,11 +11,12 @@ import { ArticleTocPlaceholder } from '../../../components/articles/ArticleTocPl
 import { AudienceGrid } from '../../../components/articles/AudienceGrid'
 import { RocketLaunchIcon } from '@heroicons/react/24/outline'
 
-/** ========== INPUTS (replace all placeholders) ========== */
+/** ========== INPUTS ========== */
 const SERIES = 'Weekly Deep Dive into AI and ML Advancements & Updates'
 const NEWSLETTER = 'AI Bits for Techies'
 const TITLE = `${NEWSLETTER} | Issue #1 | 8 Jan 2026`
-const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
+const HERO_IMAGE =
+  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
 const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
 
 /** ===== FAQ ===== */
@@ -85,8 +86,7 @@ export const summaryHighlights = {
         'Yes. In this week’s paper, Gemini is given 15 labelled examples plus instructions and still hits around 93% accuracy across multiple astronomy datasets, with readable explanations for each call.',
     },
     {
-      label:
-        "What is an AI agent, and why are 'agentic coding' models suddenly everywhere?",
+      label: "What is an AI agent, and why are 'agentic coding' models suddenly everywhere?",
       description:
         'Agents are systems that can plan, use tools, and run multi-step work (not just answer one prompt). That is why models tuned for coding and tool-driven workflows are getting so much attention.',
     },
@@ -107,19 +107,22 @@ export default function ArticlePage() {
       name: 'Dr Sam Donegan',
       role: 'Founder & Lead Editor',
       bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
+      avatarUrl:
+        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
     },
     {
       name: 'Jun Kai (Luc) Chang',
       role: 'AI Software Developer',
       bio: "Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.",
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
+      avatarUrl:
+        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
     },
     {
       name: 'Julia Ponder',
       role: 'Technical Writer',
       bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
+      avatarUrl:
+        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
     },
     {
       name: 'Shivang Shekhar',
@@ -321,7 +324,11 @@ export default function ArticlePage() {
           <strong>Best for:</strong> training and stress-testing when real data is scarce, expensive, or
           legally annoying.
           <br />
-          <a href="https://github.com/always-further/deepfabric" target="_blank" rel="noopener noreferrer">
+          <a
+            href="https://github.com/always-further/deepfabric"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             https://github.com/always-further/deepfabric
           </a>
         </p>
