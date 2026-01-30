@@ -8,14 +8,14 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "generate:sitemap": "npx tsx scripts/generate-sitemap.ts",
-    "prebuild": "npx tsx scripts/generate-sitemap.ts",
+    "generate:sitemap": "npx --yes tsx scripts/generate-sitemap.ts",
+    "prebuild": "npx --yes tsx scripts/generate-sitemap.ts",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
-    "cf-typegen": "bunx --yes wrangler types",
-    "deploy": "bun run build && bunx --yes wrangler deploy",
+    "cf-typegen": "npx --yes wrangler types",
+    "deploy": "npm run build && npx --yes wrangler deploy",
     "dev": "react-router dev",
-    "preview": "bun run build && vite preview",
-    "typegen": "bun run cf-typegen 1>/dev/null && react-router typegen",
+    "preview": "npm run build && vite preview",
+    "typegen": "npm run cf-typegen 1>/dev/null && react-router typegen",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
