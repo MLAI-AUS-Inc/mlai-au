@@ -71,6 +71,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-technology-affects-education-negatively': {
+        title: 'How technology affects education negatively',
+        date: '2026-01-27',
+        description: 'Evidence-based risks of classroom tech—distraction, screen time, equity, privacy, and AI misuse—plus practical steps for Australian schools.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-technology-affects-education-negatively',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ad2b9095-7c58-48cb-93a0-796ec711627f.jpg?alt=media&token=aedd5035-940a-46bd-a249-0b171a8bc35c',
+        imageAlt: 'People in a tech startup environment, reflecting 90s film aesthetic, showcasing technology\'s negative impact on education.',
+    },
     'featured/learn-ai-melbourne': {
         title: 'Learn AI Melbourne: courses, meetups, and pathways',
         date: '2026-01-30',
