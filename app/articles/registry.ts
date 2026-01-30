@@ -71,6 +71,15 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/startup-accelerator-australia': {
+        title: 'Startup accelerators in Australia (2026)',
+        date: '2026-01-28',
+        description: 'A practical 2026 guide to Australian startup accelerators: key programs (Startmate, Google for Startups, UNSW 10x), typical terms, and how AI teams can apply.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/startup-accelerator-australia',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f',
+        imageAlt: 'Group of diverse entrepreneurs collaborating in a vibrant tech workspace, with a nostalgic 90s film aesthetic.',
+    },
     'featured/how-to-find-networking-events': {
         title: 'How to find networking events in Australia (2026)',
         date: '2026-01-28',
