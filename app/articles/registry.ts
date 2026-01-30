@@ -71,6 +71,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/learn-ai-melbourne': {
+        title: 'Learn AI Melbourne: courses, meetups, and pathways',
+        date: '2026-01-30',
+        description: 'A practical 2026 guide to learning AI in Melbourne—compare university/TAFE options, online vs on‑campus delivery, time and costs, plus local meetups and portfolio tips.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/learn-ai-melbourne',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f3e7ca80-f08c-4d98-9bc9-773ec059c33f.jpg?alt=media&token=cbbb31dd-a11e-49d5-a062-13256412f7e4',
+        imageAlt: 'Tech enthusiasts collaborate in a vibrant 90s film aesthetic, showcasing AI learning and community in Melbourne.',
+        hasContent: true,
+    },
     'featured/how-small-business-owners-can-get-started-with-ai-2026': {
         title: 'How small business owners can get started with AI (2026)',
         date: '2026-01-29',
