@@ -30,7 +30,7 @@ import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 import { Link } from 'react-router'
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
