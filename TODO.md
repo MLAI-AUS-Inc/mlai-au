@@ -20,3 +20,4 @@
 - [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
 - [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors
 - [x] Switch pricing article ArticleFAQ import to the app alias to resolve CI build resolution errors
+- [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
