@@ -180,9 +180,8 @@ const references = [
 
 export default function ArticlePage() {
   const breadcrumbs = [
-    { label: 'Home', href: '/', icon: Home },
     { label: 'Articles', href: '/articles' },
-    { label: TOPIC, current: true }
+    { label: TOPIC, href: `/articles/${CATEGORY}/${SLUG}`, current: true }
   ]
 
   const authorDetails = {
@@ -193,7 +192,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <>
       <ArticleHeroHeader
         breadcrumbs={breadcrumbs}
         title={`${TOPIC} (2026)`}
@@ -204,183 +203,178 @@ export default function ArticlePage() {
         heroImageAlt={HERO_IMAGE_ALT}
       />
 
-      <div className='relative'>
-        <div className='lg:absolute lg:right-0 lg:top-0 lg:w-72'>
-          <ArticleTocPlaceholder />
+      <ArticleTocPlaceholder className="mb-12" />
+
+      <div className=''>
+        <h2>{TOPIC}</h2>
+        <p>
+          In simple terms: investors (LPs) commit money to a fund, general partners (GPs) run the fund, and that capital is invested into a small number of high-potential startups. In Australia (2026), VC is a focused tool for AI teams pursuing outsized growth; it comes with expectations on speed, scale, and governance.
+        </p>
+
+        <ArticleImageBlock
+          src={HERO_IMAGE}
+          alt={HERO_IMAGE_ALT}
+          containerClassName='my-10'
+        />
+
+        {/* SECTION 1 */}
+        <h2>Inside a VC firm: LPs, GPs, and the fund economics ("2 and 20")</h2>
+        <p>
+          A venture capital firm typically manages one or more closed-end funds. <em>Limited partners (LPs)</em>—such as super funds, family offices, and high-net-worth investors—commit capital. <em>General partners (GPs)</em> source deals, invest, and manage the portfolio. The firm usually earns a management fee (often around 2% per year on committed capital) and a performance fee called <em>carry</em> (commonly 20% of profits after returning LP capital). Returns are highly skewed: a few outliers tend to drive most of a fund’s performance.
+        </p>
+
+        <ArticleCallout
+          title='Know your investor’s fund math'
+          variant='brand'
+          icon={<span className='text-xl'>💡</span>}
+        >
+          Ask where a fund is in its life cycle and how much is reserved for follow-on. If a GP has limited reserves, they may favour companies with clear near-term milestones or syndicates that can lead later rounds.
+        </ArticleCallout>
+
+        {/* SECTION 2 */}
+        <h2>How decisions get made: sourcing → screening → diligence → investment committee</h2>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67a0c0ab-1f4b-4a44-a503-c73dcc9786aa.jpg?alt=media&token=0f02d0e9-bbd6-40dc-8f37-9ceb43d45904"
+          alt="People in a tech startup setting collaborate, embodying a 90s film aesthetic, focused on decision-making processes."
+        />
+
+        <p>
+          Most firms run a pipeline: (1) <strong>Sourcing</strong> via networks, inbound, and theses; (2) <strong>Screening</strong> for fit (stage, sector, cheque size); (3) <strong>Diligence</strong> on team, product, market, traction, references, legal; (4) <strong>Investment Committee</strong> (IC) to approve terms; and (5) <strong>Closing</strong> and wiring funds. For AI startups, diligence often includes model provenance, data rights, eval quality, governance, and customer validation.
+        </p>
+
+        <ArticleResourceCTA
+          eyebrow='Download'
+          title={`Get the checklist for ${TOPIC}`}
+          description='A founder-side due‑diligence list to prep your deck, metrics, and data room.'
+          buttonLabel='Download now'
+          buttonHref='#'
+          accent='purple'
+        />
+
+        <QuoteBlock title='Evidence or expert insight' variant='purple'>
+          “VC is a power‑law business: one or two companies can return an entire fund. Show how you might be that outlier—credibly.”
+        </QuoteBlock>
+
+        {/* SECTION 3 */}
+        <h2>The VC fund life cycle: raise, invest, support, exit (10–12 years)</h2>
+        <ArticleImageBlock
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-70cefaae-5ceb-46a1-b31d-022491c7c52d.jpg?alt=media&token=349c0858-14a2-495d-82e8-7736232826ee"
+          alt="Nostalgic 90s film-style scene featuring diverse professionals collaborating in a tech startup environment."
+        />
+
+        <p>
+          A typical fund spends its first 1–2 years raising, then invests initial cheques over ~3–5 years while reserving capital for follow-ons. The final years focus on scaling portfolio companies and realising outcomes (secondary sales, M&A, IPO). Understanding this cadence helps you time outreach and anticipate follow-on behaviour.
+        </p>
+
+        {/* SECTION 4 */}
+        <h2>What VCs look for — especially in AI startups</h2>
+        <p>
+          Common lenses include: team (insight, speed, ethics), market (size, growth, urgency), product (clear wedge and user love), traction (paying users or strong usage), unit economics, and path to a meaningful outcome. For AI teams, investors also scrutinise your data advantage, model and infra choices, evals, and distribution.
+        </p>
+        <h3>AI-specific signals that help</h3>
+        <p>
+          • Credible data rights and privacy posture (as at 2026, customer and regulator expectations are rising). • Robust internal evals tied to customer outcomes. • Moats beyond model access (e.g., proprietary data, workflow lock‑in, or unique distribution). • Early revenue quality (expansion, retention) versus vanity metrics.
+        </p>
+
+        {/* SECTION 5 */}
+        <h2>Rounds, instruments, and terms in Australia</h2>
+        <p>
+          Australian rounds generally mirror global norms but with local nuances. <strong>Pre‑seed/Seed</strong> often use SAFEs or convertible notes (valuation cap/discount), while <strong>Series A+</strong> are usually priced equity. Term sheets commonly include pro‑rata rights and a 1× non‑participating liquidation preference in Australia; specifics vary by deal.
+        </p>
+        <h3>Instruments (founder quick scan)</h3>
+        <p>
+          • <strong>SAFE:</strong> Simple agreement for future equity. No interest or maturity, converts later. • <strong>Convertible note:</strong> Debt that converts to equity later with interest/maturity. • <strong>Priced equity:</strong> Sets a valuation now; governance ramps up (board, reporting).
+        </p>
+        <p>
+          As at 2026, AU seed rounds remain highly context‑specific. Founders should model dilution across scenarios and align on runway (typically 18–24 months) and milestones.
+        </p>
+
+        {/* SECTION 6 */}
+        <h2>The Australian landscape: programs, players, and norms</h2>
+        <p>
+          Australia supports early‑stage investing through frameworks such as <strong>ESVCLP</strong> and <strong>VCLP</strong> (see official guidance), alongside the <strong>R&D Tax Incentive</strong>. Local funds span generalist and deep‑tech; angel syndicates and micro‑funds play a growing role at pre‑seed. International funds increasingly participate remotely when the problem and traction are compelling. Always confirm program details from official sources.
+        </p>
+
+        {/* SECTION 7 */}
+        <h2>Getting a first meeting: materials, outreach, and proof</h2>
+        <p>
+          Prepare a tight 10–12 slide deck, a concise memo, and a lightweight data room (cap table, product demo, key metrics, customer references). For outreach, warm intros help but thoughtful cold emails with clear traction are read. Lead with customer outcomes, why now, and a crisp ask (round size, use of funds, milestones).
+        </p>
+
+        <ArticleStepList
+          title='Practical steps'
+          steps={[
+            'Map investor–company fit: stage, cheque size, sector thesis, and fund age.',
+            'Build an evidence pack: product demo, early customer proof, metrics, and data rights.',
+            'Create a targeted list and run a 2–3 week, well‑paced process to keep momentum.'
+          ]}
+          accent='indigo'
+        />
+
+        <AudienceGrid
+          heading='Who this helps'
+          cards={[
+            {
+              title: 'Founders & Teams',
+              description: 'For leaders validating AI ideas, seeking funding, or planning runway.',
+              icon: <RocketLaunchIcon className='h-6 w-6' />,
+              variant: 'orange'
+            },
+            {
+              title: 'Students & Switchers',
+              description: 'For those building portfolios, learning venture basics, or exploring AI paths.',
+              icon: <AcademicCapIcon className='h-6 w-6' />,
+              variant: 'purple'
+            },
+            {
+              title: 'Community Builders',
+              description: 'For mentors and organisers supporting early-stage AI teams in Australia.',
+              icon: <UsersIcon className='h-6 w-6' />,
+              variant: 'yellow'
+            }
+          ]}
+        />
+
+        <MLAITemplateResourceCTA />
+
+        {/* SECTION 8 (Closing) */}
+        <h2>Choose your capital strategy, not just a round</h2>
+        <p>
+          VC can be powerful when your goal is speed to a large outcome. It is not the only path: angels, revenue, grants, and partnerships may better fit some AI teams. Decide based on your milestones, customer cycles, and resilience to market swings. If you do pursue VC, be explicit about runway, evidence, and what success looks like between now and the next raise.
+        </p>
+
+        <div className='mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100'>
+          <h3 className='text-lg font-bold text-gray-900 mb-4'>Your Next Steps</h3>
+          <ul className='space-y-3'>
+            <li className='flex gap-3 text-gray-700'>
+              <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>1</span>
+              <span>Download the checklist mentioned above.</span>
+            </li>
+            <li className='flex gap-3 text-gray-700'>
+              <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>2</span>
+              <span>Draft your round plan: runway, milestones, and target investor list.</span>
+            </li>
+            <li className='flex gap-3 text-gray-700'>
+              <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>3</span>
+              <span>Run a focused outreach window and refine based on feedback.</span>
+            </li>
+          </ul>
         </div>
 
-        <div className='prose prose-lg prose-indigo max-w-3xl px-4 py-10 sm:px-6 lg:px-8 text-gray-700 prose-headings:text-gray-900 hover:prose-a:text-[--brand-ink]'>
-          <p>
-            <strong>{TOPIC}</strong> — In simple terms: investors (LPs) commit money to a fund, general partners (GPs) run the fund, and that capital is invested into a small number of high-potential startups. In Australia (2026), VC is a focused tool for AI teams pursuing outsized growth; it comes with expectations on speed, scale, and governance.
-          </p>
+        <ArticleCompanyCTA
+          title={`Need help with ${TOPIC}?`}
+          body="MLAI is a not-for-profit community empowering the Australian AI community. Share your goals and we'll point you to helpful resources and connections."
+          buttonText='Join the MLAI community'
+          buttonHref='https://mlai.au/contact'
+          note='Friendly, community-first contact — no hard sell.'
+        />
 
-          <ArticleImageBlock
-            src={HERO_IMAGE}
-            alt={HERO_IMAGE_ALT}
-            width={1200}
-            height={630}
-            containerClassName='my-10'
-          />
-
-          {/* SECTION 1 */}
-          <h2>Inside a VC firm: LPs, GPs, and the fund economics (\"2 and 20\")</h2>
-          <p>
-            A venture capital firm typically manages one or more closed-end funds. <em>Limited partners (LPs)</em>—such as super funds, family offices, and high-net-worth investors—commit capital. <em>General partners (GPs)</em> source deals, invest, and manage the portfolio. The firm usually earns a management fee (often around 2% per year on committed capital) and a performance fee called <em>carry</em> (commonly 20% of profits after returning LP capital). Returns are highly skewed: a few outliers tend to drive most of a fund’s performance.
-          </p>
-
-          <ArticleCallout
-            title='Know your investor’s fund math'
-            variant='brand'
-            icon={<span className='text-xl'>💡</span>}
-          >
-            Ask where a fund is in its life cycle and how much is reserved for follow-on. If a GP has limited reserves, they may favour companies with clear near-term milestones or syndicates that can lead later rounds.
-          </ArticleCallout>
-
-          {/* SECTION 2 */}
-          <h2>How decisions get made: sourcing → screening → diligence → investment committee</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-67a0c0ab-1f4b-4a44-a503-c73dcc9786aa.jpg?alt=media&token=0f02d0e9-bbd6-40dc-8f37-9ceb43d45904" alt="People in a tech startup setting collaborate, embodying a 90s film aesthetic, focused on decision-making processes." className="w-full rounded-lg my-8" />
-
-          <p>
-            Most firms run a pipeline: (1) <strong>Sourcing</strong> via networks, inbound, and theses; (2) <strong>Screening</strong> for fit (stage, sector, cheque size); (3) <strong>Diligence</strong> on team, product, market, traction, references, legal; (4) <strong>Investment Committee</strong> (IC) to approve terms; and (5) <strong>Closing</strong> and wiring funds. For AI startups, diligence often includes model provenance, data rights, eval quality, governance, and customer validation.
-          </p>
-
-          <ArticleResourceCTA
-            eyebrow='Download'
-            title={`Get the checklist for ${TOPIC}`}
-            description='A founder-side due‑diligence list to prep your deck, metrics, and data room.'
-            buttonLabel='Download now'
-            buttonHref='#'
-            accent='purple'
-          />
-
-          <QuoteBlock title='Evidence or expert insight' variant='purple'>
-            “VC is a power‑law business: one or two companies can return an entire fund. Show how you might be that outlier—credibly.”
-          </QuoteBlock>
-
-          {/* SECTION 3 */}
-          <h2>The VC fund life cycle: raise, invest, support, exit (10–12 years)</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-70cefaae-5ceb-46a1-b31d-022491c7c52d.jpg?alt=media&token=349c0858-14a2-495d-82e8-7736232826ee" alt="Nostalgic 90s film-style scene featuring diverse professionals collaborating in a tech startup environment." className="w-full rounded-lg my-8" />
-
-          <p>
-            A typical fund spends its first 1–2 years raising, then invests initial cheques over ~3–5 years while reserving capital for follow-ons. The final years focus on scaling portfolio companies and realising outcomes (secondary sales, M&amp;A, IPO). Understanding this cadence helps you time outreach and anticipate follow-on behaviour.
-          </p>
-
-          {/* SECTION 4 */}
-          <h2>What VCs look for — especially in AI startups</h2>
-          <p>
-            Common lenses include: team (insight, speed, ethics), market (size, growth, urgency), product (clear wedge and user love), traction (paying users or strong usage), unit economics, and path to a meaningful outcome. For AI teams, investors also scrutinise your data advantage, model and infra choices, evals, and distribution.
-          </p>
-          <h3>AI-specific signals that help</h3>
-          <p>
-            • Credible data rights and privacy posture (as at 2026, customer and regulator expectations are rising). • Robust internal evals tied to customer outcomes. • Moats beyond model access (e.g., proprietary data, workflow lock‑in, or unique distribution). • Early revenue quality (expansion, retention) versus vanity metrics.
-          </p>
-
-          {/* SECTION 5 */}
-          <h2>Rounds, instruments, and terms in Australia</h2>
-          <p>
-            Australian rounds generally mirror global norms but with local nuances. <strong>Pre‑seed/Seed</strong> often use SAFEs or convertible notes (valuation cap/discount), while <strong>Series A+</strong> are usually priced equity. Term sheets commonly include pro‑rata rights and a 1× non‑participating liquidation preference in Australia; specifics vary by deal.
-          </p>
-          <h3>Instruments (founder quick scan)</h3>
-          <p>
-            • <strong>SAFE:</strong> Simple agreement for future equity. No interest or maturity, converts later. • <strong>Convertible note:</strong> Debt that converts to equity later with interest/maturity. • <strong>Priced equity:</strong> Sets a valuation now; governance ramps up (board, reporting).
-          </p>
-          <p>
-            As at 2026, AU seed rounds remain highly context‑specific. Founders should model dilution across scenarios and align on runway (typically 18–24 months) and milestones.
-          </p>
-
-          {/* SECTION 6 */}
-          <h2>The Australian landscape: programs, players, and norms</h2>
-          <p>
-            Australia supports early‑stage investing through frameworks such as <strong>ESVCLP</strong> and <strong>VCLP</strong> (see official guidance), alongside the <strong>R&amp;D Tax Incentive</strong>. Local funds span generalist and deep‑tech; angel syndicates and micro‑funds play a growing role at pre‑seed. International funds increasingly participate remotely when the problem and traction are compelling. Always confirm program details from official sources.
-          </p>
-
-          {/* SECTION 7 */}
-          <h2>Getting a first meeting: materials, outreach, and proof</h2>
-          <p>
-            Prepare a tight 10–12 slide deck, a concise memo, and a lightweight data room (cap table, product demo, key metrics, customer references). For outreach, warm intros help but thoughtful cold emails with clear traction are read. Lead with customer outcomes, why now, and a crisp ask (round size, use of funds, milestones).
-          </p>
-
-          <ArticleStepList
-            title='Practical steps'
-            steps={[
-              'Map investor–company fit: stage, cheque size, sector thesis, and fund age.',
-              'Build an evidence pack: product demo, early customer proof, metrics, and data rights.',
-              'Create a targeted list and run a 2–3 week, well‑paced process to keep momentum.'
-            ]}
-            accent='indigo'
-          />
-
-          <AudienceGrid
-            heading='Who this helps'
-            cards={[
-              {
-                title: 'Founders & Teams',
-                description: 'For leaders validating AI ideas, seeking funding, or planning runway.',
-                icon: <RocketLaunchIcon className='h-6 w-6' />,
-                variant: 'orange'
-              },
-              {
-                title: 'Students & Switchers',
-                description: 'For those building portfolios, learning venture basics, or exploring AI paths.',
-                icon: <AcademicCapIcon className='h-6 w-6' />,
-                variant: 'purple'
-              },
-              {
-                title: 'Community Builders',
-                description: 'For mentors and organisers supporting early-stage AI teams in Australia.',
-                icon: <UsersIcon className='h-6 w-6' />,
-                variant: 'yellow'
-              }
-            ]}
-          />
-
-          <MLAITemplateResourceCTA />
-
-          {/* SECTION 8 (Closing) */}
-          <h2>Choose your capital strategy, not just a round</h2>
-          <p>
-            VC can be powerful when your goal is speed to a large outcome. It is not the only path: angels, revenue, grants, and partnerships may better fit some AI teams. Decide based on your milestones, customer cycles, and resilience to market swings. If you do pursue VC, be explicit about runway, evidence, and what success looks like between now and the next raise.
-          </p>
-
-          <div className='mt-8 bg-gray-50 rounded-xl p-6 border border-gray-100'>
-            <h3 className='text-lg font-bold text-gray-900 mb-4'>Your Next Steps</h3>
-            <ul className='space-y-3'>
-              <li className='flex gap-3 text-gray-700'>
-                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>1</span>
-                <span>Download the checklist mentioned above.</span>
-              </li>
-              <li className='flex gap-3 text-gray-700'>
-                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>2</span>
-                <span>Draft your round plan: runway, milestones, and target investor list.</span>
-              </li>
-              <li className='flex gap-3 text-gray-700'>
-                <span className='flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-600'>3</span>
-                <span>Run a focused outreach window and refine based on feedback.</span>
-              </li>
-            </ul>
-          </div>
-
-          <ArticleCompanyCTA
-            title={`Need help with ${TOPIC}?`}
-            body="MLAI is a not-for-profit community empowering the Australian AI community. Share your goals and we'll point you to helpful resources and connections."
-            buttonText='Join the MLAI community'
-            buttonHref='https://mlai.au/contact'
-            note='Friendly, community-first contact — no hard sell.'
-          />
-        </div>
-      </div>
-
-      <div className='max-w-3xl mx-auto px-4 sm:px-6 lg:px-8'>
         <ArticleDisclaimer className='mt-8' />
 
         <ArticleReferences references={references} />
 
-        <ArticleFAQ items={faqItems} />
-
-        <AuthorBio author={authorDetails} />
-
-        <ArticleFooterNav backHref='/articles' topHref='#' />
+        <AuthorBio author={authorDetails} className="mt-8" />
       </div>
-    </div>
+    </>
   )
 }

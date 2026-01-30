@@ -36,6 +36,27 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/startup-accelerator-australia': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-find-networking-events': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-technology-has-changed-education': {
         toc: true,
         howTo: false,
