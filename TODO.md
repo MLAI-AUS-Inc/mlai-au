@@ -22,3 +22,4 @@
 - [x] Switch pricing article ArticleFAQ import to the app alias to resolve CI build resolution errors
 - [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
 - [x] Fix JSX string quoting in the education negatives article CTA body to unblock CI builds
+- [x] Replace relative ArticleFAQ imports with app alias in featured articles to fix CI build resolution
