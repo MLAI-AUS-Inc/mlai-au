@@ -17,6 +17,8 @@ const NEWSLETTER = 'AI Bits for Techies'
 const TITLE = `${NEWSLETTER} | Issue #4 | 5 Feb 2026`
 const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
 const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
+const GEEKY_THOUGHT_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_ycdjkoycdjkoycdj.png?alt=media&token=db9a41d3-7abc-4238-af15-35313ab3487c' // Add your image URL here
+const TOOLS_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_bots7bots7bots7b.png?alt=media&token=46a1488c-6f8a-46ee-9813-157b68835128' // Add your image URL here
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -163,7 +165,7 @@ export default function ArticlePage() {
       name: 'Shivang Shekhar',
       role: 'Technical Writer',
       bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl: '🔬',
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
     },
   ]
 
@@ -338,6 +340,13 @@ export default function ArticlePage() {
 
         <hr className="my-8 border-gray-100" />
 
+        {TOOLS_IMAGE && (
+          <ArticleImageBlock
+            src={TOOLS_IMAGE}
+            alt="Tools worth poking this week"
+          />
+        )}
+
         <h2>Tools worth poking this week (in a sandbox first)</h2>
 
         <h3>GLM-Image (by Zhipu AI)</h3>
@@ -378,8 +387,8 @@ export default function ArticlePage() {
           <strong>Security note:</strong> giving an agent broad machine access creates real risk (impersonation/supply-chain attacks have already been reported around the rename), so treat it like you would a powerful script: isolate it, minimize permissions, and avoid running it on a machine with sensitive secrets.
         </p>
         <p>
-          <a href="https://github.com/moltbot" target="_blank" rel="noopener noreferrer">
-            https://github.com/moltbot
+          <a href="https://github.com/openclaw" target="_blank" rel="noopener noreferrer">
+            https://github.com/openclaw
           </a>
           <br />
           <a href="https://moltbot.org/" target="_blank" rel="noopener noreferrer">
@@ -399,6 +408,13 @@ export default function ArticlePage() {
         </p>
 
         <hr className="my-8 border-gray-100" />
+
+        {GEEKY_THOUGHT_IMAGE && (
+          <ArticleImageBlock
+            src={GEEKY_THOUGHT_IMAGE}
+            alt="Geeky thought of the day"
+          />
+        )}
 
         <h2>Geeky thought of the day</h2>
         <p className="font-semibold">
