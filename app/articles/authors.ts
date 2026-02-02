@@ -79,7 +79,10 @@ const authorRegistry = {
             name: 'Monash University',
             url: 'https://www.monash.edu/',
         },
-        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/team-avatars%2F1764224485742.jpeg?alt=media&token=fe578f25-0500-4e7a-980e-a290b37d7b11',
+        sameAs: [
+            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/shivang-s-466458191' },
+        ],
+        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
         avatarAlt: 'Shivang Shekhar',
         knowsAbout: ['AI Trends', 'Machine Learning', 'Mechanical Engineering', 'Chemistry'],
     },
