@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "react-router";
 
 interface ToolCard {
   id: string;
@@ -40,7 +41,7 @@ const tools: ToolCard[] = [
     bgColor: "#4b0db3", // Purple - from sidebar
     icon: "🤝",
     explanation:
-      "Investor networks take years to build. If you share consistent, authentic monthly updates, we'll warm-intro you to investors with a real track record in startups like yours, in Australia and overseas. (Coming soon)",
+      "Investor networks take years to build. If you share consistent, authentic monthly updates, we'll warm-intro you to investors with a real track record in startups like yours, in Australia and overseas.",
     image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202026-01-17%20at%207.19.26%E2%80%AFPM.png?alt=media&token=560f5b25-a414-4967-8c5c-e942342a9031",
     rotation: "-rotate-2",
     zIndex: 30,
@@ -260,7 +261,7 @@ export default function FounderTools() {
                           className={`text-sm font-medium ${useDarkText ? "text-black/70" : "text-white/80"
                             }`}
                         >
-                          {tool.id === "raising" ? "Coming soon" : "See what's inside"}
+                          See what's inside
                         </span>
                       </div>
                     )}
@@ -320,7 +321,7 @@ export default function FounderTools() {
                         className={`text-sm font-medium ${useDarkText ? "text-black/70" : "text-white/80"
                           }`}
                       >
-                        {tool.id === "raising" ? "Coming soon" : "See what's inside"}
+                        See what's inside
                       </span>
                     </div>
                   </div>
@@ -361,24 +362,32 @@ export default function FounderTools() {
 
                   {/* Access Tools Button */}
                   <div className="text-center">
-                    <button
-                      disabled={selectedToolData.id === "raising"}
-                      className={`font-bold py-3 px-8 rounded-full text-base transition-all duration-300 ${
-                        selectedToolData.id === "raising"
-                          ? "opacity-60 cursor-not-allowed"
-                          : "hover:scale-105 active:scale-95"
-                      } ${
-                        selectedToolData.bgColor === "#fefc22" || selectedToolData.bgColor === "#00ffd7"
-                          ? "text-black"
-                          : "text-white"
-                      }`}
-                      style={{
-                        backgroundColor: selectedToolData.bgColor,
-                        boxShadow: `0 0 30px ${selectedToolData.bgColor}60, 0 4px 15px rgba(0, 0, 0, 0.3)`
-                      }}
-                    >
-                      Open {selectedToolData.title} {selectedToolData.id === "raising" && "(coming soon)"}
-                    </button>
+                    {selectedToolData.id === "raising" ? (
+                      <Link
+                        to="/vibe-raising"
+                        className={`inline-block font-bold py-3 px-8 rounded-full text-base transition-all duration-300 hover:scale-105 active:scale-95 text-white`}
+                        style={{
+                          backgroundColor: selectedToolData.bgColor,
+                          boxShadow: `0 0 30px ${selectedToolData.bgColor}60, 0 4px 15px rgba(0, 0, 0, 0.3)`
+                        }}
+                      >
+                        Open {selectedToolData.title}
+                      </Link>
+                    ) : (
+                      <button
+                        className={`font-bold py-3 px-8 rounded-full text-base transition-all duration-300 hover:scale-105 active:scale-95 ${
+                          selectedToolData.bgColor === "#fefc22" || selectedToolData.bgColor === "#00ffd7"
+                            ? "text-black"
+                            : "text-white"
+                        }`}
+                        style={{
+                          backgroundColor: selectedToolData.bgColor,
+                          boxShadow: `0 0 30px ${selectedToolData.bgColor}60, 0 4px 15px rgba(0, 0, 0, 0.3)`
+                        }}
+                      >
+                        Open {selectedToolData.title}
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
@@ -455,24 +464,32 @@ export default function FounderTools() {
                 {/* Access Tools Button */}
                 <div className="mt-8 text-center">
                   {hoveredToolData && (
-                    <button
-                      disabled={hoveredToolData.id === "raising"}
-                      className={`font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 ${
-                        hoveredToolData.id === "raising"
-                          ? "opacity-60 cursor-not-allowed"
-                          : "hover:scale-105"
-                      } ${
-                        hoveredToolData.bgColor === "#fefc22" || hoveredToolData.bgColor === "#00ffd7"
-                          ? "text-black"
-                          : "text-white"
-                      }`}
-                      style={{
-                        backgroundColor: hoveredToolData.bgColor,
-                        boxShadow: `0 0 40px ${hoveredToolData.bgColor}60, 0 4px 20px rgba(0, 0, 0, 0.3)`
-                      }}
-                    >
-                      Open {hoveredToolData.title} {hoveredToolData.id === "raising" && "(coming soon)"}
-                    </button>
+                    hoveredToolData.id === "raising" ? (
+                      <Link
+                        to="/vibe-raising"
+                        className={`inline-block font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 hover:scale-105 text-white`}
+                        style={{
+                          backgroundColor: hoveredToolData.bgColor,
+                          boxShadow: `0 0 40px ${hoveredToolData.bgColor}60, 0 4px 20px rgba(0, 0, 0, 0.3)`
+                        }}
+                      >
+                        Open {hoveredToolData.title}
+                      </Link>
+                    ) : (
+                      <button
+                        className={`font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 hover:scale-105 ${
+                          hoveredToolData.bgColor === "#fefc22" || hoveredToolData.bgColor === "#00ffd7"
+                            ? "text-black"
+                            : "text-white"
+                        }`}
+                        style={{
+                          backgroundColor: hoveredToolData.bgColor,
+                          boxShadow: `0 0 40px ${hoveredToolData.bgColor}60, 0 4px 20px rgba(0, 0, 0, 0.3)`
+                        }}
+                      >
+                        Open {hoveredToolData.title}
+                      </button>
+                    )
                   )}
                 </div>
               </div>

@@ -455,6 +455,21 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                     </div>
                                 </div>
 
+                                {/* Founder Call to Action */}
+                                <div className="mt-12 bg-[#4b0db3] rounded-xl p-8 text-center">
+                                    <h3 className="text-3xl font-bold text-white mb-4">
+                                        Ready to Get Started?
+                                    </h3>
+                                    <p className="text-white text-lg mb-6 max-w-2xl mx-auto">
+                                        Email us and tell us about your startup. We'll help you get set up with Vibe Raising and start building momentum with your investors.
+                                    </p>
+                                    <a
+                                        href="mailto:hi@mlai.au?subject=Founder Interest in Vibe Raising"
+                                        className="inline-block px-8 py-4 bg-white text-[#4b0db3] font-bold rounded-lg hover:bg-zinc-100 transition text-lg"
+                                    >
+                                        Email Us at hi@mlai.au
+                                    </a>
+                                </div>
 
                             </div>
                         </div>
