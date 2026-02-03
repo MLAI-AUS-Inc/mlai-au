@@ -45,6 +45,9 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
+  // Vibe-Raising page
+  route("/vibe-raising", "routes/vibe-raising.tsx"),
+
   // Valley App routes
   route("/valley", "routes/valley.tsx", [
     index("routes/valley._index.tsx"),
