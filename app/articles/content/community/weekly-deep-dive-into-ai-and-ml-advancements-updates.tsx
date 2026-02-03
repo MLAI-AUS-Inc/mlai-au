@@ -128,7 +128,7 @@ export default function ArticlePage() {
       name: 'Shivang Shekhar',
       role: 'Technical Writer',
       bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl: '🔬',
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
     },
   ]
 

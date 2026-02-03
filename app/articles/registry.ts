@@ -313,6 +313,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "...",
     hasContent: true,
   },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
+    title: "AI Bits for Techies | Issue #4 | 5 Feb 2026",
+    date: "2026-02-05",
+    description: "Issue #4: Weekly deep dive into AI and ML advancements and updates.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
+    image: "...",
+    imageAlt: "...",
+    hasContent: true,
+  },
 
 };
 
