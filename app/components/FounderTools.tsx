@@ -371,7 +371,7 @@ export default function FounderTools() {
                           }`}
                         style={{
                           backgroundColor: selectedToolData.bgColor,
-                          boxShadow: `0 0 30px ${selectedToolData.bgColor}60, 0 4px 15px rgba(0, 0, 0, 0.3)`
+                          boxShadow: `0 0 30px #bf8bff80, 0 4px 15px rgba(0, 0, 0, 0.3)`
                         }}
                       >
                         Open {selectedToolData.title}
@@ -475,7 +475,7 @@ export default function FounderTools() {
                             }`}
                           style={{
                             backgroundColor: hoveredToolData.bgColor,
-                            boxShadow: `0 0 40px ${hoveredToolData.bgColor}60, 0 4px 20px rgba(0, 0, 0, 0.3)`
+                            boxShadow: `0 0 40px #bf8bff80, 0 4px 20px rgba(0, 0, 0, 0.3)`
                           }}
                         >
                           Open {hoveredToolData.title}

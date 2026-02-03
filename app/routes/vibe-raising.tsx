@@ -1,5 +1,20 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import {
+    ChartBar,
+    Rocket,
+    ArrowLeftRight,
+    Sparkles,
+    Send,
+    Search,
+    Zap,
+    TrendingUp,
+    Handshake,
+    Clock,
+    Globe,
+    Lightbulb,
+    Target
+} from "lucide-react";
 import type { Route } from "./+types/vibe-raising";
 
 const PAGE_TITLE = 'Vibe Raising: Unlock Capital with Monthly Founder Updates.';
@@ -124,21 +139,27 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                 <h2 className="text-3xl font-bold text-zinc-900 mb-8">How the Loop Works:</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="bg-[#ff3d00] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">📤</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <Send className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Founders share</h3>
                                         <p className="text-sm">
                                             Regular updates keep profiles fresh and momentum visible.
                                         </p>
                                     </div>
                                     <div className="bg-[#4b0db3] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">🔍</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <Search className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Investors discover</h3>
                                         <p className="text-sm">
                                             Relevant, timely information about startups that match your thesis.
                                         </p>
                                     </div>
                                     <div className="bg-[#FFF500] rounded-xl p-6">
-                                        <div className="text-3xl mb-4">✨</div>
+                                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center mb-6">
+                                            <Sparkles className="w-[14px] h-[14px] text-zinc-900" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3 text-zinc-900">Vibe Raising connects</h3>
                                         <p className="text-sm text-zinc-700">
                                             Unique data enables smarter, more meaningful introductions.
@@ -176,28 +197,36 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                 <h2 className="text-3xl font-bold text-zinc-900 mb-8">For Investors & VCs:</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                     <div className="bg-[#3537dc] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">📊</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <ChartBar className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Exclusive data</h3>
                                         <p className="text-sm">
                                             Access insights you won't find elsewhere—live metrics and growth signals.
                                         </p>
                                     </div>
                                     <div className="bg-[#ff3d00] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">⏱️</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <Rocket className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Time Saving</h3>
                                         <p className="text-sm">
                                             No more stale directories. Surface active, funded-ready startups.
                                         </p>
                                     </div>
                                     <div className="bg-[var(--brutalist-mint)] rounded-xl p-6">
-                                        <div className="text-3xl mb-4">📈</div>
+                                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center mb-6">
+                                            <ArrowLeftRight className="w-[14px] h-[14px] text-zinc-900" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3 text-zinc-900">Better matching</h3>
                                         <p className="text-sm text-zinc-700">
                                             Intelligent matching between investor preferences and startup trajectories.
                                         </p>
                                     </div>
                                     <div className="bg-[#FFF500] rounded-xl p-6">
-                                        <div className="text-3xl mb-4">🚀</div>
+                                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center mb-6">
+                                            <Sparkles className="w-[14px] h-[14px] text-zinc-900" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3 text-zinc-900">Early access</h3>
                                         <p className="text-sm text-zinc-700">
                                             See emerging startups before they hit the mainstream radar.
@@ -232,21 +261,27 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                 <h2 className="text-3xl font-bold text-zinc-900 mb-8">How the Loop Works:</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="bg-[#ff3d00] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">📤</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <Send className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Founders share</h3>
                                         <p className="text-sm">
                                             Regular updates keep profiles fresh and momentum visible.
                                         </p>
                                     </div>
                                     <div className="bg-[#4b0db3] rounded-xl p-6 text-white">
-                                        <div className="text-3xl mb-4">🔍</div>
+                                        <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center mb-6">
+                                            <Search className="w-[14px] h-[14px] text-white" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3">Investors discover</h3>
                                         <p className="text-sm">
                                             Relevant, timely information about startups that match your thesis.
                                         </p>
                                     </div>
                                     <div className="bg-[#FFF500] rounded-xl p-6">
-                                        <div className="text-3xl mb-4">✨</div>
+                                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center mb-6">
+                                            <Zap className="w-[14px] h-[14px] text-zinc-900" />
+                                        </div>
                                         <h3 className="text-xl font-bold mb-3 text-zinc-900">Vibe Raising connects</h3>
                                         <p className="text-sm text-zinc-700">
                                             Unique data enables smarter, more meaningful introductions.
@@ -347,8 +382,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">📈</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <TrendingUp className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Build Investor Confidence
                                             </h3>
                                             <p className="text-zinc-700">
@@ -357,8 +394,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                         </div>
 
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">🤝</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <Handshake className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Access Warm Introductions
                                             </h3>
                                             <p className="text-zinc-700">
@@ -367,8 +406,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                         </div>
 
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">⚡</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <Clock className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Save Time Every Month
                                             </h3>
                                             <p className="text-zinc-700">
@@ -377,8 +418,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                         </div>
 
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">🌏</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <Globe className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Connect Globally
                                             </h3>
                                             <p className="text-zinc-700">
@@ -387,8 +430,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                         </div>
 
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">💡</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <Lightbulb className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Get Valuable Feedback
                                             </h3>
                                             <p className="text-zinc-700">
@@ -397,8 +442,10 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                         </div>
 
                                         <div className="bg-[var(--brutalist-beige)] rounded-xl p-6">
-                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-2">
-                                                <span className="text-2xl">🎯</span>
+                                            <h3 className="text-xl font-bold text-zinc-900 mb-3 flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center">
+                                                    <Target className="w-[18px] h-[18px] text-zinc-900" />
+                                                </div>
                                                 Track Your Progress
                                             </h3>
                                             <p className="text-zinc-700">
