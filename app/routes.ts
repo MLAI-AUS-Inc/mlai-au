@@ -45,4 +45,7 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
+  // Vibe-Raising page
+  route("/vibe-raising", "routes/vibe-raising.tsx"),
+
 ] satisfies RouteConfig;

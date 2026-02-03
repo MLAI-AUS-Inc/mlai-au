@@ -61,7 +61,18 @@ export function TestimonialModal({ testimonial, onClose }: TestimonialModalProps
           )}
           <div>
             <div className="text-xl font-bold">{testimonial.author.name}</div>
-            <div className="text-sm opacity-70">{testimonial.author.handle}</div>
+            {testimonial.author.website ? (
+              <a
+                href={testimonial.author.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm opacity-70 hover:opacity-100 hover:underline transition-opacity"
+              >
+                {testimonial.author.handle}
+              </a>
+            ) : (
+              <div className="text-sm opacity-70">{testimonial.author.handle}</div>
+            )}
           </div>
         </div>
 

@@ -1,10 +1,12 @@
 /**
- * Static Testimonial Section
+ * Testimonial Section with rotating fade animation
  * Displays testimonials in a clean card layout (3 columns on desktop)
- * Styled like the reference image with blue background and white cards
+ * Cycles through groups of 3 testimonials with a fade transition
  */
 
+import { useEffect, useState, useCallback } from "react";
 import { TESTIMONIALS, TETRIS_COLORS } from "./testimonialData";
+import type { Testimonial } from "./types";
 
 // Color mapping for quote text
 const QUOTE_COLORS: Record<string, string> = {
@@ -12,17 +14,22 @@ const QUOTE_COLORS: Record<string, string> = {
   purple: TETRIS_COLORS.purple,
   blue: TETRIS_COLORS.blue,
   pink: TETRIS_COLORS.pink,
-  mint: "#00b894", // Slightly darker mint for readability on white
-  yellow: "#d4a800", // Darker yellow for readability on white
+  mint: "#00b894",
+  yellow: "#d4a800",
   black: TETRIS_COLORS.black,
 };
+
+const ROTATE_INTERVAL = 6000; // ms between rotations
+const FADE_DURATION = 500; // ms for fade transition
 
 interface TestimonialCardProps {
   body: string;
   authorName: string;
   authorHandle: string;
   authorImage: string;
+  authorWebsite?: string;
   quoteColor: string;
+  visible: boolean;
 }
 
 function TestimonialCard({
@@ -30,16 +37,24 @@ function TestimonialCard({
   authorName,
   authorHandle,
   authorImage,
+  authorWebsite,
   quoteColor,
+  visible,
 }: TestimonialCardProps) {
   return (
-    <div className="bg-white rounded-2xl p-6 flex flex-col h-full shadow-lg">
+    <div
+      className="bg-white rounded-2xl p-6 flex flex-col h-full shadow-lg"
+      style={{
+        opacity: visible ? 1 : 0,
+        transition: `opacity ${FADE_DURATION}ms ease-in-out`,
+      }}
+    >
       {/* Quote */}
       <blockquote
         className="text-lg md:text-xl lg:text-2xl font-bold leading-snug flex-grow"
         style={{ color: quoteColor }}
       >
-        "{body}"
+        &ldquo;{body}&rdquo;
       </blockquote>
 
       {/* Author */}
@@ -51,20 +66,61 @@ function TestimonialCard({
         />
         <div>
           <div className="font-semibold text-gray-900">{authorName} |</div>
-          <div className="text-gray-600 text-sm">{authorHandle}</div>
+          {authorWebsite ? (
+            <a
+              href={authorWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-600 text-sm hover:text-gray-900 hover:underline transition-colors"
+            >
+              {authorHandle}
+            </a>
+          ) : (
+            <div className="text-gray-600 text-sm">{authorHandle}</div>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+/** Split testimonials into groups of 3 */
+function buildGroups(testimonials: Testimonial[]): Testimonial[][] {
+  const groups: Testimonial[][] = [];
+  for (let i = 0; i < testimonials.length; i += 3) {
+    const group = testimonials.slice(i, i + 3);
+    if (group.length === 3) {
+      groups.push(group);
+    }
+  }
+  // If we only got one group or none, just use all testimonials reshuffled
+  return groups.length > 0 ? groups : [testimonials.slice(0, 3)];
+}
+
 export function TestimonialSection() {
-  // Select 3 diverse testimonials for display
-  const featuredTestimonials = [
-    TESTIMONIALS[0], // Orange - Eike
-    TESTIMONIALS[3], // Blue - Blair
-    TESTIMONIALS[4], // Yellow/Mint - Community
-  ];
+  // Use all testimonials in order
+  const ordered = TESTIMONIALS;
+
+  const groups = buildGroups(ordered);
+  const [groupIndex, setGroupIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  const rotate = useCallback(() => {
+    if (groups.length <= 1) return;
+    setVisible(false);
+    setTimeout(() => {
+      setGroupIndex((prev) => (prev + 1) % groups.length);
+      setVisible(true);
+    }, FADE_DURATION);
+  }, [groups.length]);
+
+  useEffect(() => {
+    if (groups.length <= 1) return;
+    const timer = setInterval(rotate, ROTATE_INTERVAL);
+    return () => clearInterval(timer);
+  }, [rotate, groups.length]);
+
+  const currentGroup = groups[groupIndex];
 
   return (
     <div className="h-full flex flex-col">
@@ -77,29 +133,43 @@ export function TestimonialSection() {
 
       {/* Testimonial Cards */}
       <div className="flex-grow grid grid-cols-1 md:grid-cols-3 gap-6 px-4">
-        {featuredTestimonials.map((testimonial) => (
+        {currentGroup.map((testimonial) => (
           <TestimonialCard
             key={testimonial.id}
-            body={
-              testimonial.body.length > 120
-                ? testimonial.body.slice(0, 120) + "..."
-                : testimonial.body
-            }
+            body={testimonial.body}
             authorName={testimonial.author.name}
             authorHandle={testimonial.author.handle}
             authorImage={testimonial.author.imageUrl}
-            quoteColor={QUOTE_COLORS[testimonial.color] || TETRIS_COLORS.black}
+            authorWebsite={testimonial.author.website}
+            quoteColor={
+              QUOTE_COLORS[testimonial.color] || TETRIS_COLORS.black
+            }
+            visible={visible}
           />
         ))}
       </div>
 
-      {/* CTA Button */}
-      <div className="flex justify-center mt-8">
-        <button className="bg-[#ff5a5f] hover:bg-[#ff4549] text-white font-semibold px-8 py-3 rounded-full transition-colors flex items-center gap-2">
-          Read More Stories
-          <span aria-hidden="true">&rarr;</span>
-        </button>
-      </div>
+      {/* Dot indicators */}
+      {groups.length > 1 && (
+        <div className="flex justify-center gap-2 mt-6">
+          {groups.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setVisible(false);
+                setTimeout(() => {
+                  setGroupIndex(i);
+                  setVisible(true);
+                }, FADE_DURATION);
+              }}
+              className={`w-2.5 h-2.5 rounded-full transition-colors ${
+                i === groupIndex ? "bg-white" : "bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Show testimonials group ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
