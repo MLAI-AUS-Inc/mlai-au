@@ -184,7 +184,7 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                     </div>
                                     <div className="bg-[#ff3d00] rounded-xl p-6 text-white">
                                         <div className="text-3xl mb-4">⏱️</div>
-                                        <h3 className="text-xl font-bold mb-3">Save hours sourcing</h3>
+                                        <h3 className="text-xl font-bold mb-3">Time Saving</h3>
                                         <p className="text-sm">
                                             No more stale directories. Surface active, funded-ready startups.
                                         </p>
