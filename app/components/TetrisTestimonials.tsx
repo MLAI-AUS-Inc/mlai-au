@@ -13,11 +13,25 @@ const TETRIS_COLORS = {
 
 type ColorKey = keyof typeof TETRIS_COLORS;
 
+type TestimonialAuthor = {
+  name: string;
+  handle: string;
+  imageUrl: string;
+  website?: string;
+};
+
+type Testimonial = {
+  id: number;
+  body: string;
+  author: TestimonialAuthor;
+  color: ColorKey;
+};
+
 // Styling constants
 const BORDER_RADIUS = 16; // Rounded corner radius
 
 // Testimonials data matching the reference image
-const testimonials = [
+const testimonials: Testimonial[] = [
   {
     id: 1,
     body: "It was an absolute pleasure to work with the MLAI team for Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community in action for the startup speed dating.",
