@@ -8,7 +8,7 @@ export default function FloatingSocials() {
     <div className="fixed right-4 bottom-20 z-40 flex flex-col items-end gap-3">
       {/* Slack Join Button - Always visible */}
       <a
-        href="https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg"
+        href="https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg"
         target="_blank"
         rel="noopener noreferrer"
         className="group relative"

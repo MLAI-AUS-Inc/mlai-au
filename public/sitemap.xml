@@ -62,301 +62,103 @@
  </url>
  <url>
   <loc>https://mlai.au/articles/featured/how-technology-affects-education-negatively</loc>
-  <lastmod>2026-01-27</lastmod>
+  <lastmod>2025-12-30</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
   <loc>https://mlai.au/articles/featured/learn-ai-melbourne</loc>
-  <lastmod>2026-01-30</lastmod>
+  <lastmod>2026-01-28</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
   <loc>https://mlai.au/articles/featured/how-small-business-owners-can-get-started-with-ai-2026</loc>
-  <lastmod>2026-01-29</lastmod>
+  <lastmod>2026-01-22</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
   <loc>https://mlai.au/articles/featured/how-to-foster-community-engagement</loc>
-  <lastmod>2026-01-29</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/startup-accelerator-australia</loc>
-  <lastmod>2026-01-28</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-to-find-networking-events</loc>
-  <lastmod>2026-01-28</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut</loc>
-  <lastmod>2026-01-27</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-technology-has-changed-education</loc>
-  <lastmod>2026-01-27</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-much-venture-capital-was-invested-in-2023</loc>
-  <lastmod>2026-01-26</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/what-are-collaboration-tools</loc>
-  <lastmod>2026-01-26</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-technology-is-shaping-learning-in-higher-education</loc>
-  <lastmod>2026-01-27</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/venture-capital-how-does-it-work</loc>
-  <lastmod>2026-01-26</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-many-startup-accelerators-and-incubators-are-there-in-si</loc>
-  <lastmod>2026-01-26</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-does-a-venture-capital-firm-work</loc>
-  <lastmod>2026-01-25</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/the-best-startup-pitch-deck-ever</loc>
-  <lastmod>2026-01-25</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-to-get-data-science-job</loc>
-  <lastmod>2026-01-24</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-much-do-data-scientists-make</loc>
-  <lastmod>2026-01-24</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/how-to-build-a-model-in-data-science</loc>
-  <lastmod>2026-01-24</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/how-does-machine-learning-work</loc>
-  <lastmod>2026-01-23</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/how-to-do-machine-learning</loc>
-  <lastmod>2026-01-23</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/how-to-become-machine-learning-engineer</loc>
-  <lastmod>2026-01-23</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/how-vcs-value-startups</loc>
-  <lastmod>2026-01-22</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/how-to-get-into-venture-capital</loc>
-  <lastmod>2026-01-22</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/community/how-to-network-at-networking-events</loc>
-  <lastmod>2026-01-22</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/how-to-become-a-data-science</loc>
-  <lastmod>2026-01-21</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/why-is-artificial-intelligence-bad</loc>
-  <lastmod>2026-01-21</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/what-are-artificial-intelligence</loc>
-  <lastmod>2026-01-21</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-can-i-learn-artificial-intelligence</loc>
-  <lastmod>2026-01-21</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/how-to-invest-in-startups-india</loc>
-  <lastmod>2026-01-21</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/what-percent-of-startups-fail</loc>
-  <lastmod>2026-01-20</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/what-is-deep-learning</loc>
-  <lastmod>2026-01-20</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/what-is-difference-between-artificial-intelligence-and-machi</loc>
-  <lastmod>2026-01-20</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/how-to-get-venture-capital</loc>
-  <lastmod>2026-01-20</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/what-is-artificial-general-intelligence</loc>
-  <lastmod>2026-01-20</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/what-is-machine-learning</loc>
-  <lastmod>2026-01-19</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/what-are-startups</loc>
-  <lastmod>2026-01-18</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/what-is-venture-capital</loc>
-  <lastmod>2026-01-18</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/accelerator-startup-programs</loc>
-  <lastmod>2026-01-17</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/careers/what-is-an-ai-agent-orchestrator-and-how-can-i-become-one-20</loc>
-  <lastmod>2026-01-16</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-to-get-a-job-at-an-ai-startup-australia</loc>
-  <lastmod>2026-01-16</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/ai-startup-companies</loc>
-  <lastmod>2026-01-16</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/australian-founders</loc>
-  <lastmod>2026-01-16</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/startups/startup-incubator-melbourne</loc>
-  <lastmod>2026-01-17</lastmod>
-  <changefreq>monthly</changefreq>
-  <priority>0.8</priority>
- </url>
- <url>
-  <loc>https://mlai.au/articles/featured/how-do-i-figure-out-how-much-my-product-should-cost</loc>
   <lastmod>2026-01-14</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in</loc>
-  <lastmod>2026-01-13</lastmod>
+  <loc>https://mlai.au/articles/featured/startup-accelerator-australia</loc>
+  <lastmod>2026-01-10</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/startups/how-to-raise-money-for-my-startup-in-australia-2026</loc>
-  <lastmod>2026-01-13</lastmod>
+  <loc>https://mlai.au/articles/featured/how-to-find-networking-events</loc>
+  <lastmod>2026-01-03</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/careers/how-to-get-started-with-ai-2026</loc>
-  <lastmod>2026-01-08</lastmod>
+  <loc>https://mlai.au/articles/featured/how-modern-technology-affects-education-today-and-in-the-fut</loc>
+  <lastmod>2025-12-26</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/careers/best-way-to-learn-about-ai-2026</loc>
-  <lastmod>2026-01-08</lastmod>
+  <loc>https://mlai.au/articles/featured/how-technology-has-changed-education</loc>
+  <lastmod>2025-12-21</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/community/ai-hackathons-and-events-melbourne</loc>
-  <lastmod>2026-01-08</lastmod>
+  <loc>https://mlai.au/articles/featured/how-much-venture-capital-was-invested-in-2023</loc>
+  <lastmod>2025-12-17</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/startups/how-to-start-a-startup-and-use-ai-to-make-it-easy</loc>
-  <lastmod>2026-01-07</lastmod>
+  <loc>https://mlai.au/articles/featured/what-are-collaboration-tools</loc>
+  <lastmod>2025-12-13</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-technology-is-shaping-learning-in-higher-education</loc>
+  <lastmod>2025-12-09</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/venture-capital-how-does-it-work</loc>
+  <lastmod>2025-12-05</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-many-startup-accelerators-and-incubators-are-there-in-si</loc>
+  <lastmod>2025-12-01</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-does-a-venture-capital-firm-work</loc>
+  <lastmod>2025-11-27</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/the-best-startup-pitch-deck-ever</loc>
+  <lastmod>2025-11-23</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-to-get-data-science-job</loc>
+  <lastmod>2025-11-19</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-much-do-data-scientists-make</loc>
+  <lastmod>2025-11-15</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
@@ -367,8 +169,20 @@
   <priority>0.8</priority>
  </url>
  <url>
-  <loc>https://mlai.au/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2</loc>
-  <lastmod>2026-01-15</lastmod>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2</loc>
+  <lastmod>2026-01-19</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3</loc>
+  <lastmod>2026-01-26</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4</loc>
+  <lastmod>2026-02-05</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>
