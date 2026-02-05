@@ -2,7 +2,7 @@ export default function StickySlackButton() {
   return (
     <div className="fixed top-4 right-4 z-50">
       <a
-        href="https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg"
+        href="https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-teal-500 hover:bg-teal-600 rounded-md shadow-lg transition duration-150 ease-in-out"
