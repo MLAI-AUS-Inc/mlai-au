@@ -1,6 +1,7 @@
 
 import { Link } from "react-router";
 import { ImageWithFallback } from "./ImageWithFallback";
+import { ARTICLE_FALLBACK_IMAGE } from "~/articles/registry";
 
 export default function NextArticleCTA({ label = "Next up", title, description, href, to, image, imageAlt }: any) {
     const destination = to || href;
@@ -26,6 +27,7 @@ export default function NextArticleCTA({ label = "Next up", title, description, 
                     <div className="relative aspect-[16/10] overflow-hidden rounded-[26px] shadow-[0_25px_60px_-26px_rgba(0,0,0,0.35)] border border-gray-200">
                         <ImageWithFallback
                             src={image}
+                            fallbackSrc={ARTICLE_FALLBACK_IMAGE}
                             alt={imageAlt || title}
                             className="absolute inset-0 w-full h-full object-cover"
                         />

@@ -1,10 +1,11 @@
 import { H3, Body } from "~/components/ui/Typography";
+import { ImageWithFallback } from "~/components/ImageWithFallback";
 
 const previousMembers = [
   {
     name: "Louka Ewington-Pitsos",
     role: "Co-founder, President (2023-2025)",
-    imageUrl: "/team-photos/previous/louka.png",
+    imageUrl: "",
     contribution: "Co-founded MLAI and led it to initial success running the first major hackathon focused on solving Australian problems with AI, and leading its second hackathon - the Green Battery Hack. Louka is a data science award winner and entrepreneur who founded a road maintenance startup, sold an arbitrage system, and surveyed 1/3 of the ACT with computer vision models, Louka still works in startups relating to AI.",
   },
   {
@@ -44,8 +45,8 @@ export default function PreviousTeam() {
                 <div className="flex flex-col">
                   {/* Image and basic info */}
                   <div className="flex items-start gap-x-4 mb-4">
-                    <img
-                      className="h-16 w-16 rounded-full object-cover"
+                    <ImageWithFallback
+                      className="h-16 w-16 rounded-full object-cover bg-gray-200"
                       src={person.imageUrl}
                       alt={person.name}
                     />

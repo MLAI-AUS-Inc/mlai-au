@@ -1,6 +1,9 @@
 // Adapted from user provided code for React Router v7
 import type { MetaDescriptor } from "react-router";
 
+export const ARTICLE_FALLBACK_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
+
 export type ArticleWithSlug = {
   title: string;
   date: string; // YYYY-MM-DD
@@ -256,7 +259,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "AU-focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.",
     author: "Dr Sam Donegan",
     slug: "featured/how-to-get-data-science-job",
-    image: "https://placehold.co/1200x630/png",
+    image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "How to get a data science job in Australia (2026)",
     hasContent: true,
   },
@@ -298,8 +301,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   author: "MLAI Editorial Team",
   authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
   slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2",
-  image: "...",
-  imageAlt: "...",
+  image: ARTICLE_FALLBACK_IMAGE,
+  imageAlt: "AI Bits for Techies newsletter banner",
   hasContent: true,
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
@@ -309,8 +312,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3",
-    image: "...",
-    imageAlt: "...",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
@@ -320,8 +323,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
-    image: "...",
-    imageAlt: "...",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
 
