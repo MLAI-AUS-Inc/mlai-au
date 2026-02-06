@@ -144,7 +144,7 @@ const references = [
   },
   {
     id: 4,
-    href: 'https://guykawasaki.com/the-102030-rule/',
+    href: 'https://guykawasaki.com/the_102030_rule/',
     title: 'The 10/20/30 Rule of PowerPoint',
     publisher: 'Guy Kawasaki',
     description: 'Guideline for slide count, time, and font size that remains influential.',

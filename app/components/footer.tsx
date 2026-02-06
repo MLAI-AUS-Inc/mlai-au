@@ -14,6 +14,8 @@ const footerNavigation = {
   Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
   About: [
     { name: "Contact", href: "/#about" },
+    { name: "Members", href: "/members" },
+    { name: "How to Pitch", href: "/how-to-pitch-your-idea" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/mlai-aus-inc" },
   ],
   social: [

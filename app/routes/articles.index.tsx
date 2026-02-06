@@ -41,7 +41,7 @@ export function meta({ data }: Route.MetaArgs) {
     return [
         { title: title },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://www.mlai.au/articles" : `https://www.mlai.au/articles?page=${pageNumber}` },
+        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://mlai.au/articles" : `https://mlai.au/articles?page=${pageNumber}` },
     ];
 }
 

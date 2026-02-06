@@ -146,7 +146,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://business.gov.au/grants-and-programs/early-stage-venture-capital-limited-partnerships-esvclp',
+    href: 'https://business.gov.au/grants-and-programs/early-stage-venture-capital-limited-partnerships',
     title: 'Early Stage Venture Capital Limited Partnerships (ESVCLP)',
     publisher: 'Australian Government (business.gov.au)',
     description: 'Program overview and official information for ESVCLP.',
@@ -154,7 +154,7 @@ const references = [
   },
   {
     id: 4,
-    href: 'https://business.gov.au/grants-and-programs/venture-capital-limited-partnerships-vclp',
+    href: 'https://business.gov.au/grants-and-programs/venture-capital-limited-partnerships',
     title: 'Venture Capital Limited Partnerships (VCLP)',
     publisher: 'Australian Government (business.gov.au)',
     description: 'Program overview and official information for VCLP.',

@@ -211,7 +211,7 @@ export default function ArticlePage() {
             title={`Download the ${TOPIC} checklist`}
             description='Access a structured template to apply the steps in this guide.'
             buttonLabel='Get the checklist'
-            buttonHref='/resources'
+            buttonHref='/articles'
             accent='purple'
           />
 

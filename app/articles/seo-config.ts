@@ -425,6 +425,6 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
 export const canonical = (path: string) => {
     const siteUrl = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL
         ? process.env.NEXT_PUBLIC_SITE_URL
-        : 'https://www.mlai.au';
+        : 'https://mlai.au';
     return `${siteUrl}${path}`;
 };
