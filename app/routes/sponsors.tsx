@@ -1,5 +1,11 @@
+import type { MetaFunction } from "react-router";
 import { ButtonLink } from "~/components/ui/Button";
 import { Body, H1, H2 } from "~/components/ui/Typography";
+
+export const meta: MetaFunction = () => [
+    { title: "Sponsors | MLAI" },
+    { name: "description", content: "Partner with MLAI to support Australia's AI community. Explore sponsorship tiers and benefits." },
+];
 
 const sponsorshipTiers = [
   {

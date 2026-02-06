@@ -6,6 +6,11 @@ import EventsCalendar from "~/components/EventsCalendar";
 import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
 
+export const meta: Route.MetaFunction = () => [
+    { title: "Events | MLAI" },
+    { name: "description", content: "Upcoming AI and Machine Learning events, meetups, and workshops hosted by MLAI in Australia." },
+];
+
 interface LoaderData {
   events: Promise<Event[]>;
 }

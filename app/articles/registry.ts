@@ -217,7 +217,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/how-many-startup-accelerators-and-incubators-are-there-in-si": {
-    title: "How many startup accelerators and incubators are there in Singapore? (2026)",
+    title: "Startup accelerators and incubators in Singapore (2026)",
     date: "2025-12-01",
     description:
       "Short answer: about 60–80 active accelerators/incubators in Singapore in 2026, depending on definitions. Learn how counts are built and how to verify programmes.",

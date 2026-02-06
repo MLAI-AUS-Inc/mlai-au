@@ -1,6 +1,12 @@
+import type { MetaFunction } from "react-router";
 import { H1, H2, Body } from "~/components/ui/Typography";
 import Team from "~/components/team";
 import PreviousTeam from "~/components/previous-team";
+
+export const meta: MetaFunction = () => [
+    { title: "Members | MLAI" },
+    { name: "description", content: "Meet the passionate volunteers who drive MLAI forward, empowering Australia's AI community." },
+];
 
 export default function Members() {
   return (
