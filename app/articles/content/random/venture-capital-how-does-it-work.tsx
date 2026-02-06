@@ -329,7 +329,7 @@ export default function ArticleContent() {
           title={`Get templates for ${TOPIC}`}
           description="Download a raise planning checklist, cap table model, and a term‑sheet reading guide."
           buttonLabel="Download now"
-          buttonHref="/resources"
+          buttonHref="/articles"
           accent="purple"
         />
 

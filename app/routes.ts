@@ -6,12 +6,10 @@ export default [
   route("/sponsors", "routes/sponsors.tsx"),
   route("/members", "routes/members.tsx"),
   route("/events", "routes/events.tsx"),
-  route("/hackathon", "routes/hackathon.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
-  route("/hackathons", "routes/hackathons.tsx"),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),

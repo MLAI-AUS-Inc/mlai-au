@@ -14,6 +14,19 @@ import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "MLAI" },
+  {
+    name: "description",
+    content:
+      "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+  },
+  {
+    name: "keywords",
+    content: "Machine Learning, Artificial Intelligence, AI, Australia",
+  },
+];
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -46,17 +59,8 @@ export default function Layout() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Basic meta tags */}
-        <title>MLAI</title>
-        <meta
-          name="description"
-          content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
-        />
         <meta name="application-name" content="MLAI-website" />
         <meta name="referrer" content="origin-when-cross-origin" />
-        <meta
-          name="keywords"
-          content="Machine Learning, Artificial Intelligence, AI, Australia"
-        />
 
         {/* Author meta tags */}
         <meta name="author" content="Dr Sam Donegan" />
@@ -80,6 +84,9 @@ export default function Layout() {
 
         {/* Robots meta tag */}
         <meta name="robots" content="index, follow" />
+
+        {/* Canonical URL to consolidate http/https/www variants */}
+        <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
 
         <Meta />
         <Links />

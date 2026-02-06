@@ -22,8 +22,9 @@ export type PillarCardProps = {
     priority?: boolean
 }
 
-const DEFAULT_FALLBACK_IMAGE =
-    "https://firebasestorage.googleapis.com/v0/b/a-duet.appspot.com/o/OpenGraph%20Images%2FOpenGraph%20Fallback.jpg?alt=media&token=9c2374d3-d994-4094-850a-22592a50f624"
+import { ARTICLE_FALLBACK_IMAGE } from "~/articles/registry"
+
+const DEFAULT_FALLBACK_IMAGE = ARTICLE_FALLBACK_IMAGE
 
 export function PillarCard({
     href,

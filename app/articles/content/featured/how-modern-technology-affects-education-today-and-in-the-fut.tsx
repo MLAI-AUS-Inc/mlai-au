@@ -114,7 +114,7 @@ export const articleMeta = {
 const references = [
   {
     id: 1,
-    href: 'https://www.australiancurriculum.edu.au/f-10-curriculum/digital-technologies/',
+    href: 'https://www.australiancurriculum.edu.au/f-10-curriculum/technologies/digital-technologies/structure/',
     title: 'Australian Curriculum: Digital Technologies',
     publisher: 'ACARA',
     description: 'Curriculum expectations for digital technologies and computational thinking across F–10.',
@@ -130,7 +130,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.oaic.gov.au/privacy/the-privacy-act/australian-privacy-principles',
+    href: 'https://www.oaic.gov.au/privacy/australian-privacy-principles',
     title: 'Australian Privacy Principles (APPs)',
     publisher: 'Office of the Australian Information Commissioner',
     description: 'Legal principles governing personal information handling in Australia.',
@@ -300,7 +300,7 @@ export default function ArticleContent() {
         </p>
         <p>
           For a broader context, see our overview of the Australian AI ecosystem in
-          <Link to="/articles/australian-ai-landscape" className="underline underline-offset-4">
+          <Link to="/articles" className="underline underline-offset-4">
             the Australian AI Landscape
           </Link>
           .

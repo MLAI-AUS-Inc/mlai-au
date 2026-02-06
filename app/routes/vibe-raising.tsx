@@ -25,7 +25,7 @@ export function meta({ }: Route.MetaArgs) {
     return [
         { title: 'Vibe Raising | MLAI Community' },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: "https://www.mlai.au/vibe-raising" },
+        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising" },
     ];
 }
 

@@ -312,7 +312,7 @@ export default function ArticleContent() {
           title={`Get templates for ${TOPIC}`}
           description="Download checklists, pilot plans, and example class norms tailored to this guide."
           buttonLabel="Download now"
-          buttonHref="/resources"
+          buttonHref="/articles"
           accent="purple"
         />
 

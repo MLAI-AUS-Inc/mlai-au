@@ -148,7 +148,7 @@ const references = [
   },
   {
     id: 2,
-    href: 'https://www.esafety.gov.au/parents/skills-advice/taming-technology/screen-time',
+    href: 'https://www.esafety.gov.au/parents/issues-and-advice/screen-time',
     title: 'Screen time — advice for parents and carers',
     publisher: 'eSafety Commissioner',
     description: 'Practical guidance on balancing screen use and wellbeing in Australia.',
@@ -156,7 +156,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.oaic.gov.au/privacy/privacy-for-organisations/apply-the-privacy-act/app-guidelines/australian-privacy-principles-quick-reference',
+    href: 'https://www.oaic.gov.au/privacy/australian-privacy-principles/australian-privacy-principles-quick-reference',
     title: 'Australian Privacy Principles — quick reference',
     publisher: 'OAIC',
     description: 'Core privacy obligations relevant to handling student data in Australia.',
@@ -164,7 +164,7 @@ const references = [
   },
   {
     id: 4,
-    href: 'https://www.unesco.org/en/education/technology/gem-report-2023',
+    href: 'https://www.unesco.org/gem-report/en/publication/technology',
     title: 'Technology in education: A tool on whose terms? (2023 GEM Report)',
     publisher: 'UNESCO',
     description: 'Global synthesis on the promises and pitfalls of technology in education.',
@@ -355,7 +355,7 @@ export default function ArticleContent() {
           title={`Get templates for ${TOPIC}`}
           description='Download checklists, lesson planning prompts, and privacy review guides.'
           buttonLabel='Download now'
-          buttonHref='/resources'
+          buttonHref='/articles'
           accent='purple'
         />
 

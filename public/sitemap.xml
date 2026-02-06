@@ -11,27 +11,12 @@
   <priority>0.9</priority>
  </url>
  <url>
-  <loc>https://mlai.au/about</loc>
-  <changefreq>monthly</changefreq>
-  <priority>0.6</priority>
- </url>
- <url>
   <loc>https://mlai.au/contact</loc>
   <changefreq>monthly</changefreq>
   <priority>0.6</priority>
  </url>
  <url>
   <loc>https://mlai.au/events</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
- </url>
- <url>
-  <loc>https://mlai.au/hackathon</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
- </url>
- <url>
-  <loc>https://mlai.au/hackathons</loc>
   <changefreq>weekly</changefreq>
   <priority>0.7</priority>
  </url>
