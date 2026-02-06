@@ -81,6 +81,9 @@ export default function Layout() {
         {/* Robots meta tag */}
         <meta name="robots" content="index, follow" />
 
+        {/* Canonical URL to consolidate http/https/www variants */}
+        <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
+
         <Meta />
         <Links />
 
