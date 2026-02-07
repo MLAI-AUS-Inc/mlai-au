@@ -14,7 +14,7 @@ import type { Route } from "./+types/articles.index";
 
 const PAGE_TITLE = 'Writing on AI, Machine Learning and Community.';
 const PAGE_DESCRIPTION =
-    'Plain-English guides on AI, Machine Learning, and how to get started with the MLAI community.';
+    'Plain-English guides on AI, Machine Learning, data science careers, and technology in Australia. Written by the MLAI community for builders and learners.';
 
 const FALLBACK_IMAGE = 'https://placehold.co/1200x630/png';
 

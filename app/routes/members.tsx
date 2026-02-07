@@ -4,8 +4,8 @@ import Team from "~/components/team";
 import PreviousTeam from "~/components/previous-team";
 
 export const meta: MetaFunction = () => [
-    { title: "Members | MLAI" },
-    { name: "description", content: "Meet the passionate volunteers who drive MLAI forward, empowering Australia's AI community." },
+    { title: "Meet the MLAI Volunteer Team | MLAI" },
+    { name: "description", content: "Meet the passionate volunteers who drive MLAI forward, empowering Australia's AI and Machine Learning community. Current and previous team members." },
 ];
 
 export default function Members() {

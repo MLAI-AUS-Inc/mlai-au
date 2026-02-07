@@ -3,8 +3,8 @@ import { ButtonLink } from "~/components/ui/Button";
 import { Body, H1, H2 } from "~/components/ui/Typography";
 
 export const meta: MetaFunction = () => [
-    { title: "Sponsors | MLAI" },
-    { name: "description", content: "Partner with MLAI to support Australia's AI community. Explore sponsorship tiers and benefits." },
+    { title: "Sponsor MLAI — Support Australia's AI Community | MLAI" },
+    { name: "description", content: "Partner with MLAI to support Australia's AI and Machine Learning community. Explore Gold, Silver, and Bronze sponsorship tiers, benefits, and brand visibility." },
 ];
 
 const sponsorshipTiers = [

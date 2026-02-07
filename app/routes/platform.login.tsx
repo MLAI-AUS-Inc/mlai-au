@@ -2,8 +2,8 @@ import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
 
 export const meta: Route.MetaFunction = () => [
-    { title: "Login | MLAI" },
-    { name: "description", content: "Sign in to your MLAI account to access the community platform and tools." },
+    { title: "Sign In to the MLAI Platform | MLAI" },
+    { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
 ];
 import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
 import { useEffect, useState } from "react";

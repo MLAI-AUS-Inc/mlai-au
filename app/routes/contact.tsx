@@ -2,8 +2,8 @@ import type { MetaFunction } from "react-router";
 import CTA from "~/components/CTA";
 
 export const meta: MetaFunction = () => [
-    { title: "Contact | MLAI" },
-    { name: "description", content: "Get in touch with MLAI Aus Inc. Contact details for Australia's AI and Machine Learning community." },
+    { title: "Contact MLAI — Australia's AI Community | MLAI" },
+    { name: "description", content: "Get in touch with MLAI Aus Inc. — Australia's AI and Machine Learning community. Find our address, email, LinkedIn, Slack, and other ways to connect." },
 ];
 
 const stats = [];

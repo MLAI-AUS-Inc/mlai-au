@@ -297,7 +297,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2": {
   title: "AI Bits for Techies | Issue #2 | 19 Jan 2026",
   date: "2026-01-19",
-  description: "Issue #2: Weekly deep dive into AI and ML advancements and updates.",
+  description: "AI Bits Issue #2: LLM personality preferences, model-user compatibility research, T3 Chat, LTX Studio, Auralix, and The Alignment Problem book pick.",
   author: "MLAI Editorial Team",
   authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
   slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2",
@@ -308,7 +308,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
     title: "AI Bits for Techies | Issue #3 | 26 Jan 2026",
     date: "2026-01-26",
-    description: "Issue #3: Weekly deep dive into AI and ML advancements and updates.",
+    description: "AI Bits Issue #3: LLM energy and water footprint benchmarks, FLUX.2 image generation, TranslateGemma, GLM-Image, and The Atlas of AI book recommendation.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3",
@@ -319,7 +319,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
     title: "AI Bits for Techies | Issue #4 | 5 Feb 2026",
     date: "2026-02-05",
-    description: "Issue #4: Weekly deep dive into AI and ML advancements and updates.",
+    description: "AI Bits Issue #4: AI coding tool productivity research, open-source developer impact studies, Qwen3-Max, OpenAI Prism, and AI governance book pick.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
