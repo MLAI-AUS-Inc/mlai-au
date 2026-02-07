@@ -91,7 +91,7 @@ export default function Layout() {
         <Meta />
         <Links />
 
-
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="R27fA2BeFrzb0BXu5adbpQ" async></script>
       </head>
       <body>
         <noscript>
