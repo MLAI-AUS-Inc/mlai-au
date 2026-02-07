@@ -72,7 +72,7 @@ export default function Layout() {
           property="og:description"
           content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
         />
-        <meta property="og:url" content="https://mlai.au" />
+        <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
         <meta property="og:type" content="website" />
         <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84" />
         <meta property="og:image:width" content="1200" />

@@ -82,7 +82,7 @@ const authorRegistry = {
         sameAs: [
             { label: 'LinkedIn', href: 'https://www.linkedin.com/in/shivang-s-466458191' },
         ],
-        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
+        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504',
         avatarAlt: 'Shivang Shekhar',
         knowsAbout: ['AI Trends', 'Machine Learning', 'Mechanical Engineering', 'Chemistry'],
     },

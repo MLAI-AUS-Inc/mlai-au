@@ -7,7 +7,7 @@ const navigation = [
   { name: "Events", href: "/#upcoming-events" },
   {
     name: "Volunteer",
-    href: "https://forms.gle/GwZR49kwTMszLKtN8",
+    href: "https://docs.google.com/forms/d/e/1FAIpQLSclIpU9So5QoX0Py-wKMjzE6F5amk7u_kMFrcm4tf2GQQ7-xA/viewform",
     target: "_blank",
     rel: "noopener noreferrer nofollow",
   },
