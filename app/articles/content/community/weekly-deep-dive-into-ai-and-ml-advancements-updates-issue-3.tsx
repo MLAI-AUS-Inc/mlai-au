@@ -297,8 +297,8 @@ export default function ArticlePage() {
           speed and accuracy across 55 languages, fitting on everything from H100 GPUs down to mobile devices
           while maintaining high-fidelity translation.
           <br />
-          <a href="https://deepmind.google/models/gemma" target="_blank" rel="noopener noreferrer">
-            https://deepmind.google/models/gemma
+          <a href="https://deepmind.google/models/gemma/" target="_blank" rel="noopener noreferrer">
+            https://deepmind.google/models/gemma/
           </a>
         </p>
 

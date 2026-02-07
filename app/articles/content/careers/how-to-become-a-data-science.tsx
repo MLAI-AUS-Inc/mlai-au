@@ -93,7 +93,7 @@ export const faqItems: FAQ[] = [
     id: 6,
     question: 'How much can a data scientist earn in Australia?',
     answer:
-      'Compensation varies by seniority, location, and sector. Consult current Australian salary guides (e.g., Hays, Michael Page) and live listings for up-to-date figures (as at 2026).'
+      (<>Compensation varies by seniority, location, and sector. See our <Link to="/articles/featured/how-much-do-data-scientists-make">breakdown of data scientist salaries in Australia</Link> for detailed ranges by level, city, and industry (as at 2026).</>)
   },
   {
     id: 7,

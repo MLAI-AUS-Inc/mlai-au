@@ -2,8 +2,8 @@ import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
 
 export const meta: Route.MetaFunction = () => [
-    { title: "Login | MLAI" },
-    { name: "description", content: "Sign in to your MLAI account to access the community platform and tools." },
+    { title: "Sign In to the MLAI Platform | MLAI" },
+    { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
 ];
 import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
 import { useEffect, useState } from "react";
@@ -137,7 +137,7 @@ export default function PlatformLogin() {
                                 <span className="sr-only">MLAI</span>
                                 <img
                                     alt="MLAI Logo"
-                                    src="/text_logo.png"
+                                    src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftext_logo.png?alt=media&token=0857f467-d3f9-4dbe-aad0-7a7331295100"
                                     className="h-8 w-auto"
                                 />
                             </Link>

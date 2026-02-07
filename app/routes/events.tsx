@@ -7,8 +7,8 @@ import { fetchEvents, type Event } from "~/lib/events";
 import { getEnv } from "~/lib/env.server";
 
 export const meta: Route.MetaFunction = () => [
-    { title: "Events | MLAI" },
-    { name: "description", content: "Upcoming AI and Machine Learning events, meetups, and workshops hosted by MLAI in Australia." },
+    { title: "AI & Machine Learning Events in Australia | MLAI" },
+    { name: "description", content: "Upcoming AI and Machine Learning events, meetups, and workshops hosted by MLAI across Australia. Browse dates, register, and join our community of builders and learners." },
 ];
 
 interface LoaderData {

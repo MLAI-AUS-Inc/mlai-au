@@ -129,7 +129,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.business.gov.au/grants-and-programs/research-and-development-tax-incentive',
+    href: 'https://business.gov.au/grants-and-programs/research-and-development-tax-incentive',
     title: 'R&D Tax Incentive',
     publisher: 'Australian Government — business.gov.au',
     description: 'Official guidance on the R&D Tax Incentive relevant to Australian startups.',

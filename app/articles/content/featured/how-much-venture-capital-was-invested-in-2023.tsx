@@ -119,7 +119,7 @@ const references = [
   },
   {
     id: 2,
-    href: 'https://www.cbinsights.com/research/report/venture-capital-2023/',
+    href: 'https://www.cbinsights.com/research/report/venture-trends-2023/',
     title: 'State of Venture 2023',
     publisher: 'CB Insights',
     description: 'Annual deep-dive reporting ~$248B global funding; coverage by stage and sector.',

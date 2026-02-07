@@ -116,7 +116,7 @@ export default function EsafetyAppLayout({ children, user }: EsafetyAppLayoutPro
                                             >
                                                 <ImageWithFallback
                                                     className="h-8 w-auto"
-                                                    src="/MLAI-Logo.png"
+                                                    src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
                                                     alt="MLAI Logo"
                                                     width={160}
                                                     height={48}

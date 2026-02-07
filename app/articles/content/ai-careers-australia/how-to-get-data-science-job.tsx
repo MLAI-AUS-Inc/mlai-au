@@ -102,7 +102,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.apsjobs.gov.au/',
+    href: 'https://www.apsjobs.gov.au/s/',
     title: 'APS Jobs (Australian Public Service)',
     publisher: 'Australian Government',
     description: 'Official Australian government job portal, including data/analytics roles.',
@@ -271,7 +271,7 @@ export default function ArticlePage() {
           {/* SECTION: Compliance & logistics */}
           <h2>Logistics: right to work, clearance, and salary research</h2>
           <p>
-            Ensure you can evidence Australian work rights; some government/defence roles require background checks or security clearances. Salary bands vary by city, sector, and role seniority—use multiple sources (recent ads, salary guides) and note that figures can change; always verify current details as at 2026.
+            Ensure you can evidence Australian work rights; some government/defence roles require background checks or security clearances. Salary bands vary by city, sector, and role seniority—use multiple sources (recent ads, salary guides) and note that figures can change; see our <a href="/articles/featured/how-much-do-data-scientists-make">data scientist salary guide</a> for detailed ranges as at 2026.
           </p>
 
           <AudienceGrid

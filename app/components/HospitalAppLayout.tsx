@@ -191,7 +191,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                             <Link to="/hospital/app/dashboard" className="flex items-center">
                                 <img
                                     className={`transition-all duration-300 ${isExpanded ? 'h-8' : 'h-10'}`}
-                                    src={isExpanded ? '/text_logo.png' : '/MLAI-Logo.png'}
+                                    src={isExpanded ? 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftext_logo.png?alt=media&token=0857f467-d3f9-4dbe-aad0-7a7331295100' : 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84'}
                                     alt="MLAI logo"
                                 />
                             </Link>

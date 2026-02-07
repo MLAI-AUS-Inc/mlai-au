@@ -74,7 +74,7 @@ export default function Layout() {
         />
         <meta property="og:url" content="https://mlai.au" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.mlai.au/MLAI-Logo.png" />
+        <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta
