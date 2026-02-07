@@ -102,7 +102,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.apsjobs.gov.au/',
+    href: 'https://www.apsjobs.gov.au/s/',
     title: 'APS Jobs (Australian Public Service)',
     publisher: 'Australian Government',
     description: 'Official Australian government job portal, including data/analytics roles.',

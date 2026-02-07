@@ -21,7 +21,7 @@ export default function HowToPitch() {
                     <div className="mt-8 flex gap-x-4">
                         <img
                             alt=""
-                            src="../photos/sam.png"
+                            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3"
                             className="mt-1 size-10 flex-none rounded-full bg-gray-50"
                         />
                         <div className="text-sm/6">
@@ -81,57 +81,23 @@ export default function HowToPitch() {
                     </ul>
                 </section>
 
-                <section className="mt-20 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 lg:gap-y-16">
-                    <div className="lg:pr-8">
-                        <h2 id='overview' className="text-pretty text-2xl font-semibold tracking-tight text-gray-900">Overview</h2>
-                        <p className="mt-6 text-base/7 text-gray-600">
-                            A lot of people are afraid when it comes to delivering a pitch. “Don&apos;t I need to be a thick-skinned, type A, salesperson, business shark in order to do that?”
-                        </p>
-                        <p className="mt-8 text-base/7 text-gray-600">
-                            The answer is no. A pitch is just a way to <strong>communicate a complex idea</strong> effectively in a <strong>short timeframe</strong> to somebody that (you should assume), doesn&apos;t know anything about what you&apos;re talking about.
-                        </p>
-                        <p className="mt-8 text-base/7 text-gray-600">
-                            Have you ever seen the movie &apos;Inception&apos;? Delivering a good pitch is basically <strong>incepting an idea into your audience&apos;s brains.</strong>
-                        </p>
-                        <p className="mt-8 text-base/7 text-gray-600">
-                            This means delivering the information in a way that is concise, emotional, vulnerable and with a clear call-to-action. As a founder you need to convince a big group of people to take a specific action to help you fix the big ol&apos; problem you&apos;ve identified.
-                        </p>
-                        <p className="mt-8 text-base/7 text-gray-600">
-                            <strong>Let&apos;s get incepting.</strong>
-                        </p>
-                    </div>
-                    <div className="pt-16 lg:row-span-2 lg:-mr-16 xl:mr-auto">
-                        <div className="-mx-8 grid grid-cols-2 gap-4 sm:-mx-16 sm:grid-cols-4 lg:mx-0 lg:grid-cols-2 lg:gap-4 xl:gap-8">
-                            <div className="aspect-square overflow-hidden rounded-xl shadow-xl outline outline-1 -outline-offset-1 outline-black/10">
-                                <img
-                                    alt=""
-                                    src="../photos/lightning_talks.png"
-                                    className="block size-full object-cover"
-                                />
-                            </div>
-                            <div className="-mt-8 aspect-square overflow-hidden rounded-xl shadow-xl outline outline-1 -outline-offset-1 outline-black/10 lg:-mt-40">
-                                <img
-                                    alt=""
-                                    src="../photos/af5e46f4ae934fd65efc97808ea6d6ae.jpg"
-                                    className="block size-full object-cover"
-                                />
-                            </div>
-                            <div className="aspect-square overflow-hidden rounded-xl shadow-xl outline outline-1 -outline-offset-1 outline-black/10">
-                                <img
-                                    alt=""
-                                    src="../photos/aihackmelb23.png"
-                                    className="block size-full object-cover"
-                                />
-                            </div>
-                            <div className="-mt-8 aspect-square overflow-hidden rounded-xl shadow-xl outline outline-1 -outline-offset-1 outline-black/10 lg:-mt-40">
-                                <img
-                                    alt=""
-                                    src="../photos/Profile_Cropped.png"
-                                    className="block size-full object-cover"
-                                />
-                            </div>
-                        </div>
-                    </div>
+                <section className="mt-20 max-w-4xl">
+                    <h2 id='overview' className="text-pretty text-2xl font-semibold tracking-tight text-gray-900">Overview</h2>
+                    <p className="mt-6 text-base/7 text-gray-600">
+                        A lot of people are afraid when it comes to delivering a pitch. "Don&apos;t I need to be a thick-skinned, type A, salesperson, business shark in order to do that?"
+                    </p>
+                    <p className="mt-8 text-base/7 text-gray-600">
+                        The answer is no. A pitch is just a way to <strong>communicate a complex idea</strong> effectively in a <strong>short timeframe</strong> to somebody that (you should assume), doesn&apos;t know anything about what you&apos;re talking about.
+                    </p>
+                    <p className="mt-8 text-base/7 text-gray-600">
+                        Have you ever seen the movie &apos;Inception&apos;? Delivering a good pitch is basically <strong>incepting an idea into your audience&apos;s brains.</strong>
+                    </p>
+                    <p className="mt-8 text-base/7 text-gray-600">
+                        This means delivering the information in a way that is concise, emotional, vulnerable and with a clear call-to-action. As a founder you need to convince a big group of people to take a specific action to help you fix the big ol&apos; problem you&apos;ve identified.
+                    </p>
+                    <p className="mt-8 text-base/7 text-gray-600">
+                        <strong>Let&apos;s get incepting.</strong>
+                    </p>
                 </section>
             </div>
             {/* TLDR Section */}
@@ -834,7 +800,7 @@ export default function HowToPitch() {
                 <div className="mt-8 flex gap-x-4">
                     <img
                         alt=""
-                        src="../photos/sam.png"
+                        src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3"
                         className="mt-1 size-10 flex-none rounded-full bg-gray-50"
                     />
                     <div className="text-sm/6">

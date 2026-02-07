@@ -47,17 +47,7 @@ const sponsorshipTiers = [
   },
 ];
 
-const currentSponsors = [
-  { name: "V2 Digital", logo: "/sponsor_logos/v2digital.png" },
-  { name: "AWS Startups", logo: "/sponsor_logos/aws.png" },
-  { name: "Mantel Group", logo: "/sponsor_logos/mantel.png" },
-  { name: "Wilson AI", logo: "/sponsor_logos/wilsonai.png" },
-  { name: "Humyn.ai", logo: "/sponsor_logos/humyn.png" },
-  { name: "Microsoft", logo: "/sponsor_logos/microsoft.png" },
-  { name: "Sirius", logo: "/sponsor_logos/sirius.png" },
-  { name: "University of Melbourne", logo: "/sponsor_logos/uom.jpeg" },
-  { name: "AirTree", logo: "/sponsor_logos/airtree.jpeg" },
-];
+const currentSponsors: { name: string; logo: string }[] = [];
 
 export default function SponsorPage() {
   return (

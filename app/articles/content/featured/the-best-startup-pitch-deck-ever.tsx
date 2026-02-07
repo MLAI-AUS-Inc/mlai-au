@@ -136,7 +136,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.sequoiacap.com/article/writing-a-business-plan/',
+    href: 'https://sequoiacap.com/article/writing-a-business-plan/',
     title: 'Writing a Business Plan (Pitch Deck Template)',
     publisher: 'Sequoia Capital',
     description: 'Canonical investor‑oriented outline for early‑stage pitch decks.',
@@ -168,7 +168,7 @@ const references = [
   },
   {
     id: 7,
-    href: 'https://www.business.gov.au/grants-and-programs/research-and-development-tax-incentive',
+    href: 'https://business.gov.au/grants-and-programs/research-and-development-tax-incentive',
     title: 'Research and Development Tax Incentive',
     publisher: 'business.gov.au',
     description: 'Information on Australia’s R&D Tax Incentive and eligibility.',

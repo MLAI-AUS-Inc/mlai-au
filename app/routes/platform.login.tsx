@@ -137,7 +137,7 @@ export default function PlatformLogin() {
                                 <span className="sr-only">MLAI</span>
                                 <img
                                     alt="MLAI Logo"
-                                    src="/text_logo.png"
+                                    src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftext_logo.png?alt=media&token=0857f467-d3f9-4dbe-aad0-7a7331295100"
                                     className="h-8 w-auto"
                                 />
                             </Link>
