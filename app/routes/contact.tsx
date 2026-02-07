@@ -71,6 +71,7 @@ export default function Contact() {
                     <a
                       href="https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg"
                       target="_blank"
+                      rel="nofollow"
                       className="text-gray-600 hover:text-teal-500 transform hover:scale-105  transition duration-100 ease-in-out"
                     >
                       <svg

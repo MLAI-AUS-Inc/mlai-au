@@ -152,7 +152,7 @@ const references = [
   },
   {
     id: 5,
-    href: 'https://asic.gov.au/regulatory-resources/fundraising/',
+    href: 'https://www.asic.gov.au/regulatory-resources/fundraising/',
     title: 'Fundraising Guidance',
     publisher: 'Australian Securities and Investments Commission (ASIC)',
     description: 'Official Australian guidance on fundraising and disclosure obligations.',

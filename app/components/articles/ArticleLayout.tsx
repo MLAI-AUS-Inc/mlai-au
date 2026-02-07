@@ -369,8 +369,8 @@ const DEFAULT_CITATIONS = [
     description: 'Framework for accelerated and sustainable AI adoption by government agencies.',
   },
   {
-    title: 'National AI Centre (CSIRO)',
-    href: 'https://www.csiro.au/en/work-with-us/industries/technology/national-ai-centre/national-ai-centre-faqs',
+    title: 'National AI Centre (DISR)',
+    href: 'https://www.industry.gov.au/science-technology-and-innovation/technology/national-artificial-intelligence-centre',
     description: 'Coordinating Australia’s AI expertise and capabilities to build a responsible AI ecosystem.',
   },
 ]

@@ -8,7 +8,7 @@ const footerNavigation = {
       name: "Apply to Volunteer",
       href: "https://forms.gle/GwZR49kwTMszLKtN8",
       target: "_blank",
-      rel: "noopener noreferrer",
+      rel: "noopener noreferrer nofollow",
     },
   ],
   Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
@@ -150,6 +150,7 @@ export default function Events() {
                   <a
                     key={item.name}
                     href={item.href}
+                    rel="nofollow"
                     className="text-gray-300 hover:text-gray-400 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   >
                     <span className="sr-only">{item.name}</span>

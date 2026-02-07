@@ -1,4 +1,10 @@
 import { CheckBadgeIcon, CheckCircleIcon, CloudArrowUpIcon, ExclamationTriangleIcon, InformationCircleIcon, LifebuoyIcon, LockClosedIcon, ServerIcon } from "@heroicons/react/20/solid";
+import type { MetaFunction } from "react-router";
+
+export const meta: MetaFunction = () => [
+    { title: "How to Pitch Your Big Idea | MLAI" },
+    { name: "description", content: "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe." },
+];
 
 export default function HowToPitch() {
     return (

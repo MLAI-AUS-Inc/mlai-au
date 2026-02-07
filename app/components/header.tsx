@@ -9,7 +9,7 @@ const navigation = [
     name: "Volunteer",
     href: "https://forms.gle/GwZR49kwTMszLKtN8",
     target: "_blank",
-    rel: "noopener noreferrer",
+    rel: "noopener noreferrer nofollow",
   },
   { name: "Contact", href: "/contact" },
   {

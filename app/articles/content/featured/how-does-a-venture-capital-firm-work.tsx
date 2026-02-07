@@ -162,7 +162,7 @@ const references = [
   },
   {
     id: 5,
-    href: 'https://www.cutthrough.ventures',
+    href: 'https://www.cutthrough.com/insights',
     title: 'Australian Startup Funding Reports',
     publisher: 'Cut Through Venture',
     description: 'Independent analysis of Australian startup funding trends (check latest report).',

@@ -286,8 +286,8 @@ export default function ArticlePage() {
           professional-grade image generation and multi-reference editing directly on local GPUs (like the RTX
           3090/4090) with sub-second response times.
           <br />
-          <a href="https://blackforestlabs.ai/" target="_blank" rel="noopener noreferrer">
-            https://blackforestlabs.ai/
+          <a href="https://bfl.ai/" target="_blank" rel="noopener noreferrer">
+            https://bfl.ai/
           </a>
         </p>
 
@@ -297,8 +297,8 @@ export default function ArticlePage() {
           speed and accuracy across 55 languages, fitting on everything from H100 GPUs down to mobile devices
           while maintaining high-fidelity translation.
           <br />
-          <a href="https://ai.google.dev/gemma" target="_blank" rel="noopener noreferrer">
-            https://ai.google.dev/gemma
+          <a href="https://deepmind.google/models/gemma" target="_blank" rel="noopener noreferrer">
+            https://deepmind.google/models/gemma
           </a>
         </p>
 

@@ -242,7 +242,7 @@ export default function ArticlePage() {
           </p>
           <p>
             Explore details and current cohorts at{' '}
-            <a href="https://startmate.com/accelerator/program" target="_blank" rel="noopener noreferrer">startmate.com/accelerator/program</a> (check terms as at 2026).
+            <a href="https://www.startmate.com/accelerator/program" target="_blank" rel="noopener noreferrer">startmate.com/accelerator/program</a> (check terms as at 2026).
           </p>
 
           {/* SECTION 4 */}
