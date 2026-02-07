@@ -113,10 +113,10 @@ export const articleMeta = {
 const references = [
   {
     id: 1,
-    href: 'https://www.universitiesaustralia.edu.au/policy-submissions/principles-for-the-use-of-generative-ai-in-teaching-and-learning/',
-    title: 'Principles for the use of generative AI in teaching and learning',
+    href: 'https://universitiesaustralia.edu.au/policy-submissions/research-innovations/artificial-intelligence-in-research/',
+    title: 'Artificial intelligence in research',
     publisher: 'Universities Australia',
-    description: 'Sector‑level guidance for Australian higher education on using generative AI in teaching and assessments.',
+    description: 'Sector‑level guidance for Australian higher education on responsible and ethical use of AI.',
     category: 'guide',
   },
   {

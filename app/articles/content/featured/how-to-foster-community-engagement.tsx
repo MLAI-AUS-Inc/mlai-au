@@ -176,9 +176,9 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://iap2.org.au/resources/iap2-public-participation-spectrum/',
+    href: 'https://engagementinstitute.org.au/resources/',
     title: 'IAP2 Public Participation Spectrum',
-    publisher: 'IAP2 Australasia',
+    publisher: 'Engagement Institute (formerly IAP2 Australasia)',
     description: 'Widely used framework describing levels of participation from Inform to Empower.',
     category: 'guide',
   },

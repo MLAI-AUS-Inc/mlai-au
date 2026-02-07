@@ -10,7 +10,7 @@ export default function FloatingSocials() {
       <a
         href="https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg"
         target="_blank"
-        rel="noopener noreferrer"
+        rel="noopener noreferrer nofollow"
         className="group relative"
       >
         <div className="flex items-center">

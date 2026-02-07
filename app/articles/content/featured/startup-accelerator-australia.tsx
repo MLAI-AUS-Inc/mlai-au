@@ -116,7 +116,7 @@ const references = [
   },
   {
     id: 2,
-    href: 'https://startmate.com/',
+    href: 'https://www.startmate.com/',
     title: 'Startmate Accelerator',
     publisher: 'Startmate',
     description: 'Well-known Australian/NZ accelerator with mentor network and alumni community; terms and intakes vary by cohort.',

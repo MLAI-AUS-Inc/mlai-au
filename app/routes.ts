@@ -10,6 +10,7 @@ export default [
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
+  route("/resources", "routes/resources.tsx"),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),

@@ -111,8 +111,8 @@ export const articleMeta = {
 const references = [
   {
     id: 1,
-    href: 'https://news.crunchbase.com/venture/global-venture-funding-2023/',
-    title: 'Global venture funding fell 38% in 2023 to ~$285B',
+    href: 'https://news.crunchbase.com/venture/global-funding-data-analysis-ai-eoy-2023/',
+    title: 'Global Startup Funding In 2023 Clocks In At Lowest Level In 5 Years',
     publisher: 'Crunchbase News',
     description: 'Year-in-review overview with methodology notes and regional breakdowns.',
     category: 'analysis'
@@ -143,7 +143,7 @@ const references = [
   },
   {
     id: 5,
-    href: 'https://www.cutthroughventure.com/reports',
+    href: 'https://www.cutthrough.com/insights',
     title: 'Australia Startup Funding – Year in Review',
     publisher: 'Cut Through Venture',
     description: 'Local methodology and annual Australian funding totals; regularly updated.',

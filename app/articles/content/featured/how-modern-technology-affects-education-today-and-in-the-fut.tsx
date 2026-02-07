@@ -114,8 +114,8 @@ export const articleMeta = {
 const references = [
   {
     id: 1,
-    href: 'https://www.australiancurriculum.edu.au/f-10-curriculum/technologies/digital-technologies/structure/',
-    title: 'Australian Curriculum: Digital Technologies',
+    href: 'https://www.australiancurriculum.edu.au/curriculum-information/understand-this-learning-area/technologies',
+    title: 'Australian Curriculum: Technologies',
     publisher: 'ACARA',
     description: 'Curriculum expectations for digital technologies and computational thinking across F–10.',
     category: 'government'

@@ -145,7 +145,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.humanitix.com/au/search?query=networking',
+    href: 'https://humanitix.com/au',
     title: 'Humanitix — Find networking events in Australia',
     publisher: 'Humanitix',
     description: 'Ticketing platform with Australian focus and charity model; search by keyword and city.',
