@@ -17,8 +17,8 @@ const NEWSLETTER = 'AI Bits for Techies'
 const TITLE = `${NEWSLETTER} | Issue #4 | 5 Feb 2026`
 const HERO_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
 const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
-const GEEKY_THOUGHT_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_ycdjkoycdjkoycdj.png?alt=media&token=db9a41d3-7abc-4238-af15-35313ab3487c' // Add your image URL here
-const TOOLS_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_bots7bots7bots7b.png?alt=media&token=46a1488c-6f8a-46ee-9813-157b68835128' // Add your image URL here
+const GEEKY_THOUGHT_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504'
+const TOOLS_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -165,7 +165,7 @@ export default function ArticlePage() {
       name: 'Shivang Shekhar',
       role: 'Technical Writer',
       bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
-      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
+      avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504',
     },
   ]
 
@@ -397,7 +397,7 @@ export default function ArticlePage() {
         </p>
 
         <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3l01zo3l01zo3l01.png?alt=media&token=bf5897e2-be7f-4a65-98fc-8d1086380fe6"
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504"
           alt="Book cover"
         />
 

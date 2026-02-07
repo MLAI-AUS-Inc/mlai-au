@@ -16,7 +16,7 @@ export default function CTA() {
         </p>
         <div className="mt-6 sm:mt-10 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <CTAButton
-            href="https://forms.gle/GwZR49kwTMszLKtN8"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSclIpU9So5QoX0Py-wKMjzE6F5amk7u_kMFrcm4tf2GQQ7-xA/viewform"
             bg="bg-[#ff3d00]"
             text="I want to volunteer"
             rel="nofollow"
