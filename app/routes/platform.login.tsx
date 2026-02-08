@@ -4,6 +4,7 @@ import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
     { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
+    { name: "robots", content: "noindex, nofollow" },
 ];
 import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
 import { useEffect, useState } from "react";
