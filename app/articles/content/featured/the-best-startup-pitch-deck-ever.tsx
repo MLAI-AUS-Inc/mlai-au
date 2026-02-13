@@ -136,7 +136,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.sequoiacap.com/article/writing-a-business-plan/',
+    href: 'https://sequoiacap.com/article/writing-a-business-plan/',
     title: 'Writing a Business Plan (Pitch Deck Template)',
     publisher: 'Sequoia Capital',
     description: 'Canonical investor‑oriented outline for early‑stage pitch decks.',
@@ -144,7 +144,7 @@ const references = [
   },
   {
     id: 4,
-    href: 'https://guykawasaki.com/the-102030-rule/',
+    href: 'https://guykawasaki.com/the_102030_rule/',
     title: 'The 10/20/30 Rule of PowerPoint',
     publisher: 'Guy Kawasaki',
     description: 'Guideline for slide count, time, and font size that remains influential.',
@@ -152,7 +152,7 @@ const references = [
   },
   {
     id: 5,
-    href: 'https://asic.gov.au/regulatory-resources/fundraising/',
+    href: 'https://www.asic.gov.au/regulatory-resources/fundraising/',
     title: 'Fundraising Guidance',
     publisher: 'Australian Securities and Investments Commission (ASIC)',
     description: 'Official Australian guidance on fundraising and disclosure obligations.',
@@ -168,9 +168,9 @@ const references = [
   },
   {
     id: 7,
-    href: 'https://www.business.gov.au/grants-and-programs/research-and-development-tax-incentive',
+    href: 'https://www.ato.gov.au/businesses-and-organisations/income-deductions-and-concessions/incentives-and-concessions/research-and-development-tax-incentive-and-concessions/research-and-development-tax-incentive',
     title: 'Research and Development Tax Incentive',
-    publisher: 'business.gov.au',
+    publisher: 'Australian Taxation Office',
     description: 'Information on Australia’s R&D Tax Incentive and eligibility.',
     category: 'government'
   }

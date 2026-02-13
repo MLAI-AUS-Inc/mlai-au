@@ -128,7 +128,7 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://www.oaic.gov.au/privacy/the-privacy-act/australian-privacy-principles',
+    href: 'https://www.oaic.gov.au/privacy/australian-privacy-principles',
     title: 'Australian Privacy Principles',
     publisher: 'OAIC (Office of the Australian Information Commissioner)',
     description: 'Foundational privacy obligations in Australia relevant to data use in ML.',

@@ -14,6 +14,19 @@ import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "MLAI" },
+  {
+    name: "description",
+    content:
+      "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+  },
+  {
+    name: "keywords",
+    content: "Machine Learning, Artificial Intelligence, AI, Australia",
+  },
+];
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -46,17 +59,8 @@ export default function Layout() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Basic meta tags */}
-        <title>MLAI</title>
-        <meta
-          name="description"
-          content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
-        />
         <meta name="application-name" content="MLAI-website" />
         <meta name="referrer" content="origin-when-cross-origin" />
-        <meta
-          name="keywords"
-          content="Machine Learning, Artificial Intelligence, AI, Australia"
-        />
 
         {/* Author meta tags */}
         <meta name="author" content="Dr Sam Donegan" />
@@ -68,9 +72,9 @@ export default function Layout() {
           property="og:description"
           content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
         />
-        <meta property="og:url" content="https://mlai.au" />
+        <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.mlai.au/MLAI-Logo.png" />
+        <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta
@@ -81,10 +85,13 @@ export default function Layout() {
         {/* Robots meta tag */}
         <meta name="robots" content="index, follow" />
 
+        {/* Canonical URL to consolidate http/https/www variants */}
+        <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
+
         <Meta />
         <Links />
 
-
+        <script src="https://analytics.ahrefs.com/analytics.js" data-key="R27fA2BeFrzb0BXu5adbpQ" async></script>
       </head>
       <body>
         <noscript>

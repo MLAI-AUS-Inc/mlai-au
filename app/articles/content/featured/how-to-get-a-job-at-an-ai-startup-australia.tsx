@@ -301,7 +301,7 @@ export default function ArticlePage() {
           <p>
             Most early-stage teams need candidates with existing Australian work rights. Remote roles often require AEST overlap. Pay bands vary:
             early-stage may offer lower cash with equity; later-stage scaleups pay closer to market for engineers and product builders, with premiums for ML
-            infra and security talent. Always confirm superannuation and equity terms in writing.
+            infra and security talent. For broader context, see our <Link to="/articles/featured/how-much-do-data-scientists-make">data scientist salary breakdown</Link>. Always confirm superannuation and equity terms in writing.
           </p>
 
           <h2>60-day plan to reach your first AI startup interviews</h2>

@@ -1,6 +1,9 @@
 // Adapted from user provided code for React Router v7
 import type { MetaDescriptor } from "react-router";
 
+export const ARTICLE_FALLBACK_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
+
 export type ArticleWithSlug = {
   title: string;
   date: string; // YYYY-MM-DD
@@ -72,7 +75,7 @@ export function removeCategoryPrefix(slug: string): string {
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
-    date: "2026-01-27",
+    date: "2025-12-30",
     description:
       "Evidence-based risks of classroom tech—distraction, screen time, equity, privacy, and AI misuse—plus practical steps for Australian schools.",
     author: "Dr Sam Donegan",
@@ -84,7 +87,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/learn-ai-melbourne": {
     title: "Learn AI Melbourne: courses, meetups, and pathways",
-    date: "2026-01-30",
+    date: "2026-01-28",
     description:
       "A practical 2026 guide to learning AI in Melbourne—compare university/TAFE options, online vs on-campus delivery, time and costs, plus local meetups and portfolio tips.",
     author: "Dr Sam Donegan",
@@ -97,7 +100,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-small-business-owners-can-get-started-with-ai-2026": {
     title: "How small business owners can get started with AI (2026)",
-    date: "2026-01-29",
+    date: "2026-01-22",
     description:
       "Starter plan for Australian small business owners to adopt AI in 2026: practical use cases, a 30-day pilot, privacy and security basics, and ROI tips.",
     author: "Dr Sam Donegan",
@@ -109,7 +112,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-to-foster-community-engagement": {
     title: "How to foster community engagement (2026)",
-    date: "2026-01-29",
+    date: "2026-01-14",
     description:
       "Practical, Australian-focused guide to foster community engagement: set purpose, include diverse voices, pick methods, close the loop, and measure what matters.",
     author: "Dr Sam Donegan",
@@ -120,7 +123,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/startup-accelerator-australia": {
     title: "Startup accelerators in Australia (2026)",
-    date: "2026-01-28",
+    date: "2026-01-10",
     description:
       "A practical 2026 guide to Australian startup accelerators: key programs (Startmate, Google for Startups, UNSW 10x), typical terms, and how AI teams can apply.",
     author: "Dr Sam Donegan",
@@ -131,7 +134,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-to-find-networking-events": {
     title: "How to find networking events in Australia (2026)",
-    date: "2026-01-28",
+    date: "2026-01-03",
     description:
       "Practical ways to find networking events in Australia: where to look, how to filter by industry and city, and tips for online and in-person meetups.",
     author: "Dr Sam Donegan",
@@ -143,7 +146,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-modern-technology-affects-education-today-and-in-the-fut": {
     title: "How modern technology affects education today and in the future (2026)",
-    date: "2026-01-27",
+    date: "2025-12-26",
     description:
       "A practical Australian view: benefits, risks and what’s next for AI, privacy and inclusion—plus steps to pilot edtech responsibly.",
     author: "Dr Sam Donegan",
@@ -156,7 +159,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-technology-has-changed-education": {
     title: "How technology has changed education (2026)",
-    date: "2026-01-27",
+    date: "2025-12-21",
     description:
       "A practical Australian look at how technology reshaped learning, teaching and assessment—covering access, personalisation, collaboration, risks, and next steps.",
     author: "Dr Sam Donegan",
@@ -168,7 +171,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-much-venture-capital-was-invested-in-2023": {
     title: "How much venture capital was invested in 2023?",
-    date: "2026-01-26",
+    date: "2025-12-17",
     description:
       "Global VC funding in 2023 ranged between ~US$248B and ~US$285B depending on source. Why estimates differ, sector trends (AI), and what it means for Australia.",
     author: "Dr Sam Donegan",
@@ -179,7 +182,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/what-are-collaboration-tools": {
     title: "What are collaboration tools",
-    date: "2026-01-26",
+    date: "2025-12-13",
     description:
       "A plain-English guide to collaboration tools: definition, types, benefits, examples, and how to choose for Australian teams.",
     author: "Dr Sam Donegan",
@@ -191,7 +194,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-technology-is-shaping-learning-in-higher-education": {
     title: "How technology is shaping learning in higher education (2026)",
-    date: "2026-01-27",
+    date: "2025-12-09",
     description:
       "How hybrid learning, AI, analytics and micro-credentials are reshaping Australian higher education in 2026, with practical steps for students and educators.",
     author: "Dr Sam Donegan",
@@ -203,7 +206,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/venture-capital-how-does-it-work": {
     title: "Venture capital: how it works (2026)",
-    date: "2026-01-26",
+    date: "2025-12-05",
     description:
       "Plain-English guide to how venture capital works in 2026: fund mechanics, rounds, dilution, term sheets, and Australian considerations. For founders and learners.",
     author: "Dr Sam Donegan",
@@ -214,8 +217,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/how-many-startup-accelerators-and-incubators-are-there-in-si": {
-    title: "How many startup accelerators and incubators are there in Singapore? (2026)",
-    date: "2026-01-26",
+    title: "Startup accelerators and incubators in Singapore (2026)",
+    date: "2025-12-01",
     description:
       "Short answer: about 60–80 active accelerators/incubators in Singapore in 2026, depending on definitions. Learn how counts are built and how to verify programmes.",
     author: "Dr Sam Donegan",
@@ -227,7 +230,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-does-a-venture-capital-firm-work": {
     title: "How Does a Venture Capital Firm Work? (2026 Guide)",
-    date: "2026-01-25",
+    date: "2025-11-27",
     description:
       "Understand VC firm structure, LPs vs GPs, fund lifecycle, how VCs make money, the investment process, and what founders in Australia should know in 2026.",
     author: "Dr Sam Donegan",
@@ -238,8 +241,8 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     hasContent: true,
   },
   "featured/the-best-startup-pitch-deck-ever": {
-    title: "The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide",
-    date: "2026-01-25",
+    title: "The Best Startup Pitch Deck Ever (2026): An Australian Founder's Guide",
+    date: "2025-11-23",
     description:
       "Investors’ 2026 expectations, the 12-slide structure, AU-specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.",
     author: "Dr Sam Donegan",
@@ -251,18 +254,18 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   },
   "featured/how-to-get-data-science-job": {
     title: "How to get a data science job in Australia (2026)",
-    date: "2026-01-24",
+    date: "2025-11-19",
     description:
       "AU-focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.",
     author: "Dr Sam Donegan",
     slug: "featured/how-to-get-data-science-job",
-    image: "https://placehold.co/1200x630/png",
+    image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "How to get a data science job in Australia (2026)",
     hasContent: true,
   },
   "featured/how-much-do-data-scientists-make": {
     title: "How Much Do Data Scientists Make?'",
-    date: "2026-01-24",
+    date: "2025-11-15",
     description:
       "Salary ranges for data scientists in Australia in 2026—entry, mid, senior and lead. City and industry differences, skills that lift pay, and negotiation tips.",
     author: "Dr Sam Donegan",
@@ -294,34 +297,34 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2": {
   title: "AI Bits for Techies | Issue #2 | 19 Jan 2026",
   date: "2026-01-19",
-  description: "Issue #2: Weekly deep dive into AI and ML advancements and updates.",
+  description: "AI Bits Issue #2: LLM personality preferences, model-user compatibility research, T3 Chat, LTX Studio, Auralix, and The Alignment Problem book pick.",
   author: "MLAI Editorial Team",
   authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
   slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2",
-  image: "...",
-  imageAlt: "...",
+  image: ARTICLE_FALLBACK_IMAGE,
+  imageAlt: "AI Bits for Techies newsletter banner",
   hasContent: true,
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
     title: "AI Bits for Techies | Issue #3 | 26 Jan 2026",
     date: "2026-01-26",
-    description: "Issue #3: Weekly deep dive into AI and ML advancements and updates.",
+    description: "AI Bits Issue #3: LLM energy and water footprint benchmarks, FLUX.2 image generation, TranslateGemma, GLM-Image, and The Atlas of AI book recommendation.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3",
-    image: "...",
-    imageAlt: "...",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
     title: "AI Bits for Techies | Issue #4 | 5 Feb 2026",
     date: "2026-02-05",
-    description: "Issue #4: Weekly deep dive into AI and ML advancements and updates.",
+    description: "AI Bits Issue #4: AI coding tool productivity research, open-source developer impact studies, Qwen3-Max, OpenAI Prism, and AI governance book pick.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
-    image: "...",
-    imageAlt: "...",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
 

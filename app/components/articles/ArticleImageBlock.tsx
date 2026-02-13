@@ -1,4 +1,5 @@
 import { ImageWithFallback } from '../ImageWithFallback'
+import { ARTICLE_FALLBACK_IMAGE } from '~/articles/registry'
 
 type ArticleImageBlockProps = {
     src: string
@@ -23,6 +24,7 @@ export function ArticleImageBlock({
         <figure className={`my-12 max-w-3xl mx-auto ${containerClassName}`}>
             <ImageWithFallback
                 src={src}
+                fallbackSrc={ARTICLE_FALLBACK_IMAGE}
                 alt={alt}
                 width={width}
                 height={height}

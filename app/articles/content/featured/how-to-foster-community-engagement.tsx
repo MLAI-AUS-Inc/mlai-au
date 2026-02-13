@@ -176,9 +176,9 @@ const references = [
   },
   {
     id: 3,
-    href: 'https://iap2.org.au/resources/iap2-public-participation-spectrum/',
+    href: 'https://engagementinstitute.org.au/resources/',
     title: 'IAP2 Public Participation Spectrum',
-    publisher: 'IAP2 Australasia',
+    publisher: 'Engagement Institute (formerly IAP2 Australasia)',
     description: 'Widely used framework describing levels of participation from Inform to Empower.',
     category: 'guide',
   },
@@ -336,7 +336,7 @@ export default function ArticleContent() {
           title={`Get templates for ${TOPIC}`}
           description="Download checklists for planning, running, and reporting on engagement cycles."
           buttonLabel="Download now"
-          buttonHref="/resources"
+          buttonHref="/articles"
           accent="purple"
         />
 
@@ -368,7 +368,7 @@ export default function ArticleContent() {
         <p>
           Want a broader view on peer networks and collaboration? See our
           {' '}
-          <Link to="/articles/community-collaboration" className="underline underline-offset-4">
+          <Link to="/articles" className="underline underline-offset-4">
             Community & Collaboration overview
           </Link>
           .

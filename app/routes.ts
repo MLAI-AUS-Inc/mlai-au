@@ -6,12 +6,11 @@ export default [
   route("/sponsors", "routes/sponsors.tsx"),
   route("/members", "routes/members.tsx"),
   route("/events", "routes/events.tsx"),
-  route("/hackathon", "routes/hackathon.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
-  route("/hackathons", "routes/hackathons.tsx"),
+  route("/resources", "routes/resources.tsx"),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
@@ -44,5 +43,8 @@ export default [
   // Article Routes
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
+
+  // Vibe-Raising page
+  route("/vibe-raising", "routes/vibe-raising.tsx"),
 
 ] satisfies RouteConfig;

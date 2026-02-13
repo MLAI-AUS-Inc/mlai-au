@@ -55,11 +55,8 @@ function buildUrlElement(entry: SitemapEntry) {
 const staticPages: SitemapEntry[] = [
     { path: "/", changefreq: "weekly", priority: 1.0 },
     { path: "/articles", changefreq: "daily", priority: 0.9 },
-    { path: "/about", changefreq: "monthly", priority: 0.6 },
     { path: "/contact", changefreq: "monthly", priority: 0.6 },
     { path: "/events", changefreq: "weekly", priority: 0.7 },
-    { path: "/hackathon", changefreq: "weekly", priority: 0.7 },
-    { path: "/hackathons", changefreq: "weekly", priority: 0.7 },
     { path: "/how-to-pitch-your-idea", changefreq: "monthly", priority: 0.6 },
     { path: "/members", changefreq: "monthly", priority: 0.5 },
     { path: "/sponsors", changefreq: "monthly", priority: 0.5 },

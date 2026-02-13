@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /__manifest
+Disallow: /platform/
 
 Sitemap: https://mlai.au/sitemap.xml

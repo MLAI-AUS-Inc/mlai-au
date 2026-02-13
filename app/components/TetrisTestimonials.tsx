@@ -13,11 +13,25 @@ const TETRIS_COLORS = {
 
 type ColorKey = keyof typeof TETRIS_COLORS;
 
+type TestimonialAuthor = {
+  name: string;
+  handle: string;
+  imageUrl: string;
+  website?: string;
+};
+
+type Testimonial = {
+  id: number;
+  body: string;
+  author: TestimonialAuthor;
+  color: ColorKey;
+};
+
 // Styling constants
 const BORDER_RADIUS = 16; // Rounded corner radius
 
 // Testimonials data matching the reference image
-const testimonials = [
+const testimonials: Testimonial[] = [
   {
     id: 1,
     body: "It was an absolute pleasure to work with the MLAI team for Ecosystem Drinks: Talent meets Startups. It was amazing to see so many engaging members of the MLAI community in action for the startup speed dating.",
@@ -123,9 +137,20 @@ function TestimonialCard({ testimonial }: TestimonialCardProps) {
           <div className="font-semibold text-sm sm:text-base">
             {testimonial.author.name}
           </div>
-          <div className="text-xs sm:text-sm opacity-80">
-            {testimonial.author.handle}
-          </div>
+          {testimonial.author.website ? (
+            <a
+              href={testimonial.author.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs sm:text-sm opacity-80 hover:opacity-100 hover:underline transition-opacity"
+            >
+              {testimonial.author.handle}
+            </a>
+          ) : (
+            <div className="text-xs sm:text-sm opacity-80">
+              {testimonial.author.handle}
+            </div>
+          )}
         </div>
       </figcaption>
     </figure>
@@ -175,9 +200,20 @@ function TestimonialBlock({
             <div className="font-semibold text-[10px]">
               {testimonial.author.name}
             </div>
-            <div className="text-[9px] opacity-70">
-              {testimonial.author.handle}
-            </div>
+            {testimonial.author.website ? (
+              <a
+                href={testimonial.author.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[9px] opacity-70 hover:opacity-100 hover:underline transition-opacity"
+              >
+                {testimonial.author.handle}
+              </a>
+            ) : (
+              <div className="text-[9px] opacity-70">
+                {testimonial.author.handle}
+              </div>
+            )}
           </div>
         </figcaption>
       )}

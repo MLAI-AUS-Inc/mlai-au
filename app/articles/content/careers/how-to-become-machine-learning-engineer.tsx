@@ -230,7 +230,7 @@ export default function ArticlePage() {
             title={`Get the checklist for ${TOPIC}`}
             description='Practical template to apply the concepts immediately.'
             buttonLabel='Download now'
-            buttonHref='/resources'
+            buttonHref='/articles'
             accent='purple'
           />
 

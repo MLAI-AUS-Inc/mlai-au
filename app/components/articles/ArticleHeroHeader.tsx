@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { ImageWithFallback } from '../ImageWithFallback'
+import { ARTICLE_FALLBACK_IMAGE } from '~/articles/registry'
 
 export interface BreadcrumbItem {
     label: string
@@ -152,6 +153,7 @@ export function ArticleHeroHeader({
                         <div className="rounded-2xl overflow-hidden">
                             <ImageWithFallback
                                 src={heroImage}
+                                fallbackSrc={ARTICLE_FALLBACK_IMAGE}
                                 alt={heroImageAlt}
                                 width={800}
                                 height={500}

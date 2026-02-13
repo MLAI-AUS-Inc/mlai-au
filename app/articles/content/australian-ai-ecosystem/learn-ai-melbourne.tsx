@@ -250,7 +250,7 @@ export default function ArticleContent() {
           title={`Get templates for ${TOPIC}`}
           description="Download a course-comparison worksheet and a one‑page project brief to keep your learning focused."
           buttonLabel="Download now"
-          buttonHref="/resources"
+          buttonHref="/articles"
           accent="purple"
         />
 
@@ -276,7 +276,7 @@ export default function ArticleContent() {
         </p>
         <p>
           Tip: you can also browse our pillar overview at{' '}
-          <Link to="/articles/australian-ai-ecosystem" className="underline underline-offset-4">Australian AI ecosystem</Link> for related guides.
+          <Link to="/articles" className="underline underline-offset-4">Australian AI ecosystem</Link> for related guides.
         </p>
       </div>
 

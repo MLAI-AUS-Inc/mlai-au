@@ -27,7 +27,7 @@ import type { ArticleFAQItem } from './ArticleFAQ'
 
 const DEFAULT_SITE_URL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SITE_URL)
   ? process.env.NEXT_PUBLIC_SITE_URL
-  : 'https://www.mlai.au'
+  : 'https://mlai.au'
 
 
 type ArticleHowToStep = {
@@ -369,8 +369,8 @@ const DEFAULT_CITATIONS = [
     description: 'Framework for accelerated and sustainable AI adoption by government agencies.',
   },
   {
-    title: 'National AI Centre (CSIRO)',
-    href: 'https://www.csiro.au/en/work-with-us/industries/technology/national-ai-centre',
+    title: 'National AI Centre (DISR)',
+    href: 'https://www.industry.gov.au/science-technology-and-innovation/technology/national-artificial-intelligence-centre',
     description: 'Coordinating Australia’s AI expertise and capabilities to build a responsible AI ecosystem.',
   },
 ]
