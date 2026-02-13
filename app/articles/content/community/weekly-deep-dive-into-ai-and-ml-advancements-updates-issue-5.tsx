@@ -635,7 +635,7 @@ export default function ArticlePage() {
         </p>
 
         <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3l01zo3l01zo3l01.png?alt=media&token=bf5897e2-be7f-4a65-98fc-8d1086380fe6"
+          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_s0aapxs0aapxs0aa.png?alt=media&token=228c86f1-d9a3-4ed2-8943-a6bbc4a4d184"
           alt="Book cover"
         />
 
