@@ -76,24 +76,23 @@ export default function HospitalAppTeam() {
 
     return (
         <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="md:flex md:items-center md:justify-between">
-                <div className="min-w-0 flex-1">
-                    <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        Team Management (Medhack: Frontiers)
-                    </h2>
-                </div>
+            <div className="text-center">
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Team Management</h2>
+                <p className="mt-4 text-lg leading-6 text-gray-500">
+                    Create or join a team for Medhack: Frontiers.
+                </p>
             </div>
 
             <div className="mt-8">
                 {myTeam ? (
-                    <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
+                    <div className="bg-white shadow sm:rounded-lg">
                         <div className="px-4 py-5 sm:p-6">
-                            <h3 className="text-base font-semibold leading-6 text-white">Your Team: {myTeam.name}</h3>
+                            <h3 className="text-base font-semibold leading-6 text-gray-900">Your Team: {myTeam.name}</h3>
                             <div className="mt-4">
-                                <h4 className="text-sm font-medium text-gray-400">Members</h4>
-                                <ul className="mt-2 divide-y divide-white/10">
+                                <h4 className="text-sm font-medium text-gray-500">Members</h4>
+                                <ul className="mt-2 divide-y divide-gray-200">
                                     {myTeam.members?.map((member: any) => (
-                                        <li key={member.id} className="py-2 text-sm text-white">
+                                        <li key={member.id} className="py-2 text-sm text-gray-900">
                                             {member.full_name || member.email}
                                         </li>
                                     ))}
@@ -102,22 +101,22 @@ export default function HospitalAppTeam() {
                         </div>
                     </div>
                 ) : (
-                    <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
+                    <div className="bg-white shadow sm:rounded-lg">
                         <div className="px-4 py-5 sm:p-6">
-                            <h3 className="text-base font-semibold leading-6 text-white">Create or Join a Team</h3>
+                            <h3 className="text-base font-semibold leading-6 text-gray-900">Create or Join a Team</h3>
                             {actionData?.error && (
-                                <div className="mt-2 rounded-md bg-red-500/10 p-2 text-sm text-red-400">
+                                <div className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-700">
                                     {actionData.error}
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                            <div className="mt-6 grid grid-cols-1 gap-8 md:grid-cols-2">
                                 {/* Create Team Form */}
                                 <div>
-                                    <h4 className="text-sm font-medium text-gray-300 mb-4">Create a new team</h4>
+                                    <h4 className="text-sm font-medium text-gray-500 mb-4">Create a new team</h4>
                                     <Form method="POST">
                                         <div>
-                                            <label htmlFor="name" className="block text-sm font-medium leading-6 text-white">
+                                            <label htmlFor="name" className="block text-sm font-medium leading-6 text-gray-900">
                                                 Team Name
                                             </label>
                                             <div className="mt-2">
@@ -126,7 +125,7 @@ export default function HospitalAppTeam() {
                                                     name="name"
                                                     id="name"
                                                     required
-                                                    className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
+                                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                                 />
                                             </div>
                                         </div>
@@ -135,7 +134,7 @@ export default function HospitalAppTeam() {
                                                 type="submit"
                                                 name="intent"
                                                 value="create_team"
-                                                className="rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
+                                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                             >
                                                 Create Team
                                             </button>
@@ -144,11 +143,11 @@ export default function HospitalAppTeam() {
                                 </div>
 
                                 {/* Join Team Form */}
-                                <div className="border-t border-white/10 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
-                                    <h4 className="text-sm font-medium text-gray-300 mb-4">Join an existing team</h4>
+                                <div className="border-t border-gray-200 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                                    <h4 className="text-sm font-medium text-gray-500 mb-4">Join an existing team</h4>
                                     <Form method="POST">
                                         <div>
-                                            <label htmlFor="code" className="block text-sm font-medium leading-6 text-white">
+                                            <label htmlFor="code" className="block text-sm font-medium leading-6 text-gray-900">
                                                 Team Code / Name
                                             </label>
                                             <div className="mt-2">
@@ -158,7 +157,7 @@ export default function HospitalAppTeam() {
                                                     id="code"
                                                     required
                                                     placeholder="Enter team name to join"
-                                                    className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
+                                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                                 />
                                             </div>
                                         </div>
@@ -167,7 +166,7 @@ export default function HospitalAppTeam() {
                                                 type="submit"
                                                 name="intent"
                                                 value="join_team"
-                                                className="rounded-md bg-white/10 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                                                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
                                             >
                                                 Join Team
                                             </button>
