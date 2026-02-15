@@ -46,6 +46,13 @@ export async function verifyMagicLink(env: Env, token: string) {
     return response.data;
 }
 
+export async function verifyMagicLinkWithCookies(env: Env, token: string) {
+    const client = getAxios(env);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    const setCookieHeaders = response.headers["set-cookie"] || [];
+    return { data: response.data, setCookieHeaders };
+}
+
 export async function getCurrentUser(env: Env, request?: Request) {
     try {
         const client = getAxios(env, request);

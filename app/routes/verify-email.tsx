@@ -1,7 +1,7 @@
 import type { Route } from "./+types/verify-email";
-import { redirect, useLoaderData } from "react-router";
-import axios from "axios";
+import { useLoaderData } from "react-router";
 import { getEnv } from "~/lib/env.server";
+import { verifyMagicLinkWithCookies } from "~/lib/auth";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -15,22 +15,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const baseURL = env.BACKEND_BASE_URL || "http://localhost:8000";
-        const response = await axios.get(`${baseURL}/api/v1/auth/verify-magic-link/`, {
-            params: { token },
-            withCredentials: true,
-        });
+        const { setCookieHeaders } = await verifyMagicLinkWithCookies(env, token);
 
         // Forward Set-Cookie headers from the backend to the browser
         const headers = new Headers();
-        const setCookieHeaders = response.headers["set-cookie"];
-        if (setCookieHeaders) {
-            if (Array.isArray(setCookieHeaders)) {
-                setCookieHeaders.forEach((cookie: string) => {
-                    headers.append("Set-Cookie", cookie);
-                });
-            } else {
-                headers.append("Set-Cookie", setCookieHeaders as string);
+        if (Array.isArray(setCookieHeaders)) {
+            for (const cookie of setCookieHeaders) {
+                headers.append("Set-Cookie", cookie);
             }
         }
 
