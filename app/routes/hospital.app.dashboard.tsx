@@ -27,7 +27,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return {
             user,
             hackathon: {
-                name: "AI Hospital Hackathon",
+                name: "Medhack: Frontiers",
                 slug: "hospital",
                 description: "Revolutionizing healthcare with AI.",
                 start_date: "2025-01-01",
@@ -49,7 +49,7 @@ export default function HospitalAppDashboard() {
                     <div className="w-full lg:w-7/12 space-y-6">
                         <div className="relative w-full bg-white rounded-xl shadow-sm ring-1 ring-gray-900/5 p-6">
                             <h2 className="max-w-2xl text-balance text-4xl font-semibold tracking-tight text-gray-900 sm:text-5xl">
-                                Welcome to AI Hospital!
+                                Welcome to Medhack: Frontiers!
                             </h2>
                             <p className="max-w-2xl text-balance text-xl tracking-tight text-gray-900 mt-4">
                                 Join us to build the future of medicine. Whether you're tackling AI for the first time

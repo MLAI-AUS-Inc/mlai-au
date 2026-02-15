@@ -23,7 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         let next = url.searchParams.get("next");
 
         if (!next) {
-            next = (app === "esafety") ? "/esafety/dashboard" : "/platform/dashboard";
+            next = "/hackathons";
         }
 
         return redirect(next);
@@ -37,7 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
-    const next = formData.get("next")?.toString() ?? (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
+    const next = formData.get("next")?.toString() ?? "/hackathons";
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -76,7 +76,7 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const app = searchParams.get("app");
-    const next = searchParams.get("next") || (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
+    const next = searchParams.get("next") || "/hackathons";
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -123,7 +123,7 @@ export default function PlatformLogin() {
 
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
-        if (app === "hospital") return "Sign in to AI Hospital Hackathon";
+        if (app === "hospital") return "Sign in to Medhack: Frontiers";
         return "Welcome!";
     };
 
