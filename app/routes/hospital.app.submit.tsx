@@ -48,65 +48,61 @@ export default function HospitalAppSubmit() {
     const actionData = useActionData<typeof action>();
 
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-            <div className="md:flex md:items-center md:justify-between">
-                <div className="min-w-0 flex-1">
-                    <h2 className="text-2xl font-bold leading-7 text-white sm:truncate sm:text-3xl sm:tracking-tight">
-                        Make a Submission (Medhack: Frontiers)
-                    </h2>
-                </div>
+        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+            <div className="text-center">
+                <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Make a Submission</h2>
+                <p className="mt-4 text-lg leading-6 text-gray-500">
+                    Upload your predictions to see how you rank against other teams.
+                </p>
             </div>
 
-            <div className="mt-8">
-                <div className="overflow-hidden rounded-lg bg-white/5 shadow ring-1 ring-white/10">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-base font-semibold leading-6 text-white">Upload Predictions</h3>
-                        <p className="mt-2 text-sm text-gray-400">
-                            Upload your CSV file containing your predictions for the hospital challenge.
-                        </p>
+            <div className="bg-white shadow sm:rounded-lg">
+                <div className="px-4 py-5 sm:p-6">
+                    <h3 className="text-base font-semibold leading-6 text-gray-900">Upload Predictions</h3>
+                    <p className="mt-2 text-sm text-gray-500">
+                        Upload your CSV file containing your predictions for the Medhack: Frontiers challenge.
+                    </p>
 
-                        {actionData?.error && (
-                            <div className="mt-4 rounded-md bg-red-500/10 p-4 text-sm text-red-400">
-                                {actionData.error}
-                            </div>
-                        )}
+                    {actionData?.error && (
+                        <div className="mt-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
+                            {actionData.error}
+                        </div>
+                    )}
 
-                        {actionData?.success && (
-                            <div className="mt-4 rounded-md bg-green-500/10 p-4">
-                                <h4 className="text-sm font-medium text-green-400">Submission Successful!</h4>
-                                <div className="mt-2 text-sm text-green-300">
-                                    <p>Score: {actionData.result.score}</p>
-                                    {/* Display other metrics if available */}
-                                </div>
+                    {actionData?.success && (
+                        <div className="mt-4 rounded-md bg-green-50 p-4">
+                            <h4 className="text-sm font-medium text-green-800">Submission Successful!</h4>
+                            <div className="mt-2 text-sm text-green-700">
+                                <p>Score: {actionData.result.score}</p>
                             </div>
-                        )}
+                        </div>
+                    )}
 
-                        <Form method="POST" encType="multipart/form-data" className="mt-6">
-                            <div>
-                                <label htmlFor="file" className="block text-sm font-medium leading-6 text-white">
-                                    CSV File
-                                </label>
-                                <div className="mt-2">
-                                    <input
-                                        type="file"
-                                        name="file"
-                                        id="file"
-                                        accept=".csv"
-                                        required
-                                        className="block w-full rounded-md border-0 bg-white/5 py-1.5 text-white shadow-sm ring-1 ring-inset ring-white/10 focus:ring-2 focus:ring-inset focus:ring-teal-500 sm:text-sm sm:leading-6"
-                                    />
-                                </div>
+                    <Form method="POST" encType="multipart/form-data" className="mt-6">
+                        <div>
+                            <label htmlFor="file" className="block text-sm font-medium leading-6 text-gray-900">
+                                CSV File
+                            </label>
+                            <div className="mt-2">
+                                <input
+                                    type="file"
+                                    name="file"
+                                    id="file"
+                                    accept=".csv"
+                                    required
+                                    className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                />
                             </div>
-                            <div className="mt-4">
-                                <button
-                                    type="submit"
-                                    className="rounded-md bg-teal-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500"
-                                >
-                                    Upload
-                                </button>
-                            </div>
-                        </Form>
-                    </div>
+                        </div>
+                        <div className="mt-4">
+                            <button
+                                type="submit"
+                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            >
+                                Upload
+                            </button>
+                        </div>
+                    </Form>
                 </div>
             </div>
         </main>

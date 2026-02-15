@@ -35,6 +35,8 @@ export default [
     route("team", "routes/hospital.app.team.tsx"),
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
+    route("resources", "routes/hospital.app.resources.tsx"),
+    route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
   // Hackathon pages
