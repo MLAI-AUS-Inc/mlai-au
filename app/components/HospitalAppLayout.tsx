@@ -180,7 +180,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                 {/* Desktop sidebar */}
                 <aside
-                    className={`hidden lg:flex fixed left-0 top-0 z-40 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
+                    className={`hidden lg:flex fixed left-0 top-0 z-50 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
                         }`}
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
