@@ -12,5 +12,5 @@ export function loader({ request }: Route.LoaderArgs) {
         return redirect("/esafety");
     }
 
-    return redirect("/platform/dashboard");
+    return redirect("/hackathons");
 }
