@@ -12,36 +12,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { user };
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
-    const env = context.cloudflare.env;
-    const formData = await request.formData();
-    const file = formData.get("file");
-
-    if (!file || !(file instanceof File)) {
-        return { error: "Please upload a valid CSV file." };
-    }
-
-    // We need to construct a FormData object to send to the backend
-    const backendFormData = new FormData();
-    backendFormData.append("file", file);
-
-    const cookieHeader = request.headers.get("Cookie");
-    const headers: Record<string, string> = {
-        "Content-Type": "multipart/form-data",
-    };
-    if (cookieHeader) {
-        headers["Cookie"] = cookieHeader;
-    }
-
-    try {
-        const response = await axiosInstance.post("/api/v1/hackathons/hospital/submissions/", backendFormData, {
-            headers,
-        });
-        return { success: true, result: response.data };
-    } catch (error: any) {
-        const errDetail = error.response?.data?.detail || "Submission failed";
-        return { error: errDetail };
-    }
+export async function action() {
+    return { error: "Submissions are not open until 21st February." };
 }
 
 export default function HospitalAppSubmit() {
@@ -56,53 +28,19 @@ export default function HospitalAppSubmit() {
                 </p>
             </div>
 
-            <div className="bg-white shadow sm:rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">Upload Predictions</h3>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Upload your CSV file containing your predictions for the Medhack: Frontiers challenge.
-                    </p>
-
-                    {actionData?.error && (
-                        <div className="mt-4 rounded-md bg-red-50 p-4 text-sm text-red-700">
-                            {actionData.error}
+            <div className="rounded-md bg-yellow-50 p-4">
+                <div className="flex">
+                    <div className="flex-shrink-0">
+                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                        </svg>
+                    </div>
+                    <div className="ml-3">
+                        <h3 className="text-sm font-medium text-yellow-800">Submissions not yet open</h3>
+                        <div className="mt-2 text-sm text-yellow-700">
+                            <p>Submissions will open on 21st February. Check back then to upload your predictions.</p>
                         </div>
-                    )}
-
-                    {actionData?.success && (
-                        <div className="mt-4 rounded-md bg-green-50 p-4">
-                            <h4 className="text-sm font-medium text-green-800">Submission Successful!</h4>
-                            <div className="mt-2 text-sm text-green-700">
-                                <p>Score: {actionData.result.score}</p>
-                            </div>
-                        </div>
-                    )}
-
-                    <Form method="POST" encType="multipart/form-data" className="mt-6">
-                        <div>
-                            <label htmlFor="file" className="block text-sm font-medium leading-6 text-gray-900">
-                                CSV File
-                            </label>
-                            <div className="mt-2">
-                                <input
-                                    type="file"
-                                    name="file"
-                                    id="file"
-                                    accept=".csv"
-                                    required
-                                    className="block w-full text-sm text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-4">
-                            <button
-                                type="submit"
-                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                            >
-                                Upload
-                            </button>
-                        </div>
-                    </Form>
+                    </div>
                 </div>
             </div>
         </main>

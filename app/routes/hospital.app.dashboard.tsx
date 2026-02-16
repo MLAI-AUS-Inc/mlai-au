@@ -9,7 +9,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
     if (!user) {
-        return redirect("/platform/login?next=/hospital/app/dashboard");
+        return redirect("/platform/login?app=hospital&next=/hospital/app");
     }
 
     // Fetch hackathon details

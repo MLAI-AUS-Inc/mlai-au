@@ -37,7 +37,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
     const location = useLocation();
 
     const navigation = [
-        { name: 'Dashboard', href: '/hospital/app/dashboard', icon: HomeIcon },
+        { name: 'Dashboard', href: '/hospital/app', icon: HomeIcon },
         { name: 'My Team', href: '/hospital/app/team', icon: UsersIcon },
         { name: 'Leaderboard', href: '/hospital/app/leaderboard', icon: TrophyIcon },
         { name: 'Submit', href: '/hospital/app/submit', icon: DocumentArrowUpIcon },
@@ -47,11 +47,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
     const updatedNavigation = navigation.map(item => ({
         ...item,
-        current: location.pathname === item.href,
+        current: location.pathname === item.href || (item.href === '/hospital/app' && location.pathname === '/hospital/app/dashboard'),
     }));
 
     const userNavigation = [
-        { name: 'Dashboard', href: '/hospital/app/dashboard' },
+        { name: 'Dashboard', href: '/hospital/app' },
         { name: 'Profile', href: '/hospital/app/profile' },
     ];
 
@@ -117,10 +117,14 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                     </Transition.Child>
 
                                     {/* Sidebar content */}
-                                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-black bg-opacity-95 backdrop-filter backdrop-blur-lg px-6 pb-2">
+                                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-[#783f8e] px-6 pb-2">
                                         <div className="flex h-16 shrink-0 items-center">
-                                            <Link to="/hospital/app/dashboard" className="flex items-center">
-                                                <span className="text-white text-xl font-bold">MLAI AUS</span>
+                                            <Link to="/hospital/app" className="flex items-center">
+                                                <img
+                                                    className="h-10"
+                                                    src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
+                                                    alt="Medhack logo"
+                                                />
                                             </Link>
                                         </div>
 
@@ -180,7 +184,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                 {/* Desktop sidebar */}
                 <aside
-                    className={`hidden lg:flex fixed left-0 top-0 z-50 h-screen flex-col bg-black bg-opacity-60 backdrop-filter backdrop-blur-lg transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
+                    className={`hidden lg:flex fixed left-0 top-0 z-50 h-screen flex-col bg-[#783f8e] transition-all duration-300 ease-in-out ${isExpanded ? 'w-64' : 'w-20'
                         }`}
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
@@ -188,11 +192,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                     <div className="flex h-full flex-col">
                         {/* Logo */}
                         <div className="flex h-20 items-center justify-center px-4">
-                            <Link to="/hospital/app/dashboard" className="flex items-center">
+                            <Link to="/hospital/app" className="flex items-center">
                                 <img
-                                    className={`transition-all duration-300 ${isExpanded ? 'h-8' : 'h-10'}`}
-                                    src={isExpanded ? 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftext_logo.png?alt=media&token=0857f467-d3f9-4dbe-aad0-7a7331295100' : 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84'}
-                                    alt="MLAI logo"
+                                    className={`transition-all duration-300 ${isExpanded ? 'h-10' : 'h-10'}`}
+                                    src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
+                                    alt="Medhack logo"
                                 />
                             </Link>
                         </div>
