@@ -139,15 +139,15 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                                                     onClick={() => setSidebarOpen(false)}
                                                                     className={classNames(
                                                                         item.current
-                                                                            ? 'bg-white bg-opacity-10 text-teal-300'
-                                                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300',
+                                                                            ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
+                                                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1]',
                                                                         'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
                                                                         'transition-all duration-200 ease-in-out'
                                                                     )}
                                                                 >
                                                                     <item.icon
                                                                         className={classNames(
-                                                                            item.current ? 'text-teal-300' : 'text-white group-hover:text-teal-300',
+                                                                            item.current ? 'text-[#e2a9f1]' : 'text-white group-hover:text-[#e2a9f1]',
                                                                             'h-6 w-6 shrink-0',
                                                                             'transition-colors duration-200'
                                                                         )}
@@ -163,11 +163,11 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                                 <li className="mt-auto">
                                                     <Link
                                                         to="/hospital/app/settings"
-                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200 ease-in-out"
+                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1] transition-all duration-200 ease-in-out"
                                                         onClick={() => setSidebarOpen(false)}
                                                     >
                                                         <Cog6ToothIcon
-                                                            className="h-6 w-6 shrink-0 text-white group-hover:text-teal-300 transition-colors duration-200"
+                                                            className="h-6 w-6 shrink-0 text-white group-hover:text-[#e2a9f1] transition-colors duration-200"
                                                             aria-hidden="true"
                                                         />
                                                         Settings
@@ -209,8 +209,8 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                     to={item.href}
                                     className={classNames(
                                         item.current
-                                            ? 'bg-white bg-opacity-10 text-teal-300'
-                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300',
+                                            ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
+                                            : 'text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1]',
                                         'group flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200'
                                     )}
                                 >
@@ -233,7 +233,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                         <div className="px-3 pb-4">
                             <Link
                                 to="/hospital/app/settings"
-                                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-teal-300 transition-all duration-200"
+                                className="group flex items-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:bg-white hover:bg-opacity-10 hover:text-[#e2a9f1] transition-all duration-200"
                             >
                                 <Cog6ToothIcon
                                     className={`flex-shrink-0 h-6 w-6 transition-all duration-300 ${isExpanded ? 'mr-3' : 'mr-0'
