@@ -77,6 +77,7 @@ const PERSONA_CONFIG: Record<string, { label: string; emoji: string; color: stri
     hacker: { label: 'Hacker', emoji: '💻', color: 'bg-slate-50 text-slate-700', ring: 'ring-slate-600/20' },
     hustler: { label: 'Hustler', emoji: '💼', color: 'bg-amber-50 text-amber-700', ring: 'ring-amber-600/20' },
     hipster: { label: 'Hipster', emoji: '🎨', color: 'bg-rose-50 text-rose-700', ring: 'ring-rose-600/20' },
+    healer: { label: 'Healer', emoji: '⚕️', color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-600/20' },
 };
 
 export default function HospitalAppTeam() {
@@ -373,7 +374,8 @@ export default function HospitalAppTeam() {
                                                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden w-64 rounded bg-gray-900 px-3 py-2 text-xs text-white shadow-lg group-hover:block z-10">
                                                             <p className="mb-1"><strong>Hacker:</strong> You build things. You love code and technical challenges.</p>
                                                             <p className="mb-1"><strong>Hustler:</strong> You sell things. You focus on business, marketing, and growth.</p>
-                                                            <p><strong>Hipster:</strong> You design things. You care about UX, UI, and aesthetics.</p>
+                                                            <p className="mb-1"><strong>Hipster:</strong> You design things. You care about UX, UI, and aesthetics.</p>
+                                                            <p><strong>Healer:</strong> You heal people. You bring clinical or health domain expertise.</p>
                                                             <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
                                                         </div>
                                                     </div>
@@ -382,7 +384,8 @@ export default function HospitalAppTeam() {
                                                     {[
                                                         { id: 'hacker', label: 'I am a Hacker', emoji: '💻' },
                                                         { id: 'hustler', label: 'I am a Hustler', emoji: '💼' },
-                                                        { id: 'hipster', label: 'I am a Hipster', emoji: '🎨' }
+                                                        { id: 'hipster', label: 'I am a Hipster', emoji: '🎨' },
+                                                        { id: 'healer', label: 'I am a Healer', emoji: '⚕️' }
                                                     ].map((option) => (
                                                         <div key={option.id} className="relative flex items-start">
                                                             <div className="flex h-6 items-center">
@@ -535,7 +538,7 @@ export default function HospitalAppTeam() {
                         <div className="bg-white shadow sm:rounded-lg">
                             {(() => {
                                 const size = teamMembers.length;
-                                const isValid = size >= 2 && size <= 5;
+                                const isValid = size >= 2 && size <= 6;
                                 return (
                                     <div className={`px-4 py-3 sm:px-6 rounded-t-lg border-b flex items-center justify-between ${isValid
                                         ? 'bg-green-50 border-green-100'
@@ -555,12 +558,12 @@ export default function HospitalAppTeam() {
                                             )}
                                         </div>
                                         <div className="flex items-center gap-1 text-xs text-gray-500">
-                                            <span>{size}/5</span>
+                                            <span>{size}/6</span>
                                             <span className="hidden sm:inline">members</span>
                                             <div className="group relative flex items-center">
                                                 <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
                                                 <div className="absolute bottom-full right-0 mb-2 hidden w-48 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block z-10">
-                                                    Teams must have between 2 and 5 members.
+                                                    Teams must have between 2 and 6 members.
                                                     <div className="absolute top-full right-1 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
                                                 </div>
                                             </div>

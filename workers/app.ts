@@ -19,7 +19,9 @@ const TRACKING_PARAMS = ["trk", "utm_source", "utm_medium", "utm_campaign", "utm
 
 /** Legacy paths that should 301-redirect to a new location */
 const LEGACY_REDIRECTS: Record<string, string> = {
-  "/hackathon": "/",
+  "/codeofconduct": "/terms",
+  "/support": "/contact",
+  "/Support": "/contact",
 };
 
 export default {

@@ -32,6 +32,7 @@ export default [
   // Medhack: Frontiers (Hospital) App routes
   route("/hospital/app", "routes/hospital.app.tsx", [
     index("routes/hospital.app.dashboard.tsx"),
+    route("dashboard", "routes/hospital.app.dashboard-redirect.tsx"),
     route("team", "routes/hospital.app.team.tsx"),
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
