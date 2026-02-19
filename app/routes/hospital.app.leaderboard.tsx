@@ -24,6 +24,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { user, leaderboard };
 }
 
+function getRankDisplay(index: number): { medal: string; style: string } {
+    if (index === 0) return { medal: '\u{1F947}', style: 'text-yellow-600 font-extrabold' };
+    if (index === 1) return { medal: '\u{1F948}', style: 'text-gray-500 font-extrabold' };
+    if (index === 2) return { medal: '\u{1F949}', style: 'text-amber-700 font-extrabold' };
+    return { medal: '', style: 'text-gray-900 font-medium' };
+}
+
 export default function HospitalAppLeaderboard() {
     const { user, leaderboard } = useLoaderData<typeof loader>();
 
@@ -60,22 +67,25 @@ export default function HospitalAppLeaderboard() {
                                     </thead>
                                     <tbody className="divide-y divide-gray-200">
                                         {leaderboard.length > 0 ? (
-                                            leaderboard.map((entry: any, index: number) => (
-                                                <tr key={entry.team_id}>
-                                                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                                                        {index + 1}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
-                                                        {entry.team_name}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700">
-                                                        {entry.score}
-                                                    </td>
-                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                        {new Date(entry.submitted_at).toLocaleString()}
-                                                    </td>
-                                                </tr>
-                                            ))
+                                            leaderboard.map((entry: any, index: number) => {
+                                                const { medal, style } = getRankDisplay(index);
+                                                return (
+                                                    <tr key={entry.team_id} className={index < 3 ? 'bg-gray-50/50' : ''}>
+                                                        <td className={`whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-0 ${style}`}>
+                                                            {medal ? `${medal} ${index + 1}` : index + 1}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-700 font-medium">
+                                                            {entry.team_name}
+                                                        </td>
+                                                        <td className={`whitespace-nowrap px-3 py-4 text-sm ${index < 3 ? 'font-bold text-gray-900' : 'text-gray-700'}`}>
+                                                            {typeof entry.score === 'number' ? entry.score.toFixed(2) : entry.score}
+                                                        </td>
+                                                        <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                            {new Date(entry.submitted_at).toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
                                         ) : (
                                             <tr>
                                                 <td colSpan={4} className="py-8 text-center text-sm text-gray-500">
