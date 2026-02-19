@@ -54,6 +54,14 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
+    // 4. Block internal React Router routes from crawlers
+    if (url.pathname === "/__manifest") {
+      return new Response("Not Found", {
+        status: 404,
+        headers: { "X-Robots-Tag": "noindex, nofollow" },
+      });
+    }
+
     return requestHandler(request, {
       cloudflare: { env, ctx },
     });

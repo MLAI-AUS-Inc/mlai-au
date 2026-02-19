@@ -288,7 +288,7 @@ export default function HospitalAppTeam() {
                                                         value={firstName}
                                                         onChange={(e) => setFirstName(e.target.value)}
                                                         autoComplete="given-name"
-                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
                                                     />
                                                 </div>
                                             </div>
@@ -305,7 +305,7 @@ export default function HospitalAppTeam() {
                                                         value={lastName}
                                                         onChange={(e) => setLastName(e.target.value)}
                                                         autoComplete="family-name"
-                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
                                                     />
                                                 </div>
                                             </div>
@@ -322,7 +322,7 @@ export default function HospitalAppTeam() {
                                                         value={email}
                                                         onChange={(e) => setEmail(e.target.value)}
                                                         autoComplete="email"
-                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
                                                     />
                                                 </div>
                                             </div>
@@ -331,7 +331,7 @@ export default function HospitalAppTeam() {
                                                 <label htmlFor="phone" className="block text-sm font-medium leading-6 text-gray-900">
                                                     Phone
                                                 </label>
-                                                <div className="mt-2 flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600">
+                                                <div className="mt-2 flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-[#e2a9f1]">
                                                     <div className="flex select-none items-center rounded-l-md bg-gray-50 px-3 text-gray-500 border-r border-gray-300 sm:text-sm">
                                                         +61
                                                     </div>
@@ -359,7 +359,7 @@ export default function HospitalAppTeam() {
                                                         rows={3}
                                                         value={about}
                                                         onChange={(e) => setAbout(e.target.value)}
-                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                                                        className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
                                                     />
                                                 </div>
                                             </div>
@@ -401,7 +401,7 @@ export default function HospitalAppTeam() {
                                                                             setPersonas(personas.filter(p => p !== option.id));
                                                                         }
                                                                     }}
-                                                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                                                    className="h-4 w-4 rounded border-gray-300 text-[#783f8e] focus:ring-[#783f8e]"
                                                                 />
                                                             </div>
                                                             <div className="ml-3 text-sm leading-6">
@@ -439,7 +439,7 @@ export default function HospitalAppTeam() {
                                                         <div className="mt-2">
                                                             <Combobox value={selectedTeam} onChange={(val) => setSelectedTeam(val || '')}>
                                                                 <div className="relative mt-1">
-                                                                    <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
+                                                                    <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-[#e2a9f1] sm:text-sm">
                                                                         <Combobox.Input
                                                                             className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
                                                                             displayValue={(team: string) => team}
@@ -465,7 +465,7 @@ export default function HospitalAppTeam() {
                                                                                 <Combobox.Option
                                                                                     value={query}
                                                                                     className={({ active }) =>
-                                                                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
+                                                                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-[#783f8e] text-white' : 'text-gray-900'
                                                                                         }`
                                                                                     }
                                                                                 >
@@ -481,7 +481,7 @@ export default function HospitalAppTeam() {
                                                                                     <Combobox.Option
                                                                                         key={team}
                                                                                         className={({ active }) =>
-                                                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'
+                                                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-[#783f8e] text-white' : 'text-gray-900'
                                                                                             }`
                                                                                         }
                                                                                         value={team}
@@ -496,7 +496,7 @@ export default function HospitalAppTeam() {
                                                                                                 </span>
                                                                                                 {selected ? (
                                                                                                     <span
-                                                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-indigo-600'
+                                                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-[#783f8e]'
                                                                                                             }`}
                                                                                                     >
                                                                                                         <CheckIcon className="h-5 w-5" aria-hidden="true" />
@@ -518,12 +518,12 @@ export default function HospitalAppTeam() {
                                         </div>
 
                                         <div className="mt-6 flex items-center justify-end gap-x-6">
-                                            {message && <p className="text-sm text-green-600">{message}</p>}
+                                            {message && <p className="text-sm text-[#783f8e]">{message}</p>}
                                             {error && <p className="text-sm text-red-600">{error}</p>}
                                             <button
                                                 type="submit"
                                                 disabled={isSaving}
-                                                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                                                className="rounded-md bg-[#783f8e] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#8f52a5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#783f8e] disabled:opacity-50"
                                             >
                                                 {isSaving ? 'Saving...' : 'Save'}
                                             </button>
@@ -541,14 +541,14 @@ export default function HospitalAppTeam() {
                                 const isValid = size >= 2 && size <= 6;
                                 return (
                                     <div className={`px-4 py-3 sm:px-6 rounded-t-lg border-b flex items-center justify-between ${isValid
-                                        ? 'bg-green-50 border-green-100'
+                                        ? 'bg-[#e2a9f1]/10 border-[#e2a9f1]/30'
                                         : 'bg-gray-50 border-gray-200'
                                         }`}>
                                         <div className="flex items-center gap-2">
                                             {isValid ? (
                                                 <div className="flex items-center gap-2">
-                                                    <span className="flex h-2 w-2 rounded-full bg-green-600" />
-                                                    <span className="text-sm font-semibold text-green-900">Team Ready</span>
+                                                    <span className="flex h-2 w-2 rounded-full bg-[#783f8e]" />
+                                                    <span className="text-sm font-semibold text-[#783f8e]">Team Ready</span>
                                                 </div>
                                             ) : (
                                                 <div className="flex items-center gap-2">
