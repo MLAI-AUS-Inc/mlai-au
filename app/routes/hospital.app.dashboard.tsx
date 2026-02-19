@@ -1,8 +1,10 @@
 import type { Route } from "./+types/hospital.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
 import { getEnv } from "~/lib/env.server";
-import { getCurrentUser } from "~/lib/auth";
+import { getCurrentUser, getHospitalRecentSubmissions } from "~/lib/auth";
+import { getAnnouncements } from "~/services/hackathon";
 import { DocumentArrowUpIcon, UsersIcon } from "@heroicons/react/24/outline";
+import Announcements, { type Announcement } from "~/components/Announcements";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -10,29 +12,45 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (!user) {
         return redirect("/platform/login?app=hospital&next=/hospital/app");
     }
-    return { user };
+
+    let announcements: Announcement[] = [];
+    try {
+        announcements = await getAnnouncements(env, request, "hospital");
+    } catch (error) {
+        console.error("Failed to fetch announcements:", error);
+    }
+
+    const hasTeam = !!(user.hospital_team || user.team);
+    let latestScore: number | null = null;
+    if (hasTeam) {
+        try {
+            const recent = await getHospitalRecentSubmissions(env, request);
+            if (Array.isArray(recent) && recent.length > 0) {
+                latestScore = recent[0].score;
+            }
+        } catch (error) {
+            console.error("Failed to fetch recent submissions:", error);
+        }
+    }
+
+    return { user, announcements, latestScore, hasTeam };
 }
 
 const MEDHACK_LOGO = "https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db";
 
 export default function HospitalAppDashboard() {
-    const { user } = useLoaderData<typeof loader>();
+    const { user, announcements, latestScore, hasTeam } = useLoaderData<typeof loader>();
 
     return (
         <div className="min-h-screen bg-[#110822] p-4 sm:p-6">
             <div className="w-full mx-auto space-y-6">
 
-                {/* ── Hero Banner ── */}
+                {/* Hero Banner */}
                 <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
-                    {/* Background gradient */}
                     <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
-
-                    {/* Decorative glow spots */}
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
                     <div className="absolute top-10 right-10 h-32 w-32 rounded-full bg-[#e2a9f1]/10 blur-2xl" />
-
-                    {/* Subtle grid overlay */}
                     <div
                         className="absolute inset-0 opacity-[0.04]"
                         style={{
@@ -40,9 +58,7 @@ export default function HospitalAppDashboard() {
                             backgroundSize: '40px 40px',
                         }}
                     />
-
                     <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-end gap-6 p-8 lg:p-12">
-                        {/* Left: text content */}
                         <div className="flex-1 space-y-4">
                             <div className="flex items-center gap-4">
                                 <img src={MEDHACK_LOGO} alt="" className="h-16 lg:h-20" />
@@ -55,7 +71,6 @@ export default function HospitalAppDashboard() {
                             <p className="text-lg font-bold text-white/90 tracking-widest uppercase">
                                 The Future of Healthcare
                             </p>
-
                             <div className="flex flex-wrap gap-3 pt-2">
                                 <a
                                     href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
@@ -83,19 +98,17 @@ export default function HospitalAppDashboard() {
                                 </a>
                             </div>
                         </div>
-
-                        {/* Right: decorative cross / medical symbol */}
                         <div className="hidden lg:flex items-center justify-center">
                             <div className="relative flex h-40 w-40 items-center justify-center">
                                 <div className="absolute h-full w-full rounded-full border-2 border-[#e2a9f1]/20 animate-pulse" />
                                 <div className="absolute h-[120%] w-[120%] rounded-full border border-[#e2a9f1]/10" />
-                                <span className="text-7xl select-none">🏥</span>
+                                <span className="text-7xl select-none">{'\u{1F3E5}'}</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* ── Second Row ── */}
+                {/* Second Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Info / Welcome Card */}
                     <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_30px_rgba(226,169,241,0.1)]">
@@ -126,8 +139,14 @@ export default function HospitalAppDashboard() {
                                 </h3>
                             </div>
                             <p className="mt-3 text-sm text-white/70 leading-relaxed flex-1">
-                                Ready to submit your project or AI model? Head to the submissions page here.
+                                Submissions are now open! Upload your predictions and see how you rank.
                             </p>
+                            {latestScore !== null && (
+                                <div className="mt-3 rounded-lg bg-[#e2a9f1]/10 border border-[#e2a9f1]/20 px-4 py-3">
+                                    <p className="text-xs text-[#e2a9f1]/70 uppercase tracking-wide">Latest Score</p>
+                                    <p className="text-2xl font-black text-white">{typeof latestScore === 'number' ? latestScore.toFixed(2) : latestScore}</p>
+                                </div>
+                            )}
                             <Link
                                 to="/hospital/app/submit"
                                 className="mt-4 block w-full rounded-lg bg-[#ff2d78] py-3 text-center text-sm font-bold uppercase tracking-wider text-white transition-all hover:bg-[#ff4d8e] hover:shadow-[0_0_20px_rgba(255,45,120,0.4)]"
@@ -138,7 +157,7 @@ export default function HospitalAppDashboard() {
                     </div>
                 </div>
 
-                {/* ── Third Row ── */}
+                {/* Third Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                     {/* Leaderboard Card */}
                     <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
@@ -149,7 +168,6 @@ export default function HospitalAppDashboard() {
                             </h3>
 
                             <div className="mt-6 flex items-end gap-6">
-                                {/* Podium + avatars */}
                                 <div className="flex items-end">
                                     {/* 2nd Place */}
                                     <div className="flex flex-col items-center">
@@ -162,7 +180,6 @@ export default function HospitalAppDashboard() {
                                             <span className="text-lg font-black text-white/70">2</span>
                                         </div>
                                     </div>
-
                                     {/* 1st Place */}
                                     <div className="flex flex-col items-center -mx-px">
                                         <img
@@ -174,7 +191,6 @@ export default function HospitalAppDashboard() {
                                             <span className="text-xl font-black text-white">1</span>
                                         </div>
                                     </div>
-
                                     {/* 3rd Place */}
                                     <div className="flex flex-col items-center">
                                         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#783f8e]/30 ring-2 ring-[#e2a9f1]/20">
@@ -185,8 +201,6 @@ export default function HospitalAppDashboard() {
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Decorative chart lines */}
                                 <div className="flex-1 hidden sm:block">
                                     <svg viewBox="0 0 200 80" className="w-full h-20" preserveAspectRatio="none">
                                         <defs>
@@ -201,7 +215,6 @@ export default function HospitalAppDashboard() {
                                                 <stop offset="100%" stopColor="#67e8f9" stopOpacity="0.9" />
                                             </linearGradient>
                                         </defs>
-                                        {/* Pink line */}
                                         <path
                                             d="M 0 60 Q 30 70, 60 50 T 120 55 T 180 30 L 200 35"
                                             fill="none"
@@ -209,7 +222,6 @@ export default function HospitalAppDashboard() {
                                             strokeWidth="2.5"
                                             strokeLinecap="round"
                                         />
-                                        {/* Cyan line */}
                                         <path
                                             d="M 0 45 Q 40 55, 80 35 T 150 25 L 200 10"
                                             fill="none"
@@ -217,7 +229,6 @@ export default function HospitalAppDashboard() {
                                             strokeWidth="2.5"
                                             strokeLinecap="round"
                                         />
-                                        {/* Glow dot on cyan */}
                                         <circle cx="150" cy="25" r="4" fill="#67e8f9" opacity="0.9" />
                                         <circle cx="150" cy="25" r="8" fill="#67e8f9" opacity="0.15" />
                                     </svg>
@@ -225,7 +236,7 @@ export default function HospitalAppDashboard() {
                             </div>
 
                             <p className="mt-4 text-center text-sm text-white/50">
-                                Submissions open 21st February — compete to claim the top spot!
+                                Submissions are open — compete to claim the top spot!
                             </p>
 
                             <Link
@@ -248,7 +259,9 @@ export default function HospitalAppDashboard() {
                                 </h3>
                             </div>
                             <p className="mt-3 text-sm text-white/70 leading-relaxed flex-1">
-                                Manage your team or join an existing one.
+                                {hasTeam
+                                    ? "Manage your team, update your profile, and coordinate with teammates."
+                                    : "Create or join a team to start competing."}
                             </p>
                             <Link
                                 to="/hospital/app/team"
@@ -260,7 +273,14 @@ export default function HospitalAppDashboard() {
                     </div>
                 </div>
 
-                {/* ── Sponsors Section ── */}
+                {/* Announcements Section */}
+                {announcements.length > 0 && (
+                    <div className="rounded-2xl border border-[#e2a9f1]/20 overflow-hidden">
+                        <Announcements announcements={announcements} />
+                    </div>
+                )}
+
+                {/* Sponsors Section */}
                 <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/15 bg-[#1a0e2e]/60">
                     <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e]/10 via-transparent to-[#783f8e]/10" />
                     <div className="relative z-10 px-6 py-6">

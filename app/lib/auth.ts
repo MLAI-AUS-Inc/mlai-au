@@ -88,9 +88,9 @@ export async function createUser(env: Env, body: {
     return response.data;
 }
 
-export async function getTeamNames(env: Env, request?: Request): Promise<string[]> {
+export async function getTeamNames(env: Env, request?: Request, slug: string = "hospital"): Promise<string[]> {
     const client = getAxios(env, request);
-    const response = await client.get("/api/v1/teams/");
+    const response = await client.get(`/api/v1/hackathons/${slug}/get_team_names/`);
     return response.data.team_names || [];
 }
 
@@ -193,5 +193,30 @@ export async function submission(formData: FormData) {
 
 export async function getLatestSubmission() {
     const response = await axiosInstance.get("/api/v1/hackathons/esafety/submission/");
+    return response.data;
+}
+
+// ─── Hospital hackathon helpers ────────────────────────────────────────────
+
+export async function hospitalSubmission(formData: FormData) {
+    return axiosInstance.post("/api/v1/hackathons/hospital/submissions/", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+}
+
+export async function getHospitalRecentSubmissions(env?: Env, request?: Request) {
+    if (env) {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+        return response.data;
+    }
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+    return response.data;
+}
+
+export async function getHospitalLatestSubmission() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_submission/");
     return response.data;
 }

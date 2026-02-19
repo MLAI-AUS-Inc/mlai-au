@@ -1,10 +1,8 @@
 import type { Route } from "./+types/hospital.app.team";
 import React, { useState, useEffect } from 'react';
-import { redirect, useLoaderData, useNavigate, useRevalidator, useFetcher } from "react-router";
-import { Combobox, Transition } from '@headlessui/react'
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/20/solid'
-import { EnvelopeIcon, PhoneIcon } from '@heroicons/react/20/solid'
-import { getTeamNames, updateUser, getCurrentUser } from '~/lib/auth';
+import { Form, redirect, useLoaderData, useRevalidator, useFetcher, useActionData } from "react-router";
+import { axiosInstance } from "~/lib/api";
+import { updateUser, getCurrentUser } from '~/lib/auth';
 import { getInitials, generateAvatarUrl } from '~/lib/avatar';
 import { getEnv } from "~/lib/env.server";
 import AvatarModal from "~/components/AvatarModal";
@@ -17,7 +15,15 @@ interface TeamMember {
     personas?: string[];
 }
 
+interface HospitalTeam {
+    id?: number;
+    name: string;
+    team_name?: string;
+    members: TeamMember[];
+}
+
 interface UserData {
+    id: number;
     email: string;
     full_name: string;
     first_name?: string;
@@ -27,6 +33,11 @@ interface UserData {
     personas?: string[];
     avatar_url?: string;
     team?: {
+        team_name: string;
+        avatar_url?: string;
+        members: TeamMember[];
+    };
+    hospital_team?: {
         team_name: string;
         avatar_url?: string;
         members: TeamMember[];
@@ -41,32 +52,89 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         return redirect("/platform/login?app=hospital&next=/hospital/app/team");
     }
 
-    // Fetch available team names
-    let teams: string[] = [];
+    // Fetch user's hospital team via hackathon API
+    let hospitalTeam: HospitalTeam | null = null;
     try {
-        teams = await getTeamNames(env, request);
+        const cookieHeader = request.headers.get("Cookie");
+        const headers: Record<string, string> = {};
+        if (cookieHeader) {
+            headers["Cookie"] = cookieHeader;
+        }
+        const response = await axiosInstance.get(
+            `/api/v1/hackathons/hospital/teams/?member_id=${(user as any).id}`,
+            { headers }
+        );
+        const teams = response.data;
+        if (Array.isArray(teams) && teams.length > 0) {
+            hospitalTeam = teams[0];
+        }
     } catch (error) {
-        console.error('Error loading teams', error);
+        console.error("Failed to fetch hospital team:", error);
     }
 
-    return { user: user as UserData, teams };
+    return { user: user as UserData, hospitalTeam };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const formData = await request.formData();
+    const intent = formData.get("intent");
 
-    try {
-        console.log("Profile Action: Received FormData");
-        for (const [key, value] of formData.entries()) {
-            console.log(`Profile Action: ${key} =`, value);
-        }
-        await updateUser(env, formData, request);
-        return { success: true };
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        return { success: false, error: 'Error updating profile.' };
+    const cookieHeader = request.headers.get("Cookie");
+    const headers: Record<string, string> = {};
+    if (cookieHeader) {
+        headers["Cookie"] = cookieHeader;
     }
+
+    // Team create/join intents go to hospital hackathon API
+    if (intent === "create_team") {
+        const name = formData.get("name")?.toString();
+        if (!name) return { error: "Team name is required" };
+
+        try {
+            await axiosInstance.post(
+                "/api/v1/hackathons/hospital/teams/",
+                { name },
+                { headers }
+            );
+            return { success: true };
+        } catch (error: any) {
+            const errDetail = error.response?.data?.detail || "Failed to create team";
+            return { error: errDetail };
+        }
+    }
+
+    if (intent === "join_team") {
+        const code = formData.get("code")?.toString();
+        if (!code) return { error: "Team code/name is required" };
+
+        try {
+            await axiosInstance.post(
+                "/api/v1/hackathons/hospital/teams/join/",
+                { code },
+                { headers }
+            );
+            return { success: true };
+        } catch (error: any) {
+            const errDetail = error.response?.data?.detail || "Failed to join team";
+            return { error: errDetail };
+        }
+    }
+
+    // Profile update intent (existing behavior)
+    if (intent === "update_profile") {
+        try {
+            // Remove the intent field before sending
+            formData.delete("intent");
+            await updateUser(env, formData, request);
+            return { success: true, profileUpdated: true };
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            return { error: 'Error updating profile.' };
+        }
+    }
+
+    return null;
 }
 
 function classNames(...classes: (string | boolean | undefined)[]) {
@@ -74,27 +142,17 @@ function classNames(...classes: (string | boolean | undefined)[]) {
 }
 
 const PERSONA_CONFIG: Record<string, { label: string; emoji: string; color: string; ring: string }> = {
-    hacker: { label: 'Hacker', emoji: '💻', color: 'bg-slate-50 text-slate-700', ring: 'ring-slate-600/20' },
-    hustler: { label: 'Hustler', emoji: '💼', color: 'bg-amber-50 text-amber-700', ring: 'ring-amber-600/20' },
-    hipster: { label: 'Hipster', emoji: '🎨', color: 'bg-rose-50 text-rose-700', ring: 'ring-rose-600/20' },
-    healer: { label: 'Healer', emoji: '⚕️', color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-600/20' },
+    hacker: { label: 'Hacker', emoji: '\u{1F4BB}', color: 'bg-slate-50 text-slate-700', ring: 'ring-slate-600/20' },
+    hustler: { label: 'Hustler', emoji: '\u{1F4BC}', color: 'bg-amber-50 text-amber-700', ring: 'ring-amber-600/20' },
+    hipster: { label: 'Hipster', emoji: '\u{1F3A8}', color: 'bg-rose-50 text-rose-700', ring: 'ring-rose-600/20' },
+    healer: { label: 'Healer', emoji: '\u{2695}\u{FE0F}', color: 'bg-emerald-50 text-emerald-700', ring: 'ring-emerald-600/20' },
 };
 
 export default function HospitalAppTeam() {
-    const { user: initialUser, teams } = useLoaderData<typeof loader>();
+    const { user: initialUser, hospitalTeam } = useLoaderData<typeof loader>();
+    const actionData = useActionData<typeof action>();
     const revalidator = useRevalidator();
     const fetcher = useFetcher();
-
-    // Split full name into first and last name for the form
-    // const splitName = (name: string) => {
-    //     const parts = name.split(' ');
-    //     return {
-    //         firstName: parts[0] || '',
-    //         lastName: parts.slice(1).join(' ') || ''
-    //     };
-    // };
-
-    // const initialNames = splitName(initialUser.full_name || '');
 
     const [firstName, setFirstName] = useState(initialUser.first_name || '');
     const [lastName, setLastName] = useState(initialUser.last_name || '');
@@ -103,80 +161,42 @@ export default function HospitalAppTeam() {
     const [about, setAbout] = useState(initialUser.about || '');
     const [personas, setPersonas] = useState<string[]>(initialUser.personas || []);
 
-    // Team state
-    const [selectedTeam, setSelectedTeam] = useState(initialUser.team?.team_name || '');
-    const [query, setQuery] = useState('');
-    const [teamMembers, setTeamMembers] = useState<TeamMember[]>(
-        (initialUser.team?.members || []).map(m => {
-            if (m.full_name === initialUser.full_name) {
-                return { ...m, personas: initialUser.personas };
-            }
-            return m;
-        })
-    );
-
     const [message, setMessage] = useState('');
     const [error, setError] = useState('');
-    // const [isSaving, setIsSaving] = useState(false); // Managed by fetcher.state
     const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
 
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
-    const [teamAvatarFile, setTeamAvatarFile] = useState<File | null>(null);
-    const [previewTeamAvatarUrl, setPreviewTeamAvatarUrl] = useState<string | null>(null);
-    const [isTeamAvatarModalOpen, setIsTeamAvatarModalOpen] = useState(false);
+    // Derive team data from hospitalTeam (from hackathon API) or fallback to user profile
+    const teamData = hospitalTeam || initialUser.hospital_team || initialUser.team;
+    const teamName = hospitalTeam?.name || hospitalTeam?.team_name || teamData?.team_name || '';
+    const teamMembers = (teamData?.members || []).map(m => {
+        if (m.full_name === initialUser.full_name) {
+            return { ...m, personas: initialUser.personas };
+        }
+        return m;
+    });
 
     const handleAvatarSave = async (file: File) => {
         setAvatarFile(file);
-        // Create a local URL for preview
         const objectUrl = URL.createObjectURL(file);
         setPreviewAvatarUrl(objectUrl);
         setIsAvatarModalOpen(false);
     };
 
-    const handleTeamAvatarSave = async (file: File) => {
-        setTeamAvatarFile(file);
-        // Create a local URL for preview
-        const objectUrl = URL.createObjectURL(file);
-        setPreviewTeamAvatarUrl(objectUrl);
-        setIsTeamAvatarModalOpen(false);
-    };
-
-    // Filter teams for combobox
-    const filteredTeams =
-        query === ''
-            ? teams
-            : teams.filter((team) => {
-                return team.toLowerCase().includes(query.toLowerCase())
-            })
-
     useEffect(() => {
         if (initialUser) {
-            // const names = splitName(initialUser.full_name || '');
             setFirstName(initialUser.first_name || '');
             setLastName(initialUser.last_name || '');
             setEmail(initialUser.email || '');
             setPhone(initialUser.phone || '');
             setAbout(initialUser.about || '');
             setPersonas(initialUser.personas || []);
-
-            if (initialUser.team) {
-                setSelectedTeam(initialUser.team.team_name || '');
-                setTeamMembers((initialUser.team.members || []).map(m => {
-                    if (m.full_name === initialUser.full_name) {
-                        return { ...m, personas: initialUser.personas };
-                    }
-                    return m;
-                }));
-            } else {
-                setSelectedTeam('');
-                setTeamMembers([]);
-            }
         }
     }, [initialUser]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleProfileSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage('');
         setError('');
@@ -186,36 +206,29 @@ export default function HospitalAppTeam() {
             return;
         }
 
-        const fullName = `${firstName} ${lastName}`.trim();
-
         const formData = new FormData();
+        formData.append('intent', 'update_profile');
         formData.append('first_name', firstName);
         formData.append('last_name', lastName);
         formData.append('email', email);
-        if (selectedTeam) formData.append('team', selectedTeam);
         if (phone) formData.append('phone', phone);
         if (about) formData.append('about', about);
         personas.forEach(p => formData.append('personas', p));
         if (avatarFile) {
             formData.append('avatar', avatarFile);
         }
-        if (teamAvatarFile) {
-            formData.append('team_avatar', teamAvatarFile);
-        }
 
         fetcher.submit(formData, {
-            method: "patch",
+            method: "post",
             encType: "multipart/form-data",
         });
     };
 
     useEffect(() => {
         if (fetcher.state === "idle" && fetcher.data) {
-            if (fetcher.data.success) {
+            if (fetcher.data.success && fetcher.data.profileUpdated) {
                 setMessage('Profile updated successfully.');
                 setAvatarFile(null);
-                setTeamAvatarFile(null);
-                // Revalidator is called automatically by Remix after action
             } else if (fetcher.data.error) {
                 setError(fetcher.data.error);
             }
@@ -223,9 +236,7 @@ export default function HospitalAppTeam() {
     }, [fetcher.state, fetcher.data]);
 
     const isSaving = fetcher.state !== "idle";
-
     const avatarUrl = previewAvatarUrl || initialUser.avatar_url || generateAvatarUrl(getInitials(initialUser.full_name || ''));
-    const teamAvatarUrl = previewTeamAvatarUrl || initialUser.team?.avatar_url || generateAvatarUrl(getInitials(selectedTeam || 'Team'));
 
     return (
         <div className="min-h-full bg-gray-50">
@@ -253,28 +264,120 @@ export default function HospitalAppTeam() {
                         <div>
                             <h1 className="text-2xl font-bold text-gray-900">{initialUser.full_name}</h1>
                             <p className="text-sm font-medium text-gray-500">
-                                {initialUser.team?.team_name ? `Member of ${initialUser.team.team_name}` : 'No team selected'}
+                                {teamName ? `Member of ${teamName}` : 'No team yet'}
                             </p>
                         </div>
-                    </div>
-                    <div className="mt-6 flex flex-col-reverse justify-stretch space-y-4 space-y-reverse sm:flex-row-reverse sm:justify-end sm:space-y-0 sm:space-x-3 sm:space-x-reverse md:mt-0 md:flex-row md:space-x-3">
-                        {/* Actions could go here if needed */}
                     </div>
                 </div>
 
                 <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 sm:px-6 lg:max-w-7xl lg:grid-flow-col-dense lg:grid-cols-3">
                     <div className="space-y-6 lg:col-span-2 lg:col-start-1">
-                        {/* Description list / Form */}
+
+                        {/* Team Create / Join — only shown when user has no team */}
+                        {!teamName && (
+                            <section aria-labelledby="team-management-title">
+                                <div className="bg-white shadow sm:rounded-lg">
+                                    <div className="px-4 py-5 sm:px-6">
+                                        <h2 id="team-management-title" className="text-lg font-medium leading-6 text-gray-900">
+                                            Create or Join a Team
+                                        </h2>
+                                        <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                                            You need a team to participate in the hackathon.
+                                        </p>
+                                    </div>
+                                    <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
+                                        {actionData?.error && (
+                                            <div className="mb-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+                                                {actionData.error}
+                                            </div>
+                                        )}
+                                        {actionData?.success && !actionData?.profileUpdated && (
+                                            <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-700">
+                                                Team operation successful!
+                                            </div>
+                                        )}
+
+                                        <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                                            {/* Create Team */}
+                                            <div>
+                                                <h3 className="text-sm font-medium text-gray-700 mb-4">Create a new team</h3>
+                                                <Form method="POST">
+                                                    <div>
+                                                        <label htmlFor="team-name" className="block text-sm font-medium leading-6 text-gray-900">
+                                                            Team Name
+                                                        </label>
+                                                        <div className="mt-2">
+                                                            <input
+                                                                type="text"
+                                                                name="name"
+                                                                id="team-name"
+                                                                required
+                                                                className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
+                                                                placeholder="Enter team name"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-4">
+                                                        <button
+                                                            type="submit"
+                                                            name="intent"
+                                                            value="create_team"
+                                                            className="rounded-md bg-[#783f8e] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#8f52a5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#783f8e]"
+                                                        >
+                                                            Create Team
+                                                        </button>
+                                                    </div>
+                                                </Form>
+                                            </div>
+
+                                            {/* Join Team */}
+                                            <div className="border-t border-gray-200 pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                                                <h3 className="text-sm font-medium text-gray-700 mb-4">Join an existing team</h3>
+                                                <Form method="POST">
+                                                    <div>
+                                                        <label htmlFor="team-code" className="block text-sm font-medium leading-6 text-gray-900">
+                                                            Team Code / Name
+                                                        </label>
+                                                        <div className="mt-2">
+                                                            <input
+                                                                type="text"
+                                                                name="code"
+                                                                id="team-code"
+                                                                required
+                                                                placeholder="Enter team name to join"
+                                                                className="block w-full rounded-md border-0 py-1.5 pl-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-[#e2a9f1] sm:text-sm sm:leading-6"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                    <div className="mt-4">
+                                                        <button
+                                                            type="submit"
+                                                            name="intent"
+                                                            value="join_team"
+                                                            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                                                        >
+                                                            Join Team
+                                                        </button>
+                                                    </div>
+                                                </Form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
+
+                        {/* Profile editing form */}
                         <section aria-labelledby="applicant-information-title">
                             <div className="bg-white shadow sm:rounded-lg">
                                 <div className="px-4 py-5 sm:px-6">
                                     <h2 id="applicant-information-title" className="text-lg font-medium leading-6 text-gray-900">
-                                        Applicant Information
+                                        Profile Information
                                     </h2>
                                     <p className="mt-1 max-w-2xl text-sm text-gray-500">Personal details and application.</p>
                                 </div>
                                 <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
-                                    <form onSubmit={handleSubmit}>
+                                    <form onSubmit={handleProfileSubmit}>
                                         <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
                                             <div className="sm:col-span-3">
                                                 <label htmlFor="first-name" className="block text-sm font-medium leading-6 text-gray-900">
@@ -382,10 +485,10 @@ export default function HospitalAppTeam() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     {[
-                                                        { id: 'hacker', label: 'I am a Hacker', emoji: '💻' },
-                                                        { id: 'hustler', label: 'I am a Hustler', emoji: '💼' },
-                                                        { id: 'hipster', label: 'I am a Hipster', emoji: '🎨' },
-                                                        { id: 'healer', label: 'I am a Healer', emoji: '⚕️' }
+                                                        { id: 'hacker', label: 'I am a Hacker', emoji: '\u{1F4BB}' },
+                                                        { id: 'hustler', label: 'I am a Hustler', emoji: '\u{1F4BC}' },
+                                                        { id: 'hipster', label: 'I am a Hipster', emoji: '\u{1F3A8}' },
+                                                        { id: 'healer', label: 'I am a Healer', emoji: '\u{2695}\u{FE0F}' }
                                                     ].map((option) => (
                                                         <div key={option.id} className="relative flex items-start">
                                                             <div className="flex h-6 items-center">
@@ -413,108 +516,6 @@ export default function HospitalAppTeam() {
                                                     ))}
                                                 </div>
                                             </div>
-
-                                            <div className="sm:col-span-6">
-                                                <div className="flex items-start gap-x-6">
-                                                    <div className="shrink-0 flex flex-col items-center">
-                                                        <label className="block text-sm font-medium leading-6 text-gray-900 mb-2">Team Avatar</label>
-                                                        <div className="relative size-16">
-                                                            <img
-                                                                alt=""
-                                                                src={teamAvatarUrl}
-                                                                className="size-16 rounded-lg object-cover"
-                                                            />
-                                                            <span aria-hidden="true" className="absolute inset-0 rounded-lg shadow-inner" />
-                                                            <button
-                                                                type="button"
-                                                                className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                                                                onClick={() => setIsTeamAvatarModalOpen(true)}
-                                                            >
-                                                                <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <label className="block text-sm font-medium leading-6 text-gray-900">Team Name</label>
-                                                        <div className="mt-2">
-                                                            <Combobox value={selectedTeam} onChange={(val) => setSelectedTeam(val || '')}>
-                                                                <div className="relative mt-1">
-                                                                    <div className="relative w-full cursor-default overflow-hidden rounded-lg bg-white text-left shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-[#e2a9f1] sm:text-sm">
-                                                                        <Combobox.Input
-                                                                            className="w-full border-none py-2 pl-3 pr-10 text-sm leading-5 text-gray-900 focus:ring-0"
-                                                                            displayValue={(team: string) => team}
-                                                                            onChange={(event) => setQuery(event.target.value)}
-                                                                            placeholder="Select or create a team"
-                                                                        />
-                                                                        <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-                                                                            <ChevronUpDownIcon
-                                                                                className="h-5 w-5 text-gray-400"
-                                                                                aria-hidden="true"
-                                                                            />
-                                                                        </Combobox.Button>
-                                                                    </div>
-                                                                    <Transition
-                                                                        as={React.Fragment}
-                                                                        leave="transition ease-in duration-100"
-                                                                        leaveFrom="opacity-100"
-                                                                        leaveTo="opacity-0"
-                                                                        afterLeave={() => setQuery('')}
-                                                                    >
-                                                                        <Combobox.Options className="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm z-10">
-                                                                            {query.length > 0 && (
-                                                                                <Combobox.Option
-                                                                                    value={query}
-                                                                                    className={({ active }) =>
-                                                                                        `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-[#783f8e] text-white' : 'text-gray-900'
-                                                                                        }`
-                                                                                    }
-                                                                                >
-                                                                                    Create "{query}"
-                                                                                </Combobox.Option>
-                                                                            )}
-                                                                            {filteredTeams.length === 0 && query !== '' ? (
-                                                                                <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
-                                                                                    Nothing found.
-                                                                                </div>
-                                                                            ) : (
-                                                                                filteredTeams.map((team) => (
-                                                                                    <Combobox.Option
-                                                                                        key={team}
-                                                                                        className={({ active }) =>
-                                                                                            `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-[#783f8e] text-white' : 'text-gray-900'
-                                                                                            }`
-                                                                                        }
-                                                                                        value={team}
-                                                                                    >
-                                                                                        {({ selected, active }) => (
-                                                                                            <>
-                                                                                                <span
-                                                                                                    className={`block truncate ${selected ? 'font-medium' : 'font-normal'
-                                                                                                        }`}
-                                                                                                >
-                                                                                                    {team}
-                                                                                                </span>
-                                                                                                {selected ? (
-                                                                                                    <span
-                                                                                                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${active ? 'text-white' : 'text-[#783f8e]'
-                                                                                                            }`}
-                                                                                                    >
-                                                                                                        <CheckIcon className="h-5 w-5" aria-hidden="true" />
-                                                                                                    </span>
-                                                                                                ) : null}
-                                                                                            </>
-                                                                                        )}
-                                                                                    </Combobox.Option>
-                                                                                ))
-                                                                            )}
-                                                                        </Combobox.Options>
-                                                                    </Transition>
-                                                                </div>
-                                                            </Combobox>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
                                         </div>
 
                                         <div className="mt-6 flex items-center justify-end gap-x-6">
@@ -525,7 +526,7 @@ export default function HospitalAppTeam() {
                                                 disabled={isSaving}
                                                 className="rounded-md bg-[#783f8e] px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-[#8f52a5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#783f8e] disabled:opacity-50"
                                             >
-                                                {isSaving ? 'Saving...' : 'Save'}
+                                                {isSaving ? 'Saving...' : 'Save Profile'}
                                             </button>
                                         </div>
                                     </form>
@@ -534,107 +535,118 @@ export default function HospitalAppTeam() {
                         </section>
                     </div>
 
+                    {/* Team sidebar */}
                     <section aria-labelledby="timeline-title" className="lg:col-span-1 lg:col-start-3">
                         <div className="bg-white shadow sm:rounded-lg">
-                            {(() => {
-                                const size = teamMembers.length;
-                                const isValid = size >= 2 && size <= 6;
-                                return (
-                                    <div className={`px-4 py-3 sm:px-6 rounded-t-lg border-b flex items-center justify-between ${isValid
-                                        ? 'bg-[#e2a9f1]/10 border-[#e2a9f1]/30'
-                                        : 'bg-gray-50 border-gray-200'
-                                        }`}>
-                                        <div className="flex items-center gap-2">
-                                            {isValid ? (
+                            {teamName ? (
+                                <>
+                                    {(() => {
+                                        const size = teamMembers.length;
+                                        const isValid = size >= 2 && size <= 6;
+                                        return (
+                                            <div className={`px-4 py-3 sm:px-6 rounded-t-lg border-b flex items-center justify-between ${isValid
+                                                ? 'bg-[#e2a9f1]/10 border-[#e2a9f1]/30'
+                                                : 'bg-gray-50 border-gray-200'
+                                                }`}>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="flex h-2 w-2 rounded-full bg-[#783f8e]" />
-                                                    <span className="text-sm font-semibold text-[#783f8e]">Team Ready</span>
+                                                    {isValid ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="flex h-2 w-2 rounded-full bg-[#783f8e]" />
+                                                            <span className="text-sm font-semibold text-[#783f8e]">Team Ready</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="flex h-2 w-2 rounded-full bg-yellow-500" />
+                                                            <span className="text-sm font-semibold text-gray-700">Forming Team</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <div className="flex items-center gap-2">
-                                                    <span className="flex h-2 w-2 rounded-full bg-yellow-500" />
-                                                    <span className="text-sm font-semibold text-gray-700">Forming Team</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                                            <span>{size}/6</span>
-                                            <span className="hidden sm:inline">members</span>
-                                            <div className="group relative flex items-center">
-                                                <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
-                                                <div className="absolute bottom-full right-0 mb-2 hidden w-48 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block z-10">
-                                                    Teams must have between 2 and 6 members.
-                                                    <div className="absolute top-full right-1 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
+                                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                    <span>{size}/6</span>
+                                                    <span className="hidden sm:inline">members</span>
+                                                    <div className="group relative flex items-center">
+                                                        <InformationCircleIcon className="h-4 w-4 text-gray-400 cursor-help" />
+                                                        <div className="absolute bottom-full right-0 mb-2 hidden w-48 rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-lg group-hover:block z-10">
+                                                            Teams must have between 2 and 6 members.
+                                                            <div className="absolute top-full right-1 -mt-1 h-2 w-2 rotate-45 bg-gray-900"></div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
+                                        );
+                                    })()}
+
+                                    <div className="px-4 py-5 sm:px-6">
+                                        <div className="flex flex-col items-center pb-6 border-b border-gray-200">
+                                            <h2 id="timeline-title" className="text-xl font-bold text-gray-900 text-center">
+                                                {teamName}
+                                            </h2>
+                                        </div>
+
+                                        <h3 className="mt-6 text-sm font-medium text-gray-500">Team Members</h3>
+
+                                        <div className="mt-4 flow-root">
+                                            <ul role="list" className="-my-5 divide-y divide-gray-200">
+                                                {teamMembers.length > 0 ? (
+                                                    teamMembers.map((member, index) => {
+                                                        const memberInitials = getInitials(member.full_name);
+                                                        const memberAvatarUrl = member.avatar_url || generateAvatarUrl(memberInitials);
+                                                        return (
+                                                            <li key={index} className="py-4">
+                                                                <div className="flex items-center space-x-4">
+                                                                    <div className="shrink-0">
+                                                                        <img
+                                                                            className="h-10 w-10 rounded-full object-cover"
+                                                                            src={memberAvatarUrl}
+                                                                            alt={member.full_name}
+                                                                        />
+                                                                    </div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <p className="truncate text-sm font-medium text-gray-900">{member.full_name}</p>
+                                                                        <div className="mt-1 flex flex-wrap gap-1">
+                                                                            {member.personas && member.personas.length > 0 ? (
+                                                                                member.personas.map(p => {
+                                                                                    const config = PERSONA_CONFIG[p.toLowerCase()] || { label: p, emoji: '\u{1F464}', color: 'bg-gray-50 text-gray-600', ring: 'ring-gray-500/10' };
+                                                                                    return (
+                                                                                        <span key={p} className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${config.color} ${config.ring}`}>
+                                                                                            <span className="mr-1">{config.emoji}</span>
+                                                                                            {config.label}
+                                                                                        </span>
+                                                                                    );
+                                                                                })
+                                                                            ) : (
+                                                                                <span className="text-xs text-gray-500 italic">
+                                                                                    {member.role || 'Participant'}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        );
+                                                    })
+                                                ) : (
+                                                    <li className="py-4">
+                                                        <p className="text-sm text-gray-500">No team members yet.</p>
+                                                    </li>
+                                                )}
+                                            </ul>
                                         </div>
                                     </div>
-                                );
-                            })()}
-
-                            <div className="px-4 py-5 sm:px-6">
-                                <div className="flex flex-col items-center pb-6 border-b border-gray-200">
-                                    <img
-                                        className="h-24 w-24 rounded-lg object-cover mb-4"
-                                        src={teamAvatarUrl}
-                                        alt={selectedTeam || 'Team'}
-                                    />
-                                    <h2 id="timeline-title" className="text-xl font-bold text-gray-900 text-center">
-                                        {selectedTeam || 'No Team Selected'}
-                                    </h2>
+                                </>
+                            ) : (
+                                <div className="px-4 py-5 sm:px-6 text-center">
+                                    <div className="rounded-full bg-[#e2a9f1]/10 p-3 inline-block mb-3">
+                                        <svg className="h-8 w-8 text-[#783f8e]" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                                        </svg>
+                                    </div>
+                                    <h2 id="timeline-title" className="text-lg font-semibold text-gray-900">No Team Yet</h2>
+                                    <p className="mt-2 text-sm text-gray-500">
+                                        Create or join a team using the form on the left to get started.
+                                    </p>
                                 </div>
-
-                                <h3 className="mt-6 text-sm font-medium text-gray-500">Team Members</h3>
-
-                                {/* Team member list */}
-                                <div className="mt-4 flow-root">
-                                    <ul role="list" className="-my-5 divide-y divide-gray-200">
-                                        {teamMembers.length > 0 ? (
-                                            teamMembers.map((member, index) => {
-                                                const memberInitials = getInitials(member.full_name);
-                                                const memberAvatarUrl = member.avatar_url || generateAvatarUrl(memberInitials);
-                                                return (
-                                                    <li key={index} className="py-4">
-                                                        <div className="flex items-center space-x-4">
-                                                            <div className="shrink-0">
-                                                                <img
-                                                                    className="h-10 w-10 rounded-full object-cover"
-                                                                    src={memberAvatarUrl}
-                                                                    alt={member.full_name}
-                                                                />
-                                                            </div>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="truncate text-sm font-medium text-gray-900">{member.full_name}</p>
-                                                                <div className="mt-1 flex flex-wrap gap-1">
-                                                                    {member.personas && member.personas.length > 0 ? (
-                                                                        member.personas.map(p => {
-                                                                            const config = PERSONA_CONFIG[p.toLowerCase()] || { label: p, emoji: '👤', color: 'bg-gray-50 text-gray-600', ring: 'ring-gray-500/10' };
-                                                                            return (
-                                                                                <span key={p} className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${config.color} ${config.ring}`}>
-                                                                                    <span className="mr-1">{config.emoji}</span>
-                                                                                    {config.label}
-                                                                                </span>
-                                                                            );
-                                                                        })
-                                                                    ) : (
-                                                                        <span className="text-xs text-gray-500 italic">
-                                                                            {member.role || 'Participant'}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </li>
-                                                );
-                                            })
-                                        ) : (
-                                            <li className="py-4">
-                                                <p className="text-sm text-gray-500">No team members yet.</p>
-                                            </li>
-                                        )}
-                                    </ul>
-                                </div>
-                            </div>
+                            )}
                         </div>
                     </section>
                 </div>
@@ -644,13 +656,6 @@ export default function HospitalAppTeam() {
                 onClose={() => setIsAvatarModalOpen(false)}
                 onSave={handleAvatarSave}
                 initialImage={avatarUrl}
-            />
-            <AvatarModal
-                isOpen={isTeamAvatarModalOpen}
-                onClose={() => setIsTeamAvatarModalOpen(false)}
-                onSave={handleTeamAvatarSave}
-                initialImage={teamAvatarUrl}
-                title="Update Team Logo"
             />
         </div>
     );
