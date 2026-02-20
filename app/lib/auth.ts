@@ -94,11 +94,36 @@ export async function getTeamNames(env: Env, request?: Request, slug: string = "
     return response.data.team_names || [];
 }
 
+export async function getHospitalTeams(env: Env, request: Request) {
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/teams/");
+        return response.data || [];
+    } catch (error) {
+        console.error("Failed to fetch hospital teams:", error);
+        return [];
+    }
+}
+
+export async function getHospitalTeam(env: Env, request: Request, userId: number) {
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get(`/api/v1/hackathons/hospital/teams/?member_id=${userId}`);
+        const teams = response.data;
+        if (Array.isArray(teams) && teams.length > 0) {
+            return teams[0];
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to fetch hospital team:", error);
+        return null;
+    }
+}
+
 export async function updateUser(env: Env, body: {
     full_name?: string;
     first_name?: string;
     last_name?: string;
-    team?: string;
     email?: string;
     phone?: string;
     about?: string;

@@ -43,6 +43,7 @@ export default [
   // Hackathon pages
   route("/hackathon", "routes/hackathon.tsx"),
   route("/hackathons", "routes/hackathons.tsx"),
+  route("/medhack", "routes/medhack.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),

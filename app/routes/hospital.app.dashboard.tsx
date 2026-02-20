@@ -3,7 +3,7 @@ import { redirect, useLoaderData, Link } from "react-router";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser, getHospitalRecentSubmissions } from "~/lib/auth";
 import { getAnnouncements } from "~/services/hackathon";
-import { DocumentArrowUpIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { DocumentArrowUpIcon, UsersIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import Announcements, { type Announcement } from "~/components/Announcements";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -46,18 +46,32 @@ export default function HospitalAppDashboard() {
             <div className="w-full mx-auto space-y-6">
 
                 {/* Hero Banner */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
+                <div className="relative overflow-visible rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
                     <div className="absolute top-10 right-10 h-32 w-32 rounded-full bg-[#e2a9f1]/10 blur-2xl" />
                     <div
-                        className="absolute inset-0 opacity-[0.04]"
+                        className="absolute inset-0 rounded-2xl opacity-[0.04]"
                         style={{
                             backgroundImage: 'linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)',
                             backgroundSize: '40px 40px',
                         }}
                     />
+                    {/* Background image on right side — fades in from left */}
+                    <div
+                        className="hidden lg:block absolute right-0 top-0 bottom-0 w-[55%] z-[1] rounded-r-2xl overflow-hidden"
+                        style={{
+                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 25%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,1) 75%)',
+                            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 25%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,1) 75%)',
+                        }}
+                    >
+                        <img
+                            src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-20%20at%2011.43.40%E2%80%AFAM%20(1).png?alt=media&token=53c45f5e-419a-45d0-a23b-08b96d3a47e1"
+                            alt=""
+                            className="h-full w-full object-cover object-center opacity-90"
+                        />
+                    </div>
                     <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-end gap-6 p-8 lg:p-12">
                         <div className="flex-1 space-y-4">
                             <div className="flex items-center gap-4">
@@ -96,14 +110,24 @@ export default function HospitalAppDashboard() {
                                 >
                                     Pitch Night Tickets
                                 </a>
+                                <Link
+                                    to="/medhack"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                >
+                                    <InformationCircleIcon className="h-4 w-4" />
+                                    Info Pack
+                                </Link>
                             </div>
                         </div>
-                        <div className="hidden lg:flex items-center justify-center">
-                            <div className="relative flex h-40 w-40 items-center justify-center">
-                                <div className="absolute h-full w-full rounded-full border-2 border-[#e2a9f1]/20 animate-pulse" />
-                                <div className="absolute h-[120%] w-[120%] rounded-full border border-[#e2a9f1]/10" />
-                                <span className="text-7xl select-none">{'\u{1F3E5}'}</span>
-                            </div>
+                        {/* Girls image — bottom-aligned, heads overflow above hero */}
+                        <div className="hidden lg:block absolute right-8 bottom-0 z-20">
+                            <img
+                                src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/LAST%20CHANCE%20TO%20REGISTER%20(1).png?alt=media&token=50ec1b74-f1a5-48a5-a5ee-8238d034169d"
+                                alt="MedHack participants"
+                                className="h-[26rem] w-auto object-contain object-bottom drop-shadow-[0_0_25px_rgba(226,169,241,0.3)]"
+                            />
                         </div>
                     </div>
                 </div>

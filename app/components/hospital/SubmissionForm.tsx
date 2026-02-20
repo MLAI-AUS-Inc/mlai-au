@@ -124,20 +124,20 @@ export default function SubmissionForm({
     };
 
     return (
-        <div className="mx-auto max-w-2xl px-8 py-8">
+        <div className="mx-auto max-w-2xl bg-[#1a0e2e]/80 border border-[#e2a9f1]/20 rounded-2xl px-8 py-8">
             <div>
-                <h2 className="text-base/7 font-semibold text-gray-900">Predictions Submission</h2>
-                <p className="mt-1 text-sm/6 text-gray-600">
+                <h2 className="text-base/7 font-semibold text-white">Predictions Submission</h2>
+                <p className="mt-1 text-sm/6 text-white/50">
                     Please upload your predictions CSV file.
                 </p>
 
                 <form onSubmit={handleSubmit} className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
                     <div className="col-span-full">
-                        <label htmlFor="csv-upload" className="block text-sm/6 font-medium text-gray-900">
+                        <label htmlFor="csv-upload" className="block text-sm/6 font-medium text-white">
                             Predictions CSV
                         </label>
                         <div
-                            className={`mt-2 flex justify-center rounded-lg border border-dashed ${isDragging ? 'border-[#783f8e] bg-[#e2a9f1]/10' : 'border-gray-900/25'} px-6 py-10`}
+                            className={`mt-2 flex justify-center rounded-lg border border-dashed ${isDragging ? 'border-[#783f8e] bg-[#e2a9f1]/10' : 'border-white/20'} px-6 py-10`}
                             onDragEnter={handleDragEnter}
                             onDragOver={handleDragOver}
                             onDragLeave={handleDragLeave}
@@ -146,11 +146,11 @@ export default function SubmissionForm({
                             <div className="text-center">
                                 {!csvFile ? (
                                     <>
-                                        <DocumentPlusIcon className="mx-auto size-12 text-gray-300" aria-hidden="true" />
-                                        <div className="mt-4 flex text-sm/6 text-gray-600">
+                                        <DocumentPlusIcon className="mx-auto size-12 text-white/30" aria-hidden="true" />
+                                        <div className="mt-4 flex text-sm/6 text-white/50">
                                             <label
                                                 htmlFor="csv-upload"
-                                                className="relative cursor-pointer rounded-md bg-white font-semibold text-[#783f8e] focus-within:outline-none focus-within:ring-2 focus-within:ring-[#783f8e] focus-within:ring-offset-2 hover:text-[#8f52a5]"
+                                                className="relative cursor-pointer rounded-md font-semibold text-[#e2a9f1] focus-within:outline-none focus-within:ring-2 focus-within:ring-[#783f8e] focus-within:ring-offset-2 focus-within:ring-offset-[#1a0e2e] hover:text-[#e2a9f1]/80"
                                             >
                                                 <span>Upload a file</span>
                                                 <input
@@ -165,15 +165,15 @@ export default function SubmissionForm({
                                             </label>
                                             <p className="pl-1">or drag and drop</p>
                                         </div>
-                                        <p className="text-xs/5 text-gray-600">CSV files only</p>
+                                        <p className="text-xs/5 text-white/40">CSV files only</p>
                                     </>
                                 ) : (
                                     <div className="flex items-center justify-center space-x-2">
-                                        <span className="text-sm text-gray-600">Selected: {csvFile.name}</span>
+                                        <span className="text-sm text-white/70">Selected: {csvFile.name}</span>
                                         <button
                                             type="button"
                                             onClick={removeFile}
-                                            className="rounded-md bg-white p-1 text-gray-400 hover:text-gray-500"
+                                            className="rounded-md p-1 text-white/40 hover:text-white/60"
                                         >
                                             <XMarkIcon className="size-5" aria-hidden="true" />
                                         </button>
@@ -185,13 +185,13 @@ export default function SubmissionForm({
 
                     {errorMsg && (
                         <div className="col-span-full">
-                            <p className="text-sm text-red-600">{errorMsg}</p>
+                            <p className="text-sm text-red-400">{errorMsg}</p>
                         </div>
                     )}
 
                     {score !== null && (
                         <div className="col-span-full rounded-lg bg-[#e2a9f1]/10 border border-[#e2a9f1]/30 p-4">
-                            <p className="text-sm font-medium text-[#783f8e]">
+                            <p className="text-sm font-medium text-[#e2a9f1]">
                                 Submission successful! Your score: <span className="text-lg font-bold">{score}</span>
                             </p>
                         </div>
@@ -201,7 +201,7 @@ export default function SubmissionForm({
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`inline-flex w-full justify-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm ${isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-[#783f8e] hover:bg-[#8f52a5]"} focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[#783f8e]`}
+                            className={`inline-flex w-full justify-center rounded-md px-4 py-2 text-sm font-semibold text-white shadow-sm ${isSubmitting ? "bg-white/10 cursor-not-allowed" : "bg-[#783f8e] hover:bg-[#8f52a5]"} focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[#783f8e]`}
                         >
                             {isSubmitting ? "Submitting..." : "Submit Predictions"}
                         </button>
