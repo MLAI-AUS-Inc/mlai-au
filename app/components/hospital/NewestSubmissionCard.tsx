@@ -1,5 +1,6 @@
 import { timeAgo } from '~/lib/timeAgo';
 import type { HospitalSubmission } from '~/types/submission';
+import { normalizeClassStats } from '~/types/submission';
 
 interface NewestSubmissionCardProps {
     submission: HospitalSubmission | null;
@@ -20,8 +21,9 @@ export default function NewestSubmissionCard({ submission }: NewestSubmissionCar
     const accuracy = submission.accuracy != null
         ? `${(submission.accuracy * 100).toFixed(1)}%`
         : 'N/A';
-    const totalRows = feedback != null
-        ? feedback.class_stats.reduce((sum, s) => sum + s.total, 0)
+    const classStats = feedback != null ? normalizeClassStats(feedback.class_stats) : undefined;
+    const totalRows = classStats
+        ? classStats.reduce((sum, s) => sum + s.total, 0)
         : null;
     const submittedBy = submission.user_name || submission.participant_name || 'Team member';
 
