@@ -1,9 +1,17 @@
+import { useState, useEffect, useCallback } from 'react';
 import type { Route } from "./+types/hospital.app.submit";
 import { useLoaderData, redirect, useRevalidator, Link } from "react-router";
-import { getCurrentUser, getHospitalRecentSubmissions } from "~/lib/auth";
+import { getCurrentUser, getHospitalRecentSubmissions, getHospitalLatestSubmission, getHospitalSubmissionById, getHospitalAllSubmissions } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import SubmissionForm from "~/components/hospital/SubmissionForm";
 import RecentSubmissions from "~/components/hospital/RecentSubmissions";
+import NewestSubmissionCard from "~/components/hospital/NewestSubmissionCard";
+import ClassAccuracyBars from "~/components/hospital/ClassAccuracyBars";
+import ConfusionMatrixHeatmap from "~/components/hospital/ConfusionMatrixHeatmap";
+import MissedCrisesAlert from "~/components/hospital/MissedCrisesAlert";
+import First100RowsTable from "~/components/hospital/First100RowsTable";
+import SubmissionHistory from "~/components/hospital/SubmissionHistory";
+import type { HospitalSubmission, SubmissionSummary } from "~/types/submission";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -28,9 +36,66 @@ export default function HospitalAppSubmit() {
     const { user, hasTeam, recentSubmissions } = useLoaderData<typeof loader>();
     const revalidator = useRevalidator();
 
+    const [submission, setSubmission] = useState<HospitalSubmission | null>(null);
+    const [allSubmissions, setAllSubmissions] = useState<SubmissionSummary[]>([]);
+    const [isSubmissionLoading, setIsSubmissionLoading] = useState(false);
+
+    const fetchLatestSubmission = useCallback(async () => {
+        try {
+            setIsSubmissionLoading(true);
+            const data = await getHospitalLatestSubmission();
+            if (data && data.submission_id != null) {
+                setSubmission(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch latest submission:", error);
+        } finally {
+            setIsSubmissionLoading(false);
+        }
+    }, []);
+
+    const fetchAllSubmissions = useCallback(async () => {
+        try {
+            const data = await getHospitalAllSubmissions();
+            if (Array.isArray(data)) {
+                setAllSubmissions(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch all submissions:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (hasTeam) {
+            fetchLatestSubmission();
+            fetchAllSubmissions();
+        }
+    }, [hasTeam, fetchLatestSubmission, fetchAllSubmissions]);
+
+    const handleSubmissionSelect = async (submissionId: number) => {
+        try {
+            setIsSubmissionLoading(true);
+            const data = await getHospitalSubmissionById(submissionId);
+            if (data) {
+                setSubmission(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch submission:", error);
+        } finally {
+            setIsSubmissionLoading(false);
+        }
+    };
+
     const handleSubmissionSuccess = () => {
         revalidator.revalidate();
+        fetchLatestSubmission();
+        fetchAllSubmissions();
     };
+
+    const feedback = submission?.feedback;
+    const bestScore = allSubmissions.length > 0
+        ? Math.max(...allSubmissions.map((s) => s.score))
+        : null;
 
     return (
         <main className="min-h-screen bg-[#110822] px-4 sm:px-6 lg:px-8 py-12">
@@ -65,9 +130,54 @@ export default function HospitalAppSubmit() {
                     </div>
                 ) : (
                     <>
-                        <SubmissionForm user={user} onSubmissionSuccess={handleSubmissionSuccess} />
+                        {/* Submission card + Recent submissions row */}
+                        <div className="flex flex-col md:flex-row gap-6">
+                            <div className="md:w-5/12">
+                                <NewestSubmissionCard submission={submission} />
+                                {isSubmissionLoading && (
+                                    <div className="mt-2 text-center text-xs text-white/30">Loading...</div>
+                                )}
+                            </div>
+                            <div className="md:w-7/12">
+                                <RecentSubmissions
+                                    submissions={recentSubmissions}
+                                    onRowClick={handleSubmissionSelect}
+                                />
+                            </div>
+                        </div>
 
-                        <RecentSubmissions submissions={recentSubmissions} />
+                        {/* Feedback section */}
+                        {submission && (
+                            feedback ? (
+                                <div className="space-y-6">
+                                    <MissedCrisesAlert
+                                        missedCrisesTotal={feedback.missed_crises_total}
+                                        missedCrises={feedback.missed_crises}
+                                    />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <ClassAccuracyBars classStats={feedback.class_stats} />
+                                        <ConfusionMatrixHeatmap confusionMatrix={feedback.confusion_matrix} />
+                                    </div>
+                                    <First100RowsTable rows={feedback.first_100_public} />
+                                </div>
+                            ) : (
+                                <div className="bg-[#1a0e2e]/80 border border-[#e2a9f1]/20 rounded-2xl p-6 text-center">
+                                    <p className="text-white/50 text-sm">
+                                        Detailed feedback is not available for this submission.
+                                    </p>
+                                </div>
+                            )
+                        )}
+
+                        {/* Submission history */}
+                        <SubmissionHistory
+                            submissions={allSubmissions}
+                            selectedId={submission?.submission_id ?? null}
+                            bestScore={bestScore}
+                            onSelect={handleSubmissionSelect}
+                        />
+
+                        <SubmissionForm user={user} onSubmissionSuccess={handleSubmissionSuccess} />
 
                         <div className="text-center">
                             <Link

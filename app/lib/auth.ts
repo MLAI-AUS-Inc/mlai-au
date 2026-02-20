@@ -246,3 +246,15 @@ export async function getHospitalLatestSubmission() {
     const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_submission/");
     return response.data;
 }
+
+export async function getHospitalSubmissionById(submissionId: number) {
+    const response = await axiosInstance.get(
+        `/api/v1/hackathons/hospital/get_submission/${submissionId}/`
+    );
+    return response.data;
+}
+
+export async function getHospitalAllSubmissions() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/submissions/");
+    return response.data;
+}
