@@ -10,11 +10,46 @@ import {
 } from "~/data/medhack-frontiers";
 
 export default function MedhackJudging() {
+  const totalScore = MEDHACK_JUDGING_CRITERIA.reduce((sum, c) => sum + c.maxScore, 0);
+
   return (
     <section id="judging" className="scroll-mt-24 space-y-8">
       <h2 className="text-3xl font-bold text-white">Judging Criteria</h2>
 
       <p className="text-white/70 mb-8">{MEDHACK_JUDGING_OVERVIEW}</p>
+
+      {/* Scoring breakdown table */}
+      <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-5">
+        <h3 className="text-lg font-semibold text-white mb-4">Scoring Breakdown</h3>
+        <p className="text-sm text-white/60 mb-4">
+          Not all criteria are weighted equally. The table below shows the maximum points for each category.
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-[#e2a9f1]/20">
+                <th className="text-left py-2 pr-4 text-white/70 font-medium">Category</th>
+                <th className="text-right py-2 pl-4 text-white/70 font-medium">Max Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {MEDHACK_JUDGING_CRITERIA.map((c) => (
+                <tr key={c.name} className="border-b border-[#e2a9f1]/10">
+                  <td className="py-2.5 pr-4 text-white/80">{c.name}</td>
+                  <td className="py-2.5 pl-4 text-right text-[#e2a9f1] font-semibold">/{c.maxScore}</td>
+                </tr>
+              ))}
+              <tr>
+                <td className="py-2.5 pr-4 text-white font-bold">Total</td>
+                <td className="py-2.5 pl-4 text-right text-[#e2a9f1] font-bold">/{totalScore}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-4 text-sm text-white/50">
+          Scores between semifinal judges are normalised to ensure fairness across judging panels.
+        </p>
+      </div>
 
       <div>
         {MEDHACK_JUDGING_CRITERIA.map((criterion) => (
@@ -22,9 +57,12 @@ export default function MedhackJudging() {
             {({ open }) => (
               <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 mb-4">
                 <DisclosureButton className="w-full flex justify-between items-center p-5 text-left">
-                  <span className="text-lg font-semibold text-white">
-                    {criterion.name}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-semibold text-white">
+                      {criterion.name}
+                    </span>
+                    <span className="text-sm text-[#e2a9f1]/70 font-medium">/{criterion.maxScore}</span>
+                  </div>
                   <ChevronDownIcon
                     className="h-5 w-5 text-white/50 ui-open:rotate-180 transition-transform duration-200"
                   />

@@ -32,6 +32,7 @@ export interface MedhackJudgingCriterion {
   high: string;
   medium: string;
   low: string;
+  maxScore: number;
 }
 
 export interface MedhackPerson {
@@ -262,7 +263,8 @@ export const MEDHACK_JUDGING_OVERVIEW = "For the Big Tract (Pitching), teams sub
 export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   {
     name: "Innovation",
-    description: "Does your solution provide a new or significantly improved approach?",
+    description: "Does the solution provide a new or significantly improved approach to what's currently available?",
+    maxScore: 5,
     questions: [
       "Is this a novel approach to the problem?",
       "Does it improve significantly on existing solutions?",
@@ -274,7 +276,8 @@ export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   },
   {
     name: "Usefulness (User Needs)",
-    description: "Does it truly address the needs of the user or patient?",
+    description: "Does it truly address the needs of the user? Does it solve a large problem?",
+    maxScore: 10,
     questions: [
       "Have you validated the problem with real users?",
       "Does the solution directly address an identified pain point?",
@@ -287,6 +290,7 @@ export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   {
     name: "Viability",
     description: "Is it scalable, cost-effective, and easy to adopt?",
+    maxScore: 10,
     questions: [
       "Can this scale beyond a prototype?",
       "Is the cost structure sustainable?",
@@ -298,7 +302,8 @@ export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   },
   {
     name: "Technical Feasibility",
-    description: "Can it be built with current technology?",
+    description: "Is what the team built technically complex? Is their future vision technically feasible?",
+    maxScore: 10,
     questions: [
       "Is the technology stack realistic and well-chosen?",
       "Has a working demo or proof of concept been built?",
@@ -310,7 +315,8 @@ export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
   },
   {
     name: "Business Readiness",
-    description: "Does it have potential to be implemented and possibly funded?",
+    description: "Does it have the potential to be implemented and possibly funded?",
+    maxScore: 10,
     questions: [
       "Is there a clear value proposition?",
       "Could this attract investment or institutional support?",
@@ -319,6 +325,19 @@ export const MEDHACK_JUDGING_CRITERIA: MedhackJudgingCriterion[] = [
     high: "Compelling value proposition with a realistic go-to-market strategy and clear funding pathway.",
     medium: "Good value proposition but go-to-market or funding strategy needs more work.",
     low: "Unclear value proposition or unrealistic path to market and funding.",
+  },
+  {
+    name: "Sustainability",
+    description: "Will it minimise long-term environmental impact and stand the test of time?",
+    maxScore: 5,
+    questions: [
+      "Does the solution consider its environmental footprint?",
+      "Is the approach designed to remain relevant and maintainable over time?",
+      "Does it avoid creating unsustainable dependencies or waste?",
+    ],
+    high: "Solution is designed with long-term sustainability in mind, minimising environmental impact and built to last.",
+    medium: "Some consideration of sustainability, but certain aspects could create long-term challenges.",
+    low: "Little to no consideration of environmental impact or long-term sustainability.",
   },
 ];
 

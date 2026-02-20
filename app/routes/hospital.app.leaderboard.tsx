@@ -55,6 +55,12 @@ export default function HospitalAppLeaderboard() {
                                                     Score
                                                 </th>
                                                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                                    Patients Died
+                                                </th>
+                                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">
+                                                    False Alarms
+                                                </th>
+                                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">
                                                     Last Submission
                                                 </th>
                                             </tr>
@@ -74,6 +80,12 @@ export default function HospitalAppLeaderboard() {
                                                             <td className={`whitespace-nowrap px-3 py-4 text-sm ${index < 3 ? 'font-bold text-white' : 'text-white/70'}`}>
                                                                 {typeof entry.score === 'number' ? entry.score.toFixed(2) : entry.score}
                                                             </td>
+                                                            <td className={`whitespace-nowrap px-3 py-4 text-sm ${entry.patients_at_risk != null && entry.patients_at_risk > 0 ? 'text-red-400 font-medium' : 'text-white/50'}`}>
+                                                                {entry.patients_at_risk != null ? entry.patients_at_risk : '—'}
+                                                            </td>
+                                                            <td className={`whitespace-nowrap px-3 py-4 text-sm ${entry.false_alarms != null && entry.false_alarms > 0 ? 'text-amber-400 font-medium' : 'text-white/50'}`}>
+                                                                {entry.false_alarms != null ? entry.false_alarms : '—'}
+                                                            </td>
                                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-white/50">
                                                                 {new Date(entry.submitted_at).toLocaleString()}
                                                             </td>
@@ -82,7 +94,7 @@ export default function HospitalAppLeaderboard() {
                                                 })
                                             ) : (
                                                 <tr>
-                                                    <td colSpan={4} className="py-8 text-center text-sm text-white/50">
+                                                    <td colSpan={6} className="py-8 text-center text-sm text-white/50">
                                                         No submissions yet. Be the first to submit!
                                                     </td>
                                                 </tr>
