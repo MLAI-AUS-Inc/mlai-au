@@ -37,6 +37,7 @@ export default [
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
     route("resources", "routes/hospital.app.resources.tsx"),
+    route("coding", "routes/hospital.app.coding.tsx"),
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 

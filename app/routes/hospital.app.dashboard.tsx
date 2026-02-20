@@ -46,7 +46,7 @@ export default function HospitalAppDashboard() {
             <div className="w-full mx-auto space-y-6">
 
                 {/* Hero Banner */}
-                <div className="relative overflow-visible rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
+                <div className="relative overflow-visible rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)] mt-16 lg:mt-20">
                     <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
@@ -62,43 +62,35 @@ export default function HospitalAppDashboard() {
                     <div
                         className="hidden lg:block absolute right-0 top-0 bottom-0 w-[55%] z-[1] rounded-r-2xl overflow-hidden"
                         style={{
-                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 25%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,1) 75%)',
-                            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 25%, rgba(0,0,0,0.7) 50%, rgba(0,0,0,1) 75%)',
+                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 20%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,1) 60%)',
+                            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 20%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,1) 60%)',
                         }}
                     >
                         <img
                             src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-20%20at%2011.43.40%E2%80%AFAM%20(1).png?alt=media&token=53c45f5e-419a-45d0-a23b-08b96d3a47e1"
                             alt=""
-                            className="h-full w-full object-cover object-center opacity-90"
+                            className="h-full w-full object-cover object-center brightness-110 saturate-[1.3]"
                         />
                     </div>
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-end gap-6 p-8 lg:p-12">
-                        <div className="flex-1 space-y-4">
-                            <div className="flex items-center gap-4">
-                                <img src={MEDHACK_LOGO} alt="" className="h-16 lg:h-20" />
+                    <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 p-5 sm:p-8 lg:p-12">
+                        <div className="flex-1 space-y-3 sm:space-y-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <img src={MEDHACK_LOGO} alt="" className="h-12 sm:h-16 lg:h-20" />
                                 <div>
-                                    <h1 className="text-4xl lg:text-5xl font-black text-white leading-none tracking-tight">
+                                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-none tracking-tight">
                                         MEDHACK:<br />FRONTIERS
                                     </h1>
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-white/90 tracking-widest uppercase">
+                            <p className="text-sm sm:text-lg font-bold text-white/90 tracking-widest uppercase">
                                 The Future of Healthcare
                             </p>
-                            <div className="flex flex-wrap gap-3 pt-2">
+                            <div className="flex flex-wrap gap-2 sm:gap-3 pt-2">
                                 <a
                                     href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
-                                >
-                                    Grab Your Spot
-                                </a>
-                                <a
-                                    href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
                                 >
                                     Hackathon Tickets
                                 </a>
@@ -106,7 +98,7 @@ export default function HospitalAppDashboard() {
                                     href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
                                 >
                                     Pitch Night Tickets
                                 </a>
@@ -114,7 +106,7 @@ export default function HospitalAppDashboard() {
                                     to="/medhack"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
                                 >
                                     <InformationCircleIcon className="h-4 w-4" />
                                     Info Pack
@@ -138,8 +130,8 @@ export default function HospitalAppDashboard() {
                     <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_30px_rgba(226,169,241,0.1)]">
                         <div className="absolute inset-0 bg-gradient-to-br from-[#783f8e] via-[#5a2d6a] to-[#3a1a50]" />
                         <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#e2a9f1]/15 blur-3xl" />
-                        <div className="relative z-10 p-8">
-                            <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight">
+                        <div className="relative z-10 p-5 sm:p-8">
+                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
                                 MEDHACK: FRONTIERS
                             </h2>
                             <p className="mt-1 text-lg font-bold text-[#ff69b4] tracking-wider uppercase">
@@ -186,8 +178,8 @@ export default function HospitalAppDashboard() {
                     {/* Leaderboard Card */}
                     <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
                         <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#783f8e]/20 blur-2xl" />
-                        <div className="relative z-10 p-6">
-                            <h3 className="text-xl font-black text-white tracking-wide">
+                        <div className="relative z-10 p-5 sm:p-6">
+                            <h3 className="text-lg sm:text-xl font-black text-white tracking-wide">
                                 Leaderboard: Top Teams
                             </h3>
 
