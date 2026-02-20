@@ -550,32 +550,6 @@ export default function HospitalAppTeam() {
                                                 </div>
                                             </div>
 
-                                            {teamName && (
-                                                <div className="sm:col-span-6">
-                                                    <label className="block text-sm font-medium leading-6 text-white mb-2">
-                                                        Team Avatar
-                                                    </label>
-                                                    <div className="flex items-center gap-x-4">
-                                                        <div className="relative size-16 shrink-0">
-                                                            <img
-                                                                alt=""
-                                                                src={teamAvatarUrl}
-                                                                className="size-16 rounded-lg object-cover ring-1 ring-[#e2a9f1]/20"
-                                                            />
-                                                            <span aria-hidden="true" className="absolute inset-0 rounded-lg shadow-inner" />
-                                                            <button
-                                                                type="button"
-                                                                className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-                                                                onClick={() => setIsTeamAvatarModalOpen(true)}
-                                                            >
-                                                                <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
-                                                            </button>
-                                                        </div>
-                                                        <p className="text-sm text-white/50">Click the image to change your team avatar.</p>
-                                                    </div>
-                                                </div>
-                                            )}
-
                                             <div className="sm:col-span-6">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <label className="block text-sm font-medium leading-6 text-white">
@@ -681,11 +655,20 @@ export default function HospitalAppTeam() {
 
                                     <div className="px-4 py-5 sm:px-6">
                                         <div className="flex flex-col items-center pb-6 border-b border-[#e2a9f1]/10">
-                                            <img
-                                                className="h-24 w-24 rounded-lg object-cover mb-4 ring-1 ring-[#e2a9f1]/20"
-                                                src={teamAvatarUrl}
-                                                alt={teamName || 'Team'}
-                                            />
+                                            <div className="relative inline-block">
+                                                <img
+                                                    className="h-24 w-24 rounded-lg object-cover ring-1 ring-[#e2a9f1]/20"
+                                                    src={teamAvatarUrl}
+                                                    alt={teamName || 'Team'}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                                                    onClick={() => setIsTeamAvatarModalOpen(true)}
+                                                >
+                                                    <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                                                </button>
+                                            </div>
                                             <h2 id="timeline-title" className="text-xl font-bold text-white text-center">
                                                 {teamName}
                                             </h2>
