@@ -9,6 +9,7 @@ import NewestSubmissionCard from "~/components/hospital/NewestSubmissionCard";
 import ClassAccuracyBars from "~/components/hospital/ClassAccuracyBars";
 import ConfusionMatrixHeatmap from "~/components/hospital/ConfusionMatrixHeatmap";
 import MissedCrisesAlert from "~/components/hospital/MissedCrisesAlert";
+import ClinicalMetricsPanel from "~/components/hospital/ClinicalMetricsPanel";
 import First100RowsTable from "~/components/hospital/First100RowsTable";
 import SubmissionHistory from "~/components/hospital/SubmissionHistory";
 import type { HospitalSubmission, SubmissionSummary } from "~/types/submission";
@@ -150,6 +151,7 @@ export default function HospitalAppSubmit() {
                         {submission && (
                             feedback ? (
                                 <div className="space-y-6">
+                                    <ClinicalMetricsPanel clinicalMetrics={feedback.clinical_metrics} />
                                     <MissedCrisesAlert
                                         missedCrisesTotal={feedback.missed_crises_total}
                                         missedCrises={feedback.missed_crises}
