@@ -57,6 +57,24 @@ const STEPS = [
     },
 ];
 
+const WINNERS = [
+    {
+        place: '1st Place',
+        thumbnail: 'https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-02%20at%2011.11.22%E2%80%AFAM.jpg?alt=media&token=9011d94f-4897-46d1-a0c4-274f1ada05f3',
+        videoId: '4CETnnpIq0I',
+    },
+    {
+        place: '2nd Place',
+        thumbnail: 'https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-02%20at%2011.12.37%E2%80%AFAM.jpg?alt=media&token=3f60a856-5318-4ffa-bc33-0d6a364ac430',
+        videoId: '5JoT56Gzcm4',
+    },
+    {
+        place: '3rd Place',
+        thumbnail: 'https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-02%20at%2011.12.24%E2%80%AFAM.jpg?alt=media&token=5fb1d47d-7d8b-4163-a101-3e98e8222310',
+        videoId: 'IiC4-i-znjU',
+    },
+];
+
 const MENTOR_TYPES = [
     {
         label: "Healthcare pros",
@@ -240,16 +258,45 @@ export default function HospitalAppPitching() {
                     </div>
                 </div>
 
-                {/* Blockquote */}
-                <figure className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
-                    <blockquote className="text-xl font-medium italic text-white/90 leading-relaxed">
-                        &ldquo;You don&apos;t need to be a coder to make a difference&mdash;you just need a problem worth solving
-                        and the passion to fix it.&rdquo;
-                    </blockquote>
-                    <figcaption className="mt-4 text-sm text-[#e2a9f1]/60">
-                        &mdash; Healthcare Innovator
-                    </figcaption>
-                </figure>
+                {/* Last Year's Winners */}
+                <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
+                    <h2 className="text-2xl font-bold text-white mb-2">Last Year&apos;s Winners</h2>
+                    <p className="text-sm text-white/60 mb-6">
+                        Watch the winning pitches from last year&apos;s hackathon to see what the judges loved.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        {WINNERS.map((w) => (
+                            <a
+                                key={w.videoId}
+                                href={`https://www.youtube.com/watch?v=${w.videoId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="group relative overflow-hidden rounded-xl border border-[#e2a9f1]/10 bg-[#110822]/40 transition-all hover:border-[#e2a9f1]/30 hover:shadow-lg"
+                            >
+                                <div className="relative aspect-video">
+                                    <img
+                                        src={w.thumbnail}
+                                        alt={`${w.place} pitch`}
+                                        className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition-colors">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/90 shadow-lg group-hover:scale-110 transition-transform">
+                                            <svg className="h-5 w-5 text-[#783f8e] ml-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="p-3">
+                                    <p className="text-sm font-bold text-white">{w.place}</p>
+                                    <p className="text-xs text-[#e2a9f1]/60 group-hover:text-[#e2a9f1] transition-colors">
+                                        Watch on YouTube &rarr;
+                                    </p>
+                                </div>
+                            </a>
+                        ))}
+                    </div>
+                </div>
 
                 {/* Big Prize, Bigger Impact */}
                 <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8">
