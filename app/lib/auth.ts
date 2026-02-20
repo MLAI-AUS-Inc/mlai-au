@@ -258,3 +258,9 @@ export async function getHospitalAllSubmissions() {
     const response = await axiosInstance.get("/api/v1/hackathons/hospital/submissions/");
     return response.data;
 }
+
+export async function getHospitalLeaderboard(env: Env, request: Request) {
+    const client = getAxios(env, request);
+    const response = await client.get("/api/v1/hackathons/hospital/leaderboard/");
+    return response.data;
+}

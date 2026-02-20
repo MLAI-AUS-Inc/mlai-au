@@ -1,22 +1,15 @@
 import type { Route } from "./+types/hospital.app.leaderboard";
-import { useLoaderData, redirect } from "react-router";
-import { axiosInstance } from "~/lib/api";
-import { getCurrentUser } from "~/lib/auth";
+import { useLoaderData } from "react-router";
+import { getCurrentUser, getHospitalLeaderboard } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
 
-    let leaderboard = [];
+    let leaderboard: any[] = [];
     try {
-        const cookieHeader = request.headers.get("Cookie");
-        const headers: Record<string, string> = {};
-        if (cookieHeader) {
-            headers["Cookie"] = cookieHeader;
-        }
-        const response = await axiosInstance.get("/api/v1/hackathons/hospital/leaderboard/", { headers });
-        leaderboard = response.data;
+        leaderboard = await getHospitalLeaderboard(env, request);
     } catch (error) {
         console.error("Failed to fetch leaderboard:", error);
     }
