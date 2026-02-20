@@ -1,4 +1,5 @@
 import type { Feedback } from '~/types/submission';
+import { normalizeClassStats } from '~/types/submission';
 
 const CLASS_COLORS: Record<string, string> = {
     Normal: '#22c55e',
@@ -11,7 +12,8 @@ interface ClassAccuracyBarsProps {
     classStats: Feedback['class_stats'] | undefined;
 }
 
-export default function ClassAccuracyBars({ classStats }: ClassAccuracyBarsProps) {
+export default function ClassAccuracyBars({ classStats: rawClassStats }: ClassAccuracyBarsProps) {
+    const classStats = normalizeClassStats(rawClassStats);
     if (!classStats) return null;
 
     return (

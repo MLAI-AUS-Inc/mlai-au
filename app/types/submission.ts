@@ -51,10 +51,19 @@ export interface PublicRow {
 
 export interface Feedback {
     confusion_matrix: ConfusionMatrix;
-    class_stats: ClassStat[];
+    class_stats: ClassStat[] | Record<string, Omit<ClassStat, 'name'>>;
     missed_crises: MissedCrisis[];
     missed_crises_total: number;
     first_100_public: PublicRow[];
+}
+
+/** Normalize class_stats from either array or object form into a ClassStat[] */
+export function normalizeClassStats(
+    raw: Feedback['class_stats'] | undefined
+): ClassStat[] | undefined {
+    if (!raw) return undefined;
+    if (Array.isArray(raw)) return raw;
+    return Object.entries(raw).map(([name, stat]) => ({ name, ...stat }));
 }
 
 export interface SubmissionSummary {
