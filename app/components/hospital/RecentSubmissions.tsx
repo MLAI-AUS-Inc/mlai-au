@@ -2,7 +2,9 @@ import { timeAgo } from '~/lib/timeAgo';
 
 interface SubmissionEntry {
     id?: string;
+    submission_id?: number;
     user_name?: string;
+    participant_name?: string;
     score: number;
     accuracy?: number;
     submitted_at: string;
@@ -10,9 +12,10 @@ interface SubmissionEntry {
 
 interface RecentSubmissionsProps {
     submissions: SubmissionEntry[];
+    onRowClick?: (submissionId: number) => void;
 }
 
-export default function RecentSubmissions({ submissions }: RecentSubmissionsProps) {
+export default function RecentSubmissions({ submissions, onRowClick }: RecentSubmissionsProps) {
     if (submissions.length === 0) {
         return (
             <div className="bg-[#1a0e2e]/80 border border-[#e2a9f1]/20 rounded-2xl p-6">
@@ -51,9 +54,17 @@ export default function RecentSubmissions({ submissions }: RecentSubmissionsProp
                                 </thead>
                                 <tbody className="divide-y divide-[#e2a9f1]/10">
                                     {submissions.map((sub, index) => (
-                                        <tr key={sub.id || index}>
+                                        <tr
+                                            key={sub.id || index}
+                                            className={onRowClick && sub.submission_id != null ? 'cursor-pointer hover:bg-white/5 transition-colors' : ''}
+                                            onClick={() => {
+                                                if (onRowClick && sub.submission_id != null) {
+                                                    onRowClick(sub.submission_id);
+                                                }
+                                            }}
+                                        >
                                             <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm text-white/80 sm:pl-0">
-                                                {sub.user_name || 'Team member'}
+                                                {sub.user_name || sub.participant_name || 'Team member'}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm font-semibold text-white">
                                                 {typeof sub.score === 'number' ? sub.score.toFixed(2) : 'N/A'}

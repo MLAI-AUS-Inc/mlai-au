@@ -105,7 +105,8 @@ export async function getHospitalTeams(env: Env, request: Request) {
     }
 }
 
-export async function getHospitalTeam(env: Env, request: Request, userId: number) {
+export async function getHospitalTeam(env: Env, request: Request, userId: number | undefined) {
+    if (userId == null || !Number.isFinite(userId)) return null;
     try {
         const client = getAxios(env, request);
         const response = await client.get(`/api/v1/hackathons/hospital/teams/?member_id=${userId}`);
@@ -243,5 +244,17 @@ export async function getHospitalRecentSubmissions(env?: Env, request?: Request)
 
 export async function getHospitalLatestSubmission() {
     const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_submission/");
+    return response.data;
+}
+
+export async function getHospitalSubmissionById(submissionId: number) {
+    const response = await axiosInstance.get(
+        `/api/v1/hackathons/hospital/get_submission/${submissionId}/`
+    );
+    return response.data;
+}
+
+export async function getHospitalAllSubmissions() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/submissions/");
     return response.data;
 }
