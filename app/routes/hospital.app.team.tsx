@@ -170,6 +170,10 @@ export default function HospitalAppTeam() {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
 
+    const [teamAvatarFile, setTeamAvatarFile] = useState<File | null>(null);
+    const [previewTeamAvatarUrl, setPreviewTeamAvatarUrl] = useState<string | null>(null);
+    const [isTeamAvatarModalOpen, setIsTeamAvatarModalOpen] = useState(false);
+
     // Join team autocomplete
     const [joinSearch, setJoinSearch] = useState('');
     const [isJoinDropdownOpen, setIsJoinDropdownOpen] = useState(false);
@@ -210,6 +214,13 @@ export default function HospitalAppTeam() {
         setIsAvatarModalOpen(false);
     };
 
+    const handleTeamAvatarSave = async (file: File) => {
+        setTeamAvatarFile(file);
+        const objectUrl = URL.createObjectURL(file);
+        setPreviewTeamAvatarUrl(objectUrl);
+        setIsTeamAvatarModalOpen(false);
+    };
+
     useEffect(() => {
         if (initialUser) {
             setFirstName(initialUser.first_name || '');
@@ -242,6 +253,9 @@ export default function HospitalAppTeam() {
         if (avatarFile) {
             formData.append('avatar', avatarFile);
         }
+        if (teamAvatarFile) {
+            formData.append('team_avatar', teamAvatarFile);
+        }
 
         fetcher.submit(formData, {
             method: "post",
@@ -254,6 +268,7 @@ export default function HospitalAppTeam() {
             if (fetcher.data.success && fetcher.data.profileUpdated) {
                 setMessage('Profile updated successfully.');
                 setAvatarFile(null);
+                setTeamAvatarFile(null);
             } else if (fetcher.data.error) {
                 setError(fetcher.data.error);
             }
@@ -262,6 +277,7 @@ export default function HospitalAppTeam() {
 
     const isSaving = fetcher.state !== "idle";
     const avatarUrl = previewAvatarUrl || initialUser.avatar_url || generateAvatarUrl(getInitials(initialUser.full_name || ''));
+    const teamAvatarUrl = previewTeamAvatarUrl || teamData?.avatar_url || generateAvatarUrl(getInitials(teamName || 'Team'));
 
     return (
         <div className="min-h-screen bg-[#110822]">
@@ -639,6 +655,20 @@ export default function HospitalAppTeam() {
 
                                     <div className="px-4 py-5 sm:px-6">
                                         <div className="flex flex-col items-center pb-6 border-b border-[#e2a9f1]/10">
+                                            <div className="relative inline-block">
+                                                <img
+                                                    className="h-24 w-24 rounded-lg object-cover ring-1 ring-[#e2a9f1]/20"
+                                                    src={teamAvatarUrl}
+                                                    alt={teamName || 'Team'}
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="absolute inset-0 flex items-center justify-center rounded-lg bg-black bg-opacity-50 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                                                    onClick={() => setIsTeamAvatarModalOpen(true)}
+                                                >
+                                                    <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                                                </button>
+                                            </div>
                                             <h2 id="timeline-title" className="text-xl font-bold text-white text-center">
                                                 {teamName}
                                             </h2>
@@ -717,6 +747,13 @@ export default function HospitalAppTeam() {
                 onClose={() => setIsAvatarModalOpen(false)}
                 onSave={handleAvatarSave}
                 initialImage={avatarUrl}
+            />
+            <AvatarModal
+                isOpen={isTeamAvatarModalOpen}
+                onClose={() => setIsTeamAvatarModalOpen(false)}
+                onSave={handleTeamAvatarSave}
+                initialImage={teamAvatarUrl}
+                title="Update Team Logo"
             />
         </div>
     );

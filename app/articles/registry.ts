@@ -276,6 +276,16 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "How to get a data science job in Australia (2026)",
     hasContent: true,
   },
+  "featured/how-to-pitch-your-idea": {
+    title: "How to Pitch Your Big Idea",
+    date: "2025-06-01",
+    description: "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-pitch-your-idea",
+    image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3",
+    imageAlt: "Guide to pitching your big idea",
+    hasContent: true,
+  },
   "featured/how-much-do-data-scientists-make": {
     title: "How Much Do Data Scientists Make?'",
     date: "2025-11-15",
