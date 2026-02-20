@@ -37,12 +37,14 @@ export default [
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
     route("resources", "routes/hospital.app.resources.tsx"),
+    route("coding", "routes/hospital.app.coding.tsx"),
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
   // Hackathon pages
   route("/hackathon", "routes/hackathon.tsx"),
   route("/hackathons", "routes/hackathons.tsx"),
+  route("/medhack", "routes/medhack.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),

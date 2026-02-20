@@ -1,7 +1,20 @@
 import type { Route } from "./+types/hospital.app.resources";
-import { useLoaderData, redirect } from "react-router";
+import { redirect } from "react-router";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
+import MedhackTableOfContents from "~/components/medhack/MedhackTableOfContents";
+import MedhackHero from "~/components/medhack/MedhackHero";
+import MedhackAbout from "~/components/medhack/MedhackAbout";
+import MedhackSubtopics from "~/components/medhack/MedhackSubtopics";
+import MedhackVenue from "~/components/medhack/MedhackVenue";
+import MedhackSchedule from "~/components/medhack/MedhackSchedule";
+import MedhackJudging from "~/components/medhack/MedhackJudging";
+import MedhackPeople from "~/components/medhack/MedhackPeople";
+import MedhackMentorSchedule from "~/components/medhack/MedhackMentorSchedule";
+import MedhackCodeOfConduct from "~/components/medhack/MedhackCodeOfConduct";
+import MedhackPolicies from "~/components/medhack/MedhackPolicies";
+import MedhackContact from "~/components/medhack/MedhackContact";
+import { MEDHACK_MENTORS } from "~/data/medhack-frontiers";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -11,57 +24,96 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 }
 
 export default function HospitalAppResources() {
-    const { user } = useLoaderData<typeof loader>();
-
     return (
-        <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-12">
-            <div className="text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Resources</h2>
-                <p className="mt-4 text-lg leading-6 text-gray-500">
-                    Guides, datasets, and tools to help you build your Medhack: Frontiers solution.
-                </p>
+        <div className="min-h-screen bg-[#110822]">
+            {/* Mobile TOC */}
+            <div className="lg:hidden px-4 pt-6">
+                <MedhackTableOfContents />
             </div>
 
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {/* Getting Started Card */}
-                <div className="bg-white shadow sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-base font-semibold leading-6 text-gray-900">Getting Started</h3>
-                        <p className="mt-2 text-sm text-gray-500">
-                            New to the hackathon? Start here to understand the challenge, rules, and how to submit.
-                        </p>
-                    </div>
+            <div className="lg:grid lg:grid-cols-[240px_1fr] lg:gap-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {/* Desktop TOC */}
+                <div className="hidden lg:block">
+                    <MedhackTableOfContents />
                 </div>
 
-                {/* Dataset Card */}
-                <div className="bg-white shadow sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-base font-semibold leading-6 text-gray-900">Datasets</h3>
-                        <p className="mt-2 text-sm text-gray-500">
-                            Access the datasets provided for the Medhack: Frontiers challenge.
-                        </p>
-                    </div>
-                </div>
+                {/* Main content */}
+                <div className="space-y-12 min-w-0">
+                    <MedhackHero />
+                    <MedhackAbout />
 
-                {/* Submission Guide Card */}
-                <div className="bg-white shadow sm:rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-base font-semibold leading-6 text-gray-900">Submission Guide</h3>
-                        <p className="mt-2 text-sm text-gray-500">
-                            Learn how to format and submit your predictions for scoring.
-                        </p>
-                    </div>
+                    <section id="event" className="scroll-mt-24">
+                        <h2 className="text-3xl font-bold text-white mb-6">The Event</h2>
+                        <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6 sm:p-8 space-y-4">
+                            <p className="text-lg font-semibold text-white/90">
+                                Clinicians, builders and optimists in the same room for one intense weekend of problem-solving. Prototype real solutions to real healthcare bottlenecks.
+                            </p>
+                            <p className="text-white/70 leading-relaxed">
+                                MedHack: Frontiers brings clinicians, builders and optimists into the same room for one intense weekend of problem-solving at the cutting edge of medical innovation. With professionals from medicine, data science, and AI development all under one roof, we&apos;re pushing the boundaries of what&apos;s possible in healthcare.
+                            </p>
+                            <p className="text-white/70 leading-relaxed">
+                                The goal is simple yet ambitious: leverage cutting-edge technology to solve pressing real-world healthcare challenges.
+                            </p>
+                            <p className="text-white/70 leading-relaxed">
+                                By working closely with doctors, nurses, pharmacists, and industry mentors, participants will create AI-driven solutions that tackle high-impact healthcare challenges. We encourage everyone to participate in both tracts&mdash;code your solution in the Small Tract and pitch your ideas in the Big Tract for the complete experience. Whether you&apos;re new to AI or a seasoned expert, this hackathon is your chance to contribute to the future of healthcare innovation.
+                            </p>
+                        </div>
+                    </section>
+
+                    <MedhackSubtopics />
+                    <MedhackVenue />
+                    <MedhackSchedule />
+
+                    <section id="how-it-works" className="scroll-mt-24">
+                        <h2 className="text-3xl font-bold text-white mb-6">How It Works</h2>
+                        <div className="space-y-6">
+                            <p className="text-white/70 leading-relaxed">
+                                MedHack: Frontiers has two tracts. We encourage all participants to take on both for the full experience&mdash;code a solution and pitch your ideas.
+                            </p>
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3">Small Tract (Coding)</h3>
+                                    <p className="text-sm text-white/70 leading-relaxed">
+                                        Perfect for those who want to dive into hands-on AI development. You&apos;ll receive continuous patient vitals data&mdash;such as heart rate, blood pressure, and oxygen saturation&mdash;from simulated patients. Your task? Build an AI model that can monitor these vitals in real-time and alert healthcare staff when something looks abnormal. Whether you&apos;re new to AI or experienced in data science, our workshops and mentors will support you.
+                                    </p>
+                                </div>
+                                <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">
+                                    <h3 className="text-xl font-bold text-white mb-3">Big Tract (Pitching)</h3>
+                                    <p className="text-sm text-white/70 leading-relaxed">
+                                        Ready to tackle real-world healthcare challenges? You&apos;ll get access to real, de-identified Electronic Medical Record (EMR) data and work closely with healthcare mentors. Through interviews and guided discussions, you&apos;ll identify critical bottlenecks in the healthcare system and develop an AI-driven solution. Your mission: understand the problem, build a compelling demo, and pitch your idea to expert judges.
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4">Your Path to Success</h3>
+                                <ol className="space-y-3">
+                                    {[
+                                        "Interview mentors to understand pain points and gather feedback on your idea.",
+                                        "Identify & define the problem using a design thinking approach.",
+                                        "Ideate & prototype\u2014brainstorm broadly, then pick the most promising concept.",
+                                        "Test & iterate by gathering feedback from mentors and potential end-users.",
+                                        "Pitch your solution with a compelling story: the problem, who benefits, how it works, and why it\u2019s better.",
+                                    ].map((step, i) => (
+                                        <li key={i} className="flex gap-3 text-sm text-white/70">
+                                            <span className="flex-shrink-0 flex items-center justify-center h-6 w-6 rounded-full bg-[#783f8e] text-white text-xs font-bold">
+                                                {i + 1}
+                                            </span>
+                                            {step}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+                        </div>
+                    </section>
+
+                    <MedhackJudging />
+                    <MedhackPeople people={MEDHACK_MENTORS} title="Mentors" sectionId="mentors" />
+                    <MedhackMentorSchedule />
+                    <MedhackCodeOfConduct />
+                    <MedhackPolicies />
+                    <MedhackContact />
                 </div>
             </div>
-
-            <div className="bg-white shadow sm:rounded-lg">
-                <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-base font-semibold leading-6 text-gray-900">Need Help?</h3>
-                    <p className="mt-2 text-sm text-gray-500">
-                        Reach out to mentors and other participants on Slack, or contact the organising team.
-                    </p>
-                </div>
-            </div>
-        </main>
+        </div>
     );
 }

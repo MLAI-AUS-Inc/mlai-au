@@ -10,7 +10,7 @@ import {
     TrophyIcon,
     DocumentArrowUpIcon,
     BookOpenIcon,
-    UserCircleIcon,
+    CodeBracketIcon,
     Cog6ToothIcon,
 } from '@heroicons/react/24/outline';
 import { Link, useLocation, Form } from 'react-router';
@@ -41,8 +41,8 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
         { name: 'My Team', href: '/hospital/app/team', icon: UsersIcon },
         { name: 'Leaderboard', href: '/hospital/app/leaderboard', icon: TrophyIcon },
         { name: 'Submit', href: '/hospital/app/submit', icon: DocumentArrowUpIcon },
+        { name: 'Small Tract', href: '/hospital/app/coding', icon: CodeBracketIcon },
         { name: 'Resources', href: '/hospital/app/resources', icon: BookOpenIcon },
-        { name: 'Profile', href: '/hospital/app/profile', icon: UserCircleIcon },
     ];
 
     const updatedNavigation = navigation.map(item => ({
@@ -137,6 +137,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                                                 <Link
                                                                     to={item.href}
                                                                     onClick={() => setSidebarOpen(false)}
+
                                                                     className={classNames(
                                                                         item.current
                                                                             ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
@@ -191,10 +192,10 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                 >
                     <div className="flex h-full flex-col">
                         {/* Logo */}
-                        <div className="flex h-20 items-center justify-center px-4">
-                            <Link to="/hospital/app" className="flex items-center">
+                        <div className="flex h-20 items-center justify-center overflow-visible">
+                            <Link to="/hospital/app" className="flex items-center justify-center">
                                 <img
-                                    className={`transition-all duration-300 ${isExpanded ? 'h-10' : 'h-10'}`}
+                                    className="h-14 w-14 object-contain shrink-0 transition-all duration-300"
                                     src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db"
                                     alt="Medhack logo"
                                 />
@@ -207,6 +208,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                 <Link
                                     key={item.name}
                                     to={item.href}
+                                    {...('external' in item && item.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                                     className={classNames(
                                         item.current
                                             ? 'bg-white bg-opacity-10 text-[#e2a9f1]'
@@ -253,29 +255,29 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
 
                 <div className="lg:pl-20">
                     {/* Top bar */}
-                    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
+                    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-[#e2a9f1]/20 bg-[#110822] px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                         <button
                             type="button"
                             onClick={() => setSidebarOpen(true)}
-                            className="-m-2.5 p-2.5 text-gray-700 lg:hidden"
+                            className="-m-2.5 p-2.5 text-white/70 hover:text-white lg:hidden"
                         >
                             <span className="sr-only">Open sidebar</span>
                             <Bars3Icon aria-hidden="true" className="h-6 w-6" />
                         </button>
 
                         {/* Separator */}
-                        <div aria-hidden="true" className="h-6 w-px bg-gray-900/10 lg:hidden" />
+                        <div aria-hidden="true" className="h-6 w-px bg-white/20 lg:hidden" />
 
                         <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                             <div className="relative flex flex-1"></div>
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
-                                <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+                                <button type="button" className="-m-2.5 p-2.5 text-white/50 hover:text-white/80">
                                     <span className="sr-only">View notifications</span>
                                     <BellIcon aria-hidden="true" className="h-6 w-6" />
                                 </button>
 
                                 {/* Separator */}
-                                <div aria-hidden="true" className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" />
+                                <div aria-hidden="true" className="hidden lg:block lg:h-6 lg:w-px lg:bg-white/20" />
 
                                 {/* Profile dropdown */}
                                 <Menu as="div" className="relative">
@@ -284,16 +286,16 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                         <img
                                             alt={`${fullName}'s avatar`}
                                             src={avatarUrl}
-                                            className="h-8 w-8 rounded-full bg-gray-50 shadow-sm ring-2 ring-gray-900/5 object-cover"
+                                            className="h-8 w-8 rounded-full bg-[#783f8e]/30 shadow-sm ring-2 ring-[#e2a9f1]/30 object-cover"
                                         />
                                         <span className="hidden lg:flex lg:items-center">
                                             <span
                                                 aria-hidden="true"
-                                                className="ml-4 text-sm font-semibold leading-6 text-gray-900"
+                                                className="ml-4 text-sm font-semibold leading-6 text-white"
                                             >
                                                 {fullName}
                                             </span>
-                                            <ChevronDownIcon aria-hidden="true" className="ml-2 h-5 w-5 text-gray-400" />
+                                            <ChevronDownIcon aria-hidden="true" className="ml-2 h-5 w-5 text-white/50" />
                                         </span>
                                     </Menu.Button>
                                     <Transition
@@ -305,15 +307,15 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                         leaveFrom="transform opacity-100 scale-100"
                                         leaveTo="transform opacity-0 scale-95"
                                     >
-                                        <Menu.Items className="absolute right-0 z-10 mt-2.5 w-56 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                                        <Menu.Items className="absolute right-0 z-10 mt-2.5 w-56 origin-top-right rounded-md bg-[#1a0e2e] py-2 shadow-lg ring-1 ring-[#e2a9f1]/20 focus:outline-none">
                                             {userNavigation.map((item) => (
                                                 <Menu.Item key={item.name}>
                                                     {({ focus }) => (
                                                         <Link
                                                             to={item.href}
                                                             className={classNames(
-                                                                focus ? 'bg-gray-100' : '',
-                                                                'block px-3 py-1 text-sm leading-6 text-gray-900'
+                                                                focus ? 'bg-[#783f8e]/30' : '',
+                                                                'block px-3 py-1 text-sm leading-6 text-white/90'
                                                             )}
                                                         >
                                                             {item.name}
@@ -327,8 +329,8 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                                                         <button
                                                             type="submit"
                                                             className={classNames(
-                                                                focus ? 'bg-gray-100' : '',
-                                                                'block w-full text-left px-3 py-1 text-sm leading-6 text-gray-900'
+                                                                focus ? 'bg-[#783f8e]/30' : '',
+                                                                'block w-full text-left px-3 py-1 text-sm leading-6 text-white/90'
                                                             )}
                                                         >
                                                             Sign out
@@ -344,7 +346,7 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
                     </div>
 
                     {/* Main content */}
-                    <main className="bg-gray-50">
+                    <main className="bg-[#110822]">
                         {children}
                     </main>
                 </div>

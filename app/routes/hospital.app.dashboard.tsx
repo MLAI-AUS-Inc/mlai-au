@@ -1,10 +1,14 @@
 import type { Route } from "./+types/hospital.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser, getHospitalRecentSubmissions } from "~/lib/auth";
-import { getAnnouncements } from "~/services/hackathon";
-import { DocumentArrowUpIcon, UsersIcon } from "@heroicons/react/24/outline";
-import Announcements, { type Announcement } from "~/components/Announcements";
+import { getAnnouncements, getChannelMessages } from "~/services/hackathon";
+import type { ChannelResponse, SlackMessage } from "~/services/hackathon";
+import { DocumentArrowUpIcon, UsersIcon, InformationCircleIcon, MegaphoneIcon } from "@heroicons/react/24/outline";
+import SlackChat from "~/components/hospital/SlackChat";
+import { type Announcement } from "~/components/Announcements";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -33,58 +37,74 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     }
 
-    return { user, announcements, latestScore, hasTeam };
+    let channelMessages: SlackMessage[] = [];
+    let channelCursor: string | null = null;
+    try {
+        const channelData: ChannelResponse = await getChannelMessages(env, request, "hospital", 20);
+        channelMessages = channelData.messages;
+        channelCursor = channelData.next_cursor;
+    } catch (error) {
+        console.error("Failed to fetch channel messages:", error);
+    }
+
+    return { user, announcements, latestScore, hasTeam, channelMessages, channelCursor };
 }
 
 const MEDHACK_LOGO = "https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db";
 
 export default function HospitalAppDashboard() {
-    const { user, announcements, latestScore, hasTeam } = useLoaderData<typeof loader>();
+    const { user, announcements, latestScore, hasTeam, channelMessages, channelCursor } = useLoaderData<typeof loader>();
 
     return (
         <div className="min-h-screen bg-[#110822] p-4 sm:p-6">
             <div className="w-full mx-auto space-y-6">
 
                 {/* Hero Banner */}
-                <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)]">
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
+                <div className="relative overflow-visible rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_40px_rgba(226,169,241,0.12)] mt-16 lg:mt-20">
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#783f8e] via-[#5a2d6a] to-[#2d1245]" />
                     <div className="absolute -top-20 -left-20 h-60 w-60 rounded-full bg-[#e2a9f1]/20 blur-3xl" />
                     <div className="absolute -bottom-10 right-1/3 h-40 w-40 rounded-full bg-[#ff69b4]/15 blur-3xl" />
                     <div className="absolute top-10 right-10 h-32 w-32 rounded-full bg-[#e2a9f1]/10 blur-2xl" />
                     <div
-                        className="absolute inset-0 opacity-[0.04]"
+                        className="absolute inset-0 rounded-2xl opacity-[0.04]"
                         style={{
                             backgroundImage: 'linear-gradient(rgba(255,255,255,.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.3) 1px, transparent 1px)',
                             backgroundSize: '40px 40px',
                         }}
                     />
-                    <div className="relative z-10 flex flex-col lg:flex-row items-center lg:items-end gap-6 p-8 lg:p-12">
-                        <div className="flex-1 space-y-4">
-                            <div className="flex items-center gap-4">
-                                <img src={MEDHACK_LOGO} alt="" className="h-16 lg:h-20" />
+                    {/* Background image on right side — fades in from left */}
+                    <div
+                        className="hidden lg:block absolute right-0 top-0 bottom-0 w-[55%] z-[1] rounded-r-2xl overflow-hidden"
+                        style={{
+                            WebkitMaskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 20%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,1) 60%)',
+                            maskImage: 'linear-gradient(to right, transparent 0%, rgba(0,0,0,0.4) 20%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,1) 60%)',
+                        }}
+                    >
+                        <img
+                            src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Screenshot%202026-02-20%20at%2011.43.40%E2%80%AFAM%20(1).png?alt=media&token=53c45f5e-419a-45d0-a23b-08b96d3a47e1"
+                            alt=""
+                            className="h-full w-full object-cover object-center brightness-110 saturate-[1.3]"
+                        />
+                    </div>
+                    <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-end gap-4 sm:gap-6 p-5 sm:p-8 lg:p-12">
+                        <div className="flex-1 space-y-3 sm:space-y-4">
+                            <div className="flex items-center gap-3 sm:gap-4">
+                                <img src={MEDHACK_LOGO} alt="" className="h-12 sm:h-16 lg:h-20" />
                                 <div>
-                                    <h1 className="text-4xl lg:text-5xl font-black text-white leading-none tracking-tight">
+                                    <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-none tracking-tight">
                                         MEDHACK:<br />FRONTIERS
                                     </h1>
                                 </div>
                             </div>
-                            <p className="text-lg font-bold text-white/90 tracking-widest uppercase">
+                            <p className="text-sm sm:text-lg font-bold text-white/90 tracking-widest uppercase">
                                 The Future of Healthcare
                             </p>
-                            <div className="flex flex-wrap gap-3 pt-2">
+                            <div className="flex flex-wrap gap-2 sm:gap-3 pt-2">
                                 <a
                                     href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
-                                >
-                                    Grab Your Spot
-                                </a>
-                                <a
-                                    href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
                                 >
                                     Hackathon Tickets
                                 </a>
@@ -92,39 +112,55 @@ export default function HospitalAppDashboard() {
                                     href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-5 py-2 text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                    className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
                                 >
                                     Pitch Night Tickets
                                 </a>
+                                <Link
+                                    to="/medhack"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1.5 rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
+                                >
+                                    <InformationCircleIcon className="h-4 w-4" />
+                                    Info Pack
+                                </Link>
                             </div>
                         </div>
-                        <div className="hidden lg:flex items-center justify-center">
-                            <div className="relative flex h-40 w-40 items-center justify-center">
-                                <div className="absolute h-full w-full rounded-full border-2 border-[#e2a9f1]/20 animate-pulse" />
-                                <div className="absolute h-[120%] w-[120%] rounded-full border border-[#e2a9f1]/10" />
-                                <span className="text-7xl select-none">{'\u{1F3E5}'}</span>
-                            </div>
+                        {/* Girls image — bottom-aligned, heads overflow above hero */}
+                        <div className="hidden lg:block absolute right-8 bottom-0 z-20">
+                            <img
+                                src="https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/LAST%20CHANCE%20TO%20REGISTER%20(1).png?alt=media&token=50ec1b74-f1a5-48a5-a5ee-8238d034169d"
+                                alt="MedHack participants"
+                                className="h-[26rem] w-auto object-contain object-bottom drop-shadow-[0_0_25px_rgba(226,169,241,0.3)]"
+                            />
                         </div>
                     </div>
                 </div>
 
                 {/* Second Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    {/* Info / Welcome Card */}
-                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_30px_rgba(226,169,241,0.1)]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#783f8e] via-[#5a2d6a] to-[#3a1a50]" />
-                        <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#e2a9f1]/15 blur-3xl" />
-                        <div className="relative z-10 p-8">
-                            <h2 className="text-3xl lg:text-4xl font-black text-white tracking-tight">
-                                MEDHACK: FRONTIERS
-                            </h2>
-                            <p className="mt-1 text-lg font-bold text-[#ff69b4] tracking-wider uppercase">
-                                The Future of Healthcare
-                            </p>
-                            <p className="mt-4 text-base text-white/80 max-w-xl leading-relaxed">
-                                Join us to build the future of medicine. Whether you're tackling AI for
-                                the first time or building a game-changing solution, we've got you covered.
-                            </p>
+                    {/* Announcements Card */}
+                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                        <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#783f8e]/20 blur-3xl" />
+                        <div className="relative z-10 p-5 sm:p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <MegaphoneIcon className="h-7 w-7 text-[#e2a9f1]" />
+                                <h3 className="text-xl font-black text-white uppercase tracking-wide">
+                                    Announcements
+                                </h3>
+                            </div>
+                            {announcements.length > 0 ? (
+                                <ul className="divide-y divide-[#e2a9f1]/10">
+                                    {announcements.slice(0, 3).map((a) => (
+                                        <AnnouncementItem key={a.id} announcement={a} />
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-white/40 py-6 text-center">
+                                    No announcements yet.
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -162,8 +198,8 @@ export default function HospitalAppDashboard() {
                     {/* Leaderboard Card */}
                     <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
                         <div className="absolute -bottom-8 -left-8 h-32 w-32 rounded-full bg-[#783f8e]/20 blur-2xl" />
-                        <div className="relative z-10 p-6">
-                            <h3 className="text-xl font-black text-white tracking-wide">
+                        <div className="relative z-10 p-5 sm:p-6">
+                            <h3 className="text-lg sm:text-xl font-black text-white tracking-wide">
                                 Leaderboard: Top Teams
                             </h3>
 
@@ -273,12 +309,11 @@ export default function HospitalAppDashboard() {
                     </div>
                 </div>
 
-                {/* Announcements Section */}
-                {announcements.length > 0 && (
-                    <div className="rounded-2xl border border-[#e2a9f1]/20 overflow-hidden">
-                        <Announcements announcements={announcements} />
-                    </div>
-                )}
+                {/* Slack Chat — Full Width */}
+                <SlackChat
+                    initialMessages={channelMessages}
+                    initialCursor={channelCursor}
+                />
 
                 {/* Sponsors Section */}
                 <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/15 bg-[#1a0e2e]/60">
@@ -312,4 +347,64 @@ export default function HospitalAppDashboard() {
             </div>
         </div>
     );
+}
+
+function AnnouncementItem({ announcement }: { announcement: Announcement }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const maxLength = 200;
+    const shouldTruncate = announcement.body.length > maxLength;
+
+    const displayedBody = isExpanded || !shouldTruncate
+        ? announcement.body
+        : announcement.body.slice(0, maxLength) + "...";
+
+    return (
+        <li className="py-4 first:pt-0 last:pb-0 list-none">
+            <div className="flex items-center gap-3">
+                <img
+                    src={announcement.author.imageUrl}
+                    alt=""
+                    className="h-8 w-8 rounded-full object-cover ring-1 ring-[#e2a9f1]/30"
+                />
+                <span className="text-sm font-semibold text-[#e2a9f1]">
+                    {announcement.author.name}
+                </span>
+                <span className="text-xs text-white/40">
+                    · {timeAgo(announcement.datetime)}
+                </span>
+            </div>
+            <h4 className="mt-2 text-sm font-bold text-white">
+                {announcement.title}
+            </h4>
+            <div className="mt-1 text-sm text-white/70 prose prose-sm prose-invert max-w-none prose-p:my-1 prose-headings:text-white prose-strong:text-white prose-a:text-[#e2a9f1]">
+                <ReactMarkdown>{displayedBody}</ReactMarkdown>
+            </div>
+            {shouldTruncate && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-1 text-xs font-medium text-[#e2a9f1] hover:text-[#e2a9f1]/80 focus:outline-none"
+                >
+                    {isExpanded ? "Show less" : "Show more"}
+                </button>
+            )}
+        </li>
+    );
+}
+
+function timeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
 }

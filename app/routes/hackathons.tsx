@@ -42,6 +42,13 @@ export default function Hackathons() {
                             <p className="mt-2 text-sm text-gray-200">
                                 Revolutionizing healthcare with AI. Join us to build the future of medicine.
                             </p>
+                            <a
+                                href="/medhack"
+                                onClick={(e) => e.stopPropagation()}
+                                className="mt-3 inline-block rounded-md bg-white/20 px-4 py-1.5 text-xs font-semibold text-white backdrop-blur-sm hover:bg-white/30 transition-colors"
+                            >
+                                View Information Pack
+                            </a>
                         </div>
                     </a>
 

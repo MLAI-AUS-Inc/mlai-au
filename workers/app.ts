@@ -54,12 +54,14 @@ export default {
       return Response.redirect(url.toString(), 301);
     }
 
-    // 4. Block internal React Router routes from crawlers
+    // 4. Let React Router handle /__manifest (needed for client-side navigation)
+    //    but add noindex header to keep it out of search engines
     if (url.pathname === "/__manifest") {
-      return new Response("Not Found", {
-        status: 404,
-        headers: { "X-Robots-Tag": "noindex, nofollow" },
+      const response = await requestHandler(request, {
+        cloudflare: { env, ctx },
       });
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return response;
     }
 
     return requestHandler(request, {
