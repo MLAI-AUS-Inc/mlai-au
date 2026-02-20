@@ -105,7 +105,8 @@ export async function getHospitalTeams(env: Env, request: Request) {
     }
 }
 
-export async function getHospitalTeam(env: Env, request: Request, userId: number) {
+export async function getHospitalTeam(env: Env, request: Request, userId: number | undefined) {
+    if (userId == null || !Number.isFinite(userId)) return null;
     try {
         const client = getAxios(env, request);
         const response = await client.get(`/api/v1/hackathons/hospital/teams/?member_id=${userId}`);
