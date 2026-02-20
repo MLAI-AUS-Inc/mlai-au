@@ -42,8 +42,8 @@ export default function HospitalAppLayout({ children, user }: HospitalAppLayoutP
         { name: 'My Team', href: '/hospital/app/team', icon: UsersIcon },
         { name: 'Leaderboard', href: '/hospital/app/leaderboard', icon: TrophyIcon },
         { name: 'Submit', href: '/hospital/app/submit', icon: DocumentArrowUpIcon },
-        { name: 'Small Tract', href: '/hospital/app/coding', icon: CodeBracketIcon },
-        { name: 'Big Tract', href: '/hospital/app/pitching', icon: LightBulbIcon },
+        { name: 'Small Tract (Coding)', href: '/hospital/app/coding', icon: CodeBracketIcon },
+        { name: 'Big Tract (Pitching)', href: '/hospital/app/pitching', icon: LightBulbIcon },
         { name: 'Resources', href: '/hospital/app/resources', icon: BookOpenIcon },
     ];
 
