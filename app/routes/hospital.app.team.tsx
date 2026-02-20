@@ -298,16 +298,17 @@ export default function HospitalAppTeam() {
                 <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-6 px-4 sm:px-6 lg:max-w-7xl lg:grid-flow-col-dense lg:grid-cols-3 lg:px-8">
                     <div className="space-y-6 lg:col-span-2 lg:col-start-1">
 
-                        {/* Team Create / Join — only shown when user has no team */}
-                        {!teamName && (
+                        {/* Team Create / Join */}
                             <section aria-labelledby="team-management-title">
                                 <div className="bg-[#1a0e2e]/80 border border-[#e2a9f1]/20 rounded-2xl">
                                     <div className="px-4 py-5 sm:px-6">
                                         <h2 id="team-management-title" className="text-lg font-medium leading-6 text-white">
-                                            Create or Join a Team
+                                            {teamName ? 'Change Team' : 'Create or Join a Team'}
                                         </h2>
                                         <p className="mt-1 max-w-2xl text-sm text-white/50">
-                                            You need a team to participate in the hackathon.
+                                            {teamName
+                                                ? 'Create a new team or switch to an existing one.'
+                                                : 'You need a team to participate in the hackathon.'}
                                         </p>
                                     </div>
                                     <div className="border-t border-[#e2a9f1]/10 px-4 py-5 sm:px-6">
@@ -432,7 +433,6 @@ export default function HospitalAppTeam() {
                                     </div>
                                 </div>
                             </section>
-                        )}
 
                         {/* Profile editing form */}
                         <section aria-labelledby="applicant-information-title">

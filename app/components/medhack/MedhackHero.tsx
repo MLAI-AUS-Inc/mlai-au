@@ -1,5 +1,5 @@
-const EVENTBRITE_URL =
-  "https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493";
+const HACKATHON_TICKETS_URL = "https://luma.com/uxf4awhv";
+const PITCH_NIGHT_TICKETS_URL = "https://luma.com/zi6w8y0x";
 
 const MEDHACK_LOGO_URL =
   "https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db";
@@ -32,7 +32,7 @@ export default function MedhackHero() {
 
           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:flex-wrap sm:justify-center lg:justify-start">
             <a
-              href={EVENTBRITE_URL}
+              href={HACKATHON_TICKETS_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-sm font-bold text-[#783f8e] shadow-lg transition hover:bg-white/90 hover:shadow-xl"
@@ -40,7 +40,7 @@ export default function MedhackHero() {
               Grab Your Spot
             </a>
             <a
-              href={EVENTBRITE_URL}
+              href={HACKATHON_TICKETS_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg border-2 border-white/80 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"
@@ -48,7 +48,7 @@ export default function MedhackHero() {
               Hackathon Tickets
             </a>
             <a
-              href={EVENTBRITE_URL}
+              href={PITCH_NIGHT_TICKETS_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center rounded-lg border-2 border-white/80 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/10"

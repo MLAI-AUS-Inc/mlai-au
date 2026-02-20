@@ -101,7 +101,7 @@ export default function HospitalAppDashboard() {
                             </p>
                             <div className="flex flex-wrap gap-2 sm:gap-3 pt-2">
                                 <a
-                                    href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
+                                    href="https://luma.com/uxf4awhv"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
@@ -109,7 +109,7 @@ export default function HospitalAppDashboard() {
                                     Hackathon Tickets
                                 </a>
                                 <a
-                                    href="https://www.eventbrite.com.au/o/mlai-machine-learning-ai-61498883493"
+                                    href="https://luma.com/zi6w8y0x"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center rounded-md border-2 border-white/80 bg-transparent px-3 sm:px-5 py-2 text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white transition-all hover:bg-white hover:text-[#783f8e]"
