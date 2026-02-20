@@ -1,10 +1,14 @@
 import type { Route } from "./+types/hospital.app.dashboard";
 import { redirect, useLoaderData, Link } from "react-router";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { getEnv } from "~/lib/env.server";
 import { getCurrentUser, getHospitalRecentSubmissions } from "~/lib/auth";
-import { getAnnouncements } from "~/services/hackathon";
-import { DocumentArrowUpIcon, UsersIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
-import Announcements, { type Announcement } from "~/components/Announcements";
+import { getAnnouncements, getChannelMessages } from "~/services/hackathon";
+import type { ChannelResponse, SlackMessage } from "~/services/hackathon";
+import { DocumentArrowUpIcon, UsersIcon, InformationCircleIcon, MegaphoneIcon } from "@heroicons/react/24/outline";
+import SlackChat from "~/components/hospital/SlackChat";
+import { type Announcement } from "~/components/Announcements";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -33,13 +37,23 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     }
 
-    return { user, announcements, latestScore, hasTeam };
+    let channelMessages: SlackMessage[] = [];
+    let channelCursor: string | null = null;
+    try {
+        const channelData: ChannelResponse = await getChannelMessages(env, request, "hospital", 20);
+        channelMessages = channelData.messages;
+        channelCursor = channelData.next_cursor;
+    } catch (error) {
+        console.error("Failed to fetch channel messages:", error);
+    }
+
+    return { user, announcements, latestScore, hasTeam, channelMessages, channelCursor };
 }
 
 const MEDHACK_LOGO = "https://firebasestorage.googleapis.com/v0/b/medhack-ai.firebasestorage.app/o/Team%20Formation%20Night%20Slides%20(2).png?alt=media&token=5a1b7fb7-6dd4-4699-9d88-d8db97ff68db";
 
 export default function HospitalAppDashboard() {
-    const { user, announcements, latestScore, hasTeam } = useLoaderData<typeof loader>();
+    const { user, announcements, latestScore, hasTeam, channelMessages, channelCursor } = useLoaderData<typeof loader>();
 
     return (
         <div className="min-h-screen bg-[#110822] p-4 sm:p-6">
@@ -126,21 +140,27 @@ export default function HospitalAppDashboard() {
 
                 {/* Second Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                    {/* Info / Welcome Card */}
-                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/30 shadow-[0_0_30px_rgba(226,169,241,0.1)]">
-                        <div className="absolute inset-0 bg-gradient-to-br from-[#783f8e] via-[#5a2d6a] to-[#3a1a50]" />
-                        <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#e2a9f1]/15 blur-3xl" />
-                        <div className="relative z-10 p-5 sm:p-8">
-                            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight">
-                                MEDHACK: FRONTIERS
-                            </h2>
-                            <p className="mt-1 text-lg font-bold text-[#ff69b4] tracking-wider uppercase">
-                                The Future of Healthcare
-                            </p>
-                            <p className="mt-4 text-base text-white/80 max-w-xl leading-relaxed">
-                                Join us to build the future of medicine. Whether you're tackling AI for
-                                the first time or building a game-changing solution, we've got you covered.
-                            </p>
+                    {/* Announcements Card */}
+                    <div className="lg:col-span-3 relative overflow-hidden rounded-2xl border border-[#e2a9f1]/20 bg-[#1a0e2e]/80 shadow-[0_0_20px_rgba(226,169,241,0.06)]">
+                        <div className="absolute -bottom-10 -right-10 h-48 w-48 rounded-full bg-[#783f8e]/20 blur-3xl" />
+                        <div className="relative z-10 p-5 sm:p-6">
+                            <div className="flex items-center gap-3 mb-4">
+                                <MegaphoneIcon className="h-7 w-7 text-[#e2a9f1]" />
+                                <h3 className="text-xl font-black text-white uppercase tracking-wide">
+                                    Announcements
+                                </h3>
+                            </div>
+                            {announcements.length > 0 ? (
+                                <ul className="divide-y divide-[#e2a9f1]/10">
+                                    {announcements.slice(0, 3).map((a) => (
+                                        <AnnouncementItem key={a.id} announcement={a} />
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-sm text-white/40 py-6 text-center">
+                                    No announcements yet.
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -289,12 +309,11 @@ export default function HospitalAppDashboard() {
                     </div>
                 </div>
 
-                {/* Announcements Section */}
-                {announcements.length > 0 && (
-                    <div className="rounded-2xl border border-[#e2a9f1]/20 overflow-hidden">
-                        <Announcements announcements={announcements} />
-                    </div>
-                )}
+                {/* Slack Chat — Full Width */}
+                <SlackChat
+                    initialMessages={channelMessages}
+                    initialCursor={channelCursor}
+                />
 
                 {/* Sponsors Section */}
                 <div className="relative overflow-hidden rounded-2xl border border-[#e2a9f1]/15 bg-[#1a0e2e]/60">
@@ -328,4 +347,64 @@ export default function HospitalAppDashboard() {
             </div>
         </div>
     );
+}
+
+function AnnouncementItem({ announcement }: { announcement: Announcement }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const maxLength = 200;
+    const shouldTruncate = announcement.body.length > maxLength;
+
+    const displayedBody = isExpanded || !shouldTruncate
+        ? announcement.body
+        : announcement.body.slice(0, maxLength) + "...";
+
+    return (
+        <li className="py-4 first:pt-0 last:pb-0 list-none">
+            <div className="flex items-center gap-3">
+                <img
+                    src={announcement.author.imageUrl}
+                    alt=""
+                    className="h-8 w-8 rounded-full object-cover ring-1 ring-[#e2a9f1]/30"
+                />
+                <span className="text-sm font-semibold text-[#e2a9f1]">
+                    {announcement.author.name}
+                </span>
+                <span className="text-xs text-white/40">
+                    · {timeAgo(announcement.datetime)}
+                </span>
+            </div>
+            <h4 className="mt-2 text-sm font-bold text-white">
+                {announcement.title}
+            </h4>
+            <div className="mt-1 text-sm text-white/70 prose prose-sm prose-invert max-w-none prose-p:my-1 prose-headings:text-white prose-strong:text-white prose-a:text-[#e2a9f1]">
+                <ReactMarkdown>{displayedBody}</ReactMarkdown>
+            </div>
+            {shouldTruncate && (
+                <button
+                    onClick={() => setIsExpanded(!isExpanded)}
+                    className="mt-1 text-xs font-medium text-[#e2a9f1] hover:text-[#e2a9f1]/80 focus:outline-none"
+                >
+                    {isExpanded ? "Show less" : "Show more"}
+                </button>
+            )}
+        </li>
+    );
+}
+
+function timeAgo(dateString: string): string {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
 }
