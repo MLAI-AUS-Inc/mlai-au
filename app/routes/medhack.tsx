@@ -6,12 +6,10 @@ import MedhackSubtopics from "~/components/medhack/MedhackSubtopics";
 import MedhackVenue from "~/components/medhack/MedhackVenue";
 import MedhackSchedule from "~/components/medhack/MedhackSchedule";
 import MedhackJudging from "~/components/medhack/MedhackJudging";
-import MedhackPeople from "~/components/medhack/MedhackPeople";
 import MedhackMentorSchedule from "~/components/medhack/MedhackMentorSchedule";
 import MedhackCodeOfConduct from "~/components/medhack/MedhackCodeOfConduct";
 import MedhackPolicies from "~/components/medhack/MedhackPolicies";
 import MedhackContact from "~/components/medhack/MedhackContact";
-import { MEDHACK_MENTORS } from "~/data/medhack-frontiers";
 
 export const meta: MetaFunction = () => {
   return [
@@ -114,7 +112,6 @@ export default function MedhackInfoPack() {
           </section>
 
           <MedhackJudging />
-          <MedhackPeople people={MEDHACK_MENTORS} title="Mentors" sectionId="mentors" />
           <MedhackMentorSchedule />
           <MedhackCodeOfConduct />
           <MedhackPolicies />
