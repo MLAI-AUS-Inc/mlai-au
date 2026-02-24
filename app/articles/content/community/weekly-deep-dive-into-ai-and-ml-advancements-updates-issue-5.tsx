@@ -19,9 +19,11 @@ const HERO_IMAGE =
   'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_07_03%20PM.png?alt=media&token=d143aea5-9ffa-4674-906b-4d7fe020e2df'
 const HERO_IMAGE_ALT = 'Scientific illustration of transient image classification'
 const GEEKY_THOUGHT_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_ycdjkoycdjkoycdj.png?alt=media&token=db9a41d3-7abc-4238-af15-35313ab3487c'
+  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/geeky%20thought.png?alt=media&token=872aa2d4-e473-446a-bbf1-c1ed0d66e5e5'
 const TOOLS_IMAGE =
-  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_bots7bots7bots7b.png?alt=media&token=46a1488c-6f8a-46ee-9813-157b68835128'
+  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/tools%20image.png?alt=media&token=da31d7a6-37f4-4519-b665-b81a997248c8'
+const BOOK_RECOMMENDATION_IMAGE =
+  'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/book%20recommendation.png?alt=media&token=4e4ef417-d76a-48e4-b2e0-e3b8ba92fb51'
 
 /** ===== FAQ ===== */
 interface FAQ {
@@ -227,6 +229,7 @@ export default function ArticlePage() {
       bio: 'Sam leads the MLAI editorial team, combining deep research in machine learning with practical guidance for Australian teams adopting AI responsibly.',
       avatarUrl:
         'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
+      url: 'https://www.linkedin.com/in/samueldonegan',
     },
     {
       name: 'Jun Kai (Luc) Chang',
@@ -234,6 +237,7 @@ export default function ArticlePage() {
       bio: 'Luc is an AI Software Developer at Monash AIM, building neural networks on FPGA boards. He is pursuing a Master of AI at Monash and co-founding a startup in the event space.',
       avatarUrl:
         'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
+      url: 'https://www.linkedin.com/in/jkchangjobs',
     },
     {
       name: 'Julia Ponder',
@@ -241,13 +245,15 @@ export default function ArticlePage() {
       bio: 'Julia specialises in translating developer jargon into plain English. She creates clear, expertly formatted documentation and tests products before they go to market.',
       avatarUrl:
         'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1702549233653.jpeg?alt=media&token=9ae8a7a5-58a0-4b3d-be4a-5699d2ca3a7c',
+      url: 'https://www.linkedin.com/in/julia-ponder-australia/',
     },
     {
       name: 'Shivang Shekhar',
       role: 'Technical Writer',
       bio: 'Shivang is a mechanical engineer and AI masters student at Monash University with a diverse science background. He is the main author for AI Bits for Techies each week.',
       avatarUrl:
-        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_hpeo86hpeo86hpeo.png?alt=media&token=d4672acb-a6a0-40ce-b626-b4ba9623249a',
+        'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/shivang%20profile%20pic%20(1).png?alt=media&token=0e31c4ae-9e56-48db-9779-065753982748',
+      url: 'https://www.linkedin.com/in/shivang-s-466458191',
     },
   ]
 
@@ -278,7 +284,8 @@ export default function ArticlePage() {
         icon={<span className="text-xl">💡</span>}
         className="my-6"
       >
-        TODO: One or two sentences explaining what this issue focuses on and how it fits into the {SERIES} series.
+        This issue zooms in on agent-native platforms: three Moltbook papers show where "emergent" behavior is really
+        human-influenced, plus tools and a book that reframe governance vs. alignment. Part of the {SERIES} series.
       </QuoteBlock>
 
       <ArticleTocPlaceholder className="mb-12">
@@ -290,13 +297,13 @@ export default function ArticlePage() {
         cards={[
           {
             title: 'Founders & Teams',
-            description: 'TODO: Why this issue matters for founders and teams.',
+            description: 'If you ship or plan multi-agent or bot-heavy products, the Moltbook findings on attribution, trust ceilings, and bursty automation are directly relevant to how you design moderation and interpret what your system is actually doing.',
             variant: 'orange',
             icon: <RocketLaunchIcon className="w-5 h-5 text-white" strokeWidth={1.8} />,
           },
           {
             title: 'Students & Switchers',
-            description: 'TODO: Why this issue matters for students and career switchers.',
+            description: 'A clear example of how to read agent-society research: what "emergent" really means, why attribution matters before capabilities, and how to spot human-in-the-loop vs. autonomous behavior in real systems.',
             variant: 'purple',
             icon: (
               <svg
@@ -316,7 +323,7 @@ export default function ArticlePage() {
           },
           {
             title: 'Community Builders',
-            description: 'TODO: Why this issue matters for community builders and ecosystem supporters.',
+            description: 'Safety and moderation in agent-heavy communities: topic-dependent risk, rate limits, and why observability and human-in-the-loop signals are core infrastructure, not afterthoughts.',
             variant: 'yellow',
             icon: (
               <svg
@@ -635,7 +642,7 @@ export default function ArticlePage() {
         </p>
 
         <ArticleImageBlock
-          src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_s0aapxs0aapxs0aa.png?alt=media&token=228c86f1-d9a3-4ed2-8943-a6bbc4a4d184"
+          src={BOOK_RECOMMENDATION_IMAGE}
           alt="Book cover"
         />
 
