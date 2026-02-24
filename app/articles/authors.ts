@@ -33,7 +33,7 @@ const authorRegistry = {
             url: 'https://www.mlai.au/',
         },
         sameAs: [
-            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/samueldonegan/' },
+            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/samueldonegan' },
         ],
         avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1732146096971.jpeg?alt=media&token=8cbc3057-565b-48d0-be4f-e786332a6376',
         avatarAlt: 'Dr Sam Donegan',
@@ -48,7 +48,7 @@ const authorRegistry = {
             url: 'https://www.monash.edu/',
         },
         sameAs: [
-            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/jkchangjobs/' },
+            { label: 'LinkedIn', href: 'https://www.linkedin.com/in/jkchangjobs' },
         ],
         avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/1708509977925.jpeg?alt=media&token=57e9f02a-7209-4ff0-89d3-bd79e23cc8cb',
         avatarAlt: 'Jun Kai (Luc) Chang',
@@ -82,7 +82,7 @@ const authorRegistry = {
         sameAs: [
             { label: 'LinkedIn', href: 'https://www.linkedin.com/in/shivang-s-466458191' },
         ],
-        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504',
+        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/shivang%20profile%20pic%20(1).png?alt=media&token=0e31c4ae-9e56-48db-9779-065753982748',
         avatarAlt: 'Shivang Shekhar',
         knowsAbout: ['AI Trends', 'Machine Learning', 'Mechanical Engineering', 'Chemistry'],
     },
