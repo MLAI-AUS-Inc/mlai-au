@@ -2,5 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /__manifest
 Disallow: /platform/
+Disallow: /hospital/
+Disallow: /esafety/
+Disallow: /verify-email
 
 Sitemap: https://mlai.au/sitemap.xml

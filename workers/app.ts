@@ -19,7 +19,9 @@ const TRACKING_PARAMS = ["trk", "utm_source", "utm_medium", "utm_campaign", "utm
 
 /** Legacy paths that should 301-redirect to a new location */
 const LEGACY_REDIRECTS: Record<string, string> = {
-  "/hackathon": "/",
+  "/codeofconduct": "/terms",
+  "/support": "/contact",
+  "/Support": "/contact",
 };
 
 export default {
@@ -50,6 +52,16 @@ export default {
     }
     if (hasTrackingParams) {
       return Response.redirect(url.toString(), 301);
+    }
+
+    // 4. Let React Router handle /__manifest (needed for client-side navigation)
+    //    but add noindex header to keep it out of search engines
+    if (url.pathname === "/__manifest") {
+      const response = await requestHandler(request, {
+        cloudflare: { env, ctx },
+      });
+      response.headers.set("X-Robots-Tag", "noindex, nofollow");
+      return response;
     }
 
     return requestHandler(request, {

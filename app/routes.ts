@@ -14,7 +14,7 @@ export default [
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
-  route("/platform/dashboard", "routes/platform.dashboard.tsx"),
+
   route("/platform/logout", "routes/platform.logout.tsx"),
   route("/verify-email", "routes/verify-email.tsx"),
 
@@ -29,13 +29,23 @@ export default [
     route("profile", "routes/esafety.profile.tsx"),
   ]),
 
-  // AI Hospital App routes
+  // Medhack: Frontiers (Hospital) App routes
   route("/hospital/app", "routes/hospital.app.tsx", [
     index("routes/hospital.app.dashboard.tsx"),
+    route("dashboard", "routes/hospital.app.dashboard-redirect.tsx"),
     route("team", "routes/hospital.app.team.tsx"),
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
+    route("resources", "routes/hospital.app.resources.tsx"),
+    route("coding", "routes/hospital.app.coding.tsx"),
+    route("pitching", "routes/hospital.app.pitching.tsx"),
+    route("profile", "routes/hospital.app.profile.tsx"),
   ]),
+
+  // Hackathon pages
+  route("/hackathon", "routes/hackathon.tsx"),
+  route("/hackathons", "routes/hackathons.tsx"),
+  route("/medhack", "routes/medhack.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),

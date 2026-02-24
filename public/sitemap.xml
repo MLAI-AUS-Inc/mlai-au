@@ -52,6 +52,12 @@
   <priority>0.8</priority>
  </url>
  <url>
+  <loc>https://mlai.au/articles/featured/how-to-get-started-with-ai-2026</loc>
+  <lastmod>2025-02-10</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
   <loc>https://mlai.au/articles/featured/learn-ai-melbourne</loc>
   <lastmod>2026-01-28</lastmod>
   <changefreq>monthly</changefreq>
@@ -138,6 +144,12 @@
  <url>
   <loc>https://mlai.au/articles/featured/how-to-get-data-science-job</loc>
   <lastmod>2025-11-19</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-to-pitch-your-idea</loc>
+  <lastmod>2025-06-01</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>

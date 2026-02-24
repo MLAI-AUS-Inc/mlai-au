@@ -85,6 +85,19 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt:
       "People in a tech startup environment, reflecting 90s film aesthetic, showcasing technology's negative impact on education.",
   },
+  "featured/how-to-get-started-with-ai-2026": {
+    title: "How to get started with AI in Australia (2026)",
+    date: "2025-02-10",
+    description:
+      "A practical 2026 playbook for Australians starting with AI—covering skills, tools, governance, and fast pilot ideas for teams and individuals.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-get-started-with-ai-2026",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268",
+    imageAlt:
+      "Team collaborating on AI data charts with laptops and whiteboard",
+    hasContent: true,
+  },
   "featured/learn-ai-melbourne": {
     title: "Learn AI Melbourne: courses, meetups, and pathways",
     date: "2026-01-28",
@@ -261,6 +274,16 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     slug: "featured/how-to-get-data-science-job",
     image: ARTICLE_FALLBACK_IMAGE,
     imageAlt: "How to get a data science job in Australia (2026)",
+    hasContent: true,
+  },
+  "featured/how-to-pitch-your-idea": {
+    title: "How to Pitch Your Big Idea",
+    date: "2025-06-01",
+    description: "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-pitch-your-idea",
+    image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3",
+    imageAlt: "Guide to pitching your big idea",
     hasContent: true,
   },
   "featured/how-much-do-data-scientists-make": {
