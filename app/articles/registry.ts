@@ -372,6 +372,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7": {
+    title: "AI Bits for Techies | Issue #7 | 4 Mar 2026",
+    date: "2026-03-04",
+    description: "AI Bits Issue #7: Follow-on deep dive expanding the sales and trust theme—where AI-driven outreach hits human trust limits, and how builders can adjust distribution strategies in a post-noise-floor world.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
 
 };
 
