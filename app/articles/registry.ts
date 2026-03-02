@@ -375,7 +375,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
   "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7": {
     title: "AI Bits for Techies | Issue #7 | 4 Mar 2026",
     date: "2026-03-04",
-    description: "AI Bits Issue #7: Follow-on deep dive expanding the sales and trust theme—where AI-driven outreach hits human trust limits, and how builders can adjust distribution strategies in a post-noise-floor world.",
+    description: "AI Bits Issue #7: This week explores the \"Physics Bottleneck\" and the shift from programming robots to prompting hardware via OpenVLA. We break down the Sim-to-Real gap, the scarcity of tactile data, and why the future of robotics belongs to those who own the \"physical miles\" of data.",
     author: "MLAI Editorial Team",
     authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
     slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7",
