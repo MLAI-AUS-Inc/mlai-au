@@ -383,6 +383,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8": {
+    title: "AI Bits for Techies | Issue #8 | 11 Mar 2026",
+    date: "2026-03-11",
+    description: "AI Bits Issue #8: This week's Springer LNCS paper from ICCCI 2023 flips the compatibility narrative—showing that a translation layer on a lean kernel can neutralise the native OS advantage. The \"Windows Idle Tax\" is real, measurable, and peer-reviewed. Build on the floor that does less when you are not looking.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
 
 };
 
