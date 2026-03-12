@@ -1,6 +1,6 @@
 import { Link, useLoaderData } from "react-router";
-import type { Route } from "./+types/valley.investors";
-import { requireFounder } from "~/lib/valley-session";
+import type { Route } from "./+types/vibe-raising-app.investors";
+import { requireFounder } from "~/lib/vibe-raising-session";
 import {
     SparklesIcon,
     LockClosedIcon,

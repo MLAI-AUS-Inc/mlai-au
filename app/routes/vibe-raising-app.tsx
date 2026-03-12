@@ -1,7 +1,7 @@
-import type { Route } from "./+types/valley";
+import type { Route } from "./+types/vibe-raising-app";
 import { useState } from "react";
 import { Outlet, useLoaderData, Link, Form, redirect, useNavigation } from "react-router";
-import { getValleyUser, createValleySessionCookie, type ValleyUser } from "~/lib/valley-session";
+import { getVibeRaisingUser, createVibeRaisingSessionCookie, type VibeRaisingUser } from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import { BuildingOffice2Icon, ChartBarIcon, DocumentTextIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
@@ -9,17 +9,17 @@ import type { User } from "~/types/user";
 type Role = "founder" | "investor";
 
 const FOUNDER_NAVIGATION = [
-    { name: 'My Updates', href: '/valley', icon: DocumentTextIcon },
-    { name: 'Discover Investors', href: '/valley/discover', icon: MagnifyingGlassIcon },
+    { name: 'My Updates', href: '/vibe-raising', icon: DocumentTextIcon },
+    { name: 'Discover Investors', href: '/vibe-raising/discover', icon: MagnifyingGlassIcon },
 ];
 
 const INVESTOR_NAVIGATION = [
-    { name: 'Portfolio Updates', href: '/valley', icon: DocumentTextIcon },
-    { name: 'Connections', href: '/valley/discover', icon: MagnifyingGlassIcon },
+    { name: 'Portfolio Updates', href: '/vibe-raising', icon: DocumentTextIcon },
+    { name: 'Connections', href: '/vibe-raising/discover', icon: MagnifyingGlassIcon },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
-    const user = getValleyUser(request);
+    const user = getVibeRaisingUser(request);
     return { user };
 }
 
@@ -31,7 +31,7 @@ export async function action({ request }: Route.ActionArgs) {
     const companyName = formData.get("companyName")?.toString() || "";
 
     // Create the user session
-    const user: ValleyUser = {
+    const user: VibeRaisingUser = {
         fullName,
         email,
         companyName,
@@ -39,9 +39,9 @@ export async function action({ request }: Route.ActionArgs) {
     };
 
     // Redirect to same page (will now show dashboard)
-    return redirect("/valley", {
+    return redirect("/vibe-raising", {
         headers: {
-            "Set-Cookie": createValleySessionCookie(user)
+            "Set-Cookie": createVibeRaisingSessionCookie(user)
         }
     });
 }
@@ -59,7 +59,7 @@ function LoginForm() {
                 <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 mb-8 border border-gray-100">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Valley</h1>
+                        <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Vibe Raising</h1>
                         <p className="text-gray-500 text-sm">
                             Connect founders with investors through monthly updates
                         </p>
@@ -171,13 +171,13 @@ function LoginForm() {
     );
 }
 
-export default function ValleyApp() {
-    const { user: valleyUser } = useLoaderData<typeof loader>();
+export default function VibeRaisingApp() {
+    const { user: vibeRaisingUser } = useLoaderData<typeof loader>();
 
     // Map to Platform User type or Guest
-    const platformUser: User = valleyUser ? {
-        full_name: valleyUser.fullName,
-        email: valleyUser.email,
+    const platformUser: User = vibeRaisingUser ? {
+        full_name: vibeRaisingUser.fullName,
+        email: vibeRaisingUser.email,
         role: 'participant',
         is_superuser: false,
         is_active: true,
@@ -193,11 +193,11 @@ export default function ValleyApp() {
         avatar_url: null
     };
 
-    const nav = valleyUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
+    const nav = vibeRaisingUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
 
     return (
         <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]}>
-            {valleyUser ? <Outlet /> : <LoginForm />}
+            {vibeRaisingUser ? <Outlet /> : <LoginForm />}
         </AuthenticatedLayout>
     );
 }

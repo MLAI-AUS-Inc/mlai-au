@@ -7,7 +7,7 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
-import Footer from "~/components/footer";
+import Footer from "./components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -35,11 +35,11 @@ export default function Layout() {
   const location = useLocation();
 
   // Check if we're in the eSafety app routes or AI Hospital app routes
-  /* Check if we're in the eSafety app, Hospital app, or Valley app routes */
+  /* Check if we're in the eSafety app, Hospital app, or Vibe Raising app routes */
   const isEsafetyApp = location.pathname.startsWith('/esafety');
   const isHospitalApp = location.pathname.startsWith('/hospital/app');
-  const isValleyApp = location.pathname.startsWith('/valley');
-  const isAppRoute = isEsafetyApp || isHospitalApp || isValleyApp;
+  const isVibeRaisingApp = location.pathname.startsWith('/vibe-raising');
+  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
 
   return (
     <html lang="en" suppressHydrationWarning>
