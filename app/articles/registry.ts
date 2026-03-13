@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-find-a-technical-co-founder-for-your-ai-startup': {
+        title: 'How to Find a Technical Co-Founder for Your AI Startup',
+        date: '2026-03-13',
+        description: 'Struggling to build your AI or tech startup without coding skills? Discover proven strategies to find, attract, and pitch a technical co-founder.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-find-a-technical-co-founder-for-your-ai-startup',
+        image: '',
+        imageAlt: 'How to Find a Technical Co-Founder for Your AI Startup',
+        hasContent: true,
+    },
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
     date: "2025-12-30",
