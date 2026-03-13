@@ -140,15 +140,15 @@ export default function ArticleContent() {
         <QuoteBlock title="Key insight" variant="purple">
           {"A technical cofounder can help, but a non-technical founder can still validate demand and launch an MVP through a product studio or fractional technical support."}
         </QuoteBlock>
-      <section className="mx-auto max-w-4xl mt-10" id="do-you-really-need-one">
-        <h2 className="text-3xl font-semibold">{"Do You Really Need a Technical Cofounder on Day One?"}</h2>
+      <section className="mx-auto max-w-[1220px] mt-0" id="do-you-really-need-one">
+        <h2 className="font-heading text-3xl font-semibold">{"Do You Really Need a Technical Cofounder on Day One?"}</h2>
         <p className="text-base leading-7">{"Not always. A technical cofounder can be a major advantage, but they are not the only path to getting an MVP into users\u2019 hands. If you are a non-technical founder with strong domain knowledge, sales ability, or distribution, you may be able to validate the market before locking in a long-term cofounder relationship."}</p>
         <p className="text-base leading-7">{"The bigger risk is often rushing into what is basically a business marriage. Founders sometimes panic, assume they need a technical partner immediately, and give away large equity stakes to someone they barely know. A weaker cofounder match can hurt more than a slower start, especially if you have never built anything together under pressure."}</p>
         <p className="text-base leading-7">{"A practical middle path is to use a product studio like MLAI, or bring in a fractional CTO, to scope and build the first version while you test the market. This approach helps you launch, learn from real users, and make better technical decisions without forcing a permanent equity choice too early. If traction starts to appear, you are often in a stronger position to attract better technical talent later, whether that becomes a senior hire, a fractional leader, or the right technical cofounder with proven fit."}</p>
         <p className="text-base leading-7">{"A technical cofounder can be a major advantage, but they are not the only path to getting an MVP into users\u2019 hands. If you are a non-technical founder with strong domain knowledge, sales ability, or distribution, you may be able to validate the market before locking in a long-term cofounder relationship."}</p>
       </section>
-      <section className="mx-auto max-w-4xl mt-10" id="where-to-look">
-        <h2 className="text-3xl font-semibold">{"Where to Look for Your Technical Partner"}</h2>
+      <section className="mx-auto max-w-[1220px] mt-0" id="where-to-look">
+        <h2 className="font-heading text-3xl font-semibold">{"Where to Look for Your Technical Partner"}</h2>
         <p className="text-base leading-7">{"A good technical cofounder rarely appears through one channel alone. Start with founder matching networks such as CoFoundersLab and Y Combinator Startup School matching, where people are already signalling that they want to build something serious."}</p>
         <p className="text-base leading-7">{"Instead of asking, \"Want to be my technical cofounder?\" explain the problem, the customer pain, what progress you have made, and why you think the person could be a strong fit. That gives people enough context to decide whether a conversation is worth having."}</p>
         <p className="text-base leading-7">{"Start with founder matching networks such as CoFoundersLab and Y Combinator Startup School matching, where people are already signalling that they want to build something serious. A good technical cofounder rarely appears through one channel alone."}</p>
@@ -176,8 +176,8 @@ export default function ArticleContent() {
           ]}
           accent="indigo"
         />
-      <section className="mx-auto max-w-4xl mt-10" id="how-to-evaluate">
-        <h2 className="text-3xl font-semibold">{"How to Pitch and Evaluate a Potential Technical Cofounder"}</h2>
+      <section className="mx-auto max-w-[1220px] mt-0" id="how-to-evaluate">
+        <h2 className="font-heading text-3xl font-semibold">{"How to Pitch and Evaluate a Potential Technical Cofounder"}</h2>
         <p className="text-base leading-7">{"A strong first conversation is not a sales pitch about your big idea. It is proof that you can carry the business side of the company. A good technical cofounder wants to see that you are not just looking for someone to build for free. They want evidence that you understand the problem, can attract users, and are ready to do the hard commercial work after the product ships."}</p>
         <p className="text-base leading-7">{"You should also treat early meetings as a two-way evaluation. Listen for practical thinking. The right person does not need to love cutting corners, but they should be comfortable shipping a small MVP to test the market before investing months in perfect architecture."}</p>
         <p className="text-base leading-7">{"It is proof that you can carry the business side of the company. A good technical cofounder wants to see that you are not just looking for someone to build for free. They want evidence that you understand the problem, can attract users, and are ready to do the hard commercial work after the product ships."}</p>
@@ -186,8 +186,8 @@ export default function ArticleContent() {
         <h3>{"What to test in their thinking"}</h3>
         <p className="text-base leading-7">{"Give them a realistic startup scenario: limited budget, unclear feature priorities, and pressure to learn fast. Their answer will show whether they think like a founder or like a pure implementer. You are looking for judgment, not just technical vocabulary."}</p>
       </section>
-      <section className="mx-auto max-w-4xl mt-10" id="conclusion">
-        <h2 className="text-3xl font-semibold">{"Keep Moving Forward: Don't Let the Search Stall Your Startup"}</h2>
+      <section className="mx-auto max-w-[1220px] mt-0" id="conclusion">
+        <h2 className="font-heading text-3xl font-semibold">{"Keep Moving Forward: Don't Let the Search Stall Your Startup"}</h2>
         <p className="text-base leading-7">{"Finding the right technical cofounder can take far longer than most founders expect. You are choosing a long-term business partner who must share your pace, standards, and appetite for risk."}</p>
         <p className="text-base leading-7">{"Startup momentum matters. A practical path is to keep building while you keep looking. With a partner like MLAI, you can architect your product, de-risk the technical roadmap, and get an MVP into users' hands sooner. That progress helps you learn faster, makes your company more credible, and can make your startup far more attractive to a future technical cofounder who wants to join something already in motion."}</p>
         <p className="text-base leading-7">{"You are choosing a long-term business partner who must share your pace, standards, and appetite for risk. Finding the right technical cofounder can take far longer than most founders expect. A practical path is to keep building while you keep looking. With a partner like MLAI, you can architect your product, de-risk the technical roadmap, and get an MVP into users' hands sooner."}</p>
