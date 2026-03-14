@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
+        title: 'How to Test for a Cofounder Values Match Before You Commit',
+        date: '2026-03-14',
+        description: 'Learn actionable strategies to test for a cofounder values match before launching your startup. Discover trial projects, hard questions, and alignment frameworks.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-test-for-a-cofounder-values-match-before-you-commit',
+        image: '',
+        imageAlt: 'How to Test for a Cofounder Values Match Before You Commit',
+        hasContent: true,
+    },
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
     date: "2025-12-30",

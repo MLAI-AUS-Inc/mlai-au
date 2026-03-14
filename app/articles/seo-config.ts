@@ -29,6 +29,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-technology-affects-education-negatively': {
         toc: true,
         howTo: false,
