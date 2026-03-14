@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/when-should-a-startup-founder-start-raising-money-a-practical-timing-framework': {
+        title: 'When Should a Startup Founder Start Raising Money? A Practical Timing Framework',
+        date: '2026-03-14',
+        description: 'Learn when to start raising money as a startup founder, what signals show you\'re ready, and how to avoid raising too early or too late.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/when-should-a-startup-founder-start-raising-money-a-practical-timing-framework',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-284a7f62-2ccc-4f6f-97a1-66e1a8efa23f.jpg?alt=media&token=6668f82f-c2cb-4741-88fd-bd2e1fd860ec',
+        imageAlt: 'Startup founder planning fundraising timing with runway chart, investor calendar, and growth milestones',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
