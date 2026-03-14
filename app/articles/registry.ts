@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/marketing-ai-for-small-business-practical-ways-australian-owners-can-start-witho': {
+        title: 'Marketing AI for Small Business: Practical Ways Australian Owners Can Start Without Wasting Time or Budget',
+        date: '2026-03-14',
+        description: 'Learn how small businesses can use marketing AI to save time, improve customer targeting and content workflows, and adopt tools responsibly with a practical Australian-focused plan.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/marketing-ai-for-small-business-practical-ways-australian-owners-can-start-witho',
+        image: '',
+        imageAlt: 'Marketing AI for Small Business: Practical Ways Australian Owners Can Start Without Wasting Time or Budget',
+        hasContent: true,
+    },
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
     date: "2025-12-30",
