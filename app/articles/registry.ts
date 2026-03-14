@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-win-a-hackathon-a-strategic-guide-to-ideation-execution-and-pitching': {
+        title: 'How to Win a Hackathon: A Strategic Guide to Ideation, Execution, and Pitching',
+        date: '2026-03-14',
+        description: 'Discover how to win a hackathon with this comprehensive guide. Learn proven strategies for team building, rapid prototyping, and delivering a winning pitch.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-win-a-hackathon-a-strategic-guide-to-ideation-execution-and-pitching',
+        image: '',
+        imageAlt: 'How to Win a Hackathon: A Strategic Guide to Ideation, Execution, and Pitching',
+        hasContent: true,
+    },
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
     date: "2025-12-30",
