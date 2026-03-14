@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/the-ultimate-go-to-market-strategy-for-early-stage-ai-startups': {
+        title: 'The Ultimate Go-To-Market Strategy for Early-Stage AI Startups',
+        date: '2026-03-14',
+        description: 'Learn how to build a winning go-to-market strategy for early-stage startups. Discover step-by-step tactics to launch and scale your AI product in Australia.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/the-ultimate-go-to-market-strategy-for-early-stage-ai-startups',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d49a01e6-d49e-4973-998b-47cf06434e6b.jpg?alt=media&token=ae7bab03-0b8c-4799-a9a2-0cbc903cb81f',
+        imageAlt: 'The Ultimate Go-To-Market Strategy for Early-Stage AI Startups',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
