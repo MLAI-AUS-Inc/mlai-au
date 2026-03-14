@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/making-your-first-hire-in-australia': {
+        title: 'Making Your First Hire in Australia',
+        date: '2026-03-14',
+        description: 'Learn what you need to know before making your first hire in Australia, from ATO compliance and contracts to effective onboarding.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/making-your-first-hire-in-australia',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-185a0333-9284-4db4-a975-c751cf14331c.jpg?alt=media&token=46c9458d-0fd7-4b41-8fe7-460daa112851',
+        imageAlt: 'Making Your First Hire in Australia',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
