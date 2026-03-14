@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/the-ultimate-guide-to-ai-hackathons-and-events-in-sydney': {
+        title: 'The Ultimate Guide to AI Hackathons and Events in Sydney',
+        date: '2026-03-14',
+        description: 'Discover the top AI hackathons and tech events in Sydney. Learn where to connect, collaborate, and build with Australia\'s growing artificial intelligence community.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/the-ultimate-guide-to-ai-hackathons-and-events-in-sydney',
+        image: '',
+        imageAlt: 'The Ultimate Guide to AI Hackathons and Events in Sydney',
+        hasContent: true,
+    },
   "featured/how-technology-affects-education-negatively": {
     title: "How technology affects education negatively",
     date: "2025-12-30",
