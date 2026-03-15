@@ -76,10 +76,10 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/making-your-first-hire-in-australia': {
         title: 'Making Your First Hire in Australia',
         date: '2026-03-14',
-        description: 'Learn what you need to know before making your first hire in Australia, from ATO compliance and contracts to effective onboarding.',
+        description: 'A practical guide to making your first hire in Australia, covering legal requirements, payroll setup, and actionable steps for growing your team.',
         author: 'Dr Sam Donegan',
         slug: 'featured/making-your-first-hire-in-australia',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-185a0333-9284-4db4-a975-c751cf14331c.jpg?alt=media&token=46c9458d-0fd7-4b41-8fe7-460daa112851',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-f8f304f3-46f3-4b26-b57e-3283292d6fa1.jpg?alt=media&token=3ad72c49-c4e0-448c-9023-71517b50c293',
         imageAlt: 'Making Your First Hire in Australia',
         hasContent: true,
     },
