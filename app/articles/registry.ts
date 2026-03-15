@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/building-an-ai-harness-for-a-long-running-project': {
+        title: 'Building an AI Harness for a Long-Running Project',
+        date: '2026-03-15',
+        description: 'Learn how an AI harness for a long running project manages state, context, tools, checkpoints, and guardrails to keep autonomous work reliable, secure, and recoverable.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/building-an-ai-harness-for-a-long-running-project',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-e0447c71-bb99-429a-9503-57b0333d43b6.jpg?alt=media&token=d7bdce2c-359e-4119-9f97-dc61a9de3dea',
+        imageAlt: 'Developer and teammate reviewing AI project checkpoints and tools on a laptop in',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
