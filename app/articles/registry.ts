@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-find-a-sales-led-non-technical-founder-to-be-your-ceo': {
+        title: 'How to Find a Sales-Led Non-Technical Founder as CEO',
+        date: '2026-03-15',
+        description: 'Learn how technical founders can find, vet, and partner with a sales-led non technical founder ceo to lead go-to-market, revenue, and growth.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-find-a-sales-led-non-technical-founder-to-be-your-ceo',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-f6d9235d-c4a4-4ceb-a3fd-c7e2c0db88e4.jpg?alt=media&token=c1d17f1d-f3a5-474b-829b-251b7e939861',
+        imageAlt: 'How to Find a Sales-Led Non-Technical Founder as CEO',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
