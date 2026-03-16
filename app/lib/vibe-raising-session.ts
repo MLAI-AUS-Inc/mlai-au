@@ -3,11 +3,69 @@
 
 import { redirect } from "react-router";
 
+export interface Company {
+    id: string;
+    name: string;
+    domain?: string;
+    abn?: string;
+    registered: boolean;
+}
+
 export interface VibeRaisingUser {
     fullName: string;
     email: string;
     companyName: string;
     role: "founder" | "investor";
+    domain?: string;
+    abn?: string;
+    companyRegistered?: boolean;
+    // Multi-company support
+    companies?: Company[];
+    activeCompanyId?: string;
+}
+
+// Get the active company from a user (backward-compatible with single-company sessions)
+export function getActiveCompany(user: VibeRaisingUser): Company {
+    if (user.companies?.length) {
+        const active = user.companies.find(c => c.id === user.activeCompanyId);
+        if (active) return active;
+        return user.companies[0];
+    }
+    return {
+        id: "company-1",
+        name: user.companyName,
+        domain: user.domain,
+        abn: user.abn,
+        registered: user.companyRegistered ?? false,
+    };
+}
+
+// Switch active company — updates both activeCompanyId and top-level fields for backward compat
+export function setActiveCompany(user: VibeRaisingUser, companyId: string): VibeRaisingUser {
+    const company = user.companies?.find(c => c.id === companyId);
+    if (!company) return user;
+    return {
+        ...user,
+        activeCompanyId: companyId,
+        companyName: company.name,
+        domain: company.domain,
+        abn: company.abn,
+        companyRegistered: company.registered,
+    };
+}
+
+// Add a new company to the user and set it as active
+export function addCompany(user: VibeRaisingUser, company: Company): VibeRaisingUser {
+    const existing = user.companies ?? [];
+    return {
+        ...user,
+        companies: [...existing, company],
+        activeCompanyId: company.id,
+        companyName: company.name,
+        domain: company.domain,
+        abn: company.abn,
+        companyRegistered: company.registered,
+    };
 }
 
 const COOKIE_NAME = "vibe_raising_session";

@@ -24,13 +24,14 @@ interface AuthenticatedLayoutProps {
     user: User;
     navigation?: { name: string; href: string; icon: any }[];
     userNavigation?: { name: string; href: string }[];
+    logoutAction?: string;
 }
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
 }
 
-export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation }: AuthenticatedLayoutProps) {
+export default function AuthenticatedLayout({ children, user, navigation: customNavigation, userNavigation: customUserNavigation, logoutAction = "/platform/logout" }: AuthenticatedLayoutProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
@@ -351,7 +352,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             ))}
                                             <Menu.Item>
                                                 {({ focus }) => (
-                                                    <Form method="post" action="/platform/logout">
+                                                    <Form method="post" action={logoutAction}>
                                                         <button
                                                             type="submit"
                                                             className={classNames(

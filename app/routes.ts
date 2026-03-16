@@ -48,6 +48,7 @@ export default [
   // Vibe Raising App routes
   route("/vibe-raising", "routes/vibe-raising-app.tsx", [
     index("routes/vibe-raising-app._index.tsx"),
+    route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("create-update", "routes/vibe-raising-app.create-update.tsx"),
     route("discover", "routes/vibe-raising-app.investors.tsx"), // Placeholder for next step
   ]),

@@ -1,8 +1,8 @@
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useOutletContext, useNavigate } from "react-router";
 import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
-import { getVibeRaisingUser } from "~/lib/vibe-raising-session";
+import { getVibeRaisingUser, getActiveCompany } from "~/lib/vibe-raising-session";
 import { clsx } from "clsx";
 import {
     ArrowRightIcon,
@@ -34,7 +34,8 @@ export async function loader({ request }: Route.LoaderArgs) {
     if (!user) return { user: null, updates: [], portfolioUpdates: [] };
 
     const cookieHeader = request.headers.get("Cookie") || "";
-    const hasSubmitted = cookieHeader.includes("vibe_raising_submitted=true");
+    const activeCompany = getActiveCompany(user);
+    const hasSubmitted = cookieHeader.includes(`vibe_submitted_${activeCompany.id}=true`);
 
     // Founder Mock Data
     const mockUpdates = hasSubmitted ? [
@@ -130,32 +131,76 @@ function useAutoResize(value?: string) {
     return ref;
 }
 
-// Reuseable Components
-function MetricCard({ label, value, icon: Icon, colorClass }: { label: string, value: string, icon: any, colorClass: string }) {
+// ─── Bullet list helper ──────────────────────────────────────────
+function BulletList({ text, className = "text-sm text-gray-600" }: { text: string; className?: string }) {
+    const items = text.split(/(?<=\.)\s+/).filter(s => s.trim());
     return (
-        <div className={`${colorClass} rounded-lg p-4 border`}>
-            <p className="text-xs font-medium flex items-center gap-1 mb-1 opacity-80">
-                <Icon className="w-3.5 h-3.5" /> {label}
-            </p>
-            <p className="text-xl font-bold text-gray-900">{value}</p>
+        <ul className={clsx("space-y-1 list-disc list-inside", className)}>
+            {items.map((item, i) => (
+                <li key={i}>{item.trim()}</li>
+            ))}
+        </ul>
+    );
+}
+
+// Reuseable Components
+function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
+    return (
+        <div className={clsx(
+            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+            active
+                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                : "border-gray-200 bg-gray-50 opacity-40"
+        )}>
+            <div className={clsx(
+                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                active ? "bg-blue-100" : "bg-white"
+            )}>
+                <Icon className="w-4 h-4 text-gray-400" />
+            </div>
+            <p className={clsx(
+                "text-base font-extrabold leading-tight",
+                active ? "text-gray-900" : "text-gray-300"
+            )}>{active ? value : "—"}</p>
+            <p className={clsx(
+                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                active ? "text-gray-600" : "text-gray-400"
+            )}>{label}</p>
         </div>
     );
 }
 
 // Editable metric input for inline editing
-function EditableMetricCard({ label, value, icon: Icon, colorClass, editing, onChange }: { label: string, value: string, icon: any, colorClass: string, editing: boolean, onChange: (v: string) => void }) {
-    if (!editing) return <MetricCard label={label} value={value} icon={Icon} colorClass={colorClass} />;
+function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
+    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} />;
     return (
-        <div className={`${colorClass} rounded-lg p-4 border`}>
-            <p className="text-xs font-medium flex items-center gap-1 mb-1 opacity-80">
-                <Icon className="w-3.5 h-3.5" /> {label}
-            </p>
-            <input
-                type="text"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="w-full text-xl font-bold text-gray-900 bg-transparent border-b border-gray-300 focus:border-blue-500 focus:outline-none py-0.5"
-            />
+        <div className={clsx(
+            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+            active
+                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+        )}>
+            <div className={clsx(
+                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                active ? "bg-blue-100" : "bg-white"
+            )}>
+                <Icon className="w-4 h-4 text-gray-400" />
+            </div>
+            {active ? (
+                <input
+                    type="text"
+                    value={value}
+                    onClick={(e) => e.stopPropagation()}
+                    onChange={(e) => onChange(e.target.value)}
+                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
+                />
+            ) : (
+                <p className="text-base font-extrabold text-gray-300">—</p>
+            )}
+            <p className={clsx(
+                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                active ? "text-gray-600" : "text-gray-400"
+            )}>{label}</p>
         </div>
     );
 }
@@ -163,7 +208,6 @@ function EditableMetricCard({ label, value, icon: Icon, colorClass, editing, onC
 // Available metric categories for toggle pills
 const METRIC_OPTIONS = [
     { key: "revenue", label: "Revenue", icon: CurrencyDollarIcon, colorClass: "bg-green-50/50 border-green-100" },
-    { key: "growth", label: "Growth", icon: ChartBarIcon, colorClass: "bg-blue-50/50 border-blue-100" },
     { key: "users", label: "Users", icon: UserGroupIcon, colorClass: "bg-purple-50/50 border-purple-100" },
     { key: "mrr", label: "MRR", icon: CurrencyDollarIcon, colorClass: "bg-emerald-50/50 border-emerald-100" },
     { key: "burnRate", label: "Burn Rate", icon: FireIcon, colorClass: "bg-red-50/50 border-red-100" },
@@ -171,7 +215,7 @@ const METRIC_OPTIONS = [
 ];
 
 // Inline-editable update card
-function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) {
+function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boolean; user: any }) {
     const [editing, setEditing] = useState(false);
     const [expanded, setExpanded] = useState(isCurrent);
     const [highlights, setHighlights] = useState(update.highlights);
@@ -221,49 +265,97 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
             isCurrent ? "border-blue-200 ring-1 ring-blue-100" : "border-gray-200",
             expanded && "hover:shadow-md"
         )}>
-            {/* Card header — always visible */}
-            <button
-                type="button"
-                onClick={() => !editing && setExpanded(!expanded)}
-                className={clsx(
-                    "w-full p-5 flex items-center justify-between text-left",
-                    !editing && "cursor-pointer hover:bg-gray-50/50 transition-colors"
-                )}
-            >
-                <div className="flex items-center gap-3">
-                    {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />}
-                    {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
-                    <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
-                    {isCurrent && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Current</span>}
-                    <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
-                        {update.score}
-                    </span>
-                </div>
-                <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-blue-600 text-xs font-medium">
-                        <UserGroupIcon className="w-3.5 h-3.5" />
-                        {update.investorsSentTo} sent
-                    </span>
-                    <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                        <EyeIcon className="w-3.5 h-3.5" />
-                        {update.investorsViewed} viewed
-                    </span>
-                    {!expanded && !editing && (
-                        <>
-                            <span className="w-px h-3 bg-gray-200" />
-                            <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
-                        </>
-                    )}
-                    <ChevronDownIcon className={clsx("w-4 h-4 text-gray-400 transition-transform", expanded && "rotate-180")} />
-                </div>
-            </button>
+            {/* Collapsed header — plain white */}
+            {!expanded && (
+                <button
+                    type="button"
+                    onClick={() => !editing && setExpanded(true)}
+                    className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-gray-50/50 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />}
+                        {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
+                        <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
+                        {isCurrent && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Current</span>}
+                        <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
+                            {update.score}
+                        </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1 text-blue-600 text-xs font-medium">
+                            <UserGroupIcon className="w-3.5 h-3.5" />
+                            {update.investorsSentTo} sent
+                        </span>
+                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                            <EyeIcon className="w-3.5 h-3.5" />
+                            {update.investorsViewed} viewed
+                        </span>
+                        <span className="w-px h-3 bg-gray-200" />
+                        <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                        <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    </div>
+                </button>
+            )}
 
             {/* Expanded content */}
             {expanded && (
-                <div className="border-t border-gray-100">
+                <div>
+                    {/* Hero gradient cover with header info */}
+                    <button
+                        type="button"
+                        onClick={() => !editing && setExpanded(false)}
+                        className="relative w-full h-32 overflow-hidden text-left cursor-pointer group"
+                    >
+                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-500 transition-colors" />
+                        <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
+                            <circle cx="120" cy="80" r="100" fill="white" />
+                            <circle cx="650" cy="140" r="70" fill="white" />
+                            <circle cx="400" cy="30" r="50" fill="white" />
+                            <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                        </svg>
+                        {/* Top row: date + collapse chevron */}
+                        <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
+                            <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                            <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
+                        </div>
+                        {/* Bottom row: company + month + badges + stats */}
+                        <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 flex items-end justify-between">
+                            <div className="flex items-center gap-2.5">
+                                {user?.domain ? (
+                                    <img
+                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                        alt=""
+                                        className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
+                                    />
+                                ) : (
+                                    <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                                        <span className="text-sm font-bold text-white">{user?.companyName?.charAt(0) || "?"}</span>
+                                    </div>
+                                )}
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-white font-bold text-sm drop-shadow-sm">{update.month}</p>
+                                        {isCurrent && <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">Current</span>}
+                                        <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
+                                    </div>
+                                    <p className="text-white/60 text-[11px]">{user?.companyName}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                    <UserGroupIcon className="w-3.5 h-3.5" />
+                                    {update.investorsSentTo} sent
+                                </span>
+                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                    {update.investorsViewed} viewed
+                                </span>
+                            </div>
+                        </div>
+                    </button>
+
                     {/* Action bar */}
-                    <div className="px-5 py-2.5 bg-gray-50/80 flex items-center justify-between border-b border-gray-100">
-                        <span className="text-xs text-gray-400">{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                    <div className="px-5 py-2.5 bg-gray-50/80 flex items-center justify-end border-b border-gray-100">
                         <div className="flex items-center gap-2">
                             {saved && (
                                 <span className="text-xs text-green-600 font-medium flex items-center gap-1">
@@ -323,17 +415,18 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
                                 ))}
                             </div>
                         )}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {METRIC_OPTIONS.filter(m => selectedMetrics.has(m.key)).map(m => (
-                                <EditableMetricCard
-                                    key={m.key}
-                                    label={m.label}
-                                    value={metrics[m.key] || ""}
-                                    icon={m.icon}
-                                    colorClass={m.colorClass}
-                                    editing={editing}
-                                    onChange={(v) => updateMetricValue(m.key, v)}
-                                />
+                        <div className="grid gap-3 grid-cols-5">
+                            {(editing ? METRIC_OPTIONS : METRIC_OPTIONS.filter(m => selectedMetrics.has(m.key))).map(m => (
+                                <div key={m.key} onClick={() => editing && toggleMetric(m.key)}>
+                                    <EditableMetricCard
+                                        label={m.label}
+                                        value={metrics[m.key] || ""}
+                                        icon={m.icon}
+                                        active={selectedMetrics.has(m.key)}
+                                        editing={editing}
+                                        onChange={(v) => updateMetricValue(m.key, v)}
+                                    />
+                                </div>
                             ))}
                         </div>
 
@@ -352,7 +445,7 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
                                     rows={3}
                                 />
                             ) : (
-                                <p className="text-sm text-gray-600 leading-relaxed">{highlights}</p>
+                                <BulletList text={highlights} />
                             )}
                         </div>
 
@@ -371,7 +464,7 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
                                     rows={3}
                                 />
                             ) : (
-                                <p className="text-sm text-gray-600 leading-relaxed">{challenges}</p>
+                                <BulletList text={challenges} />
                             )}
                         </div>
 
@@ -390,7 +483,7 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
                                     rows={3}
                                 />
                             ) : (
-                                <p className="text-sm text-gray-600 leading-relaxed">{asks}</p>
+                                <BulletList text={asks} />
                             )}
                         </div>
                     </div>
@@ -402,6 +495,8 @@ function UpdateCard({ update, isCurrent }: { update: any; isCurrent: boolean }) 
 
 // 1. Founder Dashboard View
 function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
+    const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
+    const navigate = useNavigate();
     const firstName = user.fullName.split(' ')[0];
     const hasUpdates = updates.length > 0;
 
@@ -412,61 +507,82 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
     if (!hasUpdates) {
         return (
-            <div className="max-w-4xl mx-auto space-y-12 py-8">
-                <div className="text-center">
-                    <span className="inline-block px-4 py-1.5 bg-blue-50 text-blue-600 text-sm font-semibold rounded-full mb-6 border border-blue-100">
-                        Welcome to Vibe Raising
-                    </span>
-                    <h1 className="text-5xl font-extrabold text-gray-900 mb-6 tracking-tight">
-                        Welcome, {firstName}! 👋
-                    </h1>
-                    <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-                        Transform how you communicate with investors through consistent monthly updates.
-                    </p>
-                    <Link
-                        to="/vibe-raising/create-update"
-                        className="inline-flex items-center gap-3 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all shadow-lg hover:shadow-xl active:scale-[0.98]"
-                    >
-                        Create Your First Update
-                        <ArrowRightIcon className="w-5 h-5" />
-                    </Link>
+            <div className="-m-6 sm:-m-8 lg:-m-10">
+                {/* Hero section with background image */}
+                <div className="relative h-[calc(100vh-64px)] overflow-hidden">
+                    {/* Background image — cropped to viewport height */}
+                    <img
+                        src="/hero-bg.jpg"
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover object-top"
+                    />
+                    {/* Dark overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
+
+                    {/* Content over the image */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-16">
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg whitespace-nowrap">
+                            Ready to raise your vibe, {firstName}?
+                        </h1>
+                        <p className="text-base sm:text-lg text-white/80 max-w-md mx-auto mb-8 leading-snug">
+                            Build lasting investor relationships through
+                            <br />
+                            consistent, transparent monthly updates.
+                        </p>
+                        <button
+                            onClick={() => triggerAnnouncement(() => navigate("/vibe-raising/create-update"))}
+                            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
+                        >
+                            Create Your First Update
+                            <ArrowRightIcon className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
-                <div className="bg-blue-50/50 rounded-3xl p-12 border border-blue-100/50">
+                {/* How It Works — thin vertical line separators */}
+                <div className="px-6 py-14">
                     <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">How It Works</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className="flex items-center justify-center max-w-5xl mx-auto">
                         {[
-                            { step: 1, title: "Create Your Update" },
-                            { step: 2, title: "Get AI Feedback" },
-                            { step: 3, title: "Engage with Investors" }
-                        ].map((item) => (
-                            <div key={item.step} className="text-center space-y-4">
-                                <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto shadow-md">
-                                    {item.step}
+                            { step: 1, title: "Create Your Update", desc: "Draft your monthly progress in minutes" },
+                            { step: 2, title: "Get AI Feedback", desc: "Receive scoring and suggestions instantly" },
+                            { step: 3, title: "Engage with Investors", desc: "We match you with the right investors" }
+                        ].map((item, idx) => (
+                            <div key={item.step} className="flex items-center">
+                                <div className="text-center px-8 sm:px-14 space-y-2">
+                                    <span className="text-3xl font-extrabold text-blue-600">{item.step}</span>
+                                    <p className="font-bold text-gray-900 text-sm whitespace-nowrap">{item.title}</p>
+                                    <p className="text-xs text-gray-500 whitespace-nowrap">{item.desc}</p>
                                 </div>
-                                <p className="font-bold text-gray-900">{item.title}</p>
+                                {idx < 2 && (
+                                    <div className="w-px h-16 bg-gray-300 flex-shrink-0" />
+                                )}
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-10 border border-red-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
-                    <div className="flex items-start gap-5">
-                        <div className="mt-1 p-2 bg-red-50 rounded-lg">
-                            <ExclamationTriangleIcon className="w-7 h-7 text-red-500" />
+                {/* Warning card — investor outreach timing */}
+                <div className="max-w-4xl mx-auto px-6 pb-14">
+                    <div className="bg-white rounded-2xl p-10 border border-red-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+                        <div className="flex items-start gap-5">
+                            <div className="mt-1 p-2 bg-red-50 rounded-lg flex-shrink-0">
+                                <ExclamationTriangleIcon className="w-7 h-7 text-red-500" />
+                            </div>
+                            <div className="space-y-4">
+                                <h2 className="text-2xl font-bold text-gray-900">Don't Wait Until You Need Money</h2>
+                                <p className="text-gray-600 leading-relaxed text-lg">
+                                    If you're reaching out to investors only when you need capital, it's already too late.
+                                    Investors can smell desperation — and when that moment comes, you've already messed up.
+                                    The best founders plan ahead. Start building relationships at least 6 months before you
+                                    need funding. Send regular updates, share your progress and challenges honestly.
+                                    We will match you with the proper investors based on your updates, so when the time comes
+                                    to raise, the trust is already there.
+                                </p>
+                            </div>
                         </div>
-                        <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-gray-900">Why Startups Fail</h2>
-                            <p className="text-gray-600 leading-relaxed text-lg">
-                                Investors value consistency and transparency. When updates only appear at "wow" moments,
-                                it creates distance rather than confidence. By the time a company urgently needs capital,
-                                investors hesitate—not because the vision isn't exciting, but because the relationship
-                                hasn't been built. Regular, honest monthly updates turn progress into trust, and trust
-                                into continued support.
-                            </p>
-                        </div>
+                        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-400 rounded-l-2xl" />
                     </div>
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-red-400 rounded-l-2xl" />
                 </div>
             </div>
         );
@@ -521,7 +637,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
             {/* All update cards — current expanded, past collapsed */}
             <div className="space-y-3">
                 {updates.map((update) => (
-                    <UpdateCard key={update.id} update={update} isCurrent={update.isCurrent} />
+                    <UpdateCard key={`${user.activeCompanyId || "default"}-${update.id}`} update={update} isCurrent={update.isCurrent} user={user} />
                 ))}
             </div>
         </div>
@@ -580,38 +696,52 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
             <div className="space-y-6">
                 {portfolioUpdates.map((update) => (
                     <div key={update.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                        <div className="p-6 border-b border-gray-100 flex items-start justify-between">
-                            <div className="flex items-center gap-4">
-                                <div className="h-12 w-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl font-black text-gray-400">
-                                    {update.companyName[0]}
+                        {/* Hero gradient banner */}
+                        <div className="relative w-full h-28 overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400" />
+                            <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
+                                <circle cx="120" cy="80" r="100" fill="white" />
+                                <circle cx="650" cy="140" r="70" fill="white" />
+                                <circle cx="400" cy="30" r="50" fill="white" />
+                                <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                            </svg>
+                            <div className="absolute inset-0 flex items-end justify-between px-6 pb-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center text-lg font-black text-white shadow-sm">
+                                        {update.companyName[0]}
+                                    </div>
+                                    <div>
+                                        <p className="text-white font-bold text-sm drop-shadow-sm">{update.companyName}</p>
+                                        <p className="text-white/70 text-xs">{update.founderName}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="text-lg font-bold text-gray-900">{update.companyName}</h3>
-                                    <p className="text-sm text-gray-500 font-medium">{update.founderName}</p>
-                                    <p className="text-xs text-orange-600 font-bold mt-1 flex items-center gap-1">
-                                        <LockClosedIcon className="w-3 h-3" />
-                                        Update History (Premium Only)
-                                    </p>
+                                <div className="text-white/70 text-xs font-medium flex items-center gap-1.5">
+                                    <CalendarIcon className="w-3.5 h-3.5" />
+                                    {format(new Date(update.date), "MMMM yyyy")}
                                 </div>
                             </div>
-                            <div className="text-sm text-gray-400 font-medium flex items-center gap-1.5">
-                                <CalendarIcon className="w-4 h-4" />
-                                {format(new Date(update.date), "MMMM yyyy")}
-                            </div>
+                        </div>
+                        <div className="px-6 py-2 border-b border-gray-100 flex items-center">
+                            <p className="text-xs text-orange-600 font-bold flex items-center gap-1">
+                                <LockClosedIcon className="w-3 h-3" />
+                                Update History (Premium Only)
+                            </p>
                         </div>
 
                         <div className="p-6 space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} colorClass="bg-green-50/50 border-green-100" />
-                                <MetricCard label="Growth" value={update.metrics.growth} icon={ChartBarIcon} colorClass="bg-blue-50/50 border-blue-100" />
-                                <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} colorClass="bg-purple-50/50 border-purple-100" />
+                            <div className="grid gap-3 grid-cols-5">
+                                {update.metrics.revenue && <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />}
+                                {update.metrics.users && <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />}
+                                {update.metrics.mrr && <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />}
+                                {update.metrics.burnRate && <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />}
+                                {update.metrics.runway && <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
                                     <SparklesIcon className="w-5 h-5 text-yellow-500" />
                                     Highlights
                                 </h4>
-                                <p className="text-gray-600 leading-relaxed text-sm">{update.highlights}</p>
+                                <BulletList text={update.highlights} />
                             </div>
                         </div>
 

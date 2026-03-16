@@ -1,9 +1,10 @@
 import type { Route } from "./+types/vibe-raising-app";
-import { useState } from "react";
-import { Outlet, useLoaderData, Link, Form, redirect, useNavigation } from "react-router";
-import { getVibeRaisingUser, createVibeRaisingSessionCookie, type VibeRaisingUser } from "~/lib/vibe-raising-session";
+import { useState, useEffect, Fragment } from "react";
+import { Outlet, useLoaderData, Form, redirect, useNavigation, Link } from "react-router";
+import { Menu, Transition } from "@headlessui/react";
+import { getVibeRaisingUser, createVibeRaisingSessionCookie, setActiveCompany, getActiveCompany, type VibeRaisingUser } from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, DocumentTextIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, PlayCircleIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 
 type Role = "founder" | "investor";
@@ -25,12 +26,26 @@ export async function loader({ request }: Route.LoaderArgs) {
 
 export async function action({ request }: Route.ActionArgs) {
     const formData = await request.formData();
+    const intent = formData.get("intent")?.toString();
+
+    // Switch active company
+    if (intent === "switch-company") {
+        const user = getVibeRaisingUser(request);
+        if (!user) throw redirect("/vibe-raising");
+        const companyId = formData.get("companyId")?.toString() || "";
+        const updatedUser = setActiveCompany(user, companyId);
+        const returnTo = formData.get("returnTo")?.toString() || "/vibe-raising";
+        return redirect(returnTo, {
+            headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
+        });
+    }
+
+    // Login form submission
     const role = formData.get("role")?.toString() as Role;
     const fullName = formData.get("fullName")?.toString() || "";
     const email = formData.get("email")?.toString() || "";
     const companyName = formData.get("companyName")?.toString() || "";
 
-    // Create the user session
     const user: VibeRaisingUser = {
         fullName,
         email,
@@ -38,12 +53,199 @@ export async function action({ request }: Route.ActionArgs) {
         role
     };
 
-    // Redirect to same page (will now show dashboard)
     return redirect("/vibe-raising", {
         headers: {
             "Set-Cookie": createVibeRaisingSessionCookie(user)
         }
     });
+}
+
+// Announcement Popup Component
+function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, onComplete?: () => void }) {
+    console.log("AnnouncementPopup: rendering");
+
+    const handleComplete = () => {
+        onDismiss();
+        if (onComplete) onComplete();
+    };
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+            {/* Backdrop */}
+            <div 
+                className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
+                onClick={onDismiss}
+            />
+
+            {/* Modal */}
+            <div className="relative z-[110] w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
+                            Announcement
+                        </span>
+                        <h2 className="text-lg font-bold text-gray-900">Welcome to Vibe Raising</h2>
+                    </div>
+                    <button
+                        onClick={onDismiss}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="Close"
+                    >
+                        <XMarkIcon className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Video Placeholder */}
+                <div className="relative bg-gray-900 aspect-video flex items-center justify-center">
+                    {/* Gradient overlay for visual depth */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 to-indigo-900/60" />
+                    <div className="relative z-10 flex flex-col items-center gap-4 text-center px-8">
+                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer group">
+                            <PlayCircleIcon className="w-12 h-12 text-white group-hover:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                            <p className="text-white font-semibold text-lg">Intro Video</p>
+                            <p className="text-white/60 text-sm mt-1">Video placeholder — replace with your announcement video</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Body copy */}
+                <div className="px-6 py-5 text-center">
+                    <p className="text-gray-600 text-sm leading-relaxed">
+                        Before you register, take a moment to watch this short intro about how Vibe Raising connects founders with investors through transparent monthly updates.
+                    </p>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 pb-6 flex flex-col items-center gap-3">
+                    <button
+                        onClick={handleComplete}
+                        className="w-full py-3.5 px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/20"
+                    >
+                        Get Started →
+                    </button>
+                    <button
+                        onClick={onDismiss}
+                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                        Skip for now
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Company Switcher for founders with multiple companies
+function CompanySwitcher({ user }: { user: VibeRaisingUser }) {
+    const companies = user.companies ?? [];
+    if (companies.length === 0) return null;
+
+    const active = getActiveCompany(user);
+
+    return (
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-2">
+            <div className="flex items-center justify-between">
+                <Menu as="div" className="relative">
+                    <Menu.Button className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
+                        {active.domain ? (
+                            <img
+                                src={`https://www.google.com/s2/favicons?domain=${active.domain}&sz=32`}
+                                alt=""
+                                className="w-5 h-5 rounded bg-gray-50"
+                            />
+                        ) : (
+                            <div className="w-5 h-5 rounded bg-indigo-100 flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-indigo-600">{active.name.charAt(0)}</span>
+                            </div>
+                        )}
+                        <span className="text-sm font-semibold text-gray-900">{active.name}</span>
+                        {companies.length > 1 && (
+                            <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                        )}
+                    </Menu.Button>
+
+                    {companies.length > 1 && (
+                        <Transition
+                            as={Fragment}
+                            enter="transition ease-out duration-100"
+                            enterFrom="transform opacity-0 scale-95"
+                            enterTo="transform opacity-100 scale-100"
+                            leave="transition ease-in duration-75"
+                            leaveFrom="transform opacity-100 scale-100"
+                            leaveTo="transform opacity-0 scale-95"
+                        >
+                            <Menu.Items className="absolute left-0 z-50 mt-1 w-64 origin-top-left rounded-xl bg-white shadow-lg ring-1 ring-gray-900/5 focus:outline-none overflow-hidden">
+                                <div className="py-1">
+                                    {companies.map((company) => (
+                                        <Menu.Item key={company.id}>
+                                            {({ focus }) => (
+                                                <Form method="POST">
+                                                    <input type="hidden" name="intent" value="switch-company" />
+                                                    <input type="hidden" name="companyId" value={company.id} />
+                                                    <input type="hidden" name="returnTo" value={typeof window !== "undefined" ? window.location.pathname : "/vibe-raising"} />
+                                                    <button
+                                                        type="submit"
+                                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                                                            focus ? "bg-gray-50" : ""
+                                                        } ${company.id === active.id ? "bg-blue-50/50" : ""}`}
+                                                    >
+                                                        {company.domain ? (
+                                                            <img
+                                                                src={`https://www.google.com/s2/favicons?domain=${company.domain}&sz=32`}
+                                                                alt=""
+                                                                className="w-5 h-5 rounded bg-gray-50 flex-shrink-0"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-5 h-5 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
+                                                                <span className="text-[10px] font-bold text-indigo-600">{company.name.charAt(0)}</span>
+                                                            </div>
+                                                        )}
+                                                        <span className="font-medium text-gray-900 truncate flex-1">{company.name}</span>
+                                                        {company.id === active.id && (
+                                                            <CheckIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                                                        )}
+                                                    </button>
+                                                </Form>
+                                            )}
+                                        </Menu.Item>
+                                    ))}
+                                </div>
+                                <div className="border-t border-gray-100">
+                                    <Menu.Item>
+                                        {({ focus }) => (
+                                            <Link
+                                                to="/vibe-raising/company-setup?new=true"
+                                                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-600 transition-colors ${
+                                                    focus ? "bg-gray-50" : ""
+                                                }`}
+                                            >
+                                                <PlusIcon className="w-5 h-5 flex-shrink-0" />
+                                                Add another company
+                                            </Link>
+                                        )}
+                                    </Menu.Item>
+                                </div>
+                            </Menu.Items>
+                        </Transition>
+                    )}
+                </Menu>
+
+                {companies.length <= 1 && (
+                    <Link
+                        to="/vibe-raising/company-setup?new=true"
+                        className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
+                    >
+                        <PlusIcon className="w-3.5 h-3.5" />
+                        Add Company
+                    </Link>
+                )}
+            </div>
+        </div>
+    );
 }
 
 // Login Form Component
@@ -173,6 +375,13 @@ function LoginForm() {
 
 export default function VibeRaisingApp() {
     const { user: vibeRaisingUser } = useLoaderData<typeof loader>();
+    const [showAnnouncement, setShowAnnouncement] = useState(false);
+    const [onCompleteCallback, setOnCompleteCallback] = useState<(() => void) | undefined>();
+
+    const triggerAnnouncement = (callback?: () => void) => {
+        setOnCompleteCallback(() => callback);
+        setShowAnnouncement(true);
+    };
 
     // Map to Platform User type or Guest
     const platformUser: User = vibeRaisingUser ? {
@@ -196,8 +405,18 @@ export default function VibeRaisingApp() {
     const nav = vibeRaisingUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
 
     return (
-        <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]}>
-            {vibeRaisingUser ? <Outlet /> : <LoginForm />}
+        <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]} logoutAction="/vibe-raising/logout">
+            {/* Show announcement popup for founders when triggered */}
+            {vibeRaisingUser?.role === 'founder' && showAnnouncement && (
+                <AnnouncementPopup 
+                    onDismiss={() => setShowAnnouncement(false)} 
+                    onComplete={onCompleteCallback}
+                />
+            )}
+            {vibeRaisingUser?.role === 'founder' && vibeRaisingUser.companies?.length && (
+                <CompanySwitcher user={vibeRaisingUser} />
+            )}
+            {vibeRaisingUser ? <Outlet context={{ triggerAnnouncement }} /> : <LoginForm />}
         </AuthenticatedLayout>
     );
 }
