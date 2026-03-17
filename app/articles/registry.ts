@@ -404,6 +404,17 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     imageAlt: "AI Bits for Techies newsletter banner",
     hasContent: true,
   },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9": {
+    title: "AI Bits for Techies | Issue #9 | 18 Mar 2026",
+    date: "2026-03-18",
+    description: "AI Bits Issue #9: This week explores the \"Agentic Shift\" from single prompts to long-running sessions via the Claude Agent SDK. We break down the \"Initializer-Coder\" framework, the necessity of persistent state, and how to bridge the \"Context Ceiling\" in complex builds.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
 
 };
 
