@@ -4,7 +4,7 @@ import { Outlet, useLoaderData, Form, redirect, useNavigation, Link } from "reac
 import { Menu, Transition } from "@headlessui/react";
 import { getVibeRaisingUser, createVibeRaisingSessionCookie, setActiveCompany, getActiveCompany, type VibeRaisingUser } from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, PlayCircleIcon, XMarkIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 
 type Role = "founder" | "investor";
@@ -70,74 +70,70 @@ function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, o
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
                 onClick={onDismiss}
             />
 
-            {/* Modal */}
-            <div className="relative z-[110] w-full max-w-2xl mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden">
+            {/* Modal — side-by-side: video left, content right */}
+            <div className="relative z-[110] flex w-full max-w-3xl h-[560px] bg-white rounded-2xl shadow-2xl overflow-hidden">
 
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                    <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700 uppercase tracking-wide">
-                            Announcement
-                        </span>
-                        <h2 className="text-lg font-bold text-gray-900">Welcome to Vibe Raising</h2>
+                {/* Left: vertical video — fixed size matching 9:16 ratio */}
+                <div className="relative flex-shrink-0 w-[315px] h-full bg-black overflow-hidden">
+                    <iframe
+                        src="https://player.vimeo.com/video/1174236138?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
+                        className="absolute top-0 left-0 w-full h-full"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowFullScreen
+                        title="Vibe Raising Intro"
+                    />
+                </div>
+
+                {/* Right: header + copy + CTA */}
+                <div className="flex flex-col flex-1 min-w-0">
+
+                    {/* Header */}
+                    <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+                        <h2 className="text-2xl font-bold text-gray-900">Welcome to Vibe Raising</h2>
+                        <button
+                            onClick={onDismiss}
+                            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 mt-1"
+                            aria-label="Close"
+                        >
+                            <XMarkIcon className="w-5 h-5" />
+                        </button>
                     </div>
-                    <button
-                        onClick={onDismiss}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Close"
-                    >
-                        <XMarkIcon className="w-5 h-5" />
-                    </button>
-                </div>
 
-                {/* Video Placeholder */}
-                <div className="relative bg-gray-900 aspect-video flex items-center justify-center">
-                    {/* Gradient overlay for visual depth */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 to-indigo-900/60" />
-                    <div className="relative z-10 flex flex-col items-center gap-4 text-center px-8">
-                        <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-sm border-2 border-white/40 flex items-center justify-center hover:bg-white/30 transition-colors cursor-pointer group">
-                            <PlayCircleIcon className="w-12 h-12 text-white group-hover:scale-110 transition-transform" />
-                        </div>
-                        <div>
-                            <p className="text-white font-semibold text-lg">Intro Video</p>
-                            <p className="text-white/60 text-sm mt-1">Video placeholder — replace with your announcement video</p>
-                        </div>
+                    {/* Body copy */}
+                    <div className="flex-1 px-6 py-6">
+                        <p className="text-gray-600 text-sm leading-relaxed">
+                            Watch this short intro on how Vibe Raising connects founders with investors through consistent, transparent monthly updates.
+                        </p>
                     </div>
-                </div>
 
-                {/* Body copy */}
-                <div className="px-6 py-5 text-center">
-                    <p className="text-gray-600 text-sm leading-relaxed">
-                        Before you register, take a moment to watch this short intro about how Vibe Raising connects founders with investors through transparent monthly updates.
-                    </p>
-                </div>
-
-                {/* Footer */}
-                <div className="px-6 pb-6 flex flex-col items-center gap-3">
-                    <button
-                        onClick={handleComplete}
-                        className="w-full py-3.5 px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/20"
-                    >
-                        Get Started →
-                    </button>
-                    <button
-                        onClick={onDismiss}
-                        className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                    >
-                        Skip for now
-                    </button>
+                    {/* Footer */}
+                    <div className="px-6 pb-6 flex flex-col gap-3">
+                        <button
+                            onClick={handleComplete}
+                            className="w-full py-3.5 px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/20"
+                        >
+                            Get Started →
+                        </button>
+                        <button
+                            onClick={onDismiss}
+                            className="text-sm text-gray-400 hover:text-gray-600 transition-colors text-center"
+                        >
+                            Skip for now
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     );
 }
+
 
 // Company Switcher for founders with multiple companies
 function CompanySwitcher({ user }: { user: VibeRaisingUser }) {
