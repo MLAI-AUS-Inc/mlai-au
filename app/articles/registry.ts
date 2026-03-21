@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-choose-the-best-ai-for-coding-in-2025': {
+        title: 'How to Choose the Best AI for Coding in 2025',
+        date: '2026-03-21',
+        description: 'Discover the best AI for coding in 2025. Compare leading coding assistants, key evaluation criteria, and practical steps for safer adoption in real developer workflows.',
+        author: 'Dr Sam Donegan',
+        slug: 'featured/how-to-choose-the-best-ai-for-coding-in-2025',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-2fcc0fc5-779d-4991-a48d-f1ee5bc84d36.jpg?alt=media&token=dd992915-031f-4e66-8362-bc94bdef2730',
+        imageAlt: 'How to Choose the Best AI for Coding in 2025',
+        hasContent: true,
+    },
     'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         title: 'How to Test for a Cofounder Values Match Before You Commit',
         date: '2026-03-14',
