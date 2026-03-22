@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
+        title: "A Practical Guide on How to Create an Artificial Intelligence",
+        date: "2026-03-22",
+        description: "Learn how to create an artificial intelligence with our step-by-step guide covering data strategy, model training, and ethical deployment for your projects.",
+        author: "Dr Sam Donegan",
+        slug: "featured/a-practical-guide-on-how-to-create-an-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c1f2bc9-89fc-42cc-8e74-2c6d708ae3c9.jpg?alt=media&token=257975d5-7903-4218-b610-048dfe649d16",
+        imageAlt: "A Practical Guide on How to Create an Artificial Intelligence",
+        hasContent: true,
+    },
     'featured/how-to-choose-the-best-ai-for-coding-in-2025': {
         title: 'How to Choose the Best AI for Coding in 2025',
         date: '2026-03-21',
