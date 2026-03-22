@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/the-guide-to-becoming-an-artificial-intelligence-engineer': {
+        title: "How to Become an Artificial Intelligence Engineer",
+        date: "2026-03-22",
+        description: "Learn how to become an artificial intelligence engineer with a practical roadmap covering math, Python, machine learning, tools, cloud platforms, and portfolio projects.",
+        author: "Dr Sam Donegan",
+        slug: "featured/the-guide-to-becoming-an-artificial-intelligence-engineer",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0d0d8543-02f3-4bfd-9421-e93aa4a87fb5.jpg?alt=media&token=c3ae1865-1135-48f8-a0a1-7fb6eeda2650",
+        imageAlt: "Close-up of aspiring artificial intelligence engineer coding in Python with notes on math and machine learning",
+        hasContent: true,
+    },
     'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
         title: "A Practical Guide on How to Create an Artificial Intelligence",
         date: "2026-03-22",

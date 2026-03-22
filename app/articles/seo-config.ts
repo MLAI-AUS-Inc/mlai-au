@@ -29,6 +29,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/the-guide-to-becoming-an-artificial-intelligence-engineer': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
         toc: true,
         howTo: false,
