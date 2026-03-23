@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-long-has-artificial-intelligence-truly-been-around': {
+        title: "How Long Has Artificial Intelligence Truly Been Around?",
+        date: "2026-03-23",
+        description: "Wondering how long artificial intelligence has been around? Explore its history from early theory in the 1950s to the public rise of generative AI in the 2020s.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-long-has-artificial-intelligence-truly-been-around",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-92eff22b-a7b0-42bb-bcaf-3fcd2ed794a1.jpg?alt=media&token=ad3a0ef0-13b4-46d9-8df7-1f89adadd99b",
+        imageAlt: "How Long Has Artificial Intelligence Truly Been Around?",
+        hasContent: true,
+    },
     'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
         title: "A Practical Guide on How to Create an Artificial Intelligence",
         date: "2026-03-22",
