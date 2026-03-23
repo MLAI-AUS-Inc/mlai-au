@@ -31,9 +31,12 @@ for (const envFile of envFiles) {
   }
 }
 
+const inspectorPort =
+  process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
+
 export default defineConfig({
   plugins: [
-    cloudflare({ viteEnvironment: { name: "ssr" } }),
+    cloudflare({ viteEnvironment: { name: "ssr" }, inspectorPort }),
     tailwindcss(),
     reactRouter(),
     tsconfigPaths(),
