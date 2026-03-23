@@ -11,6 +11,7 @@ export default [
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
   route("/resources", "routes/resources.tsx"),
+  route("/roo", "routes/roo.tsx"),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),

@@ -23,3 +23,59 @@
 - [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
 - [x] Fix JSX string quoting in the education negatives article CTA body to unblock CI builds
 - [x] Add explicit testimonial types to allow optional website links for CI typecheck
+- [x] Add new `/roo` public onboarding page route
+- [x] Build custom Roo onboarding page layout and sections
+- [x] Run `bun run typecheck`
+- [x] Align Roo page colours with the sidebar palette
+- [x] Redesign Roo at-a-glance section to match the new reference composition
+- [x] Restyle Roo desktop jump-nav to match the new reference slice
+- [x] Re-run `bun run typecheck`
+- [x] Simplify Roo hero by removing the desktop mint Roo tile
+- [x] Remove hero benefit chips under the CTA row
+- [x] Re-run `bun run typecheck`
+- [x] Fix Roo at-a-glance desktop composition to match the horizontal three-card reference
+- [x] Replace desktop at-a-glance connector layout
+- [x] Re-run `bun run typecheck`
+- [x] Remove Roo Points light info cards
+- [x] Expand Roo Points dark limits panel across the available width
+- [x] Re-run `bun run typecheck`
+- [x] Add full-width image card to the Roo Points section
+- [x] Restyle the How it works section background to use the shared beige palette
+- [x] Restyle the Volunteer work section background to use the shared beige palette
+- [x] Restyle the Pilot rules section background to use the shared beige palette
+- [x] Remove all section eyebrow subtitles from the Roo page
+- [x] Add Roo Points progression messaging for trust, team roles, event hosting, and paid work
+- [x] Audit Roo card contrast and fix dark/light text inheritance issues
+- [x] Get local /roo rendering working for visual verification
+- [x] Match Roo at-a-glance desktop layout to the reference after live checking
+- [x] Re-run `bun run typecheck` and `bun run build`
+- [x] Lift Roo higher in the at-a-glance section
+- [x] Raise the admin card so it overlaps the torso cleanly
+- [x] Re-verify local /roo screenshot against the reference
+- [x] Re-run `bun run typecheck`
+- [x] Move Roo much higher in the at-a-glance section
+- [x] Re-verify the live /roo screenshot after the larger shift
+- [x] Move Roo up another 100px above the admin card
+- [x] Raise the blue floor-glow and tighten the bottom of the at-a-glance section
+- [x] Re-run `bun run typecheck`
+- [x] Reduce the at-a-glance section height so it ends just below the blue card
+- [x] Re-run `bun run typecheck`
+- [x] Move all three at-a-glance cards up onto Roo so his head clears the blue card
+- [x] Reduce the at-a-glance container height so it ends just below the blue card
+- [x] Re-verify the live /roo screenshot after the layout change
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card slightly so Roo's face clears
+- [x] Increase the at-a-glance section height slightly so the full blue card shows with bottom padding
+- [x] Re-verify the live /roo screenshot after the spacing retune
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card further so Roo's face is visible above it
+- [x] Increase the at-a-glance section height again so the full blue card clears with padding
+- [x] Lift Roo within the at-a-glance stage so his face clears the admin card
+- [x] Re-verify the live /roo screenshot after the final stage retune
+- [x] Re-run `bun run typecheck`
+- [x] Increase the at-a-glance stage height a bit more so the full blue card shows
+- [x] Lift Roo a bit more within the at-a-glance stage
+- [x] Re-verify the live /roo screenshot after the extra stage lift
+- [x] Re-run `bun run typecheck`
+- [x] Remove the at-a-glance midline connector lines
+- [x] Re-run `bun run typecheck`
