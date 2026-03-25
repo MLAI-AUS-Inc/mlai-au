@@ -89,6 +89,7 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
+    const isVibeRaising = app === "vibe-raising";
     const next = searchParams.get("next") || getDefaultNext(app);
     const error = searchParams.get("error");
     const submit = useSubmit();
@@ -150,8 +151,23 @@ export default function PlatformLogin() {
     };
 
     return (
-        <main className="relative min-h-screen overflow-hidden bg-gray-50">
-            <GradientBackground />
+        <main
+            className={clsx(
+                "relative min-h-screen overflow-hidden",
+                isVibeRaising
+                    ? "bg-[linear-gradient(180deg,var(--brutalist-beige)_0%,#f7f2e8_100%)]"
+                    : "bg-gray-50"
+            )}
+        >
+            {isVibeRaising ? (
+                <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                    <div className="absolute left-[8%] top-[14%] h-36 w-36 rounded-full bg-[var(--brutalist-mint)]/10 blur-3xl" />
+                    <div className="absolute right-[10%] top-[24%] h-40 w-40 rounded-full bg-[var(--brutalist-orange)]/10 blur-3xl" />
+                    <div className="absolute bottom-[14%] left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-[var(--brutalist-blue)]/10 blur-3xl" />
+                </div>
+            ) : (
+                <GradientBackground />
+            )}
             <div className="isolate flex min-h-dvh items-center justify-center p-6 lg:p-8">
                 <div className="w-full max-w-md rounded-xl bg-white ring-1 shadow-md ring-black/5">
                     <div className="p-7 sm:p-11">

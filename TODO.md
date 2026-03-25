@@ -1,3 +1,15 @@
+- [x] Diagnose Vibe Raising magic-link callback failure
+- [x] Apply missing backend Vibe Raising migration to local DB
+- [x] Re-test verify-email and profile flow
+- [x] Restyle the Vibe Raising `/platform/login` background to the shared cream palette
+- [x] Add subtle colour blur accents to the Vibe Raising login page
+- [x] Run `bun run typecheck`
+- [x] Update `/hackathons` hero and Vibe Raising CTA copy
+- [x] Disable the Medhack: Frontiers card to match the eSafety card state
+- [x] Run `bun run typecheck`
+- [x] Restyle `/hackathons` page background to the shared cream palette
+- [x] Rebuild the Vibe Raising CTA to match the Roo-inspired dark card treatment
+- [x] Run `bun run typecheck`
 - [x] Add Vibe Raising backend profile/auth helper layer and types
 - [x] Extract reusable Vibe Raising onboarding card component
 - [x] Refactor Vibe Raising routes off `vibe_raising_session` auth
