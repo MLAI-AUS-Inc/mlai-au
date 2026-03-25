@@ -4,19 +4,20 @@ import { Outlet, useLoaderData, Form, redirect, useNavigation, Link } from "reac
 import { Menu, Transition } from "@headlessui/react";
 import { getVibeRaisingUser, createVibeRaisingSessionCookie, setActiveCompany, getActiveCompany, type VibeRaisingUser } from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon, UsersIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 
 type Role = "founder" | "investor";
 
 const FOUNDER_NAVIGATION = [
     { name: 'My Updates', href: '/vibe-raising', icon: DocumentTextIcon },
-    { name: 'Discover Investors', href: '/vibe-raising/discover', icon: MagnifyingGlassIcon },
+    { name: 'Discover Investors', href: '/vibe-raising/discover', icon: UsersIcon },
+    { name: 'Manage Companies', href: '/vibe-raising/companies', icon: BuildingOffice2Icon },
 ];
 
 const INVESTOR_NAVIGATION = [
     { name: 'Portfolio Updates', href: '/vibe-raising', icon: DocumentTextIcon },
-    { name: 'Connections', href: '/vibe-raising/discover', icon: MagnifyingGlassIcon },
+    { name: 'Connections', href: '/vibe-raising/discover', icon: UsersIcon },
 ];
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -135,114 +136,7 @@ function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, o
 }
 
 
-// Company Switcher for founders with multiple companies
-function CompanySwitcher({ user }: { user: VibeRaisingUser }) {
-    const companies = user.companies ?? [];
-    if (companies.length === 0) return null;
 
-    const active = getActiveCompany(user);
-
-    return (
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-2">
-            <div className="flex items-center justify-between">
-                <Menu as="div" className="relative">
-                    <Menu.Button className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg hover:bg-gray-50 transition-colors">
-                        {active.domain ? (
-                            <img
-                                src={`https://www.google.com/s2/favicons?domain=${active.domain}&sz=32`}
-                                alt=""
-                                className="w-5 h-5 rounded bg-gray-50"
-                            />
-                        ) : (
-                            <div className="w-5 h-5 rounded bg-indigo-100 flex items-center justify-center">
-                                <span className="text-[10px] font-bold text-indigo-600">{active.name.charAt(0)}</span>
-                            </div>
-                        )}
-                        <span className="text-sm font-semibold text-gray-900">{active.name}</span>
-                        {companies.length > 1 && (
-                            <ChevronDownIcon className="w-4 h-4 text-gray-400" />
-                        )}
-                    </Menu.Button>
-
-                    {companies.length > 1 && (
-                        <Transition
-                            as={Fragment}
-                            enter="transition ease-out duration-100"
-                            enterFrom="transform opacity-0 scale-95"
-                            enterTo="transform opacity-100 scale-100"
-                            leave="transition ease-in duration-75"
-                            leaveFrom="transform opacity-100 scale-100"
-                            leaveTo="transform opacity-0 scale-95"
-                        >
-                            <Menu.Items className="absolute left-0 z-50 mt-1 w-64 origin-top-left rounded-xl bg-white shadow-lg ring-1 ring-gray-900/5 focus:outline-none overflow-hidden">
-                                <div className="py-1">
-                                    {companies.map((company) => (
-                                        <Menu.Item key={company.id}>
-                                            {({ focus }) => (
-                                                <Form method="POST">
-                                                    <input type="hidden" name="intent" value="switch-company" />
-                                                    <input type="hidden" name="companyId" value={company.id} />
-                                                    <input type="hidden" name="returnTo" value={typeof window !== "undefined" ? window.location.pathname : "/vibe-raising"} />
-                                                    <button
-                                                        type="submit"
-                                                        className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                                                            focus ? "bg-gray-50" : ""
-                                                        } ${company.id === active.id ? "bg-blue-50/50" : ""}`}
-                                                    >
-                                                        {company.domain ? (
-                                                            <img
-                                                                src={`https://www.google.com/s2/favicons?domain=${company.domain}&sz=32`}
-                                                                alt=""
-                                                                className="w-5 h-5 rounded bg-gray-50 flex-shrink-0"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-5 h-5 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                                                <span className="text-[10px] font-bold text-indigo-600">{company.name.charAt(0)}</span>
-                                                            </div>
-                                                        )}
-                                                        <span className="font-medium text-gray-900 truncate flex-1">{company.name}</span>
-                                                        {company.id === active.id && (
-                                                            <CheckIcon className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                                                        )}
-                                                    </button>
-                                                </Form>
-                                            )}
-                                        </Menu.Item>
-                                    ))}
-                                </div>
-                                <div className="border-t border-gray-100">
-                                    <Menu.Item>
-                                        {({ focus }) => (
-                                            <Link
-                                                to="/vibe-raising/company-setup?new=true"
-                                                className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-indigo-600 transition-colors ${
-                                                    focus ? "bg-gray-50" : ""
-                                                }`}
-                                            >
-                                                <PlusIcon className="w-5 h-5 flex-shrink-0" />
-                                                Add another company
-                                            </Link>
-                                        )}
-                                    </Menu.Item>
-                                </div>
-                            </Menu.Items>
-                        </Transition>
-                    )}
-                </Menu>
-
-                {companies.length <= 1 && (
-                    <Link
-                        to="/vibe-raising/company-setup?new=true"
-                        className="flex items-center gap-1.5 text-xs font-medium text-indigo-600 hover:text-indigo-700 px-2.5 py-1.5 rounded-lg hover:bg-indigo-50 transition-colors"
-                    >
-                        <PlusIcon className="w-3.5 h-3.5" />
-                        Add Company
-                    </Link>
-                )}
-            </div>
-        </div>
-    );
-}
 
 // Login Form Component
 function LoginForm() {
@@ -409,9 +303,7 @@ export default function VibeRaisingApp() {
                     onComplete={onCompleteCallback}
                 />
             )}
-            {vibeRaisingUser?.role === 'founder' && vibeRaisingUser.companies?.length && (
-                <CompanySwitcher user={vibeRaisingUser} />
-            )}
+
             {vibeRaisingUser ? <Outlet context={{ triggerAnnouncement }} /> : <LoginForm />}
         </AuthenticatedLayout>
     );

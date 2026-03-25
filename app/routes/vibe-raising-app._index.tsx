@@ -214,6 +214,15 @@ const METRIC_OPTIONS = [
     { key: "runway", label: "Runway", icon: ChartBarIcon, colorClass: "bg-amber-50/50 border-amber-100" },
 ];
 
+const GRADIENTS = [
+    "from-indigo-500 via-purple-500 to-pink-400 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-500",
+    "from-blue-500 via-cyan-500 to-teal-400 group-hover:from-blue-600 group-hover:via-cyan-600 group-hover:to-teal-500",
+    "from-rose-500 via-red-500 to-orange-400 group-hover:from-rose-600 group-hover:via-red-600 group-hover:to-orange-500",
+    "from-emerald-500 via-teal-500 to-cyan-400 group-hover:from-emerald-600 group-hover:via-teal-600 group-hover:to-cyan-500",
+    "from-fuchsia-500 via-pink-500 to-rose-400 group-hover:from-fuchsia-600 group-hover:via-pink-600 group-hover:to-rose-500",
+    "from-amber-500 via-orange-500 to-rose-400 group-hover:from-amber-600 group-hover:via-orange-600 group-hover:to-rose-500"
+];
+
 // Inline-editable update card
 function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boolean; user: any }) {
     const [editing, setEditing] = useState(false);
@@ -226,6 +235,10 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
         new Set(Object.keys(update.metrics).filter(k => update.metrics[k]))
     );
     const [saved, setSaved] = useState(false);
+
+    // Hash numeric or string ID to pick a deterministic gradient
+    const hashId = typeof update.id === 'number' ? update.id : update.id?.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) || 0;
+    const gradientClass = GRADIENTS[hashId % GRADIENTS.length];
 
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
@@ -304,15 +317,31 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     <button
                         type="button"
                         onClick={() => !editing && setExpanded(false)}
-                        className="relative w-full h-32 overflow-hidden text-left cursor-pointer group"
+                        className="relative w-full h-32 overflow-hidden text-left cursor-pointer group bg-black"
                     >
-                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-500 transition-colors" />
-                        <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
-                            <circle cx="120" cy="80" r="100" fill="white" />
-                            <circle cx="650" cy="140" r="70" fill="white" />
-                            <circle cx="400" cy="30" r="50" fill="white" />
-                            <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
-                        </svg>
+                        {update.videoUrl ? (
+                            <div className="absolute inset-0">
+                                <video 
+                                    src={update.videoUrl} 
+                                    autoPlay 
+                                    muted 
+                                    loop 
+                                    playsInline 
+                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                            </div>
+                        ) : (
+                            <>
+                                <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} transition-colors duration-300`} />
+                                <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
+                                    <circle cx="120" cy="80" r="100" fill="white" />
+                                    <circle cx="650" cy="140" r="70" fill="white" />
+                                    <circle cx="400" cy="30" r="50" fill="white" />
+                                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                                </svg>
+                            </>
+                        )}
                         {/* Top row: date + collapse chevron */}
                         <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
                             <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>

@@ -51,6 +51,7 @@ export default [
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("create-update", "routes/vibe-raising-app.create-update.tsx"),
     route("discover", "routes/vibe-raising-app.investors.tsx"), // Placeholder for next step
+    route("companies", "routes/vibe-raising-app.companies.tsx"),
   ]),
   route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx"),
 

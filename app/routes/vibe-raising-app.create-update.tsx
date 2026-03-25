@@ -424,6 +424,16 @@ function formatCompact(n: number): string {
     return `$${n}`;
 }
 
+function formatUsers(n: number): string {
+    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`;
+    return `${n}`;
+}
+
+function parseUsers(raw: string): number {
+    return parseInt(String(raw).replace(/[,\s]/g, "")) || 0;
+}
+
 // Pick bar color based on MoM growth rate — catchy colors for high growth
 function getBarColor(rate: number | null) {
     if (rate === null) return { bar: "bg-slate-300", hover: "group-hover:bg-slate-400", selected: "bg-slate-400", label: "text-slate-400" };
@@ -433,7 +443,19 @@ function getBarColor(rate: number | null) {
     return               { bar: "bg-rose-300", hover: "group-hover:bg-rose-400", selected: "bg-rose-400", label: "text-rose-500" };
 }
 
-function GrowthChart({ data, onSelect }: { data: ChartData[]; onSelect: (index: number) => void }) {
+function GrowthChart({
+    data,
+    onSelect,
+    title = "Revenue",
+    subtitle = "Monthly revenue with MoM growth",
+    formatter = formatCompact,
+}: {
+    data: ChartData[];
+    onSelect: (index: number) => void;
+    title?: string;
+    subtitle?: string;
+    formatter?: (n: number) => string;
+}) {
     const max = Math.max(...data.map(d => d.value), 1);
 
     // Auto-calculate MoM rates
@@ -448,8 +470,8 @@ function GrowthChart({ data, onSelect }: { data: ChartData[]; onSelect: (index: 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-6">
             <div className="flex items-center justify-between mb-5">
                 <div>
-                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">Revenue</h3>
-                    <p className="text-xs text-gray-400 mt-1">Monthly revenue with MoM growth</p>
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">{title}</h3>
+                    <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
                 </div>
             </div>
 
@@ -495,12 +517,12 @@ function GrowthChart({ data, onSelect }: { data: ChartData[]; onSelect: (index: 
                                 </div>
                             </div>
 
-                            {/* Revenue value */}
+                            {/* Value */}
                             <span className={clsx(
                                 "w-16 text-right text-sm font-bold flex-shrink-0",
                                 d.isCurrent ? "text-gray-900" : "text-gray-600"
                             )}>
-                                {formatCompact(d.value)}
+                                {formatter(d.value)}
                             </span>
 
                             {/* MoM rate */}
@@ -526,13 +548,19 @@ function GrowthChart({ data, onSelect }: { data: ChartData[]; onSelect: (index: 
 
 export default function CreateUpdate() {
     const { user, existingData, isEdit } = useLoaderData<typeof loader>();
-    const actionData = useActionData<typeof action>();
+    const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [draftSaved, setDraftSaved] = useState(false);
+    const [showConfirmPopup, setShowConfirmPopup] = useState(false);
+    const [hasDraft, setHasDraft] = useState<boolean>(() => {
+        if (typeof window === "undefined") return false;
+        return !!localStorage.getItem("vibe_draft");
+    });
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -603,6 +631,65 @@ export default function CreateUpdate() {
         setSelectedMetrics(newMetrics);
     };
 
+    const resumeDraft = () => {
+        try {
+            const raw = localStorage.getItem("vibe_draft");
+            if (!raw) return;
+            const draft = JSON.parse(raw);
+
+            // Restore current month fields
+            if (draft.month) setSelectedMonth(draft.month);
+            if (draft.year) setSelectedYear(Number(draft.year));
+            setHighlights(draft.highlights || "");
+            setChallenges(draft.challenges || "");
+            setAsks(draft.asks || "");
+
+            // Restore current month metrics
+            const metrics: Record<string, string> = {};
+            METRIC_OPTIONS.forEach(opt => {
+                if (draft[opt.key]) metrics[opt.key] = draft[opt.key];
+            });
+            setMetricValues(metrics);
+            const newSelected = new Set<string>(Object.keys(metrics).filter(k => metrics[k]));
+            if (newSelected.size === 0) newSelected.add("revenue");
+            setSelectedMetrics(newSelected);
+
+            // Reconstruct past month cards from flat pastMonth_N_* fields
+            const restoredPastMonths: Array<{
+                month: string; expanded: boolean;
+                highlights: string; challenges: string; asks: string;
+                metrics: Record<string, string>;
+            }> = [];
+            for (let i = 0; draft[`pastMonth_${i}_month`]; i++) {
+                const pmMetrics: Record<string, string> = {};
+                METRIC_OPTIONS.forEach(opt => {
+                    const val = draft[`pastMonth_${i}_${opt.key}`];
+                    if (val) pmMetrics[opt.key] = val;
+                });
+                restoredPastMonths.push({
+                    month: draft[`pastMonth_${i}_month`] || "Unknown",
+                    expanded: false,
+                    highlights: draft[`pastMonth_${i}_highlights`] || "",
+                    challenges: draft[`pastMonth_${i}_challenges`] || "",
+                    asks: draft[`pastMonth_${i}_asks`] || "",
+                    metrics: pmMetrics,
+                });
+            }
+            if (restoredPastMonths.length > 0) {
+                setPastMonthCards(restoredPastMonths);
+            }
+
+            setHasDraft(false);
+        } catch (e) {
+            console.error("Failed to resume draft", e);
+        }
+    };
+
+    const dismissDraft = () => {
+        localStorage.removeItem("vibe_draft");
+        setHasDraft(false);
+    };
+
     const toggleMetric = (key: string) => {
         setSelectedMetrics(prev => {
             const next = new Set(prev);
@@ -633,6 +720,20 @@ export default function CreateUpdate() {
         {
             month: selectedMonth,
             value: parseRevenue(metricValues.revenue || "0"),
+            isCurrent: true
+        }
+    ];
+
+    // Active users chart data
+    const activeUsersChartData: ChartData[] = [
+        ...pastMonthCards.map((card, i) => ({
+            month: card.month,
+            value: parseUsers(card.metrics.activeUsers || "0"),
+            isSelected: expandedCards.has(i)
+        })),
+        {
+            month: selectedMonth,
+            value: parseUsers(metricValues.activeUsers || "0"),
             isCurrent: true
         }
     ];
@@ -694,13 +795,33 @@ export default function CreateUpdate() {
     // 1. Feedback View — preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
         const { feedback, data } = actionData;
+
+        const handleSaveDraft = () => {
+            try {
+                localStorage.setItem("vibe_draft", JSON.stringify(data));
+                setDraftSaved(true);
+                setTimeout(() => setDraftSaved(false), 2500);
+            } catch (e) {
+                console.error("Failed to save draft", e);
+            }
+        };
+
         return (
             <div className="max-w-5xl mx-auto pb-12">
-                {/* Header */}
-                <div className="flex items-center justify-between py-6 mb-4">
-                    <div>
+                {/* Header — back arrow top-left, title center-left, X on right */}
+                <div className="flex items-center gap-3 py-6 mb-4">
+                    <button
+                        onClick={() => setDismissedFeedback(true)}
+                        className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
+                        aria-label="Back to edit"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
+                        </svg>
+                    </button>
+                    <div className="flex-1">
                         <h1 className="text-2xl font-bold text-gray-900">Review Your Update</h1>
-                        <p className="text-sm text-gray-400 mt-1">Preview exactly what investors will see</p>
+                        <p className="text-sm text-gray-400 mt-0.5">Preview exactly what investors will see</p>
                     </div>
                     <button onClick={() => window.history.back()} className="text-gray-400 hover:text-gray-600">
                         <XMarkIcon className="w-6 h-6" />
@@ -833,7 +954,7 @@ export default function CreateUpdate() {
                             </div>
                         </div>
 
-                        {/* Revenue chart + Past month previews */}
+                        {/* Revenue + Active Users charts + Past month previews */}
                         {(() => {
                             const d = data as any;
                             const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; metrics: Record<string, string> }> = [];
@@ -857,13 +978,46 @@ export default function CreateUpdate() {
                                     isCurrent: true,
                                 }
                             ];
+
+                            // Build active users chart data
+                            const reviewActiveUsersChartData: ChartData[] = [
+                                ...pastMonths.map(pm => ({
+                                    month: pm.month,
+                                    value: parseUsers(pm.metrics.activeUsers || "0"),
+                                })),
+                                {
+                                    month: d?.month || selectedMonth,
+                                    value: parseUsers(d?.activeUsers || "0"),
+                                    isCurrent: true,
+                                }
+                            ];
+
                             const hasRevenue = reviewChartData.some(r => r.value > 0);
+                            const hasActiveUsers = reviewActiveUsersChartData.some(r => r.value > 0);
+                            const hasAnyChart = hasRevenue || hasActiveUsers;
 
                             return (
                                 <>
-                                    {hasRevenue && (
-                                        <div className="mt-4">
-                                            <GrowthChart data={reviewChartData} onSelect={() => {}} />
+                                    {hasAnyChart && (
+                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-2" : "grid-cols-1"}`}>
+                                            {hasRevenue && (
+                                                <GrowthChart
+                                                    data={reviewChartData}
+                                                    onSelect={() => {}}
+                                                    title="Revenue"
+                                                    subtitle="Monthly revenue with MoM growth"
+                                                    formatter={formatCompact}
+                                                />
+                                            )}
+                                            {hasActiveUsers && (
+                                                <GrowthChart
+                                                    data={reviewActiveUsersChartData}
+                                                    onSelect={() => {}}
+                                                    title="Active Users"
+                                                    subtitle="Monthly active users with MoM growth"
+                                                    formatter={formatUsers}
+                                                />
+                                            )}
                                         </div>
                                     )}
                                     {pastMonths.length > 0 && (
@@ -878,29 +1032,127 @@ export default function CreateUpdate() {
                             );
                         })()}
 
+                        {/* Your Audience Block */}
+                        {(() => {
+                            const d = data as any;
+                            const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                            
+                            const criteria = [];
+                            if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
+                            if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
+                            if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
+                            if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
+                            if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
+                            if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
+                            if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
+                            if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
+
+                            const count = 18 + (criteria.length * 14);
+
+                            return (
+                                <div className="mt-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                        <UsersIcon className="w-4 h-4 text-indigo-500" />
+                                        Your Audience
+                                    </h3>
+                                    <p className="text-sm text-indigo-800/80 mb-3">
+                                        We found <strong className="text-indigo-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {criteria.map(c => (
+                                            <span key={c} className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg shadow-sm">
+                                                {c}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+
                         {/* Action buttons — below preview */}
                         <div className="flex items-center gap-3 mt-6">
                             <button
                                 type="button"
-                                onClick={() => setDismissedFeedback(true)}
-                                className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm"
+                                onClick={handleSaveDraft}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-colors"
                             >
-                                ← Revise
+                                {draftSaved ? (
+                                    <>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Draft Saved!
+                                    </>
+                                ) : (
+                                    <>Save as Draft</>
+                                )}
                             </button>
-                            <Form method="POST" className="flex-1">
-                                <input type="hidden" name="intent" value="publish" />
-                                {Object.entries(data || {}).map(([key, value]) => (
-                                    <input key={key} type="hidden" name={key} value={value as any} />
-                                ))}
-                                <button
-                                    type="submit"
-                                    className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm transition-colors"
-                                >
-                                    Publish Update
-                                </button>
-                            </Form>
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPopup(true)}
+                                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm transition-colors"
+                            >
+                                Publish and Send
+                            </button>
                         </div>
                     </div>
+
+                    {/* Pre-Publish Confirmation Popup */}
+                    {showConfirmPopup && (() => {
+                        const d = data as any;
+                        const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                        
+                        const criteria = [];
+                        if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
+                        if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
+                        if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
+                        if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
+                        if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
+                        if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
+                        if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
+                        if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
+
+                        const count = 18 + (criteria.length * 14);
+
+                        return (
+                            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
+                                <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                                    <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
+                                    <p className="text-gray-600 mb-6 text-sm leading-relaxed">
+                                        Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{count} investors</strong> matching your criteria: {criteria.join(", ")}.
+                                    </p>
+
+                                    <Form 
+                                        method="POST" 
+                                        className="space-y-3"
+                                        onSubmit={() => {
+                                            localStorage.removeItem("vibe_draft");
+                                        }}
+                                    >
+                                        <input type="hidden" name="intent" value="publish" />
+                                        {Object.entries(data || {}).map(([key, value]) => (
+                                            <input key={key} type="hidden" name={key} value={value as any} />
+                                        ))}
+                                        
+                                        <button
+                                            type="submit"
+                                            className="w-full px-5 py-3 text-sm font-bold text-white bg-green-600 rounded-xl hover:bg-green-700 shadow-md transition-all active:scale-95"
+                                        >
+                                            Yes, Publish and Send
+                                        </button>
+                                        
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowConfirmPopup(false)}
+                                            className="w-full px-5 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                                        >
+                                            Wait, go back
+                                        </button>
+                                    </Form>
+                                </div>
+                            </div>
+                        );
+                    })()}
 
                     {/* RATING SIDEBAR — thin vertical bar on right */}
                     <div className="w-56 flex-shrink-0 sticky top-6 space-y-3">
@@ -988,6 +1240,36 @@ export default function CreateUpdate() {
                 </Link>
             </div>
 
+            {/* Draft Resume Banner */}
+            {hasDraft && (
+                <div className="mb-5 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 shadow-sm">
+                    <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                    </div>
+                    <div className="flex-1">
+                        <p className="text-sm font-semibold text-gray-900">You have a saved draft</p>
+                        <p className="text-xs text-gray-500">Resume where you left off.</p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={resumeDraft}
+                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                    >
+                        Resume Draft
+                    </button>
+                    <button
+                        type="button"
+                        onClick={dismissDraft}
+                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                        aria-label="Dismiss"
+                    >
+                        <XMarkIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
 
@@ -1072,12 +1354,24 @@ export default function CreateUpdate() {
                     </div>
                 </button>
 
-                {/* ─── Growth Chart — only visible after email scrape ─── */}
+                {/* ─── Growth Charts ─── */}
                 {pastMonthCards.length > 0 && (
-                    <GrowthChart
-                        data={chartData}
-                        onSelect={expandCardFromChart}
-                    />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <GrowthChart
+                            data={chartData}
+                            onSelect={expandCardFromChart}
+                            title="Revenue"
+                            subtitle="Monthly revenue with MoM growth"
+                            formatter={formatCompact}
+                        />
+                        <GrowthChart
+                            data={activeUsersChartData}
+                            onSelect={expandCardFromChart}
+                            title="Active Users"
+                            subtitle="Monthly active users with MoM growth"
+                            formatter={formatUsers}
+                        />
+                    </div>
                 )}
 
                 {/* ─── Stacked Card Layout ─── */}
