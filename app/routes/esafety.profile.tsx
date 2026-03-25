@@ -44,7 +44,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Fetch available team names
     let teams: string[] = [];
     try {
-        teams = await getTeamNames(env, request);
+        teams = await getTeamNames(env, request, "esafety");
     } catch (error) {
         console.error('Error loading teams', error);
     }

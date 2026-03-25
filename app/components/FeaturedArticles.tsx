@@ -5,18 +5,18 @@ import { ARTICLE_REGISTRY } from "~/articles/registry";
 
 // Get the featured articles for the home page display
 const FEATURED_ARTICLE_SLUGS = [
-  "featured/how-to-get-started-with-ai-2026",
-  "featured/best-way-to-learn-about-ai-2026",
-  "featured/ai-hackathons-and-events-melbourne",
-  "featured/weekly-deep-dive-into-ai-and-ml-advancements-updates",
+  "featured/learn-ai-melbourne",
+  "featured/how-to-get-data-science-job",
+  "featured/startup-accelerator-australia",
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates",
 ];
 
 // Map slugs to card colors to match the design
 const CARD_COLORS: Record<string, "coral-with-person" | "purple" | "black" | "blue"> = {
-  "featured/how-to-get-started-with-ai-2026": "coral-with-person",
-  "featured/best-way-to-learn-about-ai-2026": "purple",
-  "featured/ai-hackathons-and-events-melbourne": "black",
-  "featured/weekly-deep-dive-into-ai-and-ml-advancements-updates": "blue",
+  "featured/learn-ai-melbourne": "coral-with-person",
+  "featured/how-to-get-data-science-job": "purple",
+  "featured/startup-accelerator-australia": "black",
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates": "blue",
 };
 
 export default function FeaturedArticles() {
@@ -50,7 +50,7 @@ export default function FeaturedArticles() {
                 image={article.image}
                 imageAlt={article.imageAlt}
                 color={CARD_COLORS[article.slug]}
-                personImage={article.slug === "featured/how-to-get-started-with-ai-2026" ? article.image : undefined}
+                personImage={article.slug === "featured/learn-ai-melbourne" ? article.image : undefined}
               />
             ))}
           </div>

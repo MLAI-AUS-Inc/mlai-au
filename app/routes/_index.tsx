@@ -1,5 +1,10 @@
 import type { Route } from "./+types/_index";
 import { useLoaderData } from "react-router";
+
+export const meta: Route.MetaFunction = () => [
+    { title: "MLAI | Empowering Australia's AI Community" },
+    { name: "description", content: "MLAI is a not-for-profit community empowering Australia's AI and Machine Learning ecosystem through events, articles, and networking." },
+];
 import HackathonPage from "./hackathon";
 import HomePage from "./home";
 import { fetchSubstackPosts } from "~/lib/substack";

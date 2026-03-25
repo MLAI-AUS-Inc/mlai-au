@@ -6,14 +6,16 @@ const footerNavigation = {
   volunteering: [
     {
       name: "Apply to Volunteer",
-      href: "https://forms.gle/GwZR49kwTMszLKtN8",
+      href: "https://docs.google.com/forms/d/e/1FAIpQLSclIpU9So5QoX0Py-wKMjzE6F5amk7u_kMFrcm4tf2GQQ7-xA/viewform",
       target: "_blank",
-      rel: "noopener noreferrer",
+      rel: "noopener noreferrer nofollow",
     },
   ],
   Sponsoring: [{ name: "Info for sponsors", href: "/sponsors" }],
   About: [
     { name: "Contact", href: "/#about" },
+    { name: "Members", href: "/members" },
+    { name: "How to Pitch", href: "/how-to-pitch-your-idea" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/mlai-aus-inc" },
   ],
   social: [
@@ -46,7 +48,7 @@ const footerNavigation = {
     },
     {
       name: "Slack",
-      href: "https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg",
+      href: "https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg",
       icon: (props: any) => (
         <svg
           className="h-6 w-6"
@@ -148,6 +150,7 @@ export default function Events() {
                   <a
                     key={item.name}
                     href={item.href}
+                    rel="nofollow"
                     className="text-gray-300 hover:text-gray-400 p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
                   >
                     <span className="sr-only">{item.name}</span>

@@ -24,6 +24,7 @@ export interface Testimonial {
     name: string;
     handle: string;
     imageUrl: string;
+    website?: string;
   };
   color: ColorKey;
   gridWidth: number; // How many grid columns this testimonial occupies

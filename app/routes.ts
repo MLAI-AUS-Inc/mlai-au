@@ -6,12 +6,12 @@ export default [
   route("/sponsors", "routes/sponsors.tsx"),
   route("/members", "routes/members.tsx"),
   route("/events", "routes/events.tsx"),
-  route("/hackathon", "routes/hackathon.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
-  route("/hackathons", "routes/hackathons.tsx"),
+  route("/resources", "routes/resources.tsx"),
+  route("/roo", "routes/roo.tsx"),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
@@ -30,13 +30,23 @@ export default [
     route("profile", "routes/esafety.profile.tsx"),
   ]),
 
-  // AI Hospital App routes
+  // Medhack: Frontiers (Hospital) App routes
   route("/hospital/app", "routes/hospital.app.tsx", [
     index("routes/hospital.app.dashboard.tsx"),
+    route("dashboard", "routes/hospital.app.dashboard-redirect.tsx"),
     route("team", "routes/hospital.app.team.tsx"),
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
+    route("resources", "routes/hospital.app.resources.tsx"),
+    route("coding", "routes/hospital.app.coding.tsx"),
+    route("pitching", "routes/hospital.app.pitching.tsx"),
+    route("profile", "routes/hospital.app.profile.tsx"),
   ]),
+
+  // Hackathon pages
+  route("/hackathon", "routes/hackathon.tsx"),
+  route("/hackathons", "routes/hackathons.tsx"),
+  route("/medhack", "routes/medhack.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
@@ -50,7 +60,7 @@ export default [
     index("routes/vibe-raising-app._index.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("create-update", "routes/vibe-raising-app.create-update.tsx"),
-    route("discover", "routes/vibe-raising-app.investors.tsx"), // Placeholder for next step
+    route("discover", "routes/vibe-raising-app.investors.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
   ]),
   route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx"),

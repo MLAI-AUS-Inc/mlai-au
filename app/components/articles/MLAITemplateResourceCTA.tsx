@@ -20,7 +20,7 @@ export function MLAITemplateResourceCTA({ className = '' }: MLAITemplateResource
             Created by the MLAI community for Australian startups and teams.
           </p>
           <Link
-            to="/resources"
+            to="/articles"
             className="inline-block rounded-lg bg-[#1028E0] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1020C2] focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             Access free templates

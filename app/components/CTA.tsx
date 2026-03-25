@@ -16,9 +16,10 @@ export default function CTA() {
         </p>
         <div className="mt-6 sm:mt-10 grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
           <CTAButton
-            href="https://forms.gle/GwZR49kwTMszLKtN8"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSclIpU9So5QoX0Py-wKMjzE6F5amk7u_kMFrcm4tf2GQQ7-xA/viewform"
             bg="bg-[#ff3d00]"
             text="I want to volunteer"
+            rel="nofollow"
           />
           <CTAButton href="/#events" bg="bg-[#4b1bd1]" text="I want to build" />
           <CTAButton href="/sponsors" bg="bg-[#00ffd7]" text="I want to sponsor" textColor="text-black" />
@@ -33,15 +34,18 @@ function CTAButton({
   text,
   bg,
   textColor = 'text-white',
+  rel,
 }: {
   href: string
   text: string
   bg: string
   textColor?: string
+  rel?: string
 }) {
   return (
     <a
       href={href}
+      rel={rel}
       className={`inline-flex w-full items-center justify-center rounded-xl sm:rounded-2xl px-4 sm:px-6 py-3 sm:py-3.5 text-sm sm:text-base font-semibold ${bg} ${textColor} shadow-[0_20px_50px_-22px_rgba(0,0,0,0.4)] transition-transform hover:-translate-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 min-h-[48px]`}
     >
       {text} <span aria-hidden="true" className="ml-1">→</span>

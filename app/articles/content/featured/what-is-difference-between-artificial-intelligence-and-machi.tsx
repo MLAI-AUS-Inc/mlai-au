@@ -9,7 +9,7 @@ import { Link } from 'react-router'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
@@ -90,7 +90,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className="bg-white">
+    <div className="bg-transparent">
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -109,14 +109,16 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant="info">
-          <p className="text-sm text-gray-800">
+        <QuoteBlock variant='purple' icon={<span className='text-xl'>💡</span>}>
+          <p className='text-sm text-white'>
+            
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
               Browse related articles →
             </Link>
+          
           </p>
-        </ArticleCallout>
+        </QuoteBlock>
 
         {/* Persona Grid */}
         <AudienceGrid
@@ -180,7 +182,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Stack explanation */}
           <h2>The AI → ML → deep learning stack (and where LLMs sit)</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f5fc57b2-7984-42c6-9b93-d74c1e660f45.jpg?alt=media&token=ab7a7a79-8601-45d9-879a-2c700f4abac5" alt="Group of tech enthusiasts collaborating in a trendy startup space, embodying the 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f5fc57b2-7984-42c6-9b93-d74c1e660f45.jpg?alt=media&token=ab7a7a79-8601-45d9-879a-2c700f4abac5" alt="Group of tech enthusiasts collaborating in a trendy startup space, embodying the 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             A helpful mental model is a set of nested circles: AI (outer), ML (inside AI), and deep learning (inside ML). LLMs such as GPT‑class models are a <em>deep learning</em> technique trained on large corpora; they’re used to build AI applications like chatbots, coding tools, and document assistants.
@@ -191,7 +193,7 @@ export default function ArticlePage() {
 
           {/* SECTION: How they work */}
           <h2>How they work: rules, search and learning</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-26774910-2413-4b85-8ba5-a57ae6a552b2.jpg?alt=media&token=38711d1b-f356-4247-a5f9-94595e4b9132" alt="People collaborating in a retro tech startup environment, capturing a 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-26774910-2413-4b85-8ba5-a57ae6a552b2.jpg?alt=media&token=38711d1b-f356-4247-a5f9-94595e4b9132" alt="People collaborating in a retro tech startup environment, capturing a 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <ul>
             <li><strong>Rules/symbolic AI:</strong> Human‑written logic (if/then), ontologies, and knowledge bases. Great for clear, stable policies and compliance.</li>

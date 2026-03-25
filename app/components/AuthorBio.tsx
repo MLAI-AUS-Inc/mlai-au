@@ -6,6 +6,8 @@ interface AuthorProfile {
     bio?: string
     avatarUrl?: string
     url?: string
+    /** Optional: if not using url, link can be taken from sameAs (e.g. LinkedIn) */
+    sameAs?: { label: string; href: string }[]
 }
 
 interface AuthorBioProps {
@@ -30,8 +32,10 @@ export default function AuthorBio({ author, authors, className = '' }: AuthorBio
             </h3>
 
             <div className={`grid gap-6 ${authorList.length > 1 ? 'md:grid-cols-3' : 'md:grid-cols-1 max-w-sm mx-auto'}`}>
-                {authorList.map((person, idx) => (
-                    <ComponentWrapper key={person.name + idx} href={person.url}>
+                {authorList.map((person, idx) => {
+                    const profileUrl = person.url ?? person.sameAs?.find((s) => s.label === 'LinkedIn')?.href
+                    return (
+                        <ComponentWrapper key={person.name + idx} href={profileUrl}>
                         <div className="flex flex-col h-full items-center text-center p-4 rounded-xl border border-black/30 bg-white/40 backdrop-blur-[1px] transition-all hover:-translate-y-1 hover:border-black">
                             {person.avatarUrl && (
                                 <img
@@ -51,7 +55,8 @@ export default function AuthorBio({ author, authors, className = '' }: AuthorBio
                             )}
                         </div>
                     </ComponentWrapper>
-                ))}
+                    )
+                })}
             </div>
 
             <p className="mt-6 text-xs text-gray-600 text-center">
@@ -68,7 +73,7 @@ function ComponentWrapper({ href, children }: { href?: string; children: ReactNo
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block no-underline"
+                className="block no-underline cursor-pointer"
             >
                 {children}
             </a>

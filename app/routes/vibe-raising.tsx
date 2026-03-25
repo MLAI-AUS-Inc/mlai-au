@@ -15,25 +15,24 @@ import {
     Lightbulb,
     Target
 } from "lucide-react";
-import type { Route } from "./+types/vibe-raising";
 
 const PAGE_TITLE = 'Vibe Raising: Unlock Capital with Monthly Founder Updates.';
 const PAGE_DESCRIPTION =
     'Regular, authentic updates are crucial for keeping investors engaged and informed about your progress.';
 
-export function meta({ }: Route.MetaArgs) {
+export function meta() {
     return [
         { title: 'Vibe Raising | MLAI Community' },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: "https://www.mlai.au/vibe-raising" },
+        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising" },
     ];
 }
 
-export async function loader({ }: Route.LoaderArgs) {
+export async function loader() {
     return {};
 }
 
-export default function VibeRaisingPage({ }: Route.ComponentProps) {
+export default function VibeRaisingPage() {
     const [activeTab, setActiveTab] = useState<'investors' | 'founders'>('investors');
 
     return (
@@ -455,6 +454,21 @@ export default function VibeRaisingPage({ }: Route.ComponentProps) {
                                     </div>
                                 </div>
 
+                                {/* Founder Call to Action */}
+                                <div className="mt-12 bg-[#4b0db3] rounded-xl p-8 text-center">
+                                    <h3 className="text-3xl font-bold text-white mb-4">
+                                        Ready to Get Started?
+                                    </h3>
+                                    <p className="text-white text-lg mb-6 max-w-2xl mx-auto">
+                                        Email us and tell us about your startup. We'll help you get set up with Vibe Raising and start building momentum with your investors.
+                                    </p>
+                                    <a
+                                        href="mailto:hi@mlai.au?subject=Founder Interest in Vibe Raising"
+                                        className="inline-block px-8 py-4 bg-white text-[#4b0db3] font-bold rounded-lg hover:bg-zinc-100 transition text-lg"
+                                    >
+                                        Email Us at hi@mlai.au
+                                    </a>
+                                </div>
 
                             </div>
                         </div>

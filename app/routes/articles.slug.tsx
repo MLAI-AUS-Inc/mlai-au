@@ -22,8 +22,11 @@ export function meta({ data }: Route.MetaArgs) {
     if (!data?.article) {
         return [{ title: "Article Not Found | MLAI" }];
     }
+    const suffix = " | MLAI";
+    const fullTitle = `${data.article.title}${suffix}`;
+    const title = fullTitle.length > 70 ? data.article.title : fullTitle;
     return [
-        { title: `${data.article.title} | MLAI Articles` },
+        { title },
         { name: "description", content: data.article.description },
     ];
 }
@@ -135,7 +138,7 @@ export default function ArticleSlugPage({ loaderData }: Route.ComponentProps) {
             upcomingEvents={upcomingEvents}
         >
             <div className="relative">
-                <ArticleContent article={article} />
+                <ArticleContent key={article.slug} article={article} />
             </div>
         </ArticleLayout>
     );

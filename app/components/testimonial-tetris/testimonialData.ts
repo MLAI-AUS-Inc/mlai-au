@@ -48,7 +48,7 @@ function getShapeDimensions(shapeType: ShapeType): { width: number; height: numb
 interface BaseTestimonial {
   id: number;
   body: string;
-  author: { name: string; handle: string; imageUrl: string };
+  author: { name: string; handle: string; imageUrl: string; website?: string };
   color: ColorKey;
   shapeType: ShapeType;
 }
@@ -61,6 +61,7 @@ const BASE_TESTIMONIALS: BaseTestimonial[] = [
       name: "Eike Zoller",
       handle: "Ecosystems Director - Stone & Chalk",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/eikezeller.jpg?alt=media&token=f184570d-27bf-4100-a53d-2a541d4f1fce",
+      website: "https://www.stoneandchalk.com.au/",
     },
     color: "orange",
     shapeType: "L", // L-shaped
@@ -69,9 +70,10 @@ const BASE_TESTIMONIALS: BaseTestimonial[] = [
     id: 2,
     body: "As excitement about AI builds and the impacts spread into all our daily lives, a strong and diverse community of participants is vital to support positive outcomes for all. It's great to see the MLAI Aus crew working hard to build this community across Australia. Get off the couch, get involved!",
     author: {
-      name: "Kendra Vent",
+      name: "Kendra Vant",
       handle: "Director - Europalabs",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
+      website: "https://europa-labs.com/",
     },
     color: "black",
     shapeType: "I", // I-shaped (long bar)
@@ -83,53 +85,70 @@ const BASE_TESTIMONIALS: BaseTestimonial[] = [
       name: "Xavier Andueza",
       handle: "Founding AI Engineer - Userdoc",
       imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
+      website: "https://mlai.au",
     },
     color: "purple",
     shapeType: "T", // T-shaped
   },
   {
-    id: 4,
-    body: "MLAI has been a fantastic community for connecting with like-minded, talented, and diverse people. Everyone has been warm, welcoming, and eager to talk about tech details.",
+    id: 8,
+    body: "As we implement AI-powered features such as medication adherence tracking, the support from the MLAI community has been invaluable. The collaboration has helped accelerate our product development and provided opportunities to learn from leading AI practitioners in Australia.",
     author: {
-      name: "Blair Seffer",
-      handle: "Userdoc",
-      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fxavier.png?alt=media&token=d803afb5-66ce-4dfe-8407-f284ab117f78",
+      name: "Rachel Zhao",
+      handle: "Woofya",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/testimonials%2F1753688236159.jpeg?alt=media&token=e39a5559-eff3-41bf-a5d5-d80028d0c18f",
+      website: "https://woofya.com.au",
     },
-    color: "blue",
-    shapeType: "J", // J-shaped (mirror of L)
+    color: "orange",
+    shapeType: "T",
   },
   {
-    id: 5,
-    body: "MLAI has been connecting cool people with incredible teams. Join in and meet amazing people!",
+    id: 9,
+    body: "MLAI saved my gut- and hence my life, thanks to the Kombucha",
     author: {
-      name: "Community Member",
-      handle: "MLAI Volunteer",
-      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
-    },
-    color: "yellow",
-    shapeType: "S", // S-shaped
-  },
-  {
-    id: 6,
-    body: "MLAI has an amazing community!",
-    author: {
-      name: "Olata",
-      handle: "MLAI Member",
-      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/kendra.png?alt=media&token=63333d01-f649-40e5-bbbc-b9239af80c0e",
+      name: "Shriabhay (Abhay) S",
+      handle: "MLAI",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/testimonials%2F1767874131620%20(1).png?alt=media&token=1c68163a-2792-4b21-8d73-8e90fa6df494",
+      website: "https://mlai.au",
     },
     color: "mint",
-    shapeType: "O", // O-shaped (square)
+    shapeType: "S",
   },
   {
-    id: 7,
-    body: "MLAI's community is built by passionate volunteers making Australia a hub for AI innovation.",
+    id: 10,
+    body: "The free coffee lured me in but the MLAI community kept me coming back!",
     author: {
-      name: "MLAI Team",
-      handle: "Community Volunteers",
-      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/eikezeller.jpg?alt=media&token=f184570d-27bf-4100-a53d-2a541d4f1fce",
+      name: "CJ Moss",
+      handle: "MLAI",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/testimonials%2FT05N9C1QSJC-U08SNPBTUJJ-6323b3f9e9f6-512.png?alt=media&token=54ac889a-5db4-4167-b64d-edd2fbc1392d",
+      website: "https://mlai.au",
     },
-    color: "pink",
-    shapeType: "Z", // Z-shaped
+    color: "yellow",
+    shapeType: "O",
+  },
+  {
+    id: 11,
+    body: "My dog nearly got run over by a car but MLAI saved him, I will forever be grateful and in debt to MLAI",
+    author: {
+      name: "Ethan Lee",
+      handle: "MLAI",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/testimonials%2F1750860666754.jpeg?alt=media&token=125c7ea4-cf01-4e23-be89-08cabbaaa87b",
+      website: "https://mlai.au",
+    },
+    color: "purple",
+    shapeType: "J",
+  },
+  {
+    id: 12,
+    body: "Dr Sam and the team at MLAI have built a genuinely useful AI community. The knowledge sharing is practical, generous, and immediately applicable, and you come away with real clarity on what to do next. Their \"Hack your way to #1 in Google\" course is the standout. It's packed with tactics you can implement fast, and it gives startups a clear path to turning AI and search into a repeatable growth lever. If you're building anything and need traction, it's an easy yes.",
+    author: {
+      name: "Ronan Leonard",
+      handle: "Intelligent Resourcing",
+      imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/testimonials%2FScreenshot%202026-02-03%20at%205.00.04%E2%80%AFPM.png?alt=media&token=5f1fcaee-b467-4130-9088-a5a6a1d5a3fb",
+      website: "https://www.intelligentresourcing.co",
+    },
+    color: "blue",
+    shapeType: "I",
   },
 ];
 

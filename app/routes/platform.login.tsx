@@ -1,5 +1,11 @@
 import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
+
+export const meta: Route.MetaFunction = () => [
+    { title: "Sign In to the MLAI Platform | MLAI" },
+    { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
+    { name: "robots", content: "noindex, nofollow" },
+];
 import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -17,7 +23,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         let next = url.searchParams.get("next");
 
         if (!next) {
-            next = (app === "esafety") ? "/esafety/dashboard" : "/platform/dashboard";
+            next = "/hackathons";
         }
 
         return redirect(next);
@@ -31,7 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
-    const next = formData.get("next")?.toString() ?? (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
+    const next = formData.get("next")?.toString() ?? "/hackathons";
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -70,7 +76,7 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const app = searchParams.get("app");
-    const next = searchParams.get("next") || (app === "esafety" ? "/esafety/dashboard" : "/platform/dashboard");
+    const next = searchParams.get("next") || "/hackathons";
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -117,7 +123,7 @@ export default function PlatformLogin() {
 
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
-        if (app === "hospital") return "Sign in to AI Hospital Hackathon";
+        if (app === "hospital") return "Sign in to Medhack: Frontiers";
         return "Welcome!";
     };
 
@@ -132,7 +138,7 @@ export default function PlatformLogin() {
                                 <span className="sr-only">MLAI</span>
                                 <img
                                     alt="MLAI Logo"
-                                    src="/text_logo.png"
+                                    src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Ftext_logo.png?alt=media&token=0857f467-d3f9-4dbe-aad0-7a7331295100"
                                     className="h-8 w-auto"
                                 />
                             </Link>

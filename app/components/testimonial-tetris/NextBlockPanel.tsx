@@ -201,9 +201,21 @@ export function NextBlockPanel({ nextPiece, isMobile = false }: NextBlockPanelPr
                 <div className="text-sm font-semibold" style={{ color: textColor }}>
                   — {testimonial.author.name}
                 </div>
-                <div className="text-xs opacity-70" style={{ color: textColor }}>
-                  {testimonial.author.handle}
-                </div>
+                {testimonial.author.website ? (
+                  <a
+                    href={testimonial.author.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs opacity-70 hover:opacity-100 hover:underline transition-opacity"
+                    style={{ color: textColor }}
+                  >
+                    {testimonial.author.handle}
+                  </a>
+                ) : (
+                  <div className="text-xs opacity-70" style={{ color: textColor }}>
+                    {testimonial.author.handle}
+                  </div>
+                )}
               </div>
             </div>
           </>

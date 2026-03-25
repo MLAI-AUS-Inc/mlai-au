@@ -46,6 +46,13 @@ export async function verifyMagicLink(env: Env, token: string) {
     return response.data;
 }
 
+export async function verifyMagicLinkWithCookies(env: Env, token: string) {
+    const client = getAxios(env);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    const setCookieHeaders = response.headers["set-cookie"] || [];
+    return { data: response.data, setCookieHeaders };
+}
+
 export async function getCurrentUser(env: Env, request?: Request) {
     try {
         const client = getAxios(env, request);
@@ -81,17 +88,43 @@ export async function createUser(env: Env, body: {
     return response.data;
 }
 
-export async function getTeamNames(env: Env, request?: Request): Promise<string[]> {
+export async function getTeamNames(env: Env, request?: Request, slug: string = "hospital"): Promise<string[]> {
     const client = getAxios(env, request);
-    const response = await client.get("/api/v1/teams/");
+    const response = await client.get(`/api/v1/hackathons/${slug}/get_team_names/`);
     return response.data.team_names || [];
+}
+
+export async function getHospitalTeams(env: Env, request: Request) {
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/teams/");
+        return response.data || [];
+    } catch (error) {
+        console.error("Failed to fetch hospital teams:", error);
+        return [];
+    }
+}
+
+export async function getHospitalTeam(env: Env, request: Request, userId: number | undefined) {
+    if (userId == null || !Number.isFinite(userId)) return null;
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get(`/api/v1/hackathons/hospital/teams/?member_id=${userId}`);
+        const teams = response.data;
+        if (Array.isArray(teams) && teams.length > 0) {
+            return teams[0];
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to fetch hospital team:", error);
+        return null;
+    }
 }
 
 export async function updateUser(env: Env, body: {
     full_name?: string;
     first_name?: string;
     last_name?: string;
-    team?: string;
     email?: string;
     phone?: string;
     about?: string;
@@ -186,5 +219,48 @@ export async function submission(formData: FormData) {
 
 export async function getLatestSubmission() {
     const response = await axiosInstance.get("/api/v1/hackathons/esafety/submission/");
+    return response.data;
+}
+
+// ─── Hospital hackathon helpers ────────────────────────────────────────────
+
+export async function hospitalSubmission(formData: FormData) {
+    return axiosInstance.post("/api/v1/hackathons/hospital/submissions/", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+}
+
+export async function getHospitalRecentSubmissions(env?: Env, request?: Request) {
+    if (env) {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+        return response.data;
+    }
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+    return response.data;
+}
+
+export async function getHospitalLatestSubmission() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_submission/");
+    return response.data;
+}
+
+export async function getHospitalSubmissionById(submissionId: number) {
+    const response = await axiosInstance.get(
+        `/api/v1/hackathons/hospital/get_submission/${submissionId}/`
+    );
+    return response.data;
+}
+
+export async function getHospitalAllSubmissions() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/submissions/");
+    return response.data;
+}
+
+export async function getHospitalLeaderboard(env: Env, request: Request) {
+    const client = getAxios(env, request);
+    const response = await client.get("/api/v1/hackathons/hospital/leaderboard/");
     return response.data;
 }

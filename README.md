@@ -92,7 +92,7 @@ bun run cf-typegen
 
 ## Community
 
-- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg)
+- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg)
 - **LinkedIn**: [Follow us](https://www.linkedin.com/company/mlai-aus-inc)
 - **Instagram**: [@mlai_aus](https://www.instagram.com/mlai_aus/)
 

@@ -1,19 +1,20 @@
-
 import { useState } from "react";
 import {
     getArticlesSortedNewestFirst,
     resolveArticleRouteSlug,
 } from "~/articles/registry";
 
-import { Link } from "react-router";
 import FeaturedArticleCard, { type FeaturedCardColor } from "~/components/articles/FeaturedArticleCard";
-import ArticleListCard, { getAccentColorByIndex } from "~/components/articles/ArticleListCard";
 import ArticleSearchBar from "~/components/articles/ArticleSearchBar";
+import ArticleCalendarSection from "~/components/articles/ArticleCalendarSection";
+import HeroSection from "~/components/ui/HeroSection";
+import CardGrid from "~/components/ui/CardGrid";
+import EmptyState from "~/components/ui/EmptyState";
 import type { Route } from "./+types/articles.index";
 
 const PAGE_TITLE = 'Writing on AI, Machine Learning and Community.';
 const PAGE_DESCRIPTION =
-    'Plain-English guides on AI, Machine Learning, and how to get started with the MLAI community.';
+    'Plain-English guides on AI, Machine Learning, data science careers, and technology in Australia. Written by the MLAI community for builders and learners.';
 
 const FALLBACK_IMAGE = 'https://placehold.co/1200x630/png';
 
@@ -22,6 +23,8 @@ const PERSON_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-webs
 
 // Color rotation for featured cards (first one is special with person image)
 const FEATURED_COLORS: FeaturedCardColor[] = ['coral-with-person', 'purple', 'black', 'blue'];
+
+const PAGE_SIZE = 10;
 
 function getFeaturedColor(index: number): FeaturedCardColor {
     return FEATURED_COLORS[index % FEATURED_COLORS.length];
@@ -38,7 +41,7 @@ export function meta({ data }: Route.MetaArgs) {
     return [
         { title: title },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://www.mlai.au/articles" : `https://www.mlai.au/articles?page=${pageNumber}` },
+        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://mlai.au/articles" : `https://mlai.au/articles?page=${pageNumber}` },
     ];
 }
 
@@ -58,20 +61,14 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
 
     // Search/filter state (UI only for now)
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeFilters, setActiveFilters] = useState<string[]>([]);
+    const [, setActiveFilters] = useState<string[]>([]);
 
-    const pageSize = 10;
-    const total = sorted.length;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    const currentPage = Math.min(Math.max(page, 1), totalPages);
-    const start = (currentPage - 1) * pageSize;
-
+    // Build article summaries for the calendar section
     const articleSummaries = sorted.map((currentArticle) => ({
-        slug: currentArticle.slug,
+        slug: resolveArticleRouteSlug(currentArticle.slug),
         title: currentArticle.title,
         description: currentArticle.description,
         date: currentArticle.date,
-        image: currentArticle.image,
     }));
 
     // Filter articles based on search query (simple title match for now)
@@ -81,39 +78,31 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
         )
         : articleSummaries;
 
-    const paginatedSummaries = filteredSummaries.slice(start, start + pageSize);
+    // Pagination
+    const total = filteredSummaries.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(page, 1), totalPages);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const paginatedSummaries = filteredSummaries.slice(start, start + PAGE_SIZE);
 
     return (
         <main className="min-h-screen bg-[var(--brutalist-beige)]">
-            {/* Yellow Hero Section (Title + Search Only) */}
-            <div className="p-2 lg:p-3">
-                <section className="articles-hero">
-                    <div className="max-w-6xl mx-auto">
-                        <div className="max-w-4xl">
-                            {/* Page Title */}
-                            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-zinc-900 tracking-tight">
-                                {PAGE_TITLE}
-                            </h1>
-                            <p className="mt-4 text-base text-zinc-700">
-                                {PAGE_DESCRIPTION}
-                            </p>
+            {/* Hero Section */}
+            <HeroSection
+                title={PAGE_TITLE}
+                description={PAGE_DESCRIPTION}
+                variant="yellow"
+            >
+                <ArticleSearchBar
+                    onSearch={setSearchQuery}
+                    onFilterChange={setActiveFilters}
+                />
+            </HeroSection>
 
-                            {/* Search Bar */}
-                            <div className="mt-8">
-                                <ArticleSearchBar
-                                    onSearch={setSearchQuery}
-                                    onFilterChange={setActiveFilters}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </div>
-
-            {/* Featured Articles & All Articles Grid (On Beige Background) */}
+            {/* Featured Articles & Calendar Section */}
             <div className="max-w-6xl mx-auto px-4 lg:px-6">
                 {/* Featured Articles Grid */}
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <CardGrid columns={{ sm: 2, lg: 4 }} gap={4} className="mt-8">
                     {featured.map((article, index) => (
                         <FeaturedArticleCard
                             key={article.slug}
@@ -125,61 +114,51 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
                         />
                     ))}
                     {featured.length === 0 && (
-                        <p className="text-zinc-600 col-span-full">No featured articles yet.</p>
+                        <EmptyState
+                            message="No featured articles yet."
+                            className="col-span-full"
+                        />
+                    )}
+                </CardGrid>
+
+                {/* Article Calendar Section */}
+                <div className="py-12">
+                    {searchQuery ? (
+                        // Show filtered results when searching
+                        filteredSummaries.length > 0 ? (
+                            <ArticleCalendarSection
+                                title={`Search results for "${searchQuery}"`}
+                                articles={filteredSummaries}
+                                paginatedArticles={paginatedSummaries}
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                pageSize={PAGE_SIZE}
+                                paginationBasePath="/articles"
+                            />
+                        ) : (
+                            <div className="text-center py-12">
+                                <h2 className="text-2xl font-bold text-zinc-900 mb-4">
+                                    No articles found
+                                </h2>
+                                <p className="text-zinc-500">
+                                    No articles match "{searchQuery}". Try a different search term.
+                                </p>
+                            </div>
+                        )
+                    ) : (
+                        <ArticleCalendarSection
+                            id="all-articles"
+                            title="All Articles"
+                            articles={articleSummaries}
+                            paginatedArticles={paginatedSummaries}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            pageSize={PAGE_SIZE}
+                            paginationBasePath="/articles"
+                            paginationHash="#all-articles"
+                        />
                     )}
                 </div>
-
-                {/* All Articles Section */}
-                <section className="py-12">
-                    <h2 className="text-2xl font-bold text-zinc-900 mb-6">All Articles</h2>
-
-                    {/* Articles Grid - 2 columns on larger screens */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {paginatedSummaries.map((article, index) => (
-                            <ArticleListCard
-                                key={article.slug}
-                                href={`/articles/${resolveArticleRouteSlug(article.slug)}`}
-                                title={article.title}
-                                date={article.date}
-                                accentColor={getAccentColorByIndex(index)}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Empty state */}
-                    {paginatedSummaries.length === 0 && (
-                        <p className="text-zinc-500 text-center py-8">
-                            {searchQuery ? `No articles found matching "${searchQuery}"` : "No articles available yet."}
-                        </p>
-                    )}
-
-                    {/* Pagination */}
-                    {totalPages > 1 && !searchQuery && (
-                        <nav className="mt-12 flex items-center justify-center gap-2" aria-label="Pagination">
-                            {currentPage > 1 && (
-                                <Link
-                                    to={currentPage === 2 ? '/articles' : `/articles?page=${currentPage - 1}`}
-                                    className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
-                                >
-                                    ← Previous
-                                </Link>
-                            )}
-
-                            <span className="px-4 py-2 text-sm text-zinc-500">
-                                Page {currentPage} of {totalPages}
-                            </span>
-
-                            {currentPage < totalPages && (
-                                <Link
-                                    to={`/articles?page=${currentPage + 1}`}
-                                    className="px-4 py-2 text-sm font-medium text-zinc-600 hover:text-zinc-900 transition"
-                                >
-                                    Next →
-                                </Link>
-                            )}
-                        </nav>
-                    )}
-                </section>
             </div>
         </main>
     );

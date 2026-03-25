@@ -9,7 +9,7 @@ import { Link } from 'react-router'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
@@ -129,7 +129,7 @@ export default function ArticlePage() {
   }
 
   return (
-    <div className='bg-white'>
+    <div className='bg-transparent'>
       <ArticleHeroHeader
         breadcrumbs={[
           { label: 'Home', href: '/', icon: Home },
@@ -148,14 +148,16 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant='info'>
-          <p className='text-sm text-gray-800'>
+        <QuoteBlock variant='purple' icon={<span className='text-xl'>💡</span>}>
+          <p className='text-sm text-white'>
+            
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to='/articles' className='font-semibold text-[--brand] underline-offset-4 hover:underline'>
+            <Link to='/articles' className='font-semibold text-white underline-offset-4 hover:underline'>
               Browse related articles →
             </Link>
+          
           </p>
-        </ArticleCallout>
+        </QuoteBlock>
 
         {/* Persona Grid */}
         <AudienceGrid
@@ -209,7 +211,7 @@ export default function ArticlePage() {
             title={`Download the ${TOPIC} checklist`}
             description='Access a structured template to apply the steps in this guide.'
             buttonLabel='Get the checklist'
-            buttonHref='/resources'
+            buttonHref='/articles'
             accent='purple'
           />
 
@@ -226,7 +228,7 @@ export default function ArticlePage() {
 
           {/* SECTION: PAA — Do I need maths or coding? */}
           <h2>Do I need maths or coding to learn AI?</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-af337c0c-b67e-4790-bb6c-77f76de5fa02.jpg?alt=media&token=06faa127-111b-44dc-8750-fed1bbde6dcf" alt="Group of diverse individuals collaborating in a retro tech startup environment with vintage 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-af337c0c-b67e-4790-bb6c-77f76de5fa02.jpg?alt=media&token=06faa127-111b-44dc-8750-fed1bbde6dcf" alt="Group of diverse individuals collaborating in a retro tech startup environment with vintage 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             You can start without both, but the more technical your goal, the more you’ll rely on them. For non‑technical roles (e.g., product or operations), focus on data literacy, evaluation, and safe tool use. For technical roles, learn Python and a little linear algebra and statistics alongside projects.
@@ -258,7 +260,7 @@ export default function ArticlePage() {
 
           {/* SECTION: Choose a learning path */}
           <h2>Choose your path: self‑paced vs Australian qualifications</h2>
-<img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-031434c3-6229-4046-a050-4bdf000b7c7b.jpg?alt=media&token=cd22c3a9-a966-41a8-a318-869a9be1d29f" alt="People in a tech startup collaborate, embodying the exploration of self-paced vs Australian qualifications. 90s film aesthetic." className="w-full rounded-lg my-8" />
+          <img src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-031434c3-6229-4046-a050-4bdf000b7c7b.jpg?alt=media&token=cd22c3a9-a966-41a8-a318-869a9be1d29f" alt="People in a tech startup collaborate, embodying the exploration of self-paced vs Australian qualifications. 90s film aesthetic." className="w-full rounded-lg my-8" />
 
           <p>
             You have three common routes in Australia (as at 2026):

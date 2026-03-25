@@ -1,4 +1,3 @@
-import { Link } from "react-router";
 import { useState } from "react";
 
 const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
@@ -25,47 +24,46 @@ export default function Hackathons() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
-                    {/* AI Hospital Hackathon Card */}
-                    {/* AI Hospital Hackathon Card */}
-                    <div
-                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
+                    {/* Medhack: Frontiers Card — Active */}
+                    <a
+                        href="/platform/login?app=hospital&next=/hospital/app"
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:scale-[1.02]"
                         onMouseEnter={() => setHoveredCard("ai-hospital")}
                         onMouseLeave={() => setHoveredCard(null)}
                     >
                         <img
                             src={hoveredCard === "ai-hospital" ? AI_HOSPITAL_GIF : AI_HOSPITAL_STATIC}
-                            alt="AI Hospital Hackathon"
+                            alt="Medhack: Frontiers"
                             className="absolute inset-0 h-full w-full object-cover object-top"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-10">
-                            <h3 className="text-2xl font-bold">AI Hospital Hackathon (Coming Soon)</h3>
+                            <h3 className="text-2xl font-bold">Medhack: Frontiers</h3>
                             <p className="mt-2 text-sm text-gray-200">
                                 Revolutionizing healthcare with AI. Join us to build the future of medicine.
                             </p>
                         </div>
-                    </div>
+                    </a>
 
-                    {/* eSafety Hackathon Card */}
-                    <Link
-                        to="/platform/login?app=esafety&next=/esafety/dashboard"
-                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
+                    {/* eSafety Hackathon Card — Disabled */}
+                    <div
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
                         onMouseEnter={() => setHoveredCard("esafety")}
                         onMouseLeave={() => setHoveredCard(null)}
                     >
                         <img
                             src={hoveredCard === "esafety" ? ESAFETY_GIF : ESAFETY_STATIC}
                             alt="eSafety Hackathon"
-                            className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                            className="absolute inset-0 h-full w-full object-cover object-center"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60 transition-opacity duration-300 group-hover:opacity-50" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-60" />
                         <div className="absolute bottom-0 left-0 right-0 p-6 text-white z-10">
-                            <h3 className="text-2xl font-bold">eSafety Hackathon</h3>
-                            <p className="mt-2 text-sm text-gray-200 opacity-0 transform translate-y-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+                            <h3 className="text-2xl font-bold">eSafety Hackathon (Coming Soon)</h3>
+                            <p className="mt-2 text-sm text-gray-200">
                                 Building a safer internet for everyone. Innovate for online safety.
                             </p>
                         </div>
-                    </Link>
+                    </div>
                 </div>
             </div>
         </div>

@@ -50,9 +50,8 @@ const navigation = [
   {
     number: "7",
     name: "Login",
-    href: "/platform/login",
+    href: "/hackathons",
     color: "#00ffd7", // Mint (external route - no section)
-    target: "_blank",
   },
 ];
 
@@ -192,8 +191,6 @@ export default function Sidebar() {
               <a
                 key={item.name}
                 href={item.href}
-                target={item.target}
-                rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
                 className={`relative rounded-xl overflow-hidden transition-all duration-300 ease-out ${expanded ? "flex-1 min-h-[60px]" : "flex-none h-6"
                   }`}
                 style={{ backgroundColor: item.color }}
@@ -258,8 +255,6 @@ export default function Sidebar() {
                 <a
                   key={item.name}
                   href={item.href}
-                  target={item.target}
-                  rel={item.target === "_blank" ? "noopener noreferrer" : undefined}
                   className="relative flex items-center rounded-lg px-4 py-4"
                   style={{ backgroundColor: item.color }}
                   onClick={(e) => {

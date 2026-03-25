@@ -1,5 +1,87 @@
+- [x] Fetch latest `origin/main` and `origin/valley-landing-page`
+- [x] Check out `valley-landing-page`
+- [x] Merge `origin/main` into `valley-landing-page` with unrelated histories allowed
+- [x] Resolve shared route, root shell, and package-script merge conflicts
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
 - [x] Populate this list
 - [x] Keep TODO.md updated when multi-step changes, and update as steps are completed
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
 - [x] Update article title/slug constants and registry metadata
 - [x] Adjust SEO config path for the new slug
+- [x] Fix JSX string literal in data science salary article to unblock production build
+- [x] Update the data scientist salary article title and slug to match "How Much Do Data Scientists Make?'"
+- [x] Update pricing article FAQ import to use the app alias for build stability
+- [x] Fix JSX string quoting in the VC firm article CTA body
+- [x] Fix article registry defaults + layout props for Singapore accelerators article to resolve CI typecheck errors
+- [x] Update education article imports to use app alias paths for build consistency
+- [x] Run `bun run build`
+- [x] Standardize ArticleFAQ imports to use the app alias to prevent CI resolution failures
+- [x] Re-run `bun run build`
+- [x] Align pricing article FAQ import path with other featured articles to fix CI build resolution
+- [x] Switch sitemap generation scripts to use bunx so tsx is available in CI
+- [x] Update collaboration tools article slug/title to "what-are-collaboration-tools"
+- [x] Align collaboration tools registry/SEO paths and content filename with new slug
+- [x] Normalize featured article ArticleFAQ imports to use app alias for build stability
+- [x] Replace unsupported ArticleImageBlock caption props with figcaptions in higher education articles
+- [x] Allow ArticleImageBlock captions to satisfy venture capital article typecheck errors
+- [x] Switch pricing article ArticleFAQ import to the app alias to resolve CI build resolution errors
+- [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
+- [x] Fix JSX string quoting in the education negatives article CTA body to unblock CI builds
+- [x] Add explicit testimonial types to allow optional website links for CI typecheck
+- [x] Add new `/roo` public onboarding page route
+- [x] Build custom Roo onboarding page layout and sections
+- [x] Run `bun run typecheck`
+- [x] Align Roo page colours with the sidebar palette
+- [x] Redesign Roo at-a-glance section to match the new reference composition
+- [x] Restyle Roo desktop jump-nav to match the new reference slice
+- [x] Re-run `bun run typecheck`
+- [x] Simplify Roo hero by removing the desktop mint Roo tile
+- [x] Remove hero benefit chips under the CTA row
+- [x] Re-run `bun run typecheck`
+- [x] Fix Roo at-a-glance desktop composition to match the horizontal three-card reference
+- [x] Replace desktop at-a-glance connector layout
+- [x] Re-run `bun run typecheck`
+- [x] Remove Roo Points light info cards
+- [x] Expand Roo Points dark limits panel across the available width
+- [x] Re-run `bun run typecheck`
+- [x] Add full-width image card to the Roo Points section
+- [x] Restyle the How it works section background to use the shared beige palette
+- [x] Restyle the Volunteer work section background to use the shared beige palette
+- [x] Restyle the Pilot rules section background to use the shared beige palette
+- [x] Remove all section eyebrow subtitles from the Roo page
+- [x] Add Roo Points progression messaging for trust, team roles, event hosting, and paid work
+- [x] Audit Roo card contrast and fix dark/light text inheritance issues
+- [x] Get local /roo rendering working for visual verification
+- [x] Match Roo at-a-glance desktop layout to the reference after live checking
+- [x] Re-run `bun run typecheck` and `bun run build`
+- [x] Lift Roo higher in the at-a-glance section
+- [x] Raise the admin card so it overlaps the torso cleanly
+- [x] Re-verify local /roo screenshot against the reference
+- [x] Re-run `bun run typecheck`
+- [x] Move Roo much higher in the at-a-glance section
+- [x] Re-verify the live /roo screenshot after the larger shift
+- [x] Move Roo up another 100px above the admin card
+- [x] Raise the blue floor-glow and tighten the bottom of the at-a-glance section
+- [x] Re-run `bun run typecheck`
+- [x] Reduce the at-a-glance section height so it ends just below the blue card
+- [x] Re-run `bun run typecheck`
+- [x] Move all three at-a-glance cards up onto Roo so his head clears the blue card
+- [x] Reduce the at-a-glance container height so it ends just below the blue card
+- [x] Re-verify the live /roo screenshot after the layout change
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card slightly so Roo's face clears
+- [x] Increase the at-a-glance section height slightly so the full blue card shows with bottom padding
+- [x] Re-verify the live /roo screenshot after the spacing retune
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card further so Roo's face is visible above it
+- [x] Increase the at-a-glance section height again so the full blue card clears with padding
+- [x] Lift Roo within the at-a-glance stage so his face clears the admin card
+- [x] Re-verify the live /roo screenshot after the final stage retune
+- [x] Re-run `bun run typecheck`
+- [x] Increase the at-a-glance stage height a bit more so the full blue card shows
+- [x] Lift Roo a bit more within the at-a-glance stage
+- [x] Re-verify the live /roo screenshot after the extra stage lift
+- [x] Re-run `bun run typecheck`
+- [x] Remove the at-a-glance midline connector lines
+- [x] Re-run `bun run typecheck`
