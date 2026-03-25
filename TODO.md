@@ -1,3 +1,10 @@
+- [x] Add Vibe Raising backend profile/auth helper layer and types
+- [x] Extract reusable Vibe Raising onboarding card component
+- [x] Refactor Vibe Raising routes off `vibe_raising_session` auth
+- [x] Extend shared login and verify-email flow for `app=vibe-raising`
+- [x] Add Vibe Raising CTA to `/hackathons`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
 - [x] Fetch latest `origin/main` and `origin/valley-landing-page`
 - [x] Check out `valley-landing-page`
 - [x] Merge `origin/main` into `valley-landing-page` with unrelated histories allowed

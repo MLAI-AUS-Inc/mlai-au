@@ -1,17 +1,30 @@
 import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
+import { createUser, sendMagicLink, getCurrentUser, type AuthAppName } from "~/lib/auth";
+import { useEffect, useState } from "react";
+import { GradientBackground } from "~/components/GradientBackground";
+import { Field, Input, Label } from "@headlessui/react";
+import { clsx } from "clsx";
+import { getEnv } from "~/lib/env.server";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
     { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
     { name: "robots", content: "noindex, nofollow" },
 ];
-import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
-import { useEffect, useState } from "react";
-import { GradientBackground } from "~/components/GradientBackground";
-import { Field, Input, Label } from "@headlessui/react";
-import { clsx } from "clsx";
-import { getEnv } from "~/lib/env.server";
+
+function getDefaultNext(app: AuthAppName | null | undefined): string {
+    if (app === "hospital") return "/hospital/app";
+    if (app === "esafety") return "/esafety/dashboard";
+    if (app === "vibe-raising") return "/vibe-raising";
+    return "/hackathons";
+}
+
+function parseAuthApp(value: string | null): AuthAppName | null {
+    return value === "esafety" || value === "hospital" || value === "vibe-raising"
+        ? value
+        : null;
+}
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -19,11 +32,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     if (user) {
         const url = new URL(request.url);
-        const app = url.searchParams.get("app");
+        const app = parseAuthApp(url.searchParams.get("app"));
         let next = url.searchParams.get("next");
 
         if (!next) {
-            next = "/hackathons";
+            next = getDefaultNext(app);
         }
 
         return redirect(next);
@@ -36,8 +49,8 @@ export async function action({ request, context }: Route.ActionArgs) {
     const intent = formData.get("intent")?.toString() ?? "check";
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
-    const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
-    const next = formData.get("next")?.toString() ?? "/hackathons";
+    const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
+    const next = formData.get("next")?.toString() ?? getDefaultNext(app ?? null);
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -75,8 +88,8 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
-    const app = searchParams.get("app");
-    const next = searchParams.get("next") || "/hackathons";
+    const app = parseAuthApp(searchParams.get("app"));
+    const next = searchParams.get("next") || getDefaultNext(app);
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -124,7 +137,16 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "vibe-raising") return "Sign in to Vibe Raising";
         return "Welcome!";
+    };
+
+    const getSupportText = () => {
+        if (app === "vibe-raising") {
+            return "Use your MLAI account to open Vibe Raising. We’ll email you a magic link to sign in or create your account.";
+        }
+
+        return "Provide your email to create your account";
     };
 
     return (
@@ -145,7 +167,7 @@ export default function PlatformLogin() {
                         </div>
                         <h1 className="mt-8 text-base/6 font-medium">{getWelcomeText()}</h1>
                         <p className="mt-1 text-sm/5 text-gray-600">
-                            Provide your email to create your account
+                            {getSupportText()}
                         </p>
 
                         {(data?.error || error) && (

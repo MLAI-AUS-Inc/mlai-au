@@ -1,25 +1,34 @@
 import type { Route } from "./+types/vibe-raising-app.companies";
 import { Link, Form, redirect, useNavigation } from "react-router";
-import { requireFounder, getActiveCompany, setActiveCompany, createVibeRaisingSessionCookie } from "~/lib/vibe-raising-session";
+import { getEnv } from "~/lib/env.server";
+import {
+    getActiveVibeRaisingCompany,
+    requireVibeRaisingFounder,
+    setVibeRaisingActiveCompany,
+} from "~/lib/vibe-raising";
 import { PlusIcon, BuildingOffice2Icon, CheckCircleIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = requireFounder(request);
-    const activeCompany = getActiveCompany(user);
-    return { user, activeCompanyId: activeCompany?.id };
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
+    const activeCompany = getActiveVibeRaisingCompany(user);
+    return { user, activeCompanyId: activeCompany?.id ?? null };
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString();
 
     if (intent === "switch-company") {
-        const user = requireFounder(request);
+        const env = getEnv(context);
+        const { appUser: user } = await requireVibeRaisingFounder(env, request);
         const companyId = formData.get("companyId")?.toString() || "";
-        const updatedUser = setActiveCompany(user, companyId);
-        return redirect("/vibe-raising", {
-            headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
-        });
+
+        if (user.companies.some((company) => company.id === companyId) && companyId !== user.activeCompanyId) {
+            await setVibeRaisingActiveCompany(env, request, companyId);
+        }
+
+        return redirect("/vibe-raising");
     }
     
     return null;

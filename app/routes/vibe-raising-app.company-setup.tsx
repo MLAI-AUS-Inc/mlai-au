@@ -1,74 +1,65 @@
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
-import { requireFounder, createVibeRaisingSessionCookie, addCompany, type Company } from "~/lib/vibe-raising-session";
 import { BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon } from "@heroicons/react/24/outline";
+import { getEnv } from "~/lib/env.server";
+import {
+    getActiveVibeRaisingCompany,
+    requireVibeRaisingFounder,
+    saveVibeRaisingCompany,
+    setVibeRaisingActiveCompany,
+} from "~/lib/vibe-raising";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = requireFounder(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const url = new URL(request.url);
     const isAddingNew = url.searchParams.get("new") === "true";
+    const activeCompany = getActiveVibeRaisingCompany(user);
 
     // If not adding a new company and already registered, skip setup
     if (!isAddingNew && user.companyRegistered) {
         throw redirect("/vibe-raising/create-update");
     }
 
-    return { user, isAddingNew };
+    return { user, activeCompany, isAddingNew };
 }
 
-export async function action({ request }: Route.ActionArgs) {
-    const user = requireFounder(request);
+export async function action({ request, context }: Route.ActionArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const url = new URL(request.url);
     const isAddingNew = url.searchParams.get("new") === "true";
     const formData = await request.formData();
+    const activeCompany = getActiveVibeRaisingCompany(user);
 
-    const companyName = formData.get("companyName")?.toString() || user.companyName;
+    const companyName =
+        formData.get("companyName")?.toString() || activeCompany?.name || user.companyName;
     const domain = formData.get("domain")?.toString() || "";
     const abn = formData.get("abn")?.toString() || "";
-
-    if (isAddingNew) {
-        // Adding a new company to the array
-        const newId = `company-${Date.now()}`;
-        const newCompany: Company = {
-            id: newId,
-            name: companyName,
-            domain,
-            abn,
-            registered: true,
-        };
-        const updatedUser = addCompany(user, newCompany);
-        return redirect("/vibe-raising", {
-            headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
-        });
-    }
-
-    // First-time setup: initialize the companies array with this company
-    const companyId = `company-${Date.now()}`;
-    const company: Company = {
-        id: companyId,
+    const companyId = await saveVibeRaisingCompany(env, request, {
+        companyId: isAddingNew ? null : activeCompany?.id ?? null,
         name: companyName,
         domain,
         abn,
         registered: true,
-    };
-
-    const updatedUser = {
-        ...user,
-        companyName,
-        domain,
-        abn,
-        companyRegistered: true,
-        companies: [company],
-        activeCompanyId: companyId,
-    };
-
-    return redirect("/vibe-raising/create-update", {
-        headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
     });
+
+    if (isAddingNew) {
+        if (companyId) {
+            await setVibeRaisingActiveCompany(env, request, companyId);
+        }
+        return redirect("/vibe-raising");
+    }
+
+    if (companyId) {
+        await setVibeRaisingActiveCompany(env, request, companyId);
+    }
+
+    return redirect("/vibe-raising/create-update");
 }
 
 export default function CompanySetup() {
-    const { user, isAddingNew } = useLoaderData<typeof loader>();
+    const { user, activeCompany, isAddingNew } = useLoaderData<typeof loader>();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
 
@@ -103,7 +94,7 @@ export default function CompanySetup() {
                                     type="text"
                                     id="companyName"
                                     name="companyName"
-                                    defaultValue={isAddingNew ? "" : user.companyName}
+                                    defaultValue={isAddingNew ? "" : activeCompany?.name || user.companyName}
                                     placeholder="Acme Inc."
                                     required
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
@@ -122,6 +113,7 @@ export default function CompanySetup() {
                                     type="text"
                                     id="domain"
                                     name="domain"
+                                    defaultValue={isAddingNew ? "" : activeCompany?.domain || ""}
                                     placeholder="example.com.au"
                                     required
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
@@ -140,6 +132,7 @@ export default function CompanySetup() {
                                     type="text"
                                     id="abn"
                                     name="abn"
+                                    defaultValue={isAddingNew ? "" : activeCompany?.abn || ""}
                                     placeholder="51 824 753 556"
                                     required
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"

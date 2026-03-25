@@ -65,6 +65,33 @@ export default function Hackathons() {
                         </div>
                     </div>
                 </div>
+
+                <div className="mx-auto mt-16 max-w-5xl">
+                    <div className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-600 via-indigo-600 to-slate-900 shadow-2xl">
+                        <div className="grid gap-8 px-8 py-10 md:grid-cols-[1.4fr_0.8fr] md:px-12 md:py-12">
+                            <div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-blue-100/80">
+                                    Founder Updates
+                                </p>
+                                <h2 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                                    Open the Vibe Raising app
+                                </h2>
+                                <p className="mt-4 max-w-2xl text-base text-blue-100/90 sm:text-lg">
+                                    Log in with your MLAI account to share monthly founder updates, manage your startup profile, and unlock investor discovery inside Vibe Raising.
+                                </p>
+                            </div>
+
+                            <div className="flex items-center md:justify-end">
+                                <a
+                                    href="/platform/login?app=vibe-raising&next=/vibe-raising"
+                                    className="inline-flex w-full items-center justify-center rounded-2xl bg-white px-6 py-4 text-base font-semibold text-slate-900 shadow-lg transition-transform duration-200 hover:-translate-y-0.5 hover:bg-blue-50 md:w-auto"
+                                >
+                                    Go to Vibe Raising
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

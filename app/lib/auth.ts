@@ -1,6 +1,8 @@
 import { axiosInstance, API_URL } from "./api";
 import axios from "axios";
 
+export type AuthAppName = "esafety" | "hospital" | "vibe-raising";
+
 // Helper to get the base URL from the environment or fall back to the static config
 function getBaseUrl(env: Env): string {
     return env.BACKEND_BASE_URL || API_URL;
@@ -30,10 +32,16 @@ export async function sendMagicLink(env: Env, body: {
     fullName?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
-    app?: "esafety" | "hospital";
+    app?: AuthAppName;
 }) {
     // Derive app from next if not provided
-    const app = body.app || (body.next?.startsWith("/esafety") ? "esafety" : "hospital");
+    const app =
+        body.app ||
+        (body.next?.startsWith("/esafety")
+            ? "esafety"
+            : body.next?.startsWith("/vibe-raising")
+              ? "vibe-raising"
+              : "hospital");
 
     const client = getAxios(env);
     const response = await client.post("/api/v1/auth/send-magic-link/", { ...body, app });
@@ -81,7 +89,7 @@ export async function createUser(env: Env, body: {
     fullName?: string;
     phone?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
-    app?: "esafety" | "hospital";
+    app?: AuthAppName;
 }) {
     const client = getAxios(env);
     const response = await client.post("/api/v1/auth/create-user/", body);

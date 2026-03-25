@@ -1,7 +1,12 @@
 import { Form, Link, useActionData, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
 import React, { useState, useCallback, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
-import { requireFounder, getActiveCompany } from "~/lib/vibe-raising-session";
+import { getEnv } from "~/lib/env.server";
+import {
+    createVibeRaisingSubmittedCookie,
+    getActiveVibeRaisingCompany,
+    requireVibeRaisingFounder,
+} from "~/lib/vibe-raising";
 import {
     XMarkIcon,
     SparklesIcon,
@@ -23,8 +28,9 @@ import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = requireFounder(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
     // Require company registration before creating updates
     if (!user.companyRegistered) {
@@ -53,8 +59,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     return { user, existingData, isEdit: !!editId };
 }
 
-export async function action({ request }: Route.ActionArgs) {
-    const user = requireFounder(request);
+export async function action({ request, context }: Route.ActionArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const formData = await request.formData();
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
@@ -82,10 +89,15 @@ export async function action({ request }: Route.ActionArgs) {
 
     if (intent === "publish") {
         console.log("Publishing update:", updates);
-        const company = getActiveCompany(user);
+        const company = getActiveVibeRaisingCompany(user);
+
+        if (!company) {
+            throw redirect("/vibe-raising/company-setup");
+        }
+
         return redirect("/vibe-raising", {
             headers: {
-                "Set-Cookie": `vibe_submitted_${company.id}=true; Path=/; Max-Age=3600; SameSite=Lax`
+                "Set-Cookie": createVibeRaisingSubmittedCookie(company.id)
             }
         });
     }

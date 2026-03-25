@@ -2,8 +2,13 @@ import { Link, useLoaderData, useOutletContext, useNavigate } from "react-router
 import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
-import { getVibeRaisingUser, getActiveCompany } from "~/lib/vibe-raising-session";
+import {
+    getActiveVibeRaisingCompany,
+    hasSubmittedVibeRaisingUpdate,
+    requireVibeRaisingProfile,
+} from "~/lib/vibe-raising";
 import { clsx } from "clsx";
+import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
     ExclamationTriangleIcon,
@@ -29,13 +34,11 @@ import {
     FireIcon,
 } from "@heroicons/react/24/outline";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = getVibeRaisingUser(request);
-    if (!user) return { user: null, updates: [], portfolioUpdates: [] };
-
-    const cookieHeader = request.headers.get("Cookie") || "";
-    const activeCompany = getActiveCompany(user);
-    const hasSubmitted = cookieHeader.includes(`vibe_submitted_${activeCompany.id}=true`);
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingProfile(env, request);
+    const activeCompany = getActiveVibeRaisingCompany(user);
+    const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, activeCompany?.id);
 
     // Founder Mock Data
     const mockUpdates = hasSubmitted ? [
