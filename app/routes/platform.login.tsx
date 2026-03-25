@@ -29,9 +29,10 @@ function parseAuthApp(value: string | null): AuthAppName | null {
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
+    const url = new URL(request.url);
+    const forceLogin = url.searchParams.get("forceLogin") === "1";
 
-    if (user) {
-        const url = new URL(request.url);
+    if (user && !forceLogin) {
         const app = parseAuthApp(url.searchParams.get("app"));
         let next = url.searchParams.get("next");
 
@@ -90,6 +91,7 @@ export default function PlatformLogin() {
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
     const isVibeRaising = app === "vibe-raising";
+    const forceLogin = searchParams.get("forceLogin") === "1";
     const next = searchParams.get("next") || getDefaultNext(app);
     const error = searchParams.get("error");
     const submit = useSubmit();
@@ -129,6 +131,7 @@ export default function PlatformLogin() {
             formData.append("email", email);
             formData.append("next", next);
             if (app) formData.append("app", app);
+            if (forceLogin) formData.append("forceLogin", "1");
             // We use 'check' intent for resending magic link
             formData.append("intent", "check");
             submit(formData, { method: "post" });
@@ -294,6 +297,7 @@ export default function PlatformLogin() {
 
                                 <input type="hidden" name="next" value={next} />
                                 {app && <input type="hidden" name="app" value={app} />}
+                                {forceLogin && <input type="hidden" name="forceLogin" value="1" />}
 
                                 <div className="mt-8">
                                     <button

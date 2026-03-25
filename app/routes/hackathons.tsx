@@ -86,7 +86,7 @@ export default function Hackathons() {
                                 </p>
 
                                 <a
-                                    href="/platform/login?app=vibe-raising&next=/vibe-raising"
+                                    href="/platform/login?app=vibe-raising&next=/vibe-raising&forceLogin=1"
                                     className="mt-8 inline-flex min-h-14 items-center justify-center rounded-full bg-[var(--brutalist-yellow)] px-7 py-4 text-base font-semibold text-[var(--brutalist-black)] shadow-[0_18px_40px_rgba(254,252,34,0.2)] transition-transform duration-200 hover:scale-[1.02] hover:opacity-95"
                                 >
                                     Go to Vibe Raising

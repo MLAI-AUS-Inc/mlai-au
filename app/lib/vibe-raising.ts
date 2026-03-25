@@ -5,13 +5,21 @@ import { getCurrentUser } from "~/lib/auth";
 import type {
   VibeRaisingAppUser,
   VibeRaisingCompany,
+  VibeRaisingDraftedContent,
   VibeRaisingProfile,
   VibeRaisingRole,
+  VibeRaisingStartupUpdateBootstrapResponse,
+  VibeRaisingStartupUpdateRunSummary,
+  VibeRaisingStartupUpdateState,
+  VibeRaisingStartupUpdateStatusResponse,
 } from "~/types/vibe-raising";
 
 const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
 const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
+const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
+const STARTUP_UPDATE_RUN_PATH = "/api/v1/vibe-raising/startup-update/run/";
+const STARTUP_UPDATE_STATUS_PATH = "/api/v1/vibe-raising/startup-update/status/";
 
 type OptionalContext = {
   authUser: User | null;
@@ -154,6 +162,188 @@ function getCompanyIdFromPayload(raw: unknown): string | null {
     asNullableString(payload.companyId) ??
     asNullableString(payload.company_id)
   );
+}
+
+function normalizeMetrics(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== "object") return {};
+
+  const metrics: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (value === null || value === undefined) continue;
+    const text = String(value).trim();
+    if (!text) continue;
+    metrics[key] = text;
+  }
+  return metrics;
+}
+
+function normalizePastMonthSummary(raw: unknown) {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  return {
+    month: asNullableString(payload.month) ?? "Unknown",
+    highlights: asNullableString(payload.highlights) ?? "",
+    challenges: asNullableString(payload.challenges) ?? "",
+    asks: asNullableString(payload.asks) ?? "",
+    metrics: normalizeMetrics(payload.metrics),
+  };
+}
+
+function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const rawYear = payload.year;
+  let yearValue: number | undefined;
+  if (typeof rawYear === "number" && Number.isFinite(rawYear)) {
+    yearValue = rawYear;
+  } else if (typeof rawYear === "string") {
+    const parsedYear = Number(rawYear.trim());
+    if (Number.isFinite(parsedYear)) {
+      yearValue = parsedYear;
+    }
+  }
+
+  return {
+    month: asNullableString(payload.month) ?? undefined,
+    year: yearValue,
+    highlights: asNullableString(payload.highlights) ?? "",
+    challenges: asNullableString(payload.challenges) ?? "",
+    asks: asNullableString(payload.asks) ?? "",
+    metrics: normalizeMetrics(payload.metrics),
+    pastMonths: Array.isArray(payload.pastMonths)
+      ? payload.pastMonths.map(normalizePastMonthSummary)
+      : [],
+  };
+}
+
+function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const runId =
+    asNullableString(payload.runId) ??
+    asNullableString(payload.run_id);
+  const workflow =
+    asNullableString(payload.workflow) ?? "";
+  const domain =
+    asNullableString(payload.domain) ?? "";
+
+  if (!runId || !workflow || !domain) {
+    return null;
+  }
+
+  return {
+    runId,
+    workflow,
+    domain,
+    status: asNullableString(payload.status) ?? "",
+    currentStep:
+      asNullableString(payload.currentStep) ??
+      asNullableString(payload.current_step),
+    createdAt:
+      asNullableString(payload.createdAt) ??
+      asNullableString(payload.created_at) ??
+      undefined,
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at) ??
+      undefined,
+  };
+}
+
+function normalizeStartupUpdateState(value: unknown): VibeRaisingStartupUpdateState {
+  switch (value) {
+    case "needs_domain":
+    case "needs_google_auth":
+    case "processing":
+    case "ready":
+    case "failed":
+      return value;
+    default:
+      return "failed";
+  }
+}
+
+function getBrowserCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const name = "csrftoken=";
+  const cookies = document.cookie.split(";");
+  for (const cookie of cookies) {
+    const trimmed = cookie.trim();
+    if (trimmed.startsWith(name)) {
+      return decodeURIComponent(trimmed.slice(name.length));
+    }
+  }
+  return null;
+}
+
+function buildAbsoluteBackendUrl(baseUrl: string, path: string): string {
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
+  return new URL(path.replace(/^\//, ""), normalizedBase).toString();
+}
+
+async function requestBrowserJson<T>(
+  backendBaseUrl: string,
+  path: string,
+  init?: RequestInit,
+): Promise<T> {
+  const headers = new Headers(init?.headers);
+  const csrfToken = getBrowserCsrfToken();
+  if (csrfToken) {
+    headers.set("X-CSRFToken", csrfToken);
+  }
+
+  if (init?.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(buildAbsoluteBackendUrl(backendBaseUrl, path), {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+
+  const text = await response.text();
+  let data: any = null;
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
+
+  if (!response.ok) {
+    const error: any = new Error(
+      data?.error ??
+        data?.detail ??
+        (typeof data === "string" && data) ??
+        `Request failed with status ${response.status}`,
+    );
+    error.status = response.status;
+    error.data = data;
+    throw error;
+  }
+
+  return data as T;
+}
+
+function normalizeStartupUpdateStatus(
+  raw: unknown,
+): VibeRaisingStartupUpdateStatusResponse {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  return {
+    state: normalizeStartupUpdateState(payload.state),
+    googleConnected: Boolean(
+      payload.googleConnected ?? payload.google_connected,
+    ),
+    company: payload.company ? normalizeCompany(payload.company) : null,
+    run: normalizeStartupUpdateRun(payload.run),
+    draft: normalizeDraftedContent(payload.draft),
+    error:
+      asNullableString(payload.error) ??
+      asNullableString(payload.detail),
+  };
 }
 
 export function getActiveVibeRaisingCompany(
@@ -353,4 +543,66 @@ export async function setVibeRaisingActiveCompany(
 ): Promise<void> {
   const client = createApiClient(env, request);
   await client.post(ACTIVE_COMPANY_PATH, { companyId });
+}
+
+export async function bootstrapVibeRaisingStartupUpdate(
+  backendBaseUrl: string,
+): Promise<VibeRaisingStartupUpdateBootstrapResponse> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    STARTUP_UPDATE_BOOTSTRAP_PATH,
+    { method: "POST" },
+  );
+
+  return {
+    googleConnected: Boolean(
+      response.googleConnected ?? response.google_connected,
+    ),
+    company: response.company ? normalizeCompany(response.company) : null,
+    binding:
+      response.binding && typeof response.binding === "object"
+        ? {
+            organizationId: Number(
+              (response.binding as Record<string, unknown>).organizationId ??
+                (response.binding as Record<string, unknown>).organization_id ??
+                0,
+            ),
+            organizationDomain:
+              asNullableString(
+                (response.binding as Record<string, unknown>).organizationDomain,
+              ) ??
+              asNullableString(
+                (response.binding as Record<string, unknown>).organization_domain,
+              ) ??
+              "",
+            isDefaultForGmail: Boolean(
+              (response.binding as Record<string, unknown>).isDefaultForGmail ??
+                (response.binding as Record<string, unknown>).is_default_for_gmail,
+            ),
+          }
+        : null,
+    oauthUrl: asNullableString(response.oauthUrl) ?? "",
+  };
+}
+
+export async function runVibeRaisingStartupUpdate(
+  backendBaseUrl: string,
+): Promise<VibeRaisingStartupUpdateStatusResponse> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    STARTUP_UPDATE_RUN_PATH,
+    { method: "POST" },
+  );
+  return normalizeStartupUpdateStatus(response);
+}
+
+export async function getVibeRaisingStartupUpdateStatus(
+  backendBaseUrl: string,
+): Promise<VibeRaisingStartupUpdateStatusResponse> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    STARTUP_UPDATE_STATUS_PATH,
+    { method: "GET" },
+  );
+  return normalizeStartupUpdateStatus(response);
 }

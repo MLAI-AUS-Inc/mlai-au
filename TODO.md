@@ -1,3 +1,20 @@
+- [x] Wire Vibe Raising create-update Gmail button to real mlai-backend Google OAuth
+- [x] Add Vibe Raising startup-update bootstrap/run/status backend wrappers
+- [x] Replace mocked email drafting flow with OAuth return + draft polling
+- [x] Add backend tests for Vibe Raising startup-update endpoints and Gmail OAuth origin handling
+- [x] Run backend SQLite test pass for `vibe_raising.tests` and `integrations.tests_gmail_oauth`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build` and note the existing IndexNow 403 tail
+- [x] Restore the public Vibe Raising landing page at `/vibe-raising-landing`
+- [x] Keep `/vibe-raising` reserved for the authenticated app and add app-side `noindex`
+- [x] Update public FounderTools Vibe Raising links to the restored landing page
+- [x] Run `bun run typecheck`
+- [x] Stop the `/vibe-raising` self-redirect loop for first-time users after magic-link login
+- [x] Re-test `/verify-email -> /vibe-raising` with an incomplete Vibe Raising profile
+- [x] Run `bun run typecheck`
+- [x] Allow the Vibe Raising login page to bypass auto-redirect when opened from `/hackathons`
+- [x] Update the hackathons CTA to force the login screen instead of jumping straight to `/vibe-raising`
+- [x] Run `bun run typecheck`
 - [x] Diagnose Vibe Raising magic-link callback failure
 - [x] Apply missing backend Vibe Raising migration to local DB
 - [x] Re-test verify-email and profile flow

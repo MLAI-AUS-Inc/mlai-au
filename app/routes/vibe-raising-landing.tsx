@@ -15,24 +15,25 @@ import {
     Lightbulb,
     Target
 } from "lucide-react";
+import type { Route } from "./+types/vibe-raising-landing";
 
 const PAGE_TITLE = 'Vibe Raising: Unlock Capital with Monthly Founder Updates.';
 const PAGE_DESCRIPTION =
     'Regular, authentic updates are crucial for keeping investors engaged and informed about your progress.';
 
-export function meta() {
+export function meta({ }: Route.MetaArgs) {
     return [
         { title: 'Vibe Raising | MLAI Community' },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising" },
+        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising-landing" },
     ];
 }
 
-export async function loader() {
+export async function loader({ }: Route.LoaderArgs) {
     return {};
 }
 
-export default function VibeRaisingPage() {
+export default function VibeRaisingPage({ }: Route.ComponentProps) {
     const [activeTab, setActiveTab] = useState<'investors' | 'founders'>('investors');
 
     return (

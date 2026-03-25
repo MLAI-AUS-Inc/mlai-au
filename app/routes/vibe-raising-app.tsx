@@ -35,6 +35,10 @@ const INVESTOR_NAVIGATION = [
   { name: "Connections", href: "/vibe-raising/discover", icon: UsersIcon },
 ];
 
+export const meta: Route.MetaFunction = () => [
+  { name: "robots", content: "noindex, nofollow" },
+];
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const vibeContext = await getOptionalVibeRaisingContext(env, request);

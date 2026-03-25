@@ -1,11 +1,12 @@
-import { Link, useLoaderData, useOutletContext, useNavigate } from "react-router";
+import { Link, redirect, useLoaderData, useOutletContext, useNavigate } from "react-router";
 import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
     getActiveVibeRaisingCompany,
+    getOptionalVibeRaisingContext,
+    getVibeRaisingLoginHref,
     hasSubmittedVibeRaisingUpdate,
-    requireVibeRaisingProfile,
 } from "~/lib/vibe-raising";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
@@ -36,7 +37,17 @@ import {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const { appUser: user } = await requireVibeRaisingProfile(env, request);
+    const vibeContext = await getOptionalVibeRaisingContext(env, request);
+
+    if (!vibeContext.authUser) {
+        throw redirect(getVibeRaisingLoginHref(request));
+    }
+
+    if (!vibeContext.appUser) {
+        return null;
+    }
+
+    const user = vibeContext.appUser;
     const activeCompany = getActiveVibeRaisingCompany(user);
     const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, activeCompany?.id);
 
@@ -795,7 +806,13 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
 }
 
 export default function VibeRaisingHome() {
-    const { user, updates, portfolioUpdates } = useLoaderData<typeof loader>();
+    const data = useLoaderData<typeof loader>();
+
+    if (!data) {
+        return null;
+    }
+
+    const { user, updates, portfolioUpdates } = data;
     if (!user) return null;
 
     if (user.role === 'investor') {

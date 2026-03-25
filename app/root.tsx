@@ -50,7 +50,9 @@ export default function Layout() {
   // Hide the global chrome inside authenticated app surfaces.
   const isEsafetyApp = location.pathname.startsWith("/esafety");
   const isHospitalApp = location.pathname.startsWith("/hospital/app");
-  const isVibeRaisingApp = location.pathname.startsWith("/vibe-raising");
+  const isVibeRaisingApp =
+    location.pathname === "/vibe-raising" ||
+    location.pathname.startsWith("/vibe-raising/");
   const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
 
   return (

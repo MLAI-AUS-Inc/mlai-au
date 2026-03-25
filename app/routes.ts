@@ -55,6 +55,9 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
+  // Vibe Raising public landing
+  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx"),
+
   // Vibe Raising App routes
   route("/vibe-raising", "routes/vibe-raising-app.tsx", [
     index("routes/vibe-raising-app._index.tsx"),

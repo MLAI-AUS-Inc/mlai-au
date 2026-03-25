@@ -1,4 +1,4 @@
-import { Form, Link, useActionData, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
+import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
 import React, { useState, useCallback, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
@@ -40,6 +40,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Check for edit mode
     const url = new URL(request.url);
     const editId = url.searchParams.get("edit");
+    const resumeEmailDrafting = url.searchParams.get("draft_from_email") === "1";
 
     let existingData = null;
     if (editId) {
@@ -56,7 +57,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         };
     }
 
-    return { user, existingData, isEdit: !!editId };
+    return {
+        user,
+        existingData,
+        isEdit: !!editId,
+        backendBaseUrl: String(env.BACKEND_BASE_URL || "http://localhost:8000"),
+        resumeEmailDrafting,
+    };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -559,9 +566,16 @@ function GrowthChart({
 }
 
 export default function CreateUpdate() {
-    const { user, existingData, isEdit } = useLoaderData<typeof loader>();
+    const {
+        user,
+        existingData,
+        isEdit,
+        backendBaseUrl,
+        resumeEmailDrafting,
+    } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
+    const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
@@ -582,7 +596,7 @@ export default function CreateUpdate() {
     const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
 
     // State declarations
-    const [showEmailWizard, setShowEmailWizard] = useState(false);
+    const [showEmailWizard, setShowEmailWizard] = useState(resumeEmailDrafting);
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -637,11 +651,50 @@ export default function CreateUpdate() {
         })));
         
         const newMetrics = new Set<string>();
-        Object.keys(data.metrics).forEach(key => {
+        Object.keys(data.metrics || {}).forEach(key => {
             if (data.metrics[key]) newMetrics.add(key);
         });
-        setSelectedMetrics(newMetrics);
+        setSelectedMetrics(newMetrics.size > 0 ? newMetrics : new Set(["revenue"]));
     };
+
+    const clearEmailDraftingParams = useCallback(() => {
+        const params = new URLSearchParams(location.search);
+        let changed = false;
+
+        ["gmail_connected", "draft_from_email"].forEach((key) => {
+            if (params.has(key)) {
+                params.delete(key);
+                changed = true;
+            }
+        });
+
+        if (!changed) return;
+
+        const nextSearch = params.toString();
+        navigate(
+            `${location.pathname}${nextSearch ? `?${nextSearch}` : ""}`,
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
+
+    const handleEmailWizardClose = useCallback(() => {
+        setShowEmailWizard(false);
+        if (resumeEmailDrafting) {
+            clearEmailDraftingParams();
+        }
+    }, [clearEmailDraftingParams, resumeEmailDrafting]);
+
+    const handleEmailDraftComplete = useCallback((data: any) => {
+        handleDraftComplete(data);
+        setShowEmailWizard(false);
+        clearEmailDraftingParams();
+    }, [clearEmailDraftingParams, handleDraftComplete]);
+
+    useEffect(() => {
+        if (resumeEmailDrafting) {
+            setShowEmailWizard(true);
+        }
+    }, [resumeEmailDrafting]);
 
     const resumeDraft = () => {
         try {
@@ -1748,8 +1801,11 @@ export default function CreateUpdate() {
 
             <DraftFromEmailWizard
                 isOpen={showEmailWizard}
-                onClose={() => setShowEmailWizard(false)}
-                onDraftComplete={handleDraftComplete}
+                onClose={handleEmailWizardClose}
+                onDraftComplete={handleEmailDraftComplete}
+                backendBaseUrl={backendBaseUrl}
+                companyDomain={user.domain}
+                resumeAfterGoogleAuth={resumeEmailDrafting}
             />
         </div>
     );
