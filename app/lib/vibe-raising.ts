@@ -345,7 +345,6 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     asks: asNullableString(payload.asks) ?? "",
   };
 }
-
 function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSummary | null {
   if (!raw || typeof raw !== "object") return null;
 
