@@ -2,7 +2,6 @@ import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
-  EnvelopeIcon,
   SparklesIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -28,7 +27,7 @@ interface DraftFromEmailWizardProps {
 }
 
 type WizardStep = "provider" | "drafting";
-type Provider = "gmail" | "outlook";
+type Provider = "gmail";
 
 const DEFAULT_DRAFTING_MESSAGE =
   "AI is scanning your recent emails and drafting your investor update.";
@@ -78,7 +77,7 @@ function ProviderStep({
         We&apos;ll scan your recent emails to draft your investor update.
       </p>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <button
           type="button"
           onClick={onConnectGmail}
@@ -114,19 +113,7 @@ function ProviderStep({
             </svg>
           )}
           <span className="font-bold text-gray-900">
-            {gmailBusy ? "Redirecting..." : "Gmail"}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          disabled
-          className="relative flex cursor-not-allowed flex-col items-center gap-4 rounded-xl border-2 border-gray-200 bg-gray-50 p-6 opacity-70"
-        >
-          <EnvelopeIcon className="h-12 w-12 text-blue-600" />
-          <span className="font-bold text-gray-900">Outlook</span>
-          <span className="text-xs font-medium uppercase tracking-[0.24em] text-gray-400">
-            Coming soon
+            {gmailBusy ? "Connecting..." : "Continue with Gmail"}
           </span>
         </button>
       </div>
@@ -201,14 +188,16 @@ export default function DraftFromEmailWizard({
 
   const handleStatus = useCallback(
     (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
-      if (statusResponse.state === "ready" && statusResponse.draft) {
+      if (statusResponse.state === "completed" && statusResponse.draft) {
         onDraftComplete(statusResponse.draft);
         return false;
       }
 
-      if (statusResponse.state === "processing") {
+      if (statusResponse.state === "queued" || statusResponse.state === "running") {
         setStep("drafting");
-        setStatusMessage(formatRunStep(statusResponse.run?.currentStep));
+        setStatusMessage(
+          formatRunStep(statusResponse.currentStep ?? statusResponse.run?.currentStep),
+        );
         return true;
       }
 
@@ -217,7 +206,7 @@ export default function DraftFromEmailWizard({
         statusResponse.error ??
           (statusResponse.state === "needs_domain"
             ? "Add a company domain before connecting Gmail."
-            : statusResponse.state === "needs_google_auth"
+            : statusResponse.state === "auth_required"
               ? "Reconnect Gmail to continue drafting from email."
               : "We couldn't draft your update from Gmail. Please try again."),
       );
