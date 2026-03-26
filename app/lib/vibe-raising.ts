@@ -6,10 +6,12 @@ import type {
   VibeRaisingAppUser,
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
+  VibeRaisingEmailDraftMonth,
   VibeRaisingProfile,
   VibeRaisingRole,
   VibeRaisingStartupUpdateBootstrapResponse,
   VibeRaisingStartupUpdateRunSummary,
+  VibeRaisingStartupUpdateStepState,
   VibeRaisingStartupUpdateState,
   VibeRaisingStartupUpdateStatusResponse,
 } from "~/types/vibe-raising";
@@ -18,8 +20,8 @@ const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
 const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
-const STARTUP_UPDATE_RUN_PATH = "/api/v1/vibe-raising/startup-update/run/";
-const STARTUP_UPDATE_STATUS_PATH = "/api/v1/vibe-raising/startup-update/status/";
+const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
+const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
 
 type OptionalContext = {
   authUser: User | null;
@@ -216,6 +218,73 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   };
 }
 
+function normalizeStepStates(raw: unknown): Record<string, VibeRaisingStartupUpdateStepState> {
+  if (!raw || typeof raw !== "object") return {};
+
+  const normalized: Record<string, VibeRaisingStartupUpdateStepState> = {};
+  for (const [stepKey, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (!value || typeof value !== "object") continue;
+    const payload = value as Record<string, unknown>;
+    normalized[stepKey] = {
+      name: asNullableString(payload.name) ?? stepKey,
+      required: Boolean(payload.required),
+      status: asNullableString(payload.status) ?? "",
+      attempts:
+        typeof payload.attempts === "number" && Number.isFinite(payload.attempts)
+          ? payload.attempts
+          : Number(payload.attempts ?? 0) || 0,
+      message: asNullableString(payload.message),
+      startedAt:
+        asNullableString(payload.startedAt) ??
+        asNullableString(payload.started_at),
+      completedAt:
+        asNullableString(payload.completedAt) ??
+        asNullableString(payload.completed_at),
+      error: asNullableString(payload.error),
+      artifacts: Array.isArray(payload.artifacts) ? payload.artifacts : [],
+    };
+  }
+
+  return normalized;
+}
+
+function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const month = asNullableString(payload.month);
+  if (!month) return null;
+
+  const rawDraftId = payload.draftId ?? payload.draft_id;
+  const draftId =
+    typeof rawDraftId === "number" && Number.isFinite(rawDraftId)
+      ? rawDraftId
+      : typeof rawDraftId === "string" && rawDraftId.trim()
+        ? Number(rawDraftId)
+        : undefined;
+  const rawYear = payload.year;
+  const year =
+    typeof rawYear === "number" && Number.isFinite(rawYear)
+      ? rawYear
+      : typeof rawYear === "string" && rawYear.trim()
+        ? Number(rawYear)
+        : undefined;
+
+  return {
+    draftId: typeof draftId === "number" && Number.isFinite(draftId) ? draftId : undefined,
+    isoMonth:
+      asNullableString(payload.isoMonth) ??
+      asNullableString(payload.iso_month) ??
+      undefined,
+    month,
+    year: typeof year === "number" && Number.isFinite(year) ? year : undefined,
+    highlights: asNullableString(payload.highlights) ?? "",
+    challenges: asNullableString(payload.challenges) ?? "",
+    asks: asNullableString(payload.asks) ?? "",
+    metrics: normalizeMetrics(payload.metrics),
+  };
+}
+
 function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSummary | null {
   if (!raw || typeof raw !== "object") return null;
 
@@ -248,17 +317,30 @@ function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSum
       asNullableString(payload.updatedAt) ??
       asNullableString(payload.updated_at) ??
       undefined,
+    stepStates: normalizeStepStates(
+      payload.stepStates ??
+        payload.step_states,
+    ),
   };
 }
 
 function normalizeStartupUpdateState(value: unknown): VibeRaisingStartupUpdateState {
   switch (value) {
     case "needs_domain":
+      return "needs_domain";
+    case "auth_required":
     case "needs_google_auth":
+      return "auth_required";
+    case "queued":
+      return "queued";
+    case "running":
     case "processing":
+      return "running";
+    case "completed":
     case "ready":
+      return "completed";
     case "failed":
-      return value;
+      return "failed";
     default:
       return "failed";
   }
@@ -332,14 +414,60 @@ function normalizeStartupUpdateStatus(
   raw: unknown,
 ): VibeRaisingStartupUpdateStatusResponse {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const currentMonth =
+    normalizeEmailDraftMonth(payload.currentMonth) ??
+    normalizeEmailDraftMonth(payload.current_month);
+  const rawPastMonths = payload.pastMonths ?? payload.past_months;
+  const pastMonths = Array.isArray(rawPastMonths)
+    ? rawPastMonths
+        .map(normalizeEmailDraftMonth)
+        .filter((value): value is VibeRaisingEmailDraftMonth => value !== null)
+    : [];
+  const run = normalizeStartupUpdateRun(payload.run ?? payload);
+  const draft =
+    normalizeDraftedContent(payload.draft) ??
+    normalizeDraftedContent({
+      ...(currentMonth ?? {}),
+      pastMonths,
+    });
+  const topLevelStepStates = normalizeStepStates(
+    payload.stepStates ??
+      payload.step_states,
+  );
   return {
     state: normalizeStartupUpdateState(payload.state),
-    googleConnected: Boolean(
-      payload.googleConnected ?? payload.google_connected,
+    gmailConnected: Boolean(
+      payload.gmailConnected ??
+        payload.gmail_connected ??
+        payload.googleConnected ??
+        payload.google_connected,
     ),
+    authUrl:
+      asNullableString(payload.authUrl) ??
+      asNullableString(payload.auth_url),
     company: payload.company ? normalizeCompany(payload.company) : null,
-    run: normalizeStartupUpdateRun(payload.run),
-    draft: normalizeDraftedContent(payload.draft),
+    run,
+    draft,
+    runId:
+      asNullableString(payload.runId) ??
+      asNullableString(payload.run_id) ??
+      run?.runId ??
+      null,
+    status:
+      asNullableString(payload.status) ??
+      run?.status ??
+      null,
+    currentStep:
+      asNullableString(payload.currentStep) ??
+      asNullableString(payload.current_step) ??
+      run?.currentStep ??
+      null,
+    stepStates:
+      Object.keys(topLevelStepStates).length > 0
+        ? topLevelStepStates
+        : (run?.stepStates ?? {}),
+    currentMonth,
+    pastMonths,
     error:
       asNullableString(payload.error) ??
       asNullableString(payload.detail),
@@ -581,7 +709,10 @@ export async function bootstrapVibeRaisingStartupUpdate(
             ),
           }
         : null,
-    oauthUrl: asNullableString(response.oauthUrl) ?? "",
+    oauthUrl:
+      asNullableString(response.oauthUrl) ??
+      asNullableString(response.oauth_url) ??
+      "",
   };
 }
 
@@ -590,7 +721,7 @@ export async function runVibeRaisingStartupUpdate(
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
-    STARTUP_UPDATE_RUN_PATH,
+    EMAIL_DRAFT_START_PATH,
     { method: "POST" },
   );
   return normalizeStartupUpdateStatus(response);
@@ -601,7 +732,7 @@ export async function getVibeRaisingStartupUpdateStatus(
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
-    STARTUP_UPDATE_STATUS_PATH,
+    EMAIL_DRAFT_STATUS_PATH,
     { method: "GET" },
   );
   return normalizeStartupUpdateStatus(response);
