@@ -52,10 +52,23 @@ export interface VibeRaisingDraftedContent {
 
 export type VibeRaisingStartupUpdateState =
   | "needs_domain"
-  | "needs_google_auth"
-  | "processing"
-  | "ready"
+  | "auth_required"
+  | "queued"
+  | "running"
+  | "completed"
   | "failed";
+
+export interface VibeRaisingStartupUpdateStepState {
+  name: string;
+  required: boolean;
+  status: string;
+  attempts: number;
+  message?: string | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  error?: string | null;
+  artifacts?: unknown[];
+}
 
 export interface VibeRaisingStartupUpdateBindingSummary {
   organizationId: number;
@@ -69,8 +82,20 @@ export interface VibeRaisingStartupUpdateRunSummary {
   domain: string;
   status: string;
   currentStep?: string | null;
+  stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface VibeRaisingEmailDraftMonth {
+  draftId?: number;
+  isoMonth?: string;
+  month: string;
+  year?: number;
+  highlights: string;
+  challenges: string;
+  asks: string;
+  metrics?: Record<string, string>;
 }
 
 export interface VibeRaisingStartupUpdateBootstrapResponse {
@@ -82,9 +107,16 @@ export interface VibeRaisingStartupUpdateBootstrapResponse {
 
 export interface VibeRaisingStartupUpdateStatusResponse {
   state: VibeRaisingStartupUpdateState;
-  googleConnected: boolean;
+  gmailConnected: boolean;
+  authUrl?: string | null;
   company: VibeRaisingCompany | null;
   run: VibeRaisingStartupUpdateRunSummary | null;
   draft: VibeRaisingDraftedContent | null;
+  runId?: string | null;
+  status?: string | null;
+  currentStep?: string | null;
+  stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
+  currentMonth?: VibeRaisingEmailDraftMonth | null;
+  pastMonths: VibeRaisingEmailDraftMonth[];
   error?: string | null;
 }

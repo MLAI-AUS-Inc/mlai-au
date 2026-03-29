@@ -1,3 +1,11 @@
+- [x] Verify `/vibe-raising/create-update` still returns `200` with an authenticated founder session
+- [x] Confirm `/api/v1/vibe-raising/profile/` returns `200` for the current founder profile
+- [x] Redact auth cookies from frontend API debug logging
+- [x] Run `bun run typecheck`
+- [x] Diagnose Vibe Raising Gmail draft 404 against the live backend route list
+- [x] Point the create-update Gmail flow at `startup-update/bootstrap|run|status` instead of stale `email-draft/*`
+- [x] Run `bun run typecheck`
+- [x] Run `bunx react-router build`
 - [x] Wire Vibe Raising create-update Gmail button to real mlai-backend Google OAuth
 - [x] Add Vibe Raising startup-update bootstrap/run/status backend wrappers
 - [x] Replace mocked email drafting flow with OAuth return + draft polling

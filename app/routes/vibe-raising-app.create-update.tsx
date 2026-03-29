@@ -40,7 +40,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     // Check for edit mode
     const url = new URL(request.url);
     const editId = url.searchParams.get("edit");
-    const resumeEmailDrafting = url.searchParams.get("draft_from_email") === "1";
+    const resumeEmailDrafting =
+        url.searchParams.get("email_draft") === "1" ||
+        url.searchParams.get("draft_from_email") === "1";
 
     let existingData = null;
     if (editId) {
@@ -596,7 +598,8 @@ export default function CreateUpdate() {
     const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
 
     // State declarations
-    const [showEmailWizard, setShowEmailWizard] = useState(resumeEmailDrafting);
+    const [isClientMounted, setIsClientMounted] = useState(false);
+    const [showEmailWizard, setShowEmailWizard] = useState(false);
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -633,6 +636,7 @@ export default function CreateUpdate() {
         if (initial.size === 0) initial.add("revenue");
         return initial;
     });
+    const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
 
     const handleDraftComplete = (data: any) => {
         if (data.month) setSelectedMonth(data.month);
@@ -661,7 +665,7 @@ export default function CreateUpdate() {
         const params = new URLSearchParams(location.search);
         let changed = false;
 
-        ["gmail_connected", "draft_from_email"].forEach((key) => {
+        ["gmail_connected", "draft_from_email", "email_draft"].forEach((key) => {
             if (params.has(key)) {
                 params.delete(key);
                 changed = true;
@@ -691,10 +695,15 @@ export default function CreateUpdate() {
     }, [clearEmailDraftingParams, handleDraftComplete]);
 
     useEffect(() => {
+        setIsClientMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!isClientMounted) return;
         if (resumeEmailDrafting) {
             setShowEmailWizard(true);
         }
-    }, [resumeEmailDrafting]);
+    }, [isClientMounted, resumeEmailDrafting]);
 
     const resumeDraft = () => {
         try {
@@ -1399,23 +1408,45 @@ export default function CreateUpdate() {
                 {/* ─── Draft from Email Banner ─── */}
                 <button
                     type="button"
-                    onClick={() => setShowEmailWizard(true)}
-                    className="w-full bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100 p-8 shadow-sm overflow-hidden relative group hover:shadow-md hover:border-purple-200 transition-all cursor-pointer text-left"
+                    onClick={() => {
+                        if (canGenerateDraftFromEmail) {
+                            setShowEmailWizard(true);
+                            return;
+                        }
+                        navigate("/vibe-raising/companies");
+                    }}
+                    className={clsx(
+                        "w-full rounded-2xl border p-8 shadow-sm overflow-hidden relative text-left transition-all",
+                        canGenerateDraftFromEmail
+                            ? "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100 group hover:shadow-md hover:border-purple-200 cursor-pointer"
+                            : "bg-gray-50 border-gray-200 cursor-pointer hover:border-gray-300",
+                    )}
                 >
-                    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-purple-200/20 blur-3xl rounded-full" />
+                    <div className={clsx(
+                        "absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 blur-3xl rounded-full",
+                        canGenerateDraftFromEmail ? "bg-purple-200/20" : "bg-gray-300/20",
+                    )} />
                     <div className="relative z-10 flex items-center gap-5">
-                        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                            <SparklesIcon className="w-7 h-7 text-purple-600" />
+                        <div className={clsx(
+                            "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
+                            canGenerateDraftFromEmail ? "bg-purple-100 group-hover:bg-purple-200" : "bg-gray-200",
+                        )}>
+                            <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
                         </div>
                         <div className="flex-1">
                             <h2 className="text-lg font-bold text-gray-900">
                                 Generate Draft from Email
                             </h2>
                             <p className="text-sm text-gray-500 mt-0.5">
-                                Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds.
+                                {canGenerateDraftFromEmail
+                                    ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
+                                    : "Add a company domain first so Gmail emails can be matched to the right startup."}
                             </p>
                         </div>
-                        <ArrowRightIcon className="w-5 h-5 text-purple-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
+                        <ArrowRightIcon className={clsx(
+                            "w-5 h-5 transition-transform flex-shrink-0",
+                            canGenerateDraftFromEmail ? "text-purple-400 group-hover:translate-x-1" : "text-gray-400",
+                        )} />
                     </div>
                 </button>
 
@@ -1799,14 +1830,16 @@ export default function CreateUpdate() {
 
             </Form>
 
-            <DraftFromEmailWizard
-                isOpen={showEmailWizard}
-                onClose={handleEmailWizardClose}
-                onDraftComplete={handleEmailDraftComplete}
-                backendBaseUrl={backendBaseUrl}
-                companyDomain={user.domain}
-                resumeAfterGoogleAuth={resumeEmailDrafting}
-            />
+            {isClientMounted ? (
+                <DraftFromEmailWizard
+                    isOpen={showEmailWizard}
+                    onClose={handleEmailWizardClose}
+                    onDraftComplete={handleEmailDraftComplete}
+                    backendBaseUrl={backendBaseUrl}
+                    companyDomain={user.domain}
+                    resumeAfterGoogleAuth={resumeEmailDrafting}
+                />
+            ) : null}
         </div>
     );
 }
