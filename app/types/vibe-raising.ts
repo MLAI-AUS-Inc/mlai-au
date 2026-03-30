@@ -71,8 +71,10 @@ export interface VibeRaisingStartupUpdateStepState {
 }
 
 export interface VibeRaisingStartupUpdateBindingSummary {
+  id?: number;
   organizationId: number;
   organizationDomain: string;
+  googleConnectionId?: number | null;
   isDefaultForGmail: boolean;
 }
 
@@ -82,9 +84,23 @@ export interface VibeRaisingStartupUpdateRunSummary {
   domain: string;
   status: string;
   currentStep?: string | null;
+  stepOrder?: string[];
   stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface VibeRaisingStartupUpdateRunProgress {
+  runId: string;
+  status: string;
+  currentStep?: string | null;
+  completedSteps: number;
+  totalSteps: number;
+  displayStage: string;
+  lastHeartbeatAt?: string | null;
+  canRetry: boolean;
+  terminalState?: string | null;
+  generatedDraftMonths: string[];
 }
 
 export interface VibeRaisingEmailDraftMonth {
@@ -110,13 +126,31 @@ export interface VibeRaisingStartupUpdateStatusResponse {
   gmailConnected: boolean;
   authUrl?: string | null;
   company: VibeRaisingCompany | null;
+  binding?: VibeRaisingStartupUpdateBindingSummary | null;
   run: VibeRaisingStartupUpdateRunSummary | null;
+  progress: VibeRaisingStartupUpdateRunProgress | null;
   draft: VibeRaisingDraftedContent | null;
   runId?: string | null;
   status?: string | null;
   currentStep?: string | null;
   stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
+  completedSteps: number;
+  totalSteps: number;
+  displayStage?: string | null;
+  lastHeartbeatAt?: string | null;
+  canRetry: boolean;
+  terminalState?: string | null;
+  generatedDraftMonths: string[];
+  reusedExistingRun?: boolean;
   currentMonth?: VibeRaisingEmailDraftMonth | null;
   pastMonths: VibeRaisingEmailDraftMonth[];
   error?: string | null;
+}
+
+export interface VibeRaisingDraftResultsResponse {
+  runId?: string | null;
+  draft: VibeRaisingDraftedContent | null;
+  currentMonth?: VibeRaisingEmailDraftMonth | null;
+  pastMonths: VibeRaisingEmailDraftMonth[];
+  months: VibeRaisingEmailDraftMonth[];
 }

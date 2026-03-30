@@ -1,47 +1,24 @@
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
-  SparklesIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 import { Spinner } from "~/components/ui/Spinner";
 import {
   bootstrapVibeRaisingStartupUpdate,
-  getVibeRaisingStartupUpdateStatus,
-  runVibeRaisingStartupUpdate,
 } from "~/lib/vibe-raising";
-import type {
-  VibeRaisingDraftedContent,
-  VibeRaisingStartupUpdateStatusResponse,
-} from "~/types/vibe-raising";
 
 interface DraftFromEmailWizardProps {
   isOpen: boolean;
   onClose: () => void;
-  onDraftComplete: (content: VibeRaisingDraftedContent) => void;
+  onGoogleConnected?: () => void;
   backendBaseUrl: string;
   companyDomain?: string | null;
-  resumeAfterGoogleAuth?: boolean;
 }
 
-type WizardStep = "provider" | "drafting";
 type Provider = "gmail";
-
-const DEFAULT_DRAFTING_MESSAGE =
-  "AI is scanning your recent emails and drafting your investor update.";
-const POLL_INTERVAL_MS = 2500;
-const MAX_POLL_ATTEMPTS = 60;
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function formatRunStep(step?: string | null) {
-  if (!step) return DEFAULT_DRAFTING_MESSAGE;
-  return `Working through ${step.replace(/_/g, " ")}.`;
-}
 
 function getErrorMessage(error: unknown) {
   const payload = (error as { data?: { error?: string; detail?: string } })?.data;
@@ -56,15 +33,11 @@ function ProviderStep({
   connectingProvider,
   errorMessage,
   onConnectGmail,
-  onRetryDraft,
-  resumeAfterGoogleAuth,
 }: {
   companyDomain?: string | null;
   connectingProvider: Provider | null;
   errorMessage: string | null;
   onConnectGmail: () => void;
-  onRetryDraft: () => void;
-  resumeAfterGoogleAuth?: boolean;
 }) {
   const gmailBusy = connectingProvider === "gmail";
 
@@ -133,33 +106,6 @@ function ProviderStep({
           {errorMessage}
         </div>
       )}
-
-      {resumeAfterGoogleAuth && errorMessage && (
-        <button
-          type="button"
-          onClick={onRetryDraft}
-          className="mt-4 inline-flex items-center rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
-        >
-          Retry draft generation
-        </button>
-      )}
-    </div>
-  );
-}
-
-function DraftingStep({ statusMessage }: { statusMessage: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center py-16">
-      <div className="relative mb-6">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-purple-100">
-          <SparklesIcon className="h-8 w-8 animate-pulse text-purple-600" />
-        </div>
-      </div>
-      <p className="mb-2 text-lg font-bold text-gray-900">Drafting Your Update...</p>
-      <p className="max-w-xs text-center text-sm text-gray-500">{statusMessage}</p>
-      <div className="mt-6">
-        <Spinner size="md" />
-      </div>
     </div>
   );
 }
@@ -167,85 +113,12 @@ function DraftingStep({ statusMessage }: { statusMessage: string }) {
 export default function DraftFromEmailWizard({
   isOpen,
   onClose,
-  onDraftComplete,
+  onGoogleConnected,
   backendBaseUrl,
   companyDomain,
-  resumeAfterGoogleAuth = false,
 }: DraftFromEmailWizardProps) {
-  const [step, setStep] = useState<WizardStep>("provider");
   const [connectingProvider, setConnectingProvider] = useState<Provider | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [statusMessage, setStatusMessage] = useState(DEFAULT_DRAFTING_MESSAGE);
-  const flowNonceRef = useRef(0);
-  const resumeHandledRef = useRef(false);
-
-  const resetToProvider = useCallback(() => {
-    flowNonceRef.current += 1;
-    setStep("provider");
-    setConnectingProvider(null);
-    setStatusMessage(DEFAULT_DRAFTING_MESSAGE);
-  }, []);
-
-  const handleStatus = useCallback(
-    (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
-      if (statusResponse.state === "completed" && statusResponse.draft) {
-        onDraftComplete(statusResponse.draft);
-        return false;
-      }
-
-      if (statusResponse.state === "queued" || statusResponse.state === "running") {
-        setStep("drafting");
-        setStatusMessage(
-          formatRunStep(statusResponse.currentStep ?? statusResponse.run?.currentStep),
-        );
-        return true;
-      }
-
-      resetToProvider();
-      setErrorMessage(
-        statusResponse.error ??
-          (statusResponse.state === "needs_domain"
-            ? "Add a company domain before connecting Gmail."
-            : statusResponse.state === "auth_required"
-              ? "Reconnect Gmail to continue drafting from email."
-              : "We couldn't draft your update from Gmail. Please try again."),
-      );
-      return false;
-    },
-    [onDraftComplete, resetToProvider],
-  );
-
-  const startDraftFlow = useCallback(async () => {
-    const flowNonce = ++flowNonceRef.current;
-    setConnectingProvider(null);
-    setErrorMessage(null);
-    setStep("drafting");
-    setStatusMessage("Starting your email scan...");
-
-    try {
-      const initial = await runVibeRaisingStartupUpdate(backendBaseUrl);
-      if (flowNonce !== flowNonceRef.current) return;
-      if (!handleStatus(initial)) return;
-
-      for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt += 1) {
-        await sleep(POLL_INTERVAL_MS);
-        if (flowNonce !== flowNonceRef.current) return;
-
-        const currentStatus = await getVibeRaisingStartupUpdateStatus(backendBaseUrl);
-        if (flowNonce !== flowNonceRef.current) return;
-        if (!handleStatus(currentStatus)) return;
-      }
-
-      resetToProvider();
-      setErrorMessage(
-        "Email processing is still running. Please wait a moment and retry draft generation.",
-      );
-    } catch (error) {
-      if (flowNonce !== flowNonceRef.current) return;
-      resetToProvider();
-      setErrorMessage(getErrorMessage(error));
-    }
-  }, [backendBaseUrl, handleStatus, resetToProvider]);
 
   const handleGmailConnect = useCallback(async () => {
     if (!companyDomain?.trim()) {
@@ -253,19 +126,21 @@ export default function DraftFromEmailWizard({
       return;
     }
 
-    const flowNonce = ++flowNonceRef.current;
     setConnectingProvider("gmail");
     setErrorMessage(null);
 
     try {
       const response = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
-      if (flowNonce !== flowNonceRef.current) return;
+      if (response.googleConnected) {
+        setConnectingProvider(null);
+        onGoogleConnected?.();
+        return;
+      }
       if (!response.oauthUrl) {
         throw new Error("Missing Google OAuth redirect URL.");
       }
       window.location.assign(response.oauthUrl);
     } catch (error: any) {
-      if (flowNonce !== flowNonceRef.current) return;
       setConnectingProvider(null);
       setErrorMessage(
         error?.data?.state === "needs_domain"
@@ -273,41 +148,21 @@ export default function DraftFromEmailWizard({
           : getErrorMessage(error),
       );
     }
-  }, [backendBaseUrl, companyDomain]);
+  }, [backendBaseUrl, companyDomain, onGoogleConnected]);
 
   useEffect(() => {
     if (!isOpen) {
-      resetToProvider();
+      setConnectingProvider(null);
       setErrorMessage(null);
-      resumeHandledRef.current = false;
-      return;
     }
-
-    if (!resumeAfterGoogleAuth) {
-      setErrorMessage(null);
-      setStep("provider");
-      setStatusMessage(DEFAULT_DRAFTING_MESSAGE);
-      resumeHandledRef.current = false;
-    }
-  }, [isOpen, resetToProvider, resumeAfterGoogleAuth]);
-
-  useEffect(() => {
-    if (!isOpen || !resumeAfterGoogleAuth || resumeHandledRef.current) {
-      return;
-    }
-
-    resumeHandledRef.current = true;
-    void startDraftFlow();
-  }, [isOpen, resumeAfterGoogleAuth, startDraftFlow]);
-
-  const isDrafting = step === "drafting";
+  }, [isOpen]);
 
   return (
     <Transition show={isOpen} as={Fragment}>
       <Dialog
         as="div"
         className="relative z-50"
-        onClose={isDrafting ? () => {} : onClose}
+        onClose={onClose}
       >
         <Transition.Child
           as={Fragment}
@@ -333,30 +188,20 @@ export default function DraftFromEmailWizard({
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-8">
-                {!isDrafting && (
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
-                  >
-                    <XMarkIcon className="h-5 w-5" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
 
-                {step === "provider" && (
-                  <ProviderStep
-                    companyDomain={companyDomain}
-                    connectingProvider={connectingProvider}
-                    errorMessage={errorMessage}
-                    onConnectGmail={handleGmailConnect}
-                    onRetryDraft={startDraftFlow}
-                    resumeAfterGoogleAuth={resumeAfterGoogleAuth}
-                  />
-                )}
-
-                {step === "drafting" && (
-                  <DraftingStep statusMessage={statusMessage} />
-                )}
+                <ProviderStep
+                  companyDomain={companyDomain}
+                  connectingProvider={connectingProvider}
+                  errorMessage={errorMessage}
+                  onConnectGmail={handleGmailConnect}
+                />
               </Dialog.Panel>
             </Transition.Child>
           </div>

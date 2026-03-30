@@ -6,6 +6,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
+import { isVibeRaisingAllowedEmail, VIBE_RAISING_ALLOWED_EMAIL } from "~/lib/vibe-raising";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -26,15 +27,28 @@ function parseAuthApp(value: string | null): AuthAppName | null {
         : null;
 }
 
+function getRestrictedVibeRaisingMessage() {
+    return `Vibe Raising is currently limited to ${VIBE_RAISING_ALLOWED_EMAIL}.`;
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
     const url = new URL(request.url);
     const forceLogin = url.searchParams.get("forceLogin") === "1";
+    const app = parseAuthApp(url.searchParams.get("app"));
 
     if (user && !forceLogin) {
-        const app = parseAuthApp(url.searchParams.get("app"));
         let next = url.searchParams.get("next");
+
+        if (app === "vibe-raising" && !isVibeRaisingAllowedEmail(user.email)) {
+            const params = new URLSearchParams();
+            params.set("app", "vibe-raising");
+            params.set("next", url.searchParams.get("next") || getDefaultNext(app));
+            params.set("forceLogin", "1");
+            params.set("error", "restricted_email");
+            return redirect(`/platform/login?${params.toString()}`);
+        }
 
         if (!next) {
             next = getDefaultNext(app);
@@ -52,6 +66,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
     const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
     const next = formData.get("next")?.toString() ?? getDefaultNext(app ?? null);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (app === "vibe-raising" && !isVibeRaisingAllowedEmail(normalizedEmail)) {
+        return { error: getRestrictedVibeRaisingMessage(), email };
+    }
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -110,6 +129,7 @@ export default function PlatformLogin() {
     const errorMessages: Record<string, string> = {
         invalid_link: "The verification link is invalid or missing. Please try logging in again.",
         verification_failed: "Email verification failed. The link may have expired. Please try logging in again.",
+        restricted_email: getRestrictedVibeRaisingMessage(),
     };
 
     useEffect(() => {
@@ -147,7 +167,7 @@ export default function PlatformLogin() {
 
     const getSupportText = () => {
         if (app === "vibe-raising") {
-            return "Use your MLAI account to open Vibe Raising. We’ll email you a magic link to sign in or create your account.";
+            return `Use your MLAI account to open Vibe Raising. Access is currently limited to ${VIBE_RAISING_ALLOWED_EMAIL}.`;
         }
 
         return "Provide your email to create your account";

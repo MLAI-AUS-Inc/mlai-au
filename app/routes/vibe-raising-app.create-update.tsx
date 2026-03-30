@@ -1,11 +1,16 @@
 import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { startTransition, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
 import {
     createVibeRaisingSubmittedCookie,
     getActiveVibeRaisingCompany,
     requireVibeRaisingFounder,
+    bootstrapVibeRaisingStartupUpdate,
+    getVibeRaisingStartupUpdateActiveRun,
+    getVibeRaisingStartupUpdateDraftResults,
+    getVibeRaisingStartupUpdateStatus,
+    runVibeRaisingStartupUpdate,
 } from "~/lib/vibe-raising";
 import {
     XMarkIcon,
@@ -27,6 +32,8 @@ import {
 import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
+import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
+import type { VibeRaisingStartupUpdateStatusResponse } from "~/types/vibe-raising";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -130,6 +137,60 @@ const METRIC_OPTIONS: MetricOption[] = [
     { key: "burnRate", label: "Burn Rate", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" /> },
     { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" /> },
 ];
+
+const EMAIL_DRAFT_POLL_INTERVAL_MS = 5000;
+const EMAIL_DRAFT_POLL_BACKOFF_MS = 10000;
+
+type PersistedEmailDraftRun = {
+    runId: string;
+    domain: string;
+    bindingId?: number | null;
+    googleConnectionId?: number | null;
+};
+
+function getEmailDraftStorageKey(domain?: string | null) {
+    const normalized = String(domain || "").trim().toLowerCase() || "unknown";
+    return `vibe_raising_email_draft:${normalized}`;
+}
+
+function readPersistedEmailDraftRun(storageKey: string): PersistedEmailDraftRun | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as Partial<PersistedEmailDraftRun>;
+        const runId = String(parsed.runId || "").trim();
+        const domain = String(parsed.domain || "").trim();
+        if (!runId || !domain) return null;
+        return {
+            runId,
+            domain,
+            bindingId:
+                typeof parsed.bindingId === "number" && Number.isFinite(parsed.bindingId)
+                    ? parsed.bindingId
+                    : null,
+            googleConnectionId:
+                typeof parsed.googleConnectionId === "number" && Number.isFinite(parsed.googleConnectionId)
+                    ? parsed.googleConnectionId
+                    : null,
+        };
+    } catch {
+        return null;
+    }
+}
+
+function isEmailDraftRunning(statusResponse: VibeRaisingStartupUpdateStatusResponse | null) {
+    return statusResponse?.state === "queued" || statusResponse?.state === "running";
+}
+
+function getEmailDraftErrorMessage(error: unknown) {
+    const payload = (error as { data?: { error?: string; detail?: string } })?.data;
+    if (payload?.error) return payload.error;
+    if (payload?.detail) return payload.detail;
+    if (error instanceof Error && error.message) return error.message;
+    return "We couldn't draft your update from Gmail. Please try again.";
+}
 
 // Hint suggestions per section, cycled through as user adds points
 const SECTION_HINTS: Record<string, string[]> = {
@@ -637,6 +698,13 @@ export default function CreateUpdate() {
         return initial;
     });
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
+    const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
+    const [emailDraftStatus, setEmailDraftStatus] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
+    const [emailDraftUiError, setEmailDraftUiError] = useState<string | null>(null);
+    const [emailDraftActionBusy, setEmailDraftActionBusy] = useState(false);
+    const [emailDraftPollingDegraded, setEmailDraftPollingDegraded] = useState(false);
+    const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
+    const emailDraftRecoveryKeyRef = useRef<string | null>(null);
 
     const handleDraftComplete = (data: any) => {
         if (data.month) setSelectedMonth(data.month);
@@ -660,6 +728,25 @@ export default function CreateUpdate() {
         });
         setSelectedMetrics(newMetrics.size > 0 ? newMetrics : new Set(["revenue"]));
     };
+
+    const persistEmailDraftRun = useEffectEvent((statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        if (typeof window === "undefined" || !statusResponse.runId) return;
+
+        localStorage.setItem(
+            emailDraftStorageKey,
+            JSON.stringify({
+                runId: statusResponse.runId,
+                domain: String(user.domain || "").trim().toLowerCase(),
+                bindingId: statusResponse.binding?.id ?? null,
+                googleConnectionId: statusResponse.binding?.googleConnectionId ?? null,
+            }),
+        );
+    });
+
+    const clearPersistedEmailDraftRun = useEffectEvent(() => {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem(emailDraftStorageKey);
+    });
 
     const clearEmailDraftingParams = useCallback(() => {
         const params = new URLSearchParams(location.search);
@@ -688,22 +775,267 @@ export default function CreateUpdate() {
         }
     }, [clearEmailDraftingParams, resumeEmailDrafting]);
 
-    const handleEmailDraftComplete = useCallback((data: any) => {
-        handleDraftComplete(data);
-        setShowEmailWizard(false);
-        clearEmailDraftingParams();
-    }, [clearEmailDraftingParams, handleDraftComplete]);
-
     useEffect(() => {
         setIsClientMounted(true);
     }, []);
 
+    const hydrateCompletedEmailDraft = useEffectEvent(async (runId?: string | null) => {
+        const results = await getVibeRaisingStartupUpdateDraftResults(backendBaseUrl, runId);
+        if (!results.draft) {
+            throw new Error("Draft generation completed, but no draft payload was returned.");
+        }
+
+        startTransition(() => {
+            handleDraftComplete(results.draft);
+            setEmailDraftStatus(null);
+            setEmailDraftUiError(null);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+        });
+        clearPersistedEmailDraftRun();
+    });
+
+    const processEmailDraftStatus = useEffectEvent(async (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        if (statusResponse.runId) {
+            persistEmailDraftRun(statusResponse);
+        }
+
+        if (statusResponse.state === "queued" || statusResponse.state === "running") {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(null);
+            });
+            return;
+        }
+
+        if (statusResponse.state === "completed") {
+            startTransition(() => {
+                setEmailDraftStatus({
+                    ...statusResponse,
+                    state: "running",
+                    displayStage:
+                        statusResponse.displayStage ||
+                        statusResponse.progress?.displayStage ||
+                        "Loading drafted update",
+                });
+                setEmailDraftUiError(null);
+            });
+            try {
+                await hydrateCompletedEmailDraft(statusResponse.runId ?? null);
+                return;
+            } catch (error) {
+                startTransition(() => {
+                    setEmailDraftPollingDegraded(true);
+                    setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_BACKOFF_MS);
+                });
+                throw error;
+            }
+        }
+
+        if (statusResponse.state === "failed") {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(null);
+                setEmailDraftPollingDegraded(false);
+                setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            });
+            return;
+        }
+
+        clearPersistedEmailDraftRun();
+        startTransition(() => {
+            setEmailDraftStatus(null);
+            setEmailDraftUiError(statusResponse.error ?? null);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+        });
+    });
+
+    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+        setEmailDraftActionBusy(true);
+        setEmailDraftUiError(null);
+
+        try {
+            const statusResponse = await runVibeRaisingStartupUpdate(backendBaseUrl, options);
+            if (statusResponse.state === "auth_required") {
+                setShowEmailWizard(true);
+                return;
+            }
+
+            await processEmailDraftStatus(statusResponse);
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftStatus(null);
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+        }
+    }, [backendBaseUrl]);
+
+    const handleGenerateDraftFromEmailClick = useCallback(async () => {
+        if (!canGenerateDraftFromEmail) {
+            navigate("/vibe-raising/companies");
+            return;
+        }
+
+        setEmailDraftActionBusy(true);
+        setEmailDraftUiError(null);
+        try {
+            const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
+            if (bootstrap.googleConnected) {
+                await startOrResumeEmailDraft();
+                return;
+            }
+            setShowEmailWizard(true);
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftStatus(null);
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+        }
+    }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, startOrResumeEmailDraft]);
+
+    const handleEmailWizardConnected = useCallback(() => {
+        setShowEmailWizard(false);
+        void startOrResumeEmailDraft();
+    }, [startOrResumeEmailDraft]);
+
+    const pollEmailDraftStatus = useEffectEvent(async (runId: string) => {
+        try {
+            const statusResponse = await getVibeRaisingStartupUpdateStatus(backendBaseUrl, runId);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            await processEmailDraftStatus(statusResponse);
+        } catch {
+            setEmailDraftPollingDegraded(true);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_BACKOFF_MS);
+        }
+    });
+
     useEffect(() => {
         if (!isClientMounted) return;
-        if (resumeEmailDrafting) {
-            setShowEmailWizard(true);
+
+        const recoveryKey = `${backendBaseUrl}:${emailDraftStorageKey}:${resumeEmailDrafting ? "resume" : "idle"}`;
+        if (emailDraftRecoveryKeyRef.current === recoveryKey) {
+            return;
         }
-    }, [isClientMounted, resumeEmailDrafting]);
+        emailDraftRecoveryKeyRef.current = recoveryKey;
+
+        let cancelled = false;
+        void (async () => {
+            setEmailDraftActionBusy(true);
+            try {
+                const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
+                if (cancelled) return;
+                if (activeRun) {
+                    await processEmailDraftStatus(activeRun);
+                    return;
+                }
+
+                const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
+                if (persistedRun?.runId) {
+                    try {
+                        const storedStatus = await getVibeRaisingStartupUpdateStatus(
+                            backendBaseUrl,
+                            persistedRun.runId,
+                        );
+                        if (cancelled) return;
+                        await processEmailDraftStatus(storedStatus);
+                        return;
+                    } catch {
+                        clearPersistedEmailDraftRun();
+                    }
+                }
+
+                if (resumeEmailDrafting) {
+                    await startOrResumeEmailDraft();
+                    return;
+                }
+
+                try {
+                    await hydrateCompletedEmailDraft();
+                    return;
+                } catch (error) {
+                    if ((error as { status?: number })?.status !== 404) {
+                        throw error;
+                    }
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    startTransition(() => {
+                        setEmailDraftUiError(getEmailDraftErrorMessage(error));
+                    });
+                }
+            } finally {
+                if (!cancelled) {
+                    setEmailDraftActionBusy(false);
+                    if (resumeEmailDrafting) {
+                        clearEmailDraftingParams();
+                    }
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        backendBaseUrl,
+        clearEmailDraftingParams,
+        emailDraftStorageKey,
+        isClientMounted,
+        resumeEmailDrafting,
+        startOrResumeEmailDraft,
+    ]);
+
+    useEffect(() => {
+        if (!isClientMounted || !emailDraftStatus?.runId || !isEmailDraftRunning(emailDraftStatus)) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            void pollEmailDraftStatus(emailDraftStatus.runId ?? "");
+        }, emailDraftPollDelayMs);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [
+        emailDraftPollDelayMs,
+        emailDraftStatus?.runId,
+        emailDraftStatus?.state,
+        isClientMounted,
+    ]);
+
+    const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    const emailDraftCardVisible = isEmailDraftBusy || emailDraftStatus?.state === "failed" || Boolean(emailDraftUiError);
+    const emailDraftCardStatus = emailDraftStatus?.state === "failed" || emailDraftUiError ? "failed" : "running";
+    const emailDraftCardDisplayStage =
+        emailDraftStatus?.displayStage ||
+        emailDraftStatus?.progress?.displayStage ||
+        (emailDraftUiError
+            ? "We couldn't start the Gmail draft."
+            : "Preparing company context");
+    const emailDraftCardCompletedSteps =
+        emailDraftStatus?.completedSteps ??
+        emailDraftStatus?.progress?.completedSteps ??
+        0;
+    const emailDraftCardTotalSteps =
+        emailDraftStatus?.totalSteps ??
+        emailDraftStatus?.progress?.totalSteps ??
+        8;
+    const emailDraftCardError =
+        emailDraftStatus?.error ||
+        emailDraftUiError ||
+        "We couldn't draft your update from Gmail. Please try again.";
+
+    const handleRetryEmailDraft = () => {
+        clearPersistedEmailDraftRun();
+        void startOrResumeEmailDraft({ forceRegenerate: true });
+    };
 
     const resumeDraft = () => {
         try {
@@ -1329,13 +1661,15 @@ export default function CreateUpdate() {
                     <button
                         type="button"
                         onClick={resumeDraft}
-                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                        disabled={isEmailDraftBusy}
+                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-60"
                     >
                         Resume Draft
                     </button>
                     <button
                         type="button"
                         onClick={dismissDraft}
+                        disabled={isEmailDraftBusy}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                         aria-label="Dismiss"
                     >
@@ -1347,128 +1681,149 @@ export default function CreateUpdate() {
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
 
-                {/* Upload Section */}
-                <div
-                    {...getRootProps()}
-                    className={clsx(
-                        "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
-                        isDragActive ? "bg-blue-50/50 border-blue-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
-                    )}
-                >
-                    <input {...getInputProps()} />
-                    
-                    <div className="flex flex-col items-center max-w-sm">
-                        <div className="w-12 h-12 text-gray-400 mb-4">
-                            <CloudArrowUpIcon className="w-full h-full stroke-1" />
-                        </div>
-                        
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                            Drag files here to upload
-                        </h3>
-                        
-                        <p className="text-sm text-gray-400 font-medium mb-1">
-                            Supported video files are MP4, MOV, AVI
-                        </p>
-                        
-                        <p className="text-sm text-gray-400 mb-6">
-                            Minimize processing time
-                        </p>
+                <div className="relative">
+                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+                        {/* Upload Section */}
+                        <div
+                            {...getRootProps()}
+                            className={clsx(
+                                "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
+                                isDragActive ? "bg-blue-50/50 border-blue-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
+                            )}
+                        >
+                            <input {...getInputProps()} />
 
-                        <div className="flex items-center gap-3">
-                            <button 
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsRecording(!isRecording);
-                                }}
-                                className={clsx(
-                                    "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
-                                    isRecording 
-                                        ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse" 
-                                        : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
-                                )}
-                            >
-                                <span className={clsx(
-                                    "w-2.5 h-2.5 rounded-full",
-                                    isRecording ? "bg-red-600" : "bg-red-500"
-                                )} />
-                                {isRecording ? "Stop Recording" : "Record"}
-                            </button>
-                            
-                            <button 
-                                type="button"
-                                className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm"
-                            >
-                                Select file
-                            </button>
+                            <div className="flex flex-col items-center max-w-sm">
+                                <div className="w-12 h-12 text-gray-400 mb-4">
+                                    <CloudArrowUpIcon className="w-full h-full stroke-1" />
+                                </div>
+
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                    Drag files here to upload
+                                </h3>
+
+                                <p className="text-sm text-gray-400 font-medium mb-1">
+                                    Supported video files are MP4, MOV, AVI
+                                </p>
+
+                                <p className="text-sm text-gray-400 mb-6">
+                                    Minimize processing time
+                                </p>
+
+                                <div className="flex items-center gap-3">
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIsRecording(!isRecording);
+                                        }}
+                                        disabled={isEmailDraftBusy}
+                                        className={clsx(
+                                            "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
+                                            isRecording
+                                                ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse"
+                                                : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
+                                        )}
+                                    >
+                                        <span className={clsx(
+                                            "w-2.5 h-2.5 rounded-full",
+                                            isRecording ? "bg-red-600" : "bg-red-500"
+                                        )} />
+                                        {isRecording ? "Stop Recording" : "Record"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        disabled={isEmailDraftBusy}
+                                        className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
+                                    >
+                                        Select file
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </fieldset>
+                    {isEmailDraftBusy && (
+                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
+                    )}
                 </div>
 
-                {/* ─── Draft from Email Banner ─── */}
-                <button
-                    type="button"
-                    onClick={() => {
-                        if (canGenerateDraftFromEmail) {
-                            setShowEmailWizard(true);
-                            return;
-                        }
-                        navigate("/vibe-raising/companies");
-                    }}
-                    className={clsx(
-                        "w-full rounded-2xl border p-8 shadow-sm overflow-hidden relative text-left transition-all",
-                        canGenerateDraftFromEmail
-                            ? "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100 group hover:shadow-md hover:border-purple-200 cursor-pointer"
-                            : "bg-gray-50 border-gray-200 cursor-pointer hover:border-gray-300",
-                    )}
-                >
-                    <div className={clsx(
-                        "absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 blur-3xl rounded-full",
-                        canGenerateDraftFromEmail ? "bg-purple-200/20" : "bg-gray-300/20",
-                    )} />
-                    <div className="relative z-10 flex items-center gap-5">
+                {emailDraftCardVisible ? (
+                    <EmailDraftInProgressCard
+                        status={emailDraftCardStatus}
+                        displayStage={emailDraftCardDisplayStage}
+                        completedSteps={emailDraftCardCompletedSteps}
+                        totalSteps={emailDraftCardTotalSteps}
+                        error={emailDraftCardError}
+                        pollingDegraded={emailDraftPollingDegraded}
+                        onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
+                        retryDisabled={emailDraftActionBusy}
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        disabled={emailDraftActionBusy}
+                        onClick={() => {
+                            void handleGenerateDraftFromEmailClick();
+                        }}
+                        className={clsx(
+                            "w-full rounded-2xl border p-8 shadow-sm overflow-hidden relative text-left transition-all",
+                            canGenerateDraftFromEmail
+                                ? "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100 group hover:shadow-md hover:border-purple-200 cursor-pointer"
+                                : "bg-gray-50 border-gray-200 cursor-pointer hover:border-gray-300",
+                            emailDraftActionBusy && "opacity-70",
+                        )}
+                    >
                         <div className={clsx(
-                            "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
-                            canGenerateDraftFromEmail ? "bg-purple-100 group-hover:bg-purple-200" : "bg-gray-200",
-                        )}>
-                            <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
-                        </div>
-                        <div className="flex-1">
-                            <h2 className="text-lg font-bold text-gray-900">
-                                Generate Draft from Email
-                            </h2>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                                {canGenerateDraftFromEmail
-                                    ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
-                                    : "Add a company domain first so Gmail emails can be matched to the right startup."}
-                            </p>
-                        </div>
-                        <ArrowRightIcon className={clsx(
-                            "w-5 h-5 transition-transform flex-shrink-0",
-                            canGenerateDraftFromEmail ? "text-purple-400 group-hover:translate-x-1" : "text-gray-400",
+                            "absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 blur-3xl rounded-full",
+                            canGenerateDraftFromEmail ? "bg-purple-200/20" : "bg-gray-300/20",
                         )} />
-                    </div>
-                </button>
-
-                {/* ─── Growth Charts ─── */}
-                {pastMonthCards.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <GrowthChart
-                            data={chartData}
-                            onSelect={expandCardFromChart}
-                            title="Revenue"
-                            subtitle="Monthly revenue with MoM growth"
-                            formatter={formatCompact}
-                        />
-                        <GrowthChart
-                            data={activeUsersChartData}
-                            onSelect={expandCardFromChart}
-                            title="Active Users"
-                            subtitle="Monthly active users with MoM growth"
-                            formatter={formatUsers}
-                        />
-                    </div>
+                        <div className="relative z-10 flex items-center gap-5">
+                            <div className={clsx(
+                                "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
+                                canGenerateDraftFromEmail ? "bg-purple-100 group-hover:bg-purple-200" : "bg-gray-200",
+                            )}>
+                                <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
+                            </div>
+                            <div className="flex-1">
+                                <h2 className="text-lg font-bold text-gray-900">
+                                    Generate Draft from Email
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-0.5">
+                                    {canGenerateDraftFromEmail
+                                        ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
+                                        : "Add a company domain first so Gmail emails can be matched to the right startup."}
+                                </p>
+                            </div>
+                            <ArrowRightIcon className={clsx(
+                                "w-5 h-5 transition-transform flex-shrink-0",
+                                canGenerateDraftFromEmail ? "text-purple-400 group-hover:translate-x-1" : "text-gray-400",
+                            )} />
+                        </div>
+                    </button>
                 )}
+
+                <div className="relative">
+                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+                        {/* ─── Growth Charts ─── */}
+                        {pastMonthCards.length > 0 && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <GrowthChart
+                                    data={chartData}
+                                    onSelect={expandCardFromChart}
+                                    title="Revenue"
+                                    subtitle="Monthly revenue with MoM growth"
+                                    formatter={formatCompact}
+                                />
+                                <GrowthChart
+                                    data={activeUsersChartData}
+                                    onSelect={expandCardFromChart}
+                                    title="Active Users"
+                                    subtitle="Monthly active users with MoM growth"
+                                    formatter={formatUsers}
+                                />
+                            </div>
+                        )}
 
                 {/* ─── Stacked Card Layout ─── */}
                 {pastMonthCards.length > 0 && (
@@ -1810,34 +2165,38 @@ export default function CreateUpdate() {
                     </div>
                 )}
 
-                {/* Footer Buttons */}
-                <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-                    <button
-                        type="button"
-                        onClick={() => navigate("/vibe-raising")}
-                        className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
-                    >
-                        {isSubmitting ? "Reviewing..." : "Review"}
-                    </button>
+                        {/* Footer Buttons */}
+                        <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/vibe-raising")}
+                                disabled={isEmailDraftBusy}
+                                className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={isSubmitting || isEmailDraftBusy}
+                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm disabled:opacity-60"
+                            >
+                                {isSubmitting ? "Reviewing..." : "Review"}
+                            </button>
+                        </div>
+                    </fieldset>
+                    {isEmailDraftBusy && (
+                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
+                    )}
                 </div>
-
             </Form>
 
             {isClientMounted ? (
                 <DraftFromEmailWizard
                     isOpen={showEmailWizard}
                     onClose={handleEmailWizardClose}
-                    onDraftComplete={handleEmailDraftComplete}
+                    onGoogleConnected={handleEmailWizardConnected}
                     backendBaseUrl={backendBaseUrl}
                     companyDomain={user.domain}
-                    resumeAfterGoogleAuth={resumeEmailDrafting}
                 />
             ) : null}
         </div>

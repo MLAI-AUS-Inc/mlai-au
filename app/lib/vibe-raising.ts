@@ -3,6 +3,7 @@ import type { User } from "~/types/user";
 import { createApiClient } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import type {
+  VibeRaisingDraftResultsResponse,
   VibeRaisingAppUser,
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
@@ -10,6 +11,8 @@ import type {
   VibeRaisingProfile,
   VibeRaisingRole,
   VibeRaisingStartupUpdateBootstrapResponse,
+  VibeRaisingStartupUpdateBindingSummary,
+  VibeRaisingStartupUpdateRunProgress,
   VibeRaisingStartupUpdateRunSummary,
   VibeRaisingStartupUpdateStepState,
   VibeRaisingStartupUpdateState,
@@ -22,6 +25,9 @@ const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
 const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
+const EMAIL_DRAFT_ACTIVE_RUN_PATH = "/api/v1/vibe-raising/email-draft/active-run/";
+const EMAIL_DRAFT_DRAFT_RESULTS_PATH = "/api/v1/vibe-raising/email-draft/draft-results/";
+export const VIBE_RAISING_ALLOWED_EMAIL = "sam@mlai.au";
 
 type OptionalContext = {
   authUser: User | null;
@@ -309,6 +315,9 @@ function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSum
     currentStep:
       asNullableString(payload.currentStep) ??
       asNullableString(payload.current_step),
+    stepOrder: Array.isArray(payload.stepOrder ?? payload.step_order)
+      ? ((payload.stepOrder ?? payload.step_order) as unknown[]).map((item: unknown) => String(item))
+      : [],
     createdAt:
       asNullableString(payload.createdAt) ??
       asNullableString(payload.created_at) ??
@@ -344,6 +353,116 @@ function normalizeStartupUpdateState(value: unknown): VibeRaisingStartupUpdateSt
     default:
       return "failed";
   }
+}
+
+function normalizeBindingSummary(raw: unknown): VibeRaisingStartupUpdateBindingSummary | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const payload = raw as Record<string, unknown>;
+  const organizationId = Number(
+    payload.organizationId ??
+      payload.organization_id ??
+      0,
+  );
+  const organizationDomain =
+    asNullableString(payload.organizationDomain) ??
+    asNullableString(payload.organization_domain) ??
+    "";
+
+  if (!organizationId || !organizationDomain) {
+    return null;
+  }
+
+  const rawBindingId = payload.id ?? payload.bindingId ?? payload.binding_id;
+  const bindingId =
+    typeof rawBindingId === "number" && Number.isFinite(rawBindingId)
+      ? rawBindingId
+      : typeof rawBindingId === "string" && rawBindingId.trim()
+        ? Number(rawBindingId)
+        : undefined;
+  const rawGoogleConnectionId =
+    payload.googleConnectionId ??
+    payload.google_connection_id;
+  const googleConnectionId =
+    typeof rawGoogleConnectionId === "number" && Number.isFinite(rawGoogleConnectionId)
+      ? rawGoogleConnectionId
+      : typeof rawGoogleConnectionId === "string" && rawGoogleConnectionId.trim()
+        ? Number(rawGoogleConnectionId)
+        : undefined;
+
+  return {
+    id: typeof bindingId === "number" && Number.isFinite(bindingId) ? bindingId : undefined,
+    organizationId,
+    organizationDomain,
+    googleConnectionId:
+      typeof googleConnectionId === "number" && Number.isFinite(googleConnectionId)
+        ? googleConnectionId
+        : null,
+    isDefaultForGmail: Boolean(
+      payload.isDefaultForGmail ??
+        payload.is_default_for_gmail,
+    ),
+  };
+}
+
+function normalizeGeneratedDraftMonths(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((item) => String(item ?? "").trim())
+    .filter((value) => value.length > 0);
+}
+
+function normalizeStartupUpdateProgress(
+  raw: unknown,
+  run: VibeRaisingStartupUpdateRunSummary | null,
+): VibeRaisingStartupUpdateRunProgress | null {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const runId =
+    asNullableString(payload.runId) ??
+    asNullableString(payload.run_id) ??
+    run?.runId ??
+    null;
+  const statusText =
+    asNullableString(payload.status) ??
+    run?.status ??
+    null;
+  const displayStage =
+    asNullableString(payload.displayStage) ??
+    asNullableString(payload.display_stage);
+
+  if (!runId || !statusText || !displayStage) {
+    return null;
+  }
+
+  return {
+    runId,
+    status: statusText,
+    currentStep:
+      asNullableString(payload.currentStep) ??
+      asNullableString(payload.current_step) ??
+      run?.currentStep ??
+      null,
+    completedSteps:
+      typeof payload.completedSteps === "number" && Number.isFinite(payload.completedSteps)
+        ? payload.completedSteps
+        : Number(payload.completedSteps ?? payload.completed_steps ?? 0) || 0,
+    totalSteps:
+      typeof payload.totalSteps === "number" && Number.isFinite(payload.totalSteps)
+        ? payload.totalSteps
+        : Number(payload.totalSteps ?? payload.total_steps ?? 0) || 0,
+    displayStage,
+    lastHeartbeatAt:
+      asNullableString(payload.lastHeartbeatAt) ??
+      asNullableString(payload.last_heartbeat_at),
+    canRetry: Boolean(payload.canRetry ?? payload.can_retry),
+    terminalState:
+      asNullableString(payload.terminalState) ??
+      asNullableString(payload.terminal_state),
+    generatedDraftMonths: normalizeGeneratedDraftMonths(
+      payload.generatedDraftMonths ??
+        payload.generated_draft_months,
+    ),
+  };
 }
 
 function getBrowserCsrfToken(): string | null {
@@ -424,6 +543,10 @@ function normalizeStartupUpdateStatus(
         .filter((value): value is VibeRaisingEmailDraftMonth => value !== null)
     : [];
   const run = normalizeStartupUpdateRun(payload.run ?? payload);
+  const progress = normalizeStartupUpdateProgress(
+    payload.progress ?? payload,
+    run,
+  );
   const draft =
     normalizeDraftedContent(payload.draft) ??
     normalizeDraftedContent({
@@ -446,7 +569,9 @@ function normalizeStartupUpdateStatus(
       asNullableString(payload.authUrl) ??
       asNullableString(payload.auth_url),
     company: payload.company ? normalizeCompany(payload.company) : null,
+    binding: normalizeBindingSummary(payload.binding),
     run,
+    progress,
     draft,
     runId:
       asNullableString(payload.runId) ??
@@ -466,6 +591,42 @@ function normalizeStartupUpdateStatus(
       Object.keys(topLevelStepStates).length > 0
         ? topLevelStepStates
         : (run?.stepStates ?? {}),
+    completedSteps:
+      typeof payload.completedSteps === "number" && Number.isFinite(payload.completedSteps)
+        ? payload.completedSteps
+        : Number(payload.completedSteps ?? payload.completed_steps ?? progress?.completedSteps ?? 0) || 0,
+    totalSteps:
+      typeof payload.totalSteps === "number" && Number.isFinite(payload.totalSteps)
+        ? payload.totalSteps
+        : Number(payload.totalSteps ?? payload.total_steps ?? progress?.totalSteps ?? 0) || 0,
+    displayStage:
+      asNullableString(payload.displayStage) ??
+      asNullableString(payload.display_stage) ??
+      progress?.displayStage ??
+      null,
+    lastHeartbeatAt:
+      asNullableString(payload.lastHeartbeatAt) ??
+      asNullableString(payload.last_heartbeat_at) ??
+      progress?.lastHeartbeatAt ??
+      null,
+    canRetry:
+      Boolean(payload.canRetry ?? payload.can_retry) ||
+      Boolean(progress?.canRetry),
+    terminalState:
+      asNullableString(payload.terminalState) ??
+      asNullableString(payload.terminal_state) ??
+      progress?.terminalState ??
+      null,
+    generatedDraftMonths: normalizeGeneratedDraftMonths(
+      payload.generatedDraftMonths ??
+        payload.generated_draft_months ??
+        progress?.generatedDraftMonths ??
+        [],
+    ),
+    reusedExistingRun: Boolean(
+      payload.reusedExistingRun ??
+        payload.reused_existing_run,
+    ),
     currentMonth,
     pastMonths,
     error:
@@ -511,6 +672,7 @@ export function buildVibeRaisingAppUser(
 export function getVibeRaisingLoginHref(
   request: Request,
   nextOverride?: string,
+  options?: { forceLogin?: boolean; error?: string },
 ): string {
   const url = new URL(request.url);
   const next = nextOverride ?? `${url.pathname}${url.search}`;
@@ -519,7 +681,18 @@ export function getVibeRaisingLoginHref(
     next,
   });
 
+  if (options?.forceLogin) {
+    params.set("forceLogin", "1");
+  }
+  if (options?.error) {
+    params.set("error", options.error);
+  }
+
   return `/platform/login?${params.toString()}`;
+}
+
+export function isVibeRaisingAllowedEmail(email: string | null | undefined): boolean {
+  return String(email || "").trim().toLowerCase() === VIBE_RAISING_ALLOWED_EMAIL;
 }
 
 export function getVibeRaisingSubmittedCookieName(companyId: string): string {
@@ -599,6 +772,15 @@ export async function requireVibeRaisingProfile(
 
   if (!context.authUser) {
     throw redirect(getVibeRaisingLoginHref(request));
+  }
+
+  if (!isVibeRaisingAllowedEmail(context.authUser.email)) {
+    throw redirect(
+      getVibeRaisingLoginHref(request, undefined, {
+        forceLogin: true,
+        error: "restricted_email",
+      }),
+    );
   }
 
   if (!context.profile || !context.appUser) {
@@ -687,28 +869,7 @@ export async function bootstrapVibeRaisingStartupUpdate(
       response.googleConnected ?? response.google_connected,
     ),
     company: response.company ? normalizeCompany(response.company) : null,
-    binding:
-      response.binding && typeof response.binding === "object"
-        ? {
-            organizationId: Number(
-              (response.binding as Record<string, unknown>).organizationId ??
-                (response.binding as Record<string, unknown>).organization_id ??
-                0,
-            ),
-            organizationDomain:
-              asNullableString(
-                (response.binding as Record<string, unknown>).organizationDomain,
-              ) ??
-              asNullableString(
-                (response.binding as Record<string, unknown>).organization_domain,
-              ) ??
-              "",
-            isDefaultForGmail: Boolean(
-              (response.binding as Record<string, unknown>).isDefaultForGmail ??
-                (response.binding as Record<string, unknown>).is_default_for_gmail,
-            ),
-          }
-        : null,
+    binding: normalizeBindingSummary(response.binding),
     oauthUrl:
       asNullableString(response.oauthUrl) ??
       asNullableString(response.oauth_url) ??
@@ -718,22 +879,72 @@ export async function bootstrapVibeRaisingStartupUpdate(
 
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
+  options?: { forceRegenerate?: boolean },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
     EMAIL_DRAFT_START_PATH,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: options?.forceRegenerate ? JSON.stringify({ forceRegenerate: true }) : undefined,
+    },
   );
   return normalizeStartupUpdateStatus(response);
 }
 
 export async function getVibeRaisingStartupUpdateStatus(
   backendBaseUrl: string,
+  runId?: string | null,
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
-    EMAIL_DRAFT_STATUS_PATH,
+    runId
+      ? `/api/v1/vibe-raising/email-draft/runs/${encodeURIComponent(runId)}/status/`
+      : EMAIL_DRAFT_STATUS_PATH,
     { method: "GET" },
   );
   return normalizeStartupUpdateStatus(response);
+}
+
+export async function getVibeRaisingStartupUpdateActiveRun(
+  backendBaseUrl: string,
+): Promise<VibeRaisingStartupUpdateStatusResponse | null> {
+  const response = await requestBrowserJson<unknown>(
+    backendBaseUrl,
+    EMAIL_DRAFT_ACTIVE_RUN_PATH,
+    { method: "GET" },
+  );
+  if (!response) return null;
+  return normalizeStartupUpdateStatus(response);
+}
+
+export async function getVibeRaisingStartupUpdateDraftResults(
+  backendBaseUrl: string,
+  runId?: string | null,
+): Promise<VibeRaisingDraftResultsResponse> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    runId
+      ? `/api/v1/vibe-raising/email-draft/runs/${encodeURIComponent(runId)}/draft-results/`
+      : EMAIL_DRAFT_DRAFT_RESULTS_PATH,
+    { method: "GET" },
+  );
+  const normalized = normalizeStartupUpdateStatus(response);
+  const rawMonths = response.months;
+  const months = Array.isArray(rawMonths)
+    ? rawMonths
+        .map(normalizeEmailDraftMonth)
+        .filter((value): value is VibeRaisingEmailDraftMonth => value !== null)
+    : [
+        ...normalized.pastMonths,
+        ...(normalized.currentMonth ? [normalized.currentMonth] : []),
+      ];
+
+  return {
+    runId: normalized.runId ?? null,
+    draft: normalized.draft,
+    currentMonth: normalized.currentMonth,
+    pastMonths: normalized.pastMonths,
+    months,
+  };
 }
