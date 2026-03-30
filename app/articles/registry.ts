@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-assess-cofounder-values-match-before-you-commit': {
+        title: "How to Assess Cofounder Values Match Before You Commit",
+        date: "2026-03-30",
+        description: "How to assess cofounder values match before building together.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-assess-cofounder-values-match-before-you-commit",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-61741a72-5e72-4a5d-aa77-2b18a2d80edd.jpg?alt=media&token=9365304c-09a2-4986-914d-af4699a65f17",
+        imageAlt: "Two startup cofounders in",
+        hasContent: true,
+    },
     'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
         title: "A Practical Guide on How to Create an Artificial Intelligence",
         date: "2026-03-22",
