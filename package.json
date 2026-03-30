@@ -8,15 +8,16 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "generate:sitemap": "npx --yes tsx scripts/generate-sitemap.ts",
-    "prebuild": "npx --yes tsx scripts/generate-sitemap.ts",
-    "build": "react-router build",
-    "postbuild": "npx --yes tsx scripts/submit-indexnow.ts",
-    "cf-typegen": "npx --yes wrangler types",
-    "deploy": "npm run build && npx --yes wrangler deploy",
+    "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",
+    "prebuild": "bunx --yes tsx scripts/generate-sitemap.ts",
+    "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
+    "postbuild": "bunx --yes tsx scripts/submit-indexnow.ts",
+    "cf-typegen": "bunx --yes wrangler types",
+    "deploy": "bun run build && bunx --yes wrangler deploy",
     "dev": "react-router dev",
-    "preview": "npm run build && vite preview",
-    "typegen": "npm run cf-typegen 1>/dev/null && react-router typegen",
+    "dev:node": "node node_modules/@react-router/dev/bin.js dev",
+    "preview": "bun run build && vite preview",
+    "typegen": "bun run cf-typegen 1>/dev/null && react-router typegen",
     "typecheck": "react-router typegen && tsc -b"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "isbot": "^5.1.32",
     "logrocket": "^10.1.1",
     "lucide-react": "^0.535.0",

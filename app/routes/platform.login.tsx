@@ -1,29 +1,57 @@
 import type { Route } from "./+types/platform.login";
 import { Form, useActionData, useSearchParams, useSubmit, Link, redirect } from "react-router";
+import { createUser, sendMagicLink, getCurrentUser, type AuthAppName } from "~/lib/auth";
+import { useEffect, useState } from "react";
+import { GradientBackground } from "~/components/GradientBackground";
+import { Field, Input, Label } from "@headlessui/react";
+import { clsx } from "clsx";
+import { getEnv } from "~/lib/env.server";
+import { isVibeRaisingAllowedEmail, VIBE_RAISING_ALLOWED_EMAIL } from "~/lib/vibe-raising";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
     { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
     { name: "robots", content: "noindex, nofollow" },
 ];
-import { createUser, sendMagicLink, getCurrentUser } from "~/lib/auth";
-import { useEffect, useState } from "react";
-import { GradientBackground } from "~/components/GradientBackground";
-import { Field, Input, Label } from "@headlessui/react";
-import { clsx } from "clsx";
-import { getEnv } from "~/lib/env.server";
+
+function getDefaultNext(app: AuthAppName | null | undefined): string {
+    if (app === "hospital") return "/hospital/app";
+    if (app === "esafety") return "/esafety/dashboard";
+    if (app === "vibe-raising") return "/vibe-raising";
+    return "/hackathons";
+}
+
+function parseAuthApp(value: string | null): AuthAppName | null {
+    return value === "esafety" || value === "hospital" || value === "vibe-raising"
+        ? value
+        : null;
+}
+
+function getRestrictedVibeRaisingMessage() {
+    return `Vibe Raising is currently limited to ${VIBE_RAISING_ALLOWED_EMAIL}.`;
+}
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
+    const url = new URL(request.url);
+    const forceLogin = url.searchParams.get("forceLogin") === "1";
+    const app = parseAuthApp(url.searchParams.get("app"));
 
-    if (user) {
-        const url = new URL(request.url);
-        const app = url.searchParams.get("app");
+    if (user && !forceLogin) {
         let next = url.searchParams.get("next");
 
+        if (app === "vibe-raising" && !isVibeRaisingAllowedEmail(user.email)) {
+            const params = new URLSearchParams();
+            params.set("app", "vibe-raising");
+            params.set("next", url.searchParams.get("next") || getDefaultNext(app));
+            params.set("forceLogin", "1");
+            params.set("error", "restricted_email");
+            return redirect(`/platform/login?${params.toString()}`);
+        }
+
         if (!next) {
-            next = "/hackathons";
+            next = getDefaultNext(app);
         }
 
         return redirect(next);
@@ -36,8 +64,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     const intent = formData.get("intent")?.toString() ?? "check";
     const email = formData.get("email")?.toString() ?? "";
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
-    const app = formData.get("app")?.toString() as "esafety" | "hospital" | undefined;
-    const next = formData.get("next")?.toString() ?? "/hackathons";
+    const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
+    const next = formData.get("next")?.toString() ?? getDefaultNext(app ?? null);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (app === "vibe-raising" && !isVibeRaisingAllowedEmail(normalizedEmail)) {
+        return { error: getRestrictedVibeRaisingMessage(), email };
+    }
 
     if (intent === "create") {
         const firstName = formData.get("firstName")?.toString();
@@ -75,8 +108,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
-    const app = searchParams.get("app");
-    const next = searchParams.get("next") || "/hackathons";
+    const app = parseAuthApp(searchParams.get("app"));
+    const isVibeRaising = app === "vibe-raising";
+    const forceLogin = searchParams.get("forceLogin") === "1";
+    const next = searchParams.get("next") || getDefaultNext(app);
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -94,6 +129,7 @@ export default function PlatformLogin() {
     const errorMessages: Record<string, string> = {
         invalid_link: "The verification link is invalid or missing. Please try logging in again.",
         verification_failed: "Email verification failed. The link may have expired. Please try logging in again.",
+        restricted_email: getRestrictedVibeRaisingMessage(),
     };
 
     useEffect(() => {
@@ -115,6 +151,7 @@ export default function PlatformLogin() {
             formData.append("email", email);
             formData.append("next", next);
             if (app) formData.append("app", app);
+            if (forceLogin) formData.append("forceLogin", "1");
             // We use 'check' intent for resending magic link
             formData.append("intent", "check");
             submit(formData, { method: "post" });
@@ -124,12 +161,36 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "vibe-raising") return "Sign in to Vibe Raising";
         return "Welcome!";
     };
 
+    const getSupportText = () => {
+        if (app === "vibe-raising") {
+            return `Use your MLAI account to open Vibe Raising. Access is currently limited to ${VIBE_RAISING_ALLOWED_EMAIL}.`;
+        }
+
+        return "Provide your email to create your account";
+    };
+
     return (
-        <main className="relative min-h-screen overflow-hidden bg-gray-50">
-            <GradientBackground />
+        <main
+            className={clsx(
+                "relative min-h-screen overflow-hidden",
+                isVibeRaising
+                    ? "bg-[linear-gradient(180deg,var(--brutalist-beige)_0%,#f7f2e8_100%)]"
+                    : "bg-gray-50"
+            )}
+        >
+            {isVibeRaising ? (
+                <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                    <div className="absolute left-[8%] top-[14%] h-36 w-36 rounded-full bg-[var(--brutalist-mint)]/10 blur-3xl" />
+                    <div className="absolute right-[10%] top-[24%] h-40 w-40 rounded-full bg-[var(--brutalist-orange)]/10 blur-3xl" />
+                    <div className="absolute bottom-[14%] left-1/2 h-32 w-32 -translate-x-1/2 rounded-full bg-[var(--brutalist-blue)]/10 blur-3xl" />
+                </div>
+            ) : (
+                <GradientBackground />
+            )}
             <div className="isolate flex min-h-dvh items-center justify-center p-6 lg:p-8">
                 <div className="w-full max-w-md rounded-xl bg-white ring-1 shadow-md ring-black/5">
                     <div className="p-7 sm:p-11">
@@ -145,7 +206,7 @@ export default function PlatformLogin() {
                         </div>
                         <h1 className="mt-8 text-base/6 font-medium">{getWelcomeText()}</h1>
                         <p className="mt-1 text-sm/5 text-gray-600">
-                            Provide your email to create your account
+                            {getSupportText()}
                         </p>
 
                         {(data?.error || error) && (
@@ -256,6 +317,7 @@ export default function PlatformLogin() {
 
                                 <input type="hidden" name="next" value={next} />
                                 {app && <input type="hidden" name="app" value={app} />}
+                                {forceLogin && <input type="hidden" name="forceLogin" value="1" />}
 
                                 <div className="mt-8">
                                     <button

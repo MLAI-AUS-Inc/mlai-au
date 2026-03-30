@@ -15,7 +15,7 @@ import {
     Lightbulb,
     Target
 } from "lucide-react";
-import type { Route } from "./+types/vibe-raising";
+import type { Route } from "./+types/vibe-raising-landing";
 
 const PAGE_TITLE = 'Vibe Raising: Unlock Capital with Monthly Founder Updates.';
 const PAGE_DESCRIPTION =
@@ -25,7 +25,7 @@ export function meta({ }: Route.MetaArgs) {
     return [
         { title: 'Vibe Raising | MLAI Community' },
         { name: "description", content: PAGE_DESCRIPTION },
-        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising" },
+        { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising-landing" },
     ];
 }
 

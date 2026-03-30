@@ -1,3 +1,53 @@
+- [x] Verify `/vibe-raising/create-update` still returns `200` with an authenticated founder session
+- [x] Confirm `/api/v1/vibe-raising/profile/` returns `200` for the current founder profile
+- [x] Redact auth cookies from frontend API debug logging
+- [x] Run `bun run typecheck`
+- [x] Diagnose Vibe Raising Gmail draft 404 against the live backend route list
+- [x] Point the create-update Gmail flow at `startup-update/bootstrap|run|status` instead of stale `email-draft/*`
+- [x] Run `bun run typecheck`
+- [x] Run `bunx react-router build`
+- [x] Wire Vibe Raising create-update Gmail button to real mlai-backend Google OAuth
+- [x] Add Vibe Raising startup-update bootstrap/run/status backend wrappers
+- [x] Replace mocked email drafting flow with OAuth return + draft polling
+- [x] Add backend tests for Vibe Raising startup-update endpoints and Gmail OAuth origin handling
+- [x] Run backend SQLite test pass for `vibe_raising.tests` and `integrations.tests_gmail_oauth`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build` and note the existing IndexNow 403 tail
+- [x] Restore the public Vibe Raising landing page at `/vibe-raising-landing`
+- [x] Keep `/vibe-raising` reserved for the authenticated app and add app-side `noindex`
+- [x] Update public FounderTools Vibe Raising links to the restored landing page
+- [x] Run `bun run typecheck`
+- [x] Stop the `/vibe-raising` self-redirect loop for first-time users after magic-link login
+- [x] Re-test `/verify-email -> /vibe-raising` with an incomplete Vibe Raising profile
+- [x] Run `bun run typecheck`
+- [x] Allow the Vibe Raising login page to bypass auto-redirect when opened from `/hackathons`
+- [x] Update the hackathons CTA to force the login screen instead of jumping straight to `/vibe-raising`
+- [x] Run `bun run typecheck`
+- [x] Diagnose Vibe Raising magic-link callback failure
+- [x] Apply missing backend Vibe Raising migration to local DB
+- [x] Re-test verify-email and profile flow
+- [x] Restyle the Vibe Raising `/platform/login` background to the shared cream palette
+- [x] Add subtle colour blur accents to the Vibe Raising login page
+- [x] Run `bun run typecheck`
+- [x] Update `/hackathons` hero and Vibe Raising CTA copy
+- [x] Disable the Medhack: Frontiers card to match the eSafety card state
+- [x] Run `bun run typecheck`
+- [x] Restyle `/hackathons` page background to the shared cream palette
+- [x] Rebuild the Vibe Raising CTA to match the Roo-inspired dark card treatment
+- [x] Run `bun run typecheck`
+- [x] Add Vibe Raising backend profile/auth helper layer and types
+- [x] Extract reusable Vibe Raising onboarding card component
+- [x] Refactor Vibe Raising routes off `vibe_raising_session` auth
+- [x] Extend shared login and verify-email flow for `app=vibe-raising`
+- [x] Add Vibe Raising CTA to `/hackathons`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
+- [x] Fetch latest `origin/main` and `origin/valley-landing-page`
+- [x] Check out `valley-landing-page`
+- [x] Merge `origin/main` into `valley-landing-page` with unrelated histories allowed
+- [x] Resolve shared route, root shell, and package-script merge conflicts
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
 - [x] Populate this list
 - [x] Keep TODO.md updated when multi-step changes, and update as steps are completed
 - [x] Rename the featured article slug/file to how-to-do-machine-learning

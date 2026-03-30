@@ -15,7 +15,7 @@ export default [
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
-
+  route("/platform/dashboard", "routes/platform.dashboard.tsx"),
   route("/platform/logout", "routes/platform.logout.tsx"),
   route("/verify-email", "routes/verify-email.tsx"),
 
@@ -55,7 +55,17 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
-  // Vibe-Raising page
-  route("/vibe-raising", "routes/vibe-raising.tsx"),
+  // Vibe Raising public landing
+  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx"),
+
+  // Vibe Raising App routes
+  route("/vibe-raising", "routes/vibe-raising-app.tsx", [
+    index("routes/vibe-raising-app._index.tsx"),
+    route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
+    route("create-update", "routes/vibe-raising-app.create-update.tsx"),
+    route("discover", "routes/vibe-raising-app.investors.tsx"),
+    route("companies", "routes/vibe-raising-app.companies.tsx"),
+  ]),
+  route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx"),
 
 ] satisfies RouteConfig;

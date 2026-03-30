@@ -47,10 +47,13 @@ export const links: Route.LinksFunction = () => [
 export default function Layout() {
   const location = useLocation();
 
-  // Check if we're in the eSafety app routes or AI Hospital app routes
-  const isEsafetyApp = location.pathname.startsWith('/esafety');
-  const isHospitalApp = location.pathname.startsWith('/hospital/app');
-  const isAppRoute = isEsafetyApp || isHospitalApp;
+  // Hide the global chrome inside authenticated app surfaces.
+  const isEsafetyApp = location.pathname.startsWith("/esafety");
+  const isHospitalApp = location.pathname.startsWith("/hospital/app");
+  const isVibeRaisingApp =
+    location.pathname === "/vibe-raising" ||
+    location.pathname.startsWith("/vibe-raising/");
+  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -74,7 +77,10 @@ export default function Layout() {
         />
         <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84" />
+        <meta
+          property="og:image"
+          content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta
@@ -91,7 +97,11 @@ export default function Layout() {
         <Meta />
         <Links />
 
-        <script src="https://analytics.ahrefs.com/analytics.js" data-key="R27fA2BeFrzb0BXu5adbpQ" async></script>
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="R27fA2BeFrzb0BXu5adbpQ"
+          async
+        ></script>
       </head>
       <body>
         <noscript>
@@ -106,7 +116,7 @@ export default function Layout() {
         {/* Only show platform-wide components if NOT in specific apps */}
         {!isAppRoute && <Sidebar />}
         {!isAppRoute && <SectionMarkers />}
-        <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
+        <div className={isAppRoute ? "" : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
           <Outlet />
         </div>
         {!isAppRoute && <Footer />}
@@ -152,9 +162,6 @@ export default function Layout() {
           `,
           }}
         />
-
-        {/* Ahrefs Analytics */}
-        <script src="https://analytics.ahrefs.com/analytics.js" data-key="gpWL4pKb2ZPfqFtu60natQ" async></script>
         <Scripts />
       </body>
     </html>
