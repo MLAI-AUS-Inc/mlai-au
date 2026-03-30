@@ -205,11 +205,32 @@ function isEmailDraftRunning(statusResponse: VibeRaisingStartupUpdateStatusRespo
     return statusResponse?.state === "queued" || statusResponse?.state === "running";
 }
 
+function isHtmlErrorDocument(value: unknown) {
+    if (typeof value !== "string") return false;
+    const normalized = value.trim().toLowerCase();
+    return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
+}
+
 function getEmailDraftErrorMessage(error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
     const payload = (error as { data?: { error?: string; detail?: string } })?.data;
+    if (typeof payload === "string" && isHtmlErrorDocument(payload)) {
+        if (statusCode === 404) {
+            return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+        }
+        return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+    }
     if (payload?.error) return payload.error;
     if (payload?.detail) return payload.detail;
-    if (error instanceof Error && error.message) return error.message;
+    if (error instanceof Error && error.message) {
+        if (isHtmlErrorDocument(error.message)) {
+            if (statusCode === 404) {
+                return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            }
+            return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        }
+        return error.message;
+    }
     return "We couldn't draft your update from Gmail. Please try again.";
 }
 
