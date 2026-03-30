@@ -1,7 +1,7 @@
 {
-  "title": "How to Build an AI Harness for Long Running Tasks in 2026",
-  "meta_title": "How to Build an AI Harness for Long Running Tasks 2026",
-  "meta_description": "Learn how to build an AI harness for long running tasks in 2026 using narrow scope, state, tools, checkpoints, and evaluation loops.",
+  "title": "How to Build an AI Harness for Long-Running Tasks in 2026",
+  "meta_title": "How to Build an AI Harness for Long-Running Tasks 2026",
+  "meta_description": "Learn how to build an AI harness for long running tasks in 2026 with planning, checkpoints, validation, recovery loops, and human review.",
   "slug": "how-to-build-an-ai-harness-for-long-running-tasks-in-2026",
   "category": "featured",
   "target_keyword": "how to build an ai harness for long running tasks (2026)",
@@ -9,57 +9,54 @@
   "modified_date": "2026-03-30",
   "summary_items": [
     {
-      "label": "Why does a long-running AI system need a harness?",
-      "description": "Long-running tasks often fail through drift, premature completion, or missed edge cases across many steps. A harness adds orchestration, constraints, tools, and feedback loops so the model can operate as a controlled system."
+      "label": "What an AI harness does",
+      "description": "An AI harness is the orchestration layer around the model. It adds structure through state tracking, tool controls, checkpoints, validation, and recovery so long tasks stay traceable and easier to trust."
     },
     {
-      "label": "What should you define before choosing models or tools?",
-      "description": "Start with one narrow job, a clear business outcome, and explicit operating boundaries. Define what the system may do alone, what must be escalated, and what counts as finished work."
+      "label": "Why long-running agents fail without one",
+      "description": "Standalone agents often drift, lose context, stop early, or report success before the work is complete. These failures become harder to spot as tasks span more steps, tools, and decisions."
     },
     {
-      "label": "What makes an AI harness dependable over time?",
-      "description": "A dependable harness persists task state, limits tool access, and uses checkpoints, retries, and review gates. It also verifies outputs before advancing so the model's confidence is not treated as proof of success."
+      "label": "How to build the operating loop",
+      "description": "A practical harness runs a repeatable cycle: plan the next action, execute, verify the result, save state, then continue, retry, or escalate. Human review and explicit stop conditions are part of the design."
     }
   ],
   "summary_question_candidates": [],
   "faq_items": [
     {
-      "question": "What is an AI harness in this context?",
-      "answer": "It is the orchestration layer around the model. The harness manages prompts, tool use, memory, constraints, checkpoints, and feedback so multi-step work can stay controlled over time."
+      "question": "What is an AI harness in plain language?",
+      "answer": "It is the control layer around an AI model. Instead of letting the model run alone, the harness manages task scope, state, tool access, checks, and recovery rules."
     },
     {
-      "question": "What is the best first use case for a long-running AI harness?",
-      "answer": "A bounded workflow is the safest starting point, such as inbox triage, meeting summaries, scheduling, or drafting customer replies. These jobs have clearer inputs, outputs, and escalation rules than broad open-ended tasks."
+      "question": "Which parts matter most for long-running AI tasks?",
+      "answer": "The grounded sections point to a few core parts: task decomposition, memory or state tracking, tool access, checkpoints, validators, and clear stop or escalation rules."
     },
     {
-      "question": "What state should the harness persist between runs?",
-      "answer": "It should save the current objective, intermediate outputs, tool results, and a short decision history. That allows the task to resume safely after interruption and makes progress easier to review."
+      "question": "How should the model and the harness split responsibilities?",
+      "answer": "The model should propose candidate actions such as a next step, a draft, or a tool choice. The harness should decide execution flow, verify outputs, store checkpoints, and handle retries or escalation."
     },
     {
-      "question": "How should tool access be managed?",
-      "answer": "Give the agent only the tools needed for the specific job. The harness should define when each tool can be used and add extra checks for sensitive actions with real-world impact."
+      "question": "What are good first use cases for an AI harness?",
+      "answer": "Start with repeatable, multi-step work that has a clear boundary and measurable output. Examples in the article include inbox sorting, research assembly, customer response workflows, and audit-style tasks."
     },
     {
-      "question": "How do you reduce drift and false completion?",
-      "answer": "Re-anchor the goal at checkpoints and run a separate evaluation step before marking work complete. The harness should check that required outputs exist, still match the brief, and have not skipped important constraints."
-    },
-    {
-      "question": "What is a practical build sequence for 2026?",
-      "answer": "Define purpose and boundaries first, then choose the model, prompt structure, and smallest useful toolset. After that, add orchestration features like logs, checkpoints, retries, and human review gates, then refine them using real task runs."
+      "question": "When should a human stay in the loop?",
+      "answer": "Human review belongs in the design for complex, ambiguous, or high-stakes work. The harness should pause for review when validation fails repeatedly, outputs conflict, or the next action cannot be justified clearly."
     }
   ],
   "sections": [
     {
       "section_id": "section-01",
-      "heading": "Why Long Running AI Tasks Need a Harness",
+      "heading": "Why long-running AI tasks need a harness",
       "section_type": "intro",
       "paragraphs": [
-        "Long-running AI tasks break in ways short demos often hide. A model may start strong, then drift away from the goal, stop too early, or return work that looks complete but misses edge cases. This shows up in multi-step work such as research, compliance reviews, and software delivery, where success depends on staying accurate over many turns and tool calls rather than giving one good answer.",
-        "That is why teams need a harness around the model. In the sources, a harness is the orchestration layer that wraps the model with prompts, tools, constraints, and feedback loops so it can act more like a reliable system. Put simply, the model supplies reasoning, but the harness supplies control."
+        "Long-running AI tasks are different from short chat prompts. A model may start well, then drift off-task, stop too early, or return work that looks finished but misses edge cases. This shows up in jobs like building a full application, running a multi-step research process, or auditing a large system. As tasks stretch across many steps and tool calls, simple prompt-and-response setups become hard to trust.",
+        "An AI harness is the orchestration layer around the model that makes this work more dependable. It adds structure around the model through prompts, tools, feedback loops, checks, and recovery paths so the system can stay on task and be evaluated as it goes. In 2026, the main opportunity is not just to build agents that can act, but to build systems that can keep working reliably over longer runs."
       ],
       "bullets": [
-        "A harness is the system around the model, not the model itself.",
-        "Reliable AI work depends on orchestration, feedback, and control over time."
+        "Without a harness, long tasks can wander, stall, or claim success too soon.",
+        "A harness wraps the model with orchestration, checks, and feedback loops.",
+        "In 2026, reliability over many steps matters as much as raw model quality."
       ],
       "recommended_component_id": null,
       "callout": null,
@@ -69,13 +66,16 @@
     },
     {
       "section_id": "section-02",
-      "heading": "Start With a Narrow Job and Clear Operating Boundaries",
+      "heading": "Where autonomous agents break down in practice",
       "section_type": "prose",
       "paragraphs": [
-        "Before you think about prompts, tools, or frameworks, define one narrow job for the harness. The safest starting point is a single business outcome with a limited scope, not a broad instruction like \"handle operations\" or \"run support.\" A practical first version might sort an inbox, draft customer replies, build a staff roster, or transcribe and summarise meetings. These tasks are useful, repeat often, and have clearer inputs and outputs than open-ended work. This also matches the basic advice in agent-building guides: start by defining the agent's purpose and scope before you design the rest of the system.",
-        "State what the harness is allowed to do on its own, what it must send to a human, and what counts as finished work. For example, an inbox harness might classify messages and draft replies, but escalate complaints, payment disputes, or unclear requests. A meeting-summary harness might produce notes and action items, but avoid making decisions on behalf of the team. It gives you a simpler way to test whether the harness stayed on task, used the right level of autonomy, and completed the job you actually wanted."
+        "Autonomous agents often look capable on short, well-bounded tasks, but they become unreliable when the work stretches across many steps. The common pattern in the sources is not that the model lacks raw intelligence. It is that an unstructured agent has no strong frame for staying on task over time. In practice, that shows up as inconsistent output, getting stuck when a decision is ambiguous, or failing in ways that are hard to notice until much later. For long-running work, that kind of silent drift is usually more dangerous than an obvious error.",
+        "A second problem is that agents tend to lose the thread of the job as context grows and the task branches. The sources describe this as wandering off-track, struggling with context, and declaring success too early. An agent may produce something that looks finished while still missing edge cases or important checks. That matters most in coding, research, audit, and multi-system business workflows, where the task is not just one answer but a chain of steps that must stay aligned from start to finish. This is the practical reason a harness becomes necessary: it adds structure around the model so the system can detect drift, evaluate its own work more clearly, and avoid mistaking partial progress for a complete result."
       ],
-      "bullets": [],
+      "bullets": [
+        "Unstructured agents are less dependable on complex, multi-step work than on short tasks.",
+        "The risk rises in work like code migration, audits, research, and broader business workflows."
+      ],
       "recommended_component_id": null,
       "callout": null,
       "image": null,
@@ -84,34 +84,31 @@
     },
     {
       "section_id": "section-03",
-      "heading": "Design the Harness Around State, Tools, and Checkpoints",
+      "heading": "The core parts of a reliable AI harness",
       "section_type": "prose",
       "paragraphs": [
-        "For long-running work, treat the model as only one part of the system. The harness should sit around the agent and manage the job over time. This orchestration layer keeps the task on track when work spans many steps, tool calls, or retries. Sources on agent harnesses describe this as the part that handles prompts, tools, feedback loops, and execution flow, rather than leaving all control inside a single model call. That separation matters because agents can drift, stop too early, or lose the thread on larger tasks.",
-        "A practical design is to keep reasoning inside the agent, but move memory, state, and execution rules into the harness. General agent-building guides also support this split by framing agents as systems that reason about goals, choose tools, and act across multiple steps. In a harness, that means the model decides what it wants to do next, while the surrounding system records where the task is up to, what has already been tried, and what actions are allowed.",
-        "State should be persisted as the task runs, not reconstructed from scratch after failure. Save the current objective, intermediate outputs, tool results, and a short decision history so the harness can restart safely after an interruption. Checkpoints also help you review whether the agent is making progress or just producing activity. For tools and integrations, keep access narrow and explicit. Give the agent only the systems it needs for the job, and put guardrails around actions so the harness can approve, limit, or validate sensitive operations before they run."
+        "A reliable AI harness is the control system around the model, not the model itself. The model proposes plans, writes content, or suggests tool calls. The harness keeps the work moving in a safe and structured way by holding the task definition, the current state, the allowed tools, and the rules for what counts as done. This separation matters on long-running work because models can drift, stop too early, or produce output that looks finished but fails at the edges.",
+        "In practice, the core parts usually include task decomposition, state or memory tracking, tool access, checkpoints, and validation. State tracking records what has already happened so the run can continue without losing context. Tool access lets the model act on external systems, but within clear boundaries. Checkpoints create places to review progress, and validators test whether each step actually meets the expected standard before the harness moves on."
       ],
-      "bullets": [
-        "Keep reasoning in the agent, but keep control flow in the harness.",
-        "Limit tools to the minimum set needed for the task.",
-        "Add explicit guardrails around actions with real-world impact."
-      ],
+      "bullets": [],
       "recommended_component_id": null,
       "callout": null,
       "image": null,
       "internal_links": [],
       "subsections": [
         {
-          "heading": "What to persist between runs",
+          "heading": "What the model does versus what the harness does",
           "paragraphs": [
-            "A short record of why the agent chose its last action can also help the next cycle continue from a stable point instead of repeating work."
+            "The model should focus on generating candidate actions. It can suggest the next step, draft code, summarize findings, or choose a tool based on the current goal. The harness then decides how that suggestion is executed.",
+            "This design makes failure easier to detect and contain. If a tool call fails, or a result does not pass evaluation, the harness can route the task back for revision instead of treating the first answer as final. Sources on harness design consistently frame this as an orchestration layer with prompts, tools, feedback loops, and explicit acceptance checks rather than a single autonomous model left to run on its own."
           ],
           "bullets": []
         },
         {
-          "heading": "How to scope tool access",
+          "heading": "Why stop conditions and human review belong in the design",
           "paragraphs": [
-            "Tool access should match the task scope, not the model's full capabilities. If the job is research, the harness may only need search and document retrieval. If the job is workflow execution, it may need a small set of approved integrations. The harness should define which tools exist, when they can be used, and what kinds of actions need extra checks."
+            "Human review is not just a backup plan for when the system goes wrong. For complex or high-stakes tasks, it is one of the built-in control points of the harness. This keeps the system useful without pretending the model can resolve every edge case alone.",
+            "The harness should know when to pause, ask for help, or end the run. That can happen when validation repeatedly fails, when the task goal has been met, or when the model reaches an unclear state it should not guess through. For long-running tasks, reliability comes less from letting the model do more and more, and more from giving the surrounding system clear ways to track progress, verify outputs, and stop safely."
           ],
           "bullets": []
         }
@@ -119,36 +116,57 @@
     },
     {
       "section_id": "section-04",
-      "heading": "Build for the Failure Modes You Already Know Will Happen",
+      "heading": "How to build the loop from planning to recovery",
       "section_type": "prose",
       "paragraphs": [
-        "Long-running tasks fail in predictable ways, so the harness should be designed around those failures from the start. A common problem is context drift: the agent slowly loses the original goal, skips constraints, or follows a side path that looked useful a few steps earlier. The other side of that problem is context overload, where too much accumulated history makes it harder for the model to stay focused. Source material on long-running agent harnesses frames this as a core reliability issue, not a rare edge case. In practice, that means the harness should keep the task state explicit and regularly restate what success looks like before the agent continues.",
-        "Another repeat failure is poor self-evaluation. Agents often produce work that looks finished, then claim success before the output is actually usable. The harness should not treat the model's own confidence as proof. After a draft, plan, or tool run, have the harness check whether required outputs exist, whether the result still matches the original goal, and whether anything important is missing. If those checks fail, the system should route the task back for revision instead of advancing automatically.",
-        "Let the agent create the next piece of work, then have the harness run a distinct evaluation step before marking that phase complete. This matches the broader guidance in the sources: define goals clearly, wrap the model in control logic, and use feedback loops to keep multi-step work on track. For long workflows, simple gates are often enough: stop if the task objective has changed, stop if required artifacts are missing, and stop if the answer cannot be checked against the brief or prior outputs.",
-        "The main design goal is to reduce false confidence. A good harness assumes that drift, missed requirements, and premature completion will happen sooner or later. That does not make the agent perfect, but it does make failures easier to catch while the task is still recoverable."
+        "A harness for long-running AI work should start with a clear objective, a defined scope, and a small set of phases the system can track. The sources consistently frame the harness as the orchestration layer around the model, not just a better prompt. That matters because complex work often fails in predictable ways: the model drifts, declares success too early, or produces output that looks complete but is hard to trust. Turning the job into a few named phases gives the loop structure and makes progress easier to inspect.",
+        "From there, the operating cycle is simple in concept: plan the next step, execute with the available tools, verify what came back, save state, and then decide whether to continue, retry, or escalate. This kind of structured workflow is presented in the priority sources as the difference between a one-off assistant and a reliable system. The goal is a loop that can keep moving on long tasks while staying traceable when something goes wrong."
       ],
       "bullets": [
-        "Re-anchor the task goal at major checkpoints so the agent does not drift.",
-        "Add a separate review step before the harness advances to the next phase."
+        "Track a small number of phases instead of letting the task stay as one open-ended prompt.",
+        "After each action, verify results before the harness commits to the next step."
       ],
       "recommended_component_id": null,
       "callout": null,
       "image": null,
       "internal_links": [],
-      "subsections": []
+      "subsections": [
+        {
+          "heading": "Planning the next move",
+          "paragraphs": [
+            "Planning should produce the next manageable action, not a giant master plan that the model will forget or reinterpret later. The supporting sources describe agents as systems that reason, plan, use tools, and execute across many steps, but they also warn that unstructured workflows break down on larger tasks. A practical harness therefore keeps planning narrow: define the current phase, choose the next action, note the expected result, and record what would count as completion for that step."
+          ],
+          "bullets": []
+        },
+        {
+          "heading": "Verification and checkpointing",
+          "paragraphs": [
+            "The harness should check whether the output actually matches the expected result before it moves on, because poor self-evaluation and silent failure are recurring problems in the source material. In practice, that means comparing the result to the task objective, checking whether the tool output supports the model's claim, and storing a checkpoint with the current state. If the result passes, the harness can continue from a known point instead of relying on fragile conversational memory alone."
+          ],
+          "bullets": []
+        },
+        {
+          "heading": "Recovery when the task goes off track",
+          "paragraphs": [
+            "If a tool call fails, outputs conflict, or the model cannot justify the next action, the harness should stop treating the run as normal. The next branch is usually one of three options supported by the workflow pattern in the sources: retry with clearer constraints, re-plan from the last good checkpoint, or escalate to a human when the decision is ambiguous or high risk. This makes failure visible and recoverable instead of letting the agent continue with a false sense of progress."
+          ],
+          "bullets": []
+        }
+      ]
     },
     {
       "section_id": "section-05",
-      "heading": "A Practical Build Sequence You Can Use in 2026",
+      "heading": "Choose the right first use cases and safety rails",
       "section_type": "prose",
       "paragraphs": [
-        "A good build sequence starts by narrowing the job before you touch models or tools. The first phase is to define the task purpose, the inputs it will receive, the output you expect, and where the task should stop. The 2026 agent build guides consistently start with purpose and scope for the same reason: an agent that can reason across steps still needs a clear goal and clear boundaries. For a harness, this also means deciding what counts as success, what should trigger a handoff, and which decisions must stay with a human.",
-        "Choose the model that fits the job, write a tight system prompt, and give the agent only the tools it truly needs for the workflow. The practical build advice across the sources points to a simple pattern: pair clear instructions with a small toolset, then expand only when the task proves it needs more capability. For long-running work, the harness matters as much as the model, so this phase should also define how the agent will call tools and how its outputs will be structured for the next step.",
-        "The third phase is where an agent becomes a reliable harness instead of a promising demo. Add the orchestration features that keep multi-step runs on track: logs so you can inspect what happened, checkpoints so progress is not lost, retries for recoverable failures, and review gates for risky or ambiguous moments. The long-running harness material frames this as the layer around the model that keeps it on task. In practice, that means you are not asking the model to be perfectly self-managing.",
-        "The last phase is to test the harness on real task runs and tighten the completion rules based on what breaks. Start with realistic jobs, inspect where the run stalls or produces weak outputs, and then refine the prompt, tools, checkpoints, or success criteria. This step is important because long-running tasks often fail at the edges rather than in the happy path. A practical 2026 build process is therefore iterative: define the work, assemble the smallest useful system, wrap it in orchestration, and then improve it with evidence from actual runs rather than assumptions."
+        "A good first use case for an AI harness is not \u201crun the whole business process alone.\u201d It is a repeatable, multi-step task with a clear start, a clear finish, and outputs you can inspect. The source material points to practical examples like inbox sorting, customer response workflows, quote comparison, research-style assembly work, and audit-like tasks that span many steps.",
+        "This matters because unstructured agents tend to break down on complex work. The MindStudio source says teams often begin with a coding assistant and quickly hit problems when the task becomes larger, such as codebase migration, API audits, or broad test generation. The harness pattern exists to make those longer workflows more reliable and traceable. In practice, that means choosing work where you can define the task boundary before the agent starts, rather than asking it to improvise across unclear goals.",
+        "Define what the agent is allowed to read, write, or call. Decide what an acceptable output looks like, whether that is a classified inbox, a summary pack, or an audit report for review. The build-from-scratch guidance also supports this approach: define the agent\u2019s goals and capabilities early, instead of letting it discover its own scope while running.",
+        "Let the harness handle the repetitive parts first, then send its outputs to a reviewer for approval or correction."
       ],
       "bullets": [
-        "Phase 2: choose the model, prompt structure, and smallest useful toolset."
+        "Prefer tasks that are repeatable, multi-step, and easy to measure.",
+        "Limit tools and data access up front."
       ],
       "recommended_component_id": null,
       "callout": null,
@@ -158,17 +176,17 @@
     },
     {
       "section_id": "section-06",
-      "heading": "What to Do Next Before You Scale Beyond a Pilot",
+      "heading": "Build for reliability first, then increase autonomy",
       "section_type": "conclusion",
       "paragraphs": [
-        "Before you try to build a broad autonomous agent, pick one long-running workflow with a clear finish line. A narrow scope makes it easier to define the goal, choose the right tools, and see where the system actually breaks. The 2026 agent guides consistently start with purpose and scope for a reason: long-running systems fail when they are asked to do too much too early.",
-        "As you move from idea to implementation, treat the harness as the real product, not just the model inside it. The useful parts are the orchestration around the model: prompts, tools, memory, checkpoints, and feedback loops that keep work on track over many steps. Run the pilot, inspect where it wanders, stops early, or misses edge cases, and improve those control points first. Only after that should you widen the task, add more tools, or give the system more autonomy."
+        "For long, stateful, and error-prone work, the harness matters more than chasing a slightly stronger model. The core sources agree on the same pattern: unstructured agents drift, stop early, or fail quietly, while a harness adds the prompts, tools, checkpoints, and evaluation loops that turn model output into a more reliable system.",
+        "A good next step is to pick one bounded workflow and run it end to end with visible checkpoints. That could be a research task, an audit, or another repeatable piece of real work with a defined finish line. Document the task contract, decide what success and failure look like, and add a small evaluation loop before expanding scope. Once the harness can complete one useful workflow consistently, you can widen the task, add more tools, and increase autonomy with much less risk."
       ],
       "bullets": [
-        "Choose one bounded workflow for your first pilot.",
-        "Build the harness around the model, including checkpoints and evaluation."
+        "Start with one bounded workflow, not a general-purpose agent.",
+        "Define pass-fail tests early, then pilot the harness on real work."
       ],
-      "recommended_component_id": "ArticleResourceCTA",
+      "recommended_component_id": null,
       "callout": null,
       "image": null,
       "internal_links": [],
@@ -176,32 +194,33 @@
     }
   ],
   "cta": {
-    "title": "Plan your first AI harness pilot",
-    "body": "Start with one narrow workflow, clear boundaries, and a simple review loop. If you are shaping an applied AI project, explore our practical resources and community pathways for builders in Australia.",
-    "button_text": "Explore AI builder resources",
+    "title": "Need a practical starting point?",
+    "body": "Use a simple workflow template to define task scope, pass-fail checks, checkpoints, and review gates before you increase autonomy.",
+    "button_text": "Explore AI learning resources",
     "button_href": "/practical-ai-ml-learning-upskilling"
   },
   "notes": [
-    "Use grounded sections as written. Keep the article framed as a practical featured guide focused on reliability, not autonomy hype. Ensure the shell includes the required featured components, at least one step list, resource CTA blocks, Article references and disclaimer, and FAQ support. Do not add unsupported claims about performance, benchmarks, or specific frameworks. Internal links may point to: /ai-machine-learning-community-events-australia, /ai-partnerships-sponsorship-australia, /ai-startup-building-pitching, and /practical-ai-ml-learning-upskilling.",
-    "Rendered with the mlai_au_featured article profile for a full featured-article shell."
+    "Use the grounded sections as-is. Keep the article framed around reliability over novelty. Ensure the shell includes the required featured components, Article structured data, at least one step list, and the required internal link targets where appropriate: ai-machine-learning-community-events-australia, ai-partnerships-sponsorship-australia, ai-startup-building-pitching, practical-ai-ml-learning-upskilling.",
+    "Rendered with the mlai_au_featured article profile for a full featured-article shell.",
+    "Normalized SEO title from `Build an AI Harness for Long Running Tasks 2026` to `How to Build an AI Harness for Long-Running Tasks 2026`."
   ],
   "claim_bindings": [
     {
       "claim_id": "claim-001",
-      "claim_text": "Long-running AI tasks break in ways short demos often hide.",
+      "claim_text": "Long-running AI tasks are different from short chat prompts.",
       "section_id": "section-01",
       "location": "sections.section-01.paragraphs[0][0]",
       "required": true,
       "source_ids": [
-        "source-03"
+        "source-10"
       ],
-      "support_excerpt": "Ten everyday small business tasks you can automate with AI | ANZ\nDiscover 10 everyday small business tasks you can automate with AI today. Save time, streamline admin and boost efficiency.\nTen everyday small business tasks you can automate with AI Task 1: Sort out your inbox Task",
+      "support_excerpt": "How to build AI agents in 6 simple steps (2026 guide)\nLearn how to build AI agents from scrach. We'll go over how to choose your AI model, connect your tools, write instructions, and more.\nWhat is an AI agent? Types of AI agents What you need before you start How to build an AI a",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-002",
-      "claim_text": "A model may start strong, then drift away from the goal, stop too early, or return work that looks complete but misses edge cases.",
+      "claim_text": "A model may start well, then drift off-task, stop too early, or return work that looks finished but misses edge cases.",
       "section_id": "section-01",
       "location": "sections.section-01.paragraphs[0][1]",
       "required": true,
@@ -214,7 +233,7 @@
     },
     {
       "claim_id": "claim-003",
-      "claim_text": "This shows up in multi-step work such as research, compliance reviews, and software delivery, where success depends on staying accurate over many turns and tool calls rather than giving one good answer.",
+      "claim_text": "This shows up in jobs like building a full application, running a multi-step research process, or auditing a large system.",
       "section_id": "section-01",
       "location": "sections.section-01.paragraphs[0][2]",
       "required": true,
@@ -227,248 +246,35 @@
     },
     {
       "claim_id": "claim-004",
-      "claim_text": "That is why teams need a harness around the model.",
+      "claim_text": "As tasks stretch across many steps and tool calls, simple prompt-and-response setups become hard to trust.",
+      "section_id": "section-01",
+      "location": "sections.section-01.paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-08"
+      ],
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-005",
+      "claim_text": "An AI harness is the orchestration layer around the model that makes this work more dependable.",
       "section_id": "section-01",
       "location": "sections.section-01.paragraphs[1][0]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-09"
       ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-005",
-      "claim_text": "In the sources, a harness is the orchestration layer that wraps the model with prompts, tools, constraints, and feedback loops so it can act more like a reliable system.",
+      "claim_id": "claim-006",
+      "claim_text": "It adds structure around the model through prompts, tools, feedback loops, checks, and recovery paths so the system can stay on task and be evaluated as it goes.",
       "section_id": "section-01",
       "location": "sections.section-01.paragraphs[1][1]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-006",
-      "claim_text": "Put simply, the model supplies reasoning, but the harness supplies control.",
-      "section_id": "section-01",
-      "location": "sections.section-01.paragraphs[1][2]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-007",
-      "claim_text": "This article focuses on that control layer: how to design for reliability and durability, not just autonomy.",
-      "section_id": "section-01",
-      "location": "sections.section-01.paragraphs[1][3]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-008",
-      "claim_text": "Long tasks fail through drift, premature completion, and quiet edge-case mistakes.",
-      "section_id": "section-01",
-      "location": "sections.section-01.bullets[0]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-009",
-      "claim_text": "A harness is the system around the model, not the model itself.",
-      "section_id": "section-01",
-      "location": "sections.section-01.bullets[1]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-010",
-      "claim_text": "Reliable AI work depends on orchestration, feedback, and control over time.",
-      "section_id": "section-01",
-      "location": "sections.section-01.bullets[2]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-001",
-      "claim_text": "Before you think about prompts, tools, or frameworks, define one narrow job for the harness.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[0][0]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-002",
-      "claim_text": "The safest starting point is a single business outcome with a limited scope, not a broad instruction like \"handle operations\" or \"run support.\" A practical first version might sort an inbox, draft customer replies, build a staff roster, or transcribe and summarise meetings.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[0][1]",
-      "required": true,
-      "source_ids": [
-        "source-03"
-      ],
-      "support_excerpt": "Ten everyday small business tasks you can automate with AI | ANZ\nDiscover 10 everyday small business tasks you can automate with AI today. Save time, streamline admin and boost efficiency.\nTen everyday small business tasks you can automate with AI Task 1: Sort out your inbox Task",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-003",
-      "claim_text": "These tasks are useful, repeat often, and have clearer inputs and outputs than open-ended work.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[0][2]",
-      "required": true,
-      "source_ids": [
-        "source-03"
-      ],
-      "support_excerpt": "Ten everyday small business tasks you can automate with AI | ANZ\nDiscover 10 everyday small business tasks you can automate with AI today. Save time, streamline admin and boost efficiency.\nTen everyday small business tasks you can automate with AI Task 1: Sort out your inbox Task",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-004",
-      "claim_text": "This also matches the basic advice in agent-building guides: start by defining the agent's purpose and scope before you design the rest of the system.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[0][3]",
-      "required": true,
-      "source_ids": [
-        "source-04"
-      ],
-      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-005",
-      "claim_text": "Once the job is clear, write down the operating boundaries in plain language.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][0]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-006",
-      "claim_text": "State what the harness is allowed to do on its own, what it must send to a human, and what counts as finished work.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][1]",
-      "required": true,
-      "source_ids": [
-        "source-11"
-      ],
-      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-007",
-      "claim_text": "For example, an inbox harness might classify messages and draft replies, but escalate complaints, payment disputes, or unclear requests.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][2]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-008",
-      "claim_text": "A meeting-summary harness might produce notes and action items, but avoid making decisions on behalf of the team.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][3]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-009",
-      "claim_text": "This kind of boundary-setting keeps long-running tasks contained.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][4]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-010",
-      "claim_text": "It gives you a simpler way to test whether the harness stayed on task, used the right level of autonomy, and completed the job you actually wanted.",
-      "section_id": "section-02",
-      "location": "sections.section-02.paragraphs[1][5]",
-      "required": true,
-      "source_ids": [
-        "source-11"
-      ],
-      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-001",
-      "claim_text": "For long-running work, treat the model as only one part of the system.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[0][0]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-002",
-      "claim_text": "The harness should sit around the agent and manage the job over time.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[0][1]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-003",
-      "claim_text": "This orchestration layer keeps the task on track when work spans many steps, tool calls, or retries.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[0][2]",
       "required": true,
       "source_ids": [
         "source-01"
@@ -478,36 +284,34 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-004",
-      "claim_text": "Sources on agent harnesses describe this as the part that handles prompts, tools, feedback loops, and execution flow, rather than leaving all control inside a single model call.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[0][3]",
+      "claim_id": "claim-007",
+      "claim_text": "In 2026, the main opportunity is not just to build agents that can act, but to build systems that can keep working reliably over longer runs.",
+      "section_id": "section-01",
+      "location": "sections.section-01.paragraphs[1][2]",
       "required": true,
       "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-005",
-      "claim_text": "That separation matters because agents can drift, stop too early, or lose the thread on larger tasks.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[0][4]",
-      "required": true,
-      "source_ids": [
-        "source-04"
+        "source-02"
       ],
       "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-006",
-      "claim_text": "A practical design is to keep reasoning inside the agent, but move memory, state, and execution rules into the harness.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[1][0]",
+      "claim_id": "claim-008",
+      "claim_text": "That shift moves the focus from novelty to durability, traceability, and controlled execution.",
+      "section_id": "section-01",
+      "location": "sections.section-01.paragraphs[1][3]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-009",
+      "claim_text": "Without a harness, long tasks can wander, stall, or claim success too soon.",
+      "section_id": "section-01",
+      "location": "sections.section-01.bullets[0]",
       "required": true,
       "source_ids": [
         "source-09"
@@ -517,21 +321,277 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-007",
-      "claim_text": "General agent-building guides also support this split by framing agents as systems that reason about goals, choose tools, and act across multiple steps.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[1][1]",
+      "claim_id": "claim-010",
+      "claim_text": "A harness wraps the model with orchestration, checks, and feedback loops.",
+      "section_id": "section-01",
+      "location": "sections.section-01.bullets[1]",
+      "required": true,
+      "source_ids": [
+        "source-09"
+      ],
+      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-011",
+      "claim_text": "In 2026, reliability over many steps matters as much as raw model quality.",
+      "section_id": "section-01",
+      "location": "sections.section-01.bullets[2]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-001",
+      "claim_text": "Autonomous agents often look capable on short, well-bounded tasks, but they become unreliable when the work stretches across many steps.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[0][0]",
       "required": true,
       "source_ids": [
         "source-02"
       ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-002",
+      "claim_text": "The common pattern in the sources is not that the model lacks raw intelligence.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[0][1]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-003",
+      "claim_text": "It is that an unstructured agent has no strong frame for staying on task over time.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[0][2]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-004",
+      "claim_text": "In practice, that shows up as inconsistent output, getting stuck when a decision is ambiguous, or failing in ways that are hard to notice until much later.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-005",
+      "claim_text": "For long-running work, that kind of silent drift is usually more dangerous than an obvious error.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[0][4]",
+      "required": true,
+      "source_ids": [
+        "source-05"
+      ],
+      "support_excerpt": "How Hightouch built their long-running agent harness | Amplify Partners\nA story of real context engineering: how Hightouch's engineers built a long running agent that smoothly handles sparse and open ended marketing tasks.\nHow Hightouch built their long-running agent harness Chal",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-006",
+      "claim_text": "A second problem is that agents tend to lose the thread of the job as context grows and the task branches.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[1][0]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-007",
+      "claim_text": "The sources describe this as wandering off-track, struggling with context, and declaring success too early.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[1][1]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-008",
-      "claim_text": "In a harness, that means the model decides what it wants to do next, while the surrounding system records where the task is up to, what has already been tried, and what actions are allowed.",
+      "claim_text": "An agent may produce something that looks finished while still missing edge cases or important checks.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[1][2]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-009",
+      "claim_text": "That matters most in coding, research, audit, and multi-system business workflows, where the task is not just one answer but a chain of steps that must stay aligned from start to finish.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[1][3]",
+      "required": true,
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-010",
+      "claim_text": "This is the practical reason a harness becomes necessary: it adds structure around the model so the system can detect drift, evaluate its own work more clearly, and avoid mistaking partial progress for a complete result.",
+      "section_id": "section-02",
+      "location": "sections.section-02.paragraphs[1][4]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-011",
+      "claim_text": "Unstructured agents are less dependable on complex, multi-step work than on short tasks.",
+      "section_id": "section-02",
+      "location": "sections.section-02.bullets[0]",
+      "required": true,
+      "source_ids": [
+        "source-02"
+      ],
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-012",
+      "claim_text": "Typical failures include context loss, weak self-checking, and premature success claims.",
+      "section_id": "section-02",
+      "location": "sections.section-02.bullets[1]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-013",
+      "claim_text": "The risk rises in work like code migration, audits, research, and broader business workflows.",
+      "section_id": "section-02",
+      "location": "sections.section-02.bullets[2]",
+      "required": true,
+      "source_ids": [
+        "source-12"
+      ],
+      "support_excerpt": "AI Tools for Business Owners Australia 2026 | Practical Guide With Real Examples\nHow Australian business owners are actually using AI tools like ChatGPT, Claude, and Xero AI features to save 5-10 hours per week. Practical examples, not hype.\nAI Tools for Business Owners Australia",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-001",
+      "claim_text": "A reliable AI harness is the control system around the model, not the model itself.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[0][0]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-002",
+      "claim_text": "The model proposes plans, writes content, or suggests tool calls.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[0][1]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-003",
+      "claim_text": "The harness keeps the work moving in a safe and structured way by holding the task definition, the current state, the allowed tools, and the rules for what counts as done.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[0][2]",
+      "required": true,
+      "source_ids": [
+        "source-09"
+      ],
+      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-004",
+      "claim_text": "This separation matters on long-running work because models can drift, stop too early, or produce output that looks finished but fails at the edges.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-005",
+      "claim_text": "In practice, the core parts usually include task decomposition, state or memory tracking, tool access, checkpoints, and validation.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[1][0]",
+      "required": true,
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-006",
+      "claim_text": "Task decomposition breaks a large job into smaller steps the system can monitor.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[1][1]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-007",
+      "claim_text": "State tracking records what has already happened so the run can continue without losing context.",
       "section_id": "section-03",
       "location": "sections.section-03.paragraphs[1][2]",
       "required": true,
@@ -543,47 +603,60 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-009",
-      "claim_text": "This makes the system easier to resume, test, and control.",
+      "claim_id": "claim-008",
+      "claim_text": "Tool access lets the model act on external systems, but within clear boundaries.",
       "section_id": "section-03",
       "location": "sections.section-03.paragraphs[1][3]",
-      "required": true,
+      "required": false,
       "source_ids": [],
       "support_excerpt": null,
       "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-009",
+      "claim_text": "Checkpoints create places to review progress, and validators test whether each step actually meets the expected standard before the harness moves on.",
+      "section_id": "section-03",
+      "location": "sections.section-03.paragraphs[1][4]",
+      "required": true,
+      "source_ids": [
+        "source-08"
+      ],
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "outcome": "passed",
+      "repair_action": null
     },
     {
       "claim_id": "claim-010",
-      "claim_text": "State should be persisted as the task runs, not reconstructed from scratch after failure.",
+      "claim_text": "The model should focus on generating candidate actions.",
       "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[2][0]",
+      "location": "sections.section-03.subsections[0].paragraphs[0][0]",
       "required": true,
       "source_ids": [
-        "source-01"
+        "source-06"
       ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-011",
-      "claim_text": "Save the current objective, intermediate outputs, tool results, and a short decision history so the harness can restart safely after an interruption.",
+      "claim_text": "It can suggest the next step, draft code, summarize findings, or choose a tool based on the current goal.",
       "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[2][1]",
+      "location": "sections.section-03.subsections[0].paragraphs[0][1]",
       "required": true,
       "source_ids": [
-        "source-09"
+        "source-08"
       ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-012",
-      "claim_text": "Checkpoints also help you review whether the agent is making progress or just producing activity.",
+      "claim_text": "The harness then decides how that suggestion is executed.",
       "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[2][2]",
+      "location": "sections.section-03.subsections[0].paragraphs[0][2]",
       "required": true,
       "source_ids": [
         "source-09"
@@ -594,96 +667,85 @@
     },
     {
       "claim_id": "claim-013",
-      "claim_text": "For tools and integrations, keep access narrow and explicit.",
+      "claim_text": "It manages retries, records outcomes, enforces constraints, and determines whether the result is acceptable enough to continue.",
       "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[2][3]",
+      "location": "sections.section-03.subsections[0].paragraphs[0][3]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-014",
+      "claim_text": "This design makes failure easier to detect and contain.",
+      "section_id": "section-03",
+      "location": "sections.section-03.subsections[0].paragraphs[1][0]",
       "required": true,
       "source_ids": [
-        "source-02"
+        "source-08"
       ],
       "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-014",
-      "claim_text": "Give the agent only the systems it needs for the job, and put guardrails around actions so the harness can approve, limit, or validate sensitive operations before they run.",
-      "section_id": "section-03",
-      "location": "sections.section-03.paragraphs[2][4]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
       "claim_id": "claim-015",
-      "claim_text": "Keep reasoning in the agent, but keep control flow in the harness.",
+      "claim_text": "If a tool call fails, or a result does not pass evaluation, the harness can route the task back for revision instead of treating the first answer as final.",
       "section_id": "section-03",
-      "location": "sections.section-03.bullets[0]",
+      "location": "sections.section-03.subsections[0].paragraphs[1][1]",
       "required": true,
       "source_ids": [
-        "source-09"
+        "source-01"
       ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-016",
-      "claim_text": "Persist task state, intermediate outputs, and recent decisions.",
+      "claim_text": "Sources on harness design consistently frame this as an orchestration layer with prompts, tools, feedback loops, and explicit acceptance checks rather than a single autonomous model left to run on its own.",
       "section_id": "section-03",
-      "location": "sections.section-03.bullets[1]",
+      "location": "sections.section-03.subsections[0].paragraphs[1][2]",
       "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
     },
     {
       "claim_id": "claim-017",
-      "claim_text": "Use checkpoints so long jobs can resume after failure or pause.",
+      "claim_text": "Human review is not just a backup plan for when the system goes wrong.",
       "section_id": "section-03",
-      "location": "sections.section-03.bullets[2]",
+      "location": "sections.section-03.subsections[1].paragraphs[0][0]",
       "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
+      "source_ids": [
+        "source-02"
+      ],
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
+      "outcome": "passed",
+      "repair_action": null
     },
     {
       "claim_id": "claim-018",
-      "claim_text": "Limit tools to the minimum set needed for the task.",
+      "claim_text": "For complex or high-stakes tasks, it is one of the built-in control points of the harness.",
       "section_id": "section-03",
-      "location": "sections.section-03.bullets[3]",
+      "location": "sections.section-03.subsections[1].paragraphs[0][1]",
       "required": true,
       "source_ids": [
-        "source-03"
+        "source-11"
       ],
-      "support_excerpt": "Ten everyday small business tasks you can automate with AI | ANZ\nDiscover 10 everyday small business tasks you can automate with AI today. Save time, streamline admin and boost efficiency.\nTen everyday small business tasks you can automate with AI Task 1: Sort out your inbox Task",
+      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-019",
-      "claim_text": "Add explicit guardrails around actions with real-world impact.",
+      "claim_text": "A reviewer might approve a plan before execution, inspect a checkpoint after several steps, or make a decision when the task becomes ambiguous.",
       "section_id": "section-03",
-      "location": "sections.section-03.bullets[4]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-020",
-      "claim_text": "The most useful checkpoint data is the minimum context needed to continue work without confusion.",
-      "section_id": "section-03",
-      "location": "sections.section-03.subsections[0].paragraphs[0][0]",
+      "location": "sections.section-03.subsections[1].paragraphs[0][2]",
       "required": true,
       "source_ids": [],
       "support_excerpt": null,
@@ -691,10 +753,23 @@
       "repair_action": "dropped_unsupported_claim"
     },
     {
-      "claim_id": "claim-021",
-      "claim_text": "That usually includes the task goal, the current stage, completed steps, intermediate outputs, and the result of recent tool calls.",
+      "claim_id": "claim-020",
+      "claim_text": "This keeps the system useful without pretending the model can resolve every edge case alone.",
       "section_id": "section-03",
-      "location": "sections.section-03.subsections[0].paragraphs[0][1]",
+      "location": "sections.section-03.subsections[1].paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-021",
+      "claim_text": "Explicit stop conditions are just as important.",
+      "section_id": "section-03",
+      "location": "sections.section-03.subsections[1].paragraphs[1][0]",
       "required": true,
       "source_ids": [],
       "support_excerpt": null,
@@ -703,83 +778,46 @@
     },
     {
       "claim_id": "claim-022",
-      "claim_text": "A short record of why the agent chose its last action can also help the next cycle continue from a stable point instead of repeating work.",
+      "claim_text": "The harness should know when to pause, ask for help, or end the run.",
       "section_id": "section-03",
-      "location": "sections.section-03.subsections[0].paragraphs[0][2]",
+      "location": "sections.section-03.subsections[1].paragraphs[1][1]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-01"
       ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-023",
-      "claim_text": "Tool access should match the task scope, not the model's full capabilities.",
+      "claim_text": "That can happen when validation repeatedly fails, when the task goal has been met, or when the model reaches an unclear state it should not guess through.",
       "section_id": "section-03",
-      "location": "sections.section-03.subsections[1].paragraphs[0][0]",
+      "location": "sections.section-03.subsections[1].paragraphs[1][2]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-024",
+      "claim_text": "For long-running tasks, reliability comes less from letting the model do more and more, and more from giving the surrounding system clear ways to track progress, verify outputs, and stop safely.",
+      "section_id": "section-03",
+      "location": "sections.section-03.subsections[1].paragraphs[1][3]",
+      "required": true,
+      "source_ids": [
+        "source-06"
       ],
       "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-024",
-      "claim_text": "If the job is research, the harness may only need search and document retrieval.",
-      "section_id": "section-03",
-      "location": "sections.section-03.subsections[1].paragraphs[0][1]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-025",
-      "claim_text": "If the job is workflow execution, it may need a small set of approved integrations.",
-      "section_id": "section-03",
-      "location": "sections.section-03.subsections[1].paragraphs[0][2]",
-      "required": true,
-      "source_ids": [
-        "source-05"
-      ],
-      "support_excerpt": "Best AI Tools for Small Business in Australia (2026 Guide) | New Digital\nA practical, no-fluff guide to the best AI tools for Aussie small businesses in 2026. Learn what to use, how to set it up, and where to start.\nHow to Build Your First AI Workflow for a Small Business (Step-b",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-026",
-      "claim_text": "The key idea from the sources is not to give broad, uncontrolled access by default.",
-      "section_id": "section-03",
-      "location": "sections.section-03.subsections[1].paragraphs[0][3]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-027",
-      "claim_text": "The harness should define which tools exist, when they can be used, and what kinds of actions need extra checks.",
-      "section_id": "section-03",
-      "location": "sections.section-03.subsections[1].paragraphs[0][4]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
       "claim_id": "claim-001",
-      "claim_text": "Long-running tasks fail in predictable ways, so the harness should be designed around those failures from the start.",
+      "claim_text": "A harness for long-running AI work should start with a clear objective, a defined scope, and a small set of phases the system can track.",
       "section_id": "section-04",
       "location": "sections.section-04.paragraphs[0][0]",
       "required": true,
@@ -792,111 +830,9 @@
     },
     {
       "claim_id": "claim-002",
-      "claim_text": "A common problem is context drift: the agent slowly loses the original goal, skips constraints, or follows a side path that looked useful a few steps earlier.",
+      "claim_text": "The sources consistently frame the harness as the orchestration layer around the model, not just a better prompt.",
       "section_id": "section-04",
       "location": "sections.section-04.paragraphs[0][1]",
-      "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-003",
-      "claim_text": "The other side of that problem is context overload, where too much accumulated history makes it harder for the model to stay focused.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[0][2]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-004",
-      "claim_text": "Source material on long-running agent harnesses frames this as a core reliability issue, not a rare edge case.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[0][3]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-005",
-      "claim_text": "In practice, that means the harness should keep the task state explicit and regularly restate what success looks like before the agent continues.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[0][4]",
-      "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-006",
-      "claim_text": "Another repeat failure is poor self-evaluation.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][0]",
-      "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-007",
-      "claim_text": "Agents often produce work that looks finished, then claim success before the output is actually usable.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][1]",
-      "required": true,
-      "source_ids": [
-        "source-11"
-      ],
-      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-008",
-      "claim_text": "The harness should not treat the model's own confidence as proof.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][2]",
-      "required": true,
-      "source_ids": [
-        "source-07"
-      ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-009",
-      "claim_text": "Instead, insert review loops between major stages.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][3]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-010",
-      "claim_text": "After a draft, plan, or tool run, have the harness check whether required outputs exist, whether the result still matches the original goal, and whether anything important is missing.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][4]",
       "required": true,
       "source_ids": [
         "source-09"
@@ -906,23 +842,62 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-011",
-      "claim_text": "If those checks fail, the system should route the task back for revision instead of advancing automatically.",
+      "claim_id": "claim-003",
+      "claim_text": "That matters because complex work often fails in predictable ways: the model drifts, declares success too early, or produces output that looks complete but is hard to trust.",
       "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[1][5]",
+      "location": "sections.section-04.paragraphs[0][2]",
       "required": true,
       "source_ids": [
-        "source-05"
+        "source-01"
       ],
-      "support_excerpt": "Best AI Tools for Small Business in Australia (2026 Guide) | New Digital\nA practical, no-fluff guide to the best AI tools for Aussie small businesses in 2026. Learn what to use, how to set it up, and where to start.\nHow to Build Your First AI Workflow for a Small Business (Step-b",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-012",
-      "claim_text": "A practical way to do this is to separate generation from verification.",
+      "claim_id": "claim-004",
+      "claim_text": "Turning the job into a few named phases gives the loop structure and makes progress easier to inspect.",
       "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[2][0]",
+      "location": "sections.section-04.paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-08"
+      ],
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-005",
+      "claim_text": "From there, the operating cycle is simple in concept: plan the next step, execute with the available tools, verify what came back, save state, and then decide whether to continue, retry, or escalate.",
+      "section_id": "section-04",
+      "location": "sections.section-04.paragraphs[1][0]",
+      "required": true,
+      "source_ids": [
+        "source-12"
+      ],
+      "support_excerpt": "AI Tools for Business Owners Australia 2026 | Practical Guide With Real Examples\nHow Australian business owners are actually using AI tools like ChatGPT, Claude, and Xero AI features to save 5-10 hours per week. Practical examples, not hype.\nAI Tools for Business Owners Australia",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-006",
+      "claim_text": "This kind of structured workflow is presented in the priority sources as the difference between a one-off assistant and a reliable system.",
+      "section_id": "section-04",
+      "location": "sections.section-04.paragraphs[1][1]",
+      "required": true,
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-007",
+      "claim_text": "The goal is not full autonomy at any cost.",
+      "section_id": "section-04",
+      "location": "sections.section-04.paragraphs[1][2]",
       "required": true,
       "source_ids": [],
       "support_excerpt": null,
@@ -930,36 +905,23 @@
       "repair_action": "dropped_unsupported_claim"
     },
     {
-      "claim_id": "claim-013",
-      "claim_text": "Let the agent create the next piece of work, then have the harness run a distinct evaluation step before marking that phase complete.",
+      "claim_id": "claim-008",
+      "claim_text": "The goal is a loop that can keep moving on long tasks while staying traceable when something goes wrong.",
       "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[2][1]",
+      "location": "sections.section-04.paragraphs[1][3]",
       "required": true,
       "source_ids": [
-        "source-01"
+        "source-05"
       ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "support_excerpt": "How Hightouch built their long-running agent harness | Amplify Partners\nA story of real context engineering: how Hightouch's engineers built a long running agent that smoothly handles sparse and open ended marketing tasks.\nHow Hightouch built their long-running agent harness Chal",
       "outcome": "passed",
       "repair_action": null
     },
     {
-      "claim_id": "claim-014",
-      "claim_text": "This matches the broader guidance in the sources: define goals clearly, wrap the model in control logic, and use feedback loops to keep multi-step work on track.",
+      "claim_id": "claim-009",
+      "claim_text": "Track a small number of phases instead of letting the task stay as one open-ended prompt.",
       "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[2][2]",
-      "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-015",
-      "claim_text": "For long workflows, simple gates are often enough: stop if the task objective has changed, stop if required artifacts are missing, and stop if the answer cannot be checked against the brief or prior outputs.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[2][3]",
+      "location": "sections.section-04.bullets[0]",
       "required": true,
       "source_ids": [
         "source-03"
@@ -969,71 +931,8 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-016",
-      "claim_text": "The main design goal is to reduce false confidence.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[3][0]",
-      "required": true,
-      "source_ids": [
-        "source-02"
-      ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-017",
-      "claim_text": "A good harness assumes that drift, missed requirements, and premature completion will happen sooner or later.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[3][1]",
-      "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-018",
-      "claim_text": "It responds with explicit stopping rules, structured reviews, and verification before finish states.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[3][2]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-019",
-      "claim_text": "That does not make the agent perfect, but it does make failures easier to catch while the task is still recoverable.",
-      "section_id": "section-04",
-      "location": "sections.section-04.paragraphs[3][3]",
-      "required": true,
-      "source_ids": [
-        "source-10"
-      ],
-      "support_excerpt": "How to build AI agents in 6 simple steps (2026 guide)\nLearn how to build AI agents from scrach. We'll go over how to choose your AI model, connect your tools, write instructions, and more.\nWhat is an AI agent? Types of AI agents What you need before you start How to build an AI a",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-020",
-      "claim_text": "Re-anchor the task goal at major checkpoints so the agent does not drift.",
-      "section_id": "section-04",
-      "location": "sections.section-04.bullets[0]",
-      "required": true,
-      "source_ids": [
-        "source-02"
-      ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-021",
-      "claim_text": "Add a separate review step before the harness advances to the next phase.",
+      "claim_id": "claim-010",
+      "claim_text": "After each action, verify results before the harness commits to the next step.",
       "section_id": "section-04",
       "location": "sections.section-04.bullets[1]",
       "required": true,
@@ -1045,8 +944,8 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-022",
-      "claim_text": "Use stopping rules when outputs are incomplete, off-goal, or not verifiable.",
+      "claim_id": "claim-011",
+      "claim_text": "Use explicit rules for continue, retry, or human escalation.",
       "section_id": "section-04",
       "location": "sections.section-04.bullets[2]",
       "required": true,
@@ -1056,21 +955,160 @@
       "repair_action": "dropped_unsupported_claim"
     },
     {
-      "claim_id": "claim-001",
-      "claim_text": "A good build sequence starts by narrowing the job before you touch models or tools.",
-      "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[0][0]",
+      "claim_id": "claim-012",
+      "claim_text": "Planning should produce the next manageable action, not a giant master plan that the model will forget or reinterpret later.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[0].paragraphs[0][0]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-06"
       ],
       "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
       "outcome": "passed",
       "repair_action": null
     },
     {
+      "claim_id": "claim-013",
+      "claim_text": "The supporting sources describe agents as systems that reason, plan, use tools, and execute across many steps, but they also warn that unstructured workflows break down on larger tasks.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[0].paragraphs[0][1]",
+      "required": true,
+      "source_ids": [
+        "source-02"
+      ],
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-014",
+      "claim_text": "A practical harness therefore keeps planning narrow: define the current phase, choose the next action, note the expected result, and record what would count as completion for that step.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[0].paragraphs[0][2]",
+      "required": true,
+      "source_ids": [
+        "source-08"
+      ],
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-015",
+      "claim_text": "Verification is the control point that keeps the loop honest.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[1].paragraphs[0][0]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-016",
+      "claim_text": "The harness should check whether the output actually matches the expected result before it moves on, because poor self-evaluation and silent failure are recurring problems in the source material.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[1].paragraphs[0][1]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-017",
+      "claim_text": "In practice, that means comparing the result to the task objective, checking whether the tool output supports the model's claim, and storing a checkpoint with the current state.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[1].paragraphs[0][2]",
+      "required": true,
+      "source_ids": [
+        "source-06"
+      ],
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-018",
+      "claim_text": "If the result passes, the harness can continue from a known point instead of relying on fragile conversational memory alone.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[1].paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-09"
+      ],
+      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-019",
+      "claim_text": "Recovery rules should be explicit enough that failure does not turn into drift.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[2].paragraphs[0][0]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-020",
+      "claim_text": "If a tool call fails, outputs conflict, or the model cannot justify the next action, the harness should stop treating the run as normal.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[2].paragraphs[0][1]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-021",
+      "claim_text": "The next branch is usually one of three options supported by the workflow pattern in the sources: retry with clearer constraints, re-plan from the last good checkpoint, or escalate to a human when the decision is ambiguous or high risk.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[2].paragraphs[0][2]",
+      "required": true,
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-022",
+      "claim_text": "This makes failure visible and recoverable instead of letting the agent continue with a false sense of progress.",
+      "section_id": "section-04",
+      "location": "sections.section-04.subsections[2].paragraphs[0][3]",
+      "required": true,
+      "source_ids": [
+        "source-08"
+      ],
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-001",
+      "claim_text": "A good first use case for an AI harness is not \u201crun the whole business process alone.\u201d It is a repeatable, multi-step task with a clear start, a clear finish, and outputs you can inspect.",
+      "section_id": "section-05",
+      "location": "sections.section-05.paragraphs[0][0]",
+      "required": true,
+      "source_ids": [
+        "source-01"
+      ],
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
       "claim_id": "claim-002",
-      "claim_text": "The first phase is to define the task purpose, the inputs it will receive, the output you expect, and where the task should stop.",
+      "claim_text": "The source material points to practical examples like inbox sorting, customer response workflows, quote comparison, research-style assembly work, and audit-like tasks that span many steps.",
       "section_id": "section-05",
       "location": "sections.section-05.paragraphs[0][1]",
       "required": true,
@@ -1083,7 +1121,7 @@
     },
     {
       "claim_id": "claim-003",
-      "claim_text": "That sounds basic, but it is what keeps a long-running system from drifting into open-ended behaviour.",
+      "claim_text": "These are better starting points than open-ended autonomy because they already have a known goal and a way to judge whether the result is useful.",
       "section_id": "section-05",
       "location": "sections.section-05.paragraphs[0][2]",
       "required": true,
@@ -1094,46 +1132,48 @@
     },
     {
       "claim_id": "claim-004",
-      "claim_text": "The 2026 agent build guides consistently start with purpose and scope for the same reason: an agent that can reason across steps still needs a clear goal and clear boundaries.",
+      "claim_text": "This matters because unstructured agents tend to break down on complex work.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[0][3]",
+      "location": "sections.section-05.paragraphs[1][0]",
       "required": true,
       "source_ids": [
         "source-02"
       ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-005",
-      "claim_text": "For a harness, this also means deciding what counts as success, what should trigger a handoff, and which decisions must stay with a human.",
+      "claim_text": "The MindStudio source says teams often begin with a coding assistant and quickly hit problems when the task becomes larger, such as codebase migration, API audits, or broad test generation.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[0][4]",
+      "location": "sections.section-05.paragraphs[1][1]",
       "required": true,
       "source_ids": [
-        "source-11"
+        "source-04"
       ],
-      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-006",
-      "claim_text": "Once the task is bounded, move to the minimum working execution layer.",
+      "claim_text": "The harness pattern exists to make those longer workflows more reliable and traceable.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[1][0]",
+      "location": "sections.section-05.paragraphs[1][2]",
       "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
+      "source_ids": [
+        "source-04"
+      ],
+      "support_excerpt": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio\nEnterprise teams at Stripe, Shopify, and Airbnb are building structured AI workflow engines. Here's what they are and how to apply the pattern yourself.\nThe Problem With U",
+      "outcome": "passed",
+      "repair_action": null
     },
     {
       "claim_id": "claim-007",
-      "claim_text": "Choose the model that fits the job, write a tight system prompt, and give the agent only the tools it truly needs for the workflow.",
+      "claim_text": "In practice, that means choosing work where you can define the task boundary before the agent starts, rather than asking it to improvise across unclear goals.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[1][1]",
+      "location": "sections.section-05.paragraphs[1][3]",
       "required": true,
       "source_ids": [
         "source-10"
@@ -1144,9 +1184,9 @@
     },
     {
       "claim_id": "claim-008",
-      "claim_text": "This is a better starting point than assembling a large stack up front.",
+      "claim_text": "Once you have a candidate use case, set the rails before you increase autonomy.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[1][2]",
+      "location": "sections.section-05.paragraphs[2][0]",
       "required": true,
       "source_ids": [],
       "support_excerpt": null,
@@ -1155,87 +1195,83 @@
     },
     {
       "claim_id": "claim-009",
-      "claim_text": "The practical build advice across the sources points to a simple pattern: pair clear instructions with a small toolset, then expand only when the task proves it needs more capability.",
+      "claim_text": "Keep the tool set narrow and approved.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[1][3]",
+      "location": "sections.section-05.paragraphs[2][1]",
       "required": true,
-      "source_ids": [
-        "source-03"
-      ],
-      "support_excerpt": "Ten everyday small business tasks you can automate with AI | ANZ\nDiscover 10 everyday small business tasks you can automate with AI today. Save time, streamline admin and boost efficiency.\nTen everyday small business tasks you can automate with AI Task 1: Sort out your inbox Task",
-      "outcome": "passed",
-      "repair_action": null
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
     },
     {
       "claim_id": "claim-010",
-      "claim_text": "For long-running work, the harness matters as much as the model, so this phase should also define how the agent will call tools and how its outputs will be structured for the next step.",
+      "claim_text": "Define what the agent is allowed to read, write, or call.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[1][4]",
+      "location": "sections.section-05.paragraphs[2][2]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-08"
       ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-011",
-      "claim_text": "The third phase is where an agent becomes a reliable harness instead of a promising demo.",
+      "claim_text": "Decide what an acceptable output looks like, whether that is a classified inbox, a summary pack, or an audit report for review.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[2][0]",
+      "location": "sections.section-05.paragraphs[2][3]",
       "required": true,
       "source_ids": [
-        "source-09"
+        "source-01"
       ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-012",
-      "claim_text": "Add the orchestration features that keep multi-step runs on track: logs so you can inspect what happened, checkpoints so progress is not lost, retries for recoverable failures, and review gates for risky or ambiguous moments.",
+      "claim_text": "The build-from-scratch guidance also supports this approach: define the agent\u2019s goals and capabilities early, instead of letting it discover its own scope while running.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[2][1]",
+      "location": "sections.section-05.paragraphs[2][4]",
       "required": true,
       "source_ids": [
-        "source-01"
+        "source-08"
       ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-013",
-      "claim_text": "The long-running harness material frames this as the layer around the model that keeps it on task.",
+      "claim_text": "For high-impact decisions, start with a human in the loop.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[2][2]",
+      "location": "sections.section-05.paragraphs[3][0]",
       "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
     },
     {
       "claim_id": "claim-014",
-      "claim_text": "In practice, that means you are not asking the model to be perfectly self-managing.",
+      "claim_text": "Let the harness handle the repetitive parts first, then send its outputs to a reviewer for approval or correction.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[2][3]",
+      "location": "sections.section-05.paragraphs[3][1]",
       "required": true,
       "source_ids": [
-        "source-07"
+        "source-11"
       ],
-      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
+      "support_excerpt": "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode\nHarness engineering is the new discipline of designing environments, constraints, and feedback loops that make AI coding agents reliable at scale. OpenAI built 1M+ lines ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-015",
-      "claim_text": "You are giving it a controlled environment with feedback loops and stopping points, which reduces the common failure modes of wandering off-task or claiming completion too early.",
+      "claim_text": "That gives you a feedback path and reduces the risk of silent errors.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[2][4]",
+      "location": "sections.section-05.paragraphs[3][2]",
       "required": true,
       "source_ids": [],
       "support_excerpt": null,
@@ -1244,94 +1280,55 @@
     },
     {
       "claim_id": "claim-016",
-      "claim_text": "The last phase is to test the harness on real task runs and tighten the completion rules based on what breaks.",
+      "claim_text": "As results become more consistent, you can loosen the review layer for low-risk steps while keeping approvals for the parts that affect customers, compliance, or important internal decisions.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[3][0]",
+      "location": "sections.section-05.paragraphs[3][3]",
       "required": true,
-      "source_ids": [
-        "source-09"
-      ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
-      "outcome": "passed",
-      "repair_action": null
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
     },
     {
       "claim_id": "claim-017",
-      "claim_text": "Start with realistic jobs, inspect where the run stalls or produces weak outputs, and then refine the prompt, tools, checkpoints, or success criteria.",
+      "claim_text": "Prefer tasks that are repeatable, multi-step, and easy to measure.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[3][1]",
+      "location": "sections.section-05.bullets[0]",
       "required": true,
       "source_ids": [
-        "source-01"
+        "source-02"
       ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
+      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-018",
-      "claim_text": "This step is important because long-running tasks often fail at the edges rather than in the happy path.",
+      "claim_text": "Start with bounded workflows like inbox triage, quote comparison, research assembly, or internal audits.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[3][2]",
+      "location": "sections.section-05.bullets[1]",
       "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
     },
     {
       "claim_id": "claim-019",
-      "claim_text": "A practical 2026 build process is therefore iterative: define the work, assemble the smallest useful system, wrap it in orchestration, and then improve it with evidence from actual runs rather than assumptions.",
+      "claim_text": "Limit tools and data access up front.",
       "section_id": "section-05",
-      "location": "sections.section-05.paragraphs[3][3]",
+      "location": "sections.section-05.bullets[2]",
       "required": true,
       "source_ids": [
-        "source-10"
+        "source-05"
       ],
-      "support_excerpt": "How to build AI agents in 6 simple steps (2026 guide)\nLearn how to build AI agents from scrach. We'll go over how to choose your AI model, connect your tools, write instructions, and more.\nWhat is an AI agent? Types of AI agents What you need before you start How to build an AI a",
+      "support_excerpt": "How Hightouch built their long-running agent harness | Amplify Partners\nA story of real context engineering: how Hightouch's engineers built a long running agent that smoothly handles sparse and open ended marketing tasks.\nHow Hightouch built their long-running agent harness Chal",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-020",
-      "claim_text": "Phase 1: define the goal, inputs, outputs, boundaries, and human handoff points.",
-      "section_id": "section-05",
-      "location": "sections.section-05.bullets[0]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-021",
-      "claim_text": "Phase 2: choose the model, prompt structure, and smallest useful toolset.",
-      "section_id": "section-05",
-      "location": "sections.section-05.bullets[1]",
-      "required": true,
-      "source_ids": [
-        "source-02"
-      ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-022",
-      "claim_text": "Phase 3: add logs, checkpoints, retries, and review gates.",
-      "section_id": "section-05",
-      "location": "sections.section-05.bullets[2]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-023",
-      "claim_text": "Phase 4: test real runs and refine completion criteria from observed failures.",
+      "claim_text": "Keep human review for higher-risk actions until performance is stable.",
       "section_id": "section-05",
       "location": "sections.section-05.bullets[3]",
       "required": true,
@@ -1342,46 +1339,44 @@
     },
     {
       "claim_id": "claim-001",
-      "claim_text": "Before you try to build a broad autonomous agent, pick one long-running workflow with a clear finish line.",
+      "claim_text": "For long, stateful, and error-prone work, the harness matters more than chasing a slightly stronger model.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[0][0]",
       "required": true,
       "source_ids": [
-        "source-10"
+        "source-06"
       ],
-      "support_excerpt": "How to build AI agents in 6 simple steps (2026 guide)\nLearn how to build AI agents from scrach. We'll go over how to choose your AI model, connect your tools, write instructions, and more.\nWhat is an AI agent? Types of AI agents What you need before you start How to build an AI a",
+      "support_excerpt": "The importance of Agent Harness in 2026\nIn 2026, Agent Harnesses will become essential for building reliable AI systems that can handle complex, multi-day tasks.\nThe importance of Agent Harness in 2026 What is an Agent Harness? The Benchmark Problem and the need for Agent Harness",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-002",
-      "claim_text": "A narrow scope makes it easier to define the goal, choose the right tools, and see where the system actually breaks.",
+      "claim_text": "The core sources agree on the same pattern: unstructured agents drift, stop early, or fail quietly, while a harness adds the prompts, tools, checkpoints, and evaluation loops that turn model output into a more reliable system.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[0][1]",
       "required": true,
       "source_ids": [
-        "source-02"
+        "source-01"
       ],
-      "support_excerpt": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade\n9 min read \u2014 A practical eight-step guide to building an AI agent from scratch, covering system prompts, LLM selection, memory, tools, and testing.\nBuild what matters, with Gozade 1. Define Your Agent\u2019s Purpose and Scop",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-003",
-      "claim_text": "The 2026 agent guides consistently start with purpose and scope for a reason: long-running systems fail when they are asked to do too much too early.",
+      "claim_text": "That is why the practical starting point is not maximum autonomy.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[0][2]",
       "required": true,
-      "source_ids": [
-        "source-04"
-      ],
-      "support_excerpt": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog\nPublished: March 24, 2026 | Reading Time: 18 minutes About the Author Emachalan is a Full-Stack Developer specializin...\nBuild an AI Agent From Scratch in 2026 (Python Tutorial + Code) Key Takeaw",
-      "outcome": "passed",
-      "repair_action": null
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
     },
     {
       "claim_id": "claim-004",
-      "claim_text": "A good pilot is specific enough to measure, repeat, and review.",
+      "claim_text": "It is a controlled workflow where the task, progress, and pass-fail conditions are clear.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[0][3]",
       "required": true,
@@ -1392,20 +1387,20 @@
     },
     {
       "claim_id": "claim-005",
-      "claim_text": "As you move from idea to implementation, treat the harness as the real product, not just the model inside it.",
+      "claim_text": "A good next step is to pick one bounded workflow and run it end to end with visible checkpoints.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[1][0]",
       "required": true,
       "source_ids": [
-        "source-09"
+        "source-01"
       ],
-      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
       "outcome": "passed",
       "repair_action": null
     },
     {
       "claim_id": "claim-006",
-      "claim_text": "The useful parts are the orchestration around the model: prompts, tools, memory, checkpoints, and feedback loops that keep work on track over many steps.",
+      "claim_text": "That could be a research task, an audit, or another repeatable piece of real work with a defined finish line.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[1][1]",
       "required": true,
@@ -1418,22 +1413,9 @@
     },
     {
       "claim_id": "claim-007",
-      "claim_text": "Run the pilot, inspect where it wanders, stops early, or misses edge cases, and improve those control points first.",
+      "claim_text": "Document the task contract, decide what success and failure look like, and add a small evaluation loop before expanding scope.",
       "section_id": "section-06",
       "location": "sections.section-06.paragraphs[1][2]",
-      "required": true,
-      "source_ids": [
-        "source-01"
-      ],
-      "support_excerpt": "Building Long-Running AI Agent Harnesses | atal upadhyay\n1. What Is an Agent Harness? (And Why Should You Care?) If you've ever asked an AI model to write a full application, carry out a multi-step research task, or run a compliance audit, you've likely noticed something: the AI ",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-008",
-      "claim_text": "Only after that should you widen the task, add more tools, or give the system more autonomy.",
-      "section_id": "section-06",
-      "location": "sections.section-06.paragraphs[1][3]",
       "required": true,
       "source_ids": [
         "source-03"
@@ -1443,34 +1425,10 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-009",
-      "claim_text": "That path is slower than a flashy demo, but it is how you build something dependable.",
+      "claim_id": "claim-008",
+      "claim_text": "Once the harness can complete one useful workflow consistently, you can widen the task, add more tools, and increase autonomy with much less risk.",
       "section_id": "section-06",
-      "location": "sections.section-06.paragraphs[1][4]",
-      "required": true,
-      "source_ids": [],
-      "support_excerpt": null,
-      "outcome": "skipped",
-      "repair_action": "dropped_unsupported_claim"
-    },
-    {
-      "claim_id": "claim-010",
-      "claim_text": "Choose one bounded workflow for your first pilot.",
-      "section_id": "section-06",
-      "location": "sections.section-06.bullets[0]",
-      "required": true,
-      "source_ids": [
-        "source-05"
-      ],
-      "support_excerpt": "Best AI Tools for Small Business in Australia (2026 Guide) | New Digital\nA practical, no-fluff guide to the best AI tools for Aussie small businesses in 2026. Learn what to use, how to set it up, and where to start.\nHow to Build Your First AI Workflow for a Small Business (Step-b",
-      "outcome": "passed",
-      "repair_action": null
-    },
-    {
-      "claim_id": "claim-011",
-      "claim_text": "Build the harness around the model, including checkpoints and evaluation.",
-      "section_id": "section-06",
-      "location": "sections.section-06.bullets[1]",
+      "location": "sections.section-06.paragraphs[1][3]",
       "required": true,
       "source_ids": [
         "source-01"
@@ -1480,8 +1438,32 @@
       "repair_action": null
     },
     {
-      "claim_id": "claim-012",
-      "claim_text": "Expand scope only after you have observed and fixed real failures.",
+      "claim_id": "claim-009",
+      "claim_text": "Start with one bounded workflow, not a general-purpose agent.",
+      "section_id": "section-06",
+      "location": "sections.section-06.bullets[0]",
+      "required": true,
+      "source_ids": [
+        "source-10"
+      ],
+      "support_excerpt": "How to build AI agents in 6 simple steps (2026 guide)\nLearn how to build AI agents from scrach. We'll go over how to choose your AI model, connect your tools, write instructions, and more.\nWhat is an AI agent? Types of AI agents What you need before you start How to build an AI a",
+      "outcome": "passed",
+      "repair_action": null
+    },
+    {
+      "claim_id": "claim-010",
+      "claim_text": "Write a simple task contract with expected inputs, outputs, and stopping conditions.",
+      "section_id": "section-06",
+      "location": "sections.section-06.bullets[1]",
+      "required": true,
+      "source_ids": [],
+      "support_excerpt": null,
+      "outcome": "skipped",
+      "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-011",
+      "claim_text": "Use visible checkpoints so progress and failures are easy to trace.",
       "section_id": "section-06",
       "location": "sections.section-06.bullets[2]",
       "required": true,
@@ -1489,13 +1471,26 @@
       "support_excerpt": null,
       "outcome": "skipped",
       "repair_action": "dropped_unsupported_claim"
+    },
+    {
+      "claim_id": "claim-012",
+      "claim_text": "Define pass-fail tests early, then pilot the harness on real work.",
+      "section_id": "section-06",
+      "location": "sections.section-06.bullets[3]",
+      "required": true,
+      "source_ids": [
+        "source-09"
+      ],
+      "support_excerpt": "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode\nWhat is harness engineering and why it matters for AI agent development in 2026. A complete guide to building reliable AI agent systems \u2014 from prompt design to tool orchestration.\nWhat Is Harness",
+      "outcome": "passed",
+      "repair_action": null
     }
   ],
   "references": [
     {
-      "source_id": "source-03",
-      "title": "Ten everyday small business tasks you can automate with AI | ANZ",
-      "url": "https://www.anz.com.au/business/business-hub/running-business/run/small-business-tasks-you-can-automate-with-ai/"
+      "source_id": "source-10",
+      "title": "How to build AI agents in 6 simple steps (2026 guide)",
+      "url": "https://www.gumloop.com/blog/how-to-build-ai-agents"
     },
     {
       "source_id": "source-01",
@@ -1503,9 +1498,9 @@
       "url": "https://atalupadhyay.wordpress.com/2026/03/26/building-long-running-ai-agent-harnesses/"
     },
     {
-      "source_id": "source-07",
-      "title": "The importance of Agent Harness in 2026",
-      "url": "https://www.philschmid.de/agent-harness-2026"
+      "source_id": "source-08",
+      "title": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade",
+      "url": "https://gozade.com/blog/how-to-build-an-ai-agent-a-2026-step-by-step-guide"
     },
     {
       "source_id": "source-09",
@@ -1513,9 +1508,29 @@
       "url": "https://www.nxcode.io/resources/news/what-is-harness-engineering-complete-guide-2026"
     },
     {
-      "source_id": "source-04",
+      "source_id": "source-02",
       "title": "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog",
       "url": "https://www.agilesoftlabs.com/blog/2026/03/how-to-build-ai-agent-from-scratch-2026"
+    },
+    {
+      "source_id": "source-06",
+      "title": "The importance of Agent Harness in 2026",
+      "url": "https://www.philschmid.de/agent-harness-2026"
+    },
+    {
+      "source_id": "source-04",
+      "title": "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio",
+      "url": "https://www.mindstudio.ai/blog/ai-coding-agent-harness-stripe-shopify-airbnb"
+    },
+    {
+      "source_id": "source-05",
+      "title": "How Hightouch built their long-running agent harness | Amplify Partners",
+      "url": "https://amplifypartners.com/blog-posts/how-hightouch-built-their-long-running-agent-harness"
+    },
+    {
+      "source_id": "source-12",
+      "title": "AI Tools for Business Owners Australia 2026 | Practical Guide With Real Examples",
+      "url": "https://www.scalesuite.com.au/resources/ai-tools-for-business-owners-australia"
     },
     {
       "source_id": "source-11",
@@ -1523,19 +1538,9 @@
       "url": "https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026"
     },
     {
-      "source_id": "source-02",
-      "title": "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade",
-      "url": "https://gozade.com/blog/how-to-build-an-ai-agent-a-2026-step-by-step-guide"
-    },
-    {
-      "source_id": "source-05",
-      "title": "Best AI Tools for Small Business in Australia (2026 Guide) | New Digital",
-      "url": "https://newdigital.com.au/blog/best-ai-tools-small-business-australia-2026/"
-    },
-    {
-      "source_id": "source-10",
-      "title": "How to build AI agents in 6 simple steps (2026 guide)",
-      "url": "https://www.gumloop.com/blog/how-to-build-ai-agents"
+      "source_id": "source-03",
+      "title": "Ten everyday small business tasks you can automate with AI | ANZ",
+      "url": "https://www.anz.com.au/business/business-hub/running-business/run/small-business-tasks-you-can-automate-with-ai/"
     }
   ]
 }

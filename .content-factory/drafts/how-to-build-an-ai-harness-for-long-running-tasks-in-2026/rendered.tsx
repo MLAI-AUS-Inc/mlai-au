@@ -19,14 +19,14 @@ import ArticleDisclaimer from '../../components/articles/ArticleDisclaimer'
 
 export const useCustomHeader = true
 
-const TOPIC = "How to Build an AI Harness for Long Running Tasks in 2026"
+const TOPIC = "How to Build an AI Harness for Long-Running Tasks in 2026"
 export const CATEGORY = "featured"
 export const SLUG = "how-to-build-an-ai-harness-for-long-running-tasks-in-2026"
 export const DATE_PUBLISHED = "2026-03-30"
 export const DATE_MODIFIED = "2026-03-30"
-export const DESCRIPTION = "Learn how to build an AI harness for long running tasks in 2026 using narrow scope, state, tools, checkpoints, and evaluation loops."
-const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6da4d371-b414-467f-be44-18aa70704f3c.jpg?alt=media&token=f4bf5997-5721-4a9f-a193-0769998f3805"
-const HERO_IMAGE_ALT = "How to Build an AI Harness for Long Running Tasks in 2026"
+export const DESCRIPTION = "Learn how to build an AI harness for long running tasks in 2026 with planning, checkpoints, validation, recovery loops, and human review."
+const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aa39bbc2-9a3a-4558-9554-1ae7c121e4d6.jpg?alt=media&token=273d557c-0830-4659-9e12-187888b767f1"
+const HERO_IMAGE_ALT = "How to Build an AI Harness for Long-Running Tasks in 2026"
 export const FEATURED_FOCUS = "ai"
 
 const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
@@ -42,26 +42,25 @@ interface FAQ {
 }
 
 export const faqItems: FAQ[] = [
-  { id: 1, question: "What is an AI harness in this context?", answer: "It is the orchestration layer around the model. The harness manages prompts, tool use, memory, constraints, checkpoints, and feedback so multi-step work can stay controlled over time." },
-  { id: 2, question: "What is the best first use case for a long-running AI harness?", answer: "A bounded workflow is the safest starting point, such as inbox triage, meeting summaries, scheduling, or drafting customer replies. These jobs have clearer inputs, outputs, and escalation rules than broad open-ended tasks." },
-  { id: 3, question: "What state should the harness persist between runs?", answer: "It should save the current objective, intermediate outputs, tool results, and a short decision history. That allows the task to resume safely after interruption and makes progress easier to review." },
-  { id: 4, question: "How should tool access be managed?", answer: "Give the agent only the tools needed for the specific job. The harness should define when each tool can be used and add extra checks for sensitive actions with real-world impact." },
-  { id: 5, question: "How do you reduce drift and false completion?", answer: "Re-anchor the goal at checkpoints and run a separate evaluation step before marking work complete. The harness should check that required outputs exist, still match the brief, and have not skipped important constraints." },
-  { id: 6, question: "What is a practical build sequence for 2026?", answer: "Define purpose and boundaries first, then choose the model, prompt structure, and smallest useful toolset. After that, add orchestration features like logs, checkpoints, retries, and human review gates, then refine them using real task runs." },
+  { id: 1, question: "What is an AI harness in plain language?", answer: "It is the control layer around an AI model. Instead of letting the model run alone, the harness manages task scope, state, tool access, checks, and recovery rules." },
+  { id: 2, question: "Which parts matter most for long-running AI tasks?", answer: "The grounded sections point to a few core parts: task decomposition, memory or state tracking, tool access, checkpoints, validators, and clear stop or escalation rules." },
+  { id: 3, question: "How should the model and the harness split responsibilities?", answer: "The model should propose candidate actions such as a next step, a draft, or a tool choice. The harness should decide execution flow, verify outputs, store checkpoints, and handle retries or escalation." },
+  { id: 4, question: "What are good first use cases for an AI harness?", answer: "Start with repeatable, multi-step work that has a clear boundary and measurable output. Examples in the article include inbox sorting, research assembly, customer response workflows, and audit-style tasks." },
+  { id: 5, question: "When should a human stay in the loop?", answer: "Human review belongs in the design for complex, ambiguous, or high-stakes work. The harness should pause for review when validation fails repeatedly, outputs conflict, or the next action cannot be justified clearly." },
 ]
 
 export const summaryHighlights = {
-  heading: "Key facts: How to Build an AI Harness for Long Running Tasks in 2026",
-  intro: "Learn how to build an AI harness for long running tasks in 2026 using narrow scope, state, tools, checkpoints, and evaluation loops.",
+  heading: "Key facts: How to Build an AI Harness for Long-Running Tasks in 2026",
+  intro: "Learn how to build an AI harness for long running tasks in 2026 with planning, checkpoints, validation, recovery loops, and human review.",
   items: [
-    { label: "Why does a long-running AI system need a harness?", description: "Long-running tasks often fail through drift, premature completion, or missed edge cases across many steps. A harness adds orchestration, constraints, tools, and feedback loops so the model can operate as a controlled system." },
-    { label: "What should you define before choosing models or tools?", description: "Start with one narrow job, a clear business outcome, and explicit operating boundaries. Define what the system may do alone, what must be escalated, and what counts as finished work." },
-    { label: "What makes an AI harness dependable over time?", description: "A dependable harness persists task state, limits tool access, and uses checkpoints, retries, and review gates. It also verifies outputs before advancing so the model's confidence is not treated as proof of success." },
+    { label: "What an AI harness does", description: "An AI harness is the orchestration layer around the model. It adds structure through state tracking, tool controls, checkpoints, validation, and recovery so long tasks stay traceable and easier to trust." },
+    { label: "Why long-running agents fail without one", description: "Standalone agents often drift, lose context, stop early, or report success before the work is complete. These failures become harder to spot as tasks span more steps, tools, and decisions." },
+    { label: "How to build the operating loop", description: "A practical harness runs a repeatable cycle: plan the next action, execute, verify the result, save state, then continue, retry, or escalate. Human review and explicit stop conditions are part of the design." },
   ],
 }
 
 export const articleMeta = {
-  title: "How to Build an AI Harness for Long Running Tasks in 2026",
+  title: "How to Build an AI Harness for Long-Running Tasks in 2026",
   topic: TOPIC,
   category: CATEGORY,
   slug: SLUG,
@@ -75,15 +74,11 @@ export const articleMeta = {
 }
 
 const faqSchemaItems = [
-  { question: "Why does a long-running AI system need a harness?", answer: "Long-running tasks often fail through drift, premature completion, or missed edge cases across many steps. A harness adds orchestration, constraints, tools, and feedback loops so the model can operate as a controlled system." },
-  { question: "What should you define before choosing models or tools?", answer: "Start with one narrow job, a clear business outcome, and explicit operating boundaries. Define what the system may do alone, what must be escalated, and what counts as finished work." },
-  { question: "What makes an AI harness dependable over time?", answer: "A dependable harness persists task state, limits tool access, and uses checkpoints, retries, and review gates. It also verifies outputs before advancing so the model's confidence is not treated as proof of success." },
-  { question: "What is an AI harness in this context?", answer: "It is the orchestration layer around the model. The harness manages prompts, tool use, memory, constraints, checkpoints, and feedback so multi-step work can stay controlled over time." },
-  { question: "What is the best first use case for a long-running AI harness?", answer: "A bounded workflow is the safest starting point, such as inbox triage, meeting summaries, scheduling, or drafting customer replies. These jobs have clearer inputs, outputs, and escalation rules than broad open-ended tasks." },
-  { question: "What state should the harness persist between runs?", answer: "It should save the current objective, intermediate outputs, tool results, and a short decision history. That allows the task to resume safely after interruption and makes progress easier to review." },
-  { question: "How should tool access be managed?", answer: "Give the agent only the tools needed for the specific job. The harness should define when each tool can be used and add extra checks for sensitive actions with real-world impact." },
-  { question: "How do you reduce drift and false completion?", answer: "Re-anchor the goal at checkpoints and run a separate evaluation step before marking work complete. The harness should check that required outputs exist, still match the brief, and have not skipped important constraints." },
-  { question: "What is a practical build sequence for 2026?", answer: "Define purpose and boundaries first, then choose the model, prompt structure, and smallest useful toolset. After that, add orchestration features like logs, checkpoints, retries, and human review gates, then refine them using real task runs." },
+  { question: "What is an AI harness in plain language?", answer: "It is the control layer around an AI model. Instead of letting the model run alone, the harness manages task scope, state, tool access, checks, and recovery rules." },
+  { question: "Which parts matter most for long-running AI tasks?", answer: "The grounded sections point to a few core parts: task decomposition, memory or state tracking, tool access, checkpoints, validators, and clear stop or escalation rules." },
+  { question: "How should the model and the harness split responsibilities?", answer: "The model should propose candidate actions such as a next step, a draft, or a tool choice. The harness should decide execution flow, verify outputs, store checkpoints, and handle retries or escalation." },
+  { question: "What are good first use cases for an AI harness?", answer: "Start with repeatable, multi-step work that has a clear boundary and measurable output. Examples in the article include inbox sorting, research assembly, customer response workflows, and audit-style tasks." },
+  { question: "When should a human stay in the loop?", answer: "Human review belongs in the design for complex, ambiguous, or high-stakes work. The harness should pause for review when validation fails repeatedly, outputs conflict, or the next action cannot be justified clearly." },
 ]
 
 const faqStructuredData = faqSchemaItems.length
@@ -131,12 +126,12 @@ export default function ArticleContent() {
       <ArticleTocPlaceholder className="bg-transparent" />
 
       <div className="prose prose-lg prose-slate max-w-none bg-transparent">
-        <p><strong>{TOPIC}</strong> — {"Long-running AI tasks break in ways short demos often hide. A model may start strong, then drift away from the goal, stop too early, or return work that looks complete but misses edge cases. This shows up in multi-step work such as research, compliance reviews, and software delivery, where success depends on staying accurate over many turns and tool calls rather than giving one good answer."}</p>
-        <p>{"That is why teams need a harness around the model. In the sources, a harness is the orchestration layer that wraps the model with prompts, tools, constraints, and feedback loops so it can act more like a reliable system. Put simply, the model supplies reasoning, but the harness supplies control."}</p>
+        <p><strong>{TOPIC}</strong> — {"Long-running AI tasks are different from short chat prompts. A model may start well, then drift off-task, stop too early, or return work that looks finished but misses edge cases. This shows up in jobs like building a full application, running a multi-step research process, or auditing a large system. As tasks stretch across many steps and tool calls, simple prompt-and-response setups become hard to trust."}</p>
+        <p>{"An AI harness is the orchestration layer around the model that makes this work more dependable. It adds structure around the model through prompts, tools, feedback loops, checks, and recovery paths so the system can stay on task and be evaluated as it goes. In 2026, the main opportunity is not just to build agents that can act, but to build systems that can keep working reliably over longer runs."}</p>
         <ArticleImageBlock
           src={HERO_IMAGE}
           alt={HERO_IMAGE_ALT}
-          caption="Learn how to build an AI harness for long running tasks in 2026 using narrow scope, state, tools, checkpoints, and evaluation loops."
+          caption="Learn how to build an AI harness for long running tasks in 2026 with planning, checkpoints, validation, recovery loops, and human review."
           width={1600}
           height={1067}
         />
@@ -166,38 +161,38 @@ export default function ArticleContent() {
         />
 
         <QuoteBlock title="Key insight" variant="purple">
-          {"Long-running tasks often fail through drift, premature completion, or missed edge cases across many steps. A harness adds orchestration, constraints, tools, and feedback loops so the model can operate as a controlled system."}
+          {"An AI harness is the orchestration layer around the model. It adds structure through state tracking, tool controls, checkpoints, validation, and recovery so long tasks stay traceable and easier to trust."}
         </QuoteBlock>
-          <h2>{"Start With a Narrow Job and Clear Operating Boundaries"}</h2>
-          <p>{"Before you think about prompts, tools, or frameworks, define one narrow job for the harness. The safest starting point is a single business outcome with a limited scope, not a broad instruction like \"handle operations\" or \"run support.\" A practical first version might sort an inbox, draft customer replies, build a staff roster, or transcribe and summarise meetings. These tasks are useful, repeat often, and have clearer inputs and outputs than open-ended work. This also matches the basic advice in agent-building guides: start by defining the agent's purpose and scope before you design the rest of the system."}</p>
-          <p>{"State what the harness is allowed to do on its own, what it must send to a human, and what counts as finished work. For example, an inbox harness might classify messages and draft replies, but escalate complaints, payment disputes, or unclear requests. A meeting-summary harness might produce notes and action items, but avoid making decisions on behalf of the team. It gives you a simpler way to test whether the harness stayed on task, used the right level of autonomy, and completed the job you actually wanted."}</p>
-          <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-412b4a97-ed4b-4ad9-b509-99e461546cfc.jpg?alt=media&token=ccd59ce9-4d1c-41ac-be03-78e2bf8186f8"
-            alt="Notebook with one task circled beside a desk whiteboard marked with clear operating boundaries"
-            caption="Start With a Narrow Job and Clear Operating Boundaries"
-            width={1200}
-            height={800}
-          />
-          <h2>{"Design the Harness Around State, Tools, and Checkpoints"}</h2>
-          <p>{"For long-running work, treat the model as only one part of the system. The harness should sit around the agent and manage the job over time. This orchestration layer keeps the task on track when work spans many steps, tool calls, or retries. Sources on agent harnesses describe this as the part that handles prompts, tools, feedback loops, and execution flow, rather than leaving all control inside a single model call. That separation matters because agents can drift, stop too early, or lose the thread on larger tasks."}</p>
-          <p>{"A practical design is to keep reasoning inside the agent, but move memory, state, and execution rules into the harness. General agent-building guides also support this split by framing agents as systems that reason about goals, choose tools, and act across multiple steps. In a harness, that means the model decides what it wants to do next, while the surrounding system records where the task is up to, what has already been tried, and what actions are allowed."}</p>
-          <p>{"State should be persisted as the task runs, not reconstructed from scratch after failure. Save the current objective, intermediate outputs, tool results, and a short decision history so the harness can restart safely after an interruption. Checkpoints also help you review whether the agent is making progress or just producing activity. For tools and integrations, keep access narrow and explicit. Give the agent only the systems it needs for the job, and put guardrails around actions so the harness can approve, limit, or validate sensitive operations before they run."}</p>
+          <h2>{"Where autonomous agents break down in practice"}</h2>
+          <p>{"Autonomous agents often look capable on short, well-bounded tasks, but they become unreliable when the work stretches across many steps. The common pattern in the sources is not that the model lacks raw intelligence. It is that an unstructured agent has no strong frame for staying on task over time. In practice, that shows up as inconsistent output, getting stuck when a decision is ambiguous, or failing in ways that are hard to notice until much later. For long-running work, that kind of silent drift is usually more dangerous than an obvious error."}</p>
+          <p>{"A second problem is that agents tend to lose the thread of the job as context grows and the task branches. The sources describe this as wandering off-track, struggling with context, and declaring success too early. An agent may produce something that looks finished while still missing edge cases or important checks. That matters most in coding, research, audit, and multi-system business workflows, where the task is not just one answer but a chain of steps that must stay aligned from start to finish. This is the practical reason a harness becomes necessary: it adds structure around the model so the system can detect drift, evaluate its own work more clearly, and avoid mistaking partial progress for a complete result."}</p>
           <ul>
-            <li>{"Keep reasoning in the agent, but keep control flow in the harness."}</li>
-            <li>{"Limit tools to the minimum set needed for the task."}</li>
-            <li>{"Add explicit guardrails around actions with real-world impact."}</li>
+            <li>{"Unstructured agents are less dependable on complex, multi-step work than on short tasks."}</li>
+            <li>{"The risk rises in work like code migration, audits, research, and broader business workflows."}</li>
           </ul>
           <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-ecf05875-bcca-4ec2-be7e-6f5483be763c.jpg?alt=media&token=0f68861c-1ddc-4411-8812-222123165df4"
-            alt="Desk with workflow notes, tool windows, and checkpoint board guiding a long"
-            caption="Design the Harness Around State, Tools, and Checkpoints"
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-795c4974-17d7-4366-b055-919c4329205f.jpg?alt=media&token=357193d7-64e5-40a8-a0ca-d8532c1678f6"
+            alt="Where autonomous agents break down in practice"
+            caption="Where autonomous agents break down in practice"
             width={1200}
             height={800}
           />
-          <h3>{"What to persist between runs"}</h3>
-          <p>{"A short record of why the agent chose its last action can also help the next cycle continue from a stable point instead of repeating work."}</p>
-          <h3>{"How to scope tool access"}</h3>
-          <p>{"Tool access should match the task scope, not the model's full capabilities. If the job is research, the harness may only need search and document retrieval. If the job is workflow execution, it may need a small set of approved integrations. The harness should define which tools exist, when they can be used, and what kinds of actions need extra checks."}</p>
+          <h2>{"The core parts of a reliable AI harness"}</h2>
+          <p>{"A reliable AI harness is the control system around the model, not the model itself. The model proposes plans, writes content, or suggests tool calls. The harness keeps the work moving in a safe and structured way by holding the task definition, the current state, the allowed tools, and the rules for what counts as done. This separation matters on long-running work because models can drift, stop too early, or produce output that looks finished but fails at the edges."}</p>
+          <p>{"In practice, the core parts usually include task decomposition, state or memory tracking, tool access, checkpoints, and validation. State tracking records what has already happened so the run can continue without losing context. Tool access lets the model act on external systems, but within clear boundaries. Checkpoints create places to review progress, and validators test whether each step actually meets the expected standard before the harness moves on."}</p>
+          <ArticleImageBlock
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6f91c39a-fe13-4208-9fed-f9e64a6c9a37.jpg?alt=media&token=23e4c9a5-1aef-44dd-b36a-b1dae528911f"
+            alt="The core parts of a reliable AI harness"
+            caption="The core parts of a reliable AI harness"
+            width={1200}
+            height={800}
+          />
+          <h3>{"What the model does versus what the harness does"}</h3>
+          <p>{"The model should focus on generating candidate actions. It can suggest the next step, draft code, summarize findings, or choose a tool based on the current goal. The harness then decides how that suggestion is executed."}</p>
+          <p>{"This design makes failure easier to detect and contain. If a tool call fails, or a result does not pass evaluation, the harness can route the task back for revision instead of treating the first answer as final. Sources on harness design consistently frame this as an orchestration layer with prompts, tools, feedback loops, and explicit acceptance checks rather than a single autonomous model left to run on its own."}</p>
+          <h3>{"Why stop conditions and human review belong in the design"}</h3>
+          <p>{"Human review is not just a backup plan for when the system goes wrong. For complex or high-stakes tasks, it is one of the built-in control points of the harness. This keeps the system useful without pretending the model can resolve every edge case alone."}</p>
+          <p>{"The harness should know when to pause, ask for help, or end the run. That can happen when validation repeatedly fails, when the task goal has been met, or when the model reaches an unclear state it should not guess through. For long-running tasks, reliability comes less from letting the model do more and more, and more from giving the surrounding system clear ways to track progress, verify outputs, and stop safely."}</p>
 
         <ArticleResourceCTA
           eyebrow="Free guide"
@@ -211,67 +206,75 @@ export default function ArticleContent() {
         <ArticleStepList
           title="Practical next steps"
           steps={[
-            "A harness is the system around the model, not the model itself.",
-            "Reliable AI work depends on orchestration, feedback, and control over time.",
+            "Without a harness, long tasks can wander, stall, or claim success too soon.",
+            "A harness wraps the model with orchestration, checks, and feedback loops.",
+            "In 2026, reliability over many steps matters as much as raw model quality.",
           ]}
           accent="indigo"
         />
-          <h2>{"Build for the Failure Modes You Already Know Will Happen"}</h2>
-          <p>{"Long-running tasks fail in predictable ways, so the harness should be designed around those failures from the start. A common problem is context drift: the agent slowly loses the original goal, skips constraints, or follows a side path that looked useful a few steps earlier. The other side of that problem is context overload, where too much accumulated history makes it harder for the model to stay focused. Source material on long-running agent harnesses frames this as a core reliability issue, not a rare edge case. In practice, that means the harness should keep the task state explicit and regularly restate what success looks like before the agent continues."}</p>
-          <p>{"Another repeat failure is poor self-evaluation. Agents often produce work that looks finished, then claim success before the output is actually usable. The harness should not treat the model's own confidence as proof. After a draft, plan, or tool run, have the harness check whether required outputs exist, whether the result still matches the original goal, and whether anything important is missing. If those checks fail, the system should route the task back for revision instead of advancing automatically."}</p>
-          <p>{"Let the agent create the next piece of work, then have the harness run a distinct evaluation step before marking that phase complete. This matches the broader guidance in the sources: define goals clearly, wrap the model in control logic, and use feedback loops to keep multi-step work on track. For long workflows, simple gates are often enough: stop if the task objective has changed, stop if required artifacts are missing, and stop if the answer cannot be checked against the brief or prior outputs."}</p>
-          <p>{"The main design goal is to reduce false confidence. A good harness assumes that drift, missed requirements, and premature completion will happen sooner or later. That does not make the agent perfect, but it does make failures easier to catch while the task is still recoverable."}</p>
+          <h2>{"How to build the loop from planning to recovery"}</h2>
+          <p>{"A harness for long-running AI work should start with a clear objective, a defined scope, and a small set of phases the system can track. The sources consistently frame the harness as the orchestration layer around the model, not just a better prompt. That matters because complex work often fails in predictable ways: the model drifts, declares success too early, or produces output that looks complete but is hard to trust. Turning the job into a few named phases gives the loop structure and makes progress easier to inspect."}</p>
+          <p>{"From there, the operating cycle is simple in concept: plan the next step, execute with the available tools, verify what came back, save state, and then decide whether to continue, retry, or escalate. This kind of structured workflow is presented in the priority sources as the difference between a one-off assistant and a reliable system. The goal is a loop that can keep moving on long tasks while staying traceable when something goes wrong."}</p>
           <ul>
-            <li>{"Re-anchor the task goal at major checkpoints so the agent does not drift."}</li>
-            <li>{"Add a separate review step before the harness advances to the next phase."}</li>
+            <li>{"Track a small number of phases instead of letting the task stay as one open-ended prompt."}</li>
+            <li>{"After each action, verify results before the harness commits to the next step."}</li>
           </ul>
-          <h2>{"A Practical Build Sequence You Can Use in 2026"}</h2>
-          <p>{"A good build sequence starts by narrowing the job before you touch models or tools. The first phase is to define the task purpose, the inputs it will receive, the output you expect, and where the task should stop. The 2026 agent build guides consistently start with purpose and scope for the same reason: an agent that can reason across steps still needs a clear goal and clear boundaries. For a harness, this also means deciding what counts as success, what should trigger a handoff, and which decisions must stay with a human."}</p>
-          <p>{"Choose the model that fits the job, write a tight system prompt, and give the agent only the tools it truly needs for the workflow. The practical build advice across the sources points to a simple pattern: pair clear instructions with a small toolset, then expand only when the task proves it needs more capability. For long-running work, the harness matters as much as the model, so this phase should also define how the agent will call tools and how its outputs will be structured for the next step."}</p>
-          <p>{"The third phase is where an agent becomes a reliable harness instead of a promising demo. Add the orchestration features that keep multi-step runs on track: logs so you can inspect what happened, checkpoints so progress is not lost, retries for recoverable failures, and review gates for risky or ambiguous moments. The long-running harness material frames this as the layer around the model that keeps it on task. In practice, that means you are not asking the model to be perfectly self-managing."}</p>
-          <p>{"The last phase is to test the harness on real task runs and tighten the completion rules based on what breaks. Start with realistic jobs, inspect where the run stalls or produces weak outputs, and then refine the prompt, tools, checkpoints, or success criteria. This step is important because long-running tasks often fail at the edges rather than in the happy path. A practical 2026 build process is therefore iterative: define the work, assemble the smallest useful system, wrap it in orchestration, and then improve it with evidence from actual runs rather than assumptions."}</p>
+          <h3>{"Planning the next move"}</h3>
+          <p>{"Planning should produce the next manageable action, not a giant master plan that the model will forget or reinterpret later. The supporting sources describe agents as systems that reason, plan, use tools, and execute across many steps, but they also warn that unstructured workflows break down on larger tasks. A practical harness therefore keeps planning narrow: define the current phase, choose the next action, note the expected result, and record what would count as completion for that step."}</p>
+          <h3>{"Verification and checkpointing"}</h3>
+          <p>{"The harness should check whether the output actually matches the expected result before it moves on, because poor self-evaluation and silent failure are recurring problems in the source material. In practice, that means comparing the result to the task objective, checking whether the tool output supports the model's claim, and storing a checkpoint with the current state. If the result passes, the harness can continue from a known point instead of relying on fragile conversational memory alone."}</p>
+          <h3>{"Recovery when the task goes off track"}</h3>
+          <p>{"If a tool call fails, outputs conflict, or the model cannot justify the next action, the harness should stop treating the run as normal. The next branch is usually one of three options supported by the workflow pattern in the sources: retry with clearer constraints, re-plan from the last good checkpoint, or escalate to a human when the decision is ambiguous or high risk. This makes failure visible and recoverable instead of letting the agent continue with a false sense of progress."}</p>
+          <h2>{"Choose the right first use cases and safety rails"}</h2>
+          <p>{"A good first use case for an AI harness is not \u201crun the whole business process alone.\u201d It is a repeatable, multi-step task with a clear start, a clear finish, and outputs you can inspect. The source material points to practical examples like inbox sorting, customer response workflows, quote comparison, research-style assembly work, and audit-like tasks that span many steps."}</p>
+          <p>{"This matters because unstructured agents tend to break down on complex work. The MindStudio source says teams often begin with a coding assistant and quickly hit problems when the task becomes larger, such as codebase migration, API audits, or broad test generation. The harness pattern exists to make those longer workflows more reliable and traceable. In practice, that means choosing work where you can define the task boundary before the agent starts, rather than asking it to improvise across unclear goals."}</p>
+          <p>{"Define what the agent is allowed to read, write, or call. Decide what an acceptable output looks like, whether that is a classified inbox, a summary pack, or an audit report for review. The build-from-scratch guidance also supports this approach: define the agent\u2019s goals and capabilities early, instead of letting it discover its own scope while running."}</p>
+          <p>{"Let the harness handle the repetitive parts first, then send its outputs to a reviewer for approval or correction."}</p>
           <ul>
-            <li>{"Phase 2: choose the model, prompt structure, and smallest useful toolset."}</li>
+            <li>{"Prefer tasks that are repeatable, multi-step, and easy to measure."}</li>
+            <li>{"Limit tools and data access up front."}</li>
           </ul>
           <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-6ff9f822-d050-42d6-b529-4a469f2c66c0.jpg?alt=media&token=25c6c9fb-e666-46fb-84a3-5777ff770797"
-            alt="A Practical Build Sequence You Can Use in 2026"
-            caption="A Practical Build Sequence You Can Use in 2026"
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-13ea8256-e294-4d7b-b8ae-257ffe73d75c.jpg?alt=media&token=66dcac41-8e3e-4e20-a5c4-bf07b99e1eec"
+            alt="Choose the right first use cases and safety rails"
+            caption="Choose the right first use cases and safety rails"
             width={1200}
             height={800}
           />
-          <h2>{"What to Do Next Before You Scale Beyond a Pilot"}</h2>
-          <p>{"Before you try to build a broad autonomous agent, pick one long-running workflow with a clear finish line. A narrow scope makes it easier to define the goal, choose the right tools, and see where the system actually breaks. The 2026 agent guides consistently start with purpose and scope for a reason: long-running systems fail when they are asked to do too much too early."}</p>
-          <p>{"As you move from idea to implementation, treat the harness as the real product, not just the model inside it. The useful parts are the orchestration around the model: prompts, tools, memory, checkpoints, and feedback loops that keep work on track over many steps. Run the pilot, inspect where it wanders, stops early, or misses edge cases, and improve those control points first. Only after that should you widen the task, add more tools, or give the system more autonomy."}</p>
+          <h2>{"Build for reliability first, then increase autonomy"}</h2>
+          <p>{"For long, stateful, and error-prone work, the harness matters more than chasing a slightly stronger model. The core sources agree on the same pattern: unstructured agents drift, stop early, or fail quietly, while a harness adds the prompts, tools, checkpoints, and evaluation loops that turn model output into a more reliable system."}</p>
+          <p>{"A good next step is to pick one bounded workflow and run it end to end with visible checkpoints. That could be a research task, an audit, or another repeatable piece of real work with a defined finish line. Document the task contract, decide what success and failure look like, and add a small evaluation loop before expanding scope. Once the harness can complete one useful workflow consistently, you can widen the task, add more tools, and increase autonomy with much less risk."}</p>
           <ul>
-            <li>{"Choose one bounded workflow for your first pilot."}</li>
-            <li>{"Build the harness around the model, including checkpoints and evaluation."}</li>
+            <li>{"Start with one bounded workflow, not a general-purpose agent."}</li>
+            <li>{"Define pass-fail tests early, then pilot the harness on real work."}</li>
           </ul>
           <ArticleImageBlock
-            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-e41f6174-1cc2-47eb-b418-2e01e75e3d85.jpg?alt=media&token=992c5699-9ff1-417b-878c-214a06917138"
-            alt="What to Do Next Before You Scale Beyond a Pilot"
-            caption="What to Do Next Before You Scale Beyond a Pilot"
+            src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-8127794c-10af-4242-a73d-b0dd8d5be93c.jpg?alt=media&token=2a7b2ac7-af6b-4b40-8368-6d91a0d199dc"
+            alt="Build for reliability first, then increase autonomy"
+            caption="Build for reliability first, then increase autonomy"
             width={1200}
             height={800}
           />
 
         <QuoteBlock title="Keep moving forward" variant="orange">
-          {"A dependable harness persists task state, limits tool access, and uses checkpoints, retries, and review gates. It also verifies outputs before advancing so the model's confidence is not treated as proof of success."}
+          {"A practical harness runs a repeatable cycle: plan the next action, execute, verify the result, save state, then continue, retry, or escalate. Human review and explicit stop conditions are part of the design."}
         </QuoteBlock>
 
         <MLAITemplateResourceCTA />
 
       <ArticleReferences
         references={[
-          {id: 1, href: "https://www.anz.com.au/business/business-hub/running-business/run/small-business-tasks-you-can-automate-with-ai/", title: "Ten everyday small business tasks you can automate with AI | ANZ", publisher: "anz.com.au", description: "Authoritative reference supporting Ten everyday small business tasks you can automate with AI | ANZ.", category: "guide"},
+          {id: 1, href: "https://www.gumloop.com/blog/how-to-build-ai-agents", title: "How to build AI agents in 6 simple steps (2026 guide)", publisher: "gumloop.com", description: "Authoritative reference supporting How to build AI agents in 6 simple steps (2026 guide).", category: "guide"},
           {id: 2, href: "https://atalupadhyay.wordpress.com/2026/03/26/building-long-running-ai-agent-harnesses/", title: "Building Long-Running AI Agent Harnesses | atal upadhyay", publisher: "atalupadhyay.wordpress.com", description: "Authoritative reference supporting Building Long-Running AI Agent Harnesses | atal upadhyay.", category: "guide"},
-          {id: 3, href: "https://www.philschmid.de/agent-harness-2026", title: "The importance of Agent Harness in 2026", publisher: "philschmid.de", description: "Authoritative reference supporting The importance of Agent Harness in 2026.", category: "guide"},
+          {id: 3, href: "https://gozade.com/blog/how-to-build-an-ai-agent-a-2026-step-by-step-guide", title: "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade", publisher: "gozade.com", description: "Authoritative reference supporting How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade.", category: "guide"},
           {id: 4, href: "https://www.nxcode.io/resources/news/what-is-harness-engineering-complete-guide-2026", title: "What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode", publisher: "nxcode.io", description: "Authoritative reference supporting What Is Harness Engineering? Complete Guide for AI Agent Development (2026) | NxCode.", category: "guide"},
           {id: 5, href: "https://www.agilesoftlabs.com/blog/2026/03/how-to-build-ai-agent-from-scratch-2026", title: "Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog", publisher: "agilesoftlabs.com", description: "Authoritative reference supporting Build an AI Agent From Scratch in 2026 (Python Tutorial + Code) - AgileSoftLabs Blog.", category: "guide"},
-          {id: 6, href: "https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026", title: "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode", publisher: "nxcode.io", description: "Authoritative reference supporting Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode.", category: "guide"},
-          {id: 7, href: "https://gozade.com/blog/how-to-build-an-ai-agent-a-2026-step-by-step-guide", title: "How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade", publisher: "gozade.com", description: "Authoritative reference supporting How to Build an AI Agent: A 2026 Step-by-Step Guide | Gozade.", category: "guide"},
-          {id: 8, href: "https://newdigital.com.au/blog/best-ai-tools-small-business-australia-2026/", title: "Best AI Tools for Small Business in Australia (2026 Guide) | New Digital", publisher: "newdigital.com.au", description: "Authoritative reference supporting Best AI Tools for Small Business in Australia (2026 Guide) | New Digital.", category: "guide"},
-          {id: 9, href: "https://www.gumloop.com/blog/how-to-build-ai-agents", title: "How to build AI agents in 6 simple steps (2026 guide)", publisher: "gumloop.com", description: "Authoritative reference supporting How to build AI agents in 6 simple steps (2026 guide).", category: "guide"},
+          {id: 6, href: "https://www.philschmid.de/agent-harness-2026", title: "The importance of Agent Harness in 2026", publisher: "philschmid.de", description: "Authoritative reference supporting The importance of Agent Harness in 2026.", category: "guide"},
+          {id: 7, href: "https://www.mindstudio.ai/blog/ai-coding-agent-harness-stripe-shopify-airbnb", title: "What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio", publisher: "mindstudio.ai", description: "Authoritative reference supporting What Is an AI Coding Agent Harness? How Stripe, Shopify, and Airbnb Build Reliable AI Workflows | MindStudio.", category: "guide"},
+          {id: 8, href: "https://amplifypartners.com/blog-posts/how-hightouch-built-their-long-running-agent-harness", title: "How Hightouch built their long-running agent harness | Amplify Partners", publisher: "amplifypartners.com", description: "Authoritative reference supporting How Hightouch built their long-running agent harness | Amplify Partners.", category: "guide"},
+          {id: 9, href: "https://www.scalesuite.com.au/resources/ai-tools-for-business-owners-australia", title: "AI Tools for Business Owners Australia 2026 | Practical Guide With Real Examples", publisher: "scalesuite.com.au", description: "Authoritative reference supporting AI Tools for Business Owners Australia 2026 | Practical Guide With Real Examples.", category: "guide"},
+          {id: 10, href: "https://www.nxcode.io/resources/news/harness-engineering-complete-guide-ai-agent-codex-2026", title: "Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode", publisher: "nxcode.io", description: "Authoritative reference supporting Harness Engineering: The Complete Guide to Building Systems That Make AI Agents Actually Work (2026) | NxCode.", category: "guide"},
+          {id: 11, href: "https://www.anz.com.au/business/business-hub/running-business/run/small-business-tasks-you-can-automate-with-ai/", title: "Ten everyday small business tasks you can automate with AI | ANZ", publisher: "anz.com.au", description: "Authoritative reference supporting Ten everyday small business tasks you can automate with AI | ANZ.", category: "guide"},
         ]}
         heading="Sources & further reading"
       />
@@ -280,9 +283,9 @@ export default function ArticleContent() {
 
         <div className="my-12 not-prose">
           <ArticleCompanyCTA
-            title="Plan your first AI harness pilot"
-            body="Start with one narrow workflow, clear boundaries, and a simple review loop. If you are shaping an applied AI project, explore our practical resources and community pathways for builders in Australia."
-            buttonText="Explore AI builder resources"
+            title="Need a practical starting point?"
+            body="Use a simple workflow template to define task scope, pass-fail checks, checkpoints, and review gates before you increase autonomy."
+            buttonText="Explore AI learning resources"
             buttonHref="/practical-ai-ml-learning-upskilling"
           />
         </div>
