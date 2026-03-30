@@ -4,6 +4,7 @@ import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
 import {
     createVibeRaisingSubmittedCookie,
+    cancelVibeRaisingStartupUpdate,
     getActiveVibeRaisingCompany,
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
@@ -153,6 +154,11 @@ function getEmailDraftStorageKey(domain?: string | null) {
     return `vibe_raising_email_draft:${normalized}`;
 }
 
+function getEmailDraftForceRegenerateKey(domain?: string | null) {
+    const normalized = String(domain || "").trim().toLowerCase() || "unknown";
+    return `vibe_raising_email_draft_force_regenerate:${normalized}`;
+}
+
 function readPersistedEmailDraftRun(storageKey: string): PersistedEmailDraftRun | null {
     if (typeof window === "undefined") return null;
 
@@ -178,6 +184,21 @@ function readPersistedEmailDraftRun(storageKey: string): PersistedEmailDraftRun 
     } catch {
         return null;
     }
+}
+
+function hasPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(storageKey) === "1";
+}
+
+function setPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(storageKey, "1");
+}
+
+function clearPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(storageKey);
 }
 
 function isEmailDraftRunning(statusResponse: VibeRaisingStartupUpdateStatusResponse | null) {
@@ -229,6 +250,48 @@ interface SectionWithExampleProps {
     onChange?: (value: string) => void;
 }
 
+function BulletTextarea({
+    value,
+    placeholder,
+    onChange,
+    onFocus,
+    className,
+}: {
+    value: string;
+    placeholder: string;
+    onChange: (value: string) => void;
+    onFocus?: () => void;
+    className?: string;
+}) {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = "0px";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, [value]);
+
+    return (
+        <textarea
+            ref={textareaRef}
+            rows={1}
+            value={value}
+            onChange={(event) => {
+                event.currentTarget.style.height = "0px";
+                event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
+                onChange(event.target.value);
+            }}
+            onFocus={onFocus}
+            placeholder={placeholder}
+            className={clsx(
+                "w-full resize-none overflow-hidden whitespace-pre-wrap break-words",
+                className,
+            )}
+        />
+    );
+}
+
 function SectionWithExample({
     label,
     name,
@@ -258,7 +321,7 @@ function SectionWithExample({
 
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
-        onChange?.(updated.filter(s => s.trim()).join(" "));
+        onChange?.(updated.length ? updated.filter(s => s.trim()).join(" ") : "");
     };
 
     return (
@@ -275,19 +338,18 @@ function SectionWithExample({
                 {items.map((item, i) => (
                     <div key={i} className="flex items-start gap-2">
                         <span className="mt-2.5 text-gray-400 text-sm select-none flex-shrink-0">•</span>
-                        <input
-                            type="text"
+                        <BulletTextarea
                             value={item === "." ? "" : item}
-                            onChange={(e) => updateItem(i, e.target.value)}
+                            onChange={(text) => updateItem(i, text)}
                             onFocus={() => { if (item === ".") updateItem(i, ""); }}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 px-3 py-2 sm:text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 placeholder:italic"
+                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-blue-500 focus:ring-blue-500"
                         />
-                        {items.length > 1 && (
+                        {(items.length > 1 || (item !== "." && item.trim().length > 0)) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 p-1 text-gray-300 hover:text-red-400 transition-colors"
+                                className="mt-1.5 p-1 text-gray-300 transition-colors hover:text-red-400"
                             >
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
@@ -319,7 +381,10 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
         updated[i] = text;
         onChange(updated.filter(s => s.trim()).join(" "));
     };
-    const remove = (i: number) => onChange(items.filter((_, j) => j !== i).filter(s => s.trim()).join(" "));
+    const remove = (i: number) => {
+        const updated = items.filter((_, j) => j !== i);
+        onChange(updated.length ? updated.filter(s => s.trim()).join(" ") : "");
+    };
     const add = () => {
         const trimmed = value.trim();
         const base = trimmed && !trimmed.endsWith(".") ? trimmed + "." : trimmed;
@@ -329,18 +394,17 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
     return (
         <div className="space-y-1.5">
             {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                    <span className="text-gray-400 text-xs select-none">•</span>
-                    <input
-                        type="text"
+                <div key={i} className="flex items-start gap-1.5">
+                    <span className="mt-2 text-gray-400 text-xs select-none">•</span>
+                    <BulletTextarea
                         value={item === "." ? "" : item}
-                        onChange={(e) => update(i, e.target.value)}
+                        onChange={(text) => update(i, text)}
                         onFocus={() => { if (item === ".") update(i, ""); }}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
-                        className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded-md focus:ring-gray-400 focus:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 placeholder:italic"
+                        className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs leading-5 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-gray-400 focus:ring-gray-400"
                     />
-                    {items.length > 1 && (
-                        <button type="button" onClick={() => remove(i)} className="text-gray-300 hover:text-red-400 transition-colors">
+                    {(items.length > 1 || (item !== "." && item.trim().length > 0)) && (
+                        <button type="button" onClick={() => remove(i)} className="mt-1 text-gray-300 transition-colors hover:text-red-400">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                     )}
@@ -699,12 +763,15 @@ export default function CreateUpdate() {
     });
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
     const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
+    const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
     const [emailDraftStatus, setEmailDraftStatus] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
     const [emailDraftUiError, setEmailDraftUiError] = useState<string | null>(null);
     const [emailDraftActionBusy, setEmailDraftActionBusy] = useState(false);
+    const [emailDraftCancelBusy, setEmailDraftCancelBusy] = useState(false);
     const [emailDraftPollingDegraded, setEmailDraftPollingDegraded] = useState(false);
     const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
     const emailDraftRecoveryKeyRef = useRef<string | null>(null);
+    const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
 
     const handleDraftComplete = (data: any) => {
         if (data.month) setSelectedMonth(data.month);
@@ -748,6 +815,13 @@ export default function CreateUpdate() {
         localStorage.removeItem(emailDraftStorageKey);
     });
 
+    const resetEmailDraftUi = useEffectEvent(() => {
+        setEmailDraftStatus(null);
+        setEmailDraftUiError(null);
+        setEmailDraftPollingDegraded(false);
+        setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+    });
+
     const clearEmailDraftingParams = useCallback(() => {
         const params = new URLSearchParams(location.search);
         let changed = false;
@@ -787,15 +861,21 @@ export default function CreateUpdate() {
 
         startTransition(() => {
             handleDraftComplete(results.draft);
-            setEmailDraftStatus(null);
-            setEmailDraftUiError(null);
-            setEmailDraftPollingDegraded(false);
-            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            resetEmailDraftUi();
         });
         clearPersistedEmailDraftRun();
     });
 
     const processEmailDraftStatus = useEffectEvent(async (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        if (
+            statusResponse.runId &&
+            emailDraftIgnoredRunIdRef.current === statusResponse.runId &&
+            statusResponse.state !== "completed" &&
+            statusResponse.state !== "cancelled"
+        ) {
+            return;
+        }
+
         if (statusResponse.runId) {
             persistEmailDraftRun(statusResponse);
         }
@@ -842,6 +922,12 @@ export default function CreateUpdate() {
             return;
         }
 
+        if (statusResponse.state === "cancelled") {
+            clearPersistedEmailDraftRun();
+            resetEmailDraftUi();
+            return;
+        }
+
         clearPersistedEmailDraftRun();
         startTransition(() => {
             setEmailDraftStatus(null);
@@ -856,12 +942,22 @@ export default function CreateUpdate() {
         setEmailDraftUiError(null);
 
         try {
-            const statusResponse = await runVibeRaisingStartupUpdate(backendBaseUrl, options);
+            const shouldForceRegenerate = Boolean(
+                options?.forceRegenerate || hasPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey),
+            );
+            const statusResponse = await runVibeRaisingStartupUpdate(
+                backendBaseUrl,
+                shouldForceRegenerate ? { forceRegenerate: true } : undefined,
+            );
+            emailDraftIgnoredRunIdRef.current = null;
             if (statusResponse.state === "auth_required") {
                 setShowEmailWizard(true);
                 return;
             }
 
+            if (shouldForceRegenerate) {
+                clearPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
+            }
             await processEmailDraftStatus(statusResponse);
         } catch (error) {
             startTransition(() => {
@@ -871,7 +967,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey]);
 
     const handleGenerateDraftFromEmailClick = useCallback(async () => {
         if (!canGenerateDraftFromEmail) {
@@ -992,7 +1088,12 @@ export default function CreateUpdate() {
     ]);
 
     useEffect(() => {
-        if (!isClientMounted || !emailDraftStatus?.runId || !isEmailDraftRunning(emailDraftStatus)) {
+        if (
+            !isClientMounted ||
+            emailDraftCancelBusy ||
+            !emailDraftStatus?.runId ||
+            !isEmailDraftRunning(emailDraftStatus)
+        ) {
             return;
         }
 
@@ -1005,16 +1106,25 @@ export default function CreateUpdate() {
         };
     }, [
         emailDraftPollDelayMs,
+        emailDraftCancelBusy,
         emailDraftStatus?.runId,
         emailDraftStatus?.state,
         isClientMounted,
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
-    const emailDraftCardVisible = isEmailDraftBusy || emailDraftStatus?.state === "failed" || Boolean(emailDraftUiError);
-    const emailDraftCardStatus = emailDraftStatus?.state === "failed" || emailDraftUiError ? "failed" : "running";
+    const emailDraftCardVisible =
+        isEmailDraftBusy ||
+        emailDraftStatus?.state === "failed" ||
+        (!emailDraftStatus && Boolean(emailDraftUiError));
+    const emailDraftCardStatus =
+        emailDraftStatus?.state === "failed" || (!emailDraftStatus && emailDraftUiError)
+            ? "failed"
+            : "running";
     const emailDraftCardDisplayStage =
-        emailDraftStatus?.displayStage ||
+        (emailDraftCancelBusy
+            ? "Cancelling draft..."
+            : emailDraftStatus?.displayStage) ||
         emailDraftStatus?.progress?.displayStage ||
         (emailDraftUiError
             ? "We couldn't start the Gmail draft."
@@ -1028,14 +1138,67 @@ export default function CreateUpdate() {
         emailDraftStatus?.progress?.totalSteps ??
         8;
     const emailDraftCardError =
-        emailDraftStatus?.error ||
-        emailDraftUiError ||
-        "We couldn't draft your update from Gmail. Please try again.";
+        emailDraftStatus?.state === "failed" || !emailDraftStatus
+            ? (
+                emailDraftStatus?.error ||
+                emailDraftUiError ||
+                "We couldn't draft your update from Gmail. Please try again."
+            )
+            : undefined;
+    const emailDraftCardNotice =
+        isEmailDraftBusy && emailDraftStatus?.state !== "failed"
+            ? emailDraftUiError
+            : null;
 
     const handleRetryEmailDraft = () => {
         clearPersistedEmailDraftRun();
         void startOrResumeEmailDraft({ forceRegenerate: true });
     };
+
+    const handleCancelEmailDraft = useCallback(async () => {
+        const runId = String(emailDraftStatus?.runId || "").trim();
+        if (!runId) return;
+        if (typeof window !== "undefined") {
+            const confirmed = window.confirm(
+                "Cancel this Gmail draft run and reset the monthly update so you can try again?",
+            );
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        setEmailDraftCancelBusy(true);
+        setEmailDraftUiError(null);
+        emailDraftIgnoredRunIdRef.current = runId;
+
+        try {
+            const cancelResponse = await cancelVibeRaisingStartupUpdate(backendBaseUrl, runId);
+            if (cancelResponse.status === "completed" || cancelResponse.terminalState === "completed") {
+                emailDraftIgnoredRunIdRef.current = null;
+                await hydrateCompletedEmailDraft(cancelResponse.runId);
+                return;
+            }
+
+            if (cancelResponse.status === "cancelled" || cancelResponse.terminalState === "cancelled") {
+                clearPersistedEmailDraftRun();
+                setPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
+                resetEmailDraftUi();
+                return;
+            }
+
+            emailDraftIgnoredRunIdRef.current = null;
+            setEmailDraftUiError("We couldn't cancel that Gmail draft run. We'll keep polling the current status.");
+        } catch (error) {
+            emailDraftIgnoredRunIdRef.current = null;
+            setEmailDraftUiError(getEmailDraftErrorMessage(error));
+        } finally {
+            setEmailDraftCancelBusy(false);
+        }
+    }, [
+        backendBaseUrl,
+        emailDraftForceRegenerateKey,
+        emailDraftStatus?.runId,
+    ]);
 
     const resumeDraft = () => {
         try {
@@ -1755,9 +1918,15 @@ export default function CreateUpdate() {
                         completedSteps={emailDraftCardCompletedSteps}
                         totalSteps={emailDraftCardTotalSteps}
                         error={emailDraftCardError}
+                        notice={emailDraftCardNotice}
                         pollingDegraded={emailDraftPollingDegraded}
                         onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                        retryDisabled={emailDraftActionBusy}
+                        retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                        onCancel={isEmailDraftBusy ? () => {
+                            void handleCancelEmailDraft();
+                        } : undefined}
+                        cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                        isCancelling={emailDraftCancelBusy}
                     />
                 ) : (
                     <button

@@ -12,6 +12,7 @@ import type {
   VibeRaisingRole,
   VibeRaisingStartupUpdateBootstrapResponse,
   VibeRaisingStartupUpdateBindingSummary,
+  VibeRaisingStartupUpdateCancelResponse,
   VibeRaisingStartupUpdateRunProgress,
   VibeRaisingStartupUpdateRunSummary,
   VibeRaisingStartupUpdateStepState,
@@ -27,6 +28,7 @@ const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
 const EMAIL_DRAFT_ACTIVE_RUN_PATH = "/api/v1/vibe-raising/email-draft/active-run/";
 const EMAIL_DRAFT_DRAFT_RESULTS_PATH = "/api/v1/vibe-raising/email-draft/draft-results/";
+const EMAIL_DRAFT_CANCEL_RUNS_PATH = "/api/v1/vibe-raising/email-draft/runs/";
 export const VIBE_RAISING_ALLOWED_EMAIL = "sam@mlai.au";
 
 type OptionalContext = {
@@ -348,11 +350,66 @@ function normalizeStartupUpdateState(value: unknown): VibeRaisingStartupUpdateSt
     case "completed":
     case "ready":
       return "completed";
+    case "cancelled":
+      return "cancelled";
     case "failed":
       return "failed";
     default:
       return "failed";
   }
+}
+
+function normalizeStartupUpdateCancelResponse(
+  raw: unknown,
+): VibeRaisingStartupUpdateCancelResponse {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const runId =
+    asNullableString(payload.runId) ??
+    asNullableString(payload.run_id) ??
+    "";
+  const cleanupPayload = (payload.cleanup ?? {}) as Record<string, unknown>;
+
+  return {
+    runId,
+    status: asNullableString(payload.status) ?? "",
+    terminalState:
+      asNullableString(payload.terminalState) ??
+      asNullableString(payload.terminal_state),
+    cancelApplied: Boolean(
+      payload.cancelApplied ??
+      payload.cancel_applied,
+    ),
+    cleanup: {
+      draftsDeleted:
+        typeof cleanupPayload.draftsDeleted === "number" && Number.isFinite(cleanupPayload.draftsDeleted)
+          ? cleanupPayload.draftsDeleted
+          : Number(cleanupPayload.draftsDeleted ?? cleanupPayload.drafts_deleted ?? 0) || 0,
+      eventsDeleted:
+        typeof cleanupPayload.eventsDeleted === "number" && Number.isFinite(cleanupPayload.eventsDeleted)
+          ? cleanupPayload.eventsDeleted
+          : Number(cleanupPayload.eventsDeleted ?? cleanupPayload.events_deleted ?? 0) || 0,
+      metricsDeleted:
+        typeof cleanupPayload.metricsDeleted === "number" && Number.isFinite(cleanupPayload.metricsDeleted)
+          ? cleanupPayload.metricsDeleted
+          : Number(cleanupPayload.metricsDeleted ?? cleanupPayload.metrics_deleted ?? 0) || 0,
+    },
+    revokeRequested: Boolean(
+      payload.revokeRequested ??
+      payload.revoke_requested,
+    ),
+    revokeSucceeded: Boolean(
+      payload.revokeSucceeded ??
+      payload.revoke_succeeded,
+    ),
+    revokedJobIds: normalizeGeneratedDraftMonths(
+      payload.revokedJobIds ??
+      payload.revoked_job_ids,
+    ),
+    missingJobIds: normalizeGeneratedDraftMonths(
+      payload.missingJobIds ??
+      payload.missing_job_ids,
+    ),
+  };
 }
 
 function normalizeBindingSummary(raw: unknown): VibeRaisingStartupUpdateBindingSummary | null {
@@ -947,4 +1004,16 @@ export async function getVibeRaisingStartupUpdateDraftResults(
     pastMonths: normalized.pastMonths,
     months,
   };
+}
+
+export async function cancelVibeRaisingStartupUpdate(
+  backendBaseUrl: string,
+  runId: string,
+): Promise<VibeRaisingStartupUpdateCancelResponse> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    `${EMAIL_DRAFT_CANCEL_RUNS_PATH}${encodeURIComponent(runId)}/cancel/`,
+    { method: "POST" },
+  );
+  return normalizeStartupUpdateCancelResponse(response);
 }

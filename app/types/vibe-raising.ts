@@ -56,6 +56,7 @@ export type VibeRaisingStartupUpdateState =
   | "queued"
   | "running"
   | "completed"
+  | "cancelled"
   | "failed";
 
 export interface VibeRaisingStartupUpdateStepState {
@@ -153,4 +154,20 @@ export interface VibeRaisingDraftResultsResponse {
   currentMonth?: VibeRaisingEmailDraftMonth | null;
   pastMonths: VibeRaisingEmailDraftMonth[];
   months: VibeRaisingEmailDraftMonth[];
+}
+
+export interface VibeRaisingStartupUpdateCancelResponse {
+  runId: string;
+  status: string;
+  terminalState?: string | null;
+  cancelApplied: boolean;
+  cleanup: {
+    draftsDeleted: number;
+    eventsDeleted: number;
+    metricsDeleted: number;
+  };
+  revokeRequested: boolean;
+  revokeSucceeded: boolean;
+  revokedJobIds: string[];
+  missingJobIds: string[];
 }

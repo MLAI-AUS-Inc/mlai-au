@@ -7,9 +7,13 @@ interface EmailDraftInProgressCardProps {
   completedSteps: number;
   totalSteps: number;
   error?: string | null;
+  notice?: string | null;
   pollingDegraded?: boolean;
   onRetry?: () => void;
   retryDisabled?: boolean;
+  onCancel?: () => void;
+  cancelDisabled?: boolean;
+  isCancelling?: boolean;
 }
 
 function ProgressSegments({
@@ -49,9 +53,13 @@ export default function EmailDraftInProgressCard({
   completedSteps,
   totalSteps,
   error,
+  notice,
   pollingDegraded = false,
   onRetry,
   retryDisabled = false,
+  onCancel,
+  cancelDisabled = false,
+  isCancelling = false,
 }: EmailDraftInProgressCardProps) {
   const isFailed = status === "failed" || status === "denied";
   const title = isFailed ? "Draft from Email Needs Attention" : "Drafting Update from Email";
@@ -101,7 +109,9 @@ export default function EmailDraftInProgressCard({
 
           <p className="mt-1 text-sm font-medium text-gray-700">{displayStage}</p>
           <p className="mt-1 text-sm text-gray-500">
-            Usually takes 5-10 minutes to process. Refreshing the page is safe.
+            {isCancelling
+              ? "Cancelling draft and cleaning up this run."
+              : "Usually takes 5-10 minutes to process. Refreshing the page is safe."}
           </p>
 
           {!isFailed && (
@@ -113,6 +123,22 @@ export default function EmailDraftInProgressCard({
               <p className="text-xs text-gray-500">
                 We&apos;ll keep this run attached to your monthly update until the draft is ready.
               </p>
+              {notice ? (
+                <p className="rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm text-amber-700">
+                  {notice}
+                </p>
+              ) : null}
+              {onCancel ? (
+                <button
+                  type="button"
+                  onClick={onCancel}
+                  disabled={cancelDisabled}
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCancelling ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                  {isCancelling ? "Cancelling draft..." : "Cancel draft"}
+                </button>
+              ) : null}
             </div>
           )}
 
