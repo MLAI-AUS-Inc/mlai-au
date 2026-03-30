@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-make-your-first-hire-in-your-startup': {
+        title: "How to Make Your First Hire in Your Startup",
+        date: "2026-03-30",
+        description: "How to make your first hire in your startup by checking readiness, choosing the right role, defining the job clearly, and running a simple hiring process.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-make-your-first-hire-in-your-startup",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f2a3304c-1368-461f-80a2-1068d83a90ba.jpg?alt=media&token=d073497f-9405-4155-b3af-3d661bc7123a",
+        imageAlt: "How to Make Your First Hire in Your Startup",
+        hasContent: true,
+    },
     'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
         title: "A Practical Guide on How to Create an Artificial Intelligence",
         date: "2026-03-22",
