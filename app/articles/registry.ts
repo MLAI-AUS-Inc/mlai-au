@@ -76,10 +76,10 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/how-to-make-your-first-technical-hire-in-a-startup': {
         title: "How to Make Your First Technical Hire in a Startup",
         date: "2026-03-30",
-        description: "Learn how to make your first technical hire in a startup by choosing the right timing, defining the role around outcomes, and running a focused hiring process.",
+        description: "Learn how to make your first technical hire in a startup by judging timing, defining the right role, running a lean process, and setting clear 90-day priorities.",
         author: "Dr Sam Donegan",
         slug: "featured/how-to-make-your-first-technical-hire-in-a-startup",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a585f5c2-1de7-4691-9bc5-316b04505d9b.jpg?alt=media&token=f276e8cc-2d13-4a94-a66e-5f51be0f6de9",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9c6056d8-8b73-4037-97dc-ea92e74f3d55.jpg?alt=media&token=1d1dfcea-abaf-4558-977a-8f72a32981ed",
         imageAlt: "How to Make Your First Technical Hire in a Startup",
         hasContent: true,
     },
