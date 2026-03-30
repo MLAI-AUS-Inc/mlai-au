@@ -1,3 +1,6 @@
+- [x] Make Vibe Raising create-update highlight, challenge, and ask bullet fields wrap across multiple lines
+- [x] Restore single-item remove support for Vibe Raising bullet lists
+- [x] Run `bun run typecheck`
 - [x] Verify `/vibe-raising/create-update` still returns `200` with an authenticated founder session
 - [x] Confirm `/api/v1/vibe-raising/profile/` returns `200` for the current founder profile
 - [x] Redact auth cookies from frontend API debug logging
