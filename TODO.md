@@ -1,3 +1,56 @@
+- [x] Make Vibe Raising create-update highlight, challenge, and ask bullet fields wrap across multiple lines
+- [x] Restore single-item remove support for Vibe Raising bullet lists
+- [x] Run `bun run typecheck`
+- [x] Verify `/vibe-raising/create-update` still returns `200` with an authenticated founder session
+- [x] Confirm `/api/v1/vibe-raising/profile/` returns `200` for the current founder profile
+- [x] Redact auth cookies from frontend API debug logging
+- [x] Run `bun run typecheck`
+- [x] Diagnose Vibe Raising Gmail draft 404 against the live backend route list
+- [x] Point the create-update Gmail flow at `startup-update/bootstrap|run|status` instead of stale `email-draft/*`
+- [x] Run `bun run typecheck`
+- [x] Run `bunx react-router build`
+- [x] Wire Vibe Raising create-update Gmail button to real mlai-backend Google OAuth
+- [x] Add Vibe Raising startup-update bootstrap/run/status backend wrappers
+- [x] Replace mocked email drafting flow with OAuth return + draft polling
+- [x] Add backend tests for Vibe Raising startup-update endpoints and Gmail OAuth origin handling
+- [x] Run backend SQLite test pass for `vibe_raising.tests` and `integrations.tests_gmail_oauth`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build` and note the existing IndexNow 403 tail
+- [x] Restore the public Vibe Raising landing page at `/vibe-raising-landing`
+- [x] Keep `/vibe-raising` reserved for the authenticated app and add app-side `noindex`
+- [x] Update public FounderTools Vibe Raising links to the restored landing page
+- [x] Run `bun run typecheck`
+- [x] Stop the `/vibe-raising` self-redirect loop for first-time users after magic-link login
+- [x] Re-test `/verify-email -> /vibe-raising` with an incomplete Vibe Raising profile
+- [x] Run `bun run typecheck`
+- [x] Allow the Vibe Raising login page to bypass auto-redirect when opened from `/hackathons`
+- [x] Update the hackathons CTA to force the login screen instead of jumping straight to `/vibe-raising`
+- [x] Run `bun run typecheck`
+- [x] Diagnose Vibe Raising magic-link callback failure
+- [x] Apply missing backend Vibe Raising migration to local DB
+- [x] Re-test verify-email and profile flow
+- [x] Restyle the Vibe Raising `/platform/login` background to the shared cream palette
+- [x] Add subtle colour blur accents to the Vibe Raising login page
+- [x] Run `bun run typecheck`
+- [x] Update `/hackathons` hero and Vibe Raising CTA copy
+- [x] Disable the Medhack: Frontiers card to match the eSafety card state
+- [x] Run `bun run typecheck`
+- [x] Restyle `/hackathons` page background to the shared cream palette
+- [x] Rebuild the Vibe Raising CTA to match the Roo-inspired dark card treatment
+- [x] Run `bun run typecheck`
+- [x] Add Vibe Raising backend profile/auth helper layer and types
+- [x] Extract reusable Vibe Raising onboarding card component
+- [x] Refactor Vibe Raising routes off `vibe_raising_session` auth
+- [x] Extend shared login and verify-email flow for `app=vibe-raising`
+- [x] Add Vibe Raising CTA to `/hackathons`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
+- [x] Fetch latest `origin/main` and `origin/valley-landing-page`
+- [x] Check out `valley-landing-page`
+- [x] Merge `origin/main` into `valley-landing-page` with unrelated histories allowed
+- [x] Resolve shared route, root shell, and package-script merge conflicts
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
 - [x] Populate this list
 - [x] Keep TODO.md updated when multi-step changes, and update as steps are completed
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
@@ -23,3 +76,59 @@
 - [x] Align the education negatives article imports with the app alias to fix CI build resolution issues
 - [x] Fix JSX string quoting in the education negatives article CTA body to unblock CI builds
 - [x] Add explicit testimonial types to allow optional website links for CI typecheck
+- [x] Add new `/roo` public onboarding page route
+- [x] Build custom Roo onboarding page layout and sections
+- [x] Run `bun run typecheck`
+- [x] Align Roo page colours with the sidebar palette
+- [x] Redesign Roo at-a-glance section to match the new reference composition
+- [x] Restyle Roo desktop jump-nav to match the new reference slice
+- [x] Re-run `bun run typecheck`
+- [x] Simplify Roo hero by removing the desktop mint Roo tile
+- [x] Remove hero benefit chips under the CTA row
+- [x] Re-run `bun run typecheck`
+- [x] Fix Roo at-a-glance desktop composition to match the horizontal three-card reference
+- [x] Replace desktop at-a-glance connector layout
+- [x] Re-run `bun run typecheck`
+- [x] Remove Roo Points light info cards
+- [x] Expand Roo Points dark limits panel across the available width
+- [x] Re-run `bun run typecheck`
+- [x] Add full-width image card to the Roo Points section
+- [x] Restyle the How it works section background to use the shared beige palette
+- [x] Restyle the Volunteer work section background to use the shared beige palette
+- [x] Restyle the Pilot rules section background to use the shared beige palette
+- [x] Remove all section eyebrow subtitles from the Roo page
+- [x] Add Roo Points progression messaging for trust, team roles, event hosting, and paid work
+- [x] Audit Roo card contrast and fix dark/light text inheritance issues
+- [x] Get local /roo rendering working for visual verification
+- [x] Match Roo at-a-glance desktop layout to the reference after live checking
+- [x] Re-run `bun run typecheck` and `bun run build`
+- [x] Lift Roo higher in the at-a-glance section
+- [x] Raise the admin card so it overlaps the torso cleanly
+- [x] Re-verify local /roo screenshot against the reference
+- [x] Re-run `bun run typecheck`
+- [x] Move Roo much higher in the at-a-glance section
+- [x] Re-verify the live /roo screenshot after the larger shift
+- [x] Move Roo up another 100px above the admin card
+- [x] Raise the blue floor-glow and tighten the bottom of the at-a-glance section
+- [x] Re-run `bun run typecheck`
+- [x] Reduce the at-a-glance section height so it ends just below the blue card
+- [x] Re-run `bun run typecheck`
+- [x] Move all three at-a-glance cards up onto Roo so his head clears the blue card
+- [x] Reduce the at-a-glance container height so it ends just below the blue card
+- [x] Re-verify the live /roo screenshot after the layout change
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card slightly so Roo's face clears
+- [x] Increase the at-a-glance section height slightly so the full blue card shows with bottom padding
+- [x] Re-verify the live /roo screenshot after the spacing retune
+- [x] Re-run `bun run typecheck`
+- [x] Lower the at-a-glance admin card further so Roo's face is visible above it
+- [x] Increase the at-a-glance section height again so the full blue card clears with padding
+- [x] Lift Roo within the at-a-glance stage so his face clears the admin card
+- [x] Re-verify the live /roo screenshot after the final stage retune
+- [x] Re-run `bun run typecheck`
+- [x] Increase the at-a-glance stage height a bit more so the full blue card shows
+- [x] Lift Roo a bit more within the at-a-glance stage
+- [x] Re-verify the live /roo screenshot after the extra stage lift
+- [x] Re-run `bun run typecheck`
+- [x] Remove the at-a-glance midline connector lines
+- [x] Re-run `bun run typecheck`

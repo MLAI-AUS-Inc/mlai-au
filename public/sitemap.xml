@@ -21,6 +21,31 @@
   <priority>0.7</priority>
  </url>
  <url>
+  <loc>https://mlai.au/resources</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.6</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/roo</loc>
+  <changefreq>monthly</changefreq>
+  <priority>0.6</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/hackathon</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/hackathons</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/medhack</loc>
+  <changefreq>weekly</changefreq>
+  <priority>0.7</priority>
+ </url>
+ <url>
   <loc>https://mlai.au/how-to-pitch-your-idea</loc>
   <changefreq>monthly</changefreq>
   <priority>0.6</priority>
@@ -44,6 +69,24 @@
   <loc>https://mlai.au/terms</loc>
   <changefreq>yearly</changefreq>
   <priority>0.3</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence</loc>
+  <lastmod>2026-03-22</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-to-choose-the-best-ai-for-coding-in-2025</loc>
+  <lastmod>2026-03-21</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit</loc>
+  <lastmod>2026-03-14</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
  </url>
  <url>
   <loc>https://mlai.au/articles/featured/how-technology-affects-education-negatively</loc>
@@ -180,6 +223,36 @@
  <url>
   <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4</loc>
   <lastmod>2026-02-05</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5</loc>
+  <lastmod>2026-02-16</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6</loc>
+  <lastmod>2026-02-25</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7</loc>
+  <lastmod>2026-03-04</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8</loc>
+  <lastmod>2026-03-11</lastmod>
+  <changefreq>monthly</changefreq>
+  <priority>0.8</priority>
+ </url>
+ <url>
+  <loc>https://mlai.au/articles/community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9</loc>
+  <lastmod>2026-03-18</lastmod>
   <changefreq>monthly</changefreq>
   <priority>0.8</priority>
  </url>

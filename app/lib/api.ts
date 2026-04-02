@@ -78,9 +78,13 @@ export function createApiClient(env: any, request?: Request) {
                 }
                 config.headers.set('X-CSRFToken', csrfToken);
             }
+            const headerObject =
+                config.headers && typeof config.headers.toJSON === "function"
+                    ? config.headers.toJSON()
+                    : config.headers;
             console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
                 baseURL: config.baseURL,
-                headers: config.headers,
+                headers: sanitizeHeaders(headerObject),
                 dataIsFormData: config.data instanceof FormData
             });
             return config;
@@ -124,6 +128,22 @@ const getCSRFToken = () => {
     return cookieValue;
 };
 
+function sanitizeHeaders(
+    headers: Record<string, unknown> | AxiosHeaders | undefined,
+): Record<string, unknown> | undefined {
+    if (!headers || typeof headers !== "object") {
+        return headers as Record<string, unknown> | undefined;
+    }
+
+    const clone: Record<string, unknown> = { ...(headers as Record<string, unknown>) };
+    for (const key of Object.keys(clone)) {
+        if (key.toLowerCase() === "cookie") {
+            clone[key] = "[redacted]";
+        }
+    }
+    return clone;
+}
+
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const csrfToken = getCSRFToken();
@@ -135,8 +155,12 @@ axiosInstance.interceptors.request.use(
             // Set the CSRF token
             config.headers.set('X-CSRFToken', csrfToken);
         }
+        const headerObject =
+            config.headers && typeof config.headers.toJSON === "function"
+                ? config.headers.toJSON()
+                : config.headers;
         console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
-            headers: config.headers,
+            headers: sanitizeHeaders(headerObject),
             dataIsFormData: config.data instanceof FormData
         });
         return config;

@@ -29,6 +29,27 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/how-to-assess-cofounder-values-match-before-you-commit': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-choose-the-best-ai-for-coding-in-2025': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
         toc: true,
         howTo: false,
