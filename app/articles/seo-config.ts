@@ -36,6 +36,13 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/go-to-market-for-startups': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/how-to-assess-cofounder-values-match-before-you-commit': {
         toc: true,
         howTo: false,

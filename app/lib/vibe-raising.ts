@@ -8,6 +8,7 @@ import type {
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
   VibeRaisingEmailDraftMonth,
+  VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
   VibeRaisingRole,
   VibeRaisingStartupUpdateBootstrapResponse,
@@ -23,6 +24,7 @@ import type {
 const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
 const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
+const UPDATES_PATH = "/api/v1/vibe-raising/updates/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
 const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
@@ -290,6 +292,55 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
     metrics: normalizeMetrics(payload.metrics),
+  };
+}
+
+function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
+  if (!raw || typeof raw !== "object") return null;
+
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const rawYear = payload.year;
+  let yearValue: number | undefined;
+  if (typeof rawYear === "number" && Number.isFinite(rawYear)) {
+    yearValue = rawYear;
+  } else if (typeof rawYear === "string") {
+    const parsedYear = Number(rawYear.trim());
+    if (Number.isFinite(parsedYear)) {
+      yearValue = parsedYear;
+    }
+  }
+
+  const monthName =
+    asNullableString(payload.monthName) ??
+    asNullableString(payload.month_name);
+  const monthLabel =
+    asNullableString(payload.month) ??
+    (monthName && yearValue ? `${monthName} ${yearValue}` : monthName) ??
+    "Update";
+  const id =
+    asNullableString(payload.id) ??
+    asNullableString(payload.updateId) ??
+    asNullableString(payload.update_id) ??
+    monthLabel;
+
+  return {
+    id,
+    isoMonth:
+      asNullableString(payload.isoMonth) ??
+      asNullableString(payload.iso_month),
+    month: monthLabel,
+    monthName,
+    year: yearValue,
+    date:
+      asNullableString(payload.date) ??
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at) ??
+      new Date().toISOString(),
+    status: asNullableString(payload.status),
+    metrics: normalizeMetrics(payload.metrics),
+    highlights: asNullableString(payload.highlights) ?? "",
+    challenges: asNullableString(payload.challenges) ?? "",
+    asks: asNullableString(payload.asks) ?? "",
   };
 }
 
@@ -910,6 +961,43 @@ export async function setVibeRaisingActiveCompany(
 ): Promise<void> {
   const client = createApiClient(env, request);
   await client.post(ACTIVE_COMPANY_PATH, { companyId });
+}
+
+export async function getVibeRaisingMonthlyUpdates(
+  env: Env,
+  request: Request,
+): Promise<VibeRaisingMonthlyUpdate[]> {
+  const client = createApiClient(env, request);
+
+  try {
+    const response = await client.get(UPDATES_PATH);
+    const updates: unknown[] = Array.isArray(response.data?.updates) ? response.data.updates : [];
+    return updates
+      .map(normalizeMonthlyUpdate)
+      .filter((value): value is VibeRaisingMonthlyUpdate => value !== null);
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+export async function saveVibeRaisingMonthlyUpdate(
+  env: Env,
+  request: Request,
+  body: {
+    month: string;
+    year: number;
+    highlights: string;
+    challenges: string;
+    asks: string;
+    metrics: Record<string, string>;
+  },
+): Promise<VibeRaisingMonthlyUpdate | null> {
+  const client = createApiClient(env, request);
+  const response = await client.post(UPDATES_PATH, body);
+  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
 }
 
 export async function bootstrapVibeRaisingStartupUpdate(

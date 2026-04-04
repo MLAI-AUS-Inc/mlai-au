@@ -81,6 +81,15 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         slug: "featured/how-to-get-the-first-customers-for-my-startup-in-2026",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-5115416e-9e23-4ea5-90fd-0bd5b7d4ecc7.jpg?alt=media&token=2976f637-b1db-4612-888e-6ffa8311c597",
         imageAlt: "Startup founder pitching first customers in 2026 during a close-up candid chat with an early user",
+      },
+    'featured/go-to-market-for-startups': {
+        title: "Go to Market for Startups",
+        date: "2026-04-04",
+        description: "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests.",
+        author: "Dr Sam Donegan",
+        slug: "featured/go-to-market-for-startups",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9",
+        imageAlt: "Go to Market for Startups",
         hasContent: true,
     },
     'featured/how-to-assess-cofounder-values-match-before-you-commit': {

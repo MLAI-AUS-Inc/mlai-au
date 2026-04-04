@@ -50,6 +50,20 @@ export interface VibeRaisingDraftedContent {
   metrics?: Record<string, string>;
 }
 
+export interface VibeRaisingMonthlyUpdate {
+  id: string;
+  isoMonth?: string | null;
+  month: string;
+  monthName?: string | null;
+  year?: number;
+  date: string;
+  status?: string | null;
+  metrics: Record<string, string>;
+  highlights: string;
+  challenges: string;
+  asks: string;
+}
+
 export type VibeRaisingStartupUpdateState =
   | "needs_domain"
   | "auth_required"
