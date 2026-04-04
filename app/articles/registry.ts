@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
+        title: "How to Get the First Customers for My Startup in 2026",
+        date: "2026-04-04",
+        description: "A practical guide to how to get the first customers for my startup 2026 by choosing a narrow segment, testing a clear offer, using warm outreach, and learning fast.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-get-the-first-customers-for-my-startup-in-2026",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-885c0ece-2288-4488-b901-930d9874f0c6.jpg?alt=media&token=f038b50c-0a61-4c87-8f9e-5a9ca0a6a592",
+        imageAlt: "Startup founder testing a pitch with first customers in a candid close-up meeting,",
+        hasContent: true,
+    },
     'featured/how-to-assess-cofounder-values-match-before-you-commit': {
         title: "How to Assess Cofounder Values Match Before You Commit",
         date: "2026-03-30",
