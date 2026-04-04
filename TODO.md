@@ -1,3 +1,11 @@
+- [x] Add real Vibe Raising monthly updates API wrapper and frontend loader integration
+- [x] Persist create-update publishes to backend `MonthlyUpdateDraft` records
+- [x] Replace founder dashboard placeholder updates with real saved company updates
+- [x] Run backend `vibe_raising.tests.VibeRaisingApiTests`
+- [x] Run `bun run typecheck`
+- [x] Stop Vibe Raising bullet items from merging into adjacent points while editing
+- [x] Keep newly added blank bullet rows visible until explicitly removed with `x`
+- [x] Run `bun run typecheck`
 - [x] Make Vibe Raising create-update highlight, challenge, and ask bullet fields wrap across multiple lines
 - [x] Restore single-item remove support for Vibe Raising bullet lists
 - [x] Run `bun run typecheck`

@@ -3,10 +3,9 @@ import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
-    getActiveVibeRaisingCompany,
+    getVibeRaisingMonthlyUpdates,
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
-    hasSubmittedVibeRaisingUpdate,
 } from "~/lib/vibe-raising";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
@@ -48,69 +47,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     const user = vibeContext.appUser;
-    const activeCompany = getActiveVibeRaisingCompany(user);
-    const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, activeCompany?.id);
-
-    // Founder Mock Data
-    const mockUpdates = hasSubmitted ? [
-        {
-            id: 1,
-            month: "February 2026",
-            score: "A+",
-            date: new Date().toISOString(),
-            metrics: {
-                revenue: "$127,500",
-                growth: "18%",
-                users: "3,420"
-            },
-            highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
-            challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
+    const updates = user.role === "founder"
+        ? (await getVibeRaisingMonthlyUpdates(env, request)).map((update, index) => ({
+            ...update,
+            isCurrent: index === 0,
+            score: null,
             likes: 0,
             comments: 0,
-            investorsSentTo: 12,
-            investorsViewed: 8,
-            isCurrent: true,
-        },
-        {
-            id: 2,
-            month: "January 2026",
-            score: "A",
-            date: "2026-01-15T00:00:00.000Z",
-            metrics: {
-                revenue: "$32,000",
-                growth: "15%",
-                users: "820"
-            },
-            highlights: "Launched v2.0 with enterprise features. Revenue reached $32K MoM with 15% growth from new pricing tier.",
-            challenges: "Hiring pipeline slower than expected for engineering roles. Onboarding new enterprise customers taking longer than projected.",
-            asks: "Seeking referrals for senior full-stack engineers. Would love intros to heads of procurement at mid-market companies.",
-            likes: 3,
-            comments: 1,
-            investorsSentTo: 12,
-            investorsViewed: 10,
-            isCurrent: false,
-        },
-        {
-            id: 3,
-            month: "December 2025",
-            score: "B+",
-            date: "2025-12-10T00:00:00.000Z",
-            metrics: {
-                revenue: "$18,000",
-                growth: "",
-                users: "500"
-            },
-            highlights: "Closed pre-seed round of $250K from angel investors. Onboarded first 5 beta customers and hit 500 active users milestone.",
-            challenges: "Product stability issues during beta launch. Needed to prioritize bug fixes over new features.",
-            asks: "Looking for introductions to early-stage B2B SaaS founders for peer learning and advice on product-market fit.",
-            likes: 5,
-            comments: 2,
-            investorsSentTo: 12,
-            investorsViewed: 11,
-            isCurrent: false,
-        }
-    ] : [];
+            investorsSentTo: 0,
+            investorsViewed: 0,
+        }))
+        : [];
 
     // Investor Mock Data
     const portfolioUpdates = [
@@ -130,7 +77,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         }
     ];
 
-    return { user, updates: mockUpdates, portfolioUpdates };
+    return { user, updates, portfolioUpdates };
 }
 
 // ─── Auto-resize textarea hook ──────────────────────────────────
@@ -147,7 +94,9 @@ function useAutoResize(value?: string) {
 
 // ─── Bullet list helper ──────────────────────────────────────────
 function BulletList({ text, className = "text-sm text-gray-600" }: { text: string; className?: string }) {
-    const items = text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const items = text.includes("\n")
+        ? text.split(/\n+/).filter(s => s.trim())
+        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
     return (
         <ul className={clsx("space-y-1 list-disc list-inside", className)}>
             {items.map((item, i) => (
@@ -304,20 +253,28 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
                         <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
                         {isCurrent && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Current</span>}
-                        <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
-                            {update.score}
-                        </span>
+                        {update.score && (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
+                                {update.score}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-blue-600 text-xs font-medium">
-                            <UserGroupIcon className="w-3.5 h-3.5" />
-                            {update.investorsSentTo} sent
-                        </span>
-                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                            <EyeIcon className="w-3.5 h-3.5" />
-                            {update.investorsViewed} viewed
-                        </span>
-                        <span className="w-px h-3 bg-gray-200" />
+                        {update.investorsSentTo > 0 && (
+                            <span className="flex items-center gap-1 text-blue-600 text-xs font-medium">
+                                <UserGroupIcon className="w-3.5 h-3.5" />
+                                {update.investorsSentTo} sent
+                            </span>
+                        )}
+                        {update.investorsViewed > 0 && (
+                            <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                <EyeIcon className="w-3.5 h-3.5" />
+                                {update.investorsViewed} viewed
+                            </span>
+                        )}
+                        {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
+                            <span className="w-px h-3 bg-gray-200" />
+                        )}
                         <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400" />
                     </div>
@@ -379,20 +336,26 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     <div className="flex items-center gap-2">
                                         <p className="text-white font-bold text-sm drop-shadow-sm">{update.month}</p>
                                         {isCurrent && <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">Current</span>}
-                                        <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
+                                        {update.score && (
+                                            <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
+                                        )}
                                     </div>
                                     <p className="text-white/60 text-[11px]">{user?.companyName}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
-                                    <UserGroupIcon className="w-3.5 h-3.5" />
-                                    {update.investorsSentTo} sent
-                                </span>
-                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
-                                    <EyeIcon className="w-3.5 h-3.5" />
-                                    {update.investorsViewed} viewed
-                                </span>
+                                {update.investorsSentTo > 0 && (
+                                    <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                        <UserGroupIcon className="w-3.5 h-3.5" />
+                                        {update.investorsSentTo} sent
+                                    </span>
+                                )}
+                                {update.investorsViewed > 0 && (
+                                    <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                        <EyeIcon className="w-3.5 h-3.5" />
+                                        {update.investorsViewed} viewed
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </button>

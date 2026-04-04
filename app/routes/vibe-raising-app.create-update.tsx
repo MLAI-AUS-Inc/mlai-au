@@ -3,15 +3,14 @@ import React, { startTransition, useCallback, useEffect, useEffectEvent, useRef,
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
 import {
-    createVibeRaisingSubmittedCookie,
     cancelVibeRaisingStartupUpdate,
-    getActiveVibeRaisingCompany,
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
     getVibeRaisingStartupUpdateActiveRun,
     getVibeRaisingStartupUpdateDraftResults,
     getVibeRaisingStartupUpdateStatus,
     runVibeRaisingStartupUpdate,
+    saveVibeRaisingMonthlyUpdate,
 } from "~/lib/vibe-raising";
 import {
     XMarkIcon,
@@ -105,18 +104,23 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "publish") {
-        console.log("Publishing update:", updates);
-        const company = getActiveVibeRaisingCompany(user);
+        const metricKeys = ["revenue", "activeUsers", "mrr", "burnRate", "runway"];
+        const metrics = Object.fromEntries(
+            metricKeys
+                .map((key) => [key, String(formData.get(key) || "").trim()] as const)
+                .filter(([, value]) => value.length > 0),
+        );
 
-        if (!company) {
-            throw redirect("/vibe-raising/company-setup");
-        }
-
-        return redirect("/vibe-raising", {
-            headers: {
-                "Set-Cookie": createVibeRaisingSubmittedCookie(company.id)
-            }
+        await saveVibeRaisingMonthlyUpdate(env, request, {
+            month: String(formData.get("month") || "").trim(),
+            year: Number(formData.get("year") || 0),
+            highlights: String(formData.get("highlights") || ""),
+            challenges: String(formData.get("challenges") || ""),
+            asks: String(formData.get("asks") || ""),
+            metrics,
         });
+
+        return redirect("/vibe-raising");
     }
 
     return null;
@@ -271,6 +275,54 @@ interface SectionWithExampleProps {
     onChange?: (value: string) => void;
 }
 
+function parseBulletItems(value?: string) {
+    const normalized = String(value || "").replace(/\r\n/g, "\n").trim();
+    if (!normalized) return [""];
+
+    const items = normalized
+        .split(/\n+/)
+        .map((item) => item.replace(/^\s*•\s*/, "").trim())
+        .filter(Boolean);
+
+    return items.length ? items : [""];
+}
+
+function serializeBulletItems(items: string[]) {
+    return items
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .join("\n");
+}
+
+function useBulletItemsState(
+    value: string | undefined,
+    onChange?: (value: string) => void,
+) {
+    const [items, setItems] = useState<string[]>(() => parseBulletItems(value));
+    const lastCommittedValueRef = React.useRef(String(value || ""));
+
+    useEffect(() => {
+        const normalizedValue = String(value || "");
+        if (normalizedValue === lastCommittedValueRef.current) {
+            return;
+        }
+
+        setItems(parseBulletItems(normalizedValue));
+        lastCommittedValueRef.current = normalizedValue;
+    }, [value]);
+
+    const commitItems = useCallback((nextItems: string[]) => {
+        const safeItems = nextItems.length ? nextItems : [""];
+        setItems(safeItems);
+
+        const serialized = serializeBulletItems(nextItems);
+        lastCommittedValueRef.current = serialized;
+        onChange?.(serialized);
+    }, [onChange]);
+
+    return { items, commitItems };
+}
+
 function BulletTextarea({
     value,
     placeholder,
@@ -321,28 +373,22 @@ function SectionWithExample({
     value,
     onChange,
 }: SectionWithExampleProps) {
-    // Split value into bullet items (by sentence-ending period or newlines)
-    const items = (value || "").split(/(?<=\.)\s+/).filter(s => s.trim());
-    if (items.length === 0) items.push("");
-
+    const { items, commitItems } = useBulletItemsState(value, onChange);
     const hints = SECTION_HINTS[name] || [];
 
     const updateItem = (index: number, text: string) => {
         const updated = [...items];
         updated[index] = text;
-        onChange?.(updated.filter(s => s.trim()).join(" "));
+        commitItems(updated);
     };
 
     const addItem = () => {
-        const trimmed = (value || "").trim();
-        const base = trimmed && !trimmed.endsWith(".") ? trimmed + "." : trimmed;
-        // Add empty item — placeholder hint will guide the user
-        onChange?.(base + (base ? " " : "") + ".");
+        commitItems([...items, ""]);
     };
 
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
-        onChange?.(updated.length ? updated.filter(s => s.trim()).join(" ") : "");
+        commitItems(updated.length ? updated : [""]);
     };
 
     return (
@@ -360,13 +406,12 @@ function SectionWithExample({
                     <div key={i} className="flex items-start gap-2">
                         <span className="mt-2.5 text-gray-400 text-sm select-none flex-shrink-0">•</span>
                         <BulletTextarea
-                            value={item === "." ? "" : item}
+                            value={item}
                             onChange={(text) => updateItem(i, text)}
-                            onFocus={() => { if (item === ".") updateItem(i, ""); }}
                             placeholder={hints[i % hints.length] || placeholder}
                             className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-blue-500 focus:ring-blue-500"
                         />
-                        {(items.length > 1 || (item !== "." && item.trim().length > 0)) && (
+                        {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
@@ -392,24 +437,20 @@ function SectionWithExample({
 
 // Bullet-point input for past month cards
 function BulletInput({ value, onChange, placeholder, section }: { value: string; onChange: (v: string) => void; placeholder?: string; section?: string }) {
-    const items = value.split(/(?<=\.)\s+/).filter(s => s.trim());
-    if (items.length === 0) items.push("");
-
+    const { items, commitItems } = useBulletItemsState(value, onChange);
     const hints = section ? (SECTION_HINTS[section] || []) : [];
 
     const update = (i: number, text: string) => {
         const updated = [...items];
         updated[i] = text;
-        onChange(updated.filter(s => s.trim()).join(" "));
+        commitItems(updated);
     };
     const remove = (i: number) => {
         const updated = items.filter((_, j) => j !== i);
-        onChange(updated.length ? updated.filter(s => s.trim()).join(" ") : "");
+        commitItems(updated.length ? updated : [""]);
     };
     const add = () => {
-        const trimmed = value.trim();
-        const base = trimmed && !trimmed.endsWith(".") ? trimmed + "." : trimmed;
-        onChange(base + (base ? " " : "") + ".");
+        commitItems([...items, ""]);
     };
 
     return (
@@ -418,13 +459,12 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
                 <div key={i} className="flex items-start gap-1.5">
                     <span className="mt-2 text-gray-400 text-xs select-none">•</span>
                     <BulletTextarea
-                        value={item === "." ? "" : item}
+                        value={item}
                         onChange={(text) => update(i, text)}
-                        onFocus={() => { if (item === ".") update(i, ""); }}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
                         className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs leading-5 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-gray-400 focus:ring-gray-400"
                     />
-                    {(items.length > 1 || (item !== "." && item.trim().length > 0)) && (
+                    {(items.length > 1 || item.trim().length > 0) && (
                         <button type="button" onClick={() => remove(i)} className="mt-1 text-gray-300 transition-colors hover:text-red-400">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
