@@ -76,11 +76,11 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
     'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
         title: "How to Get the First Customers for My Startup in 2026",
         date: "2026-04-04",
-        description: "A practical guide to how to get the first customers for my startup 2026 by choosing a narrow segment, testing a clear offer, using warm outreach, and learning fast.",
+        description: "Learn how to get the first customers for my startup 2026 with a focused plan: choose a narrow segment, make a simple offer, use founder-led outreach, and turn early users into proof.",
         author: "Dr Sam Donegan",
         slug: "featured/how-to-get-the-first-customers-for-my-startup-in-2026",
-        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-885c0ece-2288-4488-b901-930d9874f0c6.jpg?alt=media&token=f038b50c-0a61-4c87-8f9e-5a9ca0a6a592",
-        imageAlt: "Startup founder testing a pitch with first customers in a candid close-up meeting,",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-5115416e-9e23-4ea5-90fd-0bd5b7d4ecc7.jpg?alt=media&token=2976f637-b1db-4612-888e-6ffa8311c597",
+        imageAlt: "Startup founder pitching first customers in 2026 during a close-up candid chat with an early user",
         hasContent: true,
     },
     'featured/how-to-assess-cofounder-values-match-before-you-commit': {
