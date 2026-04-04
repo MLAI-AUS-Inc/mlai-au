@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-artificial-intelligence-with-example-for-everyday-readers': {
+        title: "What Is Artificial Intelligence With Example for Everyday Readers",
+        date: "2026-04-04",
+        description: "What is artificial intelligence with example explained simply",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-with-example-for-everyday-readers",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7f3951a9-ecc4-465c-b320-fc43c8053e7e.jpg?alt=media&token=df271f37-1457-45a7-8273-a10c00bc8933",
+        imageAlt: "Close-up of a woman using an AI chatbot on her phone while a friend watches",
+        hasContent: true,
+    },
     'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
         title: "How to Get the First Customers for My Startup in 2026",
         date: "2026-04-04",
