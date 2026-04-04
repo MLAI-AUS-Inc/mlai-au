@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/go-to-market-for-startups': {
+        title: "Go to Market for Startups",
+        date: "2026-04-04",
+        description: "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests.",
+        author: "Dr Sam Donegan",
+        slug: "featured/go-to-market-for-startups",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9",
+        imageAlt: "Go to Market for Startups",
+        hasContent: true,
+    },
     'featured/how-to-assess-cofounder-values-match-before-you-commit': {
         title: "How to Assess Cofounder Values Match Before You Commit",
         date: "2026-03-30",
