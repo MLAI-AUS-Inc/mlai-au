@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
+        title: "What Is AGI in Artificial Intelligence and Why It Matters",
+        date: "2026-04-04",
+        description: "What is AGI in artificial intelligence explained simply, including how it differs from today\u2019s AI systems and how to assess AGI claims without hype.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-agi-in-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46",
+        imageAlt: "What Is AGI in Artificial Intelligence and Why It Matters",
+        hasContent: true,
+    },
     'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
         title: "How to Get the First Customers for My Startup in 2026",
         date: "2026-04-04",
