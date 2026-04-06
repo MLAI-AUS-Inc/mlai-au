@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-build-ai-for-real-business-problems': {
+        title: "How to Build AI for Real Business Problems",
+        date: "2026-04-06",
+        description: "Build AI for business with a practical start-to-launch plan.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-build-ai-for-real-business-problems",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c50a0366-c987-4439-aa4d-10ba179a206c.jpg?alt=media&token=3a1e360a-3558-4f36-8257-3b17644d8c83",
+        imageAlt: "Close-up of a team reviewing an AI workflow on a laptop during a practical business planning meeting",
+        hasContent: true,
+    },
     'featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers': {
         title: "How to Start a Company Around an AI Idea From Prototype to Customers",
         date: "2026-04-06",
