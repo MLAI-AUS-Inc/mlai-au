@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers': {
+        title: "How to Start a Company Around an AI Idea From Prototype to Customers",
+        date: "2026-04-06",
+        description: "A practical guide to turning an AI prototype into a testable offer, running pilots, setting up safely in Australia, and winning early customers.",
+        author: "Dr Sam Donegan",
+        slug: "featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1febf3be-29fb-44ed-9207-e79b38921cc2.jpg?alt=media&token=3b266804-e787-46d9-86b6-7f7ec4f3aa8a",
+        imageAlt: "Founder showing an AI prototype to a small business owner during a close-up pilot meeting in Australia",
+        hasContent: true,
+    },
     'featured/how-to-startup-a-practical-guide-for-first-time-founders': {
         title: "How to Startup",
         date: "2026-04-05",
