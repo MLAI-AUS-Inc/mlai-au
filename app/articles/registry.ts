@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/why-founders-clubs-work-for-early-stage-growth': {
+        title: "Why Founders Clubs Work for Early Stage Growth",
+        date: "2026-04-08",
+        description: "Learn what founders clubs are, why they work, how different models create value, and what to check before joining one.",
+        author: "Dr Sam Donegan",
+        slug: "featured/why-founders-clubs-work-for-early-stage-growth",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7e145e57-0e89-4225-a8cf-28d27f58292d.jpg?alt=media&token=f0b58fd5-7cca-4f88-9060-ca2845f2c38b",
+        imageAlt: "Why Founders Clubs Work for Early Stage Growth",
+        hasContent: true,
+    },
     'featured/what-is-inference-in-artificial-intelligence-and-why-it-matters': {
         title: "What Is Inference in Artificial Intelligence and Why It Matters",
         date: "2026-04-08",
