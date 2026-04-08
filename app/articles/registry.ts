@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-inference-in-artificial-intelligence-and-why-it-matters': {
+        title: "What Is Inference in Artificial Intelligence and Why It Matters",
+        date: "2026-04-08",
+        description: "Learn what inference in artificial intelligence means, how it differs from training and serving, and why it matters in real AI systems.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-inference-in-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8d1255b-d720-46a6-ab79-ed65bd104e1a.jpg?alt=media&token=8e3932df-1ab1-416b-9ac7-21eab7274536",
+        imageAlt: "What Is Inference in Artificial Intelligence and Why It Matters",
+        hasContent: true,
+    },
     'featured/how-to-build-ai-for-real-business-problems': {
         title: "How to Build AI for Real Business Problems",
         date: "2026-04-06",
