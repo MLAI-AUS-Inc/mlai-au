@@ -392,30 +392,29 @@ function SectionWithExample({
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-5 h-5 text-gray-500" />
-                <label className="block text-sm font-medium text-gray-700">
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
+            <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/50 px-4 py-3">
+                <Icon className="w-4 h-4 text-gray-500" />
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
                     {label}
                 </label>
             </div>
-            {/* Hidden input for form submission */}
             <input type="hidden" name={name} value={value || ""} />
-            <div className="space-y-2">
+            <div className="space-y-3 p-4">
                 {items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                        <span className="mt-2.5 text-gray-400 text-sm select-none flex-shrink-0">•</span>
+                    <div key={i} className="flex items-start gap-3">
+                        <span className="mt-2.5 text-sm text-violet-400 select-none flex-shrink-0">•</span>
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-blue-500 focus:ring-blue-500"
+                            className="flex-1 rounded-xl border-2 border-gray-100 bg-white px-4 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-0"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 p-1 text-gray-300 transition-colors hover:text-red-400"
+                                className="mt-1.5 rounded-lg p-1.5 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400"
                             >
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
@@ -426,9 +425,9 @@ function SectionWithExample({
             <button
                 type="button"
                 onClick={addItem}
-                className="mt-2 flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
+                className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-gray-100 py-3 text-xs font-bold text-violet-600 transition-colors hover:bg-violet-50"
             >
-                <span className="text-lg leading-none">+</span>
+                <span className="text-base leading-none">+</span>
                 Add point
             </button>
         </div>
@@ -454,24 +453,24 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
     };
 
     return (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 pt-1">
             {items.map((item, i) => (
-                <div key={i} className="flex items-start gap-1.5">
-                    <span className="mt-2 text-gray-400 text-xs select-none">•</span>
+                <div key={i} className="flex items-start gap-2">
+                    <span className="mt-2 text-xs text-violet-400 select-none">•</span>
                     <BulletTextarea
                         value={item}
                         onChange={(text) => update(i, text)}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
-                        className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs leading-5 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:border-gray-400 focus:ring-gray-400"
+                        className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-violet-400"
                     />
                     {(items.length > 1 || item.trim().length > 0) && (
-                        <button type="button" onClick={() => remove(i)} className="mt-1 text-gray-300 transition-colors hover:text-red-400">
+                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md p-1 px-2 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="text-[11px] text-blue-600 font-medium hover:text-blue-700 flex items-center gap-0.5">
+            <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-violet-600 transition-all hover:bg-violet-50">
                 <span className="text-sm leading-none">+</span> Add point
             </button>
         </div>
@@ -484,7 +483,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
     const colors = {
         green: { bg: "bg-green-50", border: "border-green-100", text: "text-green-700", hoverBg: "hover:bg-green-50/80" },
         orange: { bg: "bg-orange-50", border: "border-orange-100", text: "text-orange-700", hoverBg: "hover:bg-orange-50/80" },
-        blue: { bg: "bg-blue-50", border: "border-blue-100", text: "text-blue-700", hoverBg: "hover:bg-blue-50/80" },
+        blue: { bg: "bg-violet-50", border: "border-violet-100", text: "text-violet-700", hoverBg: "hover:bg-violet-50/80" },
     }[color];
     return (
         <div className={clsx("rounded-xl border overflow-hidden", colors.border, colors.bg)}>
@@ -530,7 +529,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
             </button>
             {open && (
                 <>
-                    {/* Metrics — square boxes (read-only) */}
+                    {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
                         <div className="grid grid-cols-5 gap-2">
                             {METRIC_OPTIONS.map(m => {
@@ -541,13 +540,13 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                         className={clsx(
                                             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
                                             val
-                                                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                 : "border-gray-200 bg-gray-50 opacity-40"
                                         )}
                                     >
                                         <div className={clsx(
                                             "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                            val ? "bg-blue-100" : "bg-white"
+                                            val ? "bg-violet-100" : "bg-white"
                                         )}>
                                             {m.icon}
                                         </div>
@@ -588,7 +587,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.asks && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <QuestionMarkCircleIcon className="w-3 h-3 text-blue-500" />
+                                    <QuestionMarkCircleIcon className="w-3 h-3 text-violet-500" />
                                     Ask from Investors
                                 </h5>
                                 <BulletList text={pm.asks} className="text-xs text-gray-600" />
@@ -641,7 +640,7 @@ function parseUsers(raw: string): number {
     return parseInt(String(raw).replace(/[,\s]/g, "")) || 0;
 }
 
-// Pick bar color based on MoM growth rate — catchy colors for high growth
+// Pick bar color based on MoM growth rate - catchy colors for high growth
 function getBarColor(rate: number | null) {
     if (rate === null) return { bar: "bg-slate-300", hover: "group-hover:bg-slate-400", selected: "bg-slate-400", label: "text-slate-400" };
     if (rate >= 20)    return { bar: "bg-lime-400", hover: "group-hover:bg-lime-500", selected: "bg-lime-500", label: "text-lime-600" };
@@ -700,7 +699,7 @@ function GrowthChart({
                             {/* Month label */}
                             <span className={clsx(
                                 "w-10 text-[11px] font-bold uppercase tracking-tight text-right flex-shrink-0",
-                                d.isCurrent ? "text-blue-600" : color?.label || "text-gray-400"
+                                d.isCurrent ? "text-violet-600" : color?.label || "text-gray-400"
                             )}>
                                 {d.month.slice(0, 3)}
                             </span>
@@ -711,7 +710,7 @@ function GrowthChart({
                                     className={clsx(
                                         "h-full rounded-md transition-all duration-500 ease-out relative overflow-hidden",
                                         d.isCurrent
-                                            ? "bg-blue-600 shadow-sm"
+                                            ? "bg-violet-600 shadow-sm"
                                             : d.isSelected
                                                 ? color?.selected
                                                 : clsx(color?.bar, color?.hover)
@@ -1526,13 +1525,13 @@ export default function CreateUpdate() {
                                                 className={clsx(
                                                     "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
                                                     val
-                                                        ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-40"
                                                 )}
                                             >
                                                 <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    val ? "bg-blue-100" : "bg-white"
+                                                    val ? "bg-violet-100" : "bg-white"
                                                 )}>
                                                     {m.icon}
                                                 </div>
@@ -1575,7 +1574,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.asks && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-violet-500" />
                                             Ask from Investors
                                         </h4>
                                         <BulletList text={(data as any).asks} />
@@ -1849,7 +1848,7 @@ export default function CreateUpdate() {
                             headline="Pro tip from AI"
                             color="blue"
                         >
-                            <p className="text-xs text-blue-800 leading-relaxed">{feedback?.proTip}</p>
+                            <p className="text-xs text-violet-800 leading-relaxed">{feedback?.proTip}</p>
                         </CollapsibleFeedback>
                     </div>
                 </div>
@@ -1912,7 +1911,7 @@ export default function CreateUpdate() {
                             {...getRootProps()}
                             className={clsx(
                                 "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
-                                isDragActive ? "bg-blue-50/50 border-blue-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
+                                isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
                             )}
                         >
                             <input {...getInputProps()} />
@@ -2123,13 +2122,13 @@ export default function CreateUpdate() {
                                                             className={clsx(
                                                                 "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
                                                                 active
-                                                                    ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                             )}
                                                         >
                                                             <div className={clsx(
                                                                 "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                                                active ? "bg-blue-100" : "bg-white"
+                                                                active ? "bg-violet-100" : "bg-white"
                                                             )}>
                                                                 {m.icon}
                                                             </div>
@@ -2140,7 +2139,7 @@ export default function CreateUpdate() {
                                                                     onClick={(e) => e.stopPropagation()}
                                                                     onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
                                                                     placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                                    className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
+                                                                    className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                                                                 />
                                                             ) : (
                                                                 <p className="text-xs font-extrabold text-gray-300">—</p>
@@ -2226,13 +2225,13 @@ export default function CreateUpdate() {
                                                 className={clsx(
                                                     "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                     active
-                                                        ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                 )}
                                             >
                                                 <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    active ? "bg-blue-100" : "bg-white"
+                                                    active ? "bg-violet-100" : "bg-white"
                                                 )}>
                                                     {m.icon}
                                                 </div>
@@ -2244,7 +2243,7 @@ export default function CreateUpdate() {
                                                         onClick={(e) => e.stopPropagation()}
                                                         onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
                                                         placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
+                                                        className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                                                     />
                                                 ) : (
                                                     <p className="text-base font-extrabold text-gray-300">—</p>
@@ -2302,7 +2301,7 @@ export default function CreateUpdate() {
                                 name="month"
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-blue-500 focus:border-blue-500 border bg-gray-50"
+                                className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
                             >
                                 <option>January</option>
                                 <option>February</option>
@@ -2313,7 +2312,7 @@ export default function CreateUpdate() {
                                 name="year"
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500 border bg-gray-50"
+                                className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
                             />
                         </div>
 
@@ -2332,13 +2331,13 @@ export default function CreateUpdate() {
                                             className={clsx(
                                                 "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                 active
-                                                    ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                             )}
                                         >
                                             <div className={clsx(
                                                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                active ? "bg-blue-100" : "bg-white"
+                                                active ? "bg-violet-100" : "bg-white"
                                             )}>
                                                 {m.icon}
                                             </div>
@@ -2350,7 +2349,7 @@ export default function CreateUpdate() {
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
                                                     placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
+                                                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                                                 />
                                             ) : (
                                                 <p className="text-base font-extrabold text-gray-300">—</p>
@@ -2408,7 +2407,7 @@ export default function CreateUpdate() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting || isEmailDraftBusy}
-                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm disabled:opacity-60"
+                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm disabled:opacity-60"
                             >
                                 {isSubmitting ? "Reviewing..." : "Review"}
                             </button>

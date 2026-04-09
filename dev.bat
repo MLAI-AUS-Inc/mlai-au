@@ -1,2 +1,4 @@
 @echo off
-"C:\Program Files\nodejs\node.exe" node_modules/@react-router/dev/bin.js dev
+setlocal
+cd /d "%~dp0"
+"C:\Program Files\nodejs\node.exe" "%~dp0scripts\dev-local.mjs" %*

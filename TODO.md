@@ -1,3 +1,8 @@
+- [x] Merge PR 366 local dev wrapper and docs updates
+- [x] Reapply safe Vibe Raising UI polish from PR 366
+- [x] Reconcile Vibe Raising dashboard and create-update styling without changing behavior
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
 - [x] Add real Vibe Raising monthly updates API wrapper and frontend loader integration
 - [x] Persist create-update publishes to backend `MonthlyUpdateDraft` records
 - [x] Replace founder dashboard placeholder updates with real saved company updates

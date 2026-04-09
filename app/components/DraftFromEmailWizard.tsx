@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
-  XMarkIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
 
 import { Spinner } from "~/components/ui/Spinner";
@@ -58,7 +58,7 @@ function ProviderStep({
           className={clsx(
             "relative flex flex-col items-center gap-4 rounded-xl border-2 p-6 transition-all duration-200",
             gmailBusy
-              ? "border-blue-300 bg-blue-50"
+              ? "border-violet-300 bg-violet-50"
               : "border-gray-200 hover:border-red-300 hover:bg-red-50/30 hover:shadow-md",
             connectingProvider !== null && !gmailBusy && "cursor-not-allowed opacity-50",
           )}
@@ -191,9 +191,9 @@ export default function DraftFromEmailWizard({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                  className="absolute left-6 top-6 text-gray-400 hover:text-gray-600"
                 >
-                  <XMarkIcon className="h-5 w-5" />
+                  <ArrowLeftIcon className="h-5 w-5" />
                 </button>
 
                 <ProviderStep
