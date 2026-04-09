@@ -6,3 +6,31 @@
 - [x] Add a local dev wrapper that keeps Wrangler state inside the repo
 - [x] Update local startup docs and add the missing `.dev.vars.example`
 - [x] Make `dev.bat` resilient when the terminal starts from a `\\?\` path
+- [x] Add a Gmail privacy notice popup to the draft-from-email flow
+- [x] Update email scraping copy to describe filtered-only scanning
+- [x] Attempt typecheck after the Gmail flow update (blocked by existing route type errors)
+- [x] Add a reusable startup region badge for Vibe Raising cards
+- [x] Show the region badge on review and founder dashboard update cards
+- [x] Persist company location from setup so region badges can reflect the startup location
+- [x] Add an update source URL field to the create-update flow
+- [x] Carry the source URL through review and publish
+- [x] Combine the source link input with the video section into one large card
+- [x] Simplify the combined materials card copy and restore the original heading
+- [x] Make the black materials button reveal one inline link-and-drop panel
+- [x] Make the record button request camera/mic access and record real video
+- [x] Make recorder fall back cleanly for mic-only or camera-only devices with accurate messaging
+- [x] Redesign create update input area into two clear branches for manual materials vs AI email scan
+- [x] Simplify the create update split layout to minimal headings and actions
+- [x] Stack the create update sections vertically and restore hover info panels
+- [x] Make the AI drafting card a full-width button and expand the how-it-works copy
+- [x] Turn the AI drafting card into a black full-bar CTA without a nested button
+- [x] Trim the AI drafting banner by removing the bottom cue and reducing its padding
+- [x] Remove the AI drafting banner info panel once the body copy explains the flow
+- [x] Replace the 'Say it your way' info panel with inline body copy
+- [x] Make startup region badges render real country flags and support non-AU locations
+- [x] Style the create-update Highlights, Challenges, and Asks headings as thin black bars
+- [x] Replace native metric title tooltips with smooth custom hover panels
+- [x] Add a landing-page credibility section for responsible investors and founder supporters
+- [x] Move the credibility section from the MLAI homepage to the Vibe Raising landing flow
+- [x] Move the credibility section from the login flow to the founder dashboard hero page
+- [x] Simplify the founder dashboard credibility section and remove the beige frame styling

@@ -1,4 +1,5 @@
 import { Fragment, useState, useEffect } from "react";
+import { Link } from "react-router";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
@@ -6,6 +7,7 @@ import {
     CheckCircleIcon,
     ArrowLeftIcon,
     SparklesIcon,
+    ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import { Spinner } from "~/components/ui/Spinner";
 
@@ -85,6 +87,7 @@ function ProviderStep({
 }) {
     const [connecting, setConnecting] = useState<"gmail" | "outlook" | null>(null);
     const [connected, setConnected] = useState<"gmail" | "outlook" | null>(null);
+    const [showGmailNotice, setShowGmailNotice] = useState(false);
 
     const handleConnect = (provider: "gmail" | "outlook") => {
         setConnecting(provider);
@@ -95,20 +98,29 @@ function ProviderStep({
         }, 1500);
     };
 
+    const handleProviderClick = (provider: "gmail" | "outlook") => {
+        if (provider === "gmail") {
+            setShowGmailNotice(true);
+            return;
+        }
+
+        handleConnect(provider);
+    };
+
     return (
-        <div>
+        <div className="relative">
             <h3 className="text-lg font-bold text-gray-900 text-center mb-2">
                 Connect Your Email
             </h3>
             <p className="text-sm text-gray-500 text-center mb-8">
-                We'll scan all your recent emails to draft your investor update
+                We&apos;ll only scan filtered emails relevant to drafting your investor update
             </p>
 
             <div className="grid grid-cols-2 gap-4">
                 {/* Gmail Card */}
                 <button
                     type="button"
-                    onClick={() => handleConnect("gmail")}
+                    onClick={() => handleProviderClick("gmail")}
                     disabled={connecting !== null || connected !== null}
                     className={clsx(
                         "relative flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-all duration-200",
@@ -146,7 +158,7 @@ function ProviderStep({
                 {/* Outlook Card */}
                 <button
                     type="button"
-                    onClick={() => handleConnect("outlook")}
+                    onClick={() => handleProviderClick("outlook")}
                     disabled={connecting !== null || connected !== null}
                     className={clsx(
                         "relative flex flex-col items-center gap-4 p-6 rounded-xl border-2 transition-all duration-200",
@@ -176,6 +188,71 @@ function ProviderStep({
                     </span>
                 </button>
             </div>
+
+            <Transition
+                show={showGmailNotice}
+                as={Fragment}
+            >
+                <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 p-3 backdrop-blur-sm sm:p-4">
+                    <div className="w-full max-w-sm rounded-2xl border border-violet-100 bg-white p-5 shadow-xl">
+                        <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-violet-50">
+                                <ShieldCheckIcon className="h-6 w-6 text-violet-600" />
+                            </div>
+                            <div>
+                                <h4 className="text-base font-bold text-gray-900">
+                                    Before you connect Gmail
+                                </h4>
+                                <p className="mt-2 text-sm leading-6 text-gray-600">
+                                    MLAI only scans filtered email data needed to draft your investor update.
+                                    The Gmail data used for this step is deleted after processing.
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-gray-600">
+                                    By continuing, you agree to our{" "}
+                                    <Link
+                                        to="/terms"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-semibold text-violet-600 underline underline-offset-2"
+                                    >
+                                        Terms
+                                    </Link>{" "}
+                                    and{" "}
+                                    <Link
+                                        to="/privacy"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="font-semibold text-violet-600 underline underline-offset-2"
+                                    >
+                                        Privacy Policy
+                                    </Link>
+                                    .
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-5 flex gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setShowGmailNotice(false)}
+                                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowGmailNotice(false);
+                                    handleConnect("gmail");
+                                }}
+                                className="flex-1 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Transition>
         </div>
     );
 }
@@ -192,7 +269,7 @@ function DraftingStep() {
                 Drafting Your Update...
             </p>
             <p className="text-sm text-gray-500 text-center max-w-xs">
-                AI is scanning your emails and drafting your investor update
+                AI is scanning filtered email data and drafting your investor update
             </p>
             <div className="mt-6">
                 <Spinner size="md" />

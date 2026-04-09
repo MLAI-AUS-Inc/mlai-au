@@ -5,6 +5,8 @@ import type { Route } from "./+types/vibe-raising-app._index";
 import { getVibeRaisingUser, getActiveCompany } from "~/lib/vibe-raising-session";
 import { clsx } from "clsx";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
+import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
 import {
     ArrowRightIcon,
     ExclamationTriangleIcon,
@@ -266,6 +268,10 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     // Hash numeric or string ID to pick a deterministic gradient
     const hashId = typeof update.id === 'number' ? update.id : update.id?.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) || 0;
     const gradientClass = GRADIENTS[hashId % GRADIENTS.length];
+    const activeCompany = getActiveCompany(user);
+    const companyName = activeCompany.name || user.companyName;
+    const companyDomain = activeCompany.domain || user.domain;
+    const companyLocation = activeCompany.location || user.location;
 
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
@@ -332,6 +338,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         </span>
                         <span className="w-px h-3 bg-gray-200" />
                         <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                        <StartupRegionBadge location={companyLocation} />
                         <ChevronDownIcon className="w-4 h-4 text-gray-400" />
                     </div>
                 </button>
@@ -372,20 +379,23 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {/* Top row: date + collapse chevron */}
                         <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
                             <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>
-                            <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
+                            <div className="flex items-center gap-2">
+                                <StartupRegionBadge location={companyLocation} variant="inverse" />
+                                <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
+                            </div>
                         </div>
                         {/* Bottom row: company + month + badges + stats */}
                         <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 flex items-end justify-between">
                             <div className="flex items-center gap-2.5">
-                                {user?.domain ? (
+                                {companyDomain ? (
                                     <img
-                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                        src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
                                         alt=""
                                         className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                     />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                        <span className="text-sm font-bold text-white">{user?.companyName?.charAt(0) || "?"}</span>
+                                        <span className="text-sm font-bold text-white">{companyName?.charAt(0) || "?"}</span>
                                     </div>
                                 )}
                                 <div>
@@ -394,7 +404,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                         {isCurrent && <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">Current</span>}
                                         <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
                                     </div>
-                                    <p className="text-white/60 text-[11px]">{user?.companyName}</p>
+                                    <p className="text-white/60 text-[11px]">{companyName}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -594,6 +604,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         </button>
                     </div>
                 </div>
+
+                <ResponsibleInvestorsSection />
 
                 {/* How It Works - thin vertical line separators */}
                 <div className="px-6 py-14">

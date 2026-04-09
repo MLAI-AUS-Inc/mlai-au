@@ -145,118 +145,120 @@ function LoginForm() {
     const isSubmitting = navigation.state === "submitting";
 
     return (
-        <div className="flex items-center justify-center p-4 min-h-[80vh]">
-            <div className="w-full max-w-lg">
-                {/* Card Container */}
-                <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 mb-8 border border-gray-100">
-                    {/* Header */}
-                    <div className="text-center mb-8">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Vibe Raising</h1>
-                        <p className="text-gray-500 text-sm">
-                            Connect founders with investors through monthly updates
-                        </p>
-                    </div>
+        <div className="min-h-[80vh] px-4 py-4 sm:px-6 sm:py-6">
+            <div className="mx-auto w-full max-w-6xl">
+                <div className="mx-auto mb-8 w-full max-w-lg">
+                    {/* Card Container */}
+                    <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-100">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Vibe Raising</h1>
+                            <p className="text-gray-500 text-sm">
+                                Connect founders with investors through monthly updates
+                            </p>
+                        </div>
 
-                    {/* Role Toggle */}
-                    <div className="flex gap-4 mb-8">
-                        <button
-                            type="button"
-                            onClick={() => setSelectedRole("founder")}
-                            className={`
+                        {/* Role Toggle */}
+                        <div className="flex gap-4 mb-8">
+                            <button
+                                type="button"
+                                onClick={() => setSelectedRole("founder")}
+                                className={`
                                 flex-1 flex flex-col items-center gap-3 py-5 px-6 rounded-2xl border-2 transition-all duration-200
                                 ${selectedRole === "founder"
-                                    ? "border-violet-500 bg-violet-50 shadow-sm"
-                                    : "border-gray-200 hover:border-gray-300 bg-white"
-                                }
+                                        ? "border-violet-500 bg-violet-50 shadow-sm"
+                                        : "border-gray-200 hover:border-gray-300 bg-white"
+                                    }
                             `}
-                        >
-                            <BuildingOffice2Icon
-                                className={`w-8 h-8 ${selectedRole === "founder" ? "text-violet-600" : "text-gray-400"}`}
-                            />
-                            <span className={`font-bold ${selectedRole === "founder" ? "text-gray-900" : "text-gray-600"}`}>
-                                Founder
-                            </span>
-                        </button>
+                            >
+                                <BuildingOffice2Icon
+                                    className={`w-8 h-8 ${selectedRole === "founder" ? "text-violet-600" : "text-gray-400"}`}
+                                />
+                                <span className={`font-bold ${selectedRole === "founder" ? "text-gray-900" : "text-gray-600"}`}>
+                                    Founder
+                                </span>
+                            </button>
 
-                        <button
-                            type="button"
-                            onClick={() => setSelectedRole("investor")}
-                            className={`
+                            <button
+                                type="button"
+                                onClick={() => setSelectedRole("investor")}
+                                className={`
                                 flex-1 flex flex-col items-center gap-3 py-5 px-6 rounded-2xl border-2 transition-all duration-200
                                 ${selectedRole === "investor"
-                                    ? "border-violet-500 bg-violet-50 shadow-sm"
-                                    : "border-gray-200 hover:border-gray-300 bg-white"
-                                }
+                                        ? "border-violet-500 bg-violet-50 shadow-sm"
+                                        : "border-gray-200 hover:border-gray-300 bg-white"
+                                    }
                             `}
-                        >
-                            <ChartBarIcon
-                                className={`w-8 h-8 ${selectedRole === "investor" ? "text-violet-600" : "text-gray-400"}`}
-                            />
-                            <span className={`font-bold ${selectedRole === "investor" ? "text-gray-900" : "text-gray-600"}`}>
-                                Investor
-                            </span>
-                        </button>
-                    </div>
-
-                    {/* Registration Form */}
-                    <Form method="POST" className="space-y-6">
-                        <input type="hidden" name="role" value={selectedRole} />
-
-                        {/* Full Name */}
-                        <div>
-                            <label htmlFor="fullName" className="block text-sm font-bold text-gray-700 mb-2">
-                                Full Name
-                            </label>
-                            <input
-                                type="text"
-                                id="fullName"
-                                name="fullName"
-                                placeholder="John Doe"
-                                required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
-                            />
+                            >
+                                <ChartBarIcon
+                                    className={`w-8 h-8 ${selectedRole === "investor" ? "text-violet-600" : "text-gray-400"}`}
+                                />
+                                <span className={`font-bold ${selectedRole === "investor" ? "text-gray-900" : "text-gray-600"}`}>
+                                    Investor
+                                </span>
+                            </button>
                         </div>
 
-                        {/* Email */}
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
-                                Email
-                            </label>
-                            <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                placeholder="john@example.com"
-                                required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
-                            />
-                        </div>
+                        {/* Registration Form */}
+                        <Form method="POST" className="space-y-6">
+                            <input type="hidden" name="role" value={selectedRole} />
 
-                        {/* Company Name */}
-                        <div>
-                            <label htmlFor="companyName" className="block text-sm font-bold text-gray-700 mb-2">
-                                {selectedRole === 'founder' ? 'Startup Name' : 'Venture Firm'}
-                            </label>
-                            <input
-                                type="text"
-                                id="companyName"
-                                name="companyName"
-                                placeholder={selectedRole === 'founder' ? 'Acme Inc.' : 'Alpha Ventures'}
-                                required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
-                            />
-                        </div>
+                            {/* Full Name */}
+                            <div>
+                                <label htmlFor="fullName" className="block text-sm font-bold text-gray-700 mb-2">
+                                    Full Name
+                                </label>
+                                <input
+                                    type="text"
+                                    id="fullName"
+                                    name="fullName"
+                                    placeholder="John Doe"
+                                    required
+                                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
 
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-violet-500/20 
+                            {/* Email */}
+                            <div>
+                                <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-2">
+                                    Email
+                                </label>
+                                <input
+                                    type="email"
+                                    id="email"
+                                    name="email"
+                                    placeholder="john@example.com"
+                                    required
+                                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+
+                            {/* Company Name */}
+                            <div>
+                                <label htmlFor="companyName" className="block text-sm font-bold text-gray-700 mb-2">
+                                    {selectedRole === 'founder' ? 'Startup Name' : 'Venture Firm'}
+                                </label>
+                                <input
+                                    type="text"
+                                    id="companyName"
+                                    name="companyName"
+                                    placeholder={selectedRole === 'founder' ? 'Acme Inc.' : 'Alpha Ventures'}
+                                    required
+                                    className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+
+                            {/* Submit Button */}
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-violet-500/20 
                                 ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
-                        >
-                            {isSubmitting ? "Connecting..." : `Continue as ${selectedRole === "founder" ? "Founder" : "Investor"}`}
-                        </button>
-                    </Form>
+                            >
+                                {isSubmitting ? "Connecting..." : `Continue as ${selectedRole === "founder" ? "Founder" : "Investor"}`}
+                            </button>
+                        </Form>
+                    </div>
                 </div>
             </div>
         </div>

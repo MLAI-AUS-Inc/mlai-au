@@ -1,5 +1,5 @@
 import { Form, Link, useActionData, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { requireFounder, getActiveCompany } from "~/lib/vibe-raising-session";
 import {
@@ -16,14 +16,16 @@ import {
     ChartBarIcon,
     UsersIcon,
     FireIcon,
-    ArrowRightIcon,
     BanknotesIcon,
     InformationCircleIcon,
     PlusIcon,
+    LinkIcon,
+    ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
 
 export async function loader({ request }: Route.LoaderArgs) {
     const user = requireFounder(request);
@@ -142,6 +144,91 @@ const SECTION_HINTS: Record<string, string[]> = {
     ],
 };
 
+type RecordingMode = "video" | "audio";
+type RecordingAttemptKey = "video-audio" | "video-only" | "audio-only";
+
+interface RecordingAttempt {
+    key: RecordingAttemptKey;
+    constraints: MediaStreamConstraints;
+    mode: RecordingMode;
+    notice: string | null;
+    blockedMessage: string;
+    missingDeviceMessage: string;
+}
+
+function buildRecordingAttempts(hasVideoInput: boolean | null, hasAudioInput: boolean | null): RecordingAttempt[] {
+    const attemptsByKey: Record<RecordingAttemptKey, RecordingAttempt> = {
+        "video-audio": {
+            key: "video-audio",
+            constraints: { video: true, audio: true },
+            mode: "video",
+            notice: null,
+            blockedMessage: "Camera and microphone access was blocked. Please allow access and try again.",
+            missingDeviceMessage: "We couldn't find both a camera and a microphone for video recording.",
+        },
+        "video-only": {
+            key: "video-only",
+            constraints: { video: true, audio: false },
+            mode: "video",
+            notice: "Microphone unavailable. Recording video without audio.",
+            blockedMessage: "Camera access was blocked. Please allow access and try again.",
+            missingDeviceMessage: "We couldn't find a camera for recording.",
+        },
+        "audio-only": {
+            key: "audio-only",
+            constraints: { video: false, audio: true },
+            mode: "audio",
+            notice: "Camera unavailable. Recording audio only.",
+            blockedMessage: "Microphone access was blocked. Please allow access and try again.",
+            missingDeviceMessage: "We couldn't find a microphone for recording.",
+        },
+    };
+
+    if (hasVideoInput === false && hasAudioInput === false) {
+        return [];
+    }
+
+    const orderedKeys: RecordingAttemptKey[] = [];
+
+    if (hasVideoInput === true && hasAudioInput === true) {
+        orderedKeys.push("video-audio", "video-only", "audio-only");
+    } else if (hasVideoInput === true && hasAudioInput === false) {
+        orderedKeys.push("video-only");
+    } else if (hasVideoInput === false && hasAudioInput === true) {
+        orderedKeys.push("audio-only");
+    } else {
+        if (hasVideoInput !== false && hasAudioInput !== false) {
+            orderedKeys.push("video-audio");
+        }
+        if (hasVideoInput !== false) {
+            orderedKeys.push("video-only");
+        }
+        if (hasAudioInput !== false) {
+            orderedKeys.push("audio-only");
+        }
+    }
+
+    return [...new Set(orderedKeys)].map((key) => attemptsByKey[key]);
+}
+
+function getRecordingErrorMessage(error: unknown, lastAttempt: RecordingAttempt | null): string {
+    if (error instanceof DOMException) {
+        if (error.name === "NotAllowedError" || error.name === "SecurityError") {
+            return lastAttempt?.blockedMessage || "Camera and microphone access was blocked. Please allow access and try again.";
+        }
+
+        if (["NotFoundError", "DevicesNotFoundError", "OverconstrainedError"].includes(error.name)) {
+            return lastAttempt?.missingDeviceMessage || "We couldn't find a camera or microphone for recording.";
+        }
+
+        if (["NotReadableError", "TrackStartError", "AbortError"].includes(error.name)) {
+            return "Your camera or microphone is busy in another app. Close it there and try again.";
+        }
+    }
+
+    return "Unable to start recording right now. Please try again.";
+}
+
 function MetricTooltip({ m, active, className }: { m: MetricOption; active: boolean; className?: string }) {
     return (
         <div className="mt-0.5">
@@ -153,8 +240,14 @@ function MetricTooltip({ m, active, className }: { m: MetricOption; active: bool
 function MetricInfoBadge({ info }: { info?: string }) {
     if (!info) return null;
     return (
-        <div className="absolute top-1.5 right-1.5 text-gray-300 hover:text-gray-400 cursor-help" title={info}>
-            <InformationCircleIcon className="w-3.5 h-3.5" />
+        <div className="group absolute right-1.5 top-1.5">
+            <div className="cursor-help text-gray-300 transition-colors duration-150 hover:text-gray-400">
+                <InformationCircleIcon className="h-3.5 w-3.5" />
+            </div>
+            <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-48 translate-y-1 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+                {info}
+                <div className="absolute right-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900" />
+            </div>
         </div>
     );
 }
@@ -189,9 +282,9 @@ function SectionWithExample({
 
     return (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50/50 border-b border-gray-100">
-                <Icon className="w-4 h-4 text-gray-500" />
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+            <div className="flex items-center gap-2 bg-black px-4 py-2.5">
+                <Icon className="w-4 h-4 text-white/80" />
+                <label className="block text-xs font-bold uppercase tracking-wider text-white">
                     {label}
                 </label>
             </div>
@@ -407,6 +500,15 @@ function BulletList({ text, className = "text-sm text-gray-700" }: { text: strin
     );
 }
 
+function isHttpUrl(value: string) {
+    try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+    } catch {
+        return false;
+    }
+}
+
 // ─── Revenue Chart Component ────────────────────────────────────────
 interface ChartData {
     month: string;
@@ -550,30 +652,9 @@ function GrowthChart({
 export default function CreateUpdate() {
     const { user, existingData, isEdit } = useLoaderData<typeof loader>();
     const activeCompany = getActiveCompany(user);
-    const locationStr = activeCompany.location || user.location;
-
-    function LocationBadge({ className }: { className?: string }) {
-        let code = "AUS";
-        let flag = "🇦🇺";
-        
-        if (locationStr) {
-            if (locationStr.toLowerCase().includes("melbourne")) code = "MEL";
-            else if (locationStr.toLowerCase().includes("sydney")) code = "SYD";
-            else if (locationStr.toLowerCase().includes("brisbane")) code = "BNE";
-            else if (locationStr.toLowerCase().includes("perth")) code = "PER";
-            else if (locationStr.toLowerCase().includes("adelaide")) code = "ADL";
-            else if (locationStr.toLowerCase().includes("global") || locationStr.toLowerCase().includes("remote")) {
-                flag = "🌍";
-                code = "GLB";
-            }
-        }
-
-        return (
-            <span className={`flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md font-bold text-gray-600 text-[10px] tracking-widest leading-none border border-gray-200 shadow-sm ${className || ""}`}>
-                <span className="text-sm">{flag}</span> {code}
-            </span>
-        );
-    }
+    const companyName = activeCompany.name || user.companyName;
+    const companyDomain = activeCompany.domain || user.domain;
+    const companyLocation = activeCompany.location || user.location;
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
     const navigation = useNavigation();
@@ -581,12 +662,21 @@ export default function CreateUpdate() {
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [recordingError, setRecordingError] = useState<string | null>(null);
+    const [recordingNotice, setRecordingNotice] = useState<string | null>(null);
+    const [recordingMode, setRecordingMode] = useState<RecordingMode | null>(null);
+    const [previewMediaKind, setPreviewMediaKind] = useState<RecordingMode | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [hasDraft, setHasDraft] = useState<boolean>(() => {
         if (typeof window === "undefined") return false;
         return !!localStorage.getItem("vibe_draft");
     });
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const livePreviewRef = useRef<HTMLVideoElement | null>(null);
+    const recordedChunksRef = useRef<Blob[]>([]);
+    const discardNextRecordingRef = useRef(false);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -598,6 +688,8 @@ export default function CreateUpdate() {
     // State declarations
     const [showEmailWizard, setShowEmailWizard] = useState(false);
     const [summary, setSummary] = useState<string>(defaultData?.summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(defaultData?.sourceUrl || "");
+    const [showImportPanel, setShowImportPanel] = useState<boolean>(Boolean(defaultData?.sourceUrl));
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -669,6 +761,8 @@ export default function CreateUpdate() {
             if (draft.month) setSelectedMonth(draft.month);
             if (draft.year) setSelectedYear(Number(draft.year));
             setSummary(draft.summary || "");
+            setSourceUrl(draft.sourceUrl || "");
+            setShowImportPanel(Boolean(draft.sourceUrl));
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
@@ -725,6 +819,195 @@ export default function CreateUpdate() {
     const [newMetricLabel, setNewMetricLabel] = useState('');
     const [newMetricPrefix, setNewMetricPrefix] = useState('');
     const [newMetricValue, setNewMetricValue] = useState('');
+    const hasValidSourceUrl = isHttpUrl(sourceUrl);
+    const manualPathActive = isRecording || Boolean(videoPreviewUrl) || showImportPanel || Boolean(sourceUrl);
+    const emailPathActive = showEmailWizard;
+
+    const replacePreviewMedia = useCallback((nextUrl: string | null, nextKind: RecordingMode | null) => {
+        setVideoPreviewUrl((currentUrl) => {
+            if (currentUrl && currentUrl !== nextUrl && currentUrl.startsWith("blob:")) {
+                URL.revokeObjectURL(currentUrl);
+            }
+            return nextUrl;
+        });
+        setPreviewMediaKind(nextKind);
+    }, []);
+
+    const stopMediaStream = useCallback(() => {
+        const stream = mediaStreamRef.current;
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            mediaStreamRef.current = null;
+        }
+
+        if (livePreviewRef.current) {
+            livePreviewRef.current.srcObject = null;
+        }
+    }, []);
+
+    const stopRecording = useCallback(() => {
+        const recorder = mediaRecorderRef.current;
+
+        if (recorder && recorder.state !== "inactive") {
+            recorder.stop();
+        } else {
+            stopMediaStream();
+        }
+
+        setIsRecording(false);
+        setRecordingMode(null);
+    }, [stopMediaStream]);
+
+    const openEmailDraftFlow = useCallback(() => {
+        if (isRecording) {
+            discardNextRecordingRef.current = true;
+            stopRecording();
+        }
+
+        setShowEmailWizard(true);
+    }, [isRecording, stopRecording]);
+
+    const startRecording = useCallback(async () => {
+        if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+            setRecordingError("Video recording is not supported in this browser.");
+            return;
+        }
+
+        setRecordingError(null);
+        setRecordingNotice(null);
+        let lastAttempt: RecordingAttempt | null = null;
+
+        try {
+            stopMediaStream();
+            recordedChunksRef.current = [];
+            discardNextRecordingRef.current = false;
+            setRecordingMode(null);
+            let hasAudioInput: boolean | null = null;
+            let hasVideoInput: boolean | null = null;
+
+            if (navigator.mediaDevices.enumerateDevices) {
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    const inputDevices = devices.filter(
+                        (device) => device.kind === "audioinput" || device.kind === "videoinput"
+                    );
+
+                    if (inputDevices.length > 0) {
+                        hasAudioInput = inputDevices.some((device) => device.kind === "audioinput");
+                        hasVideoInput = inputDevices.some((device) => device.kind === "videoinput");
+                    }
+                } catch {
+                    hasAudioInput = null;
+                    hasVideoInput = null;
+                }
+            }
+
+            const attempts = buildRecordingAttempts(hasVideoInput, hasAudioInput);
+
+            if (attempts.length === 0) {
+                setRecordingError("No camera or microphone was detected on this device.");
+                setIsRecording(false);
+                return;
+            }
+
+            let stream: MediaStream | null = null;
+            let activeMode: RecordingMode | null = null;
+            let activeNotice: string | null = null;
+            let lastError: unknown = null;
+
+            for (const attempt of attempts) {
+                try {
+                    lastAttempt = attempt;
+                    stream = await navigator.mediaDevices.getUserMedia(attempt.constraints);
+                    activeMode = attempt.mode;
+                    activeNotice = attempt.notice;
+                    break;
+                } catch (error) {
+                    lastError = error;
+
+                    if (
+                        error instanceof DOMException &&
+                        ["NotFoundError", "DevicesNotFoundError", "OverconstrainedError"].includes(error.name)
+                    ) {
+                        continue;
+                    }
+
+                    throw error;
+                }
+            }
+
+            if (!stream || !activeMode) {
+                throw lastError instanceof Error ? lastError : new DOMException("No recording devices found.", "NotFoundError");
+            }
+
+            mediaStreamRef.current = stream;
+            setRecordingMode(activeMode);
+            setRecordingNotice(activeNotice);
+
+            if (activeMode === "video" && livePreviewRef.current) {
+                livePreviewRef.current.srcObject = stream;
+                void livePreviewRef.current.play().catch(() => {});
+            }
+
+            const supportedMimeType = (
+                activeMode === "audio"
+                    ? [
+                        "audio/webm;codecs=opus",
+                        "audio/webm",
+                    ]
+                    : [
+                        "video/webm;codecs=vp9,opus",
+                        "video/webm;codecs=vp8,opus",
+                        "video/webm",
+                    ]
+            ).find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+
+            const recorder = supportedMimeType
+                ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+                : new MediaRecorder(stream);
+
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                }
+            };
+
+            recorder.onerror = () => {
+                setRecordingError("Something went wrong while recording. Please try again.");
+                setIsRecording(false);
+                stopMediaStream();
+            };
+
+            recorder.onstop = () => {
+                const hasRecordedData = recordedChunksRef.current.some((chunk) => chunk.size > 0);
+                const blobType = supportedMimeType || recorder.mimeType || (activeMode === "audio" ? "audio/webm" : "video/webm");
+                const shouldDiscardRecording = discardNextRecordingRef.current;
+                discardNextRecordingRef.current = false;
+
+                if (hasRecordedData && !shouldDiscardRecording) {
+                    const recordedBlob = new Blob(recordedChunksRef.current, { type: blobType });
+                    replacePreviewMedia(URL.createObjectURL(recordedBlob), activeMode);
+                }
+
+                recordedChunksRef.current = [];
+                mediaRecorderRef.current = null;
+                setRecordingMode(null);
+                stopMediaStream();
+            };
+
+            mediaRecorderRef.current = recorder;
+            recorder.start(250);
+            setIsRecording(true);
+        } catch (error) {
+            const message = getRecordingErrorMessage(error, lastAttempt ?? null);
+
+            setRecordingError(message);
+            setRecordingNotice(null);
+            setIsRecording(false);
+            setRecordingMode(null);
+            stopMediaStream();
+        }
+    }, [replacePreviewMedia, stopMediaStream]);
 
     const addCustomMetric = () => {
         if (!newMetricLabel.trim()) return;
@@ -825,13 +1108,23 @@ export default function CreateUpdate() {
     // Dropzone setup
     const onDrop = useCallback((acceptedFiles: File[]) => {
         console.log(acceptedFiles);
-        const video = acceptedFiles.find(f => f.type.startsWith("video/"));
-        if (video) {
-            setVideoPreviewUrl(URL.createObjectURL(video));
+        setRecordingError(null);
+        setRecordingNotice(null);
+        if (isRecording) {
+            discardNextRecordingRef.current = true;
         }
-    }, []);
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+        stopRecording();
+        const video = acceptedFiles.find(f => f.type.startsWith("video/"));
+        const audio = acceptedFiles.find(f => f.type.startsWith("audio/"));
+        if (video) {
+            replacePreviewMedia(URL.createObjectURL(video), "video");
+        } else if (audio) {
+            replacePreviewMedia(URL.createObjectURL(audio), "audio");
+        }
+    }, [isRecording, replacePreviewMedia, stopRecording]);
+    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         onDrop,
+        noClick: true,
         maxSize: 20 * 1024 * 1024, // 20MB
         accept: {
             'image/*': [],
@@ -845,6 +1138,25 @@ export default function CreateUpdate() {
             'audio/*': []
         }
     });
+
+    useEffect(() => {
+        return () => {
+            stopMediaStream();
+            mediaRecorderRef.current = null;
+            if (videoPreviewUrl?.startsWith("blob:")) {
+                URL.revokeObjectURL(videoPreviewUrl);
+            }
+        };
+    }, [stopMediaStream, videoPreviewUrl]);
+
+    useEffect(() => {
+        if (!isRecording || !livePreviewRef.current || !mediaStreamRef.current) {
+            return;
+        }
+
+        livePreviewRef.current.srcObject = mediaStreamRef.current;
+        void livePreviewRef.current.play().catch(() => {});
+    }, [isRecording]);
 
     // 1. Feedback View - preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
@@ -887,16 +1199,31 @@ export default function CreateUpdate() {
 
                     {/* PREVIEW - dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="relative bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <StartupRegionBadge
+                                location={companyLocation}
+                                variant="inverse"
+                                className="absolute right-4 top-4 z-10"
+                            />
                             {/* Hero banner - video or gradient */}
                             {videoPreviewUrl ? (
                                 <div className="relative w-full aspect-video bg-black">
-                                    <video
-                                        src={videoPreviewUrl}
-                                        controls
-                                        className="w-full h-full object-contain"
-                                        poster=""
-                                    />
+                                    {previewMediaKind === "audio" ? (
+                                        <div className="flex h-full items-center justify-center px-6">
+                                            <audio
+                                                src={videoPreviewUrl}
+                                                controls
+                                                className="w-full max-w-md"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <video
+                                            src={videoPreviewUrl}
+                                            controls
+                                            className="w-full h-full object-contain"
+                                            poster=""
+                                        />
+                                    )}
                                 </div>
                             ) : (
                                 <div className="relative w-full h-32 overflow-hidden">
@@ -909,23 +1236,20 @@ export default function CreateUpdate() {
                                     </svg>
                                     <div className="absolute inset-0 flex items-end px-6 pb-4">
                                         <div className="flex items-center gap-3">
-                                            {user.domain ? (
+                                            {companyDomain ? (
                                                 <img
-                                                    src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                                    src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
                                                     alt=""
                                                     className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                                    <span className="text-sm font-bold text-white">{user.companyName.charAt(0)}</span>
+                                                    <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="text-white/70 text-xs">Investor Update</p>
-                                                    <LocationBadge className="bg-white/20 text-white/90 border-transparent shadow-none" />
-                                                </div>
+                                                <p className="text-white font-bold text-sm drop-shadow-sm">{companyName}</p>
+                                                <p className="text-white/70 text-xs">Investor Update</p>
                                             </div>
                                         </div>
                                     </div>
@@ -938,12 +1262,24 @@ export default function CreateUpdate() {
                                     <h3 className="text-lg font-bold text-gray-900">
                                         {(data as any)?.month} {(data as any)?.year} Update
                                     </h3>
-                                    <div className="flex items-center">
-                                        <span className="text-xs text-gray-400 font-medium">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
-                                        <LocationBadge className="ml-2" />
-                                    </div>
+                                    <span className="text-xs text-gray-400 font-medium">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                             </div>
+
+                            {(data as any)?.sourceUrl && (
+                                <div className="px-6 py-3 border-b border-sky-100 bg-sky-50/50">
+                                    <a
+                                        href={(data as any).sourceUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition-colors hover:text-sky-800"
+                                    >
+                                        <LinkIcon className="w-4 h-4" />
+                                        Open source update link
+                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                    </a>
+                                </div>
+                            )}
 
                             
                             {(data as any)?.summary && (
@@ -1298,7 +1634,7 @@ export default function CreateUpdate() {
 
     // 3. Create/Edit Form View
     return (
-        <div className="max-w-3xl mx-auto pb-12">
+        <div className="max-w-5xl mx-auto pb-12">
             {/* Header */}
             <div className="sticky top-0 z-10 py-4 mb-6 flex items-center justify-between">
                 <h1 className="text-xl font-bold text-gray-900">
@@ -1342,94 +1678,250 @@ export default function CreateUpdate() {
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
 
-                {/* Upload Section */}
-                <div
-                    {...getRootProps()}
-                    className={clsx(
-                        "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
-                        isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
-                    )}
-                >
-                    <input {...getInputProps()} />
-                    
-                    <div className="flex flex-col items-center max-w-sm">
-                        <div className="w-12 h-12 text-gray-400 mb-4">
-                            <CloudArrowUpIcon className="w-full h-full stroke-1" />
+                {/* Input Sections */}
+                <div className="space-y-6">
+                            <div>
+                                <div
+                                    className={clsx(
+                                        "relative overflow-hidden rounded-2xl border bg-white p-8 transition-all shadow-sm",
+                                        manualPathActive ? "border-violet-200 shadow-[0_24px_70px_-50px_rgba(109,40,217,0.25)]" : "border-gray-100",
+                                        isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "hover:bg-gray-50/50"
+                                    )}
+                                >
+                                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent" />
+
+                                    <div className="flex flex-col gap-6">
+                        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-gray-400">
+                                <CloudArrowUpIcon className="h-7 w-7 stroke-1" />
+                            </div>
+
+                            <div className="mb-4 flex items-center gap-2">
+                                <h3 className="text-xl font-bold text-gray-900">
+                                    Say it your way
+                                </h3>
+                            </div>
+
+                            <p className="max-w-2xl text-sm leading-6 text-gray-500">
+                                Tell us what you&apos;ve been building, record a video, upload a file, or share a link.
+                            </p>
+
+                            <div className="mt-6 flex flex-wrap items-center gap-3">
+                                <button 
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (isRecording) {
+                                            stopRecording();
+                                        } else {
+                                            void startRecording();
+                                        }
+                                    }}
+                                    className={clsx(
+                                        "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
+                                        isRecording 
+                                            ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse" 
+                                            : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
+                                    )}
+                                >
+                                    <span className={clsx(
+                                        "w-2.5 h-2.5 rounded-full",
+                                        isRecording ? "bg-red-600" : "bg-red-500"
+                                    )} />
+                                    {isRecording ? "Stop Recording" : "Record"}
+                                </button>
+
+                                <button 
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setShowImportPanel(prev => !prev);
+                                    }}
+                                    className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm"
+                                >
+                                    {showImportPanel ? "Hide file and link" : "Add local file or link"}
+                                </button>
+                            </div>
+
+                            {recordingNotice && !recordingError && (
+                                <p className="mt-4 text-sm font-medium text-amber-600">
+                                    {recordingNotice}
+                                </p>
+                            )}
+
+                            {recordingError && (
+                                <p className="mt-4 text-sm font-medium text-red-600">
+                                    {recordingError}
+                                </p>
+                            )}
                         </div>
-                        
-                        <div className="flex items-center justify-center gap-2 mb-6">
-                            <h3 className="text-lg font-bold text-gray-900">
-                                Say it your way
-                            </h3>
-                            <div className="relative group flex items-center justify-center">
-                                <InformationCircleIcon className="w-5 h-5 text-gray-400 hover:text-violet-600 transition-colors cursor-help" />
-                                
-                                {/* Tooltip */}
-                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-[260px] p-4 bg-gray-900 text-white rounded-xl shadow-[0_10px_40px_-5px_rgba(0,0,0,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none text-left">
-                                    <p className="text-gray-100 leading-relaxed text-sm font-medium">
-                                        Record or upload a quick 1-minute video telling investors about your startup's progress this month. Supported formats: MP4, MOV, AVI.
-                                    </p>
-                                    {/* Tooltip Arrow */}
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 flex justify-center w-full">
-                                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-t-[6px] border-t-gray-900 border-r-[6px] border-r-transparent" />
+
+                        {showImportPanel && (
+                            <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-5 shadow-sm">
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-sky-600 shadow-sm">
+                                            <LinkIcon className="h-5 w-5" />
+                                        </div>
+                                        <div className="min-w-0 flex-1">
+                                            <input
+                                                type="url"
+                                                name="sourceUrl"
+                                                value={sourceUrl}
+                                                onChange={(e) => setSourceUrl(e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                                placeholder="Paste a Notion, Google Doc, or similar link"
+                                                inputMode="url"
+                                                autoComplete="url"
+                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10"
+                                            />
+                                        </div>
+                                        {hasValidSourceUrl && (
+                                            <a
+                                                href={sourceUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                                            >
+                                                Open link
+                                                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                                            </a>
+                                        )}
+                                    </div>
+
+                                    <div
+                                        {...getRootProps()}
+                                        className={clsx(
+                                            "rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer bg-white",
+                                            isDragActive
+                                                ? "border-violet-300 bg-violet-50"
+                                                : "border-gray-200 hover:border-violet-200 hover:bg-violet-50/40"
+                                        )}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            open();
+                                        }}
+                                    >
+                                        <input {...getInputProps()} />
+                                        <div className="flex flex-col items-center justify-center gap-3">
+                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-600">
+                                                <CloudArrowUpIcon className="h-6 w-6" />
+                                            </div>
+                                            <p className="text-sm font-bold text-gray-900">
+                                                Drop file
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex items-center gap-3">
-                            <button 
-                                type="button"
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    setIsRecording(!isRecording);
-                                }}
-                                className={clsx(
-                                    "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
-                                    isRecording 
-                                        ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse" 
-                                        : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
-                                )}
-                            >
-                                <span className={clsx(
-                                    "w-2.5 h-2.5 rounded-full",
-                                    isRecording ? "bg-red-600" : "bg-red-500"
-                                )} />
-                                {isRecording ? "Stop Recording" : "Record"}
-                            </button>
-                            
-                            <button 
-                                type="button"
-                                className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm"
-                            >
-                                Select file
-                            </button>
-                        </div>
-                    </div>
+                        {(isRecording || videoPreviewUrl) && (
+                            <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 shadow-sm">
+                                <div className="flex flex-col gap-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-sm font-bold text-gray-900">
+                                                {isRecording
+                                                    ? recordingMode === "audio"
+                                                        ? "Recording audio"
+                                                        : "Recording live preview"
+                                                    : previewMediaKind === "audio"
+                                                    ? "Recorded audio ready"
+                                                    : "Recorded video ready"}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {isRecording
+                                                    ? recordingMode === "audio"
+                                                        ? "Microphone is active. Click stop when you’re done."
+                                                        : recordingNotice === "Microphone unavailable. Recording video without audio."
+                                                        ? "Camera is active. Click stop when you’re done."
+                                                        : "Camera and microphone are active. Click stop when you’re done."
+                                                    : "This preview will be shown in review while you draft your update."}
+                                            </p>
+                                        </div>
+                                        {!isRecording && videoPreviewUrl && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setRecordingNotice(null);
+                                                    replacePreviewMedia(null, null);
+                                                }}
+                                                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+                                            >
+                                                Remove media
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    <div className="overflow-hidden rounded-2xl bg-black">
+                                        {isRecording && recordingMode === "video" ? (
+                                            <video
+                                                ref={livePreviewRef}
+                                                muted
+                                                autoPlay
+                                                playsInline
+                                                className="aspect-video w-full object-cover"
+                                            />
+                                        ) : isRecording && recordingMode === "audio" ? (
+                                            <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 px-6 text-center text-white">
+                                                <div className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+                                                <p className="text-sm font-semibold">Recording audio only</p>
+                                                <p className="max-w-xs text-xs text-white/70">
+                                                    We couldn&apos;t access a camera, so this recording will capture microphone audio.
+                                                </p>
+                                            </div>
+                                        ) : previewMediaKind === "audio" ? (
+                                            <div className="flex aspect-video w-full items-center justify-center px-6">
+                                                <audio
+                                                    src={videoPreviewUrl || undefined}
+                                                    controls
+                                                    className="w-full max-w-md"
+                                                />
+                                            </div>
+                                        ) : (
+                                            <video
+                                                src={videoPreviewUrl || undefined}
+                                                controls
+                                                className="aspect-video w-full object-contain"
+                                            />
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <button
+                                    type="button"
+                                    onClick={openEmailDraftFlow}
+                                    className={clsx(
+                                        "group w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
+                                        emailPathActive
+                                            ? "ring-2 ring-purple-400/40"
+                                            : ""
+                                    )}
+                                >
+                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
+                                        <SparklesIcon className="h-7 w-7" />
+                                    </div>
+
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <h3 className="text-xl font-bold text-white">
+                                            AI Drafting
+                                        </h3>
+                                    </div>
+
+                                    <p className="mt-4 max-w-2xl text-sm leading-6 text-white/72">
+                                        AI agent will scan your filtered email to find key signals, metrics, wins, and asks, then help you make your first draft in seconds.
+                                    </p>
+                                </button>
+                            </div>
                 </div>
-
-                {/* ─── Draft from Email Banner ─── */}
-                <button
-                    type="button"
-                    onClick={() => setShowEmailWizard(true)}
-                    className="w-full bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl border border-purple-100 p-8 shadow-sm overflow-hidden relative group hover:shadow-md hover:border-purple-200 transition-all cursor-pointer text-left"
-                >
-                    <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-purple-200/20 blur-3xl rounded-full" />
-                    <div className="relative z-10 flex items-center gap-5">
-                        <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-purple-100 flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                            <SparklesIcon className="w-7 h-7 text-purple-600" />
-                        </div>
-                        <div className="flex-1">
-                            <h2 className="text-lg font-bold text-gray-900">
-                                Generate Draft from Email
-                            </h2>
-                            <p className="text-sm text-gray-500 mt-0.5">
-                                Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds.
-                            </p>
-                        </div>
-                        <ArrowRightIcon className="w-5 h-5 text-purple-400 group-hover:translate-x-1 transition-transform flex-shrink-0" />
-                    </div>
-                </button>
 
                 {/* ─── Growth Charts ─── */}
                 {pastMonthCards.length > 0 && (

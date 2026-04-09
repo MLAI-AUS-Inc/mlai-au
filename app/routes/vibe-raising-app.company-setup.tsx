@@ -35,6 +35,7 @@ export async function action({ request }: Route.ActionArgs) {
             name: companyName,
             domain,
             abn,
+            location,
             registered: true,
         };
         const updatedUser = addCompany(user, newCompany);
@@ -50,6 +51,7 @@ export async function action({ request }: Route.ActionArgs) {
         name: companyName,
         domain,
         abn,
+        location,
         registered: true,
     };
 
@@ -58,6 +60,7 @@ export async function action({ request }: Route.ActionArgs) {
         companyName,
         domain,
         abn,
+        location,
         companyRegistered: true,
         companies: [company],
         activeCompanyId: companyId,
@@ -142,6 +145,25 @@ export default function CompanySetup() {
                                 />
                             </div>
                             <p className="mt-1.5 text-xs text-gray-400">Australian Business Number - 11 digits</p>
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label htmlFor="location" className="block text-sm font-bold text-gray-700 mb-2">
+                                Location
+                            </label>
+                            <div className="relative">
+                                <MapPinIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    id="location"
+                                    name="location"
+                                    defaultValue={isAddingNew ? "" : user.location || ""}
+                                    placeholder="Melbourne, VIC"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+                            <p className="mt-1.5 text-xs text-gray-400">Used to show your startup region on update cards.</p>
                         </div>
 
                         {/* Submit */}
