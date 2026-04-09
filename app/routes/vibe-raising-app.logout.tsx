@@ -3,6 +3,7 @@ import type { Route } from "./+types/vibe-raising-app.logout";
 import { logout } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import {
+    clearVibeRaisingUnlockCookie,
     clearVibeRaisingSubmittedCookie,
     getVibeRaisingLoginHref,
     getVibeRaisingProfile,
@@ -11,6 +12,7 @@ import {
 async function handleLogout(context: Route.ActionArgs["context"], request: Request) {
     const env = getEnv(context);
     const headers = new Headers();
+    headers.append("Set-Cookie", clearVibeRaisingUnlockCookie());
 
     try {
         const profile = await getVibeRaisingProfile(env, request);
