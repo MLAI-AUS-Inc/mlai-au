@@ -45,10 +45,10 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                     return (
                         <div 
                             key={company.id} 
-                            className={`relative flex flex-col bg-white rounded-2xl border ${isActive ? "border-blue-500 shadow-md ring-1 ring-blue-500" : "border-gray-200 shadow-sm hover:border-gray-300"} overflow-hidden transition-all`}
+                            className={`relative flex flex-col bg-white rounded-2xl border ${isActive ? "border-violet-500 shadow-md ring-1 ring-violet-500" : "border-gray-200 shadow-sm hover:border-gray-300"} overflow-hidden transition-all`}
                         >
                             {isActive && (
-                                <div className="absolute top-0 inset-x-0 h-1 bg-blue-500"></div>
+                                <div className="absolute top-0 inset-x-0 h-1 bg-violet-500"></div>
                             )}
                             
                             <div className="p-6 flex-1 flex flex-col">
@@ -65,7 +65,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                         )}
                                     </div>
                                     {isActive && (
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-violet-50 text-violet-700 ring-1 ring-inset ring-violet-700/10">
                                             <CheckCircleIcon className="w-3.5 h-3.5" />
                                             Active
                                         </span>
@@ -87,7 +87,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                         disabled={isSwitching}
                                         className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-all ${
                                             isActive 
-                                                ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm" 
+                                                ? "bg-violet-600 text-white hover:bg-violet-700 shadow-sm" 
                                                 : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                                         }`}
                                     >
@@ -106,12 +106,12 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                 {/* Add New Company Card */}
                 <Link 
                     to="/vibe-raising/company-setup?new=true"
-                    className="flex flex-col items-center justify-center text-center p-8 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50/50 transition-all group min-h-[220px]"
+                    className="flex flex-col items-center justify-center text-center p-8 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50/50 transition-all group min-h-[220px]"
                 >
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200 mb-4 group-hover:scale-110 group-hover:bg-blue-600 group-hover:border-blue-600 transition-all duration-300">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200 mb-4 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-600 transition-all duration-300">
                         <PlusIcon className="w-6 h-6 text-gray-400 group-hover:text-white" />
                     </div>
-                    <h3 className="text-sm font-bold text-gray-900 group-hover:text-blue-700 mb-1">Register New Company</h3>
+                    <h3 className="text-sm font-bold text-gray-900 group-hover:text-violet-700 mb-1">Register New Company</h3>
                     <p className="text-xs text-gray-500">Add another startup to your Vibe Raising portfolio.</p>
                 </Link>
             </div>

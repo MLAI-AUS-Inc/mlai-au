@@ -4,7 +4,7 @@ import { Outlet, useLoaderData, Form, redirect, useNavigation, Link } from "reac
 import { Menu, Transition } from "@headlessui/react";
 import { getVibeRaisingUser, createVibeRaisingSessionCookie, setActiveCompany, getActiveCompany, type VibeRaisingUser } from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon, UsersIcon } from "@heroicons/react/24/outline";
+import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon, UsersIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 
 type Role = "founder" | "investor";
@@ -78,10 +78,10 @@ function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, o
                 onClick={onDismiss}
             />
 
-            {/* Modal — side-by-side: video left, content right */}
+            {/* Modal - side-by-side: video left, content right */}
             <div className="relative z-[110] flex w-full max-w-3xl h-[560px] bg-white rounded-2xl shadow-2xl overflow-hidden">
 
-                {/* Left: vertical video — fixed size matching 9:16 ratio */}
+                {/* Left: vertical video - fixed size matching 9:16 ratio */}
                 <div className="relative flex-shrink-0 w-[315px] h-full bg-black overflow-hidden">
                     <iframe
                         src="https://player.vimeo.com/video/1174236138?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
@@ -96,15 +96,15 @@ function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, o
                 <div className="flex flex-col flex-1 min-w-0">
 
                     {/* Header */}
-                    <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-                        <h2 className="text-2xl font-bold text-gray-900">Welcome to Vibe Raising</h2>
+                    <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
                         <button
                             onClick={onDismiss}
-                            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 mt-1"
-                            aria-label="Close"
+                            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                            aria-label="Back"
                         >
-                            <XMarkIcon className="w-5 h-5" />
+                            <ArrowLeftIcon className="w-5 h-5" />
                         </button>
+                        <h2 className="text-xl font-bold text-gray-900 flex-1">Welcome to Vibe Raising</h2>
                     </div>
 
                     {/* Body copy */}
@@ -118,7 +118,7 @@ function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, o
                     <div className="px-6 pb-6 flex flex-col gap-3">
                         <button
                             onClick={handleComplete}
-                            className="w-full py-3.5 px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/20"
+                            className="w-full py-3.5 px-6 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20"
                         >
                             Get Started →
                         </button>
@@ -165,13 +165,13 @@ function LoginForm() {
                             className={`
                                 flex-1 flex flex-col items-center gap-3 py-5 px-6 rounded-2xl border-2 transition-all duration-200
                                 ${selectedRole === "founder"
-                                    ? "border-blue-500 bg-blue-50 shadow-sm"
+                                    ? "border-violet-500 bg-violet-50 shadow-sm"
                                     : "border-gray-200 hover:border-gray-300 bg-white"
                                 }
                             `}
                         >
                             <BuildingOffice2Icon
-                                className={`w-8 h-8 ${selectedRole === "founder" ? "text-blue-600" : "text-gray-400"}`}
+                                className={`w-8 h-8 ${selectedRole === "founder" ? "text-violet-600" : "text-gray-400"}`}
                             />
                             <span className={`font-bold ${selectedRole === "founder" ? "text-gray-900" : "text-gray-600"}`}>
                                 Founder
@@ -184,13 +184,13 @@ function LoginForm() {
                             className={`
                                 flex-1 flex flex-col items-center gap-3 py-5 px-6 rounded-2xl border-2 transition-all duration-200
                                 ${selectedRole === "investor"
-                                    ? "border-blue-500 bg-blue-50 shadow-sm"
+                                    ? "border-violet-500 bg-violet-50 shadow-sm"
                                     : "border-gray-200 hover:border-gray-300 bg-white"
                                 }
                             `}
                         >
                             <ChartBarIcon
-                                className={`w-8 h-8 ${selectedRole === "investor" ? "text-blue-600" : "text-gray-400"}`}
+                                className={`w-8 h-8 ${selectedRole === "investor" ? "text-violet-600" : "text-gray-400"}`}
                             />
                             <span className={`font-bold ${selectedRole === "investor" ? "text-gray-900" : "text-gray-600"}`}>
                                 Investor
@@ -213,7 +213,7 @@ function LoginForm() {
                                 name="fullName"
                                 placeholder="John Doe"
                                 required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                             />
                         </div>
 
@@ -228,7 +228,7 @@ function LoginForm() {
                                 name="email"
                                 placeholder="john@example.com"
                                 required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                             />
                         </div>
 
@@ -243,7 +243,7 @@ function LoginForm() {
                                 name="companyName"
                                 placeholder={selectedRole === 'founder' ? 'Acme Inc.' : 'Alpha Ventures'}
                                 required
-                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                             />
                         </div>
 
@@ -251,8 +251,8 @@ function LoginForm() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`w-full py-4 px-6 bg-blue-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-blue-500/20 
-                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]"}`}
+                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-violet-500/20 
+                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
                         >
                             {isSubmitting ? "Connecting..." : `Continue as ${selectedRole === "founder" ? "Founder" : "Investor"}`}
                         </button>

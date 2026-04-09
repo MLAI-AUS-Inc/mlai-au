@@ -18,6 +18,8 @@ import {
     FireIcon,
     ArrowRightIcon,
     BanknotesIcon,
+    InformationCircleIcon,
+    PlusIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
@@ -100,18 +102,23 @@ interface MetricOption {
     placeholder: string;
     prefix?: string;
     icon: React.ReactNode;
+    info?: string;
 }
 
 const METRIC_OPTIONS: MetricOption[] = [
-    { key: "revenue", label: "Revenue", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "mrr", label: "MRR", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "burnRate", label: "Burn Rate", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" /> },
+    { key: "revenue", label: "Revenue (AUD)", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Your total income this month." },
+    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of unique users who engaged with your product." },
+    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly Recurring Revenue - the predictable revenue your business expects every month." },
+    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "The rate at which your company is spending its capital reserves to finance overhead." },
 ];
 
 // Hint suggestions per section, cycled through as user adds points
 const SECTION_HINTS: Record<string, string[]> = {
+    summary: [
+        "e.g. Building an AI-powered financial copilot for CFOs of series B software startups.",
+        "e.g. Revolutionizing the $100B global freight industry with autonomous docking systems.",
+        "e.g. Creating a next-gen marketplace that connects verified creative freelancers with agencies.",
+    ],
     highlights: [
         "e.g. Closed 3 new enterprise deals worth $50K ARR.",
         "e.g. Launched v2.0 with 5 new features.",
@@ -135,16 +142,21 @@ const SECTION_HINTS: Record<string, string[]> = {
     ],
 };
 
-// Collapsible Helper Component
-interface SectionWithExampleProps {
-    label: string;
-    name: string;
-    placeholder: string;
-    rows?: number;
-    icon: any;
-    defaultValue?: string;
-    value?: string;
-    onChange?: (value: string) => void;
+function MetricTooltip({ m, active, className }: { m: MetricOption; active: boolean; className?: string }) {
+    return (
+        <div className="mt-0.5">
+            <p className={clsx("font-semibold uppercase tracking-wide text-center", active ? "text-gray-600" : "text-gray-400", className)}>{m.label}</p>
+        </div>
+    );
+}
+
+function MetricInfoBadge({ info }: { info?: string }) {
+    if (!info) return null;
+    return (
+        <div className="absolute top-1.5 right-1.5 text-gray-300 hover:text-gray-400 cursor-help" title={info}>
+            <InformationCircleIcon className="w-3.5 h-3.5" />
+        </div>
+    );
 }
 
 function SectionWithExample({
@@ -155,57 +167,53 @@ function SectionWithExample({
     value,
     onChange,
 }: SectionWithExampleProps) {
-    // Split value into bullet items (by sentence-ending period or newlines)
-    const items = (value || "").split(/(?<=\.)\s+/).filter(s => s.trim());
-    if (items.length === 0) items.push("");
-
+    // We split by newline for internal management - it's much more stable than periods
+    const items = (value || "").split("\n");
     const hints = SECTION_HINTS[name] || [];
 
     const updateItem = (index: number, text: string) => {
         const updated = [...items];
         updated[index] = text;
-        onChange?.(updated.filter(s => s.trim()).join(" "));
+        onChange?.(updated.join("\n"));
     };
 
     const addItem = () => {
-        const trimmed = (value || "").trim();
-        const base = trimmed && !trimmed.endsWith(".") ? trimmed + "." : trimmed;
-        // Add empty item — placeholder hint will guide the user
-        onChange?.(base + (base ? " " : "") + ".");
+        const current = value || "";
+        onChange?.(current + (current ? "\n" : "") + "");
     };
 
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
-        onChange?.(updated.filter(s => s.trim()).join(" "));
+        onChange?.(updated.join("\n"));
     };
 
     return (
-        <div>
-            <div className="flex items-center gap-2 mb-2">
-                <Icon className="w-5 h-5 text-gray-500" />
-                <label className="block text-sm font-medium text-gray-700">
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 bg-gray-50/50 border-b border-gray-100">
+                <Icon className="w-4 h-4 text-gray-500" />
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider">
                     {label}
                 </label>
             </div>
             {/* Hidden input for form submission */}
             <input type="hidden" name={name} value={value || ""} />
-            <div className="space-y-2">
+            <div className="p-4 space-y-3">
                 {items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-2">
-                        <span className="mt-2.5 text-gray-400 text-sm select-none flex-shrink-0">•</span>
+                    <div key={i} className="flex items-start gap-3">
+                        <span className="mt-2.5 text-violet-400 text-sm select-none flex-shrink-0 animate-pulse">•</span>
                         <input
                             type="text"
-                            value={item === "." ? "" : item}
+                            value={item}
                             onChange={(e) => updateItem(i, e.target.value)}
-                            onFocus={() => { if (item === ".") updateItem(i, ""); }}
+                            onClick={(e) => e.stopPropagation()}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 px-3 py-2 sm:text-sm border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400 placeholder:italic"
+                            className="flex-1 px-4 py-2 text-sm border-2 border-gray-100 rounded-xl focus:border-violet-400 focus:ring-0 text-gray-900 placeholder:text-gray-300 placeholder:italic transition-all bg-white"
                         />
                         {items.length > 1 && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 p-1 text-gray-300 hover:text-red-400 transition-colors"
+                                className="mt-1.5 p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-all"
                             >
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
@@ -216,10 +224,9 @@ function SectionWithExample({
             <button
                 type="button"
                 onClick={addItem}
-                className="mt-2 flex items-center gap-1 text-sm text-blue-600 font-medium hover:text-blue-700"
+                className="w-full py-3 text-xs text-violet-600 font-bold hover:bg-violet-50 flex items-center justify-center gap-1.5 border-t border-dashed border-gray-100 transition-colors"
             >
-                <span className="text-lg leading-none">+</span>
-                Add point
+                <span className="text-base">+</span> Add point
             </button>
         </div>
     );
@@ -227,44 +234,40 @@ function SectionWithExample({
 
 // Bullet-point input for past month cards
 function BulletInput({ value, onChange, placeholder, section }: { value: string; onChange: (v: string) => void; placeholder?: string; section?: string }) {
-    const items = value.split(/(?<=\.)\s+/).filter(s => s.trim());
-    if (items.length === 0) items.push("");
-
+    const items = (value || "").split("\n");
     const hints = section ? (SECTION_HINTS[section] || []) : [];
 
     const update = (i: number, text: string) => {
         const updated = [...items];
         updated[i] = text;
-        onChange(updated.filter(s => s.trim()).join(" "));
+        onChange(updated.join("\n"));
     };
-    const remove = (i: number) => onChange(items.filter((_, j) => j !== i).filter(s => s.trim()).join(" "));
+    const remove = (i: number) => onChange(items.filter((_, j) => j !== i).join("\n"));
     const add = () => {
-        const trimmed = value.trim();
-        const base = trimmed && !trimmed.endsWith(".") ? trimmed + "." : trimmed;
-        onChange(base + (base ? " " : "") + ".");
+        onChange((value || "") + "\n");
     };
 
     return (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 pt-1">
             {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-1.5">
-                    <span className="text-gray-400 text-xs select-none">•</span>
+                <div key={i} className="flex items-center gap-2">
+                    <span className="text-violet-400 text-xs select-none">•</span>
                     <input
                         type="text"
-                        value={item === "." ? "" : item}
+                        value={item}
                         onChange={(e) => update(i, e.target.value)}
-                        onFocus={() => { if (item === ".") update(i, ""); }}
+                        onClick={(e) => e.stopPropagation()}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
-                        className="flex-1 px-2 py-1 text-xs border border-gray-200 rounded-md focus:ring-gray-400 focus:border-gray-400 bg-gray-50 text-gray-900 placeholder:text-gray-400 placeholder:italic"
+                        className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-violet-400 focus:border-violet-400 bg-white shadow-sm text-gray-900 placeholder:text-gray-300 placeholder:italic transition-all"
                     />
                     {items.length > 1 && (
-                        <button type="button" onClick={() => remove(i)} className="text-gray-300 hover:text-red-400 transition-colors">
+                        <button type="button" onClick={() => remove(i)} className="p-1 px-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-md transition-all">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="text-[11px] text-blue-600 font-medium hover:text-blue-700 flex items-center gap-0.5">
+            <button type="button" onClick={add} className="mt-1 px-2 py-1.5 text-[10px] text-violet-600 font-bold hover:bg-violet-50 rounded-lg flex items-center gap-1 transition-all">
                 <span className="text-sm leading-none">+</span> Add point
             </button>
         </div>
@@ -277,7 +280,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
     const colors = {
         green: { bg: "bg-green-50", border: "border-green-100", text: "text-green-700", hoverBg: "hover:bg-green-50/80" },
         orange: { bg: "bg-orange-50", border: "border-orange-100", text: "text-orange-700", hoverBg: "hover:bg-orange-50/80" },
-        blue: { bg: "bg-blue-50", border: "border-blue-100", text: "text-blue-700", hoverBg: "hover:bg-blue-50/80" },
+        blue: { bg: "bg-violet-50", border: "border-violet-100", text: "text-violet-700", hoverBg: "hover:bg-violet-50/80" },
     }[color];
     return (
         <div className={clsx("rounded-xl border overflow-hidden", colors.border, colors.bg)}>
@@ -323,24 +326,25 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
             </button>
             {open && (
                 <>
-                    {/* Metrics — square boxes (read-only) */}
+                    {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-4 gap-2">
                             {METRIC_OPTIONS.map(m => {
                                 const val = pm.metrics[m.key];
                                 return (
                                     <div
                                         key={m.key}
                                         className={clsx(
-                                            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
+                                            "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
                                             val
-                                                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                 : "border-gray-200 bg-gray-50 opacity-40"
                                         )}
                                     >
+                                        <MetricInfoBadge info={m.info} />
                                         <div className={clsx(
                                             "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                            val ? "bg-blue-100" : "bg-white"
+                                            val ? "bg-violet-100" : "bg-white"
                                         )}>
                                             {m.icon}
                                         </div>
@@ -348,12 +352,9 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                             "text-xs font-extrabold leading-tight",
                                             val ? "text-gray-900" : "text-gray-300"
                                         )}>
-                                            {val ? `${m.prefix || ""}${val}` : "—"}
+                                            {val ? `${m.prefix || ""}${val}` : "-"}
                                         </p>
-                                        <p className={clsx(
-                                            "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
-                                            val ? "text-gray-600" : "text-gray-400"
-                                        )}>{m.label}</p>
+                                        <MetricTooltip m={m} active={!!val} className="text-[8px]" />
                                     </div>
                                 );
                             })}
@@ -381,7 +382,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.asks && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <QuestionMarkCircleIcon className="w-3 h-3 text-blue-500" />
+                                    <QuestionMarkCircleIcon className="w-3 h-3 text-violet-500" />
                                     Ask from Investors
                                 </h5>
                                 <BulletList text={pm.asks} className="text-xs text-gray-600" />
@@ -434,7 +435,7 @@ function parseUsers(raw: string): number {
     return parseInt(String(raw).replace(/[,\s]/g, "")) || 0;
 }
 
-// Pick bar color based on MoM growth rate — catchy colors for high growth
+// Pick bar color based on MoM growth rate - catchy colors for high growth
 function getBarColor(rate: number | null) {
     if (rate === null) return { bar: "bg-slate-300", hover: "group-hover:bg-slate-400", selected: "bg-slate-400", label: "text-slate-400" };
     if (rate >= 20)    return { bar: "bg-lime-400", hover: "group-hover:bg-lime-500", selected: "bg-lime-500", label: "text-lime-600" };
@@ -493,7 +494,7 @@ function GrowthChart({
                             {/* Month label */}
                             <span className={clsx(
                                 "w-10 text-[11px] font-bold uppercase tracking-tight text-right flex-shrink-0",
-                                d.isCurrent ? "text-blue-600" : color?.label || "text-gray-400"
+                                d.isCurrent ? "text-violet-600" : color?.label || "text-gray-400"
                             )}>
                                 {d.month.slice(0, 3)}
                             </span>
@@ -504,7 +505,7 @@ function GrowthChart({
                                     className={clsx(
                                         "h-full rounded-md transition-all duration-500 ease-out relative overflow-hidden",
                                         d.isCurrent
-                                            ? "bg-blue-600 shadow-sm"
+                                            ? "bg-violet-600 shadow-sm"
                                             : d.isSelected
                                                 ? color?.selected
                                                 : clsx(color?.bar, color?.hover)
@@ -528,7 +529,7 @@ function GrowthChart({
                             {/* MoM rate */}
                             <span className="w-14 text-right flex-shrink-0">
                                 {rate === null ? (
-                                    <span className="text-[10px] text-gray-300">—</span>
+                                    <span className="text-[10px] text-gray-300">-</span>
                                 ) : (
                                     <span className={clsx(
                                         "text-xs font-bold",
@@ -548,6 +549,31 @@ function GrowthChart({
 
 export default function CreateUpdate() {
     const { user, existingData, isEdit } = useLoaderData<typeof loader>();
+    const activeCompany = getActiveCompany(user);
+    const locationStr = activeCompany.location || user.location;
+
+    function LocationBadge({ className }: { className?: string }) {
+        let code = "AUS";
+        let flag = "🇦🇺";
+        
+        if (locationStr) {
+            if (locationStr.toLowerCase().includes("melbourne")) code = "MEL";
+            else if (locationStr.toLowerCase().includes("sydney")) code = "SYD";
+            else if (locationStr.toLowerCase().includes("brisbane")) code = "BNE";
+            else if (locationStr.toLowerCase().includes("perth")) code = "PER";
+            else if (locationStr.toLowerCase().includes("adelaide")) code = "ADL";
+            else if (locationStr.toLowerCase().includes("global") || locationStr.toLowerCase().includes("remote")) {
+                flag = "🌍";
+                code = "GLB";
+            }
+        }
+
+        return (
+            <span className={`flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md font-bold text-gray-600 text-[10px] tracking-widest leading-none border border-gray-200 shadow-sm ${className || ""}`}>
+                <span className="text-sm">{flag}</span> {code}
+            </span>
+        );
+    }
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
     const navigation = useNavigation();
@@ -571,6 +597,7 @@ export default function CreateUpdate() {
 
     // State declarations
     const [showEmailWizard, setShowEmailWizard] = useState(false);
+    const [summary, setSummary] = useState<string>(defaultData?.summary || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -611,6 +638,7 @@ export default function CreateUpdate() {
     const handleDraftComplete = (data: any) => {
         if (data.month) setSelectedMonth(data.month);
         if (data.year) setSelectedYear(data.year);
+        if (data.summary) setSummary(data.summary);
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
@@ -640,6 +668,7 @@ export default function CreateUpdate() {
             // Restore current month fields
             if (draft.month) setSelectedMonth(draft.month);
             if (draft.year) setSelectedYear(Number(draft.year));
+            setSummary(draft.summary || "");
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
@@ -690,6 +719,31 @@ export default function CreateUpdate() {
         setHasDraft(false);
     };
 
+    // Custom metrics added by founders
+    const [customMetrics, setCustomMetrics] = useState<Array<{ key: string; label: string; prefix: string; value: string }>>([]);
+    const [addingCustom, setAddingCustom] = useState(false);
+    const [newMetricLabel, setNewMetricLabel] = useState('');
+    const [newMetricPrefix, setNewMetricPrefix] = useState('');
+    const [newMetricValue, setNewMetricValue] = useState('');
+
+    const addCustomMetric = () => {
+        if (!newMetricLabel.trim()) return;
+        const key = 'custom_' + Date.now();
+        setCustomMetrics(prev => [...prev, { key, label: newMetricLabel.trim(), prefix: newMetricPrefix.trim(), value: newMetricValue.trim() }]);
+        setNewMetricLabel('');
+        setNewMetricPrefix('');
+        setNewMetricValue('');
+        setAddingCustom(false);
+    };
+
+    const removeCustomMetric = (key: string) => {
+        setCustomMetrics(prev => prev.filter(m => m.key !== key));
+    };
+
+    const updateCustomMetricValue = (key: string, value: string) => {
+        setCustomMetrics(prev => prev.map(m => m.key === key ? { ...m, value } : m));
+    };
+
     const toggleMetric = (key: string) => {
         setSelectedMetrics(prev => {
             const next = new Set(prev);
@@ -710,7 +764,7 @@ export default function CreateUpdate() {
         setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: { ...c.metrics, [key]: value } } : c));
     };
 
-    // Prepare chart data — revenue bars with auto-calculated MoM
+    // Prepare chart data - revenue bars with auto-calculated MoM
     const chartData: ChartData[] = [
         ...pastMonthCards.map((card, i) => ({
             month: card.month,
@@ -792,7 +846,7 @@ export default function CreateUpdate() {
         }
     });
 
-    // 1. Feedback View — preview-dominant with rating sidebar
+    // 1. Feedback View - preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
         const { feedback, data } = actionData;
 
@@ -808,7 +862,7 @@ export default function CreateUpdate() {
 
         return (
             <div className="max-w-5xl mx-auto pb-12">
-                {/* Header — back arrow top-left, title center-left, X on right */}
+                {/* Header - back arrow top-left, title center-left, X on right */}
                 <div className="flex items-center gap-3 py-6 mb-4">
                     <button
                         onClick={() => setDismissedFeedback(true)}
@@ -831,10 +885,10 @@ export default function CreateUpdate() {
                 {/* Main layout: Preview + thin rating bar */}
                 <div className="flex gap-4 items-start">
 
-                    {/* PREVIEW — dominant, takes most of the width */}
+                    {/* PREVIEW - dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {/* Hero banner — video or gradient */}
+                            {/* Hero banner - video or gradient */}
                             {videoPreviewUrl ? (
                                 <div className="relative w-full aspect-video bg-black">
                                     <video
@@ -846,7 +900,7 @@ export default function CreateUpdate() {
                                 </div>
                             ) : (
                                 <div className="relative w-full h-32 overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-400" />
                                     <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
                                         <circle cx="120" cy="80" r="100" fill="white" />
                                         <circle cx="650" cy="140" r="70" fill="white" />
@@ -868,7 +922,10 @@ export default function CreateUpdate() {
                                             )}
                                             <div>
                                                 <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
-                                                <p className="text-white/70 text-xs">Investor Update</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-white/70 text-xs">Investor Update</p>
+                                                    <LocationBadge className="bg-white/20 text-white/90 border-transparent shadow-none" />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -881,28 +938,42 @@ export default function CreateUpdate() {
                                     <h3 className="text-lg font-bold text-gray-900">
                                         {(data as any)?.month} {(data as any)?.year} Update
                                     </h3>
-                                    <span className="text-xs text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                    <div className="flex items-center">
+                                        <span className="text-xs text-gray-400 font-medium">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                        <LocationBadge className="ml-2" />
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Metrics — square boxes */}
+                            
+                            {(data as any)?.summary && (
+                                <div className="px-6 py-4 bg-violet-50/40 border-b border-violet-100">
+                                    <h2 className="text-xl font-extrabold text-gray-900 leading-snug tracking-tight italic">
+                                        {(data as any).summary}
+                                    </h2>
+                                </div>
+                            )}
+
+
+                            {/* Metrics - square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <div className="grid grid-cols-5 gap-3">
+                                <div className="grid grid-cols-4 gap-3">
                                     {METRIC_OPTIONS.map(m => {
                                         const val = (data as any)?.[m.key];
                                         return (
                                             <div
                                                 key={m.key}
                                                 className={clsx(
-                                                    "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
                                                     val
-                                                        ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-40"
                                                 )}
                                             >
+                                                <MetricInfoBadge info={m.info} />
                                                 <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    val ? "bg-blue-100" : "bg-white"
+                                                    val ? "bg-violet-100" : "bg-white"
                                                 )}>
                                                     {m.icon}
                                                 </div>
@@ -910,12 +981,9 @@ export default function CreateUpdate() {
                                                     "text-base font-extrabold leading-tight",
                                                     val ? "text-gray-900" : "text-gray-300"
                                                 )}>
-                                                    {val ? `${m.prefix || ""}${val}` : "—"}
+                                                    {val ? `${m.prefix || ""}${val}` : "-"}
                                                 </p>
-                                                <p className={clsx(
-                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                    val ? "text-gray-600" : "text-gray-400"
-                                                )}>{m.label}</p>
+                                                <MetricTooltip m={m} active={!!val} className="text-[10px]" />
                                             </div>
                                         );
                                     })}
@@ -924,6 +992,7 @@ export default function CreateUpdate() {
 
                             {/* Content sections */}
                             <div className="px-6 py-5 space-y-5">
+                                
                                 {(data as any)?.highlights && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -945,7 +1014,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.asks && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-violet-500" />
                                             Ask from Investors
                                         </h4>
                                         <BulletList text={(data as any).asks} />
@@ -1050,17 +1119,17 @@ export default function CreateUpdate() {
                             const count = 18 + (criteria.length * 14);
 
                             return (
-                                <div className="mt-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                                        <UsersIcon className="w-4 h-4 text-indigo-500" />
+                                <div className="mt-6 bg-gradient-to-br from-violet-50 to-violet-50 border border-violet-100 rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-sm font-bold text-violet-900 mb-2 flex items-center gap-2">
+                                        <UsersIcon className="w-4 h-4 text-violet-500" />
                                         Your Audience
                                     </h3>
-                                    <p className="text-sm text-indigo-800/80 mb-3">
-                                        We found <strong className="text-indigo-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
+                                    <p className="text-sm text-violet-800/80 mb-3">
+                                        We found <strong className="text-violet-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {criteria.map(c => (
-                                            <span key={c} className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg shadow-sm">
+                                            <span key={c} className="px-2.5 py-1 bg-white border border-violet-200 text-violet-700 text-xs font-semibold rounded-lg shadow-sm">
                                                 {c}
                                             </span>
                                         ))}
@@ -1069,7 +1138,7 @@ export default function CreateUpdate() {
                             );
                         })()}
 
-                        {/* Action buttons — below preview */}
+                        {/* Action buttons - below preview */}
                         <div className="flex items-center gap-3 mt-6">
                             <button
                                 type="button"
@@ -1154,7 +1223,7 @@ export default function CreateUpdate() {
                         );
                     })()}
 
-                    {/* RATING SIDEBAR — thin vertical bar on right */}
+                    {/* RATING SIDEBAR - thin vertical bar on right */}
                     <div className="w-56 flex-shrink-0 sticky top-6 space-y-3">
                         {/* Company identity */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-center text-center">
@@ -1165,7 +1234,7 @@ export default function CreateUpdate() {
                                     className="w-12 h-12 rounded-xl mb-2 bg-gray-50"
                                 />
                             ) : (
-                                <div className="w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center">
                                     <span className="text-lg font-bold text-purple-600">{user.companyName.charAt(0)}</span>
                                 </div>
                             )}
@@ -1181,7 +1250,7 @@ export default function CreateUpdate() {
                             <div className="text-4xl font-bold text-green-600 leading-none">{feedback?.grade}</div>
                         </div>
 
-                        {/* Strengths — collapsible */}
+                        {/* Strengths - collapsible */}
                         <CollapsibleFeedback
                             icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
                             headline={`${feedback?.strengths.length} strengths found`}
@@ -1197,7 +1266,7 @@ export default function CreateUpdate() {
                             </ul>
                         </CollapsibleFeedback>
 
-                        {/* Improvements — collapsible */}
+                        {/* Improvements - collapsible */}
                         <CollapsibleFeedback
                             icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
                             headline={`${feedback?.improvements.length} areas to improve`}
@@ -1213,13 +1282,13 @@ export default function CreateUpdate() {
                             </ul>
                         </CollapsibleFeedback>
 
-                        {/* Pro Tip — collapsible */}
+                        {/* Pro Tip - collapsible */}
                         <CollapsibleFeedback
                             icon={<LightBulbIcon className="w-3.5 h-3.5" />}
                             headline="Pro tip from AI"
                             color="blue"
                         >
-                            <p className="text-xs text-blue-800 leading-relaxed">{feedback?.proTip}</p>
+                            <p className="text-xs text-violet-800 leading-relaxed">{feedback?.proTip}</p>
                         </CollapsibleFeedback>
                     </div>
                 </div>
@@ -1278,7 +1347,7 @@ export default function CreateUpdate() {
                     {...getRootProps()}
                     className={clsx(
                         "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
-                        isDragActive ? "bg-blue-50/50 border-blue-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
+                        isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
                     )}
                 >
                     <input {...getInputProps()} />
@@ -1288,17 +1357,25 @@ export default function CreateUpdate() {
                             <CloudArrowUpIcon className="w-full h-full stroke-1" />
                         </div>
                         
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                            Drag files here to upload
-                        </h3>
-                        
-                        <p className="text-sm text-gray-400 font-medium mb-1">
-                            Supported video files are MP4, MOV, AVI
-                        </p>
-                        
-                        <p className="text-sm text-gray-400 mb-6">
-                            Minimize processing time
-                        </p>
+                        <div className="flex items-center justify-center gap-2 mb-6">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                Say it your way
+                            </h3>
+                            <div className="relative group flex items-center justify-center">
+                                <InformationCircleIcon className="w-5 h-5 text-gray-400 hover:text-violet-600 transition-colors cursor-help" />
+                                
+                                {/* Tooltip */}
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 w-[260px] p-4 bg-gray-900 text-white rounded-xl shadow-[0_10px_40px_-5px_rgba(0,0,0,0.3)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none text-left">
+                                    <p className="text-gray-100 leading-relaxed text-sm font-medium">
+                                        Record or upload a quick 1-minute video telling investors about your startup's progress this month. Supported formats: MP4, MOV, AVI.
+                                    </p>
+                                    {/* Tooltip Arrow */}
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 flex justify-center w-full">
+                                        <div className="w-0 h-0 border-l-[6px] border-l-transparent border-t-[6px] border-t-gray-900 border-r-[6px] border-r-transparent" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
                         <div className="flex items-center gap-3">
                             <button 
@@ -1335,7 +1412,7 @@ export default function CreateUpdate() {
                 <button
                     type="button"
                     onClick={() => setShowEmailWizard(true)}
-                    className="w-full bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl border border-purple-100 p-8 shadow-sm overflow-hidden relative group hover:shadow-md hover:border-purple-200 transition-all cursor-pointer text-left"
+                    className="w-full bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl border border-purple-100 p-8 shadow-sm overflow-hidden relative group hover:shadow-md hover:border-purple-200 transition-all cursor-pointer text-left"
                 >
                     <div className="absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 bg-purple-200/20 blur-3xl rounded-full" />
                     <div className="relative z-10 flex items-center gap-5">
@@ -1377,7 +1454,7 @@ export default function CreateUpdate() {
                 {/* ─── Stacked Card Layout ─── */}
                 {pastMonthCards.length > 0 && (
                     <div className="relative">
-                        {/* Past month cards — grayed-out, peeking behind current */}
+                        {/* Past month cards - grayed-out, peeking behind current */}
                         {pastMonthCards.map((card, index) => (
                             <div key={index} id={`past-month-${index}`} className="mb-3 scroll-mt-24">
                                 {/* Collapsed: gray card strip peeking behind */}
@@ -1419,10 +1496,10 @@ export default function CreateUpdate() {
                                 {/* Expanded: full editable content */}
                                 {expandedCards.has(index) && (
                                     <div className="border border-t-0 border-gray-300 rounded-b-xl bg-white px-5 py-4 space-y-3 -mt-1">
-                                        {/* Metrics — square boxes */}
+                                        {/* Metrics - square boxes */}
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-5 gap-2">
+                                            <div className="grid grid-cols-4 gap-2">
                                                 {METRIC_OPTIONS.map(m => {
                                                     const active = m.key in card.metrics;
                                                     return (
@@ -1440,34 +1517,39 @@ export default function CreateUpdate() {
                                                                 }
                                                             }}
                                                             className={clsx(
-                                                                "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
+                                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
                                                                 active
-                                                                    ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                             )}
                                                         >
+                                                            <MetricInfoBadge info={m.info} />
                                                             <div className={clsx(
                                                                 "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                                                active ? "bg-blue-100" : "bg-white"
+                                                                active ? "bg-violet-100" : "bg-white"
                                                             )}>
                                                                 {m.icon}
                                                             </div>
-                                                            {active ? (
-                                                                <input
-                                                                    type="text"
-                                                                    value={card.metrics[m.key] || ""}
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
-                                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                                    className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
-                                                                />
+                                                             {active ? (
+                                                                <div className="flex items-center justify-center gap-0.5 w-full" onClick={(e) => e.stopPropagation()}>
+                                                                    {m.prefix && (
+                                                                        <span className="text-xs font-extrabold text-gray-900">{m.prefix}</span>
+                                                                    )}
+                                                                    <input
+                                                                        autoFocus
+                                                                        onFocus={(e) => e.currentTarget.select()}
+                                                                        type="text"
+                                                                        value={card.metrics[m.key] ?? ""}
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                        onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
+                                                                        placeholder={m.placeholder}
+                                                                        className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5 min-w-0"
+                                                                    />
+                                                                </div>
                                                             ) : (
-                                                                <p className="text-xs font-extrabold text-gray-300">—</p>
+                                                                <p className="text-xs font-extrabold text-gray-300">-</p>
                                                             )}
-                                                            <p className={clsx(
-                                                                "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
-                                                                active ? "text-gray-600" : "text-gray-400"
-                                                            )}>{m.label}</p>
+                                                            <MetricTooltip m={m} active={!!card.metrics[m.key]} className="text-[8px]" />
                                                         </div>
                                                     );
                                                 })}
@@ -1499,7 +1581,7 @@ export default function CreateUpdate() {
                             </div>
                         ))}
 
-                        {/* Current month card — prominent, always visible */}
+                        {/* Current month card - prominent, always visible */}
                         <div id="current-month-card" className="rounded-xl border-2 border-purple-300 bg-white p-6 space-y-5 shadow-md ring-1 ring-purple-100 scroll-mt-24">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -1530,55 +1612,137 @@ export default function CreateUpdate() {
                                 />
                             </div>
 
-                            {/* Metrics — square boxes, click to activate */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                                </label>
-                                <div className="grid grid-cols-5 gap-3">
-                                    {METRIC_OPTIONS.map((m) => {
-                                        const active = selectedMetrics.has(m.key);
-                                        return (
-                                            <div
-                                                key={m.key}
-                                                onClick={() => toggleMetric(m.key)}
-                                                className={clsx(
-                                                    "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                    active
-                                                        ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
-                                                        : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
-                                                )}
-                                            >
-                                                <div className={clsx(
-                                                    "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    active ? "bg-blue-100" : "bg-white"
-                                                )}>
-                                                    {m.icon}
-                                                </div>
-                                                {active ? (
-                                                    <input
-                                                        type="text"
-                                                        name={m.key}
-                                                        value={metricValues[m.key] || ""}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
-                                                        placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
-                                                    />
-                                                ) : (
-                                                    <p className="text-base font-extrabold text-gray-300">—</p>
-                                                )}
-                                                <p className={clsx(
-                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                    active ? "text-gray-600" : "text-gray-400"
-                                                )}>{m.label}</p>
-                                            </div>
-                                        );
-                                    })}
+                            
+                            {/* Company Summary / One-Liner */}
+                            <div className="bg-gradient-to-br from-violet-50 to-white p-5 rounded-2xl border border-violet-100 shadow-sm mb-6">
+                                <div className="flex items-center gap-2 mb-3">
+                                    <LightBulbIcon className="w-5 h-5 text-violet-500" />
+                                    <label className="block text-sm font-bold text-gray-900 uppercase tracking-widest">
+                                        What does your company do?
+                                    </label>
                                 </div>
+                                <textarea
+                                    name="summary"
+                                    value={summary}
+                                    onChange={(e) => setSummary(e.target.value)}
+                                    rows={2}
+                                    placeholder={(SECTION_HINTS.summary || [])[0]}
+                                    className="w-full px-4 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-violet-200 rounded-xl focus:border-violet-500 focus:ring-0 placeholder:text-gray-300 placeholder:italic transition-all resize-none shadow-sm"
+                                />
+                                <p className="mt-2 text-[10px] font-medium text-gray-400 uppercase tracking-widest italic text-center">A very short summary (max 2 lines) that clearly explains your business</p>
                             </div>
 
-                            {/* Qualitative fields — auto-expanding, no scroll */}
+
+                            {/* Metrics - square boxes, click to activate */}
+                            {(() => {
+                                const allMetrics = [
+                                    ...METRIC_OPTIONS,
+                                    ...customMetrics.map(cm => ({
+                                        key: cm.id,
+                                        label: cm.label,
+                                        placeholder: "Value",
+                                        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
+                                        isCustom: true
+                                    }))
+                                ];
+                                
+                                const addCustomMetric = () => {
+                                    const id = `customMetric_${Date.now()}`;
+                                    setCustomMetrics(prev => [...prev, { id, label: "Custom Metric" }]);
+                                    setSelectedMetrics(prev => {
+                                        const next = new Set(prev);
+                                        next.add(id);
+                                        return next;
+                                    });
+                                };
+
+                                return (
+                                <div className="w-full">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
+                                    </label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {allMetrics.map((m: any) => {
+                                            const active = selectedMetrics.has(m.key);
+                                            return (
+                                                <div
+                                                    key={m.key}
+                                                    onClick={() => toggleMetric(m.key)}
+                                                    className={clsx(
+                                                        "relative flex-1 min-w-[calc(25%-10px)] max-w-full rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                        active
+                                                            ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                            : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                    )}
+                                                >
+                                                    {m.info && <MetricInfoBadge info={m.info} />}
+                                                    {m.isCustom && (
+                                                        <input type="hidden" name={`${m.key}_label`} value={m.label} />
+                                                    )}
+                                                    <div className={clsx(
+                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                                                        active ? "bg-violet-100" : "bg-white"
+                                                    )}>
+                                                        {m.icon}
+                                                    </div>
+                                                    {active ? (
+                                                        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
+                                                            {m.prefix && (
+                                                                <span className="text-base font-extrabold text-gray-900 pl-1">{m.prefix}</span>
+                                                            )}
+                                                            <input
+                                                                autoFocus={m.isCustom}
+                                                                onFocus={(e) => e.currentTarget.select()}
+                                                                type="text"
+                                                                name={m.key}
+                                                                value={metricValues[m.key] ?? ""}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                                                                placeholder={m.placeholder}
+                                                                className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5 min-w-0"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-base font-extrabold text-gray-300">-</p>
+                                                    )}
+                                                    
+                                                    {/* Tooltip or Editable Label for custom metrics */}
+                                                    <div className="mt-0.5" onClick={e => e.stopPropagation()}>
+                                                        {m.isCustom ? (
+                                                            <input
+                                                                type="text"
+                                                                value={m.label}
+                                                                onChange={(e) => {
+                                                                    setCustomMetrics(prev => prev.map((cm: any) => cm.id === m.key ? { ...cm, label: e.target.value } : cm));
+                                                                }}
+                                                                className={clsx("font-semibold uppercase tracking-wide text-center bg-transparent border-b border-dashed focus:outline-none text-[10px] w-full", active ? "text-gray-600 border-gray-400 focus:border-violet-500" : "text-gray-400 border-gray-300")}
+                                                            />
+                                                        ) : (
+                                                            <MetricTooltip m={m} active={!!metricValues[m.key]} className="text-[10px]" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        {/* Add Custom Metric Card */}
+                                        <div
+                                            onClick={addCustomMetric}
+                                            className="relative min-w-[calc(25%-10px)] max-w-[calc(25%-10px)] rounded-xl border border-dashed border-gray-300 bg-white hover:bg-gray-50 flex flex-col items-center justify-center text-center py-4 px-2 cursor-pointer transition-all shadow-sm group"
+                                        >
+                                            <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center mb-1 group-hover:bg-violet-50 group-hover:border-violet-200 group-hover:text-violet-500 transition-colors">
+                                                <PlusIcon className="w-4 h-4 text-gray-400 group-hover:text-violet-500" />
+                                            </div>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-violet-500">
+                                                Add Metric
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                );
+                            })()}
+
+                            {/* Qualitative fields - auto-expanding, no scroll */}
                             <div className="space-y-4">
                                 <SectionWithExample
                                     label="Key Highlights"
@@ -1615,13 +1779,33 @@ export default function CreateUpdate() {
                 {/* ─── Default Form (when no email draft) ─── */}
                 {pastMonthCards.length === 0 && (
                     <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+                        
+                        {/* Company Summary / One-Liner */}
+                        <div className="bg-gradient-to-br from-violet-50 to-white p-5 rounded-2xl border border-violet-100 shadow-sm mb-6">
+                            <div className="flex items-center gap-2 mb-3">
+                                <LightBulbIcon className="w-5 h-5 text-violet-500" />
+                                <label className="block text-sm font-bold text-gray-900 uppercase tracking-widest">
+                                    What does your company do?
+                                </label>
+                            </div>
+                            <textarea
+                                name="summary"
+                                value={summary}
+                                onChange={(e) => setSummary(e.target.value)}
+                                rows={2}
+                                placeholder={(SECTION_HINTS.summary || [])[0]}
+                                className="w-full px-4 py-3 text-base font-semibold text-gray-900 bg-white border-2 border-violet-200 rounded-xl focus:border-violet-500 focus:ring-0 placeholder:text-gray-300 placeholder:italic transition-all resize-none shadow-sm"
+                            />
+                            <p className="mt-2 text-[10px] font-medium text-gray-400 uppercase tracking-widest italic text-center">A very short summary (max 2 lines) that clearly explains your business</p>
+                        </div>
+
                         {/* Month/Year */}
                         <div className="flex items-center gap-3">
                             <select
                                 name="month"
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-blue-500 focus:border-blue-500 border bg-gray-50"
+                                className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
                             >
                                 <option>January</option>
                                 <option>February</option>
@@ -1632,57 +1816,118 @@ export default function CreateUpdate() {
                                 name="year"
                                 value={selectedYear}
                                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-blue-500 focus:border-blue-500 border bg-gray-50"
+                                className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
                             />
                         </div>
 
-                        {/* Metrics — square boxes, click to activate */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                            </label>
-                            <div className="grid grid-cols-5 gap-3">
-                                {METRIC_OPTIONS.map((m) => {
-                                    const active = selectedMetrics.has(m.key);
-                                    return (
+                        {/* Metrics - square boxes, click to activate */}
+                            {(() => {
+                                const allMetrics = [
+                                    ...METRIC_OPTIONS,
+                                    ...customMetrics.map(cm => ({
+                                        key: cm.id,
+                                        label: cm.label,
+                                        placeholder: "Value",
+                                        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
+                                        isCustom: true
+                                    }))
+                                ];
+                                
+                                const addCustomMetric = () => {
+                                    const id = `customMetric_${Date.now()}`;
+                                    setCustomMetrics(prev => [...prev, { id, label: "Custom Metric" }]);
+                                    setSelectedMetrics(prev => {
+                                        const next = new Set(prev);
+                                        next.add(id);
+                                        return next;
+                                    });
+                                };
+
+                                return (
+                                <div className="w-full">
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
+                                    </label>
+                                    <div className="flex flex-wrap gap-3">
+                                        {allMetrics.map((m: any) => {
+                                            const active = selectedMetrics.has(m.key);
+                                            return (
+                                                <div
+                                                    key={m.key}
+                                                    onClick={() => toggleMetric(m.key)}
+                                                    className={clsx(
+                                                        "relative flex-1 min-w-[calc(25%-10px)] max-w-full rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                        active
+                                                            ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                            : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                    )}
+                                                >
+                                                    {m.info && <MetricInfoBadge info={m.info} />}
+                                                    {m.isCustom && (
+                                                        <input type="hidden" name={`${m.key}_label`} value={m.label} />
+                                                    )}
+                                                    <div className={clsx(
+                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                                                        active ? "bg-violet-100" : "bg-white"
+                                                    )}>
+                                                        {m.icon}
+                                                    </div>
+                                                    {active ? (
+                                                        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
+                                                            {m.prefix && (
+                                                                <span className="text-base font-extrabold text-gray-900 pl-1">{m.prefix}</span>
+                                                            )}
+                                                            <input
+                                                                autoFocus={m.isCustom}
+                                                                onFocus={(e) => e.currentTarget.select()}
+                                                                type="text"
+                                                                name={m.key}
+                                                                value={metricValues[m.key] ?? ""}
+                                                                onClick={(e) => e.stopPropagation()}
+                                                                onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                                                                placeholder={m.placeholder}
+                                                                className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5 min-w-0"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-base font-extrabold text-gray-300">-</p>
+                                                    )}
+                                                    
+                                                    {/* Tooltip or Editable Label for custom metrics */}
+                                                    <div className="mt-0.5" onClick={e => e.stopPropagation()}>
+                                                        {m.isCustom ? (
+                                                            <input
+                                                                type="text"
+                                                                value={m.label}
+                                                                onChange={(e) => {
+                                                                    setCustomMetrics(prev => prev.map((cm: any) => cm.id === m.key ? { ...cm, label: e.target.value } : cm));
+                                                                }}
+                                                                className={clsx("font-semibold uppercase tracking-wide text-center bg-transparent border-b border-dashed focus:outline-none text-[10px] w-full", active ? "text-gray-600 border-gray-400 focus:border-violet-500" : "text-gray-400 border-gray-300")}
+                                                            />
+                                                        ) : (
+                                                            <MetricTooltip m={m} active={!!metricValues[m.key]} className="text-[10px]" />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        {/* Add Custom Metric Card */}
                                         <div
-                                            key={m.key}
-                                            onClick={() => toggleMetric(m.key)}
-                                            className={clsx(
-                                                "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                active
-                                                    ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
-                                                    : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
-                                            )}
+                                            onClick={addCustomMetric}
+                                            className="relative min-w-[calc(25%-10px)] max-w-[calc(25%-10px)] rounded-xl border border-dashed border-gray-300 bg-white hover:bg-gray-50 flex flex-col items-center justify-center text-center py-4 px-2 cursor-pointer transition-all shadow-sm group"
                                         >
-                                            <div className={clsx(
-                                                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                active ? "bg-blue-100" : "bg-white"
-                                            )}>
-                                                {m.icon}
+                                            <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center mb-1 group-hover:bg-violet-50 group-hover:border-violet-200 group-hover:text-violet-500 transition-colors">
+                                                <PlusIcon className="w-4 h-4 text-gray-400 group-hover:text-violet-500" />
                                             </div>
-                                            {active ? (
-                                                <input
-                                                    type="text"
-                                                    name={m.key}
-                                                    value={metricValues[m.key] || ""}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
-                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
-                                                />
-                                            ) : (
-                                                <p className="text-base font-extrabold text-gray-300">—</p>
-                                            )}
-                                            <p className={clsx(
-                                                "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                active ? "text-gray-600" : "text-gray-400"
-                                            )}>{m.label}</p>
+                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-violet-500">
+                                                Add Metric
+                                            </span>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
+                                    </div>
+                                </div>
+                                );
+                            })()}
 
                         {/* Qualitative Sections */}
                         <div className="space-y-5">
@@ -1726,7 +1971,7 @@ export default function CreateUpdate() {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex-1 px-6 py-3 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
+                        className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm"
                     >
                         {isSubmitting ? "Reviewing..." : "Review"}
                     </button>

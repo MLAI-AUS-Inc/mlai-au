@@ -72,13 +72,13 @@ export default function DiscoverInvestors() {
         <div className="space-y-8 pb-12">
 
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white shadow-lg relative overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 text-white shadow-lg relative overflow-hidden">
                 <div className="relative z-10">
                     <h1 className="text-2xl font-bold flex items-center gap-3 mb-2">
                         <SparklesIcon className="w-8 h-8" />
                         Discover Investors
                     </h1>
-                    <p className="text-blue-100 max-w-2xl">
+                    <p className="text-violet-100 max-w-2xl">
                         Hit the investment criteria in your monthly updates to unlock connection requests with investors actively looking for startups like yours.
                     </p>
                 </div>
@@ -134,12 +134,12 @@ export default function DiscoverInvestors() {
                             {/* Body Content */}
                             <div className="p-6 space-y-4">
                                 {/* Criteria Box */}
-                                <div className="bg-blue-50/50 rounded-lg p-4 border border-blue-100">
-                                    <h4 className="flex items-center gap-2 text-sm font-bold text-blue-900 mb-2">
-                                        <FunnelIcon className="w-4 h-4 text-blue-600" />
+                                <div className="bg-violet-50/50 rounded-lg p-4 border border-violet-100">
+                                    <h4 className="flex items-center gap-2 text-sm font-bold text-violet-900 mb-2">
+                                        <FunnelIcon className="w-4 h-4 text-violet-600" />
                                         Investment Criteria
                                     </h4>
-                                    <p className="text-sm text-blue-800 leading-relaxed">
+                                    <p className="text-sm text-violet-800 leading-relaxed">
                                         {investor.criteria.description}
                                     </p>
                                 </div>
@@ -171,7 +171,7 @@ export default function DiscoverInvestors() {
                                     className={clsx(
                                         "w-full py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors",
                                         isUnlocked
-                                            ? "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
+                                            ? "bg-violet-600 text-white hover:bg-violet-700 shadow-sm"
                                             : "bg-gray-100 text-gray-400 cursor-not-allowed"
                                     )}
                                     disabled={!isUnlocked}

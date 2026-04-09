@@ -3,3 +3,6 @@
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
 - [x] Update article title/slug constants and registry metadata
 - [x] Adjust SEO config path for the new slug
+- [x] Add a local dev wrapper that keeps Wrangler state inside the repo
+- [x] Update local startup docs and add the missing `.dev.vars.example`
+- [x] Make `dev.bat` resilient when the terminal starts from a `\\?\` path

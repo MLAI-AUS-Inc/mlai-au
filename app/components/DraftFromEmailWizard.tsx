@@ -4,7 +4,7 @@ import { clsx } from "clsx";
 import {
     EnvelopeIcon,
     CheckCircleIcon,
-    XMarkIcon,
+    ArrowLeftIcon,
     SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { Spinner } from "~/components/ui/Spinner";
@@ -20,6 +20,7 @@ export interface PastMonthSummary {
 }
 
 export interface DraftedContent {
+    summary: string;
     highlights: string;
     challenges: string;
     asks: string;
@@ -38,12 +39,13 @@ type WizardStep = "provider" | "drafting";
 // ─── Mock Data ───────────────────────────────────────────────────
 
 const MOCK_DRAFTED_CONTENT: DraftedContent = {
+    summary: "AI-powered platform helping founders automate their investor reporting and fundraising updates.",
     highlights:
-        "Successfully closed seed extension round of $500K from existing investors. Launched new enterprise dashboard feature which received positive feedback from 3 pilot customers. Revenue grew 28% MoM to $45K. Signed LOI with major enterprise client worth $120K ARR. Team expanded with new Head of Product joining from Series B startup.",
+        "Successfully closed seed extension round of $500K from existing investors.\nLaunched new enterprise dashboard feature which received positive feedback from 3 pilot customers.\nRevenue grew 28% MoM to $45K.\nSigned LOI with major enterprise client worth $120K ARR.\nTeam expanded with new Head of Product joining from Series B startup.",
     challenges:
-        "Customer onboarding process still taking 12 days on average, need to streamline. Increased competition in paid acquisition channels driving up CAC by 15%. Looking to optimize our go-to-market strategy for enterprise segment.",
+        "Customer onboarding process still taking 12 days on average, need to streamline.\nIncreased competition in paid acquisition channels driving up CAC by 15%.\nLooking to optimize our go-to-market strategy for enterprise segment.",
     asks:
-        "Would appreciate introductions to VP/Director level contacts at enterprise SaaS companies for customer development interviews. Looking for advice on optimizing our sales process for enterprise deals. Any referrals for experienced enterprise sales hires would be helpful.",
+        "Would appreciate introductions to VP/Director level contacts at enterprise SaaS companies for customer development interviews.\nLooking for advice on optimizing our sales process for enterprise deals.\nAny referrals for experienced enterprise sales hires would be helpful.",
     metrics: {
         revenue: "45,000",
         growth: "28%",
@@ -261,9 +263,9 @@ export default function DraftFromEmailWizard({
                                     <button
                                         type="button"
                                         onClick={onClose}
-                                        className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                                        className="absolute top-6 left-6 text-gray-400 hover:text-gray-600"
                                     >
-                                        <XMarkIcon className="w-5 h-5" />
+                                        <ArrowLeftIcon className="w-5 h-5" />
                                     </button>
                                 )}
 

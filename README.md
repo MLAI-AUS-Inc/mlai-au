@@ -27,6 +27,8 @@ This website is built with React Router v7 and deployed on Cloudflare.
   ```bash
   cp .dev.vars.example .dev.vars
   ```
+  If you only need the site shell running locally, the example values are enough.
+  Add real API keys later if you want live event data.
 
 ### Development
 
@@ -35,7 +37,13 @@ Start the development server:
 bun run dev
 ```
 
+On Windows, you can also use:
+```powershell
+.\dev.bat
+```
+
 Your site will be available at `http://localhost:5173` with hot reloading enabled.
+Local dev stores Wrangler/Miniflare state under `.local/` in this repo so it does not depend on roaming-profile write access.
 
 ### Environment Vars and Secrets
 

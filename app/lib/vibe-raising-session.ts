@@ -8,6 +8,7 @@ export interface Company {
     name: string;
     domain?: string;
     abn?: string;
+    location?: string;
     registered: boolean;
 }
 
@@ -18,6 +19,7 @@ export interface VibeRaisingUser {
     role: "founder" | "investor";
     domain?: string;
     abn?: string;
+    location?: string;
     companyRegistered?: boolean;
     // Multi-company support
     companies?: Company[];
@@ -36,6 +38,7 @@ export function getActiveCompany(user: VibeRaisingUser): Company {
         name: user.companyName,
         domain: user.domain,
         abn: user.abn,
+        location: user.location,
         registered: user.companyRegistered ?? false,
     };
 }
@@ -50,6 +53,7 @@ export function setActiveCompany(user: VibeRaisingUser, companyId: string): Vibe
         companyName: company.name,
         domain: company.domain,
         abn: company.abn,
+        location: company.location,
         companyRegistered: company.registered,
     };
 }
@@ -64,6 +68,7 @@ export function addCompany(user: VibeRaisingUser, company: Company): VibeRaising
         companyName: company.name,
         domain: company.domain,
         abn: company.abn,
+        location: company.location,
         companyRegistered: company.registered,
     };
 }

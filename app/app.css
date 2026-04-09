@@ -147,6 +147,10 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+
+  input:focus::placeholder {
+    color: transparent;
+  }
 }
 
 /* Floating Socials Animation */
