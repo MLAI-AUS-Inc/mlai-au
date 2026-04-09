@@ -1,0 +1,10 @@
+# Local development defaults
+# Copy this file to `.dev.vars` and fill in any private keys you need.
+
+VALUE_FROM_CLOUDFLARE=Hello from Cloudflare
+BACKEND_BASE_URL=https://api.mlai.au
+VITE_SITE_URL=http://localhost:5173
+NEXT_PUBLIC_SITE_URL=http://localhost:5173
+PRIVATE_HUMANITIX_API_KEY=
+PUBLIC_HUMANITIX_API_KEY=
+LUMA_API_KEY=

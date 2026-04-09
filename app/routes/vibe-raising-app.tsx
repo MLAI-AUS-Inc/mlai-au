@@ -20,9 +20,9 @@ import {
 } from "~/lib/vibe-raising";
 import {
   BuildingOffice2Icon,
+  ArrowLeftIcon,
   DocumentTextIcon,
   UsersIcon,
-  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 const FOUNDER_NAVIGATION = [
@@ -155,17 +155,17 @@ function AnnouncementPopup({
         </div>
 
         <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
-            <h2 className="text-2xl font-bold text-gray-900">
-              Welcome to Vibe Raising
-            </h2>
+          <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
             <button
               onClick={onDismiss}
-              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 mt-1"
-              aria-label="Close"
+              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+              aria-label="Back"
             >
-              <XMarkIcon className="w-5 h-5" />
+              <ArrowLeftIcon className="w-5 h-5" />
             </button>
+            <h2 className="text-xl font-bold text-gray-900 flex-1">
+              Welcome to Vibe Raising
+            </h2>
           </div>
 
           <div className="flex-1 px-6 py-6">
@@ -178,7 +178,7 @@ function AnnouncementPopup({
           <div className="px-6 pb-6 flex flex-col gap-3">
             <button
               onClick={handleComplete}
-              className="w-full py-3.5 px-6 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-blue-500/20"
+              className="w-full py-3.5 px-6 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20"
             >
               Get Started →
             </button>

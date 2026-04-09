@@ -14,8 +14,8 @@
     "postbuild": "bunx --yes tsx scripts/submit-indexnow.ts",
     "cf-typegen": "bunx --yes wrangler types",
     "deploy": "bun run build && bunx --yes wrangler deploy",
-    "dev": "react-router dev",
-    "dev:node": "node node_modules/@react-router/dev/bin.js dev",
+    "dev": "node scripts/dev-local.mjs",
+    "dev:node": "node scripts/dev-local.mjs",
     "preview": "bun run build && vite preview",
     "typegen": "bun run cf-typegen 1>/dev/null && react-router typegen",
     "typecheck": "react-router typegen && tsc -b"
