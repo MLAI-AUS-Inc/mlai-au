@@ -36,6 +36,13 @@ export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
         citations: true,
         internalLinks: [],
     },
+    '/articles/featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
         toc: true,
         howTo: false,

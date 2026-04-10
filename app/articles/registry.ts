@@ -83,6 +83,16 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         imageAlt: "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income",
         hasContent: true,
     },
+    'featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
+        title: "What Is AGI in Artificial Intelligence and Why It Matters",
+        date: "2026-04-04",
+        description: "What is AGI in artificial intelligence explained simply, including how it differs from today\u2019s AI systems and how to assess AGI claims without hype.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-agi-in-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46",
+        imageAlt: "Abstract illustration of a human silhouette and AI interface elements representing the idea of artificial general intelligence",
+        hasContent: true,
+      },
     'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
         title: "What Is Artificial Intelligence Used For in Everyday Work and Life",
         date: "2026-04-10",
