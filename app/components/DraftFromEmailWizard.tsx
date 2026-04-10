@@ -2,7 +2,7 @@ import { Fragment, useCallback, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
-  ArrowLeftIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 
 import { Spinner } from "~/components/ui/Spinner";
@@ -191,9 +191,9 @@ export default function DraftFromEmailWizard({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="absolute left-6 top-6 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
                 >
-                  <ArrowLeftIcon className="h-5 w-5" />
+                  <XMarkIcon className="h-5 w-5" />
                 </button>
 
                 <ProviderStep

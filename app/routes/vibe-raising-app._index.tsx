@@ -6,6 +6,7 @@ import {
     getVibeRaisingMonthlyUpdates,
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
+    requireVibeRaisingUnlock,
 } from "~/lib/vibe-raising";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
@@ -41,6 +42,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (!vibeContext.authUser) {
         throw redirect(getVibeRaisingLoginHref(request));
     }
+
+    await requireVibeRaisingUnlock(env, request);
 
     if (!vibeContext.appUser) {
         return null;

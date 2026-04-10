@@ -13,7 +13,7 @@ import { getEnv } from "~/lib/env.server";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
-  isVibeRaisingAllowedEmail,
+  requireVibeRaisingUnlock,
   saveVibeRaisingCompany,
   saveVibeRaisingProfile,
   setVibeRaisingActiveCompany,
@@ -48,14 +48,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
 
-  if (!isVibeRaisingAllowedEmail(vibeContext.authUser.email)) {
-    throw redirect(
-      getVibeRaisingLoginHref(request, undefined, {
-        forceLogin: true,
-        error: "restricted_email",
-      }),
-    );
-  }
+  await requireVibeRaisingUnlock(env, request);
 
   return {
     user: vibeContext.authUser,
@@ -72,14 +65,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
 
-  if (!isVibeRaisingAllowedEmail(vibeContext.authUser.email)) {
-    throw redirect(
-      getVibeRaisingLoginHref(request, undefined, {
-        forceLogin: true,
-        error: "restricted_email",
-      }),
-    );
-  }
+  await requireVibeRaisingUnlock(env, request);
 
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();

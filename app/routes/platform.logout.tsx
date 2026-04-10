@@ -2,10 +2,12 @@ import type { Route } from "./+types/platform.logout";
 import { redirect } from "react-router";
 import { logout } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
+import { clearVibeRaisingUnlockCookie } from "~/lib/vibe-raising";
 
 
 export async function loader({ context, request }: Route.LoaderArgs) {
     const headers = new Headers();
+    headers.append("Set-Cookie", clearVibeRaisingUnlockCookie());
     try {
         const response = await logout(getEnv(context), request);
         if (response.headers['set-cookie']) {
@@ -25,6 +27,7 @@ export async function loader({ context, request }: Route.LoaderArgs) {
 
 export async function action({ context, request }: Route.ActionArgs) {
     const headers = new Headers();
+    headers.append("Set-Cookie", clearVibeRaisingUnlockCookie());
     try {
         const response = await logout(getEnv(context), request);
         if (response.headers['set-cookie']) {
