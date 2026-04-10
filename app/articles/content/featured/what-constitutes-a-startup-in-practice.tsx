@@ -26,7 +26,7 @@ export const DATE_PUBLISHED = "2026-04-06"
 export const DATE_MODIFIED = "2026-04-06"
 export const DESCRIPTION = "What constitutes a startup? Learn the practical traits that usually define one, including scalability, uncertainty, growth intent, and how startups differ from small businesses."
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-778189b4-82c7-4e6b-9b96-c21abeb867eb.jpg?alt=media&token=ffccdbe3-bf8b-46f0-8fa6-a8da9fae2a13"
-const HERO_IMAGE_ALT = "Startup founders h"
+const HERO_IMAGE_ALT = "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income"
 export const FEATURED_FOCUS = "startups"
 
 const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
@@ -236,7 +236,7 @@ export default function ArticleContent() {
           />
           <h2>{"Use the label carefully and focus on the business model"}</h2>
           <p>{"So, what constitutes a startup? The clearest answer is that it is not just a new business. A startup is usually a venture trying to find, prove, and grow a scalable business model while working through real uncertainty. That is why the label fits some young companies and not others. A local business using a proven model can still be an excellent business, but it is usually solving a different problem from a startup built for faster scaling, outside capital, or a broader market."}</p>
-          <p>{"In practice, founders should use the word startup only when it helps them make better decisions. Ask a simple question: are you still validating a repeatable path to growth, or are you already operating a model that is well understood? That distinction can shape how you think about funding, hiring, risk, and growth expectations. It is to be honest about the kind of business you are building, so your strategy matches the reality of the venture."}</p>
+          <p>{"In practice, founders should use the word startup only when it helps them make better decisions. Ask a simple question: are you still validating a repeatable path to growth, or are you already operating a model that is well understood? That distinction can shape how you think about funding, hiring, risk, and growth expectations. The goal is to be honest about the kind of business you are building, so your strategy matches the reality of the venture."}</p>
           <ul>
             <li>{"New alone does not make a business a startup."}</li>
             <li>{"A startup is typically built around scalable growth and uncertainty."}</li>

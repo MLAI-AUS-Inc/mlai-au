@@ -80,7 +80,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         author: "Dr Sam Donegan",
         slug: "featured/what-constitutes-a-startup-in-practice",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-778189b4-82c7-4e6b-9b96-c21abeb867eb.jpg?alt=media&token=ffccdbe3-bf8b-46f0-8fa6-a8da9fae2a13",
-        imageAlt: "Startup founders h",
+        imageAlt: "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income",
         hasContent: true,
     },
     'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
