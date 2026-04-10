@@ -34,3 +34,7 @@
 - [x] Move the credibility section from the MLAI homepage to the Vibe Raising landing flow
 - [x] Move the credibility section from the login flow to the founder dashboard hero page
 - [x] Simplify the founder dashboard credibility section and remove the beige frame styling
+- [x] Add functioning Google sign-in to the Vibe Raising login page
+- [x] Add Google client ID env scaffolding for local and deployed Vibe Raising sign-in
+- [x] Run typecheck after the Google login work
+- [x] Keep the Google login option visible when the client ID is not configured

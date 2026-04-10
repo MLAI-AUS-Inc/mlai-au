@@ -12,7 +12,8 @@
   "main": "./workers/app.ts",
   "vars": {
     "VALUE_FROM_CLOUDFLARE": "Hello from Cloudflare",
-    "BACKEND_BASE_URL": "https://api.mlai.au"
+    "BACKEND_BASE_URL": "https://api.mlai.au",
+    "VITE_GOOGLE_CLIENT_ID": ""
   },
   "routes": [
     {
