@@ -3,7 +3,7 @@
 
 VALUE_FROM_CLOUDFLARE=Hello from Cloudflare
 BACKEND_BASE_URL=https://api.mlai.au
-VIBE_RAISING_UNLOCK_SECRET=replace-me-for-local-dev
+VIBE_RAISING_UNLOCK_SECRET=ilovemlai
 VITE_SITE_URL=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
 PRIVATE_HUMANITIX_API_KEY=
