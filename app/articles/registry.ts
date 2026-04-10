@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
+        title: "What Is Artificial Intelligence Used For in Everyday Work and Life",
+        date: "2026-04-10",
+        description: "What is artificial intelligence used for? Learn the main everyday and business uses of AI, from pattern recognition and recommendations to automation and decision support.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ba426870-f23d-4a68-ba38-cd4ab3eb8d23.jpg?alt=media&token=b24f96bc-d8ff-4b6c-970e-e4f749a14259",
+        imageAlt: "Close-up of coworkers using an AI assistant on a laptop for everyday work tasks and decision support",
+        hasContent: true,
+    },
     'featured/why-founders-clubs-work-for-early-stage-growth': {
         title: "Why Founders Clubs Work for Early Stage Growth",
         date: "2026-04-08",
