@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-constitutes-a-startup-in-practice': {
+        title: "What Constitutes a Startup in Practice",
+        date: "2026-04-06",
+        description: "What constitutes a startup? Learn the practical traits that usually define one, including scalability, uncertainty, growth intent, and how startups differ from small businesses.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-constitutes-a-startup-in-practice",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-778189b4-82c7-4e6b-9b96-c21abeb867eb.jpg?alt=media&token=ffccdbe3-bf8b-46f0-8fa6-a8da9fae2a13",
+        imageAlt: "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income",
+        hasContent: true,
+    },
     'featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
         title: "What Is AGI in Artificial Intelligence and Why It Matters",
         date: "2026-04-04",
