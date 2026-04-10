@@ -69,17 +69,12 @@ export default function CompanySetup() {
                 <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-100">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-blue-50 mb-4">
-                            <BuildingOffice2Icon className="w-7 h-7 text-blue-600" />
+                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-50 mb-4">
+                            <BuildingOffice2Icon className="w-7 h-7 text-violet-600" />
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                            {isAddingNew ? "Add Another Company" : "Register Your Company"}
+                            {isAddingNew ? "Add Another Company" : "Let's start with some basic details"}
                         </h1>
-                        <p className="text-gray-500 text-sm">
-                            {isAddingNew
-                                ? "Register a new company to create investor updates for."
-                                : "Quick setup before your first investor update — takes less than a minute."}
-                        </p>
                     </div>
 
                     <Form method="POST" className="space-y-6">
@@ -97,7 +92,7 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.name || user.companyName}
                                     placeholder="Acme Inc."
                                     required
-                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
                         </div>
@@ -116,7 +111,7 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.domain || ""}
                                     placeholder="example.com.au"
                                     required
-                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
                         </div>
@@ -135,18 +130,18 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.abn || ""}
                                     placeholder="51 824 753 556"
                                     required
-                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
-                            <p className="mt-1.5 text-xs text-gray-400">Australian Business Number — 11 digits</p>
+                            <p className="mt-1.5 text-xs text-gray-400">Australian Business Number - 11 digits</p>
                         </div>
 
                         {/* Submit */}
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`w-full py-4 px-6 bg-blue-600 text-white font-bold rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-blue-500/20
-                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]"}`}
+                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-violet-500/20
+                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
                         >
                             {isSubmitting ? "Saving..." : isAddingNew ? "Add Company" : "Continue"}
                         </button>

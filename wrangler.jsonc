@@ -47,6 +47,7 @@
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
+   * Set `VIBE_RAISING_UNLOCK_SECRET` as a Wrangler secret before deploy.
    */
   /**
    * Static Assets

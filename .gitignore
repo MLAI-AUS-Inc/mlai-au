@@ -9,6 +9,7 @@
 # Cloudflare
 .mf
 .wrangler
+.local/
 .dev.vars*
 !.dev.vars.example
 
