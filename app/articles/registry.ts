@@ -80,7 +80,7 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
         author: "Dr Sam Donegan",
         slug: "featured/what-is-agi-in-artificial-intelligence-and-why-it-matters",
         image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46",
-        imageAlt: "What Is AGI in Artificial Intelligence and Why It Matters",
+        imageAlt: "Abstract illustration of a human silhouette and AI interface elements representing the idea of artificial general intelligence",
         hasContent: true,
       },
     'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {

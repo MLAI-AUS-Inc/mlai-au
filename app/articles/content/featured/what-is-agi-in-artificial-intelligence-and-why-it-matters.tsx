@@ -26,7 +26,7 @@ export const DATE_PUBLISHED = "2026-04-04"
 export const DATE_MODIFIED = "2026-04-04"
 export const DESCRIPTION = "What is AGI in artificial intelligence explained simply, including how it differs from today\u2019s AI systems and how to assess AGI claims without hype."
 const HERO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46"
-const HERO_IMAGE_ALT = "What Is AGI in Artificial Intelligence and Why It Matters"
+const HERO_IMAGE_ALT = "Abstract illustration of a human silhouette and AI interface elements representing the idea of artificial general intelligence"
 export const FEATURED_FOCUS = "ai"
 
 const AUTHOR_PROFILE = getAuthorProfile(DEFAULT_AUTHOR_KEY)
@@ -169,7 +169,7 @@ export default function ArticleContent() {
           <h2>{"How AGI Differs From Today\u2019s AI Systems"}</h2>
           <p>{"Artificial general intelligence, or AGI, is usually described as a hypothetical kind of AI that could handle a very wide range of intellectual tasks at a human-like level. The key idea is flexibility. An AGI system would not be limited to one narrow job or one fixed domain. It would be able to learn, adapt, transfer knowledge between areas, and deal with new problems without needing separate task-specific design each time. By contrast, most AI in use today is narrow AI: systems built to do particular kinds of work well inside defined boundaries."}</p>
           <p>{"But that does not automatically make it AGI. These systems still rely on patterns learned from training data and are used inside bounded task setups. In simple terms, a chatbot that is good at conversation is still not the same as a system that can independently understand and perform any intellectual task across domains. In the same way, an image model may generate strong visuals, but that does not mean it can plan a business strategy, run a scientific experiment, or move confidently into a totally new kind of problem on its own."}</p>
-          <p>{"For how agi differs from today\u2019s ai systems, focus on Works well on defined tasks or domains and Would need broad, transferable ability across many tasks, including new ones."}</p>
+          <p>{"A practical way to frame the difference is this: today\u2019s AI can work well on defined tasks or domains, while AGI would need broad, transferable ability across many tasks, including new ones."}</p>
           <ul>
             <li>{"Works well on defined tasks or domains."}</li>
             <li>{"Would need broad, transferable ability across many tasks, including new ones."}</li>
@@ -241,7 +241,7 @@ export default function ArticleContent() {
           <h2>{"The Practical Takeaway for Anyone Following AI"}</h2>
           <p>{"The simplest way to think about AGI is this: it is still a hypothetical idea about AI that can handle a very wide range of tasks at a human-like level, rather than just a strong tool for one category of work. That matters because many current systems look flexible in conversation, but that does not automatically make them generally intelligent. Across the main definitions, AGI is tied to broad capability, transfer across domains, and the ability to handle new problems without narrow task-specific setup."}</p>
           <p>{"Can the system reliably transfer what it learns to very different tasks? You do not need to predict when AGI will arrive to follow the field well. It is more useful to understand what AGI would actually mean, recognise that today\u2019s AI is still mostly specialised, and stay curious without treating every impressive product launch as proof that AGI is here."}</p>
-          <p>{"For the practical takeaway for anyone following ai, focus on Treat AGI as a hypothetical form of broad intelligence, not a label for every advanced AI product, Assume current AI is powerful but mostly specialised unless there is strong evidence of cross-domain transfer, and Judge AGI claims by adaptability, transfer, and independent verification rather than excitement alone."}</p>
+          <p>{"The practical takeaway is to treat AGI as a hypothetical form of broad intelligence, not a label for every advanced AI product. Assume current AI is powerful but mostly specialised unless there is strong evidence of cross-domain transfer, and judge AGI claims by adaptability, transfer, and independent verification rather than excitement alone."}</p>
           <ul>
             <li>{"Treat AGI as a hypothetical form of broad intelligence, not a label for every advanced AI product."}</li>
             <li>{"Assume current AI is powerful but mostly specialised unless there is strong evidence of cross-domain transfer."}</li>
