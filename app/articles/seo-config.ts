@@ -30,6 +30,41 @@ export type ArticleSeoConfig = {
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
     '/articles/featured/what-constitutes-a-startup-in-practice': {
+  toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/why-founders-clubs-work-for-early-stage-growth': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/what-is-inference-in-artificial-intelligence-and-why-it-matters': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/how-to-build-ai-for-real-business-problems': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
+    '/articles/featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers': {
         toc: true,
         howTo: false,
         mediaObject: false,

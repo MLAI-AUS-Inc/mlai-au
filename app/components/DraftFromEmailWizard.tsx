@@ -58,7 +58,7 @@ function ProviderStep({
           className={clsx(
             "relative flex flex-col items-center gap-4 rounded-xl border-2 p-6 transition-all duration-200",
             gmailBusy
-              ? "border-blue-300 bg-blue-50"
+              ? "border-violet-300 bg-violet-50"
               : "border-gray-200 hover:border-red-300 hover:bg-red-50/30 hover:shadow-md",
             connectingProvider !== null && !gmailBusy && "cursor-not-allowed opacity-50",
           )}

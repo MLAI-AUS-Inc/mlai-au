@@ -117,7 +117,6 @@ export interface VibeRaisingStartupUpdateRunProgress {
   terminalState?: string | null;
   generatedDraftMonths: string[];
 }
-
 export interface VibeRaisingEmailDraftMonth {
   draftId?: number;
   isoMonth?: string;

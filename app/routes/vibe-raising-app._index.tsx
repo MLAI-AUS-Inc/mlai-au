@@ -6,6 +6,7 @@ import {
     getVibeRaisingMonthlyUpdates,
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
+    requireVibeRaisingUnlock,
 } from "~/lib/vibe-raising";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
@@ -41,6 +42,8 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     if (!vibeContext.authUser) {
         throw redirect(getVibeRaisingLoginHref(request));
     }
+
+    await requireVibeRaisingUnlock(env, request);
 
     if (!vibeContext.appUser) {
         return null;
@@ -112,12 +115,12 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
             active
-                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-40"
         )}>
             <div className={clsx(
                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-blue-100" : "bg-white"
+                active ? "bg-violet-100" : "bg-white"
             )}>
                 <Icon className="w-4 h-4 text-gray-400" />
             </div>
@@ -140,12 +143,12 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
             active
-                ? "border-blue-400 bg-blue-50/60 ring-1 ring-blue-200 shadow-sm"
+                ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
         )}>
             <div className={clsx(
                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-blue-100" : "bg-white"
+                active ? "bg-violet-100" : "bg-white"
             )}>
                 <Icon className="w-4 h-4 text-gray-400" />
             </div>
@@ -155,7 +158,7 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
                     value={value}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-blue-300 focus:border-blue-500 focus:outline-none text-center py-0.5"
+                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                 />
             ) : (
                 <p className="text-base font-extrabold text-gray-300">—</p>
@@ -178,8 +181,8 @@ const METRIC_OPTIONS = [
 ];
 
 const GRADIENTS = [
-    "from-indigo-500 via-purple-500 to-pink-400 group-hover:from-indigo-600 group-hover:via-purple-600 group-hover:to-pink-500",
-    "from-blue-500 via-cyan-500 to-teal-400 group-hover:from-blue-600 group-hover:via-cyan-600 group-hover:to-teal-500",
+    "from-violet-500 via-purple-500 to-pink-400 group-hover:from-violet-600 group-hover:via-purple-600 group-hover:to-pink-500",
+    "from-violet-500 via-cyan-500 to-teal-400 group-hover:from-violet-600 group-hover:via-cyan-600 group-hover:to-teal-500",
     "from-rose-500 via-red-500 to-orange-400 group-hover:from-rose-600 group-hover:via-red-600 group-hover:to-orange-500",
     "from-emerald-500 via-teal-500 to-cyan-400 group-hover:from-emerald-600 group-hover:via-teal-600 group-hover:to-cyan-500",
     "from-fuchsia-500 via-pink-500 to-rose-400 group-hover:from-fuchsia-600 group-hover:via-pink-600 group-hover:to-rose-500",
@@ -238,10 +241,10 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     return (
         <div className={clsx(
             "bg-white rounded-xl border shadow-sm overflow-hidden transition-shadow",
-            isCurrent ? "border-blue-200 ring-1 ring-blue-100" : "border-gray-200",
+            isCurrent ? "border-violet-200 ring-1 ring-violet-100" : "border-gray-200",
             expanded && "hover:shadow-md"
         )}>
-            {/* Collapsed header — plain white */}
+            {/* Collapsed header - plain white */}
             {!expanded && (
                 <button
                     type="button"
@@ -249,10 +252,10 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-gray-50/50 transition-colors"
                 >
                     <div className="flex items-center gap-3">
-                        {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0" />}
+                        {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
                         <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
-                        {isCurrent && <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Current</span>}
+                        {isCurrent && <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">Current</span>}
                         {update.score && (
                             <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
                                 {update.score}
@@ -261,7 +264,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     </div>
                     <div className="flex items-center gap-3">
                         {update.investorsSentTo > 0 && (
-                            <span className="flex items-center gap-1 text-blue-600 text-xs font-medium">
+                            <span className="flex items-center gap-1 text-violet-600 text-xs font-medium">
                                 <UserGroupIcon className="w-3.5 h-3.5" />
                                 {update.investorsSentTo} sent
                             </span>
@@ -372,7 +375,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 <button
                                     type="button"
                                     onClick={() => setEditing(true)}
-                                    className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-blue-600 transition-colors px-2.5 py-1 rounded-md hover:bg-blue-50"
+                                    className="flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-violet-600 transition-colors px-2.5 py-1 rounded-md hover:bg-violet-50"
                                 >
                                     <PencilSquareIcon className="w-3.5 h-3.5" />
                                     Edit
@@ -412,7 +415,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                         className={clsx(
                                             "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                                             selectedMetrics.has(m.key)
-                                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                ? "bg-violet-50 text-violet-700 border-violet-200"
                                                 : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100"
                                         )}
                                     >
@@ -447,7 +450,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     ref={highlightsRef}
                                     value={highlights}
                                     onChange={(e) => setHighlights(e.target.value)}
-                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
                                     rows={3}
                                 />
                             ) : (
@@ -466,7 +469,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     ref={challengesRef}
                                     value={challenges}
                                     onChange={(e) => setChallenges(e.target.value)}
-                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
                                     rows={3}
                                 />
                             ) : (
@@ -477,7 +480,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {/* Asks */}
                         <div>
                             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-blue-500" />
+                                <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-violet-500" />
                                 Ask from Investors
                             </h4>
                             {editing ? (
@@ -485,7 +488,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     ref={asksRef}
                                     value={asks}
                                     onChange={(e) => setAsks(e.target.value)}
-                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-blue-500 focus:border-blue-500 resize-none overflow-hidden"
+                                    className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
                                     rows={3}
                                 />
                             ) : (
@@ -528,10 +531,10 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     {/* Content over the image */}
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-16">
                         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg whitespace-nowrap">
-                            Ready to raise your vibe, {firstName}?
+                            Let's get you ready to raise, {firstName}.
                         </h1>
                         <p className="text-base sm:text-lg text-white/80 max-w-md mx-auto mb-8 leading-snug">
-                            Build lasting investor relationships through
+                            Build investor trust and secure funding through
                             <br />
                             consistent, transparent monthly updates.
                         </p>
@@ -545,7 +548,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </div>
                 </div>
 
-                {/* How It Works — thin vertical line separators */}
+                {/* How It Works - thin vertical line separators */}
                 <div className="px-6 py-14">
                     <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">How It Works</h2>
                     <div className="flex items-center justify-center max-w-5xl mx-auto">
@@ -556,7 +559,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         ].map((item, idx) => (
                             <div key={item.step} className="flex items-center">
                                 <div className="text-center px-8 sm:px-14 space-y-2">
-                                    <span className="text-3xl font-extrabold text-blue-600">{item.step}</span>
+                                    <span className="text-3xl font-extrabold text-violet-600">{item.step}</span>
                                     <p className="font-bold text-gray-900 text-sm whitespace-nowrap">{item.title}</p>
                                     <p className="text-xs text-gray-500 whitespace-nowrap">{item.desc}</p>
                                 </div>
@@ -568,7 +571,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </div>
                 </div>
 
-                {/* Warning card — investor outreach timing */}
+                {/* Warning card - investor outreach timing */}
                 <div className="max-w-4xl mx-auto px-6 pb-14">
                     <div className="bg-white rounded-2xl p-10 border border-red-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
                         <div className="flex items-start gap-5">
@@ -579,7 +582,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 <h2 className="text-2xl font-bold text-gray-900">Don't Wait Until You Need Money</h2>
                                 <p className="text-gray-600 leading-relaxed text-lg">
                                     If you're reaching out to investors only when you need capital, it's already too late.
-                                    Investors can smell desperation — and when that moment comes, you've already messed up.
+                                    Investors can smell desperation - and when that moment comes, you've already messed up.
                                     The best founders plan ahead. Start building relationships at least 6 months before you
                                     need funding. Send regular updates, share your progress and challenges honestly.
                                     We will match you with the proper investors based on your updates, so when the time comes
@@ -603,7 +606,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 </div>
                 <Link
                     to="/vibe-raising/create-update"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
                 >
                     <PlusIcon className="w-4 h-4" />
                     Create Update
@@ -640,7 +643,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 </div>
             )}
 
-            {/* All update cards — current expanded, past collapsed */}
+            {/* All update cards - current expanded, past collapsed */}
             <div className="space-y-3">
                 {updates.map((update) => (
                     <UpdateCard key={`${user.activeCompanyId || "default"}-${update.id}`} update={update} isCurrent={update.isCurrent} user={user} />
@@ -660,7 +663,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
             </div>
 
             {/* Free Preview Mode Banner */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
+            <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden">
                 <div className="relative z-10 space-y-4">
                     <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider opacity-90">
                         <EyeIcon className="w-5 h-5" />
@@ -673,7 +676,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                     <div className="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
                         <div className="bg-white h-full w-[5%]" />
                     </div>
-                    <button className="bg-white text-blue-600 px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors hover:bg-blue-50">
+                    <button className="bg-white text-violet-600 px-6 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 transition-colors hover:bg-violet-50">
                         <SparklesIcon className="w-4 h-4" />
                         Upgrade for $8.99/month
                     </button>
@@ -688,7 +691,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                     <input
                         type="text"
                         placeholder="Search by company or founder name..."
-                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                        className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all font-medium"
                     />
                 </div>
                 <button className="px-6 py-3 border border-gray-200 rounded-xl font-bold text-gray-600 flex items-center gap-2 hover:bg-gray-50 transition-colors">
@@ -704,7 +707,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                     <div key={update.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                         {/* Hero gradient banner */}
                         <div className="relative w-full h-28 overflow-hidden">
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-400" />
                             <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
                                 <circle cx="120" cy="80" r="100" fill="white" />
                                 <circle cx="650" cy="140" r="70" fill="white" />
