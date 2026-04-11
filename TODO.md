@@ -1,3 +1,10 @@
+- [x] Add cleanup redirects for broken internal article CTA URLs
+- [x] Replace broken article CTA hrefs and copy with live destinations
+- [x] Add an internal article-link validator to `bun run typecheck`
+- [x] Run redirect checks, `bun run typecheck`, and `bun run build`
+- [x] Remove the public `/hackathon` route from the app and sitemap sources
+- [x] Regenerate `public/sitemap.xml`
+- [x] Run `bun run typecheck`
 - [x] Merge PR 366 local dev wrapper and docs updates
 - [x] Reapply safe Vibe Raising UI polish from PR 366
 - [x] Reconcile Vibe Raising dashboard and create-update styling without changing behavior

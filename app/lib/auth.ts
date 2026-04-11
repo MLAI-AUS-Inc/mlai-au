@@ -1,7 +1,7 @@
 import { axiosInstance, API_URL } from "./api";
 import axios from "axios";
 
-export type AuthAppName = "esafety" | "hospital" | "vibe-raising";
+export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
 
 // Helper to get the base URL from the environment or fall back to the static config
 function getBaseUrl(env: Env): string {
@@ -39,6 +39,8 @@ export async function sendMagicLink(env: Env, body: {
         body.app ||
         (body.next?.startsWith("/esafety")
             ? "esafety"
+            : body.next?.startsWith("/innovate-connect-alliance")
+              ? "innovate-connect-alliance"
             : body.next?.startsWith("/vibe-raising")
               ? "vibe-raising"
               : "hospital");

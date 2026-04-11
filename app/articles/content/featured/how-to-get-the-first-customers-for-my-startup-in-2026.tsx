@@ -266,10 +266,10 @@ export default function ArticleContent() {
 
         <div className="my-12 not-prose">
           <ArticleCompanyCTA
-            title="Turn early traction into a repeatable plan"
-            body="Use a simple founder-first playbook: pick one reachable segment, test one clear offer, track what buyers say, and document proof from every early win."
-            buttonText="Get the startup traction template"
-            buttonHref="/templates/startup-traction"
+            title="Keep building your traction plan"
+            body="Use the go-to-market guide to narrow your segment, sharpen your offer, and turn early customer signals into a repeatable motion."
+            buttonText="Read the go-to-market guide"
+            buttonHref="/articles/featured/go-to-market-for-startups"
           />
         </div>
       </div>

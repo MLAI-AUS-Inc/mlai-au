@@ -23,12 +23,13 @@ export const meta: Route.MetaFunction = () => [
 function getDefaultNext(app: AuthAppName | null | undefined): string {
     if (app === "hospital") return "/hospital/app";
     if (app === "esafety") return "/esafety/dashboard";
+    if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
     if (app === "vibe-raising") return "/vibe-raising";
     return "/hackathons";
 }
 
 function parseAuthApp(value: string | null): AuthAppName | null {
-    return value === "esafety" || value === "hospital" || value === "vibe-raising"
+    return value === "esafety" || value === "hospital" || value === "innovate-connect-alliance" || value === "vibe-raising"
         ? value
         : null;
 }
@@ -364,6 +365,7 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "innovate-connect-alliance") return "Sign in to Innovate Connect Alliance";
         if (app === "vibe-raising") return "Sign in to Vibe Raising";
         return "Welcome!";
     };
@@ -371,6 +373,10 @@ export default function PlatformLogin() {
     const getSupportText = () => {
         if (app === "vibe-raising") {
             return "Use your email to access Vibe Raising. You will need the admin password before the magic link flow continues.";
+        }
+
+        if (app === "innovate-connect-alliance") {
+            return "Provide your email to create your account and access Innovate Connect Alliance.";
         }
 
         return "Provide your email to create your account";

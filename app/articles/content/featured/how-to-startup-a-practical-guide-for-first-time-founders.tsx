@@ -274,7 +274,7 @@ export default function ArticleContent() {
             title="Need a practical next step?"
             body="Use the companion startup planning resources to turn this guide into a short action plan: validate the problem, define roles, map revenue assumptions, and prepare for registration and finance setup."
             buttonText="Explore startup resources"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles"
           />
         </div>
       </div>

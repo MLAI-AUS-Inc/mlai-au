@@ -12,6 +12,13 @@ export default [
   route("/terms", "routes/terms.tsx"),
   route("/resources", "routes/resources.tsx"),
   route("/roo", "routes/roo.tsx"),
+  route("/practical-ai-learning-beginners-builders", "routes/article-link-cleanups.tsx", { id: "cleanup-practical-ai-learning" }),
+  route("/ai-startup-building-pitching", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-building-pitching" }),
+  route("/templates/startup-traction", "routes/article-link-cleanups.tsx", { id: "cleanup-startup-traction-template" }),
+  route("/ai-careers-learning", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-careers-learning" }),
+  route("/ai-engineering-development", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-engineering-development" }),
+  route("/ai-founder-community-pitching-ideas", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-founder-community-pitching-ideas" }),
+  route("/ai-events-meetups-australia", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-events-meetups-australia" }),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
@@ -43,8 +50,15 @@ export default [
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
+  route("/innovate-connect-alliance", "routes/innovate-connect-alliance.tsx", [
+    index("routes/innovate-connect-alliance.dashboard.tsx"),
+    route("team", "routes/innovate-connect-alliance.team.tsx"),
+    route("submissions", "routes/innovate-connect-alliance.submissions.tsx"),
+    route("docs", "routes/innovate-connect-alliance.docs.tsx"),
+    route("profile", "routes/innovate-connect-alliance.profile.tsx"),
+  ]),
+
   // Hackathon pages
-  route("/hackathon", "routes/hackathon.tsx"),
   route("/hackathons", "routes/hackathons.tsx"),
   route("/medhack", "routes/medhack.tsx"),
 

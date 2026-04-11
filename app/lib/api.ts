@@ -2,6 +2,7 @@ import axios, { type InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
 
 // Vite uses import.meta.env instead of process.env
 const DEFAULT_SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
+const DEFAULT_LOCAL_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const resolveApiBase = () => {
     // In Vite, we access env vars via import.meta.env
@@ -16,13 +17,11 @@ const resolveApiBase = () => {
             hostname.endsWith('.localhost');
 
         if (isLocalhost) {
-            // If we are on esafety.localhost, point to the backend on port 80 with the same hostname
-            // This ensures cookies with Domain=.localhost are sent/received correctly
+            // Use the configured local API origin when developing on localhost.
             if (hostname === 'esafety.localhost') {
-                return 'http://localhost';
+                return DEFAULT_LOCAL_API_URL;
             }
-            // Fallback for standard localhost or other local domains
-            return 'http://localhost';
+            return DEFAULT_LOCAL_API_URL;
         }
 
         // Production domain check
@@ -34,7 +33,7 @@ const resolveApiBase = () => {
     }
 
     // Server-side (SSR) fallback
-    return configured || 'http://localhost';
+    return configured || DEFAULT_LOCAL_API_URL;
 };
 
 export const API_URL = resolveApiBase();

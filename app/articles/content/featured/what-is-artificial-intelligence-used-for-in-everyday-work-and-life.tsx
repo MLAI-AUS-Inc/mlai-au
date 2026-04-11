@@ -271,7 +271,7 @@ export default function ArticleContent() {
             title="Explore practical AI learning"
             body="If you want to move from definitions to useful examples, start with beginner-friendly resources on real AI workflows, common tools, and how to evaluate a sensible first use case."
             buttonText="See practical AI guides"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles/featured/how-to-get-started-with-ai-2026"
           />
         </div>
       </div>

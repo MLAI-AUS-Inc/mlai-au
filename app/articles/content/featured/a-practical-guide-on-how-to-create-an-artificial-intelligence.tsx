@@ -269,8 +269,8 @@ export default function ArticleContent() {
           <ArticleCompanyCTA
             title="Keep building your AI roadmap"
             body="Use this guide as a starting point, then explore more MLAI resources on AI learning, engineering, product design, and the Australian AI ecosystem."
-            buttonText="Explore MLAI resources"
-            buttonHref="/ai-careers-learning"
+            buttonText="Browse MLAI articles"
+            buttonHref="/articles"
           />
         </div>
       </div>

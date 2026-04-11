@@ -279,7 +279,7 @@ export default function ArticleContent() {
             title="Need a practical path to build AI?"
             body="Start with one clear workflow, choose the right build path for your team, and use practical guides to move from idea to a tested first version."
             buttonText="Explore practical AI resources"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonHref="/articles/featured/how-to-get-started-with-ai-2026"
           />
         </div>
       </div>
