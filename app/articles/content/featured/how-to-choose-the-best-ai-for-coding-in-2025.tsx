@@ -264,8 +264,8 @@ export default function ArticleContent() {
           <ArticleCompanyCTA
             title="Explore more AI development resources"
             body="Compare practical guides, learning paths, and industry insights to help your team use AI tools more effectively across engineering workflows."
-            buttonText="Browse AI resources"
-            buttonHref="/ai-engineering-development"
+            buttonText="Browse AI articles"
+            buttonHref="/articles"
           />
         </div>
       </div>

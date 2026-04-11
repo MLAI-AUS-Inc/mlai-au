@@ -107,8 +107,8 @@ export default function ArticlePage() {
         <ArticleCallout variant="info">
           <p className="text-sm text-gray-800">
             This guide is part of our broader series on {TOPIC}. For a career‑oriented overview, see our{' '}
-            <Link to="/articles/ai-careers-australia" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
-              AI careers in Australia guide
+            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+              AI career guides
             </Link>
             . Prefer to browse?{' '}
             <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
@@ -232,7 +232,7 @@ export default function ArticlePage() {
             <li><strong>Strengthen fundamentals:</strong> statistics, optimisation, software engineering, data practices.</li>
             <li><strong>Build evaluation skills:</strong> design and run robust tests; interpret uncertainty; communicate limits.</li>
             <li><strong>Focus on governance:</strong> privacy by design, risk assessment, documentation, and incident response.</li>
-            <li><strong>Engage locally:</strong> Australian context, standards, and networks matter. See our{' '}<Link to="/articles/ai-careers-australia">AI careers in Australia guide</Link>.</li>
+            <li><strong>Engage locally:</strong> Australian context, standards, and networks matter. See our{' '}<Link to="/articles">AI career guides</Link>.</li>
           </ul>
 
           <h2>Responsible development and governance in Australia</h2>

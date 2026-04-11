@@ -278,8 +278,8 @@ export default function ArticleContent() {
           <ArticleCompanyCTA
             title="Need a clearer startup GTM plan?"
             body="Use the guide to narrow your first customer, choose a small set of channels, and build a short test loop around real customer behaviour."
-            buttonText="Explore startup resources"
-            buttonHref="/practical-ai-learning-beginners-builders"
+            buttonText="Browse startup articles"
+            buttonHref="/articles"
           />
         </div>
       </div>

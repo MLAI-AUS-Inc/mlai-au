@@ -8,6 +8,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
+    "check:article-internal-links": "bunx --yes tsx scripts/check-article-internal-links.ts",
     "generate:sitemap": "bunx --yes tsx scripts/generate-sitemap.ts",
     "prebuild": "bunx --yes tsx scripts/generate-sitemap.ts",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' react-router build",
@@ -18,7 +19,7 @@
     "dev:node": "node scripts/dev-local.mjs",
     "preview": "bun run build && vite preview",
     "typegen": "bun run cf-typegen 1>/dev/null && react-router typegen",
-    "typecheck": "react-router typegen && tsc -b"
+    "typecheck": "react-router typegen && tsc -b && bun run check:article-internal-links"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.9",

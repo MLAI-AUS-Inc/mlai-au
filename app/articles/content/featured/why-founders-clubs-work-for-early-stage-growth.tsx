@@ -273,10 +273,10 @@ export default function ArticleContent() {
 
         <div className="my-12 not-prose">
           <ArticleCompanyCTA
-            title="Explore practical ways to connect with founders"
-            body="If you are comparing founder communities, start with formats that create real participation, not just audience size. Look for clear cadence, relevant peers, and a structure that helps members keep showing up."
-            buttonText="See founder community resources"
-            buttonHref="/ai-events-meetups-australia"
+            title="Find events and communities that fit"
+            body="If you are comparing founder communities, start with formats that create real participation, then look for local events where the follow-up and peer fit are strong."
+            buttonText="Read the networking guide"
+            buttonHref="/articles/featured/how-to-find-networking-events"
           />
         </div>
       </div>

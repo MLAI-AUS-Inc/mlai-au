@@ -267,10 +267,10 @@ export default function ArticleContent() {
 
         <div className="my-12 not-prose">
           <ArticleCompanyCTA
-            title="Use a simple cofounder alignment checklist"
-            body="Turn your discussions into a clear review of vision, commitment, decision rights, and conflict norms before making the partnership official."
-            buttonText="Get the template"
-            buttonHref="/ai-startup-building-pitching"
+            title="Go deeper on cofounder alignment"
+            body="Compare short trials, hard questions, and decision checkpoints before you formalise the partnership with a cofounder."
+            buttonText="Read the follow-up guide"
+            buttonHref="/articles/featured/how-to-test-for-a-cofounder-values-match-before-you-commit"
           />
         </div>
       </div>

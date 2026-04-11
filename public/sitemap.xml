@@ -31,11 +31,6 @@
   <priority>0.6</priority>
  </url>
  <url>
-  <loc>https://mlai.au/hackathon</loc>
-  <changefreq>weekly</changefreq>
-  <priority>0.7</priority>
- </url>
- <url>
   <loc>https://mlai.au/hackathons</loc>
   <changefreq>weekly</changefreq>
   <priority>0.7</priority>

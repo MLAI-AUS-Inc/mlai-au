@@ -275,8 +275,8 @@ export default function ArticleContent() {
           <ArticleCompanyCTA
             title="Build your first investor target list"
             body="Start with a practical system: define your Ideal Investor Profile, shortlist relevant investors, and map possible intro paths before you begin active fundraising."
-            buttonText="Explore founder resources"
-            buttonHref="/australian-ai-ecosystem"
+            buttonText="Browse founder articles"
+            buttonHref="/articles"
           />
         </div>
       </div>

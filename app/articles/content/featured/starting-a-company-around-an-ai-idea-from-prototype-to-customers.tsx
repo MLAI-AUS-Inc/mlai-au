@@ -275,8 +275,8 @@ export default function ArticleContent() {
           <ArticleCompanyCTA
             title="Need a clearer path from AI prototype to pilot?"
             body="Use the article roadmap to narrow the problem, package a small offer, and test it with real buyers before scaling. A focused first use case is usually the fastest route to evidence and early revenue."
-            buttonText="Explore founder resources"
-            buttonHref="/ai-founder-community-pitching-ideas"
+            buttonText="Browse founder articles"
+            buttonHref="/articles"
           />
         </div>
       </div>

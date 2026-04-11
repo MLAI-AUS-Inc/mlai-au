@@ -6,6 +6,9 @@ export interface Team {
     team_name: string;
     team_id: number;
     members: TeamMember[];
+    avatar_url?: string | null;
+    member_count?: number;
+    is_valid_team_size?: boolean;
 }
 
 export type UserRole = 'admin' | 'participant' | 'professional';
@@ -24,6 +27,7 @@ export interface User {
     team?: Team | null;
     hospital_team?: Team | null;
     esafety_team?: Team | null;
+    innovate_connect_alliance_team?: Team | null;
 }
 
 export interface AuthState {
