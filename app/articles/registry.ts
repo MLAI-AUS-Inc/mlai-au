@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-general-artificial-intelligence-and-why-it-matters': {
+        title: "What Is General Artificial Intelligence and Why It Matters",
+        date: "2026-04-12",
+        description: "What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-general-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6929c81e-098b-48a5-8302-f26c732f8c65.jpg?alt=media&token=cf84b2aa-8393-44a0-a444-257dae974703",
+        imageAlt: "Close-up of two coworkers discussing general artificial intelligence concepts over a laptop in a candid office moment",
+        hasContent: true,
+    },
     'featured/what-constitutes-a-startup-in-practice': {
         title: "What Constitutes a Startup in Practice",
         date: "2026-04-06",
