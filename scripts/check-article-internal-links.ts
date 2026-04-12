@@ -52,6 +52,8 @@ const VALID_STATIC_ROUTES = new Set([
   "/vibe-raising/create-update",
   "/vibe-raising/discover",
   "/vibe-raising/logout",
+  "/ai-founder-community-pitching-ideas",
+  "/practical-ai-learning-beginners-builders",
 ]);
 
 const VALID_ARTICLE_ROUTES = new Set(
