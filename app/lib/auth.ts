@@ -92,6 +92,7 @@ export async function createUser(env: Env, body: {
     phone?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
     app?: AuthAppName;
+    next?: string;
 }) {
     const client = getAxios(env);
     const response = await client.post("/api/v1/auth/create-user/", body);

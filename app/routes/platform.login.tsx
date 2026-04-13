@@ -12,7 +12,7 @@ import {
 } from "~/lib/vibe-raising";
 import { isValidVibeRaisingAdminPassword } from "~/lib/vibe-raising-auth.server";
 
-type VibeRaisingLoginStep = "email" | "password" | "create" | "sent";
+type VibeRaisingLoginStep = "email" | "password" | "sent";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -35,7 +35,7 @@ function parseAuthApp(value: string | null): AuthAppName | null {
 }
 
 function parseVibeRaisingStep(value: string | null): VibeRaisingLoginStep | null {
-    return value === "password" || value === "create" || value === "sent" || value === "email"
+    return value === "password" || value === "sent" || value === "email"
         ? value
         : null;
 }
@@ -69,6 +69,12 @@ function buildSentTimestamp(): string {
     return String(Date.now());
 }
 
+function isUserAlreadyExistsError(error: unknown): boolean {
+    const status = (error as { response?: { status?: number; data?: { error?: string } } })?.response?.status;
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+    return status === 400 && typeof message === "string" && message.toLowerCase().includes("already exists");
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
@@ -92,9 +98,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const email = user?.email || requestedEmail;
         const vibeStep: VibeRaisingLoginStep = user
             ? "password"
-            : requestedStep === "create" && email
-              ? "create"
-              : requestedStep === "sent" && email
+            : requestedStep === "sent" && email
                 ? "sent"
                 : requestedStep === "password" && email && !vibeUnlocked
                   ? "password"
@@ -131,6 +135,41 @@ export async function action({ request, context }: Route.ActionArgs) {
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
     if (app === "vibe-raising") {
+        const redirectToVibeSent = (headers?: Headers) =>
+            redirect(
+                buildVibeRaisingLoginHref(next, {
+                    step: "sent",
+                    email,
+                    sent: buildSentTimestamp(),
+                }),
+                headers ? { headers } : undefined,
+            );
+
+        const completeVibeRaisingMagicLinkFlow = async (headers?: Headers) => {
+            const data = await sendMagicLink(env, { email, next, app });
+            if (data.user_exists) {
+                return redirectToVibeSent(headers);
+            }
+
+            try {
+                await createUser(env, {
+                    email,
+                    app,
+                    next,
+                });
+                return redirectToVibeSent(headers);
+            } catch (createError) {
+                if (isUserAlreadyExistsError(createError)) {
+                    const retry = await sendMagicLink(env, { email, next, app });
+                    if (retry.user_exists) {
+                        return redirectToVibeSent(headers);
+                    }
+                }
+
+                throw createError;
+            }
+        };
+
         if (!email) {
             return redirect(buildVibeRaisingLoginHref(next, { error: "missing_email" }));
         }
@@ -152,7 +191,13 @@ export async function action({ request, context }: Route.ActionArgs) {
             try {
                 headers.append("Set-Cookie", await createVibeRaisingUnlockCookie(env));
             } catch (error) {
-                console.error("Failed to create Vibe Raising unlock cookie:", error);
+                if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
+                    console.error(
+                        "Failed to create Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
+                    );
+                } else {
+                    console.error("Failed to create Vibe Raising unlock cookie:", error);
+                }
                 return redirect(
                     buildVibeRaisingLoginHref(next, {
                         step: "password",
@@ -167,20 +212,11 @@ export async function action({ request, context }: Route.ActionArgs) {
             }
 
             try {
-                const data = await sendMagicLink(env, { email, next, app });
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: data.user_exists ? "sent" : "create",
-                        email,
-                        sent: data.user_exists ? buildSentTimestamp() : undefined,
-                    }),
-                    { headers },
-                );
+                return await completeVibeRaisingMagicLinkFlow(headers);
             } catch (error) {
-                console.error("Failed to send Vibe Raising magic link:", error);
+                console.error("Failed to continue Vibe Raising magic link flow:", error);
                 return redirect(
                     buildVibeRaisingLoginHref(next, {
-                        step: "password",
                         email,
                         error: "magic_link_failed",
                     }),
@@ -200,50 +236,10 @@ export async function action({ request, context }: Route.ActionArgs) {
             );
         }
 
-        if (intent === "create") {
-            const firstName = formData.get("firstName")?.toString();
-            const lastName = formData.get("lastName")?.toString();
-            const phone = formData.get("phone")?.toString();
-
-            try {
-                await createUser(env, {
-                    email,
-                    firstName,
-                    lastName,
-                    phone,
-                    role,
-                    app,
-                });
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: "sent",
-                        email,
-                        sent: buildSentTimestamp(),
-                    }),
-                );
-            } catch (error) {
-                console.error("Failed to create Vibe Raising account:", error);
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: "create",
-                        email,
-                        error: "create_failed",
-                    }),
-                );
-            }
-        }
-
         try {
-            const data = await sendMagicLink(env, { email, next, app });
-            return redirect(
-                buildVibeRaisingLoginHref(next, {
-                    step: data.user_exists ? "sent" : "create",
-                    email,
-                    sent: data.user_exists ? buildSentTimestamp() : undefined,
-                }),
-            );
+            return await completeVibeRaisingMagicLinkFlow();
         } catch (error) {
-            console.error("Failed to send Vibe Raising magic link:", error);
+            console.error("Failed to continue Vibe Raising magic link flow:", error);
             return redirect(
                 buildVibeRaisingLoginHref(next, {
                     step: intent === "resend" ? "sent" : "email",
@@ -448,99 +444,7 @@ export default function PlatformLogin() {
                         {isVibeRaising ? (
                             vibeStep === "sent" ? renderSentState() : (
                                 <>
-                                    {vibeStep === "create" && (
-                                        <div className="mt-8 mb-6 rounded-md bg-blue-50 p-4">
-                                            <div className="flex">
-                                                <div className="ml-3">
-                                                    <h3 className="text-sm font-medium text-blue-800">
-                                                        User does not exist
-                                                    </h3>
-                                                    <div className="mt-2 text-sm text-blue-700">
-                                                        <p>We couldn&apos;t find an account with that email. Please provide additional details to create your account.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {vibeStep === "create" ? (
-                                        <Form method="POST" className="mt-8">
-                                            <Field className="space-y-3">
-                                                <Label className="text-sm/5 font-medium">Email</Label>
-                                                <Input
-                                                    required
-                                                    readOnly
-                                                    type="email"
-                                                    name="email"
-                                                    value={email}
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black bg-gray-50"
-                                                    )}
-                                                />
-                                            </Field>
-
-                                            <Field className="mt-6 space-y-3">
-                                                <Label className="text-sm/5 font-medium">First Name</Label>
-                                                <Input
-                                                    required
-                                                    autoFocus
-                                                    type="text"
-                                                    name="firstName"
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                    )}
-                                                />
-                                            </Field>
-
-                                            <Field className="mt-6 space-y-3">
-                                                <Label className="text-sm/5 font-medium">Last Name</Label>
-                                                <Input
-                                                    required
-                                                    type="text"
-                                                    name="lastName"
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                    )}
-                                                />
-                                            </Field>
-
-                                            <div className="mt-6 space-y-3">
-                                                <label htmlFor="phone" className="block text-sm/5 font-medium text-gray-900">
-                                                    Phone Number
-                                                </label>
-                                                <div className="flex rounded-lg border border-transparent ring-1 shadow-sm ring-black/10 has-[input:focus]:outline has-[input:focus]:outline-2 has-[input:focus]:-outline-offset-1 has-[input:focus]:outline-black">
-                                                    <div className="flex items-center px-3 text-gray-500 bg-gray-50 border-r border-gray-200">
-                                                        <span className="text-base sm:text-sm">+61</span>
-                                                    </div>
-                                                    <input
-                                                        id="phone"
-                                                        name="phone"
-                                                        type="tel"
-                                                        required
-                                                        placeholder="4XX XXX XXX"
-                                                        className="block min-w-0 grow rounded-r-lg bg-white py-3 pl-3 pr-4 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-
-                                            <input type="hidden" name="next" value={next} />
-                                            <input type="hidden" name="app" value="vibe-raising" />
-
-                                            <div className="mt-8">
-                                                <button
-                                                    type="submit"
-                                                    name="intent"
-                                                    value="create"
-                                                    className="flex w-full justify-center rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                                >
-                                                    Create new account
-                                                </button>
-                                            </div>
-                                        </Form>
-                                    ) : vibeStep === "password" ? (
+                                    {vibeStep === "password" ? (
                                         <Form method="POST" className="mt-8">
                                             <Field className="space-y-3">
                                                 <Label className="text-sm/5 font-medium">Email</Label>
