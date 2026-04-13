@@ -822,7 +822,9 @@ function getVibeRaisingUnlockSecret(env: Env): string {
 async function signVibeRaisingUnlockValue(env: Env): Promise<string> {
   const secret = getVibeRaisingUnlockSecret(env);
   if (!secret) {
-    throw new Error("VIBE_RAISING_UNLOCK_SECRET is not configured");
+    throw new Error(
+      "VIBE_RAISING_UNLOCK_SECRET is not configured. Set it as a frontend worker secret before deploying Vibe Raising.",
+    );
   }
 
   const key = await crypto.subtle.importKey(
