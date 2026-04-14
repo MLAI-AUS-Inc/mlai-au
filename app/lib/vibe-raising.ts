@@ -819,6 +819,10 @@ function getVibeRaisingUnlockSecret(env: Env): string {
   return typeof secret === "string" ? secret.trim() : "";
 }
 
+export function hasVibeRaisingUnlockSecret(env: Env): boolean {
+  return getVibeRaisingUnlockSecret(env).length > 0;
+}
+
 async function signVibeRaisingUnlockValue(env: Env): Promise<string> {
   const secret = getVibeRaisingUnlockSecret(env);
   if (!secret) {
@@ -853,7 +857,13 @@ export async function hasVibeRaisingUnlock(env: Env, request: Request): Promise<
   try {
     return provided === await signVibeRaisingUnlockValue(env);
   } catch (error) {
-    console.error("Failed to verify Vibe Raising unlock cookie:", error);
+    if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
+      console.error(
+        "Failed to verify Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
+      );
+    } else {
+      console.error("Failed to verify Vibe Raising unlock cookie:", error);
+    }
     return false;
   }
 }
