@@ -161,9 +161,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         const createVibeUnlockHeaders = async (step: "password" | "create") => {
             const headers = new Headers();
-            if (!hasVibeRaisingUnlockSecret(env)) {
+            if (!(await hasVibeRaisingUnlockSecret(env))) {
                 console.error(
-                    "Vibe Raising login misconfigured: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime. Add it to mlai-au/.dev.vars for local development and configure the Wrangler secret for deployed environments.",
+                    "Vibe Raising login misconfigured: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime. Add it to mlai-au/.dev.vars for local development, configure it as a Wrangler Worker secret, or bind the account-level secret to this Worker deployment.",
                 );
                 return redirectToVibeStep(step, {
                     error: isLocalDevelopment ? "unlock_secret_missing" : "unlock_unavailable",

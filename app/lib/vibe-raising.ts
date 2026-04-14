@@ -819,15 +819,43 @@ function getVibeRaisingUnlockSecret(env: Env): string {
   return typeof secret === "string" ? secret.trim() : "";
 }
 
-export function hasVibeRaisingUnlockSecret(env: Env): boolean {
-  return getVibeRaisingUnlockSecret(env).length > 0;
+type SecretBinding = {
+  get: () => Promise<unknown> | unknown;
+};
+
+function isSecretBinding(value: unknown): value is SecretBinding {
+  return typeof value === "object" && value !== null && typeof (value as SecretBinding).get === "function";
+}
+
+async function readVibeRaisingUnlockSecret(env: Env): Promise<string> {
+  const secret = (env as unknown as Record<string, unknown>).VIBE_RAISING_UNLOCK_SECRET;
+
+  if (typeof secret === "string") {
+    return secret.trim();
+  }
+
+  if (isSecretBinding(secret)) {
+    try {
+      const resolved = await secret.get();
+      return typeof resolved === "string" ? resolved.trim() : "";
+    } catch (error) {
+      console.error("Failed to read Vibe Raising unlock secret binding:", error);
+      return "";
+    }
+  }
+
+  return "";
+}
+
+export async function hasVibeRaisingUnlockSecret(env: Env): Promise<boolean> {
+  return (await readVibeRaisingUnlockSecret(env)).length > 0;
 }
 
 async function signVibeRaisingUnlockValue(env: Env): Promise<string> {
-  const secret = getVibeRaisingUnlockSecret(env);
+  const secret = await readVibeRaisingUnlockSecret(env);
   if (!secret) {
     throw new Error(
-      "VIBE_RAISING_UNLOCK_SECRET is not configured. Set it as a frontend worker secret before deploying Vibe Raising.",
+      "VIBE_RAISING_UNLOCK_SECRET is not configured. Set it as a frontend Worker secret or bind an account secret to the Worker runtime before deploying Vibe Raising.",
     );
   }
 
