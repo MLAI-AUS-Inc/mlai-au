@@ -8,6 +8,7 @@ import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
     createVibeRaisingUnlockCookie,
+    hasVibeRaisingUnlockSecret,
     hasVibeRaisingUnlock,
 } from "~/lib/vibe-raising";
 import { isValidVibeRaisingAdminPassword } from "~/lib/vibe-raising-auth.server";
@@ -67,6 +68,11 @@ function buildVibeRaisingLoginHref(
 
 function buildSentTimestamp(): string {
     return String(Date.now());
+}
+
+function isLocalDevelopmentRuntime(env: Env): boolean {
+    const backendBaseUrl = (env as unknown as Record<string, unknown>).BACKEND_BASE_URL;
+    return typeof backendBaseUrl === "string" && backendBaseUrl.startsWith("http://localhost");
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -132,6 +138,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
     if (app === "vibe-raising") {
+        const isLocalDevelopment = isLocalDevelopmentRuntime(env);
         const redirectToVibeStep = (
             step: VibeRaisingLoginStep,
             options?: { error?: string; headers?: Headers; sent?: string },
@@ -154,17 +161,20 @@ export async function action({ request, context }: Route.ActionArgs) {
 
         const createVibeUnlockHeaders = async (step: "password" | "create") => {
             const headers = new Headers();
+            if (!hasVibeRaisingUnlockSecret(env)) {
+                console.error(
+                    "Vibe Raising login misconfigured: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime. Add it to mlai-au/.dev.vars for local development and configure the Wrangler secret for deployed environments.",
+                );
+                return redirectToVibeStep(step, {
+                    error: isLocalDevelopment ? "unlock_secret_missing" : "unlock_unavailable",
+                });
+            }
+
             try {
                 headers.append("Set-Cookie", await createVibeRaisingUnlockCookie(env));
                 return headers;
             } catch (error) {
-                if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
-                    console.error(
-                        "Failed to create Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
-                    );
-                } else {
-                    console.error("Failed to create Vibe Raising unlock cookie:", error);
-                }
+                console.error("Failed to create Vibe Raising unlock cookie:", error);
                 return redirectToVibeStep(step, { error: "unlock_unavailable" });
             }
         };
@@ -335,6 +345,9 @@ export default function PlatformLogin() {
         missing_email: "Enter your email to continue.",
         invalid_vibe_password: "That admin password is incorrect.",
         unlock_required: "Enter the Vibe Raising admin password to continue.",
+        unlock_secret_missing: import.meta.env.DEV
+            ? "Vibe Raising frontend secret missing. Set VIBE_RAISING_UNLOCK_SECRET in mlai-au/.dev.vars and restart the dev worker."
+            : "Vibe Raising unlock is unavailable right now. Please try again later.",
         unlock_unavailable: "Vibe Raising unlock is unavailable right now. Please try again later.",
         magic_link_failed: "Failed to send the magic link. Please try again.",
         magic_link_unavailable: "The Vibe Raising email login is unavailable right now. Please try again later.",
