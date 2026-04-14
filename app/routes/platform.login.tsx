@@ -1,7 +1,7 @@
 import type { Route } from "./+types/platform.login";
 import { Form, Link, redirect, useActionData, useLoaderData, useSearchParams, useSubmit } from "react-router";
-import { createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
-import { useEffect, useState, type FormEvent } from "react";
+import { checkUser, createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
+import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
@@ -90,18 +90,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const requestedStep = parseVibeRaisingStep(url.searchParams.get("step"));
         const requestedEmail = String(url.searchParams.get("email") || "").trim();
         const email = user?.email || requestedEmail;
-        const shouldShowPasswordStep = Boolean(
-            email && !vibeUnlocked && (requestedStep === "password" || requestedStep === "create"),
-        );
-        const vibeStep: VibeRaisingLoginStep = user
-            ? "password"
-            : requestedStep === "sent" && email
+        const vibeStep: VibeRaisingLoginStep =
+            requestedStep === "sent" && email
                 ? "sent"
-                : requestedStep === "create" && email && vibeUnlocked
+                : user && email
+                  ? "password"
+                : requestedStep === "password" && email
+                  ? "password"
+                : requestedStep === "create" && email
                   ? "create"
-                  : shouldShowPasswordStep
-                    ? "password"
-                  : "email";
+                : "email";
 
         return {
             vibeStep,
@@ -134,75 +132,86 @@ export async function action({ request, context }: Route.ActionArgs) {
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
     if (app === "vibe-raising") {
-        const redirectToVibeSent = (headers?: Headers) =>
+        const redirectToVibeStep = (
+            step: VibeRaisingLoginStep,
+            options?: { error?: string; headers?: Headers; sent?: string },
+        ) =>
             redirect(
                 buildVibeRaisingLoginHref(next, {
-                    step: "sent",
+                    step,
                     email,
-                    sent: buildSentTimestamp(),
+                    error: options?.error,
+                    sent: options?.sent,
                 }),
-                headers ? { headers } : undefined,
+                options?.headers ? { headers: options.headers } : undefined,
             );
+
+        const redirectToVibeSent = (headers?: Headers) =>
+            redirectToVibeStep("sent", { headers, sent: buildSentTimestamp() });
 
         const redirectToVibeCreate = (headers?: Headers) =>
-            redirect(
-                buildVibeRaisingLoginHref(next, {
-                    step: "create",
-                    email,
-                }),
-                headers ? { headers } : undefined,
-            );
+            redirectToVibeStep("create", { headers });
 
-        const completeVibeRaisingMagicLinkFlow = async (headers?: Headers) => {
-            const response = await sendMagicLink(env, { email, next, app });
-            if (response?.user_exists === false) {
-                return redirectToVibeCreate(headers);
+        const createVibeUnlockHeaders = async (step: "password" | "create") => {
+            const headers = new Headers();
+            try {
+                headers.append("Set-Cookie", await createVibeRaisingUnlockCookie(env));
+                return headers;
+            } catch (error) {
+                if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
+                    console.error(
+                        "Failed to create Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
+                    );
+                } else {
+                    console.error("Failed to create Vibe Raising unlock cookie:", error);
+                }
+                return redirectToVibeStep(step, { error: "unlock_unavailable" });
             }
+        };
 
+        const sendVibeMagicLink = async (headers?: Headers) => {
+            const response = await sendMagicLink(env, { email, next, app });
             if (response?.user_exists === true) {
                 if (response?.magic_link_sent !== true) {
                     console.error("Unexpected Vibe Raising sendMagicLink response:", response);
-                    return redirect(
-                        buildVibeRaisingLoginHref(next, {
-                            email,
-                            error: "magic_link_unavailable",
-                        }),
-                        headers ? { headers } : undefined,
-                    );
+                    return redirectToVibeStep("password", { error: "magic_link_unavailable", headers });
                 }
 
                 return redirectToVibeSent(headers);
             }
 
             console.error("Unexpected Vibe Raising sendMagicLink response:", response);
-            return redirect(
-                buildVibeRaisingLoginHref(next, {
-                    email,
-                    error: "magic_link_unavailable",
-                }),
-                headers ? { headers } : undefined,
-            );
+            return redirectToVibeCreate(headers);
         };
 
         if (!email) {
-            return redirect(buildVibeRaisingLoginHref(next, { error: "missing_email" }));
+            return redirectToVibeStep("email", { error: "missing_email" });
+        }
+
+        if (intent === "check") {
+            try {
+                const response = await checkUser(env, { email, next, app });
+                return response?.user_exists ? redirectToVibeStep("password") : redirectToVibeCreate();
+            } catch (error) {
+                console.error("Failed to check Vibe Raising user:", error);
+                return redirectToVibeStep("email", { error: "magic_link_failed" });
+            }
         }
 
         if (intent === "create") {
-            const vibeUnlocked = await hasVibeRaisingUnlock(env, request);
-            if (!vibeUnlocked) {
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: "password",
-                        email,
-                        error: "unlock_required",
-                    }),
-                );
-            }
-
             const firstName = formData.get("firstName")?.toString();
             const lastName = formData.get("lastName")?.toString();
             const phone = formData.get("phone")?.toString();
+            const password = formData.get("password")?.toString();
+
+            if (!isValidVibeRaisingAdminPassword(password)) {
+                return redirectToVibeStep("create", { error: "invalid_vibe_password" });
+            }
+
+            const headers = await createVibeUnlockHeaders("create");
+            if (headers instanceof Response) {
+                return headers;
+            }
 
             try {
                 await createUser(env, {
@@ -214,7 +223,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                     app,
                     next,
                 });
-                return redirectToVibeSent();
+                return redirectToVibeSent(headers);
             } catch (error) {
                 console.error("Failed to create Vibe Raising account:", error);
                 return { error: "Failed to create account. Please try again." };
@@ -224,34 +233,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         if (intent === "unlock") {
             const password = formData.get("password")?.toString();
             if (!isValidVibeRaisingAdminPassword(password)) {
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: "password",
-                        email,
-                        error: "invalid_vibe_password",
-                    }),
-                );
+                return redirectToVibeStep("password", { error: "invalid_vibe_password" });
             }
 
-            const headers = new Headers();
-
-            try {
-                headers.append("Set-Cookie", await createVibeRaisingUnlockCookie(env));
-            } catch (error) {
-                if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
-                    console.error(
-                        "Failed to create Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
-                    );
-                } else {
-                    console.error("Failed to create Vibe Raising unlock cookie:", error);
-                }
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        step: "password",
-                        email,
-                        error: "unlock_unavailable",
-                    }),
-                );
+            const headers = await createVibeUnlockHeaders("password");
+            if (headers instanceof Response) {
+                return headers;
             }
 
             if (currentUser) {
@@ -259,41 +246,23 @@ export async function action({ request, context }: Route.ActionArgs) {
             }
 
             try {
-                return await completeVibeRaisingMagicLinkFlow(headers);
+                return await sendVibeMagicLink(headers);
             } catch (error) {
                 console.error("Failed to continue Vibe Raising magic link flow:", error);
-                return redirect(
-                    buildVibeRaisingLoginHref(next, {
-                        email,
-                        error: "magic_link_failed",
-                    }),
-                    { headers },
-                );
+                return redirectToVibeStep("password", { error: "magic_link_failed", headers });
             }
         }
 
         const vibeUnlocked = await hasVibeRaisingUnlock(env, request);
         if (!vibeUnlocked) {
-            return redirect(
-                buildVibeRaisingLoginHref(next, {
-                    step: "password",
-                    email,
-                    error: "unlock_required",
-                }),
-            );
+            return redirectToVibeStep("password", { error: "unlock_required" });
         }
 
         try {
-            return await completeVibeRaisingMagicLinkFlow();
+            return await sendVibeMagicLink();
         } catch (error) {
             console.error("Failed to continue Vibe Raising magic link flow:", error);
-            return redirect(
-                buildVibeRaisingLoginHref(next, {
-                    step: intent === "resend" ? "sent" : "email",
-                    email,
-                    error: "magic_link_failed",
-                }),
-            );
+            return redirectToVibeStep(intent === "resend" ? "sent" : "password", { error: "magic_link_failed" });
         }
     }
 
@@ -346,19 +315,19 @@ export default function PlatformLogin() {
 
     const [timeLeft, setTimeLeft] = useState(0);
     const [email, setEmail] = useState(loaderData.email || data?.email || "");
-    const [vibeStep, setVibeStep] = useState<VibeRaisingLoginStep>(loaderData.vibeStep || "email");
+    const vibeStep = loaderData.vibeStep || "email";
+    const vibeEmailHref = buildVibeRaisingLoginHref(next);
 
     useEffect(() => {
         if (isVibeRaising) {
             setEmail(loaderData.email || "");
-            setVibeStep(loaderData.vibeStep || "email");
             return;
         }
 
         if (data?.email) {
             setEmail(data.email);
         }
-    }, [data?.email, isVibeRaising, loaderData.email, loaderData.vibeStep]);
+    }, [data?.email, isVibeRaising, loaderData.email]);
 
     const errorMessages: Record<string, string> = {
         invalid_link: "The verification link is invalid or missing. Please try logging in again.",
@@ -396,17 +365,6 @@ export default function PlatformLogin() {
         submit(formData, { method: "post" });
     };
 
-    const handleVibeEmailSubmit = (event: FormEvent<HTMLFormElement>) => {
-        if (!isVibeRaising || loaderData.vibeUnlocked) {
-            return;
-        }
-
-        event.preventDefault();
-        if (event.currentTarget.reportValidity()) {
-            setVibeStep("password");
-        }
-    };
-
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
@@ -417,7 +375,7 @@ export default function PlatformLogin() {
 
     const getSupportText = () => {
         if (app === "vibe-raising") {
-            return "Use your email to access Vibe Raising. You will need the admin password before the magic link flow continues.";
+            return "Enter your email to check whether you already have a Vibe Raising account. You will enter the admin password on the next step.";
         }
 
         if (app === "innovate-connect-alliance") {
@@ -474,6 +432,39 @@ export default function PlatformLogin() {
                 </div>
             </div>
         </>
+    );
+
+    const renderReadOnlyVibeEmailField = () => (
+        <Field className="space-y-3">
+            <Label className="text-sm/5 font-medium">Email</Label>
+            <Input
+                required
+                readOnly
+                type="email"
+                name="email"
+                value={email}
+                className={clsx(
+                    "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
+                    "bg-gray-50 px-4 py-3 text-base text-gray-900 sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
+                )}
+            />
+        </Field>
+    );
+
+    const renderVibeAdminPasswordField = (autoFocus = false) => (
+        <Field className="mt-6 space-y-3">
+            <Label className="text-sm/5 font-medium">Admin Password</Label>
+            <Input
+                required
+                autoFocus={autoFocus}
+                type="password"
+                name="password"
+                className={clsx(
+                    "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
+                    "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
+                )}
+            />
+        </Field>
     );
 
     const renderSentState = () => (
@@ -557,87 +548,47 @@ export default function PlatformLogin() {
                                                 </div>
                                             </div>
 
-                                            <Field className="space-y-3">
-                                                <Label className="text-sm/5 font-medium">Email</Label>
-                                                <Input
-                                                    required
-                                                    type="email"
-                                                    name="email"
-                                                    value={email}
-                                                    onChange={(event) => setEmail(event.target.value)}
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                    )}
-                                                />
-                                            </Field>
+                                            {renderReadOnlyVibeEmailField()}
 
                                             {renderCreateAccountFields()}
+                                            {renderVibeAdminPasswordField()}
 
                                             <input type="hidden" name="next" value={next} />
                                             <input type="hidden" name="app" value="vibe-raising" />
 
                                             <div className="mt-8 flex gap-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setVibeStep("email")}
+                                                <Link
+                                                    to={vibeEmailHref}
                                                     className="flex flex-1 items-center justify-center rounded-md border border-gray-200 px-6 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50"
                                                 >
                                                     Back
-                                                </button>
+                                                </Link>
                                                 <button
                                                     type="submit"
                                                     name="intent"
                                                     value="create"
                                                     className="flex flex-1 justify-center rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                                 >
-                                                    Create new account
+                                                    Create Account
                                                 </button>
                                             </div>
                                         </Form>
                                     ) : vibeStep === "password" ? (
                                         <Form method="POST" className="mt-8">
-                                            <Field className="space-y-3">
-                                                <Label className="text-sm/5 font-medium">Email</Label>
-                                                <Input
-                                                    required
-                                                    readOnly
-                                                    type="email"
-                                                    name="email"
-                                                    value={email}
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black bg-gray-50"
-                                                    )}
-                                                />
-                                            </Field>
-
-                                            <Field className="mt-6 space-y-3">
-                                                <Label className="text-sm/5 font-medium">Admin Password</Label>
-                                                <Input
-                                                    required
-                                                    autoFocus
-                                                    type="password"
-                                                    name="password"
-                                                    className={clsx(
-                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                    )}
-                                                />
-                                            </Field>
+                                            {renderReadOnlyVibeEmailField()}
+                                            {renderVibeAdminPasswordField(true)}
 
                                             <input type="hidden" name="next" value={next} />
                                             <input type="hidden" name="app" value="vibe-raising" />
 
                                             <div className="mt-8 flex gap-3">
                                                 {!loaderData.isAuthenticated && (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => setVibeStep("email")}
+                                                    <Link
+                                                        to={vibeEmailHref}
                                                         className="flex flex-1 items-center justify-center rounded-md border border-gray-200 px-6 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50"
                                                     >
                                                         Back
-                                                    </button>
+                                                    </Link>
                                                 )}
                                                 <button
                                                     type="submit"
@@ -650,7 +601,7 @@ export default function PlatformLogin() {
                                             </div>
                                         </Form>
                                     ) : (
-                                        <Form method="POST" className="mt-8" onSubmit={handleVibeEmailSubmit}>
+                                        <Form method="POST" className="mt-8">
                                             <Field className="space-y-3">
                                                 <Label className="text-sm/5 font-medium">Email</Label>
                                                 <Input
