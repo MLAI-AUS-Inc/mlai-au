@@ -31,9 +31,6 @@ const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
 const EMAIL_DRAFT_ACTIVE_RUN_PATH = "/api/v1/vibe-raising/email-draft/active-run/";
 const EMAIL_DRAFT_DRAFT_RESULTS_PATH = "/api/v1/vibe-raising/email-draft/draft-results/";
 const EMAIL_DRAFT_CANCEL_RUNS_PATH = "/api/v1/vibe-raising/email-draft/runs/";
-const VIBE_RAISING_UNLOCK_COOKIE_NAME = "vibe_raising_unlock";
-const VIBE_RAISING_UNLOCK_MESSAGE = "vibe-raising-unlocked:v1";
-const textEncoder = new TextEncoder();
 
 type OptionalContext = {
   authUser: User | null;
@@ -792,127 +789,6 @@ export function getVibeRaisingLoginHref(
   return `/platform/login?${params.toString()}`;
 }
 
-function getCookieValue(
-  cookieHeader: string | null | undefined,
-  name: string,
-): string | null {
-  const prefix = `${name}=`;
-  for (const cookie of String(cookieHeader || "").split(";")) {
-    const trimmed = cookie.trim();
-    if (trimmed.startsWith(prefix)) {
-      return trimmed.slice(prefix.length) || null;
-    }
-  }
-  return null;
-}
-
-function toBase64Url(bytes: Uint8Array): string {
-  let binary = "";
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-
-function getVibeRaisingUnlockSecret(env: Env): string {
-  const secret = (env as unknown as Record<string, unknown>).VIBE_RAISING_UNLOCK_SECRET;
-  return typeof secret === "string" ? secret.trim() : "";
-}
-
-type SecretBinding = {
-  get: () => Promise<unknown> | unknown;
-};
-
-function isSecretBinding(value: unknown): value is SecretBinding {
-  return typeof value === "object" && value !== null && typeof (value as SecretBinding).get === "function";
-}
-
-async function readVibeRaisingUnlockSecret(env: Env): Promise<string> {
-  const secret = (env as unknown as Record<string, unknown>).VIBE_RAISING_UNLOCK_SECRET;
-
-  if (typeof secret === "string") {
-    return secret.trim();
-  }
-
-  if (isSecretBinding(secret)) {
-    try {
-      const resolved = await secret.get();
-      return typeof resolved === "string" ? resolved.trim() : "";
-    } catch (error) {
-      console.error("Failed to read Vibe Raising unlock secret binding:", error);
-      return "";
-    }
-  }
-
-  return "";
-}
-
-export async function hasVibeRaisingUnlockSecret(env: Env): Promise<boolean> {
-  return (await readVibeRaisingUnlockSecret(env)).length > 0;
-}
-
-async function signVibeRaisingUnlockValue(env: Env): Promise<string> {
-  const secret = await readVibeRaisingUnlockSecret(env);
-  if (!secret) {
-    throw new Error(
-      "VIBE_RAISING_UNLOCK_SECRET is not configured. Set it as a frontend Worker secret or bind an account secret to the Worker runtime before deploying Vibe Raising.",
-    );
-  }
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    textEncoder.encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"],
-  );
-  const signature = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    textEncoder.encode(VIBE_RAISING_UNLOCK_MESSAGE),
-  );
-
-  return `v1.${toBase64Url(new Uint8Array(signature))}`;
-}
-
-export async function hasVibeRaisingUnlock(env: Env, request: Request): Promise<boolean> {
-  const provided = getCookieValue(
-    request.headers.get("Cookie"),
-    VIBE_RAISING_UNLOCK_COOKIE_NAME,
-  );
-  if (!provided) return false;
-
-  try {
-    return provided === await signVibeRaisingUnlockValue(env);
-  } catch (error) {
-    if (error instanceof Error && error.message.includes("VIBE_RAISING_UNLOCK_SECRET")) {
-      console.error(
-        "Failed to verify Vibe Raising unlock cookie: VIBE_RAISING_UNLOCK_SECRET is missing in the frontend worker runtime.",
-      );
-    } else {
-      console.error("Failed to verify Vibe Raising unlock cookie:", error);
-    }
-    return false;
-  }
-}
-
-export async function createVibeRaisingUnlockCookie(env: Env): Promise<string> {
-  const value = await signVibeRaisingUnlockValue(env);
-  return `${VIBE_RAISING_UNLOCK_COOKIE_NAME}=${value}; Path=/; SameSite=Lax; HttpOnly`;
-}
-
-export function clearVibeRaisingUnlockCookie(): string {
-  return `${VIBE_RAISING_UNLOCK_COOKIE_NAME}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax; HttpOnly`;
-}
-
-export async function requireVibeRaisingUnlock(env: Env, request: Request): Promise<void> {
-  if (await hasVibeRaisingUnlock(env, request)) {
-    return;
-  }
-
-  throw redirect(getVibeRaisingLoginHref(request));
-}
-
 export function getVibeRaisingSubmittedCookieName(companyId: string): string {
   return `vibe_submitted_${companyId}`;
 }
@@ -991,8 +867,6 @@ export async function requireVibeRaisingProfile(
   if (!context.authUser) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
-
-  await requireVibeRaisingUnlock(env, request);
 
   if (!context.profile || !context.appUser) {
     throw redirect("/vibe-raising");

@@ -1,11 +1,8 @@
 # Local development defaults
 # Copy this file to `.dev.vars` and fill in any private keys you need.
-# `VIBE_RAISING_UNLOCK_SECRET` signs the Vibe Raising unlock cookie.
-# Use a long random value and do not reuse the admin password.
 
 VALUE_FROM_CLOUDFLARE=Hello from Cloudflare
 BACKEND_BASE_URL=https://api.mlai.au
-VIBE_RAISING_UNLOCK_SECRET=replace-with-a-random-signing-secret
 VITE_SITE_URL=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
 PRIVATE_HUMANITIX_API_KEY=

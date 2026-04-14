@@ -13,7 +13,6 @@ import { getEnv } from "~/lib/env.server";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
-  requireVibeRaisingUnlock,
   saveVibeRaisingCompany,
   saveVibeRaisingProfile,
   setVibeRaisingActiveCompany,
@@ -48,8 +47,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
 
-  await requireVibeRaisingUnlock(env, request);
-
   return {
     user: vibeContext.authUser,
     profile: vibeContext.profile,
@@ -64,8 +61,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   if (!vibeContext.authUser) {
     throw redirect(getVibeRaisingLoginHref(request));
   }
-
-  await requireVibeRaisingUnlock(env, request);
 
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();
