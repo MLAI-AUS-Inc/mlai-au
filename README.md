@@ -53,7 +53,9 @@ Variables and secrets live in:
 - `.dev.vars` - your local dev variables, can contain secrets
 - Apple Passwords (MLAI Admin) includes a "Website Secrets .dev.vars" entry which can store secrets for development.
 
-Run `bunx wrangler secret put <key>` to save a secret to the production environment.
+Run `bunx wrangler secret put <key>` to save a secret directly to the Worker production environment.
+
+If you use Cloudflare's account-level Secrets Store instead, creating the secret is not enough by itself: you must also bind that secret to the `mlai-au` Worker runtime before deploy. `VIBE_RAISING_UNLOCK_SECRET` is read from the Worker runtime, not from the account secret list.
 
 If you add a new `.dev.vars` entry, you'll need to regenerate types:
 

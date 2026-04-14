@@ -47,7 +47,8 @@
   /**
    * Note: Use secrets to store sensitive data.
    * https://developers.cloudflare.com/workers/configuration/secrets/
-   * Set `VIBE_RAISING_UNLOCK_SECRET` as a Wrangler secret before deploy.
+   * Set `VIBE_RAISING_UNLOCK_SECRET` as a Wrangler secret before deploy,
+   * or bind an account-level secret to the Worker runtime under the same name.
    * This signs the Vibe Raising unlock cookie only; do not reuse the admin password.
    */
   /**
