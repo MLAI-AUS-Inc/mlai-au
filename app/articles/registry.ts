@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-startup-a-small-business-in-australia': {
+        title: "How to Startup a Small Business in Australia",
+        date: "2026-04-14",
+        description: "How to startup a small business in Australia with practical steps on planning, structure, registrations, tax setup, and early cash flow decisions.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-startup-a-small-business-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-2d2c373c-c64a-4d3a-a019-e3728cab592c.jpg?alt=media&token=d110a9e5-c056-4040-915b-2f90bc4e18c1",
+        imageAlt: "How to Startup a Small Business in Australia",
+        hasContent: true,
+    },
     'featured/what-is-general-artificial-intelligence-and-why-it-matters': {
         title: "What Is General Artificial Intelligence and Why It Matters",
         date: "2026-04-12",
