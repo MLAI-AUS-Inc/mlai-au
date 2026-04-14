@@ -11,7 +11,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const user = await getCurrentUser(env, request);
 
     if (!user) {
-        throw redirect("/platform/login?next=/esafety/dashboard");
+        throw redirect("/platform/login?app=esafety&next=/esafety/dashboard");
     }
 
     return { user: user as User };

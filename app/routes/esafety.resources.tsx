@@ -9,7 +9,7 @@ import ReactMarkdown from "react-markdown";
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
-    if (!user) return redirect("/platform/login");
+    if (!user) return redirect("/platform/login?app=esafety&next=/esafety/resources");
     return { user };
 }
 

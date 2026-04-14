@@ -12,7 +12,7 @@ import {
 } from "~/lib/vibe-raising";
 import { isValidVibeRaisingAdminPassword } from "~/lib/vibe-raising-auth.server";
 
-type VibeRaisingLoginStep = "email" | "password" | "sent";
+type VibeRaisingLoginStep = "email" | "password" | "create" | "sent";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -35,7 +35,7 @@ function parseAuthApp(value: string | null): AuthAppName | null {
 }
 
 function parseVibeRaisingStep(value: string | null): VibeRaisingLoginStep | null {
-    return value === "password" || value === "sent" || value === "email"
+    return value === "password" || value === "sent" || value === "email" || value === "create"
         ? value
         : null;
 }
@@ -90,12 +90,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         const requestedStep = parseVibeRaisingStep(url.searchParams.get("step"));
         const requestedEmail = String(url.searchParams.get("email") || "").trim();
         const email = user?.email || requestedEmail;
+        const shouldShowPasswordStep = Boolean(
+            email && !vibeUnlocked && (requestedStep === "password" || requestedStep === "create"),
+        );
         const vibeStep: VibeRaisingLoginStep = user
             ? "password"
             : requestedStep === "sent" && email
                 ? "sent"
-                : requestedStep === "password" && email && !vibeUnlocked
-                  ? "password"
+                : requestedStep === "create" && email && vibeUnlocked
+                  ? "create"
+                  : shouldShowPasswordStep
+                    ? "password"
                   : "email";
 
         return {
@@ -139,13 +144,81 @@ export async function action({ request, context }: Route.ActionArgs) {
                 headers ? { headers } : undefined,
             );
 
+        const redirectToVibeCreate = (headers?: Headers) =>
+            redirect(
+                buildVibeRaisingLoginHref(next, {
+                    step: "create",
+                    email,
+                }),
+                headers ? { headers } : undefined,
+            );
+
         const completeVibeRaisingMagicLinkFlow = async (headers?: Headers) => {
-            await sendMagicLink(env, { email, next, app });
-            return redirectToVibeSent(headers);
+            const response = await sendMagicLink(env, { email, next, app });
+            if (response?.user_exists === false) {
+                return redirectToVibeCreate(headers);
+            }
+
+            if (response?.user_exists === true) {
+                if (response?.magic_link_sent !== true) {
+                    console.error("Unexpected Vibe Raising sendMagicLink response:", response);
+                    return redirect(
+                        buildVibeRaisingLoginHref(next, {
+                            email,
+                            error: "magic_link_unavailable",
+                        }),
+                        headers ? { headers } : undefined,
+                    );
+                }
+
+                return redirectToVibeSent(headers);
+            }
+
+            console.error("Unexpected Vibe Raising sendMagicLink response:", response);
+            return redirect(
+                buildVibeRaisingLoginHref(next, {
+                    email,
+                    error: "magic_link_unavailable",
+                }),
+                headers ? { headers } : undefined,
+            );
         };
 
         if (!email) {
             return redirect(buildVibeRaisingLoginHref(next, { error: "missing_email" }));
+        }
+
+        if (intent === "create") {
+            const vibeUnlocked = await hasVibeRaisingUnlock(env, request);
+            if (!vibeUnlocked) {
+                return redirect(
+                    buildVibeRaisingLoginHref(next, {
+                        step: "password",
+                        email,
+                        error: "unlock_required",
+                    }),
+                );
+            }
+
+            const firstName = formData.get("firstName")?.toString();
+            const lastName = formData.get("lastName")?.toString();
+            const phone = formData.get("phone")?.toString();
+
+            try {
+                await createUser(env, {
+                    email,
+                    firstName,
+                    lastName,
+                    phone,
+                    role,
+                    app,
+                    next,
+                });
+                return redirectToVibeSent();
+            } catch (error) {
+                console.error("Failed to create Vibe Raising account:", error);
+                return { error: "Failed to create account. Please try again." };
+            }
         }
 
         if (intent === "unlock") {
@@ -236,7 +309,8 @@ export async function action({ request, context }: Route.ActionArgs) {
                 lastName,
                 phone,
                 role,
-                app
+                app,
+                next,
             });
             return { sent: true, email };
         } catch (error) {
@@ -294,6 +368,7 @@ export default function PlatformLogin() {
         unlock_required: "Enter the Vibe Raising admin password to continue.",
         unlock_unavailable: "Vibe Raising unlock is unavailable right now. Please try again later.",
         magic_link_failed: "Failed to send the magic link. Please try again.",
+        magic_link_unavailable: "The Vibe Raising email login is unavailable right now. Please try again later.",
         create_failed: "Failed to create account. Please try again.",
     };
 
@@ -351,6 +426,55 @@ export default function PlatformLogin() {
 
         return "Provide your email to create your account";
     };
+
+    const renderCreateAccountFields = () => (
+        <>
+            <Field className="mt-6 space-y-3">
+                <Label className="text-sm/5 font-medium">First Name</Label>
+                <Input
+                    required
+                    type="text"
+                    name="firstName"
+                    className={clsx(
+                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
+                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
+                    )}
+                />
+            </Field>
+
+            <Field className="mt-6 space-y-3">
+                <Label className="text-sm/5 font-medium">Last Name</Label>
+                <Input
+                    required
+                    type="text"
+                    name="lastName"
+                    className={clsx(
+                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
+                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
+                    )}
+                />
+            </Field>
+
+            <div className="mt-6 space-y-3">
+                <label htmlFor="phone" className="block text-sm/5 font-medium text-gray-900">
+                    Phone Number
+                </label>
+                <div className="flex rounded-lg border border-transparent ring-1 shadow-sm ring-black/10 has-[input:focus]:outline has-[input:focus]:outline-2 has-[input:focus]:-outline-offset-1 has-[input:focus]:outline-black">
+                    <div className="flex items-center px-3 text-gray-500 bg-gray-50 border-r border-gray-200">
+                        <span className="text-base sm:text-sm">+61</span>
+                    </div>
+                    <input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        required
+                        placeholder="4XX XXX XXX"
+                        className="block min-w-0 grow rounded-r-lg bg-white py-3 pl-3 pr-4 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm"
+                    />
+                </div>
+            </div>
+        </>
+    );
 
     const renderSentState = () => (
         <div className="mt-8">
@@ -418,7 +542,60 @@ export default function PlatformLogin() {
                         {isVibeRaising ? (
                             vibeStep === "sent" ? renderSentState() : (
                                 <>
-                                    {vibeStep === "password" ? (
+                                    {vibeStep === "create" ? (
+                                        <Form method="POST" className="mt-8">
+                                            <div className="mb-6 rounded-md bg-blue-50 p-4">
+                                                <div className="flex">
+                                                    <div className="ml-3">
+                                                        <h3 className="text-sm font-medium text-blue-800">
+                                                            User does not exist
+                                                        </h3>
+                                                        <div className="mt-2 text-sm text-blue-700">
+                                                            <p>We couldn&apos;t find an account with that email. Please provide additional details to create your account.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <Field className="space-y-3">
+                                                <Label className="text-sm/5 font-medium">Email</Label>
+                                                <Input
+                                                    required
+                                                    type="email"
+                                                    name="email"
+                                                    value={email}
+                                                    onChange={(event) => setEmail(event.target.value)}
+                                                    className={clsx(
+                                                        "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
+                                                        "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
+                                                    )}
+                                                />
+                                            </Field>
+
+                                            {renderCreateAccountFields()}
+
+                                            <input type="hidden" name="next" value={next} />
+                                            <input type="hidden" name="app" value="vibe-raising" />
+
+                                            <div className="mt-8 flex gap-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setVibeStep("email")}
+                                                    className="flex flex-1 items-center justify-center rounded-md border border-gray-200 px-6 py-3 text-base font-semibold text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    Back
+                                                </button>
+                                                <button
+                                                    type="submit"
+                                                    name="intent"
+                                                    value="create"
+                                                    className="flex flex-1 justify-center rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                                >
+                                                    Create new account
+                                                </button>
+                                            </div>
+                                        </Form>
+                                    ) : vibeStep === "password" ? (
                                         <Form method="POST" className="mt-8">
                                             <Field className="space-y-3">
                                                 <Label className="text-sm/5 font-medium">Email</Label>
@@ -541,52 +718,7 @@ export default function PlatformLogin() {
                                 </Field>
 
                                 {data?.userExists === false && (
-                                    <>
-                                        <Field className="mt-6 space-y-3">
-                                            <Label className="text-sm/5 font-medium">First Name</Label>
-                                            <Input
-                                                required
-                                                type="text"
-                                                name="firstName"
-                                                className={clsx(
-                                                    "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                    "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                )}
-                                            />
-                                        </Field>
-
-                                        <Field className="mt-6 space-y-3">
-                                            <Label className="text-sm/5 font-medium">Last Name</Label>
-                                            <Input
-                                                required
-                                                type="text"
-                                                name="lastName"
-                                                className={clsx(
-                                                    "block w-full rounded-lg border border-transparent ring-1 shadow-sm ring-black/10",
-                                                    "px-4 py-3 text-gray-900 text-base sm:text-sm focus:outline focus:outline-2 focus:-outline-offset-1 focus:outline-black"
-                                                )}
-                                            />
-                                        </Field>
-
-                                        <div className="mt-6 space-y-3">
-                                            <label htmlFor="phone" className="block text-sm/5 font-medium text-gray-900">
-                                                Phone Number
-                                            </label>
-                                            <div className="flex rounded-lg border border-transparent ring-1 shadow-sm ring-black/10 has-[input:focus]:outline has-[input:focus]:outline-2 has-[input:focus]:-outline-offset-1 has-[input:focus]:outline-black">
-                                                <div className="flex items-center px-3 text-gray-500 bg-gray-50 border-r border-gray-200">
-                                                    <span className="text-base sm:text-sm">+61</span>
-                                                </div>
-                                                <input
-                                                    id="phone"
-                                                    name="phone"
-                                                    type="tel"
-                                                    required
-                                                    placeholder="4XX XXX XXX"
-                                                    className="block min-w-0 grow rounded-r-lg bg-white py-3 pl-3 pr-4 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                    </>
+                                    renderCreateAccountFields()
                                 )}
 
                                 <input type="hidden" name="next" value={next} />
