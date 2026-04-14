@@ -34,7 +34,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     }
 
     try {
-        const { setCookieHeaders } = await verifyMagicLinkWithCookies(env, token);
+        const { setCookieHeaders } = await verifyMagicLinkWithCookies(env, token, { app, next });
 
         // Forward Set-Cookie headers from the backend to the browser
         const headers = new Headers();

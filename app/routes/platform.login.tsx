@@ -69,12 +69,6 @@ function buildSentTimestamp(): string {
     return String(Date.now());
 }
 
-function isUserAlreadyExistsError(error: unknown): boolean {
-    const status = (error as { response?: { status?: number; data?: { error?: string } } })?.response?.status;
-    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
-    return status === 400 && typeof message === "string" && message.toLowerCase().includes("already exists");
-}
-
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
@@ -146,28 +140,8 @@ export async function action({ request, context }: Route.ActionArgs) {
             );
 
         const completeVibeRaisingMagicLinkFlow = async (headers?: Headers) => {
-            const data = await sendMagicLink(env, { email, next, app });
-            if (data.user_exists) {
-                return redirectToVibeSent(headers);
-            }
-
-            try {
-                await createUser(env, {
-                    email,
-                    app,
-                    next,
-                });
-                return redirectToVibeSent(headers);
-            } catch (createError) {
-                if (isUserAlreadyExistsError(createError)) {
-                    const retry = await sendMagicLink(env, { email, next, app });
-                    if (retry.user_exists) {
-                        return redirectToVibeSent(headers);
-                    }
-                }
-
-                throw createError;
-            }
+            await sendMagicLink(env, { email, next, app });
+            return redirectToVibeSent(headers);
         };
 
         if (!email) {

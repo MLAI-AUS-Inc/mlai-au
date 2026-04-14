@@ -50,15 +50,37 @@ export async function sendMagicLink(env: Env, body: {
     return response.data;
 }
 
-export async function verifyMagicLink(env: Env, token: string) {
+function buildVerifyMagicLinkQuery(
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
+    const params = new URLSearchParams({ token });
+    if (options?.app) {
+        params.set("app", options.app);
+    }
+    if (options?.next) {
+        params.set("next", options.next);
+    }
+    return params.toString();
+}
+
+export async function verifyMagicLink(
+    env: Env,
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
     const client = getAxios(env);
-    const response = await client.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
     return response.data;
 }
 
-export async function verifyMagicLinkWithCookies(env: Env, token: string) {
+export async function verifyMagicLinkWithCookies(
+    env: Env,
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
     const client = getAxios(env);
-    const response = await client.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
     const setCookieHeaders = response.headers["set-cookie"] || [];
     return { data: response.data, setCookieHeaders };
 }
