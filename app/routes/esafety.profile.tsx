@@ -38,7 +38,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const user = await getCurrentUser(env, request);
 
     if (!user) {
-        return redirect("/platform/login?next=/esafety/profile");
+        return redirect("/platform/login?app=esafety&next=/esafety/profile");
     }
 
     // Fetch available team names

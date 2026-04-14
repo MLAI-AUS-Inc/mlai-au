@@ -7,7 +7,7 @@ import { getEnv } from "~/lib/env.server";
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
-    if (!user) return redirect("/platform/login");
+    if (!user) return redirect("/platform/login?app=esafety&next=/esafety/team");
 
     // Fetch user's team for this hackathon
     let myTeam = null;
