@@ -3,6 +3,22 @@ import axios from "axios";
 
 export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
 
+function resolveAuthApp(body: {
+    app?: AuthAppName;
+    next?: string;
+}): AuthAppName {
+    return (
+        body.app ||
+        (body.next?.startsWith("/esafety")
+            ? "esafety"
+            : body.next?.startsWith("/innovate-connect-alliance")
+              ? "innovate-connect-alliance"
+            : body.next?.startsWith("/vibe-raising")
+              ? "vibe-raising"
+              : "hospital")
+    );
+}
+
 // Helper to get the base URL from the environment or fall back to the static config
 function getBaseUrl(env: Env): string {
     return env.BACKEND_BASE_URL || API_URL;
@@ -34,19 +50,20 @@ export async function sendMagicLink(env: Env, body: {
     next?: string;
     app?: AuthAppName;
 }) {
-    // Derive app from next if not provided
-    const app =
-        body.app ||
-        (body.next?.startsWith("/esafety")
-            ? "esafety"
-            : body.next?.startsWith("/innovate-connect-alliance")
-              ? "innovate-connect-alliance"
-            : body.next?.startsWith("/vibe-raising")
-              ? "vibe-raising"
-              : "hospital");
-
     const client = getAxios(env);
+    const app = resolveAuthApp(body);
     const response = await client.post("/api/v1/auth/send-magic-link/", { ...body, app });
+    return response.data;
+}
+
+export async function checkUser(env: Env, body: {
+    email: string;
+    next?: string;
+    app?: AuthAppName;
+}) {
+    const client = getAxios(env);
+    const app = resolveAuthApp(body);
+    const response = await client.post("/api/v1/auth/check-user/", { ...body, app });
     return response.data;
 }
 
