@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-quantum-artificial-intelligence-and-why-it-matters': {
+        title: "What Is Quantum Artificial Intelligence and Why It Matters",
+        date: "2026-04-16",
+        description: "What is quantum artificial intelligence? Learn what it means, how hybrid quantum-classical AI works, where it may help first, and what current limits still keep it experimental.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-quantum-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8ec589c4-7eb1-4e71-af6f-0dafb9c8b26d.jpg?alt=media&token=3dc716aa-c439-4281-811f-6e3389496134",
+        imageAlt: "What Is Quantum Artificial Intelligence and Why It Matters",
+        hasContent: true,
+    },
     'featured/how-to-startup-a-small-business-in-australia': {
         title: "How to Startup a Small Business in Australia",
         date: "2026-04-14",
