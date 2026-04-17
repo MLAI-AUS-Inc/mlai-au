@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-an-agent-in-artificial-intelligence': {
+        title: "What Is an Agent in Artificial Intelligence?",
+        date: "2026-04-17",
+        description: "What is agent in artificial intelligence? Learn the core definition, how AI agents work, the main agent types, and how agents differ from assistants, bots, and fixed automation.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-an-agent-in-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a2025658-d5c3-44fe-a5c4-f9599005a6a0.jpg?alt=media&token=98790d72-c277-47c3-a63f-6b565ac852e2",
+        imageAlt: "Close-up of coworkers reviewing an AI agent workflow on a laptop during a",
+        hasContent: true,
+    },
     'featured/how-to-startup-a-small-business-in-australia': {
         title: "How to Startup a Small Business in Australia",
         date: "2026-04-14",
