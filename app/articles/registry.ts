@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-artificial-intelligence-in-simple-words': {
+        title: "What Is Artificial Intelligence in Simple Words?",
+        date: "2026-04-18",
+        description: "Learn what artificial intelligence means in simple words, how it works, where you use it every day, and what it can and cannot do.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-in-simple-words",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",
+        imageAlt: "Close-up of a person using an AI voice assistant on a smartphone during a casual everyday moment",
+        hasContent: true,
+    },
     'featured/what-is-an-agent-in-artificial-intelligence': {
         title: "What Is an Agent in Artificial Intelligence?",
         date: "2026-04-17",
