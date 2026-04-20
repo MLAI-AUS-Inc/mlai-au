@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-an-entrepreneur-does-and-how-to-start-well': {
+        title: "What an Entrepreneur Does and How to Start Well",
+        date: "2026-04-20",
+        description: "Entrepreneur guide for first-time founders on what the role means, how to validate an idea, build a simple plan, register properly, and organise finances in Australia.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-an-entrepreneur-does-and-how-to-start-well",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-56ed48a4-989a-4c7a-902a-a4d660355998.jpg?alt=media&token=9f5d6e18-cf07-44dd-b1e2-b211e059cccf",
+        imageAlt: "What an Entrepreneur Does and How to Start Well",
+        hasContent: true,
+    },
     'featured/what-is-artificial-intelligence-in-simple-words': {
         title: "What Is Artificial Intelligence in Simple Words?",
         date: "2026-04-18",
