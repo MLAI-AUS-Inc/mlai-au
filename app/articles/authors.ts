@@ -2,7 +2,7 @@
 export type SocialLink = { label: string; href: string };
 
 export interface AuthorRegistryEntry {
-    personId: string;
+    personId: string; 
     name: string;
     url?: string;
     honorificPrefix?: string;

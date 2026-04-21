@@ -3,7 +3,9 @@
     "allow": [
       "Bash(gh pr create:*)",
       "Bash(git remote:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)"
     ]
   }
 }
