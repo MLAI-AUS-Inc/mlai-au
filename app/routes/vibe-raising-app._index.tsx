@@ -1,12 +1,20 @@
-import { Link, useLoaderData, useOutletContext, useNavigate } from "react-router";
+import { Link, useLoaderData, useOutletContext, useNavigate, redirect } from "react-router";
 import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
-import { getVibeRaisingUser, getActiveCompany } from "~/lib/vibe-raising-session";
+import {
+    getVibeRaisingUser,
+    getActiveCompany,
+    getVibeRaisingPublishedUpdate,
+    hasSubmittedVibeRaisingUpdate,
+    VIBE_RAISING_COMPANY_SETUP_PATH,
+    VIBE_RAISING_CREATE_UPDATE_PATH,
+} from "~/lib/vibe-raising-session";
 import { clsx } from "clsx";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
+import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import {
     ArrowRightIcon,
     ExclamationTriangleIcon,
@@ -30,37 +38,30 @@ import {
     QuestionMarkCircleIcon,
     ExclamationCircleIcon,
     FireIcon,
+    LinkIcon,
+    ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 
 export async function loader({ request }: Route.LoaderArgs) {
     const user = getVibeRaisingUser(request);
     if (!user) return { user: null, updates: [], portfolioUpdates: [] };
 
-    const cookieHeader = request.headers.get("Cookie") || "";
     const activeCompany = getActiveCompany(user);
-    const hasSubmitted = cookieHeader.includes(`vibe_submitted_${activeCompany.id}=true`);
+    const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, user, activeCompany.id);
+    const publishedUpdate = getVibeRaisingPublishedUpdate(request, activeCompany.id);
 
-    // Founder Mock Data
-    const mockUpdates = hasSubmitted ? [
-        {
-            id: 1,
-            month: "February 2026",
-            score: "A+",
-            date: new Date().toISOString(),
-            metrics: {
-                revenue: "$127,500",
-                growth: "18%",
-                users: "3,420"
-            },
-            highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
-            challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
-            likes: 0,
-            comments: 0,
-            investorsSentTo: 12,
-            investorsViewed: 8,
-            isCurrent: true,
-        },
+    if (user.role === "founder") {
+        if (!user.companyRegistered) {
+            throw redirect(VIBE_RAISING_COMPANY_SETUP_PATH);
+        }
+
+        if (!hasSubmitted) {
+            throw redirect(VIBE_RAISING_CREATE_UPDATE_PATH);
+        }
+    }
+
+    // Founder mock history
+    const historicalUpdates = [
         {
             id: 2,
             month: "January 2026",
@@ -99,7 +100,29 @@ export async function loader({ request }: Route.LoaderArgs) {
             investorsViewed: 11,
             isCurrent: false,
         }
-    ] : [];
+    ];
+
+    const currentUpdate = publishedUpdate || (hasSubmitted ? {
+        id: 1,
+        month: "February 2026",
+        score: "A+",
+        date: new Date().toISOString(),
+        metrics: {
+            revenue: "$127,500",
+            growth: "18%",
+            users: "3,420"
+        },
+        highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
+        challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
+        asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
+        likes: 0,
+        comments: 0,
+        investorsSentTo: 12,
+        investorsViewed: 8,
+        isCurrent: true,
+    } : null);
+
+    const founderUpdates = currentUpdate ? [currentUpdate, ...historicalUpdates] : [];
 
     // Investor Mock Data
     const portfolioUpdates = [
@@ -119,7 +142,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         }
     ];
 
-    return { user, updates: mockUpdates, portfolioUpdates };
+    return { user, updates: founderUpdates, portfolioUpdates };
 }
 
 // ─── Auto-resize textarea hook ──────────────────────────────────
@@ -272,6 +295,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     const companyName = activeCompany.name || user.companyName;
     const companyDomain = activeCompany.domain || user.domain;
     const companyLocation = activeCompany.location || user.location;
+    const cardExcerpt = update.summary || highlights;
+    const updatePeriod = parseVibeRaisingMonthYear(update.month);
 
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
@@ -321,7 +346,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     <div className="flex items-center gap-3">
                         {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
-                        <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
+                        <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
                         {isCurrent && <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">Current</span>}
                         <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
                             {update.score}
@@ -337,7 +362,9 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             {update.investorsViewed} viewed
                         </span>
                         <span className="w-px h-3 bg-gray-200" />
-                        <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                        <span className="text-xs text-gray-400 max-w-[200px] truncate">
+                            {cardExcerpt ? `${cardExcerpt.slice(0, 60)}...` : "No update summary yet"}
+                        </span>
                         <StartupRegionBadge location={companyLocation} />
                         <ChevronDownIcon className="w-4 h-4 text-gray-400" />
                     </div>
@@ -378,7 +405,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         )}
                         {/* Top row: date + collapse chevron */}
                         <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
-                            <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
                             <div className="flex items-center gap-2">
                                 <StartupRegionBadge location={companyLocation} variant="inverse" />
                                 <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
@@ -400,11 +427,11 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 )}
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-white font-bold text-sm drop-shadow-sm">{update.month}</p>
+                                        <p className="text-white font-bold text-sm drop-shadow-sm">{companyName}</p>
                                         {isCurrent && <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">Current</span>}
                                         <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
                                     </div>
-                                    <p className="text-white/60 text-[11px]">{companyName}</p>
+                                    <p className="text-white/60 text-[11px]">Investor Update</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
@@ -461,6 +488,29 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     </div>
 
                     <div className="p-5 space-y-5">
+                        {update.sourceUrl && (
+                            <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3">
+                                <a
+                                    href={update.sourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition-colors hover:text-sky-800"
+                                >
+                                    <LinkIcon className="w-4 h-4" />
+                                    Open source update link
+                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                                </a>
+                            </div>
+                        )}
+
+                        {update.summary && (
+                            <div className="rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-4">
+                                <p className="text-lg font-extrabold italic leading-snug tracking-tight text-gray-900">
+                                    {update.summary}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Metrics */}
                         {editing && (
                             <div className="flex flex-wrap gap-2">
@@ -596,7 +646,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             consistent, transparent monthly updates.
                         </p>
                         <button
-                            onClick={() => triggerAnnouncement(() => navigate("/vibe-raising/create-update"))}
+                            onClick={() => triggerAnnouncement(() => navigate(VIBE_RAISING_CREATE_UPDATE_PATH))}
                             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
                         >
                             Create Your First Update
@@ -664,7 +714,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <p className="text-gray-500 mt-1">Share progress with your investors</p>
                 </div>
                 <Link
-                    to="/vibe-raising/create-update"
+                    to={VIBE_RAISING_CREATE_UPDATE_PATH}
                     className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
                 >
                     <PlusIcon className="w-4 h-4" />
@@ -693,7 +743,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             </div>
                         </div>
                         <Link
-                            to="/vibe-raising/create-update"
+                            to={VIBE_RAISING_CREATE_UPDATE_PATH}
                             className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Create Update Now

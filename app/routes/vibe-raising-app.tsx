@@ -2,9 +2,18 @@ import type { Route } from "./+types/vibe-raising-app";
 import { useState, useEffect, useRef, Fragment } from "react";
 import { Outlet, useLoaderData, useActionData, Form, redirect, useNavigation, useSubmit } from "react-router";
 import { Menu, Transition } from "@headlessui/react";
-import { getVibeRaisingUser, createVibeRaisingSessionCookie, setActiveCompany, getActiveCompany, type VibeRaisingUser } from "~/lib/vibe-raising-session";
+import {
+    getVibeRaisingUser,
+    createVibeRaisingSessionCookie,
+    setActiveCompany,
+    VIBE_RAISING_APP_PATH,
+    VIBE_RAISING_COMPANY_SETUP_PATH,
+    VIBE_RAISING_LOGOUT_PATH,
+    type VibeRaisingUser,
+} from "~/lib/vibe-raising-session";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
-import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon, UsersIcon, ArrowLeftIcon } from "@heroicons/react/24/outline";
+import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
+import { BuildingOffice2Icon, ChartBarIcon, ChevronDownIcon, CheckIcon, DocumentTextIcon, MagnifyingGlassIcon, PlusIcon, XMarkIcon, UsersIcon } from "@heroicons/react/24/outline";
 import type { User } from "~/types/user";
 import { getEnv } from "~/lib/env.server";
 import { getGoogleClientId, verifyGoogleIdToken } from "~/lib/google-auth";
@@ -49,14 +58,14 @@ declare global {
 const GOOGLE_IDENTITY_SCRIPT_SRC = "https://accounts.google.com/gsi/client";
 
 const FOUNDER_NAVIGATION = [
-    { name: 'My Updates', href: '/vibe-raising', icon: DocumentTextIcon },
-    { name: 'Discover Investors', href: '/vibe-raising/discover', icon: UsersIcon },
-    { name: 'Manage Companies', href: '/vibe-raising/companies', icon: BuildingOffice2Icon },
+    { name: 'My Updates', href: VIBE_RAISING_APP_PATH, icon: DocumentTextIcon },
+    { name: 'Discover Investors', href: `${VIBE_RAISING_APP_PATH}/discover`, icon: UsersIcon },
+    { name: 'Manage Companies', href: `${VIBE_RAISING_APP_PATH}/companies`, icon: BuildingOffice2Icon },
 ];
 
 const INVESTOR_NAVIGATION = [
-    { name: 'Portfolio Updates', href: '/vibe-raising', icon: DocumentTextIcon },
-    { name: 'Connections', href: '/vibe-raising/discover', icon: UsersIcon },
+    { name: 'Portfolio Updates', href: VIBE_RAISING_APP_PATH, icon: DocumentTextIcon },
+    { name: 'Connections', href: `${VIBE_RAISING_APP_PATH}/discover`, icon: UsersIcon },
 ];
 
 function normaliseRole(value: FormDataEntryValue | null): Role {
@@ -125,10 +134,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     // Switch active company
     if (intent === "switch-company") {
         const user = getVibeRaisingUser(request);
-        if (!user) throw redirect("/vibe-raising");
+        if (!user) throw redirect(VIBE_RAISING_APP_PATH);
         const companyId = formData.get("companyId")?.toString() || "";
         const updatedUser = setActiveCompany(user, companyId);
-        const returnTo = formData.get("returnTo")?.toString() || "/vibe-raising";
+        const returnTo = formData.get("returnTo")?.toString() || VIBE_RAISING_APP_PATH;
         return redirect(returnTo, {
             headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
         });
@@ -156,8 +165,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         try {
             const profile = await verifyGoogleIdToken(credential, googleClientId);
             const user = buildVibeRaisingUser(profile, role, companyName);
+            const redirectPath = role === "founder" ? VIBE_RAISING_COMPANY_SETUP_PATH : VIBE_RAISING_APP_PATH;
 
-            return redirect("/vibe-raising", {
+            return redirect(redirectPath, {
                 headers: {
                     "Set-Cookie": createVibeRaisingSessionCookie(user),
                 },
@@ -175,90 +185,14 @@ export async function action({ request, context }: Route.ActionArgs) {
     const companyName = formData.get("companyName")?.toString() || "";
 
     const user = buildVibeRaisingUser({ name: fullName, email }, role, companyName);
+    const redirectPath = role === "founder" ? VIBE_RAISING_COMPANY_SETUP_PATH : VIBE_RAISING_APP_PATH;
 
-    return redirect("/vibe-raising", {
+    return redirect(redirectPath, {
         headers: {
             "Set-Cookie": createVibeRaisingSessionCookie(user)
         }
     });
 }
-
-// Announcement Popup Component
-function AnnouncementPopup({ onDismiss, onComplete }: { onDismiss: () => void, onComplete?: () => void }) {
-    console.log("AnnouncementPopup: rendering");
-
-    const handleComplete = () => {
-        onDismiss();
-        if (onComplete) onComplete();
-    };
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div 
-                className="absolute inset-0 bg-black/70 backdrop-blur-sm" 
-                onClick={onDismiss}
-            />
-
-            {/* Modal - side-by-side: video left, content right */}
-            <div className="relative z-[110] flex w-full max-w-3xl h-[560px] bg-white rounded-2xl shadow-2xl overflow-hidden">
-
-                {/* Left: vertical video - fixed size matching 9:16 ratio */}
-                <div className="relative flex-shrink-0 w-[315px] h-full bg-black overflow-hidden">
-                    <iframe
-                        src="https://player.vimeo.com/video/1174236138?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
-                        className="absolute top-0 left-0 w-full h-full"
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        allowFullScreen
-                        title="Vibe Raising Intro"
-                    />
-                </div>
-
-                {/* Right: header + copy + CTA */}
-                <div className="flex flex-col flex-1 min-w-0">
-
-                    {/* Header */}
-                    <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
-                        <button
-                            onClick={onDismiss}
-                            className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-                            aria-label="Back"
-                        >
-                            <ArrowLeftIcon className="w-5 h-5" />
-                        </button>
-                        <h2 className="text-xl font-bold text-gray-900 flex-1">Welcome to Vibe Raising</h2>
-                    </div>
-
-                    {/* Body copy */}
-                    <div className="flex-1 px-6 py-6">
-                        <p className="text-gray-600 text-sm leading-relaxed">
-                            Watch this short intro on how Vibe Raising connects founders with investors through consistent, transparent monthly updates.
-                        </p>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="px-6 pb-6 flex flex-col gap-3">
-                        <button
-                            onClick={handleComplete}
-                            className="w-full py-3.5 px-6 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20"
-                        >
-                            Get Started →
-                        </button>
-                        <button
-                            onClick={onDismiss}
-                            className="text-sm text-gray-400 hover:text-gray-600 transition-colors text-center"
-                        >
-                            Skip for now
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-
-
 
 // Login Form Component
 function GoogleLogoIcon() {
@@ -375,7 +309,7 @@ function LoginForm({
                         <div className="text-center mb-8">
                             <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">Vibe Raising</h1>
                             <p className="text-gray-500 text-sm">
-                                Connect founders with investors through monthly updates
+                                Sign up to build your company profile and send your first monthly update
                             </p>
                         </div>
 
@@ -508,7 +442,7 @@ function LoginForm({
                                     )}
                                     <p className="text-center text-xs leading-5 text-gray-500">
                                         {googleClientId
-                                            ? `Continue with Google using the ${selectedRole === "founder" ? "startup" : "firm"} name above.`
+                                            ? `Use Google to sign up with the ${selectedRole === "founder" ? "startup" : "firm"} name above.`
                                             : "Add VITE_GOOGLE_CLIENT_ID to enable Google login."}
                                     </p>
                                 </div>
@@ -521,7 +455,7 @@ function LoginForm({
                                 className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-violet-500/20 
                                 ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
                             >
-                                {isManualSubmitting ? "Connecting..." : `Continue as ${selectedRole === "founder" ? "Founder" : "Investor"}`}
+                                {isManualSubmitting ? "Connecting..." : `Sign up as ${selectedRole === "founder" ? "Founder" : "Investor"}`}
                             </button>
                         </Form>
                     </div>
@@ -564,10 +498,10 @@ export default function VibeRaisingApp() {
     const nav = vibeRaisingUser?.role === 'investor' ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
 
     return (
-        <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]} logoutAction="/vibe-raising/logout">
+        <AuthenticatedLayout user={platformUser} navigation={nav} userNavigation={[]} logoutAction={VIBE_RAISING_LOGOUT_PATH}>
             {/* Show announcement popup for founders when triggered */}
             {vibeRaisingUser?.role === 'founder' && showAnnouncement && (
-                <AnnouncementPopup 
+                <VibeRaisingIntroPopup
                     onDismiss={() => setShowAnnouncement(false)} 
                     onComplete={onCompleteCallback}
                 />

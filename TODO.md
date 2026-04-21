@@ -38,3 +38,29 @@
 - [x] Add Google client ID env scaffolding for local and deployed Vibe Raising sign-in
 - [x] Run typecheck after the Google login work
 - [x] Keep the Google login option visible when the client ID is not configured
+- [x] Restore a dedicated Vibe Raising landing page before the app sign-up flow
+- [x] Move the authenticated Vibe Raising app under /vibe-raising/app
+- [x] Enforce founder flow: sign up > company details > monthly update > dashboard
+- [x] Replace the public Vibe Raising landing page with the hero-image version
+- [x] Restore the selfie intro video on the first public Sign Up click
+- [x] Make published founder updates use the reviewed content instead of the hardcoded dashboard draft
+- [x] Simplify the Vibe Raising hero CTA to a single centered Sign Up button
+- [x] Redesign create-update month and year selectors as top-right card tabs
+- [x] Replace the month native select with an aligned custom tab dropdown
+- [x] Widen the month tab and add a matching custom year dropdown
+- [x] Remove the triangle controls from the year tab
+- [x] Reuse the date tab style on review and dashboard as display-only labels
+- [x] Remove the duplicate left date from the create-update current card
+- [x] Prevent platform login from crashing when the current-user lookup returns a transient backend error
+- [x] Move previous two months into the create-update month bar and hide separate past-month cards
+- [x] Make create-update month chips switch displayed update content and color chart bars by month
+- [x] Redesign the month palette so adjacent months use distinct colors
+- [x] Make the create-update card and metric frames follow the active month color
+- [x] Align the create-update month/year tabs to the left edge for comparison
+- [x] Move the current/previous update indicator into the month bar
+- [x] Simplify the month-bar update indicator to thin text without a frame
+- [x] Extend the month bar and place the info control inside it
+- [x] Slim the month-bar info control to a lowercase i hover target
+- [x] Fix the month-bar info panel hover so it is not clipped
+- [x] Make the month-bar info panel read as normal paragraph text
+- [x] Only show the month-bar info control for AI drafting generated months

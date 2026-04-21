@@ -1,6 +1,13 @@
 import type { Route } from "./+types/vibe-raising-app.companies";
 import { Link, Form, redirect, useNavigation } from "react-router";
-import { requireFounder, getActiveCompany, setActiveCompany, createVibeRaisingSessionCookie } from "~/lib/vibe-raising-session";
+import {
+    requireFounder,
+    getActiveCompany,
+    setActiveCompany,
+    createVibeRaisingSessionCookie,
+    VIBE_RAISING_APP_PATH,
+    VIBE_RAISING_COMPANY_SETUP_PATH,
+} from "~/lib/vibe-raising-session";
 import { PlusIcon, BuildingOffice2Icon, CheckCircleIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 
 export async function loader({ request }: Route.LoaderArgs) {
@@ -17,7 +24,7 @@ export async function action({ request }: Route.ActionArgs) {
         const user = requireFounder(request);
         const companyId = formData.get("companyId")?.toString() || "";
         const updatedUser = setActiveCompany(user, companyId);
-        return redirect("/vibe-raising", {
+        return redirect(VIBE_RAISING_APP_PATH, {
             headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
         });
     }
@@ -105,7 +112,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
 
                 {/* Add New Company Card */}
                 <Link 
-                    to="/vibe-raising/company-setup?new=true"
+                    to={`${VIBE_RAISING_COMPANY_SETUP_PATH}?new=true`}
                     className="flex flex-col items-center justify-center text-center p-8 bg-gray-50/50 rounded-2xl border-2 border-dashed border-gray-300 hover:border-violet-400 hover:bg-violet-50/50 transition-all group min-h-[220px]"
                 >
                     <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm border border-gray-200 mb-4 group-hover:scale-110 group-hover:bg-violet-600 group-hover:border-violet-600 transition-all duration-300">

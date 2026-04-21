@@ -1,16 +1,25 @@
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
-import { requireFounder, createVibeRaisingSessionCookie, addCompany, type Company } from "~/lib/vibe-raising-session";
+import {
+    requireFounder,
+    createVibeRaisingSessionCookie,
+    addCompany,
+    hasSubmittedVibeRaisingUpdate,
+    VIBE_RAISING_APP_PATH,
+    VIBE_RAISING_CREATE_UPDATE_PATH,
+    type Company,
+} from "~/lib/vibe-raising-session";
 import { BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon, MapPinIcon } from "@heroicons/react/24/outline";
 
 export async function loader({ request }: Route.LoaderArgs) {
     const user = requireFounder(request);
     const url = new URL(request.url);
     const isAddingNew = url.searchParams.get("new") === "true";
+    const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, user);
 
     // If not adding a new company and already registered, skip setup
     if (!isAddingNew && user.companyRegistered) {
-        throw redirect("/vibe-raising/create-update");
+        throw redirect(hasSubmitted ? VIBE_RAISING_APP_PATH : VIBE_RAISING_CREATE_UPDATE_PATH);
     }
 
     return { user, isAddingNew };
@@ -39,7 +48,7 @@ export async function action({ request }: Route.ActionArgs) {
             registered: true,
         };
         const updatedUser = addCompany(user, newCompany);
-        return redirect("/vibe-raising", {
+        return redirect(VIBE_RAISING_CREATE_UPDATE_PATH, {
             headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
         });
     }
@@ -66,7 +75,7 @@ export async function action({ request }: Route.ActionArgs) {
         activeCompanyId: companyId,
     };
 
-    return redirect("/vibe-raising/create-update", {
+    return redirect(VIBE_RAISING_CREATE_UPDATE_PATH, {
         headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
     });
 }

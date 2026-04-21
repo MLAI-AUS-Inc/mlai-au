@@ -9,7 +9,13 @@ import { getEnv } from "~/lib/env.server";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env, request);
+    let user = null;
+
+    try {
+        user = await getCurrentUser(env, request);
+    } catch (error) {
+        console.warn("Skipping logged-in redirect because current user lookup failed.", error);
+    }
 
     if (user) {
         const url = new URL(request.url);
