@@ -1927,12 +1927,12 @@ export default function CreateUpdate() {
                                     Drag files here to upload
                                 </h3>
 
-                                <p className="text-sm text-gray-400 font-medium mb-1">
-                                    Supported video files are MP4, MOV, AVI
+                                <p className="text-sm text-gray-600 font-medium mb-1">
+                                    Video (MP4, MOV), audio, images, PDF, Word, Excel
                                 </p>
 
-                                <p className="text-sm text-gray-400 mb-6">
-                                    Minimize processing time
+                                <p className="text-sm text-gray-500 mb-6">
+                                    Up to 20 MB per file
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-3 w-full">
