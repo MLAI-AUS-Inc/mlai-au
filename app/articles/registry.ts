@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-tech-startup-company-and-how-it-really-works': {
+        title: "What Is a Tech Startup Company and How It Really Works",
+        date: "2026-04-22",
+        description: "Learn what is a tech startup company, how it differs from a traditional business, and the core traits, risks, and early-stage steps that define startup growth.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-tech-startup-company-and-how-it-really-works",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7f2f305c-d97f-4ad1-8a44-334c11573830.jpg?alt=media&token=7debd0b8-1544-40e2-9b58-c782e6ebb7a7",
+        imageAlt: "What Is a Tech Startup Company and How It Really Works",
+        hasContent: true,
+    },
     'featured/what-an-entrepreneur-does-and-how-to-start-well': {
         title: "What an Entrepreneur Does and How to Start Well",
         date: "2026-04-20",
