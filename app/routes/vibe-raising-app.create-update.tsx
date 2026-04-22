@@ -1457,8 +1457,10 @@ export default function CreateUpdate() {
                     </button>
                 </div>
 
-                {/* Main layout: Preview + thin rating bar */}
-                <div className="flex gap-4 items-start">
+                {/* Main layout: Preview + thin rating bar.
+                    Mobile: stacked (preview first, feedback below).
+                    Desktop: preview left, sticky sidebar right. */}
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
                     {/* PREVIEW — dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
@@ -1783,9 +1785,9 @@ export default function CreateUpdate() {
                         );
                     })()}
 
-                    {/* RATING SIDEBAR — thin vertical bar on right */}
-                    <div className="w-56 flex-shrink-0 sticky top-6 space-y-3">
-                        {/* Company identity */}
+                    {/* RATING SIDEBAR — stacked below on mobile, sticky right on desktop */}
+                    <div className="w-full lg:w-56 lg:flex-shrink-0 lg:sticky lg:top-6 space-y-3">
+                        {/* Company identity (primary) with AI grade as supporting badge */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-center text-center">
                             {user.domain ? (
                                 <img
@@ -1802,12 +1804,12 @@ export default function CreateUpdate() {
                             {user.domain && (
                                 <p className="text-[11px] text-gray-400 mt-0.5">{user.domain}</p>
                             )}
-                        </div>
-
-                        {/* Grade pill */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">AI Grade</p>
-                            <div className="text-4xl font-bold text-green-600 leading-none">{feedback?.grade}</div>
+                            {feedback?.grade && (
+                                <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700">AI Grade</span>
+                                    <span className="text-sm font-bold text-green-700 leading-none">{feedback.grade}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Strengths — collapsible */}
