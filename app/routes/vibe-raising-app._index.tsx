@@ -421,7 +421,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 ))}
                             </div>
                         )}
-                        <div className="grid gap-3 grid-cols-5">
+                        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                             {(editing ? METRIC_OPTIONS : METRIC_OPTIONS.filter(m => selectedMetrics.has(m.key))).map(m => (
                                 <div key={m.key} onClick={() => editing && toggleMetric(m.key)}>
                                     <EditableMetricCard
@@ -735,7 +735,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                         </div>
 
                         <div className="p-6 space-y-6">
-                            <div className="grid gap-3 grid-cols-5">
+                            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                                 {update.metrics.revenue && <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />}
                                 {update.metrics.users && <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />}
                                 {update.metrics.mrr && <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />}
