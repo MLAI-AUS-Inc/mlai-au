@@ -275,7 +275,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
                             <span className="w-px h-3 bg-gray-200" />
                         )}
-                        <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                        <span className="text-xs text-gray-600 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400" />
                     </div>
                 </button>
@@ -325,6 +325,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     <img
                                         src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                         alt=""
+                                        aria-hidden="true"
                                         className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                     />
                                 ) : (
