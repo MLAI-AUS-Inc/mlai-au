@@ -1912,7 +1912,7 @@ export default function CreateUpdate() {
                         <div
                             {...getRootProps()}
                             className={clsx(
-                                "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
+                                "relative border border-gray-100 rounded-2xl p-6 sm:p-12 transition-all flex flex-col items-center justify-center text-center",
                                 isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
                             )}
                         >
@@ -1935,7 +1935,7 @@ export default function CreateUpdate() {
                                     Minimize processing time
                                 </p>
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-col sm:flex-row gap-3 w-full">
                                     <button
                                         type="button"
                                         onClick={(e) => {
@@ -1944,7 +1944,7 @@ export default function CreateUpdate() {
                                         }}
                                         disabled={isEmailDraftBusy}
                                         className={clsx(
-                                            "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
+                                            "flex-1 flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
                                             isRecording
                                                 ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse"
                                                 : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
@@ -1960,7 +1960,7 @@ export default function CreateUpdate() {
                                     <button
                                         type="button"
                                         disabled={isEmailDraftBusy}
-                                        className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
+                                        className="flex-1 px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
                                     >
                                         Select file
                                     </button>
