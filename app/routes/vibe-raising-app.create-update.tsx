@@ -531,7 +531,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                 <>
                     {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                             {METRIC_OPTIONS.map(m => {
                                 const val = pm.metrics[m.key];
                                 return (
@@ -1516,7 +1516,7 @@ export default function CreateUpdate() {
 
                             {/* Metrics — square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <div className="grid grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                     {METRIC_OPTIONS.map(m => {
                                         const val = (data as any)?.[m.key];
                                         return (
@@ -2102,7 +2102,7 @@ export default function CreateUpdate() {
                                         {/* Metrics — square boxes */}
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-5 gap-2">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                                                 {METRIC_OPTIONS.map(m => {
                                                     const active = m.key in card.metrics;
                                                     return (
@@ -2215,7 +2215,7 @@ export default function CreateUpdate() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                                 </label>
-                                <div className="grid grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                     {METRIC_OPTIONS.map((m) => {
                                         const active = selectedMetrics.has(m.key);
                                         return (
@@ -2321,7 +2321,7 @@ export default function CreateUpdate() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                             </label>
-                            <div className="grid grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                 {METRIC_OPTIONS.map((m) => {
                                     const active = selectedMetrics.has(m.key);
                                     return (
