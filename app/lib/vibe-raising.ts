@@ -811,10 +811,30 @@ export function hasSubmittedVibeRaisingUpdate(
   return cookieHeader.includes(`${getVibeRaisingSubmittedCookieName(companyId)}=true`);
 }
 
+// Gated by VITE_STUB_BACKEND (.env.local). Fake founder profile with one
+// company — lets the Vibe Raising app render without hitting api.mlai.au.
+const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
+  role: "founder",
+  organizationName: "Dev Startup Pty Ltd",
+  companies: [
+    {
+      id: "dev-company",
+      name: "Dev Startup Pty Ltd",
+      domain: "devstartup.com",
+      abn: "51 824 753 556",
+      registered: true,
+    },
+  ],
+  activeCompanyId: "dev-company",
+};
+
 export async function getVibeRaisingProfile(
   env: Env,
   request: Request,
 ): Promise<VibeRaisingProfile | null> {
+  if (import.meta.env.VITE_STUB_BACKEND === "true") {
+    return DEV_VIBE_PROFILE_STUB;
+  }
   try {
     const client = createApiClient(env, request);
     const response = await client.get(PROFILE_PATH);
@@ -940,10 +960,80 @@ export async function setVibeRaisingActiveCompany(
   await client.post(ACTIVE_COMPANY_PATH, { companyId });
 }
 
+// Gated by VITE_STUB_BACKEND (.env.local). Three seeded monthly updates
+// so the founder's "My Updates" page shows realistic content in local dev.
+const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
+  {
+    id: "update-2026-04",
+    isoMonth: "2026-04",
+    month: "April 2026",
+    monthName: "April",
+    year: 2026,
+    date: "2026-04-01T00:00:00.000Z",
+    status: "draft",
+    metrics: {
+      revenue: "$62,400 MRR",
+      growth: "+18% MoM",
+      users: "2,140 active",
+      runway: "11 months",
+    },
+    highlights:
+      "Closed three enterprise pilots with Melbourne-based firms. Shipped a redesigned onboarding that lifted activation from 41% to 58%.",
+    challenges:
+      "Sales cycle for enterprise is running 6-8 weeks longer than forecast. Hiring a second AE has stalled after two declined offers.",
+    asks:
+      "Intros to Sydney-based CTOs evaluating internal tooling, and warm leads to senior AEs open to pre-Series A equity.",
+  },
+  {
+    id: "update-2026-03",
+    isoMonth: "2026-03",
+    month: "March 2026",
+    monthName: "March",
+    year: 2026,
+    date: "2026-03-01T00:00:00.000Z",
+    status: "sent",
+    metrics: {
+      revenue: "$52,900 MRR",
+      growth: "+12% MoM",
+      users: "1,820 active",
+      runway: "12 months",
+    },
+    highlights:
+      "Launched the v2 analytics dashboard. Early data shows users spending 2.3x longer in-app per session.",
+    challenges:
+      "Churn ticked up to 4.1% as a large cohort from the Q4 promo ended their trial without converting.",
+    asks:
+      "Feedback on our pricing experiment - considering a usage-based tier for teams under 20 seats.",
+  },
+  {
+    id: "update-2026-02",
+    isoMonth: "2026-02",
+    month: "February 2026",
+    monthName: "February",
+    year: 2026,
+    date: "2026-02-01T00:00:00.000Z",
+    status: "sent",
+    metrics: {
+      revenue: "$47,200 MRR",
+      growth: "+9% MoM",
+      users: "1,620 active",
+      runway: "13 months",
+    },
+    highlights:
+      "Signed our first design partner in healthcare. Team grew from 6 to 8 with two senior engineers joining.",
+    challenges:
+      "Infra costs rose 22% as we scaled the ML inference layer - investigating GPU spot instances.",
+    asks: "Intros to AI infra investors who have conviction on vertical SaaS.",
+  },
+];
+
 export async function getVibeRaisingMonthlyUpdates(
   env: Env,
   request: Request,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
+  if (import.meta.env.VITE_STUB_BACKEND === "true") {
+    return DEV_MONTHLY_UPDATES_STUB;
+  }
   const client = createApiClient(env, request);
 
   try {

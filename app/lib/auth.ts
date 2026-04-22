@@ -102,7 +102,22 @@ export async function verifyMagicLinkWithCookies(
     return { data: response.data, setCookieHeaders };
 }
 
+// Gated by VITE_STUB_BACKEND — set in .env.local to preview as a fake
+// logged-in user when the live backend is unavailable. `null` ⇒ logged out.
+const DEV_AUTH_STUB: Record<string, unknown> | null = {
+    full_name: "Dev User",
+    email: "dev@mlai.au",
+    role: "participant",
+    is_superuser: false,
+    is_active: true,
+    has_team: false,
+    avatar_url: null,
+};
+
 export async function getCurrentUser(env: Env, request?: Request) {
+    if (import.meta.env.VITE_STUB_BACKEND === "true") {
+        return DEV_AUTH_STUB;
+    }
     try {
         const client = getAxios(env, request);
         const response = await client.get("/api/v1/auth/me/");
