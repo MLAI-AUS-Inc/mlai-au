@@ -126,7 +126,7 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
                 active ? "text-gray-900" : "text-gray-300"
             )}>{active ? value : "—"}</p>
             <p className={clsx(
-                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -161,7 +161,7 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
                 <p className="text-base font-extrabold text-gray-300">—</p>
             )}
             <p className={clsx(
-                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -612,16 +612,16 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
             </div>
 
             {isOverdue && (
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-start gap-4">
-                            <div className="p-3 bg-white rounded-full border border-orange-100 shadow-sm text-orange-500">
+                            <div className="p-3 bg-white rounded-full border border-violet-100 shadow-sm text-violet-600">
                                 <ClockIcon className="w-8 h-8" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="px-2.5 py-0.5 bg-orange-200 text-orange-800 text-xs font-bold rounded-full">
+                                    <span className="px-2.5 py-0.5 bg-violet-200 text-violet-800 text-xs font-bold rounded-full">
                                         {daysOverdue} days overdue
                                     </span>
                                 </div>
@@ -633,7 +633,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         </div>
                         <Link
                             to="/vibe-raising/create-update"
-                            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap"
+                            className="px-6 py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Create Update Now
                         </Link>
