@@ -7,6 +7,7 @@ import {
     setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
 import { PlusIcon, BuildingOffice2Icon, CheckCircleIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -82,9 +83,12 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                 </div>
                                 
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">{company.name}</h3>
-                                {company.domain && (
-                                    <p className="text-sm text-gray-500 truncate">{company.domain}</p>
-                                )}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {company.domain && (
+                                        <p className="text-sm text-gray-500 truncate">{company.domain}</p>
+                                    )}
+                                    <StartupRegionBadge location={company.location} />
+                                </div>
                             </div>
 
                             <div className="p-4 border-t border-gray-50 bg-gray-50/50 mt-auto">

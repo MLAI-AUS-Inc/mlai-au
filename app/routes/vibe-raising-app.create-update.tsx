@@ -28,11 +28,15 @@ import {
     FireIcon,
     ArrowRightIcon,
     BanknotesIcon,
+    LinkIcon,
+    ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
+import { getVibeRaisingMonthTheme, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type { VibeRaisingStartupUpdateStatusResponse } from "~/types/vibe-raising";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -110,10 +114,14 @@ export async function action({ request, context }: Route.ActionArgs) {
                 .map((key) => [key, String(formData.get(key) || "").trim()] as const)
                 .filter(([, value]) => value.length > 0),
         );
+        const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
 
         await saveVibeRaisingMonthlyUpdate(env, request, {
             month: String(formData.get("month") || "").trim(),
             year: Number(formData.get("year") || 0),
+            summary: String(formData.get("summary") || "").trim() || null,
+            sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
+            videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
             highlights: String(formData.get("highlights") || ""),
             challenges: String(formData.get("challenges") || ""),
             asks: String(formData.get("asks") || ""),
@@ -152,6 +160,8 @@ type PersistedEmailDraftRun = {
     bindingId?: number | null;
     googleConnectionId?: number | null;
 };
+
+type RecordedMediaKind = "video" | "audio";
 
 function getEmailDraftStorageKey(domain?: string | null) {
     const normalized = String(domain || "").trim().toLowerCase() || "unknown";
@@ -768,6 +778,9 @@ export default function CreateUpdate() {
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [previewMediaKind, setPreviewMediaKind] = useState<RecordedMediaKind | null>(null);
+    const [recordingMode, setRecordingMode] = useState<RecordedMediaKind | null>(null);
+    const [recordingError, setRecordingError] = useState<string | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [hasDraft, setHasDraft] = useState<boolean>(() => {
@@ -785,6 +798,11 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
+    const [summary, setSummary] = useState<string>(defaultData?.summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(defaultData?.sourceUrl || "");
+    const [showImportPanel, setShowImportPanel] = useState<boolean>(
+        Boolean(defaultData?.summary || defaultData?.sourceUrl || defaultData?.videoUrl),
+    );
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -800,6 +818,8 @@ export default function CreateUpdate() {
 
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || "February");
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || 2026);
+    const [activePeriodKey, setActivePeriodKey] = useState("current");
+    const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -832,13 +852,26 @@ export default function CreateUpdate() {
     const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
     const emailDraftRecoveryKeyRef = useRef<string | null>(null);
     const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const recordedChunksRef = useRef<BlobPart[]>([]);
 
     const handleDraftComplete = (data: any) => {
+        setActivePeriodKey("current");
         if (data.month) setSelectedMonth(data.month);
         if (data.year) setSelectedYear(data.year);
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
+        setSummary(data.summary || "");
+        setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (data.videoUrl || data.video_url) {
+            setVideoPreviewUrl(data.videoUrl || data.video_url);
+            setPreviewMediaKind("video");
+        }
+        if (data.summary || data.sourceUrl || data.source_url || data.videoUrl || data.video_url) {
+            setShowImportPanel(true);
+        }
         setMetricValues(data.metrics || {});
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
@@ -1260,6 +1293,81 @@ export default function CreateUpdate() {
         emailDraftStatus?.runId,
     ]);
 
+    const stopMediaStream = useCallback(() => {
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+    }, []);
+
+    const startRecording = useCallback(async () => {
+        if (typeof window === "undefined" || typeof navigator === "undefined") {
+            return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+            setRecordingError("Recording is not supported in this browser. Upload a file or add a source URL instead.");
+            return;
+        }
+
+        try {
+            setRecordingError(null);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
+            const hasVideo = stream.getVideoTracks().length > 0;
+            recordedChunksRef.current = [];
+            mediaStreamRef.current = stream;
+            setRecordingMode(hasVideo ? "video" : "audio");
+
+            const recorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = recorder;
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                }
+            };
+            recorder.onstop = () => {
+                const blob = new Blob(recordedChunksRef.current, {
+                    type: recorder.mimeType || (hasVideo ? "video/webm" : "audio/webm"),
+                });
+                if (blob.size > 0) {
+                    setVideoPreviewUrl(URL.createObjectURL(blob));
+                    setPreviewMediaKind(hasVideo ? "video" : "audio");
+                    setShowImportPanel(true);
+                }
+                recordedChunksRef.current = [];
+                mediaRecorderRef.current = null;
+                setIsRecording(false);
+                setRecordingMode(null);
+                stopMediaStream();
+            };
+            recorder.start();
+            setIsRecording(true);
+        } catch {
+            setRecordingError("We couldn't access your camera or microphone. Upload a file or add a source URL instead.");
+            setIsRecording(false);
+            setRecordingMode(null);
+            stopMediaStream();
+        }
+    }, [stopMediaStream]);
+
+    const stopRecording = useCallback(() => {
+        const recorder = mediaRecorderRef.current;
+        if (recorder?.state === "recording") {
+            recorder.stop();
+            return;
+        }
+        setIsRecording(false);
+        setRecordingMode(null);
+        stopMediaStream();
+    }, [stopMediaStream]);
+
+    useEffect(() => {
+        return () => {
+            if (mediaRecorderRef.current?.state === "recording") {
+                mediaRecorderRef.current.stop();
+            }
+            stopMediaStream();
+        };
+    }, [stopMediaStream]);
+
     const resumeDraft = () => {
         try {
             const raw = localStorage.getItem("vibe_draft");
@@ -1269,6 +1377,11 @@ export default function CreateUpdate() {
             // Restore current month fields
             if (draft.month) setSelectedMonth(draft.month);
             if (draft.year) setSelectedYear(Number(draft.year));
+            setSummary(draft.summary || "");
+            setSourceUrl(draft.sourceUrl || "");
+            setVideoPreviewUrl(draft.videoUrl || null);
+            setPreviewMediaKind(draft.videoUrl ? "video" : null);
+            setShowImportPanel(Boolean(draft.summary || draft.sourceUrl || draft.videoUrl));
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
@@ -1370,10 +1483,13 @@ export default function CreateUpdate() {
     // Chart click: always expand + scroll
     const expandCardFromChart = (index: number) => {
         if (index === pastMonthCards.length) {
+            setActivePeriodKey("current");
             const el = document.getElementById("current-month-card");
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
+
+        setActivePeriodKey(`past-${index}`);
 
         setExpandedCards(prev => {
             const next = new Set(prev);
@@ -1397,12 +1513,38 @@ export default function CreateUpdate() {
         });
     };
 
+    const selectPeriod = (periodKey: string) => {
+        setActivePeriodKey(periodKey);
+        if (periodKey === "current") {
+            document.getElementById("current-month-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            return;
+        }
+
+        const index = Number(periodKey.replace("past-", ""));
+        if (!Number.isFinite(index)) return;
+        setExpandedCards((prev) => {
+            const next = new Set(prev);
+            next.add(index);
+            return next;
+        });
+        setTimeout(() => {
+            document.getElementById(`past-month-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+    };
+
     // Dropzone setup
     const onDrop = useCallback((acceptedFiles: File[]) => {
         console.log(acceptedFiles);
         const video = acceptedFiles.find(f => f.type.startsWith("video/"));
+        const audio = acceptedFiles.find(f => f.type.startsWith("audio/"));
         if (video) {
             setVideoPreviewUrl(URL.createObjectURL(video));
+            setPreviewMediaKind("video");
+            setShowImportPanel(true);
+        } else if (audio) {
+            setVideoPreviewUrl(URL.createObjectURL(audio));
+            setPreviewMediaKind("audio");
+            setShowImportPanel(true);
         }
     }, []);
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -1424,6 +1566,12 @@ export default function CreateUpdate() {
     // 1. Feedback View — preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
         const { feedback, data } = actionData;
+        const reviewData = data as any;
+        const reviewMonth = String(reviewData?.month || selectedMonth);
+        const reviewYear = Number(reviewData?.year || selectedYear);
+        const reviewSummary = String(reviewData?.summary || "").trim();
+        const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
+        const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
 
         const handleSaveDraft = () => {
             try {
@@ -1466,10 +1614,10 @@ export default function CreateUpdate() {
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             {/* Hero banner — video or gradient */}
-                            {videoPreviewUrl ? (
+                            {reviewVideoUrl ? (
                                 <div className="relative w-full aspect-video bg-black">
                                     <video
-                                        src={videoPreviewUrl}
+                                        src={reviewVideoUrl}
                                         controls
                                         className="w-full h-full object-contain"
                                         poster=""
@@ -1508,10 +1656,16 @@ export default function CreateUpdate() {
 
                             {/* Preview header */}
                             <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-lg font-bold text-gray-900">
-                                        {(data as any)?.month} {(data as any)?.year} Update
-                                    </h3>
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            {reviewMonth} {reviewYear} Update
+                                        </h3>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <VibeRaisingDateTabs month={reviewMonth} year={reviewYear} size="compact" />
+                                            <StartupRegionBadge location={user.location} />
+                                        </div>
+                                    </div>
                                     <span className="text-xs text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                             </div>
@@ -1555,6 +1709,25 @@ export default function CreateUpdate() {
 
                             {/* Content sections */}
                             <div className="px-6 py-5 space-y-5">
+                                {(reviewSummary || reviewSourceUrl) && (
+                                    <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                                        {reviewSummary && (
+                                            <p className="text-sm font-medium leading-relaxed text-gray-700">{reviewSummary}</p>
+                                        )}
+                                        {reviewSourceUrl && (
+                                            <a
+                                                href={reviewSourceUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-2 text-xs font-bold text-violet-700 hover:text-violet-900"
+                                            >
+                                                <LinkIcon className="h-3.5 w-3.5" />
+                                                Source materials
+                                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
                                 {(data as any)?.highlights && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -1761,9 +1934,14 @@ export default function CreateUpdate() {
                                         }}
                                     >
                                         <input type="hidden" name="intent" value="publish" />
-                                        {Object.entries(data || {}).map(([key, value]) => (
-                                            <input key={key} type="hidden" name={key} value={value as any} />
-                                        ))}
+                                        <input type="hidden" name="summary" value={reviewSummary} />
+                                        <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
+                                        <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
+                                        {Object.entries(data || {})
+                                            .filter(([key]) => !["summary", "sourceUrl", "videoUrl"].includes(key))
+                                            .map(([key, value]) => (
+                                                <input key={key} type="hidden" name={key} value={value as any} />
+                                            ))}
                                         
                                         <button
                                             type="submit"
@@ -1804,6 +1982,7 @@ export default function CreateUpdate() {
                             {user.domain && (
                                 <p className="text-[11px] text-gray-400 mt-0.5">{user.domain}</p>
                             )}
+                            <StartupRegionBadge location={user.location} className="mt-3" />
                             {feedback?.grade && (
                                 <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
                                     <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700">AI Grade</span>
@@ -1905,6 +2084,9 @@ export default function CreateUpdate() {
 
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
+                <input type="hidden" name="summary" value={summary} />
+                <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                <input type="hidden" name="videoUrl" value={videoPreviewUrl || ""} />
 
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
@@ -1940,7 +2122,11 @@ export default function CreateUpdate() {
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setIsRecording(!isRecording);
+                                            if (isRecording) {
+                                                stopRecording();
+                                            } else {
+                                                void startRecording();
+                                            }
                                         }}
                                         disabled={isEmailDraftBusy}
                                         className={clsx(
@@ -1965,7 +2151,85 @@ export default function CreateUpdate() {
                                         Select file
                                     </button>
                                 </div>
+                                {isRecording && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">
+                                        {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
+                                    </p>
+                                )}
+                                {recordingError && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">{recordingError}</p>
+                                )}
                             </div>
+                        </div>
+
+                        <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                            <button
+                                type="button"
+                                onClick={() => setShowImportPanel((value) => !value)}
+                                className="flex w-full items-center justify-between gap-4 text-left"
+                            >
+                                <div>
+                                    <h2 className="text-sm font-bold text-gray-900">Manual materials</h2>
+                                    <p className="mt-1 text-sm text-gray-500">
+                                        Add a source URL, a short summary, or a quick recorded note for this update.
+                                    </p>
+                                </div>
+                                <ChevronDownIcon className={clsx("h-5 w-5 flex-shrink-0 text-gray-400 transition-transform", showImportPanel && "rotate-180")} />
+                            </button>
+
+                            {showImportPanel && (
+                                <div className="mt-5 space-y-4">
+                                    <label className="block">
+                                        <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
+                                            <LinkIcon className="h-4 w-4 text-gray-400" />
+                                            Source URL
+                                        </span>
+                                        <input
+                                            type="url"
+                                            value={sourceUrl}
+                                            onChange={(event) => setSourceUrl(event.target.value)}
+                                            placeholder="https://docs.google.com/document/..."
+                                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                                        />
+                                    </label>
+
+                                    <label className="block">
+                                        <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
+                                        <textarea
+                                            value={summary}
+                                            onChange={(event) => setSummary(event.target.value)}
+                                            rows={3}
+                                            placeholder="Topline context investors should read before the detailed sections..."
+                                            className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                                        />
+                                    </label>
+
+                                    {videoPreviewUrl && (
+                                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                            <div className="mb-2 flex items-center justify-between gap-3">
+                                                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                                    {previewMediaKind === "audio" ? "Recorded audio" : "Recorded video"}
+                                                </p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setVideoPreviewUrl(null);
+                                                        setPreviewMediaKind(null);
+                                                    }}
+                                                    className="text-xs font-bold text-gray-400 hover:text-gray-700"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                            {previewMediaKind === "audio" ? (
+                                                <audio src={videoPreviewUrl} controls className="w-full" />
+                                            ) : (
+                                                <video src={videoPreviewUrl} controls className="aspect-video w-full rounded-lg bg-black object-contain" />
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </fieldset>
                     {isEmailDraftBusy && (
@@ -2036,6 +2300,45 @@ export default function CreateUpdate() {
 
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+                        {pastMonthCards.length > 0 && (
+                            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
+                                {pastMonthCards.map((card, index) => {
+                                    const periodKey = `past-${index}`;
+                                    const isActive = activePeriodKey === periodKey;
+                                    return (
+                                        <button
+                                            key={periodKey}
+                                            type="button"
+                                            onClick={() => selectPeriod(periodKey)}
+                                            className={clsx(
+                                                "rounded-xl px-3 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all",
+                                                isActive
+                                                    ? "bg-gray-950 text-white shadow-sm"
+                                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200",
+                                            )}
+                                        >
+                                            {card.month}
+                                        </button>
+                                    );
+                                })}
+                                <button
+                                    type="button"
+                                    onClick={() => selectPeriod("current")}
+                                    className={clsx(
+                                        "rounded-xl px-3 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all",
+                                        activePeriodKey === "current"
+                                            ? `${selectedMonthTheme.tabClass} text-white shadow-sm`
+                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200",
+                                    )}
+                                >
+                                    {selectedMonth} {selectedYear}
+                                </button>
+                                <span className="ml-auto text-[11px] font-medium text-gray-400">
+                                    {activePeriodKey === "current" ? "Current update" : "Previous update"}
+                                </span>
+                            </div>
+                        )}
+
                         {/* ─── Growth Charts ─── */}
                         {pastMonthCards.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -2182,7 +2485,14 @@ export default function CreateUpdate() {
                         ))}
 
                         {/* Current month card — prominent, always visible */}
-                        <div id="current-month-card" className="rounded-xl border-2 border-purple-300 bg-white p-6 space-y-5 shadow-md ring-1 ring-purple-100 scroll-mt-24">
+                        <div
+                            id="current-month-card"
+                            className={clsx(
+                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
+                                selectedMonthTheme.borderClass,
+                                selectedMonthTheme.ringClass,
+                            )}
+                        >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-3.5 h-3.5 rounded-full bg-purple-600" />
@@ -2190,18 +2500,19 @@ export default function CreateUpdate() {
                                 </div>
                                 <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">Current Update</span>
                             </div>
+                            <VibeRaisingDateTabs month={selectedMonth} year={selectedYear} size="compact" />
 
                             {/* Month/Year selector */}
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                                 <select
                                     name="month"
                                     value={selectedMonth}
                                     onChange={(e) => setSelectedMonth(e.target.value)}
                                     className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-purple-500 focus:border-purple-500 border bg-gray-50"
                                 >
-                                    <option>January</option>
-                                    <option>February</option>
-                                    <option>March</option>
+                                    {VIBE_RAISING_MONTH_OPTIONS.map((option) => (
+                                        <option key={option.name}>{option.name}</option>
+                                    ))}
                                 </select>
                                 <input
                                     type="number"
@@ -2296,18 +2607,25 @@ export default function CreateUpdate() {
 
                 {/* ─── Default Form (when no email draft) ─── */}
                 {pastMonthCards.length === 0 && (
-                    <div className="rounded-xl border border-gray-200 bg-white p-6 space-y-5">
+                    <div
+                        className={clsx(
+                            "rounded-xl border bg-white p-6 space-y-5 ring-1",
+                            selectedMonthTheme.borderClass,
+                            selectedMonthTheme.ringClass,
+                        )}
+                    >
                         {/* Month/Year */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <VibeRaisingDateTabs month={selectedMonth} year={selectedYear} size="compact" />
                             <select
                                 name="month"
                                 value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(e.target.value)}
                                 className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
                             >
-                                <option>January</option>
-                                <option>February</option>
-                                <option>March</option>
+                                {VIBE_RAISING_MONTH_OPTIONS.map((option) => (
+                                    <option key={option.name}>{option.name}</option>
+                                ))}
                             </select>
                             <input
                                 type="number"

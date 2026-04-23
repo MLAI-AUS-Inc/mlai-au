@@ -32,7 +32,12 @@ import {
     QuestionMarkCircleIcon,
     ExclamationCircleIcon,
     FireIcon,
+    LinkIcon,
+    ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
+import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
+import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -202,6 +207,12 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     // Hash numeric or string ID to pick a deterministic gradient
     const hashId = typeof update.id === 'number' ? update.id : update.id?.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) || 0;
     const gradientClass = GRADIENTS[hashId % GRADIENTS.length];
+    const updatePeriod = update.year
+        ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
+        : parseVibeRaisingMonthYear(update.month);
+    const updateSummary = update.summary || "";
+    const updateSourceUrl = update.sourceUrl || "";
+    const cardExcerpt = updateSummary || highlights;
 
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
@@ -276,7 +287,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
                                 <span className="w-px h-3 bg-gray-200" />
                             )}
-                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
                         </div>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
@@ -316,7 +327,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             </>
                         )}
                         {/* Top row: date + collapse chevron */}
-                        <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
+                        <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex flex-wrap items-center justify-between gap-2">
+                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
                             <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>
                             <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
                         </div>
@@ -342,6 +354,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                         {update.score && (
                                             <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
                                         )}
+                                        <StartupRegionBadge location={user?.location} variant="inverse" />
                                     </div>
                                     <p className="text-white/60 text-[11px]">{user?.companyName}</p>
                                 </div>
@@ -439,6 +452,26 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             ))}
                         </div>
 
+                        {(updateSummary || updateSourceUrl) && (
+                            <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                                {updateSummary && (
+                                    <p className="text-sm font-medium leading-relaxed text-gray-700">{updateSummary}</p>
+                                )}
+                                {updateSourceUrl && (
+                                    <a
+                                        href={updateSourceUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-xs font-bold text-violet-700 hover:text-violet-900"
+                                    >
+                                        <LinkIcon className="h-3.5 w-3.5" />
+                                        Source materials
+                                        <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                    </a>
+                                )}
+                            </div>
+                        )}
+
                         {/* Highlights */}
                         <div>
                             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -530,7 +563,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
                     {/* Content over the image */}
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-16">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg whitespace-nowrap">
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">
                             Let's get you ready to raise, {firstName}.
                         </h1>
                         <p className="text-base sm:text-lg text-white/80 max-w-md mx-auto mb-8 leading-snug">
@@ -547,6 +580,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         </button>
                     </div>
                 </div>
+
+                <ResponsibleInvestorsSection />
 
                 {/* How It Works - thin vertical line separators */}
                 <div className="px-6 py-14">

@@ -9,6 +9,7 @@ import {
 } from "react-router";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import VibeRaisingOnboardingCard from "~/components/VibeRaisingOnboardingCard";
+import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
 import {
   getOptionalVibeRaisingContext,
@@ -19,7 +20,6 @@ import {
 } from "~/lib/vibe-raising";
 import {
   BuildingOffice2Icon,
-  ArrowLeftIcon,
   DocumentTextIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
@@ -105,77 +105,6 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 }
 
-function AnnouncementPopup({
-  onDismiss,
-  onComplete,
-}: {
-  onDismiss: () => void;
-  onComplete?: () => void;
-}) {
-  const handleComplete = () => {
-    onDismiss();
-    if (onComplete) onComplete();
-  };
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onDismiss}
-      />
-
-      <div className="relative z-[110] flex w-full max-w-3xl h-[560px] bg-white rounded-2xl shadow-2xl overflow-hidden">
-        <div className="relative flex-shrink-0 w-[315px] h-full bg-black overflow-hidden">
-          <iframe
-            src="https://player.vimeo.com/video/1174236138?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
-            className="absolute top-0 left-0 w-full h-full"
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-            title="Vibe Raising Intro"
-          />
-        </div>
-
-        <div className="flex flex-col flex-1 min-w-0">
-          <div className="flex items-center gap-3 px-6 pt-6 pb-4 border-b border-gray-100">
-            <button
-              onClick={onDismiss}
-              className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
-              aria-label="Back"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
-            </button>
-            <h2 className="text-xl font-bold text-gray-900 flex-1">
-              Welcome to Vibe Raising
-            </h2>
-          </div>
-
-          <div className="flex-1 px-6 py-6">
-            <p className="text-gray-600 text-sm leading-relaxed">
-              Watch this short intro on how Vibe Raising connects founders with
-              investors through consistent, transparent monthly updates.
-            </p>
-          </div>
-
-          <div className="px-6 pb-6 flex flex-col gap-3">
-            <button
-              onClick={handleComplete}
-              className="w-full py-3.5 px-6 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 active:scale-[0.98] transition-all duration-200 shadow-lg shadow-violet-500/20"
-            >
-              Get Started →
-            </button>
-            <button
-              onClick={onDismiss}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors text-center"
-            >
-              Skip for now
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function VibeRaisingApp() {
   const { user, profile, appUser } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -218,9 +147,10 @@ export default function VibeRaisingApp() {
       logoutAction="/vibe-raising/logout"
     >
       {appUser.role === "founder" && showAnnouncement ? (
-        <AnnouncementPopup
+        <VibeRaisingIntroPopup
           onDismiss={() => setShowAnnouncement(false)}
           onComplete={onCompleteCallback}
+          onSkip={onCompleteCallback}
         />
       ) : null}
 

@@ -1,6 +1,6 @@
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
-import { ArrowPathIcon, BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon, MapPinIcon } from "@heroicons/react/24/outline";
 import { getEnv } from "~/lib/env.server";
 import {
     getActiveVibeRaisingCompany,
@@ -36,11 +36,13 @@ export async function action({ request, context }: Route.ActionArgs) {
         formData.get("companyName")?.toString() || activeCompany?.name || user.companyName;
     const domain = formData.get("domain")?.toString() || "";
     const abn = formData.get("abn")?.toString() || "";
+    const location = formData.get("location")?.toString().trim() || "";
     const companyId = await saveVibeRaisingCompany(env, request, {
         companyId: isAddingNew ? null : activeCompany?.id ?? null,
         name: companyName,
         domain,
         abn,
+        ...(location ? { location } : {}),
         registered: true,
     });
 
@@ -96,6 +98,26 @@ export default function CompanySetup() {
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
+                        </div>
+
+                        {/* Location */}
+                        <div>
+                            <label htmlFor="location" className="block text-sm font-bold text-gray-700 mb-2">
+                                Startup Location
+                            </label>
+                            <div className="relative">
+                                <MapPinIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                                <input
+                                    type="text"
+                                    id="location"
+                                    name="location"
+                                    defaultValue={isAddingNew ? "" : activeCompany?.location || ""}
+                                    placeholder="Melbourne, Australia"
+                                    autoComplete="address-level2"
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+                                />
+                            </div>
+                            <p className="mt-1.5 text-xs text-gray-400">Used to show your startup region on update cards.</p>
                         </div>
 
                         {/* Domain */}
