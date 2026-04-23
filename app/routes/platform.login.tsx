@@ -29,10 +29,16 @@ function parseAuthApp(value: string | null): AuthAppName | null {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    const user = await getCurrentUser(env, request);
+    let user = null;
     const url = new URL(request.url);
     const app = parseAuthApp(url.searchParams.get("app"));
     const next = url.searchParams.get("next") || getDefaultNext(app);
+
+    try {
+        user = await getCurrentUser(env, request);
+    } catch (error) {
+        console.warn("Skipping logged-in redirect because current user lookup failed.", error);
+    }
 
     if (user) {
         return redirect(next);
