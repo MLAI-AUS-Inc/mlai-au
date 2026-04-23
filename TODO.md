@@ -213,3 +213,4 @@
 - [x] Re-run `bun run typecheck`
 - [x] Remove the at-a-glance midline connector lines
 - [x] Re-run `bun run typecheck`
+- [x] Route manage-company update actions to dashboard when the selected company already has an update

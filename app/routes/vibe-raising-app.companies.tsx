@@ -3,12 +3,15 @@ import { Link, Form, redirect, useNavigation } from "react-router";
 import {
     requireFounder,
     getActiveCompany,
+    hasSubmittedVibeRaisingUpdate,
     setActiveCompany,
     createVibeRaisingSessionCookie,
     VIBE_RAISING_APP_PATH,
     VIBE_RAISING_COMPANY_SETUP_PATH,
+    VIBE_RAISING_CREATE_UPDATE_PATH,
 } from "~/lib/vibe-raising-session";
 import { PlusIcon, BuildingOffice2Icon, CheckCircleIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
 
 export async function loader({ request }: Route.LoaderArgs) {
     const user = requireFounder(request);
@@ -24,7 +27,10 @@ export async function action({ request }: Route.ActionArgs) {
         const user = requireFounder(request);
         const companyId = formData.get("companyId")?.toString() || "";
         const updatedUser = setActiveCompany(user, companyId);
-        return redirect(VIBE_RAISING_APP_PATH, {
+        const hasExistingUpdate = hasSubmittedVibeRaisingUpdate(request, updatedUser, companyId);
+        const nextPath = hasExistingUpdate ? VIBE_RAISING_APP_PATH : VIBE_RAISING_CREATE_UPDATE_PATH;
+
+        return redirect(nextPath, {
             headers: { "Set-Cookie": createVibeRaisingSessionCookie(updatedUser) },
         });
     }
@@ -80,9 +86,12 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                 </div>
                                 
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">{company.name}</h3>
-                                {company.domain && (
-                                    <p className="text-sm text-gray-500 truncate">{company.domain}</p>
-                                )}
+                                <div className="flex flex-wrap items-center gap-2">
+                                    {company.domain && (
+                                        <p className="text-sm text-gray-500 truncate">{company.domain}</p>
+                                    )}
+                                    <StartupRegionBadge location={company.location} />
+                                </div>
                             </div>
 
                             <div className="p-4 border-t border-gray-50 bg-gray-50/50 mt-auto">
