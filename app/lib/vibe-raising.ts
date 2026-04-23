@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { User } from "~/types/user";
-import { createApiClient } from "~/lib/api";
+import { createApiClient, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import type {
   VibeRaisingDraftResultsResponse,
@@ -811,8 +811,8 @@ export function hasSubmittedVibeRaisingUpdate(
   return cookieHeader.includes(`${getVibeRaisingSubmittedCookieName(companyId)}=true`);
 }
 
-// Gated by VITE_STUB_BACKEND (.env.local). Fake founder profile with one
-// company — lets the Vibe Raising app render without hitting api.mlai.au.
+// Local dev only: fake founder profile with one company lets Vibe Raising
+// render without hitting api.mlai.au.
 const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
   role: "founder",
   organizationName: "Dev Startup Pty Ltd",
@@ -832,7 +832,7 @@ export async function getVibeRaisingProfile(
   env: Env,
   request: Request,
 ): Promise<VibeRaisingProfile | null> {
-  if (import.meta.env.VITE_STUB_BACKEND === "true") {
+  if (shouldUseDevBackendStub()) {
     return DEV_VIBE_PROFILE_STUB;
   }
   try {
@@ -960,8 +960,8 @@ export async function setVibeRaisingActiveCompany(
   await client.post(ACTIVE_COMPANY_PATH, { companyId });
 }
 
-// Gated by VITE_STUB_BACKEND (.env.local). Three seeded monthly updates
-// so the founder's "My Updates" page shows realistic content in local dev.
+// Local dev only: seeded monthly updates so the founder's "My Updates" page
+// shows realistic content without the backend.
 const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
   {
     id: "update-2026-04",
@@ -1031,7 +1031,7 @@ export async function getVibeRaisingMonthlyUpdates(
   env: Env,
   request: Request,
 ): Promise<VibeRaisingMonthlyUpdate[]> {
-  if (import.meta.env.VITE_STUB_BACKEND === "true") {
+  if (shouldUseDevBackendStub()) {
     return DEV_MONTHLY_UPDATES_STUB;
   }
   const client = createApiClient(env, request);

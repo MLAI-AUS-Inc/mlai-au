@@ -1,13 +1,15 @@
 import axios, { type InternalAxiosRequestConfig, AxiosHeaders, type AxiosAdapter } from 'axios';
 
-// Catch-all stub adapter: when VITE_STUB_BACKEND=true (typically in
-// .env.local, never committed), every API request short-circuits and
-// returns a fake empty response instead of hitting api.mlai.au. Keeps
-// local dev working when the live backend is slow/down. Safe to commit —
-// does nothing in normal dev or production where the flag is unset.
+export function shouldUseDevBackendStub() {
+    return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
+}
+
+// Catch-all stub adapter for local development only. When
+// VITE_STUB_BACKEND=true, every API request short-circuits and returns a
+// fake empty response instead of hitting api.mlai.au.
 const devStubAdapter: AxiosAdapter = async (config) => {
     const method = (config.method || 'get').toUpperCase();
-    console.log(`[API STUB] ${method} ${config.baseURL ?? ''}${config.url ?? ''} → empty stub response`);
+    console.log(`[API STUB] ${method} ${config.baseURL ?? ''}${config.url ?? ''} -> empty stub response`);
     return {
         data: [],
         status: 200,
@@ -18,7 +20,7 @@ const devStubAdapter: AxiosAdapter = async (config) => {
 };
 
 function applyDevStubAdapter(instance: ReturnType<typeof axios.create>) {
-    if (import.meta.env.VITE_STUB_BACKEND === "true") {
+    if (shouldUseDevBackendStub()) {
         instance.defaults.adapter = devStubAdapter;
     }
 }
