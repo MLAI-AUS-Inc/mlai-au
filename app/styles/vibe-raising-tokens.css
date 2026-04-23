@@ -1,0 +1,188 @@
+/* ============================================================
+   VIBE RAISING — Design Tokens
+   MLAI · Founder Tools
+   Generated from the W3C DTCG token set.
+
+   IMPORTANT: Scoped to the Vibe Raising surface only.
+   Do NOT apply .text-*, .color-* utility classes or
+   vibe-raising design tokens on other routes.
+
+   Font loading note: Oswald + DM Sans are loaded via a
+   <link rel="stylesheet"> in app/root.tsx (not via @import
+   here, since Tailwind's bundle hoists later @imports and
+   breaks the spec requirement that @import precede all
+   other rules).
+   ============================================================ */
+
+:root {
+
+  /* ── Brand Colors ────────────────────────────────────── */
+  --vr-color-brand-purple: #6B30D9;   /* Primary action — CTA, links, focus */
+  --vr-color-brand-blue:   #5057E4;   /* Secondary — info, data metrics */
+  --vr-color-brand-orange: #E84521;   /* MLAI brand accent — brand moments only */
+  --vr-color-brand-teal:   #00C8CC;   /* Featured state — current update gradient */
+  --vr-color-brand-teal-light: #00E0A0;
+
+  /* ── Purple Scale ────────────────────────────────────── */
+  --vr-color-purple-50:  #F3EEFF;
+  --vr-color-purple-100: #E0CFFF;
+  --vr-color-purple-200: #B89EFF;
+  --vr-color-purple-500: #6B30D9;
+  --vr-color-purple-700: #4A1FA0;
+  --vr-color-purple-900: #2D1263;
+
+  /* ── Neutral Scale ───────────────────────────────────── */
+  --vr-color-neutral-white: #FFFFFF;
+  --vr-color-neutral-50:    #F7F7F8;
+  --vr-color-neutral-100:   #EDEDF0;
+  --vr-color-neutral-300:   #C8C8D4;
+  --vr-color-neutral-500:   #9090A8;
+  --vr-color-neutral-700:   #5A5A72;
+  --vr-color-neutral-900:   #1A1A2E;
+
+  /* ── Semantic Color Roles ────────────────────────────── */
+  --vr-color-bg:        var(--vr-color-neutral-white);
+  --vr-color-surface:   var(--vr-color-neutral-50);
+  --vr-color-border:    #E8E8EC;
+  --vr-color-border-md: #D0D0D8;
+  --vr-color-text:      var(--vr-color-neutral-900);
+  --vr-color-text-mid:  var(--vr-color-neutral-700);
+  --vr-color-text-sub:  var(--vr-color-neutral-500);
+  --vr-color-primary:   var(--vr-color-brand-purple);
+  --vr-color-secondary: var(--vr-color-brand-blue);
+  --vr-color-accent:    var(--vr-color-brand-orange);
+  --vr-color-featured:  var(--vr-color-brand-teal);
+  --vr-color-success:   var(--vr-color-brand-teal);
+  --vr-color-danger:    var(--vr-color-brand-orange);
+  --vr-color-warning:   #F5A623;
+
+  /* ── Typography ──────────────────────────────────────── */
+  --vr-font-title: 'Oswald', sans-serif;           /* Headings & titles ONLY */
+  --vr-font-body:  'DM Sans', system-ui, sans-serif; /* All UI text */
+
+  /* ── Font Weights ────────────────────────────────────── */
+  --vr-font-weight-light:    300;
+  --vr-font-weight-regular:  400;
+  --vr-font-weight-medium:   500;
+  --vr-font-weight-semibold: 600;
+  --vr-font-weight-bold:     700;
+
+  /* ── Font Sizes ──────────────────────────────────────── */
+  --vr-font-size-xs:   11px;
+  --vr-font-size-sm:   12px;
+  --vr-font-size-md:   13px;
+  --vr-font-size-base: 14px;
+  --vr-font-size-lg:   16px;
+  --vr-font-size-xl:   20px;
+  --vr-font-size-2xl:  26px;
+  --vr-font-size-3xl:  28px;
+  --vr-font-size-4xl:  36px;
+
+  /* ── Line Heights ────────────────────────────────────── */
+  --vr-line-height-tight:   1.2;
+  --vr-line-height-snug:    1.3;
+  --vr-line-height-normal:  1.5;
+  --vr-line-height-relaxed: 1.6;
+
+  /* ── Spacing (8pt grid) ──────────────────────────────── */
+  --vr-space-1: 4px;
+  --vr-space-2: 8px;
+  --vr-space-3: 12px;
+  --vr-space-4: 16px;
+  --vr-space-5: 24px;
+  --vr-space-6: 32px;
+  --vr-space-7: 48px;
+  --vr-space-8: 64px;
+
+  /* ── Border Radius ───────────────────────────────────── */
+  --vr-radius-sm:   4px;
+  --vr-radius-md:   8px;
+  --vr-radius-lg:   12px;
+  --vr-radius-full: 999px;
+
+  /* ── Border Widths ───────────────────────────────────── */
+  --vr-border-subtle:  1px;
+  --vr-border-default: 1.5px;
+  --vr-border-accent:  3px;
+
+  /* ── Shadows (purple-tinted) ─────────────────────────── */
+  --vr-shadow-sm: 0 1px 4px  rgba(107, 48, 217, 0.06);
+  --vr-shadow-md: 0 4px 16px rgba(107, 48, 217, 0.10);
+  --vr-shadow-lg: 0 8px 32px rgba(107, 48, 217, 0.14);
+
+}
+
+/* ── Composite Text Styles ─────────────────────────────────
+   Scoped under .vr-scope so they only apply where we opt in
+   (e.g. on /vibe-raising). Put the class on a page wrapper.
+   ──────────────────────────────────────────────────────── */
+
+.vr-scope .vr-text-page-title {
+  font-family: var(--vr-font-title);
+  font-weight: var(--vr-font-weight-semibold);
+  font-size:   var(--vr-font-size-3xl);
+  line-height: var(--vr-line-height-tight);
+  letter-spacing: 0.03em;
+  color: var(--vr-color-text);
+}
+
+.vr-scope .vr-text-section-head {
+  font-family: var(--vr-font-title);
+  font-weight: var(--vr-font-weight-semibold);
+  font-size:   var(--vr-font-size-xl);
+  line-height: var(--vr-line-height-tight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--vr-color-text);
+}
+
+.vr-scope .vr-text-card-title {
+  font-family: var(--vr-font-body);
+  font-weight: var(--vr-font-weight-semibold);
+  font-size:   var(--vr-font-size-lg);
+  line-height: var(--vr-line-height-snug);
+  color: var(--vr-color-text);
+}
+
+.vr-scope .vr-text-body {
+  font-family: var(--vr-font-body);
+  font-weight: var(--vr-font-weight-regular);
+  font-size:   var(--vr-font-size-base);
+  line-height: var(--vr-line-height-relaxed);
+  color: var(--vr-color-text);
+}
+
+.vr-scope .vr-text-body-small {
+  font-family: var(--vr-font-body);
+  font-weight: var(--vr-font-weight-regular);
+  font-size:   var(--vr-font-size-md);
+  line-height: var(--vr-line-height-normal);
+  color: var(--vr-color-text);
+}
+
+.vr-scope .vr-text-ui-label {
+  font-family:     var(--vr-font-body);
+  font-weight:     var(--vr-font-weight-semibold);
+  font-size:       var(--vr-font-size-xs);
+  line-height:     var(--vr-line-height-tight);
+  letter-spacing:  0.1em;
+  text-transform:  uppercase;
+  color: var(--vr-color-text-sub);
+}
+
+.vr-scope .vr-text-caption {
+  font-family: var(--vr-font-body);
+  font-weight: var(--vr-font-weight-regular);
+  font-size:   var(--vr-font-size-sm);
+  line-height: var(--vr-line-height-snug);
+  color:       var(--vr-color-text-sub);
+}
+
+.vr-scope .vr-text-eyebrow {
+  font-family:    var(--vr-font-body);
+  font-weight:    var(--vr-font-weight-semibold);
+  font-size:      var(--vr-font-size-xs);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color:          var(--vr-color-text-sub);
+}
