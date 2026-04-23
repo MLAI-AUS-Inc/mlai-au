@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-unicorn-startup-and-why-it-matters': {
+        title: "What Is a Unicorn Startup and Why It Matters",
+        date: "2026-04-23",
+        description: "What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-unicorn-startup-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d806828c-a396-45ac-899e-2757423ebb86.jpg?alt=media&token=68db8b05-de8f-473e-aff2-f3bc4ecec96a",
+        imageAlt: "Startup founders reviewing unicorn startup valuation on a laptop in a candid",
+        hasContent: true,
+    },
     'featured/what-an-entrepreneur-does-and-how-to-start-well': {
         title: "What an Entrepreneur Does and How to Start Well",
         date: "2026-04-20",
