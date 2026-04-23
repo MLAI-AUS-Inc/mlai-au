@@ -45,6 +45,8 @@ On Windows, you can also use:
 Your site will be available at `http://localhost:5173` with hot reloading enabled.
 Local dev stores Wrangler/Miniflare state under `.local/` in this repo so it does not depend on roaming-profile write access.
 
+To preview Vibe Raising without a running backend, set `VITE_STUB_BACKEND=true` in `.env.local` or `.dev.vars`, then restart `bun run dev`. Backend stubs are ignored outside Vite development builds.
+
 ### Environment Vars and Secrets
 
 Variables and secrets live in:
@@ -53,7 +55,7 @@ Variables and secrets live in:
 - `.dev.vars` - your local dev variables, can contain secrets
 - Apple Passwords (MLAI Admin) includes a "Website Secrets .dev.vars" entry which can store secrets for development.
 
-Run `bunx wrangler secret put <key>` to save a secret to the production environment.
+Run `bunx wrangler secret put <key>` to save a secret directly to the Worker production environment.
 
 If you add a new `.dev.vars` entry, you'll need to regenerate types:
 
@@ -100,7 +102,7 @@ bun run cf-typegen
 
 ## Community
 
-- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-39tsn9a8w-9g8UOitrnCTjRj~5e7iomg)
+- **Slack**: [Join our community](https://join.slack.com/t/mlai-aus/shared_invite/zt-36v55lk77-LbIvbAPH~9E83zEgXlXRSg)
 - **LinkedIn**: [Follow us](https://www.linkedin.com/company/mlai-aus-inc)
 - **Instagram**: [@mlai_aus](https://www.instagram.com/mlai_aus/)
 

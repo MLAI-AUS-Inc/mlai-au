@@ -364,7 +364,7 @@ export default function FounderTools() {
                   <div className="text-center">
                     {selectedToolData.id === "raising" ? (
                       <Link
-                        to="/vibe-raising"
+                        to="/vibe-raising-landing"
                         className={`font-bold py-3 px-8 rounded-full text-base transition-all duration-300 hover:scale-105 active:scale-95 inline-block ${selectedToolData.bgColor === "#fefc22" || selectedToolData.bgColor === "#00ffd7"
                           ? "text-black"
                           : "text-white"
@@ -468,7 +468,7 @@ export default function FounderTools() {
                     {hoveredToolData && (
                       hoveredToolData.id === "raising" ? (
                         <Link
-                          to="/vibe-raising"
+                          to="/vibe-raising-landing"
                           className={`font-bold py-4 px-12 rounded-full text-lg transition-all duration-300 hover:scale-105 inline-block ${hoveredToolData.bgColor === "#fefc22" || hoveredToolData.bgColor === "#00ffd7"
                             ? "text-black"
                             : "text-white"

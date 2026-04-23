@@ -1,10 +1,10 @@
-import { Link, useLoaderData } from "react-router";
+import { useLoaderData } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.investors";
-import { requireFounder } from "~/lib/vibe-raising-session";
+import { getEnv } from "~/lib/env.server";
+import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import {
     SparklesIcon,
     LockClosedIcon,
-    LockOpenIcon,
     CheckIcon,
     XMarkIcon,
     PaperAirplaneIcon,
@@ -12,8 +12,9 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = requireFounder(request);
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    await requireVibeRaisingFounder(env, request);
 
     // Mock Founder Stats (Derived from latest update)
     const stats = {
@@ -49,7 +50,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         }
     ];
 
-    return { user, stats, investors };
+    return { stats, investors };
 }
 
 function MetricCheck({ met, label }: { met: boolean; label: string }) {
@@ -66,7 +67,7 @@ function MetricCheck({ met, label }: { met: boolean; label: string }) {
 }
 
 export default function DiscoverInvestors() {
-    const { user, stats, investors } = useLoaderData<typeof loader>();
+    const { stats, investors } = useLoaderData<typeof loader>();
 
     return (
         <div className="space-y-8 pb-12">

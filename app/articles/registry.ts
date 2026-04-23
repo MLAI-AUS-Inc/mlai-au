@@ -1,456 +1,740 @@
-
 // Adapted from user provided code for React Router v7
 import type { MetaDescriptor } from "react-router";
 
+export const ARTICLE_FALLBACK_IMAGE =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
+
 export type ArticleWithSlug = {
-    title: string;
-    date: string; // YYYY-MM-DD
-    description: string;
-    author: string;
-    /** Optional array of author keys from authors.ts for multi-author articles */
-    authors?: string[];
-    slug: string;
-    image: string;
-    imageAlt: string;
-    professionalsPersona?: string;
-    dateModified?: string;
-    lastUpdated?: string;
-    downloads?: Array<{ name: string; url: string }>;
-    /** If true, this article has a content component at app/articles/content/{slug}.tsx */
-    hasContent?: boolean;
+  title: string;
+  date: string; // YYYY-MM-DD
+  description: string;
+  author: string;
+  /** Optional array of author keys from authors.ts for multi-author articles */
+  authors?: string[];
+  slug: string;
+  image: string;
+  imageAlt: string;
+  professionalsPersona?: string;
+  dateModified?: string;
+  lastUpdated?: string;
+  downloads?: Array<{ name: string; url: string }>;
+  /** If true, this article has a content component at app/articles/content/{slug}.tsx */
+  hasContent?: boolean;
 };
 
 // Route Categories for MLAI
 export type ArticleRouteCategory =
-    | 'featured'
-    | 'technology'
-    | 'ai-ml'
-    | 'startups'
-    | 'community'
-    | 'workshops'
-    | 'tutorials';
+  | "featured"
+  | "careers"
+  | "technology"
+  | "ai-ml"
+  | "startups"
+  | "community"
+  | "workshops"
+  | "tutorials";
 
 const CATEGORY_SEGMENTS: ArticleRouteCategory[] = [
-    'featured',
-    'technology',
-    'ai-ml',
-    'startups',
-    'community',
-    'workshops',
-    'tutorials',
+  "featured",
+  "careers",
+  "technology",
+  "ai-ml",
+  "startups",
+  "community",
+  "workshops",
+  "tutorials",
 ];
 
-const DEFAULT_ARTICLE_ROUTE_CATEGORY: ArticleRouteCategory = 'technology';
+const DEFAULT_ARTICLE_ROUTE_CATEGORY: ArticleRouteCategory = "technology";
 
 // Overrides for specific slugs or sub-paths
 const CATEGORY_OVERRIDES: Record<string, ArticleRouteCategory> = {
-    // Add category overrides as needed
+  // Add category overrides as needed
 };
 
 // Legacy mapping if needed
 const LEGACY_REGISTRY_TO_ROUTE_ALIASES: Record<string, string> = {
-    // Add mappings here if you have specific legacy redirects/aliases
+  // Add mappings here if you have specific legacy redirects/aliases
 };
 
 // Helper utils
 function normalizeSlug(slug?: string): string {
-    if (!slug) return '';
-    return slug.trim().toLowerCase().replace(/^\/+|\/+$/g, '');
+  if (!slug) return "";
+  return slug.trim().toLowerCase().replace(/^\/+|\/+$/g, "");
 }
 
 function hasCategoryPrefix(slug: string): boolean {
-    return CATEGORY_SEGMENTS.some((segment) => slug.startsWith(`${segment}/`));
+  return CATEGORY_SEGMENTS.some((segment) => slug.startsWith(`${segment}/`));
 }
 
 export function removeCategoryPrefix(slug: string): string {
-    if (!hasCategoryPrefix(slug)) return slug;
-    return slug.split('/').slice(1).join('/');
+  if (!hasCategoryPrefix(slug)) return slug;
+  return slug.split("/").slice(1).join("/");
 }
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
-    'featured/how-does-machine-learning-work': {
-        title: 'How does machine learning work? A practical 2026 guide',
-        date: '2026-01-23',
-        description: 'Plain-English explainer of the ML training loop, learning types, evaluation and deployment—with Australian privacy context and practical steps.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-does-machine-learning-work',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How does machine learning work? A practical 2026 guide',
-    },
-    'featured/how-to-do-machine-learning': {
-        title: 'How To Do Machine Learning',
-        date: '2026-01-23',
-        description: 'A practical Australian roadmap to start machine learning in 2026: prerequisites, first projects, scikit-learn demo, evaluation, and ethics.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-do-machine-learning',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How To Do Machine Learning',
+    'featured/what-an-entrepreneur-does-and-how-to-start-well': {
+        title: "What an Entrepreneur Does and How to Start Well",
+        date: "2026-04-20",
+        description: "Entrepreneur guide for first-time founders on what the role means, how to validate an idea, build a simple plan, register properly, and organise finances in Australia.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-an-entrepreneur-does-and-how-to-start-well",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-56ed48a4-989a-4c7a-902a-a4d660355998.jpg?alt=media&token=9f5d6e18-cf07-44dd-b1e2-b211e059cccf",
+        imageAlt: "What an Entrepreneur Does and How to Start Well",
         hasContent: true,
     },
-    'featured/how-to-become-machine-learning-engineer': {
-        title: 'How to become a Machine Learning Engineer (Australia, 2026)',
-        date: '2026-01-23',
-        description: 'Skills, pathways, portfolio projects, certifications, and a 90‑day plan to become an ML engineer in Australia in 2026—practical, evidence‑based guidance.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-become-machine-learning-engineer',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to become a Machine Learning Engineer (Australia, 2026)',
+    'featured/what-is-artificial-intelligence-in-simple-words': {
+        title: "What Is Artificial Intelligence in Simple Words?",
+        date: "2026-04-18",
+        description: "Learn what artificial intelligence means in simple words, how it works, where you use it every day, and what it can and cannot do.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-in-simple-words",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aabcc5ca-e159-4024-b1c7-baf0b68dc947.jpg?alt=media&token=a5c618e2-f10a-4f7a-8bc3-5a0702cf9959",
+        imageAlt: "Close-up of a person using an AI voice assistant on a smartphone during a casual everyday moment",
         hasContent: true,
     },
-    'featured/how-vcs-value-startups': {
-        title: 'How VCs value startups (Australia, 2026)',
-        date: '2026-01-22',
-        description: 'How venture capital investors value startups in 2026: methods, metrics, and term‑sheet mechanics with context for Australian founders and AI teams.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-vcs-value-startups',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How VCs value startups (Australia, 2026)',
+    'featured/what-is-an-agent-in-artificial-intelligence': {
+        title: "What Is an Agent in Artificial Intelligence?",
+        date: "2026-04-17",
+        description: "What is agent in artificial intelligence? Learn the core definition, how AI agents work, the main agent types, and how agents differ from assistants, bots, and fixed automation.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-an-agent-in-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a2025658-d5c3-44fe-a5c4-f9599005a6a0.jpg?alt=media&token=98790d72-c277-47c3-a63f-6b565ac852e2",
+        imageAlt: "Close-up of coworkers reviewing an AI agent workflow on a laptop during a",
         hasContent: true,
     },
-    'featured/how-to-get-into-venture-capital': {
-        title: 'How to get into venture capital (Australia, 2026)',
-        date: '2026-01-22',
-        description: 'A practical, AU-focused guide to breaking into VC: what firms hire for, real entry paths, track‑record tips, and a 90‑day plan. Updated 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-get-into-venture-capital',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to get into venture capital (Australia, 2026)',
+    'featured/how-to-startup-a-small-business-in-australia': {
+        title: "How to Startup a Small Business in Australia",
+        date: "2026-04-14",
+        description: "How to startup a small business in Australia with practical steps on planning, structure, registrations, tax setup, and early cash flow decisions.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-startup-a-small-business-in-australia",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-2d2c373c-c64a-4d3a-a019-e3728cab592c.jpg?alt=media&token=d110a9e5-c056-4040-915b-2f90bc4e18c1",
+        imageAlt: "How to Startup a Small Business in Australia",
         hasContent: true,
     },
-    'featured/how-to-network-at-networking-events': {
-        title: 'How to network at networking events (2026)',
-        date: '2026-01-22',
-        description: 'Practical, AU-focused tips to introduce yourself, start conversations, add value and follow up after networking events—templates included.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-network-at-networking-events',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to network at networking events (2026)',
+    'featured/what-is-general-artificial-intelligence-and-why-it-matters': {
+        title: "What Is General Artificial Intelligence and Why It Matters",
+        date: "2026-04-12",
+        description: "What is general artificial intelligence? Learn how AGI differs from narrow AI, why it remains theoretical, and what the term means in practical discussions today.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-general-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6929c81e-098b-48a5-8302-f26c732f8c65.jpg?alt=media&token=cf84b2aa-8393-44a0-a444-257dae974703",
+        imageAlt: "Close-up of two coworkers discussing general artificial intelligence concepts over a laptop in a candid office moment",
         hasContent: true,
     },
-    'featured/how-to-become-a-data-science': {
-        title: 'How to become a data scientist in Australia (2026 guide)',
-        date: '2026-01-21',
-        description: 'Australian pathways to become a data scientist in 2026: degree vs bootcamp, essential skills, timelines, portfolio tips, and where to find entry‑level roles.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-become-a-data-science',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to become a data scientist in Australia (2026 guide)',
+    'featured/what-constitutes-a-startup-in-practice': {
+        title: "What Constitutes a Startup in Practice",
+        date: "2026-04-06",
+        description: "What constitutes a startup? Learn the practical traits that usually define one, including scalability, uncertainty, growth intent, and how startups differ from small businesses.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-constitutes-a-startup-in-practice",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-778189b4-82c7-4e6b-9b96-c21abeb867eb.jpg?alt=media&token=ffccdbe3-bf8b-46f0-8fa6-a8da9fae2a13",
+        imageAlt: "Startup founders discussing whether a new venture is built for scalable growth or steady small-business income",
         hasContent: true,
     },
-    'featured/why-is-artificial-intelligence-bad': {
-        title: 'Why is artificial intelligence bad?',
-        date: '2026-01-21',
-        description: 'AI has real downsides—bias, privacy breaches, misinformation, job impacts. Here’s a plain‑English guide to the risks and how Australia can manage them in 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/why-is-artificial-intelligence-bad',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'Why is artificial intelligence bad?',
+    'featured/what-is-agi-in-artificial-intelligence-and-why-it-matters': {
+        title: "What Is AGI in Artificial Intelligence and Why It Matters",
+        date: "2026-04-04",
+        description: "What is AGI in artificial intelligence explained simply, including how it differs from today\u2019s AI systems and how to assess AGI claims without hype.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-agi-in-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-dcfb46e7-19b3-43bb-b1c9-a386be22de5c.jpg?alt=media&token=e798046f-9e1d-439b-b156-ae2f2fc51f46",
+        imageAlt: "Abstract illustration of a human silhouette and AI interface elements representing the idea of artificial general intelligence",
+        hasContent: true,
+      },
+    'featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life': {
+        title: "What Is Artificial Intelligence Used For in Everyday Work and Life",
+        date: "2026-04-10",
+        description: "What is artificial intelligence used for? Learn the main everyday and business uses of AI, from pattern recognition and recommendations to automation and decision support.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-used-for-in-everyday-work-and-life",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ba426870-f23d-4a68-ba38-cd4ab3eb8d23.jpg?alt=media&token=b24f96bc-d8ff-4b6c-970e-e4f749a14259",
+        imageAlt: "Close-up of coworkers using an AI assistant on a laptop for everyday work tasks and decision support",
         hasContent: true,
     },
-    'featured/what-are-artificial-intelligence': {
-        title: 'What is Artificial Intelligence (AI)?',
-        date: '2026-01-21',
-        description: 'A clear, Australian‑context explainer of AI: how it works, types, examples, risks and ethics, plus practical steps to explore responsibly in 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-are-artificial-intelligence',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What is Artificial Intelligence (AI)?',
+    'featured/why-founders-clubs-work-for-early-stage-growth': {
+        title: "Why Founders Clubs Work for Early Stage Growth",
+        date: "2026-04-08",
+        description: "Learn what founders clubs are, why they work, how different models create value, and what to check before joining one.",
+        author: "Dr Sam Donegan",
+        slug: "featured/why-founders-clubs-work-for-early-stage-growth",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7e145e57-0e89-4225-a8cf-28d27f58292d.jpg?alt=media&token=f0b58fd5-7cca-4f88-9060-ca2845f2c38b",
+        imageAlt: "Why Founders Clubs Work for Early Stage Growth",
         hasContent: true,
     },
-    'featured/how-can-i-learn-artificial-intelligence': {
-        title: 'How can I learn artificial intelligence? (Australia, 2026)',
-        date: '2026-01-21',
-        description: 'A practical Australian path to learn AI: foundations, maths/coding, study options, projects, privacy, costs, timelines, and communities. Clear steps and FAQs.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-can-i-learn-artificial-intelligence',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How can I learn artificial intelligence? (Australia, 2026)',
+    'featured/what-is-inference-in-artificial-intelligence-and-why-it-matters': {
+        title: "What Is Inference in Artificial Intelligence and Why It Matters",
+        date: "2026-04-08",
+        description: "Learn what inference in artificial intelligence means, how it differs from training and serving, and why it matters in real AI systems.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-inference-in-artificial-intelligence-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8d1255b-d720-46a6-ab79-ed65bd104e1a.jpg?alt=media&token=8e3932df-1ab1-416b-9ac7-21eab7274536",
+        imageAlt: "What Is Inference in Artificial Intelligence and Why It Matters",
         hasContent: true,
     },
-    'featured/how-to-invest-in-startups-india': {
-        title: 'How to invest in startups in India: a guide for Australians',
-        date: '2026-01-21',
-        description: 'Australians investing in Indian startups: routes (syndicates, AIFs, direct), KYC/PAN, documents, tax basics and due diligence. General info only; as at Jan 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-invest-in-startups-india',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to invest in startups in India: a guide for Australians',
+    'featured/how-to-build-ai-for-real-business-problems': {
+        title: "How to Build AI for Real Business Problems",
+        date: "2026-04-06",
+        description: "Build AI for business with a practical start-to-launch plan.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-build-ai-for-real-business-problems",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c50a0366-c987-4439-aa4d-10ba179a206c.jpg?alt=media&token=3a1e360a-3558-4f36-8257-3b17644d8c83",
+        imageAlt: "Close-up of a team reviewing an AI workflow on a laptop during a practical business planning meeting",
         hasContent: true,
     },
-    'featured/what-percent-of-startups-fail': {
-        title: 'What percent of startups fail? (Australia, 2026)',
-        date: '2026-01-20',
-        description: 'Latest evidence on startup failure rates in 2026, what “failure” means, timelines (1–5 years), and the Australian context—plus ways to reduce risk.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-percent-of-startups-fail',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What percent of startups fail? (Australia, 2026)',
+    'featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers': {
+        title: "How to Start a Company Around an AI Idea From Prototype to Customers",
+        date: "2026-04-06",
+        description: "A practical guide to turning an AI prototype into a testable offer, running pilots, setting up safely in Australia, and winning early customers.",
+        author: "Dr Sam Donegan",
+        slug: "featured/starting-a-company-around-an-ai-idea-from-prototype-to-customers",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1febf3be-29fb-44ed-9207-e79b38921cc2.jpg?alt=media&token=3b266804-e787-46d9-86b6-7f7ec4f3aa8a",
+        imageAlt: "Founder showing an AI prototype to a small business owner during a close-up pilot meeting in Australia",
         hasContent: true,
     },
-    'featured/what-is-deep-learning': {
-        title: 'What Is Deep Learning? A 2026 Guide for Australia',
-        date: '2026-01-20',
-        description: 'Understand deep learning: how neural networks work, key architectures, when to use it, and practical steps to get started in Australia (2026).',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-deep-learning',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What Is Deep Learning? A 2026 Guide for Australia',
+    'featured/how-to-startup-a-practical-guide-for-first-time-founders': {
+        title: "How to Startup",
+        date: "2026-04-05",
+        description: "Learn how to startup with a practical sequence: validate customer demand, choose the right team, plan lean, and handle Australian registration and money basics.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-startup-a-practical-guide-for-first-time-founders",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-85569f30-d263-436f-8592-5bf00e6247cb.jpg?alt=media&token=c98809c7-6e60-40b8-bf89-1cbe6844e7a0",
+        imageAlt: "How to Startup",
         hasContent: true,
     },
-    'featured/what-is-difference-between-artificial-intelligence-and-machi': {
-        title: 'What’s the difference between artificial intelligence and machine learning?',
-        date: '2026-01-20',
-        description: 'Understand the difference between artificial intelligence and machine learning, including deep learning, examples, and careers in Australia (2026).',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-difference-between-artificial-intelligence-and-machi',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What’s the difference between artificial intelligence and machine learning?',
+    'featured/what-is-artificial-intelligence-with-example-for-everyday-readers': {
+        title: "What Is Artificial Intelligence With Example for Everyday Readers",
+        date: "2026-04-04",
+        description: "What is artificial intelligence with example explained simply",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-artificial-intelligence-with-example-for-everyday-readers",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-7f3951a9-ecc4-465c-b320-fc43c8053e7e.jpg?alt=media&token=df271f37-1457-45a7-8273-a10c00bc8933",
+        imageAlt: "Close-up of a woman using an AI chatbot on her phone while a friend watches",
         hasContent: true,
     },
-    'featured/how-to-get-venture-capital': {
-        title: 'How to Get Venture Capital in Australia (2026 Guide)',
-        date: '2026-01-20',
-        description: 'A practical 2026 guide for Australian founders: what VCs look for, how to pitch, typical round sizes, timelines, due diligence, and alternatives to venture capital.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-get-venture-capital',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'How to Get Venture Capital in Australia (2026 Guide)',
+    'featured/how-to-get-the-first-customers-for-my-startup-in-2026': {
+        title: "How to Get the First Customers for My Startup in 2026",
+        date: "2026-04-04",
+        description: "Learn how to get the first customers for my startup 2026 with a focused plan: choose a narrow segment, make a simple offer, use founder-led outreach, and turn early users into proof.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-get-the-first-customers-for-my-startup-in-2026",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/article-images%2Fhero-5115416e-9e23-4ea5-90fd-0bd5b7d4ecc7.jpg?alt=media&token=2976f637-b1db-4612-888e-6ffa8311c597",
+        imageAlt: "Startup founder pitching first customers in 2026 during a close-up candid chat with an early user",
+      },
+    'featured/go-to-market-for-startups': {
+        title: "Go to Market for Startups",
+        date: "2026-04-04",
+        description: "Go to market for startups with a practical guide to customer focus, pricing, channels, and early traction tests.",
+        author: "Dr Sam Donegan",
+        slug: "featured/go-to-market-for-startups",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d8dae336-fe4f-4a44-bff3-316597ffe118.jpg?alt=media&token=0ef63680-c513-4f09-9e25-21b2d81228e9",
+        imageAlt: "Go to Market for Startups",
         hasContent: true,
     },
-    'featured/what-is-artificial-general-intelligence': {
-        title: 'What is Artificial General Intelligence',
-        date: '2026-01-20',
-        description: 'Evidence‑based explainer of AGI: how it differs from today’s AI, proposed evaluations, timelines, risks, and what it could mean for AI careers in Australia.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-artificial-general-intelligence',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What is Artificial General Intelligence',
+    'featured/how-to-assess-cofounder-values-match-before-you-commit': {
+        title: "How to Assess Cofounder Values Match Before You Commit",
+        date: "2026-03-30",
+        description: "How to assess cofounder values match before building together.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-assess-cofounder-values-match-before-you-commit",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-61741a72-5e72-4a5d-aa77-2b18a2d80edd.jpg?alt=media&token=9365304c-09a2-4986-914d-af4699a65f17",
+        imageAlt: "Two startup cofounders in",
         hasContent: true,
     },
-    'featured/what-is-machine-learning': {
-        title: 'What is Machine Learning? (2026)',
-        date: '2026-01-19',
-        description: 'Plain-English guide: what machine learning is, how it works, main types, examples, risks, and how to get started in Australia (2026).',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-machine-learning',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What is Machine Learning? (2026)',
+    'featured/a-practical-guide-on-how-to-create-an-artificial-intelligence': {
+        title: "A Practical Guide on How to Create an Artificial Intelligence",
+        date: "2026-03-22",
+        description: "Learn how to create an artificial intelligence with our step-by-step guide covering data strategy, model training, and ethical deployment for your projects.",
+        author: "Dr Sam Donegan",
+        slug: "featured/a-practical-guide-on-how-to-create-an-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c1f2bc9-89fc-42cc-8e74-2c6d708ae3c9.jpg?alt=media&token=257975d5-7903-4218-b610-048dfe649d16",
+        imageAlt: "A Practical Guide on How to Create an Artificial Intelligence",
         hasContent: true,
     },
-    'featured/what-are-startups': {
-        title: 'What are startups?',
-        date: '2026-01-18',
-        description: 'A plain-English guide to what a startup is, how it differs from a small business, funding, stages and the Australian context in 2026.',
+    'featured/how-to-choose-the-best-ai-for-coding-in-2025': {
+        title: 'How to Choose the Best AI for Coding in 2025',
+        date: '2026-03-21',
+        description: 'Discover the best AI for coding in 2025. Compare leading coding assistants, key evaluation criteria, and practical steps for safer adoption in real developer workflows.',
         author: 'Dr Sam Donegan',
-        slug: 'featured/what-are-startups',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What are startups?',
-    },
-    'featured/what-is-venture-capital': {
-        title: 'What is venture capital? (2026)',
-        date: '2026-01-18',
-        description: 'Plain-English guide to venture capital for Australia: how VC works, stages, pros and cons, and local options in 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-venture-capital',
-        image: 'https://placehold.co/1200x630/png',
-        imageAlt: 'What is venture capital? (2026)',
+        slug: 'featured/how-to-choose-the-best-ai-for-coding-in-2025',
+        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-2fcc0fc5-779d-4991-a48d-f1ee5bc84d36.jpg?alt=media&token=dd992915-031f-4e66-8362-bc94bdef2730',
+        imageAlt: 'How to Choose the Best AI for Coding in 2025',
         hasContent: true,
     },
-    'featured/accelerator-startup-programs': {
-        title: 'Accelerator startup programs in Australia (2026)',
-        date: '2026-01-17',
-        description: 'How accelerators work in Australia in 2026: eligibility, equity, timelines, and how to choose the right program. Links to LaunchVic, Startmate and Google for Startups.',
+    'featured/how-to-test-for-a-cofounder-values-match-before-you-commit': {
+        title: 'How to Test for a Cofounder Values Match Before You Commit',
+        date: '2026-03-14',
+        description: 'Learn actionable strategies to test for a cofounder values match before launching your startup. Discover trial projects, hard questions, and alignment frameworks.',
         author: 'Dr Sam Donegan',
-        slug: 'featured/accelerator-startup-programs',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e920b16e-5eae-4998-87aa-b9f5828de3c3.jpg?alt=media&token=b163fa30-60c7-4501-bd8f-27b1413a5e60',
-        imageAlt: 'Founders collaborating at an accelerator workspace',
-    },
-    'featured/what-is-an-ai-agent-orchestrator-and-how-can-i-become-one-20': {
-        title: 'What is an AI Agent Orchestrator and How Can I Become One (2026)?',
-        date: '2026-01-16',
-        description: 'Understand the AI agent orchestrator role, 2026 skills, Australian demand, and a practical path to become one.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/what-is-an-ai-agent-orchestrator-and-how-can-i-become-one-20',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-bf8dfb39-2fe4-44a3-836a-b7ca593d40af.jpg?alt=media&token=aca34ccb-4071-4fd8-87dd-65abebf13916',
-        imageAlt: 'Person coordinating multiple AI agent workflows on a screen',
-    },
-    'featured/how-to-get-a-job-at-an-ai-startup-australia': {
-        title: 'How to Get a Job at an AI Startup in Australia (2026)',
-        date: '2026-01-16',
-        description: 'Practical 2026 guide to land AI startup roles in Australia: where to look, portfolio tactics, interview prep, and local work-rights tips.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-get-a-job-at-an-ai-startup-australia',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-08abda89-03c4-4ea8-92b6-74a950332e2c.jpg?alt=media&token=a583a613-e277-4865-b0bb-c9eecc3be872',
-        imageAlt: 'Team collaborating in a startup office with laptops',
-    },
-    'featured/ai-startup-companies': {
-        title: 'AI startup companies in Australia (2026 guide)',
-        date: '2026-01-16',
-        description: 'See where AI startups are growing in Australia, how to assess them, funding options, and responsible AI signals in 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/ai-startup-companies',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c0a9272c-7c60-45ff-9716-9be16e76ffae.jpg?alt=media&token=a7c9bdfc-25b5-4dfa-8be2-01be5488c168',
-        imageAlt: 'Team collaborating around a laptop with AI diagrams',
-    },
-    'featured/australian-founders': {
-        title: 'Australian founders',
-        date: '2026-01-16',
-        description: 'Explore how Australian founders connect, find records, and access funding in 2026—covering networks, history sources, and inclusive community steps.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/australian-founders',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-4ad6f4bb-7daf-483f-9011-70292f8e493e.jpg?alt=media&token=fd644fd0-5792-4824-acb2-4bb873b075d8',
-        imageAlt: 'Australian founders collaborating in a modern workspace',
-    },
-    'featured/startup-incubator-melbourne': {
-        title: 'Startup incubator Melbourne (2026)',
-        date: '2026-01-17',
-        description: 'Current overview of Melbourne startup incubators and accelerators—programs, eligibility, equity, timelines, and how to choose. As at Jan 2026.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/startup-incubator-melbourne',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-69bbf9ce-161b-45e3-99ba-2a38429cc76d.jpg?alt=media&token=847ec6be-d4ed-4819-be4a-02922684166e',
-        imageAlt: 'Melbourne skyline at dusk',
+        slug: 'featured/how-to-test-for-a-cofounder-values-match-before-you-commit',
+        image: '',
+        imageAlt: 'How to Test for a Cofounder Values Match Before You Commit',
         hasContent: true,
     },
-    'featured/how-do-i-figure-out-how-much-my-product-should-cost': {
-        title: 'How to price your product in Australia (2025)',
-        date: '2026-01-14',
-        description: 'Learn how to set product pricing in Australia using cost, value, and competitor signals, test willingness-to-pay, and stay compliant with ACCC rules.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-do-i-figure-out-how-much-my-product-should-cost',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ff729998-0ce9-4822-89af-11bca3c17257.jpg?alt=media&token=7ab776b3-d45c-4ff5-9679-b9b169949d94',
-        imageAlt: 'Team reviewing pricing scenarios on laptops and whiteboard',
-        hasContent: true,
-    },
-    'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in': {
-        title: 'I\'ve vibe-coded my startup—now what? How to get your MVP in front of users',
-        date: '2026-01-13',
-        description: 'Turn your vibe-coded build into a tested MVP. Learn how to validate with real users, ship safely, and prepare for pilots and investment in Australia.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/ive-vibe-coded-my-startup-now-what-how-to-get-your-mvp-in',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a8f7d8bc-9e4a-4112-8b69-729f16129e61.jpg?alt=media&token=4ba2d150-2aa5-4945-9c4a-69013546d9ba',
-        imageAlt: 'Founder testing a mobile MVP with early users in a coworking space',
-        hasContent: true,
-    },
-    'featured/how-to-raise-money-for-my-startup-in-australia-2026': {
-        title: 'How to raise money for my startup in Australia (2026 guide)',
-        date: '2026-01-13',
-        description: 'Step-by-step 2026 guide for Australian founders on grants, angels, VC, and due diligence, with AU links and compliance tips.',
-        author: 'MLAI Team',
-        slug: 'featured/how-to-raise-money-for-my-startup-in-australia-2026',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-00fbdc1f-4a2c-473f-a965-743fa8a2e728.jpg?alt=media&token=0451eb99-10d0-446d-a95d-01e22f54c831',
-        imageAlt: 'Founders reviewing funding documents in an Australian coworking space',
-        hasContent: true,
-    },
-    'featured/how-to-get-started-with-ai-2026': {
-        title: 'How to get started with AI in Australia (2026)',
-        date: '2026-01-08',
-        description: 'Learn how Australians can start with AI in 2026: skills, tools, compliance, and quick wins for teams, students, and founders.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/how-to-get-started-with-ai-2026',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268',
-        imageAlt: 'How to get started with AI in Australia (2026)',
-        hasContent: true,
-    },
-    'featured/best-way-to-learn-about-ai-2026': {
-        title: 'Best Way to Learn About AI in 2026 (Australia)',
-        date: '2026-01-08',
-        description: 'A 2026 guide for Australians to learn AI: courses, portfolios, responsible use, and job market tips with practical next steps.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/best-way-to-learn-about-ai-2026',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1d8313de-82ba-4ddc-a776-52cee7f2fa1b.jpg?alt=media&token=e14f4ba6-f385-40ec-8453-017f0d7efffa',
-        imageAlt: 'Best Way to Learn About AI in 2026 (Australia)',
-        hasContent: true,
-    },
-    'featured/ai-hackathons-and-events-melbourne': {
-        title: 'AI Hackathons and Events in Melbourne (2026 Guide)',
-        date: '2026-01-08',
-        description: 'Discover 2026 AI hackathons and community events in Melbourne, including formats, venues, costs, and tips to prepare and pitch effectively.',
-        author: 'Dr Sam Donegan',
-        slug: 'featured/ai-hackathons-and-events-melbourne',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-15a64fe7-880f-4170-80a8-2c3569c3e951.jpg?alt=media&token=0e40531f-09c8-41b6-9956-b5449ca38836',
-        imageAlt: 'AI Hackathons and Events in Melbourne (2026 Guide)',
-        hasContent: true,
-    },
-    'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy': {
-        title: 'How to Start a Startup and Use AI to Make It Easy (2026)',
-        date: '2026-01-07',
-        description: 'Practical 2026 guide for Australian founders on starting a startup and using AI safely to speed research, validation, and operations.',
-        author: 'MLAI Team',
-        slug: 'featured/how-to-start-a-startup-and-use-ai-to-make-it-easy',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2F7ebeaf16-d68f-42f9-b1a1-3a77d19d6c80%20(2).png?alt=media&token=70248355-2685-43f2-b855-57566e7146a7',
-        imageAlt: 'How to Start a Startup and Use AI to Make It Easy (2026)',
-        hasContent: true,
-    },
-    'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates': {
-        title: 'Weekly Deep Dive into AI and ML Advancements & Updates',
-        date: '2026-01-08',
-        description: 'Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.',
-        author: 'MLAI Editorial Team',
-        authors: ['samDonegan', 'junKaiChang', 'juliaPonder'],
-        slug: 'featured/weekly-deep-dive-into-ai-and-ml-advancements-updates',
-        image: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_40_55%20PM%20(1).png?alt=media&token=dc0a3df1-837b-4549-be70-bc59ba215777',
-        imageAlt: 'Abstract data visualisation representing AI and machine learning signals',
-        hasContent: true,
-    },
+  "featured/how-technology-affects-education-negatively": {
+    title: "How technology affects education negatively",
+    date: "2025-12-30",
+    description:
+      "Evidence-based risks of classroom tech—distraction, screen time, equity, privacy, and AI misuse—plus practical steps for Australian schools.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-technology-affects-education-negatively",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ad2b9095-7c58-48cb-93a0-796ec711627f.jpg?alt=media&token=aedd5035-940a-46bd-a249-0b171a8bc35c",
+    imageAlt:
+      "People in a tech startup environment, reflecting 90s film aesthetic, showcasing technology's negative impact on education.",
+  },
+  "featured/how-to-get-started-with-ai-2026": {
+    title: "How to get started with AI in Australia (2026)",
+    date: "2025-02-10",
+    description:
+      "A practical 2026 playbook for Australians starting with AI—covering skills, tools, governance, and fast pilot ideas for teams and individuals.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-get-started-with-ai-2026",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d712d9d4-9358-43a8-a5c1-be38741f4d8e.jpg?alt=media&token=a4aa21de-513d-4d48-82d9-c7ef58e21268",
+    imageAlt:
+      "Team collaborating on AI data charts with laptops and whiteboard",
+    hasContent: true,
+  },
+  "featured/learn-ai-melbourne": {
+    title: "Learn AI Melbourne: courses, meetups, and pathways",
+    date: "2026-01-28",
+    description:
+      "A practical 2026 guide to learning AI in Melbourne—compare university/TAFE options, online vs on-campus delivery, time and costs, plus local meetups and portfolio tips.",
+    author: "Dr Sam Donegan",
+    slug: "featured/learn-ai-melbourne",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-f3e7ca80-f08c-4d98-9bc9-773ec059c33f.jpg?alt=media&token=cbbb31dd-a11e-49d5-a062-13256412f7e4",
+    imageAlt:
+      "Tech enthusiasts collaborate in a vibrant 90s film aesthetic, showcasing AI learning and community in Melbourne.",
+    hasContent: true,
+  },
+  "featured/how-small-business-owners-can-get-started-with-ai-2026": {
+    title: "How small business owners can get started with AI (2026)",
+    date: "2026-01-22",
+    description:
+      "Starter plan for Australian small business owners to adopt AI in 2026: practical use cases, a 30-day pilot, privacy and security basics, and ROI tips.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-small-business-owners-can-get-started-with-ai-2026",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e8d91d69-4aa4-49a0-b1e4-a8b32d3f54ab.jpg?alt=media&token=3d3573bf-5a7d-416f-a7be-61be2dd87a04",
+    imageAlt:
+      "Retro 90s tech startup scene with diverse individuals brainstorming and collaborating in a creative workspace.",
+  },
+  "featured/how-to-foster-community-engagement": {
+    title: "How to foster community engagement (2026)",
+    date: "2026-01-14",
+    description:
+      "Practical, Australian-focused guide to foster community engagement: set purpose, include diverse voices, pick methods, close the loop, and measure what matters.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-foster-community-engagement",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-bf106b26-0a88-42db-9c1f-6ac3e8d53a9f.jpg?alt=media&token=633f122e-d0b9-4188-aac7-8f1da80c0a63",
+    imageAlt: "People collaborating in a tech startup environment with a nostalgic 90s film aesthetic.",
+  },
+  "featured/startup-accelerator-australia": {
+    title: "Startup accelerators in Australia (2026)",
+    date: "2026-01-10",
+    description:
+      "A practical 2026 guide to Australian startup accelerators: key programs (Startmate, Google for Startups, UNSW 10x), typical terms, and how AI teams can apply.",
+    author: "Dr Sam Donegan",
+    slug: "featured/startup-accelerator-australia",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-b4a9a55e-4254-4bb3-9eed-5b80dfbc4432.jpg?alt=media&token=54ee6558-bb42-4528-812c-7377691e9f9f",
+    imageAlt: "Group of diverse entrepreneurs collaborating in a vibrant tech workspace, with a nostalgic 90s film aesthetic.",
+  },
+  "featured/how-to-find-networking-events": {
+    title: "How to find networking events in Australia (2026)",
+    date: "2026-01-03",
+    description:
+      "Practical ways to find networking events in Australia: where to look, how to filter by industry and city, and tips for online and in-person meetups.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-find-networking-events",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-12562886-6a00-40c3-bd65-734cd91f9fb4.jpg?alt=media&token=d1df7641-6648-4366-a06e-630ccc6043c7",
+    imageAlt:
+      "Group of diverse professionals networking in a vibrant tech startup setting, evoking a nostalgic 90s film aesthetic.",
+  },
+  "featured/how-modern-technology-affects-education-today-and-in-the-fut": {
+    title: "How modern technology affects education today and in the future (2026)",
+    date: "2025-12-26",
+    description:
+      "A practical Australian view: benefits, risks and what’s next for AI, privacy and inclusion—plus steps to pilot edtech responsibly.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-modern-technology-affects-education-today-and-in-the-fut",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c64e3c6c-e429-49ad-acb9-ed1a06156751.jpg?alt=media&token=d82a401d-a58e-47e5-ba8d-76025cf5b37b",
+    imageAlt:
+      "People collaborating in a retro tech startup setting, reflecting modern education's evolution and future impact.",
+    hasContent: true,
+  },
+  "featured/how-technology-has-changed-education": {
+    title: "How technology has changed education (2026)",
+    date: "2025-12-21",
+    description:
+      "A practical Australian look at how technology reshaped learning, teaching and assessment—covering access, personalisation, collaboration, risks, and next steps.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-technology-has-changed-education",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0536c018-0450-4ef6-bc45-46686799945c.jpg?alt=media&token=f79f1f9d-f5b6-41ca-8df5-35f1dce4af2f",
+    imageAlt:
+      "Diverse team collaborating in a tech startup, showcasing retro 90s film aesthetic in an innovative education setting.",
+  },
+  "featured/how-much-venture-capital-was-invested-in-2023": {
+    title: "How much venture capital was invested in 2023?",
+    date: "2025-12-17",
+    description:
+      "Global VC funding in 2023 ranged between ~US$248B and ~US$285B depending on source. Why estimates differ, sector trends (AI), and what it means for Australia.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-much-venture-capital-was-invested-in-2023",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-c930b949-7cad-4fe3-b144-e118eca0cfd1.jpg?alt=media&token=d69d7730-2e33-4055-b69e-b2cc47e40ad4",
+    imageAlt: "Colorful 90s aesthetic photo of diverse tech professionals collaborating in a startup environment.",
+  },
+  "featured/what-are-collaboration-tools": {
+    title: "What are collaboration tools",
+    date: "2025-12-13",
+    description:
+      "A plain-English guide to collaboration tools: definition, types, benefits, examples, and how to choose for Australian teams.",
+    author: "Dr Sam Donegan",
+    slug: "featured/what-are-collaboration-tools",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-0c642a28-660d-4dee-b077-ee0c5181aa24.jpg?alt=media&token=188443b2-3bf5-4caa-b39f-68e465028cf4",
+    imageAlt:
+      "Team brainstorming in a vibrant tech startup, showcasing collaboration tools in a retro 90s film aesthetic.",
+  },
+  "featured/how-technology-is-shaping-learning-in-higher-education": {
+    title: "How technology is shaping learning in higher education (2026)",
+    date: "2025-12-09",
+    description:
+      "How hybrid learning, AI, analytics and micro-credentials are reshaping Australian higher education in 2026, with practical steps for students and educators.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-technology-is-shaping-learning-in-higher-education",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6d1a2d84-8b4e-4540-969a-efedb4ed79d0.jpg?alt=media&token=40754573-bde6-4fe3-991d-f9b37be9cb08",
+    imageAlt:
+      "A retro-inspired scene showcasing diverse individuals collaborating in a tech startup environment.",
+  },
+  "featured/venture-capital-how-does-it-work": {
+    title: "Venture capital: how it works (2026)",
+    date: "2025-12-05",
+    description:
+      "Plain-English guide to how venture capital works in 2026: fund mechanics, rounds, dilution, term sheets, and Australian considerations. For founders and learners.",
+    author: "Dr Sam Donegan",
+    slug: "featured/venture-capital-how-does-it-work",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9dce8514-cb13-4930-b27d-d1f5dbefd41e.jpg?alt=media&token=10c631f0-44c2-4421-9a86-a5505a3d0383",
+    imageAlt: "Team collaborating in a retro 90s tech startup office amidst brainstorming and innovation.",
+    hasContent: true,
+  },
+  "featured/how-many-startup-accelerators-and-incubators-are-there-in-si": {
+    title: "Startup accelerators and incubators in Singapore (2026)",
+    date: "2025-12-01",
+    description:
+      "Short answer: about 60–80 active accelerators/incubators in Singapore in 2026, depending on definitions. Learn how counts are built and how to verify programmes.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-many-startup-accelerators-and-incubators-are-there-in-si",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-765a4937-d602-4779-9250-982df5058a4b.jpg?alt=media&token=cae4b2b5-76fd-48f2-bb4d-c018c943c150",
+    imageAlt: "Diverse group of entrepreneurs discussing ideas in a vibrant 90s film-inspired tech workspace.",
+    hasContent: true,
+  },
+  "featured/how-does-a-venture-capital-firm-work": {
+    title: "How Does a Venture Capital Firm Work? (2026 Guide)",
+    date: "2025-11-27",
+    description:
+      "Understand VC firm structure, LPs vs GPs, fund lifecycle, how VCs make money, the investment process, and what founders in Australia should know in 2026.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-does-a-venture-capital-firm-work",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aab7aebb-f326-4ee4-b06c-48702edb6ddf.jpg?alt=media&token=fc7e98eb-7918-4997-a2e0-26a4964b64e6",
+    imageAlt: "How Does a Venture Capital Firm Work? (2026 Guide)",
+    hasContent: true,
+  },
+  "featured/the-best-startup-pitch-deck-ever": {
+    title: "The Best Startup Pitch Deck Ever (2026): An Australian Founder's Guide",
+    date: "2025-11-23",
+    description:
+      "Investors’ 2026 expectations, the 12-slide structure, AU-specific tips, timing, examples, and the most common mistakes—plus a downloadable checklist.",
+    author: "Dr Sam Donegan",
+    slug: "featured/the-best-startup-pitch-deck-ever",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e50e5db0-d45f-42af-bbe1-fa732bdd1ffb.jpg?alt=media&token=cee71a66-a4bf-48d9-81b0-a662965f714a",
+    imageAlt: "The Best Startup Pitch Deck Ever (2026): An Australian Founder’s Guide",
+    hasContent: true,
+  },
+  "featured/how-to-get-data-science-job": {
+    title: "How to get a data science job in Australia (2026)",
+    date: "2025-11-19",
+    description:
+      "AU-focused guide to landing a data science role: skills, portfolio, interviews, where to find jobs, and practical steps for grads, switchers and engineers.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-get-data-science-job",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "How to get a data science job in Australia (2026)",
+    hasContent: true,
+  },
+  "featured/how-to-pitch-your-idea": {
+    title: "How to Pitch Your Big Idea",
+    date: "2025-06-01",
+    description: "MLAI's guide to pitching your big idea. Learn how to communicate complex ideas effectively in a short timeframe.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-to-pitch-your-idea",
+    image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3",
+    imageAlt: "Guide to pitching your big idea",
+    hasContent: true,
+  },
+  "featured/how-much-do-data-scientists-make": {
+    title: "How Much Do Data Scientists Make?'",
+    date: "2025-11-15",
+    description:
+      "Salary ranges for data scientists in Australia in 2026—entry, mid, senior and lead. City and industry differences, skills that lift pay, and negotiation tips.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-much-do-data-scientists-make",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-efc07de1-b4f1-46b2-8245-211ce8e1dd64.jpg?alt=media&token=ad15ab6a-efa7-4176-ba33-9908ed9a2d2e",
+    imageAlt: "How Much Do Data Scientists Make?'",
+  },
+
+  // NOTE: Your pasted snippet continues with MANY more entries.
+  // I am returning the full module structure + fixes you asked for.
+  // Keep the rest of your ARTICLE_REGISTRY entries unchanged below this point,
+  // and add them here (or paste your full registry content here).
+
+  // Newsletter pillar + issues (merge conflict resolved)
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates": {
+    title: "Weekly Deep Dive into AI and ML Advancements & Updates",
+    date: "2026-01-08",
+    description:
+      "Issue #1: Journal paper breakdowns, new AI tools (MiniMax, Nemotron 3), book recommendations, and thoughts on valid Turing Tests.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2Fmlai.au%2Fimages%2FChatGPT%20Image%20Jan%209%2C%202026%2C%2001_40_55%20PM%20(1).png?alt=media&token=dc0a3df1-837b-4549-be70-bc59ba215777",
+    imageAlt: "Abstract data visualisation representing AI and machine learning signals",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2": {
+  title: "AI Bits for Techies | Issue #2 | 19 Jan 2026",
+  date: "2026-01-19",
+  description: "AI Bits Issue #2: LLM personality preferences, model-user compatibility research, T3 Chat, LTX Studio, Auralix, and The Alignment Problem book pick.",
+  author: "MLAI Editorial Team",
+  authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+  slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2",
+  image: ARTICLE_FALLBACK_IMAGE,
+  imageAlt: "AI Bits for Techies newsletter banner",
+  hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3": {
+    title: "AI Bits for Techies | Issue #3 | 26 Jan 2026",
+    date: "2026-01-26",
+    description: "AI Bits Issue #3: LLM energy and water footprint benchmarks, FLUX.2 image generation, TranslateGemma, GLM-Image, and The Atlas of AI book recommendation.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-3",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4": {
+    title: "AI Bits for Techies | Issue #4 | 5 Feb 2026",
+    date: "2026-02-05",
+    description: "AI Bits Issue #4: AI coding tool productivity research, open-source developer impact studies, Qwen3-Max, OpenAI Prism, and AI governance book pick.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-4",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5": {
+    title: "AI Bits for Techies | Issue #5 | 16 Feb 2026",
+    date: "2026-02-16",
+    description: "AI Bits Issue #5: Three papers on Moltbook—whether agent 'emergent behavior' is real or human-influenced—plus Dr. CaBot, Seedance 2.0, WorldVQA, and a book on alignment vs. governance.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-5",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6": {
+    title: "AI Bits for Techies | Issue #6 | 25 Feb 2026",
+    date: "2026-02-25",
+    description: "AI Bits Issue #6: Journal Paper of the Week on AI in sales research—where AI wins (lead scoring, CRM, forecasting) and where it stalls (trust ceiling, noise floor). Why 'Better Tech' does not equal 'Market Share.'",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-6",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7": {
+    title: "AI Bits for Techies | Issue #7 | 4 Mar 2026",
+    date: "2026-03-04",
+    description: "AI Bits Issue #7: This week explores the \"Physics Bottleneck\" and the shift from programming robots to prompting hardware via OpenVLA. We break down the Sim-to-Real gap, the scarcity of tactile data, and why the future of robotics belongs to those who own the \"physical miles\" of data.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-7",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8": {
+    title: "AI Bits for Techies | Issue #8 | 11 Mar 2026",
+    date: "2026-03-11",
+    description: "AI Bits Issue #8: This week's Springer LNCS paper from ICCCI 2023 flips the compatibility narrative—showing that a translation layer on a lean kernel can neutralise the native OS advantage. The \"Windows Idle Tax\" is real, measurable, and peer-reviewed. Build on the floor that does less when you are not looking.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-8",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+  "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9": {
+    title: "AI Bits for Techies | Issue #9 | 18 Mar 2026",
+    date: "2026-03-18",
+    description: "AI Bits Issue #9: This week explores the \"Agentic Shift\" from single prompts to long-running sessions via the Claude Agent SDK. We break down the \"Initializer-Coder\" framework, the necessity of persistent state, and how to bridge the \"Context Ceiling\" in complex builds.",
+    author: "MLAI Editorial Team",
+    authors: ["samDonegan", "junKaiChang", "juliaPonder", "shivangShekhar"],
+    slug: "community/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-9",
+    image: ARTICLE_FALLBACK_IMAGE,
+    imageAlt: "AI Bits for Techies newsletter banner",
+    hasContent: true,
+  },
+
 };
 
-export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.keys(ARTICLE_REGISTRY);
+
+/**
+ * Deterministic ordering:
+ * - Sort by date ASC (oldest -> newest) so "next" means newer
+ * - Stable tie-break with slug
+ */
+export const ORDERED_ARTICLE_ROUTE_SLUGS: string[] = Object.values(ARTICLE_REGISTRY)
+  .slice()
+  .sort((a, b) => {
+    const ta = Date.parse(a.date);
+    const tb = Date.parse(b.date);
+
+    if (!Number.isNaN(ta) && !Number.isNaN(tb) && ta !== tb) return ta - tb;
+    if (!Number.isNaN(ta) && Number.isNaN(tb)) return -1;
+    if (Number.isNaN(ta) && !Number.isNaN(tb)) return 1;
+
+    return a.slug.localeCompare(b.slug);
+  })
+  .map((a) => a.slug);
 
 export function getNextArticleSlug(currentSlug: string): string | undefined {
-    const index = ORDERED_ARTICLE_ROUTE_SLUGS.indexOf(currentSlug);
-    if (index === -1 || index === ORDERED_ARTICLE_ROUTE_SLUGS.length - 1) {
-        return undefined;
-    }
-    return ORDERED_ARTICLE_ROUTE_SLUGS[index + 1];
+  const normalized = normalizeSlug(currentSlug);
+
+  // Try direct match in the ordered list
+  let index = ORDERED_ARTICLE_ROUTE_SLUGS.indexOf(normalized);
+
+  // If passed only leaf slug, try suffix match
+  if (index === -1) {
+    index = ORDERED_ARTICLE_ROUTE_SLUGS.findIndex(
+      (s) => s === normalized || s.endsWith(`/${normalized}`)
+    );
+  }
+
+  if (index === -1 || index === ORDERED_ARTICLE_ROUTE_SLUGS.length - 1) {
+    return undefined;
+  }
+  return ORDERED_ARTICLE_ROUTE_SLUGS[index + 1];
+}
+
+export function getPreviousArticleSlug(currentSlug: string): string | undefined {
+  const normalized = normalizeSlug(currentSlug);
+
+  let index = ORDERED_ARTICLE_ROUTE_SLUGS.indexOf(normalized);
+
+  if (index === -1) {
+    index = ORDERED_ARTICLE_ROUTE_SLUGS.findIndex(
+      (s) => s === normalized || s.endsWith(`/${normalized}`)
+    );
+  }
+
+  if (index <= 0) return undefined;
+  return ORDERED_ARTICLE_ROUTE_SLUGS[index - 1];
 }
 
 // Public API Functions
 
 export function getArticleBySlug(slug: string): ArticleWithSlug | undefined {
-    const normalized = normalizeSlug(slug);
-    // Direct match
-    if (ARTICLE_REGISTRY[normalized]) {
-        return ARTICLE_REGISTRY[normalized];
-    }
+  const normalized = normalizeSlug(slug);
 
-    // Try finding by suffix if only the leaf slug is provided
-    const foundKey = Object.keys(ARTICLE_REGISTRY).find(key => key.endsWith(`/${normalized}`) || key === normalized);
-    if (foundKey) return ARTICLE_REGISTRY[foundKey];
+  // Direct match
+  if (ARTICLE_REGISTRY[normalized]) {
+    return ARTICLE_REGISTRY[normalized];
+  }
 
-    return undefined;
+  // Try finding by suffix if only the leaf slug is provided
+  const foundKey = Object.keys(ARTICLE_REGISTRY).find(
+    (key) => key.endsWith(`/${normalized}`) || key === normalized
+  );
+  if (foundKey) return ARTICLE_REGISTRY[foundKey];
+
+  return undefined;
 }
 
 export function getArticlesSortedNewestFirst(): ArticleWithSlug[] {
-    return Object.values(ARTICLE_REGISTRY).sort((a, b) => {
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
+  return Object.values(ARTICLE_REGISTRY).sort((a, b) => {
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
+  });
 }
 
 export function getClusterCardsForPillar(pillarSlug: string): ArticleWithSlug[] {
-    // Simple containment check for now.
-    // In a real scenario, you might have a more robust "parent-child" relationship.
-    const normalized = normalizeSlug(pillarSlug);
-    return Object.values(ARTICLE_REGISTRY).filter(article =>
-        article.slug.startsWith(normalized + '/') && article.slug !== normalized
-    );
+  // Simple containment check for now.
+  // In a real scenario, you might have a more robust "parent-child" relationship.
+  const normalized = normalizeSlug(pillarSlug);
+  return Object.values(ARTICLE_REGISTRY).filter(
+    (article) => article.slug.startsWith(normalized + "/") && article.slug !== normalized
+  );
 }
 
 export function resolveArticleRouteSlug(registrySlug: string): string {
-    // This function ensures that we return the full route path for a given registry slug
-    return normalizeSlug(registrySlug);
+  // This function ensures that we return the full route path for a given registry slug
+  return normalizeSlug(registrySlug);
 }
 
 export function applyArticleRegistryDefaults(defaults: Partial<ArticleWithSlug>): ArticleWithSlug {
-    // Helper to fill in missing details if needed
-    return {
-        title: 'Untitled Article',
-        date: new Date().toISOString().split('T')[0],
-        description: '',
-        author: 'MLAI Team',
-        slug: 'unknown',
-        image: '',
-        imageAlt: '',
-        ...defaults
-    } as ArticleWithSlug;
+  // Helper to fill in missing details if needed
+  return {
+    title: "Untitled Article",
+    date: new Date().toISOString().split("T")[0],
+    description: "",
+    author: "MLAI Team",
+    slug: "unknown",
+    image: "",
+    imageAlt: "",
+    ...defaults,
+  } as ArticleWithSlug;
 }
+
+// Optional helper: meta tags builder (keeps MetaDescriptor import useful)
+export function buildArticleMeta(article: ArticleWithSlug): MetaDescriptor[] {
+  return [
+    { title: article.title },
+    { name: "description", content: article.description },
+
+    { property: "og:type", content: "article" },
+    { property: "og:title", content: article.title },
+    { property: "og:description", content: article.description },
+    { property: "og:image", content: article.image },
+
+    { name: "twitter:card", content: "summary_large_image" },
+  ];
+}
+
+// (kept exported to avoid unused warnings if you reference them elsewhere)
+export {
+  CATEGORY_SEGMENTS,
+  DEFAULT_ARTICLE_ROUTE_CATEGORY,
+  CATEGORY_OVERRIDES,
+  LEGACY_REGISTRY_TO_ROUTE_ALIASES,
+  normalizeSlug,
+  hasCategoryPrefix,
+};

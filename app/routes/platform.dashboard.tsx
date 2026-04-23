@@ -1,31 +1,14 @@
 import type { Route } from "./+types/platform.dashboard";
 import { redirect, useLoaderData } from "react-router";
-import axios from "axios";
 import { axiosInstance } from "~/lib/api";
+import { getCurrentUser } from "~/lib/auth";
+import { getEnv } from "~/lib/env.server";
 export async function loader({ request, context }: Route.LoaderArgs) {
-    // 1. Get cookies from the incoming browser request
-    const cookieHeader = request.headers.get("Cookie");
-
-    // 2. Pass them to the backend using axios
-    const authResponse = await axios.get("http://localhost/api/v1/auth/me/", {
-        headers: {
-            // CRITICAL: Forward the cookies so Django knows who we are
-            Cookie: cookieHeader || "",
-        },
-        // Ensure axios doesn't throw on 401 so we can handle it manually
-        validateStatus: (status) => status < 500,
-    });
-
-    if (authResponse.status === 401) {
+    const env = getEnv(context);
+    const user = await getCurrentUser(env, request);
+    if (!user) {
         throw redirect("/platform/login");
     }
-
-    const user = authResponse.data;
-
-    // Check for esafety subdomain and redirect to app dashboard
-    const url = new URL(request.url);
-    // Subdomain logic removed as we are moving to path-based routing
-
 
     let hackathons = [];
     try {
@@ -44,6 +27,11 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 name: "eSafety Hackathon",
                 slug: "esafety",
                 description: "Develop AI solutions for online safety."
+            },
+            {
+                name: "Innovate Connect Alliance",
+                slug: "innovate-connect-alliance",
+                description: "Collaborate, build, and submit a team video."
             },
             {
                 name: "AI Hospital Hackathon",
@@ -98,6 +86,14 @@ export default function PlatformDashboard() {
                                 {h.slug === "esafety" && (
                                     <a
                                         href="/esafety/dashboard"
+                                        className="relative inline-flex items-center rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 z-10"
+                                    >
+                                        Open App
+                                    </a>
+                                )}
+                                {h.slug === "innovate-connect-alliance" && (
+                                    <a
+                                        href="/innovate-connect-alliance"
                                         className="relative inline-flex items-center rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 z-10"
                                     >
                                         Open App

@@ -7,14 +7,29 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
-import Footer from "./components/footer";
+import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "MLAI" },
+  {
+    name: "description",
+    content:
+      "MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community",
+  },
+  {
+    name: "keywords",
+    content: "Machine Learning, Artificial Intelligence, AI, Australia",
+  },
+];
+
 export const links: Route.LinksFunction = () => [
+  { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+  { rel: "shortcut icon", href: "/favicon.ico" },
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
     rel: "preconnect",
@@ -34,11 +49,12 @@ export const links: Route.LinksFunction = () => [
 export default function Layout() {
   const location = useLocation();
 
-  // Check if we're in the eSafety app routes or AI Hospital app routes
-  /* Check if we're in the eSafety app, Hospital app, or Vibe Raising app routes */
-  const isEsafetyApp = location.pathname.startsWith('/esafety');
-  const isHospitalApp = location.pathname.startsWith('/hospital/app');
-  const isVibeRaisingApp = location.pathname.startsWith('/vibe-raising');
+  // Hide the global chrome inside authenticated app surfaces.
+  const isEsafetyApp = location.pathname.startsWith("/esafety");
+  const isHospitalApp = location.pathname.startsWith("/hospital/app");
+  const isVibeRaisingApp =
+    location.pathname === "/vibe-raising" ||
+    location.pathname.startsWith("/vibe-raising/");
   const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
 
   return (
@@ -48,17 +64,8 @@ export default function Layout() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Basic meta tags */}
-        <title>MLAI</title>
-        <meta
-          name="description"
-          content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
-        />
         <meta name="application-name" content="MLAI-website" />
         <meta name="referrer" content="origin-when-cross-origin" />
-        <meta
-          name="keywords"
-          content="Machine Learning, Artificial Intelligence, AI, Australia"
-        />
 
         {/* Author meta tags */}
         <meta name="author" content="Dr Sam Donegan" />
@@ -70,9 +77,12 @@ export default function Layout() {
           property="og:description"
           content="MLAI is a not-for-profit community based in Australia that aims to empower the Australian AI Community"
         />
-        <meta property="og:url" content="https://mlai.au" />
+        <meta property="og:url" content={`https://mlai.au${location.pathname}`} />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://www.mlai.au/MLAI-Logo.png" />
+        <meta
+          property="og:image"
+          content="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
+        />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta
@@ -83,10 +93,17 @@ export default function Layout() {
         {/* Robots meta tag */}
         <meta name="robots" content="index, follow" />
 
+        {/* Canonical URL to consolidate http/https/www variants */}
+        <link rel="canonical" href={`https://mlai.au${location.pathname}`} />
+
         <Meta />
         <Links />
 
-
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key="R27fA2BeFrzb0BXu5adbpQ"
+          async
+        ></script>
       </head>
       <body>
         <noscript>
@@ -101,7 +118,7 @@ export default function Layout() {
         {/* Only show platform-wide components if NOT in specific apps */}
         {!isAppRoute && <Sidebar />}
         {!isAppRoute && <SectionMarkers />}
-        <div className={isAppRoute ? '' : 'lg:pl-[220px] bg-[var(--brutalist-beige)]'}>
+        <div className={isAppRoute ? "" : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
           <Outlet />
         </div>
         {!isAppRoute && <Footer />}
@@ -147,9 +164,6 @@ export default function Layout() {
           `,
           }}
         />
-
-        {/* Ahrefs Analytics */}
-        <script src="https://analytics.ahrefs.com/analytics.js" data-key="gpWL4pKb2ZPfqFtu60natQ" async></script>
         <Scripts />
       </body>
     </html>

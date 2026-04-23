@@ -6,12 +6,19 @@ export default [
   route("/sponsors", "routes/sponsors.tsx"),
   route("/members", "routes/members.tsx"),
   route("/events", "routes/events.tsx"),
-  route("/hackathon", "routes/hackathon.tsx"),
   route("/contact", "routes/contact.tsx"),
   route("/how-to-pitch-your-idea", "routes/how-to-pitch-your-idea.tsx"),
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
-  route("/hackathons", "routes/hackathons.tsx"),
+  route("/resources", "routes/resources.tsx"),
+  route("/roo", "routes/roo.tsx"),
+  route("/practical-ai-learning-beginners-builders", "routes/article-link-cleanups.tsx", { id: "cleanup-practical-ai-learning" }),
+  route("/ai-startup-building-pitching", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-building-pitching" }),
+  route("/templates/startup-traction", "routes/article-link-cleanups.tsx", { id: "cleanup-startup-traction-template" }),
+  route("/ai-careers-learning", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-careers-learning" }),
+  route("/ai-engineering-development", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-engineering-development" }),
+  route("/ai-founder-community-pitching-ideas", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-founder-community-pitching-ideas" }),
+  route("/ai-events-meetups-australia", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-events-meetups-australia" }),
 
   // Platform routes
   route("/platform/login", "routes/platform.login.tsx"),
@@ -30,13 +37,30 @@ export default [
     route("profile", "routes/esafety.profile.tsx"),
   ]),
 
-  // AI Hospital App routes
+  // Medhack: Frontiers (Hospital) App routes
   route("/hospital/app", "routes/hospital.app.tsx", [
     index("routes/hospital.app.dashboard.tsx"),
+    route("dashboard", "routes/hospital.app.dashboard-redirect.tsx"),
     route("team", "routes/hospital.app.team.tsx"),
     route("submit", "routes/hospital.app.submit.tsx"),
     route("leaderboard", "routes/hospital.app.leaderboard.tsx"),
+    route("resources", "routes/hospital.app.resources.tsx"),
+    route("coding", "routes/hospital.app.coding.tsx"),
+    route("pitching", "routes/hospital.app.pitching.tsx"),
+    route("profile", "routes/hospital.app.profile.tsx"),
   ]),
+
+  route("/innovate-connect-alliance", "routes/innovate-connect-alliance.tsx", [
+    index("routes/innovate-connect-alliance.dashboard.tsx"),
+    route("team", "routes/innovate-connect-alliance.team.tsx"),
+    route("submissions", "routes/innovate-connect-alliance.submissions.tsx"),
+    route("docs", "routes/innovate-connect-alliance.docs.tsx"),
+    route("profile", "routes/innovate-connect-alliance.profile.tsx"),
+  ]),
+
+  // Hackathon pages
+  route("/hackathons", "routes/hackathons.tsx"),
+  route("/medhack", "routes/medhack.tsx"),
 
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
@@ -45,13 +69,16 @@ export default [
   route("/articles", "routes/articles.index.tsx"),
   route("/articles/*", "routes/articles.slug.tsx"),
 
-  // Vibe Raising routes
+  // Vibe Raising public landing
   route("/vibe-raising", "routes/vibe-raising.tsx"),
+  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx"),
+
+  // Vibe Raising App routes
   route("/vibe-raising/app", "routes/vibe-raising-app.tsx", [
     index("routes/vibe-raising-app._index.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("create-update", "routes/vibe-raising-app.create-update.tsx"),
-    route("discover", "routes/vibe-raising-app.investors.tsx"), // Placeholder for next step
+    route("discover", "routes/vibe-raising-app.investors.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
   ]),
   route("/vibe-raising/app/logout", "routes/vibe-raising-app.logout.tsx"),

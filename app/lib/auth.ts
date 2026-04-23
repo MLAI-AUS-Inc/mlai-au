@@ -1,5 +1,23 @@
-import { axiosInstance, API_URL } from "./api";
+import { axiosInstance, API_URL, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
+
+export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
+
+function resolveAuthApp(body: {
+    app?: AuthAppName;
+    next?: string;
+}): AuthAppName {
+    return (
+        body.app ||
+        (body.next?.startsWith("/esafety")
+            ? "esafety"
+            : body.next?.startsWith("/innovate-connect-alliance")
+              ? "innovate-connect-alliance"
+            : body.next?.startsWith("/vibe-raising")
+              ? "vibe-raising"
+              : "hospital")
+    );
+}
 
 // Helper to get the base URL from the environment or fall back to the static config
 function getBaseUrl(env: Env): string {
@@ -30,23 +48,76 @@ export async function sendMagicLink(env: Env, body: {
     fullName?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
     next?: string;
-    app?: "esafety" | "hospital";
+    app?: AuthAppName;
 }) {
-    // Derive app from next if not provided
-    const app = body.app || (body.next?.startsWith("/esafety") ? "esafety" : "hospital");
-
     const client = getAxios(env);
+    const app = resolveAuthApp(body);
     const response = await client.post("/api/v1/auth/send-magic-link/", { ...body, app });
     return response.data;
 }
 
-export async function verifyMagicLink(env: Env, token: string) {
+export async function checkUser(env: Env, body: {
+    email: string;
+    next?: string;
+    app?: AuthAppName;
+}) {
     const client = getAxios(env);
-    const response = await client.get(`/api/v1/auth/verify-magic-link/?token=${token}`);
+    const app = resolveAuthApp(body);
+    const response = await client.post("/api/v1/auth/check-user/", { ...body, app });
     return response.data;
 }
 
+function buildVerifyMagicLinkQuery(
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
+    const params = new URLSearchParams({ token });
+    if (options?.app) {
+        params.set("app", options.app);
+    }
+    if (options?.next) {
+        params.set("next", options.next);
+    }
+    return params.toString();
+}
+
+export async function verifyMagicLink(
+    env: Env,
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
+    const client = getAxios(env);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
+    return response.data;
+}
+
+export async function verifyMagicLinkWithCookies(
+    env: Env,
+    token: string,
+    options?: { app?: string | null; next?: string | null },
+) {
+    const client = getAxios(env);
+    const response = await client.get(`/api/v1/auth/verify-magic-link/?${buildVerifyMagicLinkQuery(token, options)}`);
+    const setCookieHeaders = response.headers["set-cookie"] || [];
+    return { data: response.data, setCookieHeaders };
+}
+
+// Local dev only: set VITE_STUB_BACKEND=true to preview as a fake
+// logged-in user when the live backend is unavailable. `null` means logged out.
+const DEV_AUTH_STUB: Record<string, unknown> | null = {
+    full_name: "Dev User",
+    email: "dev@mlai.au",
+    role: "participant",
+    is_superuser: false,
+    is_active: true,
+    has_team: false,
+    avatar_url: null,
+};
+
 export async function getCurrentUser(env: Env, request?: Request) {
+    if (shouldUseDevBackendStub()) {
+        return DEV_AUTH_STUB;
+    }
     try {
         const client = getAxios(env, request);
         const response = await client.get("/api/v1/auth/me/");
@@ -74,24 +145,51 @@ export async function createUser(env: Env, body: {
     fullName?: string;
     phone?: string;
     role?: "participant" | "mentor" | "judge" | "organizer";
-    app?: "esafety" | "hospital";
+    app?: AuthAppName;
+    next?: string;
 }) {
     const client = getAxios(env);
     const response = await client.post("/api/v1/auth/create-user/", body);
     return response.data;
 }
 
-export async function getTeamNames(env: Env, request?: Request): Promise<string[]> {
+export async function getTeamNames(env: Env, request?: Request, slug: string = "hospital"): Promise<string[]> {
     const client = getAxios(env, request);
-    const response = await client.get("/api/v1/teams/");
+    const response = await client.get(`/api/v1/hackathons/${slug}/get_team_names/`);
     return response.data.team_names || [];
+}
+
+export async function getHospitalTeams(env: Env, request: Request) {
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/teams/");
+        return response.data || [];
+    } catch (error) {
+        console.error("Failed to fetch hospital teams:", error);
+        return [];
+    }
+}
+
+export async function getHospitalTeam(env: Env, request: Request, userId: number | undefined) {
+    if (userId == null || !Number.isFinite(userId)) return null;
+    try {
+        const client = getAxios(env, request);
+        const response = await client.get(`/api/v1/hackathons/hospital/teams/?member_id=${userId}`);
+        const teams = response.data;
+        if (Array.isArray(teams) && teams.length > 0) {
+            return teams[0];
+        }
+        return null;
+    } catch (error) {
+        console.error("Failed to fetch hospital team:", error);
+        return null;
+    }
 }
 
 export async function updateUser(env: Env, body: {
     full_name?: string;
     first_name?: string;
     last_name?: string;
-    team?: string;
     email?: string;
     phone?: string;
     about?: string;
@@ -186,5 +284,48 @@ export async function submission(formData: FormData) {
 
 export async function getLatestSubmission() {
     const response = await axiosInstance.get("/api/v1/hackathons/esafety/submission/");
+    return response.data;
+}
+
+// ─── Hospital hackathon helpers ────────────────────────────────────────────
+
+export async function hospitalSubmission(formData: FormData) {
+    return axiosInstance.post("/api/v1/hackathons/hospital/submissions/", formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+    });
+}
+
+export async function getHospitalRecentSubmissions(env?: Env, request?: Request) {
+    if (env) {
+        const client = getAxios(env, request);
+        const response = await client.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+        return response.data;
+    }
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_recent_submissions/");
+    return response.data;
+}
+
+export async function getHospitalLatestSubmission() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/get_submission/");
+    return response.data;
+}
+
+export async function getHospitalSubmissionById(submissionId: number) {
+    const response = await axiosInstance.get(
+        `/api/v1/hackathons/hospital/get_submission/${submissionId}/`
+    );
+    return response.data;
+}
+
+export async function getHospitalAllSubmissions() {
+    const response = await axiosInstance.get("/api/v1/hackathons/hospital/submissions/");
+    return response.data;
+}
+
+export async function getHospitalLeaderboard(env: Env, request: Request) {
+    const client = getAxios(env, request);
+    const response = await client.get("/api/v1/hackathons/hospital/leaderboard/");
     return response.data;
 }

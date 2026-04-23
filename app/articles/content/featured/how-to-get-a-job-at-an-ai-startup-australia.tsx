@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { Home } from 'lucide-react'
 import { RocketLaunchIcon, AcademicCapIcon, UsersIcon } from '@heroicons/react/24/outline'
 
-import { ArticleFAQ } from '../../../components/articles/ArticleFAQ'
+import { ArticleFAQ } from '~/components/articles/ArticleFAQ'
 import ArticleCompanyCTA from '../../../components/articles/ArticleCompanyCTA'
 import AuthorBio from '../../../components/AuthorBio'
 import { ArticleHeroHeader } from '../../../components/articles/ArticleHeroHeader'
@@ -137,14 +137,16 @@ export default function ArticlePage() {
         <ArticleTocPlaceholder />
 
         {/* Intro alert - Clean, neutral style */}
-        <ArticleCallout variant="info">
-          <p className="text-sm text-gray-800">
+        <QuoteBlock variant='purple' icon={<span className='text-xl'>💡</span>}>
+          <p className='text-sm text-white'>
+            
             This guide is part of our broader series on {TOPIC}. Prefer to jump ahead?{' '}
-            <Link to="/articles" className="font-semibold text-[--brand] underline-offset-4 hover:underline">
+            <Link to="/articles" className="font-semibold text-white underline-offset-4 hover:underline">
               Browse related articles →
             </Link>
+          
           </p>
-        </ArticleCallout>
+        </QuoteBlock>
 
         {/* Persona Grid */}
         <AudienceGrid
@@ -299,7 +301,7 @@ export default function ArticlePage() {
           <p>
             Most early-stage teams need candidates with existing Australian work rights. Remote roles often require AEST overlap. Pay bands vary:
             early-stage may offer lower cash with equity; later-stage scaleups pay closer to market for engineers and product builders, with premiums for ML
-            infra and security talent. Always confirm superannuation and equity terms in writing.
+            infra and security talent. For broader context, see our <Link to="/articles/featured/how-much-do-data-scientists-make">data scientist salary breakdown</Link>. Always confirm superannuation and equity terms in writing.
           </p>
 
           <h2>60-day plan to reach your first AI startup interviews</h2>

@@ -7,24 +7,27 @@ import { getEnv } from "~/lib/env.server";
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const user = await getCurrentUser(env, request);
-    if (!user) return redirect("/platform/login");
+    if (!user) return redirect("/platform/login?app=esafety&next=/esafety/team");
 
     // Fetch user's team for this hackathon
     let myTeam = null;
-    try {
-        const cookieHeader = request.headers.get("Cookie");
-        const headers: Record<string, string> = {};
-        if (cookieHeader) {
-            headers["Cookie"] = cookieHeader;
-        }
-        const response = await axiosInstance.get("/api/v1/hackathons/esafety/teams/?member_id=" + (user as any).id, { headers });
-        const teams = response.data;
+    const memberId = (user as any).id;
+    if (memberId != null && Number.isFinite(memberId)) {
+        try {
+            const cookieHeader = request.headers.get("Cookie");
+            const headers: Record<string, string> = {};
+            if (cookieHeader) {
+                headers["Cookie"] = cookieHeader;
+            }
+            const response = await axiosInstance.get(`/api/v1/hackathons/esafety/teams/?member_id=${memberId}`, { headers });
+            const teams = response.data;
 
-        if (Array.isArray(teams) && teams.length > 0) {
-            myTeam = teams[0]; // Assuming user can only be in one team per hackathon
+            if (Array.isArray(teams) && teams.length > 0) {
+                myTeam = teams[0]; // Assuming user can only be in one team per hackathon
+            }
+        } catch (error) {
+            console.error("Failed to fetch teams:", error);
         }
-    } catch (error) {
-        console.error("Failed to fetch teams:", error);
     }
 
     return { user, myTeam };

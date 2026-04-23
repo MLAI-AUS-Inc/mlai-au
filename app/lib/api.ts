@@ -1,7 +1,33 @@
-import axios, { type InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
+import axios, { type InternalAxiosRequestConfig, AxiosHeaders, type AxiosAdapter } from 'axios';
+
+export function shouldUseDevBackendStub() {
+    return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
+}
+
+// Catch-all stub adapter for local development only. When
+// VITE_STUB_BACKEND=true, every API request short-circuits and returns a
+// fake empty response instead of hitting api.mlai.au.
+const devStubAdapter: AxiosAdapter = async (config) => {
+    const method = (config.method || 'get').toUpperCase();
+    console.log(`[API STUB] ${method} ${config.baseURL ?? ''}${config.url ?? ''} -> empty stub response`);
+    return {
+        data: [],
+        status: 200,
+        statusText: 'OK (dev stub)',
+        headers: {},
+        config,
+    } as any;
+};
+
+function applyDevStubAdapter(instance: ReturnType<typeof axios.create>) {
+    if (shouldUseDevBackendStub()) {
+        instance.defaults.adapter = devStubAdapter;
+    }
+}
 
 // Vite uses import.meta.env instead of process.env
 const DEFAULT_SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
+const DEFAULT_LOCAL_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 const resolveApiBase = () => {
     // In Vite, we access env vars via import.meta.env
@@ -16,13 +42,11 @@ const resolveApiBase = () => {
             hostname.endsWith('.localhost');
 
         if (isLocalhost) {
-            // If we are on esafety.localhost, point to the backend on port 80 with the same hostname
-            // This ensures cookies with Domain=.localhost are sent/received correctly
+            // Use the configured local API origin when developing on localhost.
             if (hostname === 'esafety.localhost') {
-                return 'http://localhost';
+                return DEFAULT_LOCAL_API_URL;
             }
-            // Fallback for standard localhost or other local domains
-            return 'http://localhost';
+            return DEFAULT_LOCAL_API_URL;
         }
 
         // Production domain check
@@ -34,7 +58,7 @@ const resolveApiBase = () => {
     }
 
     // Server-side (SSR) fallback
-    return configured || 'http://localhost';
+    return configured || DEFAULT_LOCAL_API_URL;
 };
 
 export const API_URL = resolveApiBase();
@@ -44,6 +68,7 @@ export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true,
 });
+applyDevStubAdapter(axiosInstance);
 
 // Helper to get the base URL from the environment or fall back to the static config
 export function getBaseUrl(env: any): string {
@@ -67,6 +92,7 @@ export function createApiClient(env: any, request?: Request) {
         withCredentials: true,
         headers
     });
+    applyDevStubAdapter(client);
 
     // Add the same interceptors as the global instance
     client.interceptors.request.use(
@@ -78,9 +104,13 @@ export function createApiClient(env: any, request?: Request) {
                 }
                 config.headers.set('X-CSRFToken', csrfToken);
             }
+            const headerObject =
+                config.headers && typeof config.headers.toJSON === "function"
+                    ? config.headers.toJSON()
+                    : config.headers;
             console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
                 baseURL: config.baseURL,
-                headers: config.headers,
+                headers: sanitizeHeaders(headerObject),
                 dataIsFormData: config.data instanceof FormData
             });
             return config;
@@ -124,6 +154,22 @@ const getCSRFToken = () => {
     return cookieValue;
 };
 
+function sanitizeHeaders(
+    headers: Record<string, unknown> | AxiosHeaders | undefined,
+): Record<string, unknown> | undefined {
+    if (!headers || typeof headers !== "object") {
+        return headers as Record<string, unknown> | undefined;
+    }
+
+    const clone: Record<string, unknown> = { ...(headers as Record<string, unknown>) };
+    for (const key of Object.keys(clone)) {
+        if (key.toLowerCase() === "cookie") {
+            clone[key] = "[redacted]";
+        }
+    }
+    return clone;
+}
+
 axiosInstance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
         const csrfToken = getCSRFToken();
@@ -135,8 +181,12 @@ axiosInstance.interceptors.request.use(
             // Set the CSRF token
             config.headers.set('X-CSRFToken', csrfToken);
         }
+        const headerObject =
+            config.headers && typeof config.headers.toJSON === "function"
+                ? config.headers.toJSON()
+                : config.headers;
         console.log(`[API] Request ${config.method?.toUpperCase()} ${config.url}`, {
-            headers: config.headers,
+            headers: sanitizeHeaders(headerObject),
             dataIsFormData: config.data instanceof FormData
         });
         return config;

@@ -39,7 +39,18 @@ export function NowDropping({ piece }: NowDroppingProps) {
             "{testimonial.body}"
           </p>
           <div className="text-xs font-semibold">{testimonial.author.name}</div>
-          <div className="text-xs opacity-70">{testimonial.author.handle}</div>
+          {testimonial.author.website ? (
+            <a
+              href={testimonial.author.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs opacity-70 hover:opacity-100 hover:underline transition-opacity"
+            >
+              {testimonial.author.handle}
+            </a>
+          ) : (
+            <div className="text-xs opacity-70">{testimonial.author.handle}</div>
+          )}
         </div>
       </div>
     </div>

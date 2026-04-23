@@ -1,34 +1,35 @@
 import { H3, Body } from "~/components/ui/Typography";
+import { ImageWithFallback } from "~/components/ImageWithFallback";
 
 const previousMembers = [
   {
     name: "Louka Ewington-Pitsos",
     role: "Co-founder, President (2023-2025)",
-    imageUrl: "/team-photos/previous/louka.png",
+    imageUrl: "",
     contribution: "Co-founded MLAI and led it to initial success running the first major hackathon focused on solving Australian problems with AI, and leading its second hackathon - the Green Battery Hack. Louka is a data science award winner and entrepreneur who founded a road maintenance startup, sold an arbitrage system, and surveyed 1/3 of the ACT with computer vision models, Louka still works in startups relating to AI.",
   },
   {
     name: "Jaime Blackwell",
     role: "Co-founder, Vice President (2023-2024)",
-    imageUrl: "/team-photos/previous/jaime.png",
+    imageUrl: "",
     contribution: "Co-founded MLAI, putting in significant time and effort into the first hackathon and assisting with developing monthly events afterwards focused on AI and startups. Jaime now works as a Data Scientist, having completed her AI and Computer Science Honours on tabular data generation.",
   },
   {
     name: "Dr Lukas Wesemann",
     role: "Co-founder, Secretary (2023-Present)",
-    imageUrl: "/team-photos/lukas.png",
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Flukas.png?alt=media&token=490ac923-dd87-4291-bc7d-3a02bdfac45e",
     contribution: "Co-founded MLAI and continues to serve as Secretary, Lukas has extensively assisted with all hackathons and ongoing events, being a pivotal member of the community. Lukas has a postdoc in photonics specializing in meta-optics, and is currently working as an AI Research Engineer.",
   },
   {
     name: "Dr Sam Donegan",
     role: "Vice President (2024-2025)",
-    imageUrl: "/team-photos/sam.png",
+    imageUrl: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/committee-photos%2Fsam.png?alt=media&token=dd8f33f3-cc74-43cd-8a0f-ebc2e6fb07c3",
     contribution: "A medical doctor with a passion for health promotion through design and technology, Dr Sam Donegan has run many successful events with MLAI, particularly his work for Medhack 2025. Dr Donegan is dedicated to building tech-enabled, sustainable companies that solve real problems. He continues to work with MLAI through his role as Head of Marketing.",
   },
   {
     name: "Benjaporn (Oil) Wongmayura",
     role: "Treasurer (2024-2025)",
-    imageUrl: "/team-photos/previous/oil.png",
+    imageUrl: "",
     contribution: "Oil Served as an invaluable asset to MLAI, managing the organization's finances and ensuring sustainable growth while supporting the expansion of community programs and initiatives. Oil is an experienced IT Consultant with 5 years of experience in Fintech who delivered data-driven, innovative solutions for major financial institutions across Asia and Europe.",
   },
 ];
@@ -44,8 +45,8 @@ export default function PreviousTeam() {
                 <div className="flex flex-col">
                   {/* Image and basic info */}
                   <div className="flex items-start gap-x-4 mb-4">
-                    <img
-                      className="h-16 w-16 rounded-full object-cover"
+                    <ImageWithFallback
+                      className="h-16 w-16 rounded-full object-cover bg-gray-200"
                       src={person.imageUrl}
                       alt={person.name}
                     />

@@ -1,4 +1,5 @@
 import { ImageWithFallback as Image } from "~/components/ImageWithFallback"
+import { ARTICLE_FALLBACK_IMAGE } from "~/articles/registry"
 import { Link } from 'react-router'
 
 export interface ArticleCompanyHighlightCTAProps {
@@ -68,6 +69,7 @@ export default function ArticleCompanyHighlightCTA({
                     <div className="relative mx-auto h-full w-full max-w-2xl p-6">
                         <Image
                             src={image.src}
+                            fallbackSrc={ARTICLE_FALLBACK_IMAGE}
                             alt={image.alt}
                             width={1344}
                             height={840}

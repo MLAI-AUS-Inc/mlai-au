@@ -213,6 +213,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             <li key={item.name}>
                                                 <Link
                                                     to={item.href}
+                                                    title={isExpanded ? undefined : item.name}
+                                                    aria-label={isExpanded ? undefined : item.name}
                                                     className={classNames(
                                                         item.current
                                                             ? 'bg-indigo-700 text-white'
