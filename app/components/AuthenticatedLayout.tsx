@@ -46,9 +46,21 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
     const navigation = customNavigation || defaultNavigation;
 
-    const updatedNavigation = navigation.map(item => ({
+    // Determine the single active nav item using longest-match-wins:
+    // the item whose href is the most specific prefix of the current pathname.
+    // This prevents both "/vibe-raising" and "/vibe-raising/companies" from
+    // being marked active when the user is on /vibe-raising/companies.
+    const activeIndex = navigation.reduce<number>((best, item, idx, arr) => {
+        const isMatch =
+            pathname === item.href || pathname.startsWith(item.href + "/");
+        if (!isMatch) return best;
+        if (best === -1) return idx;
+        return item.href.length > arr[best].href.length ? idx : best;
+    }, -1);
+
+    const updatedNavigation = navigation.map((item, idx) => ({
         ...item,
-        current: pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
+        current: idx === activeIndex,
     }));
 
     const defaultUserNavigation = [
@@ -187,23 +199,41 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                 {/* Static sidebar for desktop with hover animation */}
                 <div
                     className={classNames(
-                        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 ease-in-out",
+                        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col",
+                        "transition-[width] duration-[320ms]",
                         isExpanded ? "w-64" : "w-20"
                     )}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
                 >
-                    <div className="flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-indigo-600 px-6">
-                        <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
+                    <div
+                        className="flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden px-6"
+                        style={{
+                            background:
+                                "linear-gradient(180deg, var(--vr-color-brand-purple, #6B30D9) 0%, var(--vr-color-purple-700, #4A1FA0) 100%)",
+                        }}
+                    >
+                        <div className="flex h-16 shrink-0 items-center mt-4 gap-3 -mx-2 pl-2">
+                            {/* Logo stays constant size and source — no swap, no disappear */}
                             <ImageWithFallback
-                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
-                                src={isExpanded
-                                    ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
-                                    : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}
+                                className="w-10 h-10 shrink-0 rounded-md object-contain"
+                                src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"
                                 alt="MLAI Logo"
-                                width={220}
-                                height={80}
+                                width={40}
+                                height={40}
                             />
+                            {/* Wordmark appears to the right when expanded, fades in, no layout jump */}
+                            <span
+                                className={classNames(
+                                    "overflow-hidden whitespace-nowrap font-bold tracking-wide text-white",
+                                    "transition-[opacity,margin-left] duration-200",
+                                    isExpanded ? "opacity-100 ml-1 delay-100" : "opacity-0 ml-0"
+                                )}
+                                style={{ fontFamily: "var(--vr-font-title, 'Oswald', sans-serif)", fontSize: "16px", letterSpacing: "0.06em" }}
+                            >
+                                MLAI
+                            </span>
                         </div>
                         <nav className="flex flex-1 flex-col">
                             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -216,25 +246,32 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                     title={isExpanded ? undefined : item.name}
                                                     aria-label={isExpanded ? undefined : item.name}
                                                     className={classNames(
+                                                        "relative group flex items-center rounded-md p-2 text-sm font-semibold leading-6 text-white",
+                                                        "transition-colors duration-200",
                                                         item.current
-                                                            ? 'bg-indigo-700 text-white'
-                                                            : 'text-white hover:bg-indigo-700 hover:text-white',
-                                                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
-                                                        isExpanded ? '' : 'justify-center'
+                                                            ? "bg-white/15"
+                                                            : "hover:bg-white/10"
                                                     )}
                                                 >
+                                                    {/* Active left-accent bar */}
+                                                    {item.current && (
+                                                        <span
+                                                            aria-hidden="true"
+                                                            className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full"
+                                                            style={{ background: "var(--vr-color-brand-teal, #00C8CC)" }}
+                                                        />
+                                                    )}
                                                     <item.icon
-                                                        className={classNames(
-                                                            item.current ? 'text-white' : 'text-white group-hover:text-white',
-                                                            'h-6 w-6 shrink-0 transition-all duration-300',
-                                                            isExpanded ? 'mr-0' : 'mr-0'
-                                                        )}
+                                                        className="h-6 w-6 shrink-0 text-white"
                                                         aria-hidden="true"
                                                     />
                                                     <span
                                                         className={classNames(
-                                                            "transition-all duration-300 overflow-hidden whitespace-nowrap",
-                                                            isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                                            "overflow-hidden whitespace-nowrap",
+                                                            "transition-[opacity,margin-left] duration-200",
+                                                            isExpanded
+                                                                ? "opacity-100 ml-3 delay-100"
+                                                                : "opacity-0 ml-0"
                                                         )}
                                                     >
                                                         {item.name}
@@ -247,19 +284,19 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                 <li className="mt-auto mb-4">
                                     <a
                                         href="/"
-                                        className={classNames(
-                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
-                                            isExpanded ? '' : 'justify-center'
-                                        )}
+                                        className="group flex items-center rounded-md p-2 text-sm font-semibold leading-6 text-white/80 hover:bg-white/10 hover:text-white transition-colors duration-200"
                                     >
                                         <ArrowLeftOnRectangleIcon
                                             aria-hidden="true"
-                                            className="h-6 w-6 shrink-0 text-white group-hover:text-white"
+                                            className="h-6 w-6 shrink-0"
                                         />
                                         <span
                                             className={classNames(
-                                                "transition-all duration-300 overflow-hidden whitespace-nowrap",
-                                                isExpanded ? "opacity-100 w-auto ml-3" : "opacity-0 w-0 ml-0"
+                                                "overflow-hidden whitespace-nowrap",
+                                                "transition-[opacity,margin-left] duration-200",
+                                                isExpanded
+                                                    ? "opacity-100 ml-3 delay-100"
+                                                    : "opacity-0 ml-0"
                                             )}
                                         >
                                             Back to MLAI
@@ -271,7 +308,13 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                     </div>
                 </div>
 
-                <div className={classNames("lg:pl-20 transition-all duration-300 ease-in-out", isExpanded ? "lg:pl-64" : "lg:pl-20")}>
+                <div
+                    className={classNames(
+                        "transition-[padding-left] duration-[320ms]",
+                        isExpanded ? "lg:pl-64" : "lg:pl-20"
+                    )}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)" }}
+                >
                     {/* Header */}
                     <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
                         <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-700 lg:hidden">
