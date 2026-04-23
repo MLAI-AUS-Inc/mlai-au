@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Dialog, Transition } from "@headlessui/react";
 import { clsx } from "clsx";
 import {
+  EnvelopeIcon,
   ShieldCheckIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -50,7 +51,7 @@ function ProviderStep({
   const gmailBusy = connectingProvider === "gmail";
 
   return (
-    <div>
+    <div className="relative">
       <h3 className="mb-2 text-center text-lg font-bold text-gray-900">
         Connect Your Email
       </h3>
@@ -58,7 +59,7 @@ function ProviderStep({
         We&apos;ll only scan filtered emails relevant to drafting your investor update.
       </p>
 
-      <div className="grid grid-cols-1 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <button
           type="button"
           onClick={onReviewGmailNotice}
@@ -94,53 +95,84 @@ function ProviderStep({
             </svg>
           )}
           <span className="font-bold text-gray-900">
-            {gmailBusy ? "Connecting..." : "Continue with Gmail"}
+            {gmailBusy ? "Connecting..." : "Gmail"}
+          </span>
+        </button>
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Outlook support is coming soon"
+          className="relative flex cursor-not-allowed flex-col items-center gap-4 rounded-xl border-2 border-gray-200 bg-gray-50 p-6 opacity-60 transition-all duration-200"
+        >
+          <EnvelopeIcon className="h-12 w-12 text-blue-500" />
+          <span className="font-bold text-gray-900">Outlook</span>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+            Coming soon
           </span>
         </button>
       </div>
 
-      {showGmailNotice && (
-        <div className="mt-5 rounded-2xl border border-violet-100 bg-violet-50/70 p-4">
-          <div className="flex items-start gap-3">
-            <div className="rounded-xl bg-white p-2 text-violet-600 shadow-sm">
-              <ShieldCheckIcon className="h-5 w-5" />
+      <Transition show={showGmailNotice} as={Fragment}>
+        <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 p-3 backdrop-blur-sm sm:p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-violet-100 bg-white p-5 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-violet-50">
+                <ShieldCheckIcon className="h-6 w-6 text-violet-600" />
+              </div>
+              <div>
+                <h4 className="text-base font-bold text-gray-900">
+                  Before you connect Gmail
+                </h4>
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  MLAI only scans filtered email data needed to draft your investor update.
+                  The Gmail data used for this step is deleted after processing.
+                </p>
+                <p className="mt-2 text-sm leading-6 text-gray-600">
+                  By continuing, you agree to our{" "}
+                  <Link
+                    to="/terms"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-violet-600 underline underline-offset-2"
+                  >
+                    Terms
+                  </Link>{" "}
+                  and{" "}
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-violet-600 underline underline-offset-2"
+                  >
+                    Privacy Policy
+                  </Link>
+                  .
+                </p>
+              </div>
             </div>
-            <div className="min-w-0 flex-1">
-              <h4 className="text-sm font-bold text-gray-900">Before you connect Gmail</h4>
-              <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                We request Gmail access only to locate emails that match your company context and draft this update.
-                You can disconnect Google access at any time from your Google account.
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-violet-700">
-                <Link to="/privacy" target="_blank" className="hover:text-violet-900">
-                  Privacy Policy
-                </Link>
-                <Link to="/terms" target="_blank" className="hover:text-violet-900">
-                  Terms
-                </Link>
-              </div>
-              <div className="mt-4 flex gap-2">
-                <button
-                  type="button"
-                  onClick={onCancelGmailNotice}
-                  disabled={connectingProvider !== null}
-                  className="flex-1 rounded-xl border border-violet-200 bg-white px-4 py-2 text-sm font-bold text-violet-700 transition-colors hover:bg-violet-50 disabled:opacity-60"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={onConnectGmail}
-                  disabled={connectingProvider !== null}
-                  className="flex-1 rounded-xl bg-violet-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-violet-700 disabled:opacity-60"
-                >
-                  {gmailBusy ? "Connecting..." : "Continue"}
-                </button>
-              </div>
+
+            <div className="mt-5 flex gap-3">
+              <button
+                type="button"
+                onClick={onCancelGmailNotice}
+                disabled={connectingProvider !== null}
+                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onConnectGmail}
+                disabled={connectingProvider !== null}
+                className="flex-1 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-60"
+              >
+                {gmailBusy ? "Connecting..." : "Continue"}
+              </button>
             </div>
           </div>
         </div>
-      )}
+      </Transition>
 
       {!companyDomain && (
         <p className="mt-4 text-sm text-amber-700">
