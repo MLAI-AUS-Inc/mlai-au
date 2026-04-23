@@ -93,6 +93,11 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.abn) ??
     asNullableString(payload.companyAbn) ??
     asNullableString(payload.company_abn);
+  const location =
+    asNullableString(payload.location) ??
+    asNullableString(payload.companyLocation) ??
+    asNullableString(payload.company_location) ??
+    asNullableString(payload.region);
   const registered = Boolean(
     payload.registered ??
       payload.isRegistered ??
@@ -106,6 +111,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     name,
     domain,
     abn,
+    location,
     registered,
   };
 }
@@ -140,6 +146,7 @@ function normalizeProfile(raw: unknown): VibeRaisingProfile {
         name: topLevelCompanyName,
         domain: payload.domain ?? payload.company_domain,
         abn: payload.abn ?? payload.company_abn,
+        location: payload.location ?? payload.company_location,
         registered:
           payload.companyRegistered ??
           payload.company_registered ??
@@ -203,6 +210,12 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   if (!raw || typeof raw !== "object") return null;
 
   const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const structuredMemo =
+    payload.structuredMemo && typeof payload.structuredMemo === "object"
+      ? (payload.structuredMemo as Record<string, unknown>)
+      : payload.structured_memo && typeof payload.structured_memo === "object"
+        ? (payload.structured_memo as Record<string, unknown>)
+        : {};
   const rawYear = payload.year;
   let yearValue: number | undefined;
   if (typeof rawYear === "number" && Number.isFinite(rawYear)) {
@@ -217,6 +230,19 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   return {
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
+    summary:
+      asNullableString(payload.summary) ??
+      asNullableString(payload.topline) ??
+      asNullableString(structuredMemo.topline) ??
+      undefined,
+    sourceUrl:
+      asNullableString(payload.sourceUrl) ??
+      asNullableString(payload.source_url) ??
+      undefined,
+    videoUrl:
+      asNullableString(payload.videoUrl) ??
+      asNullableString(payload.video_url) ??
+      undefined,
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -287,6 +313,18 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       undefined,
     month,
     year: typeof year === "number" && Number.isFinite(year) ? year : undefined,
+    summary:
+      asNullableString(payload.summary) ??
+      asNullableString(payload.topline) ??
+      undefined,
+    sourceUrl:
+      asNullableString(payload.sourceUrl) ??
+      asNullableString(payload.source_url) ??
+      undefined,
+    videoUrl:
+      asNullableString(payload.videoUrl) ??
+      asNullableString(payload.video_url) ??
+      undefined,
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -336,6 +374,13 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
       asNullableString(payload.updated_at) ??
       new Date().toISOString(),
     status: asNullableString(payload.status),
+    summary: asNullableString(payload.summary),
+    sourceUrl:
+      asNullableString(payload.sourceUrl) ??
+      asNullableString(payload.source_url),
+    videoUrl:
+      asNullableString(payload.videoUrl) ??
+      asNullableString(payload.video_url),
     metrics: normalizeMetrics(payload.metrics),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
@@ -771,6 +816,7 @@ export function buildVibeRaisingAppUser(
     companyName: activeCompany?.name ?? "",
     domain: activeCompany?.domain ?? null,
     abn: activeCompany?.abn ?? null,
+    location: activeCompany?.location ?? null,
     companyRegistered: activeCompany?.registered ?? false,
   };
 }
@@ -822,6 +868,7 @@ const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
       name: "Dev Startup Pty Ltd",
       domain: "devstartup.com",
       abn: "51 824 753 556",
+      location: "Melbourne, Australia",
       registered: true,
     },
   ],
@@ -943,6 +990,7 @@ export async function saveVibeRaisingCompany(
     name: string;
     domain?: string | null;
     abn?: string | null;
+    location?: string | null;
     registered?: boolean;
   },
 ): Promise<string | null> {
@@ -971,6 +1019,8 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     year: 2026,
     date: "2026-04-01T00:00:00.000Z",
     status: "draft",
+    summary: "AI workflow automation for mid-market teams, with enterprise pilots converting into paid deployments.",
+    sourceUrl: "https://example.com/dev-update-april",
     metrics: {
       revenue: "$62,400 MRR",
       growth: "+18% MoM",
@@ -992,6 +1042,7 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     year: 2026,
     date: "2026-03-01T00:00:00.000Z",
     status: "sent",
+    summary: "Analytics v2 increased engagement while the team tested pricing and retention improvements.",
     metrics: {
       revenue: "$52,900 MRR",
       growth: "+12% MoM",
@@ -1013,6 +1064,7 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     year: 2026,
     date: "2026-02-01T00:00:00.000Z",
     status: "sent",
+    summary: "Healthcare design partnership and engineering hires moved the product toward a vertical AI wedge.",
     metrics: {
       revenue: "$47,200 MRR",
       growth: "+9% MoM",
@@ -1060,11 +1112,32 @@ export async function saveVibeRaisingMonthlyUpdate(
     challenges: string;
     asks: string;
     metrics: Record<string, string>;
+    summary?: string | null;
+    sourceUrl?: string | null;
+    videoUrl?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const client = createApiClient(env, request);
-  const response = await client.post(UPDATES_PATH, body);
-  return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+  try {
+    const response = await client.post(UPDATES_PATH, body);
+    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+  } catch (error: any) {
+    const status = error.response?.status;
+    const hasOptionalFields = Boolean(body.summary || body.sourceUrl || body.videoUrl);
+    if (!hasOptionalFields || (status !== 400 && status !== 422)) {
+      throw error;
+    }
+
+    const response = await client.post(UPDATES_PATH, {
+      month: body.month,
+      year: body.year,
+      highlights: body.highlights,
+      challenges: body.challenges,
+      asks: body.asks,
+      metrics: body.metrics,
+    });
+    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+  }
 }
 
 export async function bootstrapVibeRaisingStartupUpdate(

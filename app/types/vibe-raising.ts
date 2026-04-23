@@ -7,6 +7,7 @@ export interface VibeRaisingCompany {
   name: string;
   domain?: string | null;
   abn?: string | null;
+  location?: string | null;
   registered: boolean;
 }
 
@@ -29,6 +30,7 @@ export interface VibeRaisingAppUser {
   companyName: string;
   domain?: string | null;
   abn?: string | null;
+  location?: string | null;
   companyRegistered: boolean;
 }
 
@@ -43,6 +45,9 @@ export interface VibeRaisingPastMonthSummary {
 export interface VibeRaisingDraftedContent {
   month?: string;
   year?: number;
+  summary?: string;
+  sourceUrl?: string;
+  videoUrl?: string;
   highlights: string;
   challenges: string;
   asks: string;
@@ -58,6 +63,9 @@ export interface VibeRaisingMonthlyUpdate {
   year?: number;
   date: string;
   status?: string | null;
+  summary?: string | null;
+  sourceUrl?: string | null;
+  videoUrl?: string | null;
   metrics: Record<string, string>;
   highlights: string;
   challenges: string;
@@ -122,6 +130,9 @@ export interface VibeRaisingEmailDraftMonth {
   isoMonth?: string;
   month: string;
   year?: number;
+  summary?: string;
+  sourceUrl?: string;
+  videoUrl?: string;
   highlights: string;
   challenges: string;
   asks: string;
