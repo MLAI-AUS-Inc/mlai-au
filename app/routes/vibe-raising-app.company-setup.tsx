@@ -1,6 +1,6 @@
 import { Form, redirect, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
-import { BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon, BuildingOffice2Icon, GlobeAltIcon, IdentificationIcon } from "@heroicons/react/24/outline";
 import { getEnv } from "~/lib/env.server";
 import {
     getActiveVibeRaisingCompany,
@@ -81,7 +81,7 @@ export default function CompanySetup() {
                         {/* Company Name */}
                         <div>
                             <label htmlFor="companyName" className="block text-sm font-bold text-gray-700 mb-2">
-                                Company Name
+                                Company Name<span className="text-red-600 ml-0.5" aria-hidden="true">*</span>
                             </label>
                             <div className="relative">
                                 <BuildingOffice2Icon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -92,6 +92,7 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.name || user.companyName}
                                     placeholder="Acme Inc."
                                     required
+                                    autoComplete="organization"
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
@@ -100,7 +101,7 @@ export default function CompanySetup() {
                         {/* Domain */}
                         <div>
                             <label htmlFor="domain" className="block text-sm font-bold text-gray-700 mb-2">
-                                Domain
+                                Domain<span className="text-red-600 ml-0.5" aria-hidden="true">*</span>
                             </label>
                             <div className="relative">
                                 <GlobeAltIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -111,6 +112,7 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.domain || ""}
                                     placeholder="example.com.au"
                                     required
+                                    autoComplete="url"
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
@@ -119,7 +121,7 @@ export default function CompanySetup() {
                         {/* ABN */}
                         <div>
                             <label htmlFor="abn" className="block text-sm font-bold text-gray-700 mb-2">
-                                ABN
+                                ABN<span className="text-red-600 ml-0.5" aria-hidden="true">*</span>
                             </label>
                             <div className="relative">
                                 <IdentificationIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -130,6 +132,8 @@ export default function CompanySetup() {
                                     defaultValue={isAddingNew ? "" : activeCompany?.abn || ""}
                                     placeholder="51 824 753 556"
                                     required
+                                    autoComplete="off"
+                                    inputMode="numeric"
                                     className="w-full pl-11 pr-4 py-3.5 rounded-xl border border-gray-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
                                 />
                             </div>
@@ -140,9 +144,10 @@ export default function CompanySetup() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-violet-500/20
+                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2
                                 ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
                         >
+                            {isSubmitting && <ArrowPathIcon className="w-5 h-5 animate-spin" aria-hidden="true" />}
                             {isSubmitting ? "Saving..." : isAddingNew ? "Add Company" : "Continue"}
                         </button>
                     </Form>

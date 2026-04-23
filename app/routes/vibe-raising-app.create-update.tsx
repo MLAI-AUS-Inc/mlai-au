@@ -531,7 +531,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                 <>
                     {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                        <div className="grid grid-cols-5 gap-2">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                             {METRIC_OPTIONS.map(m => {
                                 const val = pm.metrics[m.key];
                                 return (
@@ -1457,8 +1457,10 @@ export default function CreateUpdate() {
                     </button>
                 </div>
 
-                {/* Main layout: Preview + thin rating bar */}
-                <div className="flex gap-4 items-start">
+                {/* Main layout: Preview + thin rating bar.
+                    Mobile: stacked (preview first, feedback below).
+                    Desktop: preview left, sticky sidebar right. */}
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
                     {/* PREVIEW — dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
@@ -1516,7 +1518,7 @@ export default function CreateUpdate() {
 
                             {/* Metrics — square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <div className="grid grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                     {METRIC_OPTIONS.map(m => {
                                         const val = (data as any)?.[m.key];
                                         return (
@@ -1783,9 +1785,9 @@ export default function CreateUpdate() {
                         );
                     })()}
 
-                    {/* RATING SIDEBAR — thin vertical bar on right */}
-                    <div className="w-56 flex-shrink-0 sticky top-6 space-y-3">
-                        {/* Company identity */}
+                    {/* RATING SIDEBAR — stacked below on mobile, sticky right on desktop */}
+                    <div className="w-full lg:w-56 lg:flex-shrink-0 lg:sticky lg:top-6 space-y-3">
+                        {/* Company identity (primary) with AI grade as supporting badge */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-center text-center">
                             {user.domain ? (
                                 <img
@@ -1802,12 +1804,12 @@ export default function CreateUpdate() {
                             {user.domain && (
                                 <p className="text-[11px] text-gray-400 mt-0.5">{user.domain}</p>
                             )}
-                        </div>
-
-                        {/* Grade pill */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">AI Grade</p>
-                            <div className="text-4xl font-bold text-green-600 leading-none">{feedback?.grade}</div>
+                            {feedback?.grade && (
+                                <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700">AI Grade</span>
+                                    <span className="text-sm font-bold text-green-700 leading-none">{feedback.grade}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Strengths — collapsible */}
@@ -1910,7 +1912,7 @@ export default function CreateUpdate() {
                         <div
                             {...getRootProps()}
                             className={clsx(
-                                "relative border border-gray-100 rounded-2xl p-12 transition-all flex flex-col items-center justify-center text-center",
+                                "relative border border-gray-100 rounded-2xl p-6 sm:p-12 transition-all flex flex-col items-center justify-center text-center",
                                 isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
                             )}
                         >
@@ -1925,15 +1927,15 @@ export default function CreateUpdate() {
                                     Drag files here to upload
                                 </h3>
 
-                                <p className="text-sm text-gray-400 font-medium mb-1">
-                                    Supported video files are MP4, MOV, AVI
+                                <p className="text-sm text-gray-600 font-medium mb-1">
+                                    Video (MP4, MOV), audio, images, PDF, Word, Excel
                                 </p>
 
-                                <p className="text-sm text-gray-400 mb-6">
-                                    Minimize processing time
+                                <p className="text-sm text-gray-500 mb-6">
+                                    Up to 20 MB per file
                                 </p>
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-col sm:flex-row gap-3 w-full">
                                     <button
                                         type="button"
                                         onClick={(e) => {
@@ -1942,7 +1944,7 @@ export default function CreateUpdate() {
                                         }}
                                         disabled={isEmailDraftBusy}
                                         className={clsx(
-                                            "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
+                                            "flex-1 flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
                                             isRecording
                                                 ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse"
                                                 : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
@@ -1958,7 +1960,7 @@ export default function CreateUpdate() {
                                     <button
                                         type="button"
                                         disabled={isEmailDraftBusy}
-                                        className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
+                                        className="flex-1 px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
                                     >
                                         Select file
                                     </button>
@@ -2102,7 +2104,7 @@ export default function CreateUpdate() {
                                         {/* Metrics — square boxes */}
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-5 gap-2">
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
                                                 {METRIC_OPTIONS.map(m => {
                                                     const active = m.key in card.metrics;
                                                     return (
@@ -2215,7 +2217,7 @@ export default function CreateUpdate() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                                 </label>
-                                <div className="grid grid-cols-5 gap-3">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                     {METRIC_OPTIONS.map((m) => {
                                         const active = selectedMetrics.has(m.key);
                                         return (
@@ -2321,7 +2323,7 @@ export default function CreateUpdate() {
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                             </label>
-                            <div className="grid grid-cols-5 gap-3">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                                 {METRIC_OPTIONS.map((m) => {
                                     const active = selectedMetrics.has(m.key);
                                     return (

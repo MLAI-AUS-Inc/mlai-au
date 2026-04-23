@@ -1,4 +1,29 @@
-import axios, { type InternalAxiosRequestConfig, AxiosHeaders } from 'axios';
+import axios, { type InternalAxiosRequestConfig, AxiosHeaders, type AxiosAdapter } from 'axios';
+
+export function shouldUseDevBackendStub() {
+    return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
+}
+
+// Catch-all stub adapter for local development only. When
+// VITE_STUB_BACKEND=true, every API request short-circuits and returns a
+// fake empty response instead of hitting api.mlai.au.
+const devStubAdapter: AxiosAdapter = async (config) => {
+    const method = (config.method || 'get').toUpperCase();
+    console.log(`[API STUB] ${method} ${config.baseURL ?? ''}${config.url ?? ''} -> empty stub response`);
+    return {
+        data: [],
+        status: 200,
+        statusText: 'OK (dev stub)',
+        headers: {},
+        config,
+    } as any;
+};
+
+function applyDevStubAdapter(instance: ReturnType<typeof axios.create>) {
+    if (shouldUseDevBackendStub()) {
+        instance.defaults.adapter = devStubAdapter;
+    }
+}
 
 // Vite uses import.meta.env instead of process.env
 const DEFAULT_SITE_URL = import.meta.env.VITE_SITE_URL || 'http://localhost:5173';
@@ -43,6 +68,7 @@ export const axiosInstance = axios.create({
     baseURL: API_URL,
     withCredentials: true,
 });
+applyDevStubAdapter(axiosInstance);
 
 // Helper to get the base URL from the environment or fall back to the static config
 export function getBaseUrl(env: any): string {
@@ -66,6 +92,7 @@ export function createApiClient(env: any, request?: Request) {
         withCredentials: true,
         headers
     });
+    applyDevStubAdapter(client);
 
     // Add the same interceptors as the global instance
     client.interceptors.request.use(

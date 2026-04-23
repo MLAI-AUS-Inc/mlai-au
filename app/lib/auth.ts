@@ -1,4 +1,4 @@
-import { axiosInstance, API_URL } from "./api";
+import { axiosInstance, API_URL, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
 export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
@@ -102,7 +102,22 @@ export async function verifyMagicLinkWithCookies(
     return { data: response.data, setCookieHeaders };
 }
 
+// Local dev only: set VITE_STUB_BACKEND=true to preview as a fake
+// logged-in user when the live backend is unavailable. `null` means logged out.
+const DEV_AUTH_STUB: Record<string, unknown> | null = {
+    full_name: "Dev User",
+    email: "dev@mlai.au",
+    role: "participant",
+    is_superuser: false,
+    is_active: true,
+    has_team: false,
+    avatar_url: null,
+};
+
 export async function getCurrentUser(env: Env, request?: Request) {
+    if (shouldUseDevBackendStub()) {
+        return DEV_AUTH_STUB;
+    }
     try {
         const client = getAxios(env, request);
         const response = await client.get("/api/v1/auth/me/");

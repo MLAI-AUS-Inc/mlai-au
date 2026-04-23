@@ -45,6 +45,8 @@ On Windows, you can also use:
 Your site will be available at `http://localhost:5173` with hot reloading enabled.
 Local dev stores Wrangler/Miniflare state under `.local/` in this repo so it does not depend on roaming-profile write access.
 
+To preview Vibe Raising without a running backend, set `VITE_STUB_BACKEND=true` in `.env.local` or `.dev.vars`, then restart `bun run dev`. Backend stubs are ignored outside Vite development builds.
+
 ### Environment Vars and Secrets
 
 Variables and secrets live in:

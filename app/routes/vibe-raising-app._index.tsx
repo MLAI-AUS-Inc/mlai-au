@@ -126,7 +126,7 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
                 active ? "text-gray-900" : "text-gray-300"
             )}>{active ? value : "—"}</p>
             <p className={clsx(
-                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -161,7 +161,7 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
                 <p className="text-base font-extrabold text-gray-300">—</p>
             )}
             <p className={clsx(
-                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -248,10 +248,10 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     onClick={() => !editing && setExpanded(true)}
                     className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-gray-50/50 transition-colors"
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                         {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
-                        <h3 className="text-base font-bold text-gray-900">{update.month}</h3>
+                        <h3 className="text-base font-bold text-gray-900 truncate">{update.month}</h3>
                         {isCurrent && <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">Current</span>}
                         {update.score && (
                             <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
@@ -259,24 +259,26 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             </span>
                         )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        {update.investorsSentTo > 0 && (
-                            <span className="flex items-center gap-1 text-violet-600 text-xs font-medium">
-                                <UserGroupIcon className="w-3.5 h-3.5" />
-                                {update.investorsSentTo} sent
-                            </span>
-                        )}
-                        {update.investorsViewed > 0 && (
-                            <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                                <EyeIcon className="w-3.5 h-3.5" />
-                                {update.investorsViewed} viewed
-                            </span>
-                        )}
-                        {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
-                            <span className="w-px h-3 bg-gray-200" />
-                        )}
-                        <span className="text-xs text-gray-400 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
-                        <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="hidden sm:flex items-center gap-3">
+                            {update.investorsSentTo > 0 && (
+                                <span className="flex items-center gap-1 text-violet-600 text-xs font-medium">
+                                    <UserGroupIcon className="w-3.5 h-3.5" />
+                                    {update.investorsSentTo} sent
+                                </span>
+                            )}
+                            {update.investorsViewed > 0 && (
+                                <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                    {update.investorsViewed} viewed
+                                </span>
+                            )}
+                            {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
+                                <span className="w-px h-3 bg-gray-200" />
+                            )}
+                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{highlights.slice(0, 60)}...</span>
+                        </div>
+                        <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
                 </button>
             )}
@@ -325,6 +327,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                     <img
                                         src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                         alt=""
+                                        aria-hidden="true"
                                         className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                     />
                                 ) : (
@@ -421,7 +424,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 ))}
                             </div>
                         )}
-                        <div className="grid gap-3 grid-cols-5">
+                        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                             {(editing ? METRIC_OPTIONS : METRIC_OPTIONS.filter(m => selectedMetrics.has(m.key))).map(m => (
                                 <div key={m.key} onClick={() => editing && toggleMetric(m.key)}>
                                     <EditableMetricCard
@@ -515,7 +518,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
         return (
             <div className="-m-6 sm:-m-8 lg:-m-10">
                 {/* Hero section with background image */}
-                <div className="relative h-[calc(100vh-64px)] overflow-hidden">
+                <div className="relative min-h-[60vh] sm:min-h-[calc(100vh-64px)] overflow-hidden">
                     {/* Background image — cropped to viewport height */}
                     <img
                         src="/hero-bg.jpg"
@@ -611,16 +614,16 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
             </div>
 
             {isOverdue && (
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-start gap-4">
-                            <div className="p-3 bg-white rounded-full border border-orange-100 shadow-sm text-orange-500">
+                            <div className="p-3 bg-white rounded-full border border-violet-100 shadow-sm text-violet-600">
                                 <ClockIcon className="w-8 h-8" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="px-2.5 py-0.5 bg-orange-200 text-orange-800 text-xs font-bold rounded-full">
+                                    <span className="px-2.5 py-0.5 bg-violet-200 text-violet-800 text-xs font-bold rounded-full">
                                         {daysOverdue} days overdue
                                     </span>
                                 </div>
@@ -632,7 +635,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         </div>
                         <Link
                             to="/vibe-raising/create-update"
-                            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap"
+                            className="px-6 py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Create Update Now
                         </Link>
@@ -735,7 +738,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                         </div>
 
                         <div className="p-6 space-y-6">
-                            <div className="grid gap-3 grid-cols-5">
+                            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                                 {update.metrics.revenue && <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />}
                                 {update.metrics.users && <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />}
                                 {update.metrics.mrr && <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />}
