@@ -48,6 +48,10 @@ export interface VibeRaisingDraftedContent {
   summary?: string;
   sourceUrl?: string;
   videoUrl?: string;
+  videoStoragePath?: string;
+  videoContentType?: string;
+  videoFileSizeBytes?: number | null;
+  videoOriginalFilename?: string;
   highlights: string;
   challenges: string;
   asks: string;
@@ -66,10 +70,22 @@ export interface VibeRaisingMonthlyUpdate {
   summary?: string | null;
   sourceUrl?: string | null;
   videoUrl?: string | null;
+  videoStoragePath?: string | null;
+  videoContentType?: string | null;
+  videoFileSizeBytes?: number | null;
+  videoOriginalFilename?: string | null;
   metrics: Record<string, string>;
   highlights: string;
   challenges: string;
   asks: string;
+}
+
+export interface VibeRaisingVideoUploadResponse {
+  videoUrl: string;
+  storagePath: string;
+  contentType: string;
+  fileSizeBytes: number;
+  originalFilename: string;
 }
 
 export type VibeRaisingStartupUpdateState =
@@ -133,6 +149,10 @@ export interface VibeRaisingEmailDraftMonth {
   summary?: string;
   sourceUrl?: string;
   videoUrl?: string;
+  videoStoragePath?: string;
+  videoContentType?: string;
+  videoFileSizeBytes?: number | null;
+  videoOriginalFilename?: string;
   highlights: string;
   challenges: string;
   asks: string;

@@ -19,12 +19,14 @@ import type {
   VibeRaisingStartupUpdateStepState,
   VibeRaisingStartupUpdateState,
   VibeRaisingStartupUpdateStatusResponse,
+  VibeRaisingVideoUploadResponse,
 } from "~/types/vibe-raising";
 
 const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
 const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
 const UPDATES_PATH = "/api/v1/vibe-raising/updates/";
+const VIDEO_UPLOAD_PATH = "/api/v1/vibe-raising/uploads/video/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
 const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
@@ -195,6 +197,15 @@ function normalizeMetrics(raw: unknown): Record<string, string> {
   return metrics;
 }
 
+function asNullableNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value.trim());
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
 function normalizePastMonthSummary(raw: unknown) {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
   return {
@@ -242,6 +253,20 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
+      undefined,
+    videoStoragePath:
+      asNullableString(payload.videoStoragePath) ??
+      asNullableString(payload.video_storage_path) ??
+      undefined,
+    videoContentType:
+      asNullableString(payload.videoContentType) ??
+      asNullableString(payload.video_content_type) ??
+      undefined,
+    videoFileSizeBytes:
+      asNullableNumber(payload.videoFileSizeBytes ?? payload.video_file_size_bytes),
+    videoOriginalFilename:
+      asNullableString(payload.videoOriginalFilename) ??
+      asNullableString(payload.video_original_filename) ??
       undefined,
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
@@ -325,6 +350,20 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
       undefined,
+    videoStoragePath:
+      asNullableString(payload.videoStoragePath) ??
+      asNullableString(payload.video_storage_path) ??
+      undefined,
+    videoContentType:
+      asNullableString(payload.videoContentType) ??
+      asNullableString(payload.video_content_type) ??
+      undefined,
+    videoFileSizeBytes:
+      asNullableNumber(payload.videoFileSizeBytes ?? payload.video_file_size_bytes),
+    videoOriginalFilename:
+      asNullableString(payload.videoOriginalFilename) ??
+      asNullableString(payload.video_original_filename) ??
+      undefined,
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -381,6 +420,17 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url),
+    videoStoragePath:
+      asNullableString(payload.videoStoragePath) ??
+      asNullableString(payload.video_storage_path),
+    videoContentType:
+      asNullableString(payload.videoContentType) ??
+      asNullableString(payload.video_content_type),
+    videoFileSizeBytes:
+      asNullableNumber(payload.videoFileSizeBytes ?? payload.video_file_size_bytes),
+    videoOriginalFilename:
+      asNullableString(payload.videoOriginalFilename) ??
+      asNullableString(payload.video_original_filename),
     metrics: normalizeMetrics(payload.metrics),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
@@ -656,7 +706,8 @@ async function requestBrowserJson<T>(
     headers.set("X-CSRFToken", csrfToken);
   }
 
-  if (init?.body && !headers.has("Content-Type")) {
+  const isFormDataBody = typeof FormData !== "undefined" && init?.body instanceof FormData;
+  if (init?.body && !headers.has("Content-Type") && !isFormDataBody) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -1135,6 +1186,10 @@ export async function saveVibeRaisingMonthlyUpdate(
     summary?: string | null;
     sourceUrl?: string | null;
     videoUrl?: string | null;
+    videoStoragePath?: string | null;
+    videoContentType?: string | null;
+    videoFileSizeBytes?: number | null;
+    videoOriginalFilename?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const client = createApiClient(env, request);
@@ -1158,6 +1213,25 @@ export async function saveVibeRaisingMonthlyUpdate(
     });
     return normalizeMonthlyUpdate(response.data?.update ?? response.data);
   }
+}
+
+export async function uploadVibeRaisingUpdateVideo(
+  backendBaseUrl: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<VibeRaisingVideoUploadResponse> {
+  const formData = new FormData();
+  formData.append("video", file);
+
+  return requestBrowserJson<VibeRaisingVideoUploadResponse>(
+    backendBaseUrl,
+    VIDEO_UPLOAD_PATH,
+    {
+      method: "POST",
+      body: formData,
+      signal,
+    },
+  );
 }
 
 export async function bootstrapVibeRaisingStartupUpdate(

@@ -112,6 +112,54 @@ function BulletList({ text, className = "text-sm text-gray-600" }: { text: strin
     );
 }
 
+function canPreviewUpdateVideo(contentType?: string | null) {
+    const normalized = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (!normalized) return true;
+    return ["video/mp4", "video/x-m4v", "video/webm", "video/ogg", "video/quicktime"].includes(normalized);
+}
+
+function UpdateVideoHero({ update }: { update: { videoUrl?: string | null; videoContentType?: string | null; videoOriginalFilename?: string | null } }) {
+    const [playbackFailed, setPlaybackFailed] = useState(false);
+    if (!update.videoUrl) return null;
+
+    if (!playbackFailed && canPreviewUpdateVideo(update.videoContentType)) {
+        return (
+            <div className="absolute inset-0">
+                <video
+                    src={update.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    onError={() => setPlaybackFailed(true)}
+                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950 px-5 text-center text-white">
+            <p className="relative z-10 text-sm font-bold">Video uploaded</p>
+            <p className="relative z-10 mt-1 max-w-xs text-xs text-white/60">
+                {update.videoOriginalFilename || "This video format may not preview in your browser."}
+            </p>
+            <a
+                href={update.videoUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
+                className="relative z-10 mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-gray-100"
+            >
+                Open video
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+            </a>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        </div>
+    );
+}
+
 // Reuseable Components
 function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
     return (
@@ -305,17 +353,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         className="relative w-full h-32 overflow-hidden text-left cursor-pointer group bg-black"
                     >
                         {update.videoUrl ? (
-                            <div className="absolute inset-0">
-                                <video 
-                                    src={update.videoUrl} 
-                                    autoPlay 
-                                    muted 
-                                    loop 
-                                    playsInline 
-                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            </div>
+                            <UpdateVideoHero update={update} />
                         ) : (
                             <>
                                 <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} transition-colors duration-300`} />
