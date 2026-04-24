@@ -40,7 +40,7 @@ import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
-import type { VibeRaisingStartupUpdateStatusResponse } from "~/types/vibe-raising";
+import type { VibeRaisingStartupUpdateStatusResponse, VibeRaisingVideoCompressionMetadata } from "~/types/vibe-raising";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -431,9 +431,12 @@ type PersistedEmailDraftRun = {
 };
 
 type RecordedMediaKind = "video" | "audio";
-type VideoUploadStatus = "idle" | "validating" | "uploading" | "ready" | "error";
+type VideoUploadStatus = "idle" | "validating" | "compressing" | "creating_session" | "uploading" | "finalizing" | "ready" | "error";
 
 const MAX_VIDEO_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MAX_SOURCE_VIDEO_BYTES = 750 * 1024 * 1024;
+const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
+const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
 const SUPPORTED_VIDEO_EXTENSIONS = [
     ".mp4",
     ".mov",
@@ -481,6 +484,11 @@ const BROWSER_PLAYABLE_VIDEO_TYPES = new Set([
     "video/quicktime",
 ]);
 
+let ffmpegLoaderPromise: Promise<{
+    ffmpeg: any;
+    fetchFile: (input: File | Blob | string) => Promise<Uint8Array>;
+}> | null = null;
+
 function formatFileSize(bytes?: number | null) {
     if (!bytes || !Number.isFinite(bytes)) return "";
     if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
@@ -517,11 +525,119 @@ function isSupportedVideoFile(file: File) {
 function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
     const firstError = fileRejections[0]?.errors[0];
     if (!firstError) return "We couldn't use that file. Please try another video.";
-    if (firstError.code === "file-too-large") return "Video exceeds the 250 MB upload limit.";
+    if (firstError.code === "file-too-large") return "Video is too large to compress in the browser. Use a file under 750 MB.";
     if (firstError.code === "file-invalid-type") {
         return "Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
     }
     return firstError.message || "We couldn't use that file. Please try another video.";
+}
+
+function shouldCompressVideo(file: File, forceCompress?: boolean) {
+    return forceCompress || file.size > VIDEO_COMPRESSION_THRESHOLD_BYTES;
+}
+
+function getCompressedVideoName(file: File) {
+    const stem = String(file.name || "update-video").replace(/\.[^.]+$/, "") || "update-video";
+    return `${stem}-compressed.mp4`;
+}
+
+async function getFfmpegVideoCompressor() {
+    if (!ffmpegLoaderPromise) {
+        ffmpegLoaderPromise = (async () => {
+            const [{ FFmpeg }, { fetchFile, toBlobURL }] = await Promise.all([
+                import("@ffmpeg/ffmpeg"),
+                import("@ffmpeg/util"),
+            ]);
+            const ffmpeg = new FFmpeg();
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.js`, "text/javascript"),
+                wasmURL: await toBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.wasm`, "application/wasm"),
+            });
+            return { ffmpeg, fetchFile };
+        })();
+    }
+    return ffmpegLoaderPromise;
+}
+
+async function compressVideoForUpload(file: File, signal: AbortSignal): Promise<{ file: File; metadata: VibeRaisingVideoCompressionMetadata }> {
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+
+    const { ffmpeg, fetchFile } = await getFfmpegVideoCompressor();
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+
+    const inputName = `input-${Date.now()}${getFileExtension(file.name) || ".video"}`;
+    const outputName = `output-${Date.now()}.mp4`;
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
+    const exitCode = await ffmpeg.exec([
+        "-i",
+        inputName,
+        "-vf",
+        "scale='min(1280,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-b:v",
+        "2000k",
+        "-maxrate",
+        "2400k",
+        "-bufsize",
+        "4000k",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "faststart",
+        outputName,
+    ]);
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+    if (exitCode !== 0) throw new Error("Video compression failed.");
+
+    const data = await ffmpeg.readFile(outputName);
+    await Promise.allSettled([
+        ffmpeg.deleteFile(inputName),
+        ffmpeg.deleteFile(outputName),
+    ]);
+    const bytes = data instanceof Uint8Array ? data : new TextEncoder().encode(String(data));
+    const outputBuffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(outputBuffer).set(bytes);
+    const compressedFile = new File([outputBuffer], getCompressedVideoName(file), { type: "video/mp4" });
+    return {
+        file: compressedFile,
+        metadata: {
+            compressed: true,
+            originalFilename: file.name,
+            originalContentType: file.type || inferVideoContentType(null, file.name),
+            originalFileSizeBytes: file.size,
+            compressedFileSizeBytes: compressedFile.size,
+            compressionRatio: file.size > 0 ? Number((compressedFile.size / file.size).toFixed(4)) : null,
+        },
+    };
+}
+
+function getVideoUploadErrorMessage(error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestPath = String((error as { requestPath?: string })?.requestPath || "");
+    const data = (error as { data?: { detail?: string; error?: string } | string })?.data;
+    const detail =
+        typeof data === "string"
+            ? data
+            : data?.detail || data?.error || (error instanceof Error ? error.message : "");
+
+    if (statusCode === 404 && requestPath.includes("/uploads/video/session/")) {
+        return "Video uploads are not available on the backend yet. Deploy the latest backend release and try again.";
+    }
+    if (statusCode === 413) {
+        return "This video is too large for the current upload path. Try a shorter clip or compress it before uploading.";
+    }
+    if (statusCode === 403 && requestPath === "signed-storage-upload") {
+        return "The video upload session expired. Please select the video again.";
+    }
+    if (requestPath === "signed-storage-upload") {
+        return "Firebase Storage rejected the upload. Check Storage CORS and try again.";
+    }
+    return detail || "Video upload failed. Please try again.";
 }
 
 function VideoAssetPreview({
@@ -1374,7 +1490,7 @@ export default function CreateUpdate() {
         setVideoUploadError(null);
     }, [revokeVideoPreviewObjectUrl]);
 
-    const uploadVideoFile = useCallback(async (file: File) => {
+    const uploadVideoFile = useCallback(async (file: File, options?: { forceCompress?: boolean }) => {
         const sequence = videoUploadSequenceRef.current + 1;
         videoUploadSequenceRef.current = sequence;
         videoUploadAbortRef.current?.abort();
@@ -1399,37 +1515,69 @@ export default function CreateUpdate() {
             return;
         }
 
-        if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+        if (file.size > MAX_SOURCE_VIDEO_BYTES) {
             setVideoUploadStatus("error");
-            setVideoUploadError("Video exceeds the 250 MB upload limit.");
+            setVideoUploadError("Video is too large to compress in the browser. Use a file under 750 MB.");
             return;
         }
 
         const localPreviewUrl = URL.createObjectURL(file);
         videoPreviewObjectUrlRef.current = localPreviewUrl;
         setVideoPreviewUrl(localPreviewUrl);
-        setVideoUploadStatus("uploading");
 
         try {
-            const uploaded = await uploadVibeRaisingUpdateVideo(backendBaseUrl, file, abortController.signal);
+            let uploadCandidate = file;
+            let compression: VibeRaisingVideoCompressionMetadata | undefined;
+            if (shouldCompressVideo(file, options?.forceCompress)) {
+                setVideoUploadStatus("compressing");
+                try {
+                    const compressed = await compressVideoForUpload(file, abortController.signal);
+                    if (videoUploadSequenceRef.current !== sequence) return;
+                    if (compressed.file.size < file.size) {
+                        uploadCandidate = compressed.file;
+                        compression = compressed.metadata;
+                    }
+                } catch (compressionError) {
+                    if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
+                    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+                        throw new Error("Video exceeds the 250 MB upload limit after compression. Try a shorter clip.");
+                    }
+                }
+            }
+
+            if (uploadCandidate.size > MAX_VIDEO_UPLOAD_BYTES) {
+                throw new Error("Video exceeds the 250 MB upload limit.");
+            }
+
+            setVideoContentType(uploadCandidate.type || inferVideoContentType(null, uploadCandidate.name));
+            setVideoFileSizeBytes(uploadCandidate.size);
+            setVideoOriginalFilename(uploadCandidate.name);
+
+            const uploaded = await uploadVibeRaisingUpdateVideo(
+                backendBaseUrl,
+                uploadCandidate,
+                abortController.signal,
+                compression,
+                (phase) => {
+                    if (videoUploadSequenceRef.current !== sequence) return;
+                    setVideoUploadStatus(phase);
+                },
+            );
             if (videoUploadSequenceRef.current !== sequence) return;
 
             setUploadedVideoUrl(uploaded.videoUrl);
             setVideoStoragePath(uploaded.storagePath || "");
-            setVideoContentType(uploaded.contentType || file.type || "");
-            setVideoFileSizeBytes(uploaded.fileSizeBytes || file.size);
-            setVideoOriginalFilename(uploaded.originalFilename || file.name);
+            setVideoContentType(uploaded.contentType || uploadCandidate.type || "");
+            setVideoFileSizeBytes(uploaded.fileSizeBytes || uploadCandidate.size);
+            setVideoOriginalFilename(uploaded.originalFilename || uploadCandidate.name);
             setVideoUploadStatus("ready");
             setVideoUploadError(null);
         } catch (error) {
             if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
-            const detail = (error as { data?: { detail?: string; error?: string }; message?: string })?.data?.detail ||
-                (error as { data?: { detail?: string; error?: string }; message?: string })?.data?.error ||
-                (error instanceof Error ? error.message : "");
             setUploadedVideoUrl("");
             setVideoStoragePath("");
             setVideoUploadStatus("error");
-            setVideoUploadError(detail || "Video upload failed. Please try again.");
+            setVideoUploadError(getVideoUploadErrorMessage(error));
         } finally {
             if (videoUploadSequenceRef.current === sequence) {
                 videoUploadAbortRef.current = null;
@@ -1798,16 +1946,26 @@ export default function CreateUpdate() {
         : canGenerateDraftFromEmail
             ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
             : "Add a company domain first so Gmail emails can be matched to the right startup.";
-    const isVideoUploadPending = videoUploadStatus === "validating" || videoUploadStatus === "uploading";
-    const isVideoUploadBlocking = isVideoUploadPending || videoUploadStatus === "error";
+    const isVideoUploadPending = videoUploadStatus === "validating" ||
+        videoUploadStatus === "compressing" ||
+        videoUploadStatus === "creating_session" ||
+        videoUploadStatus === "uploading" ||
+        videoUploadStatus === "finalizing";
+    const isVideoUploadBlocking = isVideoUploadPending || (videoUploadStatus === "error" && previewMediaKind === "video" && Boolean(videoPreviewUrl));
     const videoUploadStatusLabel =
         videoUploadStatus === "validating"
             ? "Checking video..."
-            : videoUploadStatus === "uploading"
-                ? "Uploading video..."
-                : videoUploadStatus === "ready"
-                    ? "Video ready"
-                    : null;
+            : videoUploadStatus === "compressing"
+                ? "Compressing video..."
+                : videoUploadStatus === "creating_session"
+                    ? "Preparing upload..."
+                    : videoUploadStatus === "uploading"
+                        ? "Uploading video..."
+                        : videoUploadStatus === "finalizing"
+                            ? "Finalizing video..."
+                            : videoUploadStatus === "ready"
+                                ? "Video ready"
+                                : null;
 
     const handleRetryEmailDraft = () => {
         clearPersistedEmailDraftRun();
@@ -1900,7 +2058,7 @@ export default function CreateUpdate() {
                             `recorded-update-${Date.now()}.webm`,
                             { type: blob.type || "video/webm" },
                         );
-                        void uploadVideoFile(recordedVideo);
+                        void uploadVideoFile(recordedVideo, { forceCompress: true });
                     } else {
                         resetVideoUpload();
                         const audioPreviewUrl = URL.createObjectURL(blob);
@@ -2217,7 +2375,7 @@ export default function CreateUpdate() {
         maxFiles: 1,
         multiple: false,
         noClick: true,
-        maxSize: MAX_VIDEO_UPLOAD_BYTES,
+        maxSize: MAX_SOURCE_VIDEO_BYTES,
         accept: VIDEO_ACCEPT,
     });
 
@@ -2786,7 +2944,7 @@ export default function CreateUpdate() {
                                 </p>
 
                                 <p className="text-sm text-gray-500 mb-6">
-                                    Up to 250 MB
+                                    Larger videos are compressed first. Final upload limit: 250 MB.
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-3 w-full">
