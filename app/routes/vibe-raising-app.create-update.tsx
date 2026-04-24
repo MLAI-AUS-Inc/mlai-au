@@ -11,6 +11,7 @@ import {
     getVibeRaisingStartupUpdateStatus,
     runVibeRaisingStartupUpdate,
     saveVibeRaisingMonthlyUpdate,
+    uploadVibeRaisingUpdateVideo,
 } from "~/lib/vibe-raising";
 import {
     XMarkIcon,
@@ -117,6 +118,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                 .filter(([, value]) => value.length > 0),
         );
         const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
+        const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
 
         await saveVibeRaisingMonthlyUpdate(env, request, {
             month: String(formData.get("month") || "").trim(),
@@ -124,6 +126,10 @@ export async function action({ request, context }: Route.ActionArgs) {
             summary: String(formData.get("summary") || "").trim() || null,
             sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
             videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
+            videoStoragePath: String(formData.get("videoStoragePath") || "").trim() || null,
+            videoContentType: String(formData.get("videoContentType") || "").trim() || null,
+            videoFileSizeBytes: Number.isFinite(rawVideoFileSizeBytes) && rawVideoFileSizeBytes > 0 ? rawVideoFileSizeBytes : null,
+            videoOriginalFilename: String(formData.get("videoOriginalFilename") || "").trim() || null,
             highlights: String(formData.get("highlights") || ""),
             challenges: String(formData.get("challenges") || ""),
             asks: String(formData.get("asks") || ""),
@@ -425,6 +431,150 @@ type PersistedEmailDraftRun = {
 };
 
 type RecordedMediaKind = "video" | "audio";
+type VideoUploadStatus = "idle" | "validating" | "uploading" | "ready" | "error";
+
+const MAX_VIDEO_UPLOAD_BYTES = 250 * 1024 * 1024;
+const SUPPORTED_VIDEO_EXTENSIONS = [
+    ".mp4",
+    ".mov",
+    ".m4v",
+    ".webm",
+    ".avi",
+    ".mpeg",
+    ".mpg",
+    ".3gp",
+    ".3g2",
+    ".ogv",
+    ".mkv",
+];
+const VIDEO_ACCEPT = {
+    "video/mp4": [".mp4", ".m4v"],
+    "video/quicktime": [".mov"],
+    "video/webm": [".webm"],
+    "video/x-msvideo": [".avi"],
+    "video/mpeg": [".mpeg", ".mpg"],
+    "video/3gpp": [".3gp"],
+    "video/3gpp2": [".3g2"],
+    "video/ogg": [".ogv"],
+    "video/x-matroska": [".mkv"],
+    "video/*": SUPPORTED_VIDEO_EXTENSIONS,
+    "application/octet-stream": [".mkv", ".avi", ".mov", ".mp4"],
+};
+const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".m4v": "video/x-m4v",
+    ".webm": "video/webm",
+    ".avi": "video/x-msvideo",
+    ".mpeg": "video/mpeg",
+    ".mpg": "video/mpeg",
+    ".3gp": "video/3gpp",
+    ".3g2": "video/3gpp2",
+    ".ogv": "video/ogg",
+    ".mkv": "video/x-matroska",
+};
+const BROWSER_PLAYABLE_VIDEO_TYPES = new Set([
+    "video/mp4",
+    "video/x-m4v",
+    "video/webm",
+    "video/ogg",
+    "video/quicktime",
+]);
+
+function formatFileSize(bytes?: number | null) {
+    if (!bytes || !Number.isFinite(bytes)) return "";
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${bytes} B`;
+}
+
+function getFileExtension(fileName?: string | null) {
+    const cleanName = String(fileName || "").split("?")[0].toLowerCase();
+    const dotIndex = cleanName.lastIndexOf(".");
+    return dotIndex >= 0 ? cleanName.slice(dotIndex) : "";
+}
+
+function inferVideoContentType(contentType?: string | null, fileName?: string | null) {
+    const normalized = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (normalized) return normalized;
+    return VIDEO_EXTENSION_CONTENT_TYPES[getFileExtension(fileName)] || "";
+}
+
+function isBrowserPlayableVideo(contentType?: string | null, fileName?: string | null) {
+    const inferredType = inferVideoContentType(contentType, fileName);
+    if (!inferredType) return true;
+    if (!BROWSER_PLAYABLE_VIDEO_TYPES.has(inferredType)) return false;
+    if (typeof document === "undefined") return true;
+    return document.createElement("video").canPlayType(inferredType).length > 0;
+}
+
+function isSupportedVideoFile(file: File) {
+    const contentType = String(file.type || "").toLowerCase();
+    if (contentType.startsWith("video/")) return true;
+    return SUPPORTED_VIDEO_EXTENSIONS.includes(getFileExtension(file.name));
+}
+
+function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
+    const firstError = fileRejections[0]?.errors[0];
+    if (!firstError) return "We couldn't use that file. Please try another video.";
+    if (firstError.code === "file-too-large") return "Video exceeds the 250 MB upload limit.";
+    if (firstError.code === "file-invalid-type") {
+        return "Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
+    }
+    return firstError.message || "We couldn't use that file. Please try another video.";
+}
+
+function VideoAssetPreview({
+    src,
+    contentType,
+    fileName,
+    fileSizeBytes,
+    className,
+}: {
+    src: string;
+    contentType?: string | null;
+    fileName?: string | null;
+    fileSizeBytes?: number | null;
+    className?: string;
+}) {
+    const [playbackFailed, setPlaybackFailed] = useState(false);
+    const canPreview = !playbackFailed && isBrowserPlayableVideo(contentType, fileName || src);
+
+    useEffect(() => {
+        setPlaybackFailed(false);
+    }, [src, contentType, fileName]);
+
+    if (canPreview) {
+        return (
+            <video
+                src={src}
+                controls
+                onError={() => setPlaybackFailed(true)}
+                className={clsx("bg-black object-contain", className)}
+            />
+        );
+    }
+
+    return (
+        <div className={clsx("flex min-h-40 flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-950 p-6 text-center text-white", className)}>
+            <CloudArrowUpIcon className="h-8 w-8 text-white/50" />
+            <p className="mt-3 text-sm font-bold">Video uploaded</p>
+            <p className="mt-1 max-w-sm text-xs leading-5 text-white/60">
+                {fileName || "This format may not preview in your browser."}
+                {formatFileSize(fileSizeBytes) ? ` · ${formatFileSize(fileSizeBytes)}` : ""}
+            </p>
+            <a
+                href={src}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 hover:bg-gray-100"
+            >
+                Open video
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+            </a>
+        </div>
+    );
+}
 
 function getEmailDraftStorageKey(domain?: string | null) {
     const normalized = String(domain || "").trim().toLowerCase() || "unknown";
@@ -1058,10 +1208,18 @@ export default function CreateUpdate() {
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
-    const [previewMediaKind, setPreviewMediaKind] = useState<RecordedMediaKind | null>(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(defaultData?.videoUrl || null);
+    const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
+    const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
+    const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+    const [videoStoragePath, setVideoStoragePath] = useState<string>(defaultData?.videoStoragePath || "");
+    const [videoContentType, setVideoContentType] = useState<string>(defaultData?.videoContentType || "");
+    const [videoFileSizeBytes, setVideoFileSizeBytes] = useState<number | null>(defaultData?.videoFileSizeBytes || null);
+    const [videoOriginalFilename, setVideoOriginalFilename] = useState<string>(defaultData?.videoOriginalFilename || "");
+    const [previewMediaKind, setPreviewMediaKind] = useState<RecordedMediaKind | null>(defaultData?.videoUrl ? "video" : null);
     const [recordingMode, setRecordingMode] = useState<RecordedMediaKind | null>(null);
     const [recordingError, setRecordingError] = useState<string | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
@@ -1075,8 +1233,6 @@ export default function CreateUpdate() {
     useEffect(() => {
         if (actionData?.step === "feedback") setDismissedFeedback(false);
     }, [actionData]);
-
-    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
 
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
@@ -1138,6 +1294,9 @@ export default function CreateUpdate() {
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
     const recordedChunksRef = useRef<BlobPart[]>([]);
+    const videoUploadAbortRef = useRef<AbortController | null>(null);
+    const videoUploadSequenceRef = useRef(0);
+    const videoPreviewObjectUrlRef = useRef<string | null>(null);
 
     const handleDraftComplete = (data: any) => {
         setActivePeriodKey("current");
@@ -1149,7 +1308,15 @@ export default function CreateUpdate() {
         setSummary(data.summary || "");
         setSourceUrl(data.sourceUrl || data.source_url || "");
         if (data.videoUrl || data.video_url) {
-            setVideoPreviewUrl(data.videoUrl || data.video_url);
+            const nextVideoUrl = data.videoUrl || data.video_url;
+            setUploadedVideoUrl(nextVideoUrl);
+            setVideoPreviewUrl(nextVideoUrl);
+            setVideoStoragePath(data.videoStoragePath || data.video_storage_path || "");
+            setVideoContentType(data.videoContentType || data.video_content_type || "");
+            setVideoFileSizeBytes(data.videoFileSizeBytes || data.video_file_size_bytes || null);
+            setVideoOriginalFilename(data.videoOriginalFilename || data.video_original_filename || "");
+            setVideoUploadStatus("ready");
+            setVideoUploadError(null);
             setPreviewMediaKind("video");
         }
         if (data.summary || data.sourceUrl || data.source_url || data.videoUrl || data.video_url) {
@@ -1171,6 +1338,92 @@ export default function CreateUpdate() {
         });
         setSelectedMetrics(newMetrics.size > 0 ? newMetrics : new Set(["revenue"]));
     };
+
+    const revokeVideoPreviewObjectUrl = useCallback(() => {
+        if (videoPreviewObjectUrlRef.current) {
+            URL.revokeObjectURL(videoPreviewObjectUrlRef.current);
+            videoPreviewObjectUrlRef.current = null;
+        }
+    }, []);
+
+    const resetVideoUpload = useCallback(() => {
+        videoUploadAbortRef.current?.abort();
+        videoUploadAbortRef.current = null;
+        videoUploadSequenceRef.current += 1;
+        revokeVideoPreviewObjectUrl();
+        setVideoPreviewUrl(null);
+        setUploadedVideoUrl("");
+        setVideoStoragePath("");
+        setVideoContentType("");
+        setVideoFileSizeBytes(null);
+        setVideoOriginalFilename("");
+        setPreviewMediaKind(null);
+        setVideoUploadStatus("idle");
+        setVideoUploadError(null);
+    }, [revokeVideoPreviewObjectUrl]);
+
+    const uploadVideoFile = useCallback(async (file: File) => {
+        const sequence = videoUploadSequenceRef.current + 1;
+        videoUploadSequenceRef.current = sequence;
+        videoUploadAbortRef.current?.abort();
+        const abortController = new AbortController();
+        videoUploadAbortRef.current = abortController;
+
+        setVideoUploadStatus("validating");
+        setVideoUploadError(null);
+        setUploadedVideoUrl("");
+        setVideoStoragePath("");
+        setVideoContentType(file.type || inferVideoContentType(null, file.name));
+        setVideoFileSizeBytes(file.size);
+        setVideoOriginalFilename(file.name);
+        setPreviewMediaKind("video");
+        setShowImportPanel(true);
+        revokeVideoPreviewObjectUrl();
+        setVideoPreviewUrl(null);
+
+        if (!isSupportedVideoFile(file)) {
+            setVideoUploadStatus("error");
+            setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
+            return;
+        }
+
+        if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+            setVideoUploadStatus("error");
+            setVideoUploadError("Video exceeds the 250 MB upload limit.");
+            return;
+        }
+
+        const localPreviewUrl = URL.createObjectURL(file);
+        videoPreviewObjectUrlRef.current = localPreviewUrl;
+        setVideoPreviewUrl(localPreviewUrl);
+        setVideoUploadStatus("uploading");
+
+        try {
+            const uploaded = await uploadVibeRaisingUpdateVideo(backendBaseUrl, file, abortController.signal);
+            if (videoUploadSequenceRef.current !== sequence) return;
+
+            setUploadedVideoUrl(uploaded.videoUrl);
+            setVideoStoragePath(uploaded.storagePath || "");
+            setVideoContentType(uploaded.contentType || file.type || "");
+            setVideoFileSizeBytes(uploaded.fileSizeBytes || file.size);
+            setVideoOriginalFilename(uploaded.originalFilename || file.name);
+            setVideoUploadStatus("ready");
+            setVideoUploadError(null);
+        } catch (error) {
+            if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
+            const detail = (error as { data?: { detail?: string; error?: string }; message?: string })?.data?.detail ||
+                (error as { data?: { detail?: string; error?: string }; message?: string })?.data?.error ||
+                (error instanceof Error ? error.message : "");
+            setUploadedVideoUrl("");
+            setVideoStoragePath("");
+            setVideoUploadStatus("error");
+            setVideoUploadError(detail || "Video upload failed. Please try again.");
+        } finally {
+            if (videoUploadSequenceRef.current === sequence) {
+                videoUploadAbortRef.current = null;
+            }
+        }
+    }, [backendBaseUrl, revokeVideoPreviewObjectUrl]);
 
     const persistEmailDraftRun = useEffectEvent((statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
         if (typeof window === "undefined" || !statusResponse.runId) return;
@@ -1533,6 +1786,16 @@ export default function CreateUpdate() {
         : canGenerateDraftFromEmail
             ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
             : "Add a company domain first so Gmail emails can be matched to the right startup.";
+    const isVideoUploadPending = videoUploadStatus === "validating" || videoUploadStatus === "uploading";
+    const isVideoUploadBlocking = isVideoUploadPending || videoUploadStatus === "error";
+    const videoUploadStatusLabel =
+        videoUploadStatus === "validating"
+            ? "Checking video..."
+            : videoUploadStatus === "uploading"
+                ? "Uploading video..."
+                : videoUploadStatus === "ready"
+                    ? "Video ready"
+                    : null;
 
     const handleRetryEmailDraft = () => {
         clearPersistedEmailDraftRun();
@@ -1619,8 +1882,20 @@ export default function CreateUpdate() {
                     type: recorder.mimeType || (hasVideo ? "video/webm" : "audio/webm"),
                 });
                 if (blob.size > 0) {
-                    setVideoPreviewUrl(URL.createObjectURL(blob));
-                    setPreviewMediaKind(hasVideo ? "video" : "audio");
+                    if (hasVideo) {
+                        const recordedVideo = new File(
+                            [blob],
+                            `recorded-update-${Date.now()}.webm`,
+                            { type: blob.type || "video/webm" },
+                        );
+                        void uploadVideoFile(recordedVideo);
+                    } else {
+                        resetVideoUpload();
+                        const audioPreviewUrl = URL.createObjectURL(blob);
+                        videoPreviewObjectUrlRef.current = audioPreviewUrl;
+                        setVideoPreviewUrl(audioPreviewUrl);
+                        setPreviewMediaKind("audio");
+                    }
                     setShowImportPanel(true);
                 }
                 recordedChunksRef.current = [];
@@ -1637,7 +1912,7 @@ export default function CreateUpdate() {
             setRecordingMode(null);
             stopMediaStream();
         }
-    }, [stopMediaStream]);
+    }, [resetVideoUpload, stopMediaStream, uploadVideoFile]);
 
     const stopRecording = useCallback(() => {
         const recorder = mediaRecorderRef.current;
@@ -1652,12 +1927,14 @@ export default function CreateUpdate() {
 
     useEffect(() => {
         return () => {
+            videoUploadAbortRef.current?.abort();
+            revokeVideoPreviewObjectUrl();
             if (mediaRecorderRef.current?.state === "recording") {
                 mediaRecorderRef.current.stop();
             }
             stopMediaStream();
         };
-    }, [stopMediaStream]);
+    }, [revokeVideoPreviewObjectUrl, stopMediaStream]);
 
     const resumeDraft = () => {
         try {
@@ -1670,7 +1947,15 @@ export default function CreateUpdate() {
             if (draft.year) setSelectedYear(Number(draft.year));
             setSummary(draft.summary || "");
             setSourceUrl(draft.sourceUrl || "");
+            revokeVideoPreviewObjectUrl();
+            setUploadedVideoUrl(draft.videoUrl || "");
             setVideoPreviewUrl(draft.videoUrl || null);
+            setVideoStoragePath(draft.videoStoragePath || "");
+            setVideoContentType(draft.videoContentType || "");
+            setVideoFileSizeBytes(draft.videoFileSizeBytes ? Number(draft.videoFileSizeBytes) : null);
+            setVideoOriginalFilename(draft.videoOriginalFilename || "");
+            setVideoUploadStatus(draft.videoUrl ? "ready" : "idle");
+            setVideoUploadError(null);
             setPreviewMediaKind(draft.videoUrl ? "video" : null);
             setShowImportPanel(Boolean(draft.summary || draft.sourceUrl || draft.videoUrl));
             setHighlights(draft.highlights || "");
@@ -1901,33 +2186,27 @@ export default function CreateUpdate() {
 
     // Dropzone setup
     const onDrop = useCallback((acceptedFiles: File[]) => {
-        console.log(acceptedFiles);
-        const video = acceptedFiles.find(f => f.type.startsWith("video/"));
-        const audio = acceptedFiles.find(f => f.type.startsWith("audio/"));
+        const video = acceptedFiles.find(isSupportedVideoFile);
         if (video) {
-            setVideoPreviewUrl(URL.createObjectURL(video));
-            setPreviewMediaKind("video");
-            setShowImportPanel(true);
-        } else if (audio) {
-            setVideoPreviewUrl(URL.createObjectURL(audio));
-            setPreviewMediaKind("audio");
-            setShowImportPanel(true);
+            void uploadVideoFile(video);
+            return;
         }
+        setVideoUploadStatus("error");
+        setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
+    }, [uploadVideoFile]);
+    const onDropRejected = useCallback((fileRejections: any[]) => {
+        setShowImportPanel(true);
+        setVideoUploadStatus("error");
+        setVideoUploadError(getDropzoneRejectionMessage(fileRejections));
     }, []);
-    const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
         onDrop,
-        maxSize: 20 * 1024 * 1024, // 20MB
-        accept: {
-            'image/*': [],
-            'application/pdf': [],
-            'application/msword': [],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
-            'application/vnd.ms-excel': [],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [],
-            'video/quicktime': ['.mov'],
-            'video/mp4': [],
-            'audio/*': []
-        }
+        onDropRejected,
+        maxFiles: 1,
+        multiple: false,
+        noClick: true,
+        maxSize: MAX_VIDEO_UPLOAD_BYTES,
+        accept: VIDEO_ACCEPT,
     });
 
     // 1. Feedback View — preview-dominant with rating sidebar
@@ -1938,7 +2217,11 @@ export default function CreateUpdate() {
         const reviewYear = Number(reviewData?.year || selectedYear);
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
-        const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
+        const reviewVideoUrl = String(reviewData?.videoUrl || (previewMediaKind === "video" ? videoPreviewUrl : "") || "").trim();
+        const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
+        const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
+        const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
+        const reviewVideoFileSizeBytes = Number(reviewData?.videoFileSizeBytes || videoFileSizeBytes || 0) || null;
 
         const handleSaveDraft = () => {
             try {
@@ -1983,11 +2266,12 @@ export default function CreateUpdate() {
                             {/* Hero banner — video or gradient */}
                             {reviewVideoUrl ? (
                                 <div className="relative w-full aspect-video bg-black">
-                                    <video
+                                    <VideoAssetPreview
                                         src={reviewVideoUrl}
-                                        controls
-                                        className="w-full h-full object-contain"
-                                        poster=""
+                                        contentType={reviewVideoContentType}
+                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
+                                        fileSizeBytes={reviewVideoFileSizeBytes}
+                                        className="h-full w-full rounded-none"
                                     />
                                 </div>
                             ) : (
@@ -2305,8 +2589,12 @@ export default function CreateUpdate() {
                                         <input type="hidden" name="summary" value={reviewSummary} />
                                         <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
                                         <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
+                                        <input type="hidden" name="videoStoragePath" value={reviewVideoStoragePath} />
+                                        <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
+                                        <input type="hidden" name="videoFileSizeBytes" value={reviewVideoFileSizeBytes ?? ""} />
+                                        <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
                                         {Object.entries(data || {})
-                                            .filter(([key]) => !["summary", "sourceUrl", "videoUrl"].includes(key))
+                                            .filter(([key]) => !["summary", "sourceUrl", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename"].includes(key))
                                             .map(([key, value]) => (
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
@@ -2454,7 +2742,11 @@ export default function CreateUpdate() {
                 <input type="hidden" name="intent" value="review" />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
-                <input type="hidden" name="videoUrl" value={videoPreviewUrl || ""} />
+                <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
+                <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
+                <input type="hidden" name="videoContentType" value={videoContentType} />
+                <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
+                <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
 
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
@@ -2474,15 +2766,15 @@ export default function CreateUpdate() {
                                 </div>
 
                                 <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                    Drag files here to upload
+                                    Drag a video here to upload
                                 </h3>
 
                                 <p className="text-sm text-gray-600 font-medium mb-1">
-                                    Video (MP4, MOV), audio, images, PDF, Word, Excel
+                                    MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV
                                 </p>
 
                                 <p className="text-sm text-gray-500 mb-6">
-                                    Up to 20 MB per file
+                                    Up to 250 MB
                                 </p>
 
                                 <div className="flex flex-col sm:flex-row gap-3 w-full">
@@ -2514,11 +2806,26 @@ export default function CreateUpdate() {
                                     <button
                                         type="button"
                                         disabled={isEmailDraftBusy}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            open();
+                                        }}
                                         className="flex-1 px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
                                     >
                                         Select file
                                     </button>
                                 </div>
+                                {videoUploadStatusLabel && (
+                                    <p className={clsx(
+                                        "mt-4 text-sm font-semibold",
+                                        videoUploadStatus === "ready" ? "text-green-600" : "text-violet-600",
+                                    )}>
+                                        {videoUploadStatusLabel}
+                                    </p>
+                                )}
+                                {videoUploadError && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">{videoUploadError}</p>
+                                )}
                                 {isRecording && (
                                     <p className="mt-4 text-sm font-semibold text-red-600">
                                         {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
@@ -2576,14 +2883,11 @@ export default function CreateUpdate() {
                                         <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                                             <div className="mb-2 flex items-center justify-between gap-3">
                                                 <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                                                    {previewMediaKind === "audio" ? "Recorded audio" : "Recorded video"}
+                                                    {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
                                                 </p>
                                                 <button
                                                     type="button"
-                                                    onClick={() => {
-                                                        setVideoPreviewUrl(null);
-                                                        setPreviewMediaKind(null);
-                                                    }}
+                                                    onClick={resetVideoUpload}
                                                     className="text-xs font-bold text-gray-400 hover:text-gray-700"
                                                 >
                                                     Remove
@@ -2592,7 +2896,18 @@ export default function CreateUpdate() {
                                             {previewMediaKind === "audio" ? (
                                                 <audio src={videoPreviewUrl} controls className="w-full" />
                                             ) : (
-                                                <video src={videoPreviewUrl} controls className="aspect-video w-full rounded-lg bg-black object-contain" />
+                                                <VideoAssetPreview
+                                                    src={videoPreviewUrl}
+                                                    contentType={videoContentType}
+                                                    fileName={videoOriginalFilename || videoPreviewUrl}
+                                                    fileSizeBytes={videoFileSizeBytes}
+                                                    className="aspect-video w-full"
+                                                />
+                                            )}
+                                            {videoUploadStatus === "ready" && uploadedVideoUrl && (
+                                                <p className="mt-2 text-xs font-medium text-green-600">
+                                                    Uploaded and ready to publish.
+                                                </p>
                                             )}
                                         </div>
                                     )}
@@ -3034,13 +3349,13 @@ export default function CreateUpdate() {
                             >
                                 Cancel
                             </button>
-                            <button
-                                type="submit"
-                                disabled={isSubmitting || isEmailDraftBusy}
-                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm disabled:opacity-60"
-                            >
-                                {isSubmitting ? "Reviewing..." : "Review"}
-                            </button>
+	                            <button
+	                                type="submit"
+	                                disabled={isSubmitting || isEmailDraftBusy || isVideoUploadBlocking}
+	                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm disabled:opacity-60"
+	                            >
+	                                {isSubmitting ? "Reviewing..." : isVideoUploadPending ? "Uploading video..." : "Review"}
+	                            </button>
                         </div>
                     </fieldset>
                     {isEmailDraftBusy && (
