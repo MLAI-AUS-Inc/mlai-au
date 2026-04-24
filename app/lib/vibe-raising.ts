@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { User } from "~/types/user";
-import { createApiClient, shouldUseDevBackendStub } from "~/lib/api";
+import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import type {
   VibeRaisingDraftResultsResponse,
@@ -8,6 +8,10 @@ import type {
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
   VibeRaisingEmailDraftMonth,
+  VibeRaisingInputSourceKey,
+  VibeRaisingInputSourceStatus,
+  VibeRaisingInputSourceSummary,
+  VibeRaisingInputSourcesStatusResponse,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
   VibeRaisingRole,
@@ -36,6 +40,47 @@ const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
 const EMAIL_DRAFT_ACTIVE_RUN_PATH = "/api/v1/vibe-raising/email-draft/active-run/";
 const EMAIL_DRAFT_DRAFT_RESULTS_PATH = "/api/v1/vibe-raising/email-draft/draft-results/";
 const EMAIL_DRAFT_CANCEL_RUNS_PATH = "/api/v1/vibe-raising/email-draft/runs/";
+const INPUT_SOURCES_STATUS_PATH = "/api/v1/integrations/sources/status";
+const FINANCIAL_STATUS_PATH = "/api/v1/integrations/financial/status";
+const FINANCIAL_SYNC_PATH = "/api/v1/integrations/financial/sync";
+
+const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisingInputSourceSummary, "selected" | "status">> = {
+  gmail: {
+    key: "gmail",
+    label: "Gmail",
+    capabilities: ["context"],
+  },
+  stripe: {
+    key: "stripe",
+    label: "Stripe",
+    capabilities: ["metrics"],
+  },
+  xero: {
+    key: "xero",
+    label: "Xero",
+    capabilities: ["metrics"],
+  },
+  bank_feed: {
+    key: "bank_feed",
+    label: "Bank Feed",
+    capabilities: ["cash_validation"],
+  },
+  notion: {
+    key: "notion",
+    label: "Notion",
+    capabilities: ["docs", "context"],
+  },
+  google_drive: {
+    key: "google_drive",
+    label: "Google Drive",
+    capabilities: ["docs", "context"],
+  },
+  slack: {
+    key: "slack",
+    label: "Slack",
+    capabilities: ["context"],
+  },
+};
 
 type OptionalContext = {
   authUser: User | null;
@@ -754,6 +799,173 @@ async function requestBrowserJson<T>(
   return data as T;
 }
 
+function createInputSourceSummary(
+  key: VibeRaisingInputSourceKey,
+  status: VibeRaisingInputSourceStatus,
+  overrides?: Partial<VibeRaisingInputSourceSummary>,
+): VibeRaisingInputSourceSummary {
+  const base = INPUT_SOURCE_DEFINITIONS[key];
+  return {
+    ...base,
+    selected: status === "connected" || status === "syncing",
+    status,
+    ...overrides,
+  };
+}
+
+function normalizeInputSourceStatus(value: unknown): VibeRaisingInputSourceStatus {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (["connected", "active", "ok", "ready", "valid"].includes(normalized)) return "connected";
+  if (["syncing", "running", "queued", "pending"].includes(normalized)) return "syncing";
+  if (["error", "failed", "revoked", "expired", "needs_reconnect", "reauth_required"].includes(normalized)) return "error";
+  if (["coming_soon", "coming-soon"].includes(normalized)) return "coming_soon";
+  if (["unavailable", "not_available", "not-available", "not_configured", "not-configured"].includes(normalized)) return "unavailable";
+  return "not_connected";
+}
+
+function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey | null {
+  const normalized = String(value || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
+  if (normalized === "stripe") return "stripe";
+  if (normalized === "xero") return "xero";
+  if (normalized === "gmail" || normalized === "google" || normalized === "google_gmail") return "gmail";
+  if (normalized === "bank_feed" || normalized === "basiq") return "bank_feed";
+  if (normalized === "notion") return "notion";
+  if (normalized === "google_drive" || normalized === "drive") return "google_drive";
+  if (normalized === "slack") return "slack";
+  return null;
+}
+
+function collectRawFinancialConnections(payload: Record<string, unknown>): unknown[] {
+  const candidates = [
+    payload.sources,
+    payload.connections,
+    payload.financialConnections,
+    payload.financial_connections,
+    payload.providers,
+    payload.data,
+  ];
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate;
+    if (candidate && typeof candidate === "object") {
+      const nested = candidate as Record<string, unknown>;
+      if (Array.isArray(nested.connections)) return nested.connections;
+      if (Array.isArray(nested.sources)) return nested.sources;
+      if (Array.isArray(nested.financial_connections)) return nested.financial_connections;
+      if (Array.isArray(nested.providers)) return nested.providers;
+    }
+  }
+  return [];
+}
+
+function normalizeFinancialSourceSummaries(raw: unknown): Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const summaries: Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> = {};
+  const connections = collectRawFinancialConnections(payload);
+
+  for (const rawConnection of connections) {
+    if (!rawConnection || typeof rawConnection !== "object") continue;
+    const connection = rawConnection as Record<string, unknown>;
+    const provider = normalizeInputSourceProvider(connection.provider ?? connection.key ?? connection.source);
+    if (provider !== "stripe" && provider !== "xero") continue;
+
+    const status = normalizeInputSourceStatus(
+      connection.status ??
+        connection.connectionStatus ??
+        connection.connection_status ??
+        connection.state,
+    );
+    const accountLabel =
+      asNullableString(connection.accountLabel) ??
+      asNullableString(connection.account_label) ??
+      asNullableString(connection.externalAccountName) ??
+      asNullableString(connection.external_account_name) ??
+      asNullableString(connection.externalAccountId) ??
+      asNullableString(connection.external_account_id) ??
+      asNullableString(connection.tenantName) ??
+      asNullableString(connection.tenant_name) ??
+      asNullableString(connection.name);
+    const lastSyncedAt =
+      asNullableString(connection.lastSyncedAt) ??
+      asNullableString(connection.last_synced_at) ??
+      asNullableString(connection.lastSyncAt) ??
+      asNullableString(connection.last_sync_at);
+    const warning =
+      asNullableString(connection.warning) ??
+      asNullableString(connection.lastError) ??
+      asNullableString(connection.last_error) ??
+      asNullableString(connection.error);
+
+    summaries[provider] = createInputSourceSummary(provider, status, {
+      accountLabel,
+      lastSyncedAt,
+      warning,
+    });
+  }
+
+  return summaries;
+}
+
+function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaisingInputSourceKey, VibeRaisingInputSourceSummary>> {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const summaries: Partial<Record<VibeRaisingInputSourceKey, VibeRaisingInputSourceSummary>> = {};
+  const connections = collectRawFinancialConnections(payload);
+
+  for (const rawConnection of connections) {
+    if (!rawConnection || typeof rawConnection !== "object") continue;
+    const connection = rawConnection as Record<string, unknown>;
+    const provider = normalizeInputSourceProvider(connection.provider ?? connection.key ?? connection.source);
+    if (!provider) continue;
+
+    const status = normalizeInputSourceStatus(
+      connection.status ??
+        connection.connectionStatus ??
+        connection.connection_status ??
+        connection.state,
+    );
+    const accountLabel =
+      asNullableString(connection.accountLabel) ??
+      asNullableString(connection.account_label) ??
+      asNullableString(connection.externalAccountName) ??
+      asNullableString(connection.external_account_name) ??
+      asNullableString(connection.externalAccountId) ??
+      asNullableString(connection.external_account_id) ??
+      asNullableString(connection.tenantName) ??
+      asNullableString(connection.tenant_name) ??
+      asNullableString(connection.name);
+    const lastSyncedAt =
+      asNullableString(connection.lastSyncedAt) ??
+      asNullableString(connection.last_synced_at) ??
+      asNullableString(connection.lastSyncAt) ??
+      asNullableString(connection.last_sync_at);
+    const warning =
+      asNullableString(connection.warning) ??
+      asNullableString(connection.lastError) ??
+      asNullableString(connection.last_error) ??
+      asNullableString(connection.error);
+    const selected =
+      typeof connection.selected === "boolean"
+        ? connection.selected
+        : status === "connected" || status === "syncing";
+
+    summaries[provider] = createInputSourceSummary(provider, status, {
+      accountLabel,
+      lastSyncedAt,
+      warning,
+      selected,
+    });
+  }
+
+  return summaries;
+}
+
+function buildConnectorReturnPath(nextUrl?: string) {
+  const sanitizedNext =
+    nextUrl && nextUrl.startsWith("/vibe-raising/create-update")
+      ? nextUrl
+      : "/vibe-raising/create-update";
+  return `/vibe-raising/connect-data?next=${encodeURIComponent(sanitizedNext)}`;
+}
+
 function normalizeStartupUpdateStatus(
   raw: unknown,
 ): VibeRaisingStartupUpdateStatusResponse {
@@ -970,6 +1182,11 @@ export async function getVibeRaisingProfile(
       return null;
     }
 
+    if (shouldUseDevBackendFallback(error)) {
+      console.warn("Backend unavailable in local dev; using Vibe Raising profile stub for preview.");
+      return DEV_VIBE_PROFILE_STUB;
+    }
+
     throw error;
   }
 }
@@ -1172,6 +1389,12 @@ export async function getVibeRaisingMonthlyUpdates(
     if (error.response?.status === 404) {
       return [];
     }
+
+    if (shouldUseDevBackendFallback(error)) {
+      console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
+      return DEV_MONTHLY_UPDATES_STUB;
+    }
+
     throw error;
   }
 }
@@ -1293,10 +1516,14 @@ export async function uploadVibeRaisingUpdateVideo(
 
 export async function bootstrapVibeRaisingStartupUpdate(
   backendBaseUrl: string,
+  options?: { next?: string },
 ): Promise<VibeRaisingStartupUpdateBootstrapResponse> {
+  const path = options?.next
+    ? `${STARTUP_UPDATE_BOOTSTRAP_PATH}?next=${encodeURIComponent(options.next)}`
+    : STARTUP_UPDATE_BOOTSTRAP_PATH;
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
-    STARTUP_UPDATE_BOOTSTRAP_PATH,
+    path,
     { method: "POST" },
   );
 
@@ -1313,16 +1540,143 @@ export async function bootstrapVibeRaisingStartupUpdate(
   };
 }
 
+export async function getVibeRaisingInputSourcesStatus(
+  backendBaseUrl: string,
+): Promise<VibeRaisingInputSourcesStatusResponse> {
+  try {
+    const response = await requestBrowserJson<Record<string, unknown>>(
+      backendBaseUrl,
+      INPUT_SOURCES_STATUS_PATH,
+      { method: "GET" },
+    );
+    const summaries = normalizeInputSourceSummaries(response);
+    const sources = (Object.keys(INPUT_SOURCE_DEFINITIONS) as VibeRaisingInputSourceKey[]).map((key) => (
+      summaries[key] ?? createInputSourceSummary(key, "not_connected")
+    ));
+    return {
+      sources,
+      financeUnavailable: Boolean(response.financeUnavailable ?? response.finance_unavailable),
+    };
+  } catch (error: any) {
+    if (error?.status && error.status !== 404 && error.status !== 405) {
+      throw error;
+    }
+  }
+
+  const [gmailResult, financeResult] = await Promise.allSettled([
+    requestBrowserJson<Record<string, unknown>>(
+      backendBaseUrl,
+      STARTUP_UPDATE_BOOTSTRAP_PATH,
+      { method: "POST" },
+    ),
+    requestBrowserJson<Record<string, unknown>>(
+      backendBaseUrl,
+      FINANCIAL_STATUS_PATH,
+      { method: "GET" },
+    ),
+  ]);
+
+  const sources: VibeRaisingInputSourceSummary[] = [];
+
+  if (gmailResult.status === "fulfilled") {
+    sources.push(createInputSourceSummary(
+      "gmail",
+      Boolean(gmailResult.value.googleConnected ?? gmailResult.value.google_connected)
+        ? "connected"
+        : "not_connected",
+      {
+        accountLabel:
+          asNullableString(gmailResult.value.googleEmail) ??
+          asNullableString(gmailResult.value.google_email) ??
+          asNullableString(gmailResult.value.email),
+      },
+    ));
+  } else {
+    sources.push(createInputSourceSummary("gmail", "error", {
+      warning:
+        (gmailResult.reason as { data?: { error?: string; detail?: string }; message?: string })?.data?.error ??
+        (gmailResult.reason as { data?: { error?: string; detail?: string }; message?: string })?.data?.detail ??
+        (gmailResult.reason instanceof Error ? gmailResult.reason.message : "Gmail status is unavailable."),
+    }));
+  }
+
+  let financeUnavailable = false;
+  let financialSummaries: Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> = {};
+  if (financeResult.status === "fulfilled") {
+    financialSummaries = normalizeFinancialSourceSummaries(financeResult.value);
+  } else {
+    financeUnavailable = true;
+  }
+
+  for (const key of ["stripe", "xero"] as const) {
+    sources.push(
+      financialSummaries[key] ??
+        createInputSourceSummary(key, financeUnavailable ? "unavailable" : "not_connected", {
+          warning: financeUnavailable ? "Financial connector status is not available on this backend yet." : null,
+        }),
+    );
+  }
+
+  for (const key of ["bank_feed", "notion", "google_drive", "slack"] as const) {
+    sources.push(createInputSourceSummary(key, "unavailable", {
+      selected: false,
+      warning: "This connector is not available on this backend yet.",
+    }));
+  }
+
+  return { sources, financeUnavailable };
+}
+
+const CONNECTOR_PROVIDER_SLUGS: Record<Exclude<VibeRaisingInputSourceKey, "gmail">, string> = {
+  stripe: "stripe",
+  xero: "xero",
+  bank_feed: "bank-feed",
+  notion: "notion",
+  google_drive: "google-drive",
+  slack: "slack",
+};
+
+export function connectVibeRaisingInputSource(
+  backendBaseUrl: string,
+  provider: Exclude<VibeRaisingInputSourceKey, "gmail">,
+  nextUrl?: string,
+): string {
+  const normalizedBase = backendBaseUrl.endsWith("/") ? backendBaseUrl : `${backendBaseUrl}/`;
+  const url = new URL(`integrations/connect/${CONNECTOR_PROVIDER_SLUGS[provider]}`, normalizedBase);
+  url.searchParams.set("next", buildConnectorReturnPath(nextUrl));
+  return url.toString();
+}
+
+export async function syncVibeRaisingFinancialSources(
+  backendBaseUrl: string,
+): Promise<Record<string, unknown>> {
+  return requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    FINANCIAL_SYNC_PATH,
+    { method: "POST" },
+  );
+}
+
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
-  options?: { forceRegenerate?: boolean },
+  options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
+  const body: Record<string, unknown> = {};
+  if (options?.forceRegenerate) {
+    body.forceRegenerate = true;
+  }
+  const inputSources = Array.from(new Set(options?.inputSources ?? []));
+  if (inputSources.length > 0) {
+    body.inputSources = inputSources;
+    body.input_sources = inputSources;
+  }
+
   const response = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
     EMAIL_DRAFT_START_PATH,
     {
       method: "POST",
-      body: options?.forceRegenerate ? JSON.stringify({ forceRegenerate: true }) : undefined,
+      body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
     },
   );
   return normalizeStartupUpdateStatus(response);

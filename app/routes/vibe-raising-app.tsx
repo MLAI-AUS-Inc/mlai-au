@@ -20,18 +20,20 @@ import {
 } from "~/lib/vibe-raising";
 import {
   BuildingOffice2Icon,
+  CircleStackIcon,
   DocumentTextIcon,
   UsersIcon,
 } from "@heroicons/react/24/outline";
 
 const FOUNDER_NAVIGATION = [
-  { name: "My Updates", href: "/vibe-raising", icon: DocumentTextIcon },
+  { name: "My Updates", href: "/vibe-raising", icon: DocumentTextIcon, exact: true },
+  { name: "Data Sources", href: "/vibe-raising/connect-data", icon: CircleStackIcon },
   { name: "Discover Investors", href: "/vibe-raising/discover", icon: UsersIcon },
   { name: "Manage Companies", href: "/vibe-raising/companies", icon: BuildingOffice2Icon },
 ];
 
 const INVESTOR_NAVIGATION = [
-  { name: "Portfolio Updates", href: "/vibe-raising", icon: DocumentTextIcon },
+  { name: "Portfolio Updates", href: "/vibe-raising", icon: DocumentTextIcon, exact: true },
   { name: "Connections", href: "/vibe-raising/discover", icon: UsersIcon },
 ];
 

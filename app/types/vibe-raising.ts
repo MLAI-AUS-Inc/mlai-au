@@ -107,6 +107,45 @@ export interface VibeRaisingVideoCompressionMetadata {
   compressionRatio?: number | null;
 }
 
+export type VibeRaisingInputSourceKey =
+  | "gmail"
+  | "stripe"
+  | "xero"
+  | "bank_feed"
+  | "notion"
+  | "google_drive"
+  | "slack";
+
+export type VibeRaisingInputSourceStatus =
+  | "connected"
+  | "not_connected"
+  | "syncing"
+  | "error"
+  | "coming_soon"
+  | "unavailable";
+
+export type VibeRaisingInputSourceCapability =
+  | "metrics"
+  | "context"
+  | "cash_validation"
+  | "docs";
+
+export interface VibeRaisingInputSourceSummary {
+  key: VibeRaisingInputSourceKey;
+  label: string;
+  accountLabel?: string | null;
+  capabilities: VibeRaisingInputSourceCapability[];
+  selected: boolean;
+  status: VibeRaisingInputSourceStatus;
+  lastSyncedAt?: string | null;
+  warning?: string | null;
+}
+
+export interface VibeRaisingInputSourcesStatusResponse {
+  sources: VibeRaisingInputSourceSummary[];
+  financeUnavailable: boolean;
+}
+
 export type VibeRaisingStartupUpdateState =
   | "needs_domain"
   | "auth_required"

@@ -1,4 +1,4 @@
-import { axiosInstance, API_URL, shouldUseDevBackendStub } from "./api";
+import { axiosInstance, API_URL, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
 export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
@@ -125,6 +125,10 @@ export async function getCurrentUser(env: Env, request?: Request) {
     } catch (error: any) {
         if (error.response && error.response.status === 401) {
             return null;
+        }
+        if (shouldUseDevBackendFallback(error)) {
+            console.warn("Backend unavailable in local dev; using auth stub for preview.");
+            return DEV_AUTH_STUB;
         }
         // Log the error for debugging
         console.error("getCurrentUser error:", error.message, error.response?.status, error.response?.data);
