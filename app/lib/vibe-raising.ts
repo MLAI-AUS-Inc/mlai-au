@@ -634,12 +634,23 @@ function buildAbsoluteBackendUrl(baseUrl: string, path: string): string {
   return new URL(path.replace(/^\//, ""), normalizedBase).toString();
 }
 
+function createBrowserRequestId(): string {
+  const randomId =
+    typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `mlai-vibe-${randomId}`;
+}
+
 async function requestBrowserJson<T>(
   backendBaseUrl: string,
   path: string,
   init?: RequestInit,
 ): Promise<T> {
   const headers = new Headers(init?.headers);
+  const requestId = headers.get("X-Request-ID") || createBrowserRequestId();
+  headers.set("X-Request-ID", requestId);
+
   const csrfToken = getBrowserCsrfToken();
   if (csrfToken) {
     headers.set("X-CSRFToken", csrfToken);
@@ -649,11 +660,18 @@ async function requestBrowserJson<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(buildAbsoluteBackendUrl(backendBaseUrl, path), {
-    ...init,
-    headers,
-    credentials: "include",
-  });
+  let response: Response;
+  try {
+    response = await fetch(buildAbsoluteBackendUrl(backendBaseUrl, path), {
+      ...init,
+      headers,
+      credentials: "include",
+    });
+  } catch (error: any) {
+    error.requestId = requestId;
+    error.requestPath = path;
+    throw error;
+  }
 
   const text = await response.text();
   let data: any = null;
@@ -674,6 +692,8 @@ async function requestBrowserJson<T>(
     );
     error.status = response.status;
     error.data = data;
+    error.requestId = response.headers.get("X-Request-ID") || requestId;
+    error.requestPath = path;
     throw error;
   }
 

@@ -15,6 +15,7 @@ import {
 import {
     XMarkIcon,
     SparklesIcon,
+    ArrowPathIcon,
     CloudArrowUpIcon,
     ChevronDownIcon,
     LightBulbIcon,
@@ -487,27 +488,46 @@ function isHtmlErrorDocument(value: unknown) {
     return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
 }
 
+function appendEmailDraftDiagnostics(message: string, error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestId = (error as { requestId?: string })?.requestId;
+    const diagnostics = [
+        statusCode ? `status ${statusCode}` : null,
+        requestId ? `request ${requestId}` : null,
+    ].filter(Boolean);
+
+    if (diagnostics.length === 0) return message;
+
+    const separator = message.endsWith(".") ? " " : ". ";
+    return `${message}${separator}Reference: ${diagnostics.join(" · ")}.`;
+}
+
 function getEmailDraftErrorMessage(error: unknown) {
     const statusCode = (error as { status?: number })?.status;
     const payload = (error as { data?: { error?: string; detail?: string } })?.data;
+    let message = "We couldn't draft your update from Gmail. Please try again.";
     if (typeof payload === "string" && isHtmlErrorDocument(payload)) {
         if (statusCode === 404) {
-            return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            return appendEmailDraftDiagnostics(message, error);
         }
-        return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        return appendEmailDraftDiagnostics(message, error);
     }
-    if (payload?.error) return payload.error;
-    if (payload?.detail) return payload.detail;
+    if (payload?.error) return appendEmailDraftDiagnostics(payload.error, error);
+    if (payload?.detail) return appendEmailDraftDiagnostics(payload.detail, error);
     if (error instanceof Error && error.message) {
         if (isHtmlErrorDocument(error.message)) {
             if (statusCode === 404) {
-                return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+                message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+                return appendEmailDraftDiagnostics(message, error);
             }
-            return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+            message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+            return appendEmailDraftDiagnostics(message, error);
         }
-        return error.message;
+        return appendEmailDraftDiagnostics(error.message, error);
     }
-    return "We couldn't draft your update from Gmail. Please try again.";
+    return appendEmailDraftDiagnostics(message, error);
 }
 
 // Hint suggestions per section, cycled through as user adds points
@@ -1505,6 +1525,14 @@ export default function CreateUpdate() {
         isEmailDraftBusy && emailDraftStatus?.state !== "failed"
             ? emailDraftUiError
             : null;
+    const emailDraftButtonTitle = emailDraftActionBusy
+        ? "Checking Gmail connection..."
+        : "AI Drafting";
+    const emailDraftButtonDescription = emailDraftActionBusy
+        ? "Contacting the MLAI backend and checking whether Gmail is already connected."
+        : canGenerateDraftFromEmail
+            ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
+            : "Add a company domain first so Gmail emails can be matched to the right startup.";
 
     const handleRetryEmailDraft = () => {
         clearPersistedEmailDraftRun();
@@ -2594,42 +2622,44 @@ export default function CreateUpdate() {
                         cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
                         isCancelling={emailDraftCancelBusy}
                     />
-	                ) : (
-	                    <button
-	                        type="button"
-	                        disabled={emailDraftActionBusy}
-	                        onClick={() => {
-	                            void handleGenerateDraftFromEmailClick();
-	                        }}
-	                        className={clsx(
-	                            "group relative w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
-	                            canGenerateDraftFromEmail
-	                                ? "cursor-pointer"
-	                                : "cursor-pointer opacity-80",
-	                            emailDraftActionBusy && "opacity-70",
-	                        )}
-	                    >
-	                        <div className="relative z-10">
-	                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
-	                                <SparklesIcon className="h-7 w-7" />
-	                            </div>
+                ) : (
+                    <button
+                        type="button"
+                        disabled={emailDraftActionBusy}
+                        onClick={() => {
+                            void handleGenerateDraftFromEmailClick();
+                        }}
+                        className={clsx(
+                            "group relative w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
+                            canGenerateDraftFromEmail
+                                ? "cursor-pointer"
+                                : "cursor-pointer opacity-80",
+                            emailDraftActionBusy && "opacity-70",
+                        )}
+                    >
+                        <div className="relative z-10">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
+                                {emailDraftActionBusy ? (
+                                    <ArrowPathIcon className="h-7 w-7 animate-spin" />
+                                ) : (
+                                    <SparklesIcon className="h-7 w-7" />
+                                )}
+                            </div>
 
-	                            <div className="mt-4 flex items-center justify-between gap-4">
-	                                <div>
-	                                    <h2 className="text-xl font-bold text-white">
-	                                        AI Drafting
-	                                    </h2>
-	                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72">
-	                                        {canGenerateDraftFromEmail
-	                                            ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
-	                                            : "Add a company domain first so Gmail emails can be matched to the right startup."}
-	                                    </p>
-	                                </div>
-	                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
-	                            </div>
-	                        </div>
-	                    </button>
-	                )}
+                            <div className="mt-4 flex items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">
+                                        {emailDraftButtonTitle}
+                                    </h2>
+                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72">
+                                        {emailDraftButtonDescription}
+                                    </p>
+                                </div>
+                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
+                            </div>
+                        </div>
+                    </button>
+                )}
 
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
