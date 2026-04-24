@@ -1,3 +1,9 @@
+- [x] Add targeted 301 redirects for Google legacy 404 URLs
+- [x] Restore registry entries for the missing canonical article targets
+- [x] Regenerate `public/sitemap.xml`
+- [x] Run `bun run typecheck`
+- [x] Run `bun run build`
+- [x] Curl-check legacy redirects and canonical targets
 - [x] Add cleanup redirects for broken internal article CTA URLs
 - [x] Replace broken article CTA hrefs and copy with live destinations
 - [x] Add an internal article-link validator to `bun run typecheck`
