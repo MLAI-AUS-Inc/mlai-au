@@ -1,6 +1,8 @@
 @import "tailwindcss" source(".");
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
+@import "./styles/vibe-raising-tokens.css";
+@import "./styles/vibe-raising-components.css";
 
 @custom-variant dark (&:is(.dark *));
 
