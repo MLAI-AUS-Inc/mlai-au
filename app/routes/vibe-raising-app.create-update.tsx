@@ -29,6 +29,7 @@ import {
     FireIcon,
     ArrowRightIcon,
     BanknotesIcon,
+    InformationCircleIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
@@ -37,7 +38,7 @@ import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
-import { getVibeRaisingMonthTheme, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type { VibeRaisingStartupUpdateStatusResponse } from "~/types/vibe-raising";
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -142,15 +143,276 @@ interface MetricOption {
     placeholder: string;
     prefix?: string;
     icon: React.ReactNode;
+    info?: string;
 }
 
 const METRIC_OPTIONS: MetricOption[] = [
-    { key: "revenue", label: "Revenue", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "mrr", label: "MRR", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "burnRate", label: "Burn Rate", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" /> },
-    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" /> },
+    { key: "revenue", label: "Revenue (AUD)", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Your total income this month." },
+    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Unique users who engaged with your product this month." },
+    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly recurring revenue from active subscriptions." },
+    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "How much capital the company is spending per month." },
+    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Estimated time before the company needs more funding." },
 ];
+
+function MetricInfoBadge({ info }: { info?: string }) {
+    if (!info) return null;
+
+    return (
+        <div className="group absolute right-1.5 top-1.5">
+            <div className="cursor-help text-gray-300 transition-colors hover:text-gray-500">
+                <InformationCircleIcon className="h-3.5 w-3.5" />
+            </div>
+            <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-48 translate-y-1 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+                {info}
+                <div className="absolute right-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900" />
+            </div>
+        </div>
+    );
+}
+
+function MonthYearTabs({
+    month,
+    year,
+    onMonthChange,
+    onYearChange,
+    periodTabs = [],
+    activePeriodKey = "current",
+    onPeriodChange,
+    submitDateFields = true,
+    isDateEditable = true,
+    statusLabel,
+    showInfoControl = false,
+}: {
+    month: string;
+    year: number;
+    onMonthChange: (month: string) => void;
+    onYearChange: (year: number) => void;
+    periodTabs?: Array<{ key: string; month: string; year: number }>;
+    activePeriodKey?: string;
+    onPeriodChange?: (key: string) => void;
+    submitDateFields?: boolean;
+    isDateEditable?: boolean;
+    statusLabel?: string;
+    showInfoControl?: boolean;
+}) {
+    const monthTheme = getVibeRaisingMonthTheme(month);
+    const [isMonthMenuOpen, setIsMonthMenuOpen] = useState(false);
+    const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
+    const monthMenuRef = useRef<HTMLDivElement | null>(null);
+    const yearMenuRef = useRef<HTMLDivElement | null>(null);
+    const yearOptions = Array.from({ length: 11 }, (_, index) => year - 5 + index);
+    const visibleSecondaryMonths = periodTabs
+        .filter((period) => period.key !== activePeriodKey)
+        .slice(0, 2);
+
+    useEffect(() => {
+        if (!isMonthMenuOpen && !isYearMenuOpen) return;
+
+        const closeOnOutsideClick = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (isMonthMenuOpen && !monthMenuRef.current?.contains(target)) {
+                setIsMonthMenuOpen(false);
+            }
+            if (isYearMenuOpen && !yearMenuRef.current?.contains(target)) {
+                setIsYearMenuOpen(false);
+            }
+        };
+
+        const closeOnEscape = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setIsMonthMenuOpen(false);
+                setIsYearMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", closeOnOutsideClick);
+        document.addEventListener("keydown", closeOnEscape);
+
+        return () => {
+            document.removeEventListener("mousedown", closeOnOutsideClick);
+            document.removeEventListener("keydown", closeOnEscape);
+        };
+    }, [isMonthMenuOpen, isYearMenuOpen]);
+
+    return (
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
+            <div ref={monthMenuRef} className="relative min-w-0 flex-1">
+                <div
+                    className={clsx(
+                        "relative z-10 flex w-full overflow-hidden text-sm font-black uppercase tracking-[0.12em] text-white shadow-xl ring-1 ring-white/30 transition-all duration-150",
+                        isMonthMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
+                        monthTheme.tabClass,
+                    )}
+                >
+                    <button
+                        type="button"
+                        disabled={!isDateEditable}
+                        onClick={() => {
+                            if (!isDateEditable) return;
+                            setIsYearMenuOpen(false);
+                            setIsMonthMenuOpen((current) => !current);
+                        }}
+                        className={clsx(
+                            "flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-left transition-colors",
+                            isDateEditable ? "cursor-pointer hover:bg-white/10" : "cursor-default",
+                        )}
+                        aria-label="Select update month"
+                        aria-haspopup={isDateEditable ? "listbox" : undefined}
+                        aria-expanded={isDateEditable ? isMonthMenuOpen : undefined}
+                    >
+                        <span className="min-w-0 flex-1 truncate">{month}</span>
+                        {statusLabel && (
+                            <span className="hidden shrink-0 text-[10px] font-medium normal-case tracking-normal text-white/75 sm:inline">
+                                {statusLabel}
+                            </span>
+                        )}
+                        {isDateEditable && (
+                            <ChevronDownIcon className={clsx("h-4 w-4 shrink-0 text-white/80 transition-transform duration-150", isMonthMenuOpen && "rotate-180")} />
+                        )}
+                    </button>
+                    {visibleSecondaryMonths.length > 0 && (
+                        <div className="flex shrink-0 items-stretch border-l border-white/30 text-xs tracking-[0.16em]">
+                            {visibleSecondaryMonths.map((period) => {
+                                const periodTheme = getVibeRaisingMonthTheme(period.month);
+                                return (
+                                    <button
+                                        key={period.key}
+                                        type="button"
+                                        onClick={() => onPeriodChange?.(period.key)}
+                                        className={clsx(
+                                            "flex min-w-[48px] items-center justify-center px-2 font-black text-white/90 transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:min-w-[58px] sm:px-3",
+                                            periodTheme.tabClass,
+                                        )}
+                                    >
+                                        {period.month.slice(0, 3).toUpperCase()}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
+                    {showInfoControl && (
+                        <div className="group relative flex min-w-[30px] items-stretch border-l border-white/25">
+                            <button
+                                type="button"
+                                className="flex w-full items-center justify-center px-2 text-[13px] font-medium lowercase italic text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70"
+                                aria-label="How generated monthly updates work"
+                            >
+                                i
+                            </button>
+                            <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-64 translate-y-1 rounded-2xl bg-gray-950 px-4 py-3 text-left text-[11px] font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-2xl shadow-black/25 ring-1 ring-white/10 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-72">
+                                We generated the current month and earlier months from Gmail. Click any month button to check and edit that update.
+                                <div className="absolute right-4 top-0 h-3 w-3 -translate-y-1.5 rotate-45 bg-gray-950" />
+                            </div>
+                        </div>
+                    )}
+                </div>
+                {submitDateFields && <input type="hidden" name="month" value={month} />}
+                <div
+                    className={clsx(
+                        "absolute left-0 top-full z-40 w-full origin-top overflow-hidden rounded-b-2xl border border-t-0 border-gray-200 bg-white shadow-2xl shadow-black/15 ring-1 ring-black/5 transition-all duration-150",
+                        isDateEditable && isMonthMenuOpen
+                            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                    )}
+                >
+                    <div role="listbox" aria-label="Update month" className="max-h-80 overflow-y-auto py-1">
+                        {VIBE_RAISING_MONTH_OPTIONS.map((option) => {
+                            const isSelected = option.name === month;
+                            return (
+                                <button
+                                    key={option.name}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    onClick={() => {
+                                        onMonthChange(option.name);
+                                        onPeriodChange?.("current");
+                                        setIsMonthMenuOpen(false);
+                                    }}
+                                    className={clsx(
+                                        "flex w-full items-center justify-between px-4 py-2 text-left text-xs font-black uppercase tracking-[0.12em] transition-colors",
+                                        isSelected
+                                            ? `${option.tabClass} text-white`
+                                            : "text-gray-600 hover:bg-gray-950 hover:text-white",
+                                    )}
+                                >
+                                    <span>{option.name}</span>
+                                    <span className={clsx("h-1.5 w-1.5 rounded-full", isSelected ? "bg-white" : option.tabClass)} />
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
+            <div ref={yearMenuRef} className="relative sm:min-w-[108px]">
+                <div
+                    className={clsx(
+                        "relative z-10 flex h-full items-center overflow-hidden bg-gray-950 text-white shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-150",
+                        isYearMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
+                    )}
+                >
+                    {submitDateFields && <input type="hidden" name="year" value={year} />}
+                    <button
+                        type="button"
+                        disabled={!isDateEditable}
+                        onClick={() => {
+                            if (!isDateEditable) return;
+                            setIsMonthMenuOpen(false);
+                            setIsYearMenuOpen((current) => !current);
+                        }}
+                        className={clsx(
+                            "flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-black tracking-[0.12em] transition-colors",
+                            isDateEditable ? "hover:bg-white/10" : "cursor-default",
+                        )}
+                        aria-label="Select update year"
+                        aria-haspopup={isDateEditable ? "listbox" : undefined}
+                        aria-expanded={isDateEditable ? isYearMenuOpen : undefined}
+                    >
+                        <span>{year}</span>
+                        {isDateEditable && (
+                            <ChevronDownIcon className={clsx("h-3.5 w-3.5 text-white/75 transition-transform duration-150", isYearMenuOpen && "rotate-180")} />
+                        )}
+                    </button>
+                </div>
+                <div
+                    className={clsx(
+                        "absolute left-0 top-full z-40 w-full origin-top overflow-hidden rounded-b-2xl border border-t-0 border-gray-800 bg-gray-950 shadow-2xl shadow-black/20 ring-1 ring-black/10 transition-all duration-150",
+                        isDateEditable && isYearMenuOpen
+                            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                    )}
+                >
+                    <div role="listbox" aria-label="Update year" className="max-h-72 overflow-y-auto py-1">
+                        {yearOptions.map((optionYear) => {
+                            const isSelected = optionYear === year;
+                            return (
+                                <button
+                                    key={optionYear}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={isSelected}
+                                    onClick={() => {
+                                        onYearChange(optionYear);
+                                        setIsYearMenuOpen(false);
+                                    }}
+                                    className={clsx(
+                                        "flex w-full items-center justify-center px-4 py-2 text-sm font-black tracking-[0.12em] transition-colors",
+                                        isSelected
+                                            ? "bg-white text-gray-950"
+                                            : "text-white/70 hover:bg-white/10 hover:text-white",
+                                    )}
+                                >
+                                    {optionYear}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 const EMAIL_DRAFT_POLL_INTERVAL_MS = 5000;
 const EMAIL_DRAFT_POLL_BACKOFF_MS = 10000;
@@ -423,9 +685,9 @@ function SectionWithExample({
 
     return (
         <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-            <div className="flex items-center gap-2 border-b border-gray-100 bg-gray-50/50 px-4 py-3">
-                <Icon className="w-4 h-4 text-gray-500" />
-                <label className="block text-xs font-bold uppercase tracking-wider text-gray-700">
+            <div className="flex items-center gap-2 bg-black px-4 py-2.5">
+                <Icon className="w-4 h-4 text-white/80" />
+                <label className="block text-xs font-bold uppercase tracking-wider text-white">
                     {label}
                 </label>
             </div>
@@ -568,13 +830,14 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                     <div
                                         key={m.key}
                                         className={clsx(
-                                            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
+                                            "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
                                             val
                                                 ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                 : "border-gray-200 bg-gray-50 opacity-40"
                                         )}
-                                    >
-                                        <div className={clsx(
+	                                    >
+                                        <MetricInfoBadge info={m.info} />
+	                                        <div className={clsx(
                                             "w-5 h-5 rounded-full flex items-center justify-center mb-1",
                                             val ? "bg-violet-100" : "bg-white"
                                         )}>
@@ -1264,11 +1527,11 @@ export default function CreateUpdate() {
             : null;
     const emailDraftButtonTitle = emailDraftActionBusy
         ? "Checking Gmail connection..."
-        : "Generate Draft from Email";
+        : "AI Drafting";
     const emailDraftButtonDescription = emailDraftActionBusy
         ? "Contacting the MLAI backend and checking whether Gmail is already connected."
         : canGenerateDraftFromEmail
-            ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
+            ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
             : "Add a company domain first so Gmail emails can be matched to the right startup.";
 
     const handleRetryEmailDraft = () => {
@@ -1480,17 +1743,92 @@ export default function CreateUpdate() {
         setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: { ...c.metrics, [key]: value } } : c));
     };
 
+    const activePastIndex = activePeriodKey.startsWith("past-")
+        ? Number(activePeriodKey.replace("past-", ""))
+        : -1;
+    const activePastCard = Number.isInteger(activePastIndex) ? pastMonthCards[activePastIndex] : undefined;
+    const isViewingCurrentUpdate = activePeriodKey === "current" || !activePastCard;
+    const activePastPeriod = activePastCard ? parseVibeRaisingMonthYear(activePastCard.month) : null;
+    const activeDisplayMonth = isViewingCurrentUpdate ? selectedMonth : activePastPeriod?.month || selectedMonth;
+    const activeDisplayYear = isViewingCurrentUpdate ? selectedYear : activePastPeriod?.year || selectedYear;
+    const activeMonthTheme = getVibeRaisingMonthTheme(activeDisplayMonth);
+    const activeMetricValues = isViewingCurrentUpdate ? metricValues : activePastCard?.metrics || {};
+    const activeSelectedMetrics = isViewingCurrentUpdate
+        ? selectedMetrics
+        : new Set(Object.keys(activeMetricValues).filter((key) => activeMetricValues[key]));
+    const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
+    const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
+    const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
+    const periodTabs = [
+        { key: "current", month: selectedMonth, year: selectedYear },
+        ...pastMonthCards.map((card, index) => {
+            const period = parseVibeRaisingMonthYear(card.month);
+            return { key: `past-${index}`, month: period.month, year: period.year };
+        }),
+    ];
+
+    const updateActiveMetric = (key: string, value: string) => {
+        if (isViewingCurrentUpdate) {
+            setMetricValues(prev => ({ ...prev, [key]: value }));
+            return;
+        }
+
+        if (activePastIndex >= 0) {
+            updatePastMonthMetric(activePastIndex, key, value);
+        }
+    };
+
+    const toggleActiveMetric = (key: string) => {
+        if (isViewingCurrentUpdate) {
+            toggleMetric(key);
+            return;
+        }
+
+        if (activePastIndex < 0 || !activePastCard) return;
+        setPastMonthCards(prev => prev.map((card, index) => {
+            if (index !== activePastIndex) return card;
+            const nextMetrics = { ...card.metrics };
+            if (key in nextMetrics) {
+                delete nextMetrics[key];
+                return Object.keys(nextMetrics).length > 0 ? { ...card, metrics: nextMetrics } : card;
+            }
+            return { ...card, metrics: { ...nextMetrics, [key]: "" } };
+        }));
+    };
+
+    const updateActiveHighlights = (value: string) => {
+        if (isViewingCurrentUpdate) setHighlights(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "highlights", value);
+    };
+
+    const updateActiveChallenges = (value: string) => {
+        if (isViewingCurrentUpdate) setChallenges(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "challenges", value);
+    };
+
+    const updateActiveAsks = (value: string) => {
+        if (isViewingCurrentUpdate) setAsks(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "asks", value);
+    };
+
+    useEffect(() => {
+        if (activePeriodKey === "current") return;
+        if (activePastCard) return;
+        setActivePeriodKey("current");
+    }, [activePastCard, activePeriodKey]);
+
     // Prepare chart data — revenue bars with auto-calculated MoM
     const chartData: ChartData[] = [
         ...pastMonthCards.map((card, i) => ({
             month: card.month,
             value: parseRevenue(card.metrics.revenue || "0"),
-            isSelected: expandedCards.has(i)
+            isSelected: activePeriodKey === `past-${i}`
         })),
         {
             month: selectedMonth,
             value: parseRevenue(metricValues.revenue || "0"),
-            isCurrent: true
+            isCurrent: true,
+            isSelected: activePeriodKey === "current"
         }
     ];
 
@@ -1499,12 +1837,13 @@ export default function CreateUpdate() {
         ...pastMonthCards.map((card, i) => ({
             month: card.month,
             value: parseUsers(card.metrics.activeUsers || "0"),
-            isSelected: expandedCards.has(i)
+            isSelected: activePeriodKey === `past-${i}`
         })),
         {
             month: selectedMonth,
             value: parseUsers(metricValues.activeUsers || "0"),
-            isCurrent: true
+            isCurrent: true,
+            isSelected: activePeriodKey === "current"
         }
     ];
 
@@ -1707,13 +2046,14 @@ export default function CreateUpdate() {
                                             <div
                                                 key={m.key}
                                                 className={clsx(
-                                                    "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
                                                     val
                                                         ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-40"
                                                 )}
-                                            >
-                                                <div className={clsx(
+	                                            >
+                                                <MetricInfoBadge info={m.info} />
+	                                                <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
                                                     val ? "bg-violet-100" : "bg-white"
                                                 )}>
@@ -1831,7 +2171,7 @@ export default function CreateUpdate() {
                             return (
                                 <>
                                     {hasAnyChart && (
-                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-2" : "grid-cols-1"}`}>
+                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
                                             {hasRevenue && (
                                                 <GrowthChart
                                                     data={reviewChartData}
@@ -2290,86 +2630,40 @@ export default function CreateUpdate() {
                             void handleGenerateDraftFromEmailClick();
                         }}
                         className={clsx(
-                            "w-full rounded-2xl border p-8 shadow-sm overflow-hidden relative text-left transition-all",
+                            "group relative w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
                             canGenerateDraftFromEmail
-                                ? "bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100 group hover:shadow-md hover:border-purple-200 cursor-pointer"
-                                : "bg-gray-50 border-gray-200 cursor-pointer hover:border-gray-300",
+                                ? "cursor-pointer"
+                                : "cursor-pointer opacity-80",
                             emailDraftActionBusy && "opacity-70",
                         )}
                     >
-                        <div className={clsx(
-                            "absolute top-0 right-0 -mt-8 -mr-8 w-32 h-32 blur-3xl rounded-full",
-                            canGenerateDraftFromEmail ? "bg-purple-200/20" : "bg-gray-300/20",
-                        )} />
-                        <div className="relative z-10 flex items-center gap-5">
-                            <div className={clsx(
-                                "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
-                                canGenerateDraftFromEmail ? "bg-purple-100 group-hover:bg-purple-200" : "bg-gray-200",
-                            )}>
+                        <div className="relative z-10">
+                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
                                 {emailDraftActionBusy ? (
-                                    <ArrowPathIcon className="h-7 w-7 animate-spin text-purple-600" />
+                                    <ArrowPathIcon className="h-7 w-7 animate-spin" />
                                 ) : (
-                                    <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
+                                    <SparklesIcon className="h-7 w-7" />
                                 )}
                             </div>
-                            <div className="flex-1">
-                                <h2 className="text-lg font-bold text-gray-900">
-                                    {emailDraftButtonTitle}
-                                </h2>
-                                <p className="text-sm text-gray-500 mt-0.5">
-                                    {emailDraftButtonDescription}
-                                </p>
+
+                            <div className="mt-4 flex items-center justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xl font-bold text-white">
+                                        {emailDraftButtonTitle}
+                                    </h2>
+                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72">
+                                        {emailDraftButtonDescription}
+                                    </p>
+                                </div>
+                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
                             </div>
-                            <ArrowRightIcon className={clsx(
-                                "w-5 h-5 transition-transform flex-shrink-0",
-                                canGenerateDraftFromEmail ? "text-purple-400 group-hover:translate-x-1" : "text-gray-400",
-                            )} />
                         </div>
                     </button>
                 )}
 
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                        {pastMonthCards.length > 0 && (
-                            <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm">
-                                {pastMonthCards.map((card, index) => {
-                                    const periodKey = `past-${index}`;
-                                    const isActive = activePeriodKey === periodKey;
-                                    return (
-                                        <button
-                                            key={periodKey}
-                                            type="button"
-                                            onClick={() => selectPeriod(periodKey)}
-                                            className={clsx(
-                                                "rounded-xl px-3 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all",
-                                                isActive
-                                                    ? "bg-gray-950 text-white shadow-sm"
-                                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200",
-                                            )}
-                                        >
-                                            {card.month}
-                                        </button>
-                                    );
-                                })}
-                                <button
-                                    type="button"
-                                    onClick={() => selectPeriod("current")}
-                                    className={clsx(
-                                        "rounded-xl px-3 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all",
-                                        activePeriodKey === "current"
-                                            ? `${selectedMonthTheme.tabClass} text-white shadow-sm`
-                                            : "bg-gray-100 text-gray-500 hover:bg-gray-200",
-                                    )}
-                                >
-                                    {selectedMonth} {selectedYear}
-                                </button>
-                                <span className="ml-auto text-[11px] font-medium text-gray-400">
-                                    {activePeriodKey === "current" ? "Current update" : "Previous update"}
-                                </span>
-                            </div>
-                        )}
-
-                        {/* ─── Growth Charts ─── */}
+	                        {/* ─── Growth Charts ─── */}
                         {pastMonthCards.length > 0 && (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <GrowthChart
@@ -2393,8 +2687,8 @@ export default function CreateUpdate() {
                 {pastMonthCards.length > 0 && (
                     <div className="relative">
                         {/* Past month cards — grayed-out, peeking behind current */}
-                        {pastMonthCards.map((card, index) => (
-                            <div key={index} id={`past-month-${index}`} className="mb-3 scroll-mt-24">
+	                        {pastMonthCards.map((card, index) => (
+	                            <div key={index} id={`past-month-${index}`} className="hidden">
                                 {/* Collapsed: gray card strip peeking behind */}
                                 <button
                                     type="button"
@@ -2455,13 +2749,14 @@ export default function CreateUpdate() {
                                                                 }
                                                             }}
                                                             className={clsx(
-                                                                "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
+                                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
                                                                 active
                                                                     ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                             )}
-                                                        >
-                                                            <div className={clsx(
+	                                                        >
+                                                            <MetricInfoBadge info={m.info} />
+	                                                            <div className={clsx(
                                                                 "w-5 h-5 rounded-full flex items-center justify-center mb-1",
                                                                 active ? "bg-violet-100" : "bg-white"
                                                             )}>
@@ -2518,61 +2813,59 @@ export default function CreateUpdate() {
                         <div
                             id="current-month-card"
                             className={clsx(
-                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
-                                selectedMonthTheme.borderClass,
-                                selectedMonthTheme.ringClass,
-                            )}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-3.5 h-3.5 rounded-full bg-purple-600" />
-                                    <h4 className="text-base font-bold text-gray-900">{selectedMonth} {selectedYear}</h4>
-                                </div>
-                                <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2.5 py-1 rounded-full">Current Update</span>
-                            </div>
-                            <VibeRaisingDateTabs month={selectedMonth} year={selectedYear} size="compact" />
+	                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
+	                                activeMonthTheme.borderClass,
+	                                activeMonthTheme.ringClass,
+	                            )}
+	                        >
+	                            <MonthYearTabs
+	                                month={activeDisplayMonth}
+	                                year={activeDisplayYear}
+	                                onMonthChange={setSelectedMonth}
+	                                onYearChange={setSelectedYear}
+	                                periodTabs={periodTabs}
+	                                activePeriodKey={activePeriodKey}
+	                                onPeriodChange={selectPeriod}
+	                                submitDateFields={isViewingCurrentUpdate}
+	                                isDateEditable={isViewingCurrentUpdate}
+	                                statusLabel={isViewingCurrentUpdate ? "Current Update" : "Previous Update"}
+	                                showInfoControl={pastMonthCards.length > 0}
+	                            />
 
-                            {/* Month/Year selector */}
-                            <div className="flex flex-wrap items-center gap-2">
-                                <select
-                                    name="month"
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
-                                    className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-purple-500 focus:border-purple-500 border bg-gray-50"
-                                >
-                                    {VIBE_RAISING_MONTH_OPTIONS.map((option) => (
-                                        <option key={option.name}>{option.name}</option>
-                                    ))}
-                                </select>
-                                <input
-                                    type="number"
-                                    name="year"
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                    className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-purple-500 focus:border-purple-500 border bg-gray-50"
-                                />
-                            </div>
+	                            {!isViewingCurrentUpdate && (
+	                                <>
+	                                    <input type="hidden" name="month" value={selectedMonth} />
+	                                    <input type="hidden" name="year" value={selectedYear} />
+	                                    <input type="hidden" name="highlights" value={highlights} />
+	                                    <input type="hidden" name="challenges" value={challenges} />
+	                                    <input type="hidden" name="asks" value={asks} />
+	                                    {METRIC_OPTIONS.map((metric) => (
+	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
+	                                    ))}
+	                                </>
+	                            )}
 
                             {/* Metrics — square boxes, click to activate */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                                 </label>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                    {METRIC_OPTIONS.map((m) => {
-                                        const active = selectedMetrics.has(m.key);
-                                        return (
-                                            <div
-                                                key={m.key}
-                                                onClick={() => toggleMetric(m.key)}
+	                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+	                                    {METRIC_OPTIONS.map((m) => {
+	                                        const active = activeSelectedMetrics.has(m.key);
+	                                        return (
+	                                            <div
+	                                                key={m.key}
+	                                                onClick={() => toggleActiveMetric(m.key)}
                                                 className={clsx(
-                                                    "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                     active
                                                         ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                 )}
-                                            >
-                                                <div className={clsx(
+	                                            >
+                                                <MetricInfoBadge info={m.info} />
+	                                                <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
                                                     active ? "bg-violet-100" : "bg-white"
                                                 )}>
@@ -2580,11 +2873,11 @@ export default function CreateUpdate() {
                                                 </div>
                                                 {active ? (
                                                     <input
-                                                        type="text"
-                                                        name={m.key}
-                                                        value={metricValues[m.key] || ""}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+	                                                        type="text"
+	                                                        name={isViewingCurrentUpdate ? m.key : undefined}
+	                                                        value={activeMetricValues[m.key] || ""}
+	                                                        onClick={(e) => e.stopPropagation()}
+	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
                                                         placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
                                                         className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                                                     />
@@ -2603,29 +2896,29 @@ export default function CreateUpdate() {
 
                             {/* Qualitative fields — auto-expanding, no scroll */}
                             <div className="space-y-4">
-                                <SectionWithExample
-                                    label="Key Highlights"
-                                    name="highlights"
-                                    value={highlights}
-                                    onChange={setHighlights}
+	                                <SectionWithExample
+	                                    label="Key Highlights"
+	                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
+	                                    value={activeHighlights}
+	                                    onChange={updateActiveHighlights}
                                     rows={3}
                                     placeholder="What went well this month? Major wins, product launches, partnerships..."
                                     icon={SparklesIcon}
                                 />
-                                <SectionWithExample
-                                    label="Challenges"
-                                    name="challenges"
-                                    value={challenges}
-                                    onChange={setChallenges}
+	                                <SectionWithExample
+	                                    label="Challenges"
+	                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
+	                                    value={activeChallenges}
+	                                    onChange={updateActiveChallenges}
                                     rows={3}
                                     placeholder="What obstacles are you facing? Where do you need help?"
                                     icon={ExclamationCircleIcon}
                                 />
-                                <SectionWithExample
-                                    label="Ask from Investors"
-                                    name="asks"
-                                    value={asks}
-                                    onChange={setAsks}
+	                                <SectionWithExample
+	                                    label="Ask from Investors"
+	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
+	                                    value={activeAsks}
+	                                    onChange={updateActiveAsks}
                                     rows={3}
                                     placeholder="How can your investors help? Introductions, advice, specific expertise..."
                                     icon={QuestionMarkCircleIcon}
@@ -2644,27 +2937,13 @@ export default function CreateUpdate() {
                             selectedMonthTheme.ringClass,
                         )}
                     >
-                        {/* Month/Year */}
-                        <div className="flex flex-wrap items-center gap-3">
-                            <VibeRaisingDateTabs month={selectedMonth} year={selectedYear} size="compact" />
-                            <select
-                                name="month"
-                                value={selectedMonth}
-                                onChange={(e) => setSelectedMonth(e.target.value)}
-                                className="text-sm border-gray-200 rounded-md py-1.5 pl-2 pr-7 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
-                            >
-                                {VIBE_RAISING_MONTH_OPTIONS.map((option) => (
-                                    <option key={option.name}>{option.name}</option>
-                                ))}
-                            </select>
-                            <input
-                                type="number"
-                                name="year"
-                                value={selectedYear}
-                                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                                className="w-20 text-sm border-gray-200 rounded-md py-1.5 px-2 focus:ring-violet-500 focus:border-violet-500 border bg-gray-50"
-                            />
-                        </div>
+	                        <MonthYearTabs
+	                            month={selectedMonth}
+	                            year={selectedYear}
+	                            onMonthChange={setSelectedMonth}
+	                            onYearChange={setSelectedYear}
+	                            statusLabel="Current Update"
+	                        />
 
                         {/* Metrics — square boxes, click to activate */}
                         <div>
@@ -2679,13 +2958,14 @@ export default function CreateUpdate() {
                                             key={m.key}
                                             onClick={() => toggleMetric(m.key)}
                                             className={clsx(
-                                                "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                 active
                                                     ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                             )}
-                                        >
-                                            <div className={clsx(
+	                                        >
+                                            <MetricInfoBadge info={m.info} />
+	                                            <div className={clsx(
                                                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
                                                 active ? "bg-violet-100" : "bg-white"
                                             )}>
