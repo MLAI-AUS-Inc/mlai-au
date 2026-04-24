@@ -5,10 +5,9 @@ import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import {
     SparklesIcon,
     LockClosedIcon,
-    CheckIcon,
-    XMarkIcon,
     PaperAirplaneIcon,
-    FunnelIcon
+    InformationCircleIcon,
+    AdjustmentsHorizontalIcon,
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
@@ -22,30 +21,85 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         growth: 18 // percent
     };
 
-    // Mock Investors
+    // Mock Investors — real Australian/APAC venture firms used as references
+    // (mock descriptions, criteria, and tags; not actual investment mandates)
     const investors = [
         {
             id: 1,
-            name: "Sarah Chen",
-            firm: "Alpha Ventures",
-            initials: "SC",
-            color: "bg-green-100 text-green-700",
+            firm: "Antler",
+            firmInitials: "AN",
+            category: "Pre-Seed · Residency",
+            bannerGradient: "linear-gradient(135deg, #1A1A2E 0%, #4A1FA0 100%)",
+            tags: ["Pre-Seed", "Residency", "Global", "First Cheque"],
             criteria: {
-                minMrr: 10000,
+                minMrr: 0,
                 minGrowth: 0,
-                description: "This investor focuses on Pre-seed SaaS with >$10k MRR and B2B focus with clear enterprise potential"
+                description: "Day-zero pre-seed investor. Backs founders through a residency program and writes first cheques before product-market fit."
             }
         },
         {
             id: 2,
-            name: "Michael Rodriguez",
-            firm: "Seed Capital Partners",
-            initials: "MR",
-            color: "bg-gray-100 text-gray-500", // Will be blurred
+            firm: "Folklore Ventures",
+            firmInitials: "FV",
+            category: "Pre-Seed · First Cheque",
+            bannerGradient: "linear-gradient(135deg, #00C8CC 0%, #5057E4 100%)",
+            tags: ["Pre-Seed", "ANZ", "First Cheque", "Generalist"],
+            criteria: {
+                minMrr: 5000,
+                minGrowth: 0,
+                description: "ANZ-focused pre-seed fund. Backs ambitious founders early with conviction-led cheques before revenue and PMF are fully proven."
+            }
+        },
+        {
+            id: 3,
+            firm: "Blackbird Ventures",
+            firmInitials: "BB",
+            category: "Seed · Generational",
+            bannerGradient: "linear-gradient(135deg, #1A1A2E 0%, #5057E4 100%)",
+            tags: ["Seed", "Series A", "ANZ", "Generalist"],
             criteria: {
                 minMrr: 50000,
+                minGrowth: 10,
+                description: "Backs ambitious ANZ founders building generational companies. Portfolio includes Canva, SafetyCulture, Culture Amp."
+            }
+        },
+        {
+            id: 4,
+            firm: "AirTree Ventures",
+            firmInitials: "AT",
+            category: "Seed · Series A",
+            bannerGradient: "linear-gradient(135deg, #6B30D9 0%, #00C8CC 100%)",
+            tags: ["Seed", "Series A", "SaaS", "Marketplaces"],
+            criteria: {
+                minMrr: 100000,
+                minGrowth: 15,
+                description: "Invests in ANZ software, marketplaces, and AI at seed and Series A. Portfolio includes Linktree, Employment Hero, Go1."
+            }
+        },
+        {
+            id: 5,
+            firm: "Square Peg Capital",
+            firmInitials: "SP",
+            category: "Series A · Growth",
+            bannerGradient: "linear-gradient(135deg, #6B30D9 0%, #5057E4 100%)",
+            tags: ["Series A", "Growth", "APAC", "B2B SaaS"],
+            criteria: {
+                minMrr: 150000,
                 minGrowth: 20,
-                description: "This investor focuses on Seed stage SaaS with >$50k MRR, >20% MoM growth, and product-market fit indicators"
+                description: "Series A and growth-stage founders across Australia, Israel, and Southeast Asia. Backed Airwallex, Canva, Deputy, Fiverr."
+            }
+        },
+        {
+            id: 6,
+            firm: "Main Sequence Ventures",
+            firmInitials: "MS",
+            category: "Deep Tech · CSIRO",
+            bannerGradient: "linear-gradient(135deg, #4A1FA0 0%, #2D1263 100%)",
+            tags: ["Deep Tech", "AI / ML", "CSIRO-backed", "Series A"],
+            criteria: {
+                minMrr: 200000,
+                minGrowth: 10,
+                description: "CSIRO-backed deep tech fund. Invests in science-led startups across AI, quantum, space, and advanced materials with defensible IP."
             }
         }
     ];
@@ -53,139 +107,210 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { stats, investors };
 }
 
-function MetricCheck({ met, label }: { met: boolean; label: string }) {
-    return (
-        <div className={clsx("text-xs font-medium flex items-center gap-1.5", met ? "text-green-700" : "text-gray-500")}>
-            {met ? (
-                <CheckIcon className="w-3.5 h-3.5" />
-            ) : (
-                <XMarkIcon className="w-3.5 h-3.5 text-gray-400" />
-            )}
-            <span className={clsx(met ? "" : "text-gray-500 italic")}>{label}</span>
-        </div>
-    );
-}
-
 export default function DiscoverInvestors() {
     const { stats, investors } = useLoaderData<typeof loader>();
 
     return (
-        <div className="space-y-8 pb-12">
+        <div className="vr-scope space-y-8 pb-12">
 
-            {/* Header Banner */}
-            <div className="bg-gradient-to-r from-violet-600 to-purple-600 rounded-xl p-8 text-white shadow-lg relative overflow-hidden">
-                <div className="relative z-10">
-                    <h1 className="text-2xl font-bold flex items-center gap-3 mb-2">
-                        <SparklesIcon className="w-8 h-8" />
-                        Discover Investors
-                    </h1>
-                    <p className="text-violet-100 max-w-2xl">
-                        Hit the investment criteria in your monthly updates to unlock connection requests with investors actively looking for startups like yours.
+            {/* Page header — eyebrow + Oswald title + subtitle + action buttons */}
+            <div className="flex items-start justify-between gap-4 flex-wrap">
+                <div>
+                    <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
+                    <h1 className="vr-text-page-title">Discover Investors</h1>
+                    <p
+                        className="vr-text-body-small mt-1"
+                        style={{ color: "var(--vr-color-text-mid)" }}
+                    >
+                        Match with investors actively looking for startups like yours.
                     </p>
                 </div>
-                {/* Decorative circles */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/3" />
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                    >
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                        Filter Criteria
+                    </button>
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
+                        style={{
+                            background: "var(--vr-color-primary)",
+                            color: "#fff",
+                            boxShadow: "var(--vr-shadow-sm)",
+                        }}
+                    >
+                        <SparklesIcon className="w-4 h-4" />
+                        View My Stats
+                    </button>
+                </div>
             </div>
 
-            {/* Investors Grid */}
-            <div className="space-y-6">
+            {/* Info alert — explains the unlock mechanism */}
+            <div className="vr-alert vr-alert-info">
+                <span className="vr-alert-icon">
+                    <InformationCircleIcon className="w-4 h-4" />
+                </span>
+                <div>
+                    <div className="vr-alert-title">Unlock connections by hitting investor criteria</div>
+                    <div className="vr-alert-body">
+                        As your monthly updates meet each investor's benchmarks (MRR, growth, stage), their profile unlocks and you can request a connection directly.
+                    </div>
+                </div>
+            </div>
+
+            {/* Investors grid — 1 col mobile, 2 tablet, 3 laptop+ */}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {investors.map((investor) => {
                     const mrrMet = stats.mrr >= investor.criteria.minMrr;
                     const growthMet = stats.growth >= investor.criteria.minGrowth;
                     const isUnlocked = mrrMet && growthMet;
+                    const criteriaMet = [mrrMet, growthMet].filter(Boolean).length;
 
                     return (
                         <div
                             key={investor.id}
-                            className={clsx(
-                                "bg-white rounded-xl border-2 transition-all duration-200 overflow-hidden",
-                                isUnlocked ? "border-green-400 shadow-sm" : "border-gray-100 shadow-sm opacity-90"
-                            )}
+                            className="vr-investor-card flex flex-col overflow-hidden"
+                            style={{
+                                background: "var(--vr-color-bg)",
+                                borderRadius: "var(--vr-radius-lg)",
+                                opacity: isUnlocked ? 1 : 0.96,
+                            }}
                         >
-                            {/* Card Header */}
-                            <div className="p-6 flex items-start justify-between border-b border-gray-50">
-                                <div className="flex items-center gap-4">
-                                    <div className={clsx(
-                                        "w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg",
-                                        isUnlocked ? investor.color : "bg-gray-200 text-gray-400"
-                                    )}>
-                                        {isUnlocked ? investor.initials : "??"}
-                                    </div>
-                                    <div>
-                                        <h3 className={clsx("font-bold text-lg", !isUnlocked && "blur-[6px] select-none text-gray-400")}>
-                                            {isUnlocked ? investor.name : "Investor Name Used"}
-                                        </h3>
-                                        <p className={clsx("text-sm text-gray-500", !isUnlocked && "blur-[4px] select-none")}>
-                                            {isUnlocked ? investor.firm : "Venture Firm Name"}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div>
-                                    {isUnlocked ? (
-                                        <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wide">
-                                            Unlocked!
-                                        </span>
-                                    ) : (
-                                        <LockClosedIcon className="w-5 h-5 text-gray-300" />
+                            {/* Top row: category + unlock badge */}
+                            <div className="flex items-start justify-between gap-2 px-6 pt-5 pb-3">
+                                <span
+                                    className="vr-text-eyebrow"
+                                    style={{ color: "var(--vr-color-text-sub)" }}
+                                >
+                                    {investor.category}
+                                </span>
+                                {isUnlocked ? (
+                                    <span className="vr-badge vr-badge-teal">Unlocked</span>
+                                ) : (
+                                    <span
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+                                        style={{
+                                            background: "var(--vr-color-surface)",
+                                            color: "var(--vr-color-text-sub)",
+                                            border: "1px solid var(--vr-color-border-md)",
+                                        }}
+                                    >
+                                        <LockClosedIcon className="w-3 h-3" />
+                                        {criteriaMet}/2
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Banner */}
+                            <div className="mx-6 mb-4 relative overflow-hidden" style={{ borderRadius: "var(--vr-radius-md)" }}>
+                                <div
+                                    className="vr-investor-card-banner aspect-[16/9] flex items-center justify-center relative"
+                                    style={{
+                                        background: investor.bannerGradient,
+                                        filter: isUnlocked ? undefined : "grayscale(0.6)",
+                                    }}
+                                >
+                                    <span
+                                        className="font-bold select-none"
+                                        style={{
+                                            fontFamily: "var(--vr-font-title)",
+                                            color: "rgba(255,255,255,0.92)",
+                                            fontSize: "56px",
+                                            letterSpacing: "0.02em",
+                                            textShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                                        }}
+                                    >
+                                        {investor.firmInitials}
+                                    </span>
+                                    {/* Decorative bubble */}
+                                    <div
+                                        className="absolute -top-6 -right-6 w-24 h-24 rounded-full"
+                                        style={{ background: "rgba(255,255,255,0.12)" }}
+                                    />
+                                    {/* Locked overlay */}
+                                    {!isUnlocked && (
+                                        <div
+                                            className="absolute inset-0 flex items-center justify-center"
+                                            style={{ background: "rgba(26,26,46,0.35)" }}
+                                        >
+                                            <LockClosedIcon className="w-8 h-8 text-white drop-shadow" />
+                                        </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Body Content */}
-                            <div className="p-6 space-y-4">
-                                {/* Criteria Box */}
-                                <div className="bg-violet-50/50 rounded-lg p-4 border border-violet-100">
-                                    <h4 className="flex items-center gap-2 text-sm font-bold text-violet-900 mb-2">
-                                        <FunnelIcon className="w-4 h-4 text-violet-600" />
-                                        Investment Criteria
-                                    </h4>
-                                    <p className="text-sm text-violet-800 leading-relaxed">
-                                        {investor.criteria.description}
-                                    </p>
-                                </div>
+                            {/* Firm name — primary title */}
+                            <h3
+                                className={clsx("vr-text-card-title px-6", !isUnlocked && "blur-[5px] select-none")}
+                                style={{ fontSize: "22px", lineHeight: 1.2 }}
+                            >
+                                {isUnlocked ? investor.firm : "Venture Firm"}
+                            </h3>
 
-                                {/* Progress Box */}
-                                <div className={clsx("rounded-lg p-4 border", isUnlocked ? "bg-green-50/50 border-green-100" : "bg-gray-50/50 border-gray-100")}>
-                                    <h4 className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">
-                                        Your Progress
-                                    </h4>
-                                    <div className="space-y-1">
-                                        <MetricCheck
-                                            met={mrrMet}
-                                            label={`MRR requirement met ($${stats.mrr.toLocaleString()} >= $${investor.criteria.minMrr.toLocaleString()})`}
-                                        />
-                                        <MetricCheck
-                                            met={growthMet}
-                                            label={growthMet
-                                                ? `Growth requirement met (${stats.growth}% >= ${investor.criteria.minGrowth}%)`
-                                                : `Growth below threshold (${stats.growth}% < ${investor.criteria.minGrowth}%)`
-                                            }
-                                        />
-                                    </div>
-                                </div>
+                            {/* Description */}
+                            <p
+                                className="vr-text-body-small px-6 mt-2 line-clamp-3"
+                                style={{ color: "var(--vr-color-text-mid)" }}
+                            >
+                                {investor.criteria.description}
+                            </p>
+
+                            {/* Tags */}
+                            <div className="px-6 mt-4 flex flex-wrap gap-1.5">
+                                {investor.tags.map((tag) => (
+                                    <span
+                                        key={tag}
+                                        className="inline-flex items-center px-2.5 py-1 text-xs font-medium"
+                                        style={{
+                                            background: "var(--vr-color-purple-50)",
+                                            color: "var(--vr-color-purple-700)",
+                                            borderRadius: "var(--vr-radius-sm)",
+                                        }}
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
                             </div>
 
-                            {/* Footer Action */}
-                            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
+                            {/* CTA — pushed to bottom via flex-1 spacer above */}
+                            <div className="mt-5 flex-1" />
+                            <div className="px-6 pb-5">
                                 <button
-                                    className={clsx(
-                                        "w-full py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition-colors",
-                                        isUnlocked
-                                            ? "bg-violet-600 text-white hover:bg-violet-700 shadow-sm"
-                                            : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                                    )}
                                     disabled={!isUnlocked}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 font-semibold text-sm transition-all"
+                                    style={
+                                        isUnlocked
+                                            ? {
+                                                  background: "var(--vr-color-primary)",
+                                                  color: "#fff",
+                                                  boxShadow: "var(--vr-shadow-sm)",
+                                                  borderRadius: "var(--vr-radius-md)",
+                                              }
+                                            : {
+                                                  background: "var(--vr-color-neutral-100)",
+                                                  color: "var(--vr-color-text-sub)",
+                                                  cursor: "not-allowed",
+                                                  borderRadius: "var(--vr-radius-md)",
+                                              }
+                                    }
                                 >
                                     {isUnlocked ? (
                                         <>
-                                            <PaperAirplaneIcon className="w-4 h-4 -rotate-45" />
                                             Request Connection
+                                            <PaperAirplaneIcon className="w-4 h-4 -rotate-45" />
                                         </>
                                     ) : (
                                         <>
                                             <LockClosedIcon className="w-4 h-4" />
-                                            Locked - Meet criteria to unlock
+                                            Meet criteria to unlock
                                         </>
                                     )}
                                 </button>

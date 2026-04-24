@@ -519,6 +519,44 @@
   border: 1px solid var(--vr-color-border-md);
 }
 
+/* ── Investor card (grid on /vibe-raising/discover) ───────── */
+
+.vr-scope .vr-investor-card {
+  border: 1px solid var(--vr-color-border);
+  box-shadow: var(--vr-shadow-sm);
+  transition:
+    transform 0.28s ease-out,
+    box-shadow 0.28s ease-out,
+    border-color 0.28s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover {
+  transform: scale(1.008);
+  box-shadow: var(--vr-shadow-md);
+  border-color: rgba(107, 48, 217, 0.2);
+}
+
+/* Banner zooms slightly inside its clipped container when the card is hovered */
+.vr-scope .vr-investor-card-banner {
+  transition: transform 0.5s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+  transform: scale(1.015);
+}
+
+/* Opt into motion only if the user hasn't requested reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .vr-scope .vr-investor-card:hover {
+    transform: none;
+  }
+  .vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+    transform: none;
+  }
+}
+
 /* ── Responsive tweaks ────────────────────────────────────── */
 
 @media (max-width: 640px) {
