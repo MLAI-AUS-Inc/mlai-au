@@ -12,6 +12,7 @@ export default [
   route("/terms", "routes/terms.tsx"),
   route("/resources", "routes/resources.tsx"),
   route("/roo", "routes/roo.tsx"),
+  route("/&", "routes/article-link-cleanups.tsx", { id: "cleanup-root-ampersand" }),
   route("/practical-ai-learning-beginners-builders", "routes/article-link-cleanups.tsx", { id: "cleanup-practical-ai-learning" }),
   route("/ai-startup-building-pitching", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-building-pitching" }),
   route("/templates/startup-traction", "routes/article-link-cleanups.tsx", { id: "cleanup-startup-traction-template" }),
@@ -59,6 +60,7 @@ export default [
   ]),
 
   // Hackathon pages
+  route("/hackathon", "routes/article-link-cleanups.tsx", { id: "cleanup-hackathon-singular" }),
   route("/hackathons", "routes/hackathons.tsx"),
   route("/medhack", "routes/medhack.tsx"),
 
@@ -67,6 +69,12 @@ export default [
 
   // Article Routes
   route("/articles", "routes/articles.index.tsx"),
+  route("/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates", "routes/article-link-cleanups.tsx", { id: "cleanup-featured-weekly-deep-dive" }),
+  route("/articles/featured/weekly-deep-dive-into-ai-and-ml-advancements-updates-issue-2", "routes/article-link-cleanups.tsx", { id: "cleanup-featured-weekly-deep-dive-issue-2" }),
+  route("/articles/careers/best-way-to-learn-about-ai-2026", "routes/article-link-cleanups.tsx", { id: "cleanup-careers-best-way-to-learn-ai-2026" }),
+  route("/articles/startups/how-vcs-value-startups", "routes/article-link-cleanups.tsx", { id: "cleanup-startups-how-vcs-value-startups" }),
+  route("/articles/ai-startup-accelerator", "routes/article-link-cleanups.tsx", { id: "cleanup-ai-startup-accelerator" }),
+  route("/articles/featured/ai-startup-accelerator", "routes/article-link-cleanups.tsx", { id: "cleanup-featured-ai-startup-accelerator" }),
   route("/articles/*", "routes/articles.slug.tsx"),
 
   // Vibe Raising public landing
