@@ -721,8 +721,13 @@ function parseBulletItems(value?: string) {
     const normalized = String(value || "").replace(/\r\n/g, "\n").trim();
     if (!normalized) return [""];
 
-    const items = normalized
-        .split(/\n+/)
+    const paragraphs = normalized.includes("\n")
+        ? normalized.split(/\n+/)
+        : normalized.length >= 160
+            ? normalized.split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+            : [normalized];
+
+    const items = paragraphs
         .map((item) => item.replace(/^\s*•\s*/, "").trim())
         .filter(Boolean);
 
@@ -744,14 +749,21 @@ function useBulletItemsState(
     const lastCommittedValueRef = React.useRef(String(value || ""));
 
     useEffect(() => {
-        const normalizedValue = String(value || "");
-        if (normalizedValue === lastCommittedValueRef.current) {
+        const normalizedValue = String(value || "").replace(/\r\n/g, "\n").trim();
+        const parsedItems = parseBulletItems(normalizedValue);
+        const serialized = serializeBulletItems(parsedItems);
+        if (normalizedValue && serialized !== normalizedValue) {
+            setItems(parsedItems);
+            lastCommittedValueRef.current = serialized;
+            onChange?.(serialized);
             return;
         }
 
-        setItems(parseBulletItems(normalizedValue));
+        if (normalizedValue === lastCommittedValueRef.current) return;
+
+        setItems(parsedItems);
         lastCommittedValueRef.current = normalizedValue;
-    }, [value]);
+    }, [value, onChange]);
 
     const commitItems = useCallback((nextItems: string[]) => {
         const safeItems = nextItems.length ? nextItems : [""];
