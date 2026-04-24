@@ -15,6 +15,7 @@ import {
 import {
     XMarkIcon,
     SparklesIcon,
+    ArrowPathIcon,
     CloudArrowUpIcon,
     ChevronDownIcon,
     LightBulbIcon,
@@ -225,27 +226,46 @@ function isHtmlErrorDocument(value: unknown) {
     return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
 }
 
+function appendEmailDraftDiagnostics(message: string, error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestId = (error as { requestId?: string })?.requestId;
+    const diagnostics = [
+        statusCode ? `status ${statusCode}` : null,
+        requestId ? `request ${requestId}` : null,
+    ].filter(Boolean);
+
+    if (diagnostics.length === 0) return message;
+
+    const separator = message.endsWith(".") ? " " : ". ";
+    return `${message}${separator}Reference: ${diagnostics.join(" · ")}.`;
+}
+
 function getEmailDraftErrorMessage(error: unknown) {
     const statusCode = (error as { status?: number })?.status;
     const payload = (error as { data?: { error?: string; detail?: string } })?.data;
+    let message = "We couldn't draft your update from Gmail. Please try again.";
     if (typeof payload === "string" && isHtmlErrorDocument(payload)) {
         if (statusCode === 404) {
-            return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            return appendEmailDraftDiagnostics(message, error);
         }
-        return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        return appendEmailDraftDiagnostics(message, error);
     }
-    if (payload?.error) return payload.error;
-    if (payload?.detail) return payload.detail;
+    if (payload?.error) return appendEmailDraftDiagnostics(payload.error, error);
+    if (payload?.detail) return appendEmailDraftDiagnostics(payload.detail, error);
     if (error instanceof Error && error.message) {
         if (isHtmlErrorDocument(error.message)) {
             if (statusCode === 404) {
-                return "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+                message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+                return appendEmailDraftDiagnostics(message, error);
             }
-            return "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+            message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+            return appendEmailDraftDiagnostics(message, error);
         }
-        return error.message;
+        return appendEmailDraftDiagnostics(error.message, error);
     }
-    return "We couldn't draft your update from Gmail. Please try again.";
+    return appendEmailDraftDiagnostics(message, error);
 }
 
 // Hint suggestions per section, cycled through as user adds points
@@ -1242,6 +1262,14 @@ export default function CreateUpdate() {
         isEmailDraftBusy && emailDraftStatus?.state !== "failed"
             ? emailDraftUiError
             : null;
+    const emailDraftButtonTitle = emailDraftActionBusy
+        ? "Checking Gmail connection..."
+        : "Generate Draft from Email";
+    const emailDraftButtonDescription = emailDraftActionBusy
+        ? "Contacting the MLAI backend and checking whether Gmail is already connected."
+        : canGenerateDraftFromEmail
+            ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
+            : "Add a company domain first so Gmail emails can be matched to the right startup.";
 
     const handleRetryEmailDraft = () => {
         clearPersistedEmailDraftRun();
@@ -2278,16 +2306,18 @@ export default function CreateUpdate() {
                                 "flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors",
                                 canGenerateDraftFromEmail ? "bg-purple-100 group-hover:bg-purple-200" : "bg-gray-200",
                             )}>
-                                <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
+                                {emailDraftActionBusy ? (
+                                    <ArrowPathIcon className="h-7 w-7 animate-spin text-purple-600" />
+                                ) : (
+                                    <SparklesIcon className={clsx("w-7 h-7", canGenerateDraftFromEmail ? "text-purple-600" : "text-gray-500")} />
+                                )}
                             </div>
                             <div className="flex-1">
                                 <h2 className="text-lg font-bold text-gray-900">
-                                    Generate Draft from Email
+                                    {emailDraftButtonTitle}
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-0.5">
-                                    {canGenerateDraftFromEmail
-                                        ? "Connect your inbox and let AI analyze recent emails to auto-fill metrics, highlights, and past months in seconds."
-                                        : "Add a company domain first so Gmail emails can be matched to the right startup."}
+                                    {emailDraftButtonDescription}
                                 </p>
                             </div>
                             <ArrowRightIcon className={clsx(

@@ -23,11 +23,22 @@ interface DraftFromEmailWizardProps {
 type Provider = "gmail";
 
 function getErrorMessage(error: unknown) {
+  const statusCode = (error as { status?: number })?.status;
+  const requestId = (error as { requestId?: string })?.requestId;
   const payload = (error as { data?: { error?: string; detail?: string } })?.data;
-  if (payload?.error) return payload.error;
-  if (payload?.detail) return payload.detail;
-  if (error instanceof Error && error.message) return error.message;
-  return "We couldn't draft your update from Gmail. Please try again.";
+  const message =
+    payload?.error ??
+    payload?.detail ??
+    (error instanceof Error && error.message ? error.message : null) ??
+    "We couldn't draft your update from Gmail. Please try again.";
+  const diagnostics = [
+    statusCode ? `status ${statusCode}` : null,
+    requestId ? `request ${requestId}` : null,
+  ].filter(Boolean);
+
+  if (diagnostics.length === 0) return message;
+  const separator = message.endsWith(".") ? " " : ". ";
+  return `${message}${separator}Reference: ${diagnostics.join(" · ")}.`;
 }
 
 function ProviderStep({
