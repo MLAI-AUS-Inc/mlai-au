@@ -34,6 +34,7 @@ import {
     FireIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
+    InformationCircleIcon,
 } from "@heroicons/react/24/outline";
 import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
@@ -535,6 +536,204 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     );
 }
 
+// ── Vibe Raising design-system components (scoped via .vr-scope on the page wrapper) ──
+// Split a text blob into bullet items on newlines or sentence boundaries.
+function splitItems(text: string): string[] {
+    if (!text) return [];
+    return text.includes("\n")
+        ? text.split(/\n+/).filter(s => s.trim())
+        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
+}
+
+function VRAlertInfo({ title, body }: { title: string; body: string }) {
+    return (
+        <div className="vr-alert vr-alert-info">
+            <span className="vr-alert-icon">
+                <InformationCircleIcon className="w-4 h-4" />
+            </span>
+            <div>
+                <div className="vr-alert-title">{title}</div>
+                <div className="vr-alert-body">{body}</div>
+            </div>
+        </div>
+    );
+}
+
+function VRUpdateSection({
+    icon: Icon,
+    iconColorVar,
+    label,
+    items,
+}: {
+    icon: any;
+    iconColorVar: string;
+    label: string;
+    items: string[];
+}) {
+    if (items.length === 0) return null;
+    return (
+        <div className="vr-us-block">
+            <div className="vr-us-heading">
+                <span className="vr-us-heading-icon" style={{ color: `var(${iconColorVar})` }}>
+                    <Icon className="w-3.5 h-3.5" />
+                </span>
+                <span className="vr-us-heading-text">{label}</span>
+            </div>
+            <div className="vr-us-list">
+                {items.map((item, i) => (
+                    <div className="vr-us-item" key={i}>
+                        <span className="vr-us-item-dot">•</span>
+                        <span className="vr-us-item-text">{item.trim()}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
+    const highlights = splitItems(update.highlights || "");
+    const challenges = splitItems(update.challenges || "");
+    const asks = splitItems(update.asks || "");
+    const initials = (user.fullName || user.companyName || "U")
+        .split(" ")
+        .map((p: string) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    return (
+        <div className="vr-update-card">
+            {/* Header with teal gradient + bubbles + hover-triggered purple flash */}
+            <div className="vr-uch">
+                <div className="vr-uch-bubble-1" />
+                <div className="vr-uch-bubble-2" />
+                <div className="vr-uch-glow" aria-hidden="true" />
+                <div className="vr-uch-date">{format(new Date(update.date), "MMMM d, yyyy")}</div>
+                <div className="vr-uch-main">
+                    <div className="vr-uch-emoji" aria-hidden="true">🦘</div>
+                    <div>
+                        <div className="vr-uch-title-row">
+                            <span className="vr-uch-title">{update.month}</span>
+                            <span className="vr-current-chip">Current</span>
+                        </div>
+                        <div className="vr-uch-company">{user.companyName}</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="vr-ucb">
+                <div className="vr-ucb-actions">
+                    <Link
+                        to={`/vibe-raising/create-update?edit=${update.id}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium"
+                        style={{ color: "var(--vr-color-text-mid)" }}
+                    >
+                        <PencilSquareIcon className="w-4 h-4" />
+                        Edit
+                    </Link>
+                </div>
+
+                {/* Per-update KPI grid — uses existing MetricCard, untouched */}
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
+                    {update.metrics?.revenue && (
+                        <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
+                    )}
+                    {update.metrics?.users && (
+                        <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
+                    )}
+                    {update.metrics?.runway && (
+                        <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
+                    )}
+                    {update.metrics?.mrr && (
+                        <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
+                    )}
+                    {update.metrics?.burnRate && (
+                        <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
+                    )}
+                </div>
+
+                {/* Sections */}
+                <VRUpdateSection
+                    icon={SparklesIcon}
+                    iconColorVar="--vr-color-warning"
+                    label="Key Highlights"
+                    items={highlights}
+                />
+                <VRUpdateSection
+                    icon={ExclamationCircleIcon}
+                    iconColorVar="--vr-color-brand-orange"
+                    label="Challenges"
+                    items={challenges}
+                />
+                <VRUpdateSection
+                    icon={QuestionMarkCircleIcon}
+                    iconColorVar="--vr-color-primary"
+                    label="Ask from Investors"
+                    items={asks}
+                />
+            </div>
+
+            {/* Footer */}
+            <div className="vr-ucf">
+                <div className="vr-ucf-left">
+                    <div className="vr-ucf-avatar">{initials}</div>
+                    <div>
+                        <div className="vr-ucf-name">{user.companyName}</div>
+                        <div className="vr-ucf-company">Sent to 14 investors · 78% open rate</div>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                    >
+                        Share Link
+                    </button>
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg"
+                        style={{
+                            background: "var(--vr-color-primary)",
+                            color: "#fff",
+                        }}
+                    >
+                        Resend to Unopened
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => void }) {
+    const previewSource = update.highlights || update.challenges || "";
+    const preview = previewSource.length > 0
+        ? (previewSource.split(/(?<=\.)\s+/)[0] || previewSource).slice(0, 80) + (previewSource.length > 80 ? "…" : "")
+        : "No content yet";
+    return (
+        <button type="button" className="vr-past-row" onClick={onClick}>
+            <div className="vr-past-left">
+                <span className="vr-past-dot" />
+                <div>
+                    <div className="vr-past-month">{update.month}</div>
+                    <div className="vr-past-preview">{preview}</div>
+                </div>
+            </div>
+            <div className="vr-past-right">
+                <span className="vr-badge vr-badge-teal">Sent</span>
+                <span className="vr-past-arrow" aria-hidden="true">›</span>
+            </div>
+        </button>
+    );
+}
+
 // 1. Founder Dashboard View
 function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
@@ -546,6 +745,11 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const daysSinceLast = latestUpdate ? differenceInDays(new Date(), new Date(latestUpdate.date)) : 0;
     const isOverdue = daysSinceLast > 21;
     const daysOverdue = daysSinceLast - 21;
+
+    // Current vs past update split for the tabs below
+    const currentUpdate = updates.find(u => u.isCurrent) || updates[0] || null;
+    const pastUpdates = updates.filter(u => u !== currentUpdate);
+    const [activeTab, setActiveTab] = useState<"current" | "past">("current");
 
     if (!hasUpdates) {
         return (
@@ -633,19 +837,112 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     }
 
     return (
-        <div className="space-y-8 pb-12">
-            <div className="flex items-center justify-between">
+        <div className="vr-scope space-y-8 pb-12">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Your Monthly Updates</h1>
-                    <p className="text-gray-500 mt-1">Share progress with your investors</p>
+                    <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
+                    <h1 className="vr-text-page-title">Your Monthly Updates</h1>
+                    <p className="vr-text-body-small mt-1" style={{ color: "var(--vr-color-text-mid)" }}>
+                        Share progress with your investors. Ship fast, build trust from day one.
+                    </p>
                 </div>
-                <Link
-                    to="/vibe-raising/create-update"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                    Create Update
-                </Link>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                        onClick={() => navigate("/vibe-raising/discover")}
+                    >
+                        Analytics
+                    </button>
+                    <Link
+                        to="/vibe-raising/create-update"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
+                        style={{
+                            background: "var(--vr-color-primary)",
+                            color: "#fff",
+                            boxShadow: "var(--vr-shadow-sm)",
+                        }}
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Create Update
+                    </Link>
+                </div>
+            </div>
+
+            {/* Info alert — investor engagement signal */}
+            <VRAlertInfo
+                title="3 investors opened your last update"
+                body="AirTree, Blackbird, and Antler viewed your most recent update. Consider following up with personalised notes."
+            />
+
+            {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
+            <div className="vr-metrics-row">
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
+                    />
+                    <div className="vr-metric-eyebrow">
+                        MRR
+                        <span className="vr-badge vr-badge-purple">↗ vs last mo</span>
+                    </div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Active Users</div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "var(--vr-color-brand-orange)" }}
+                    />
+                    <div className="vr-metric-eyebrow">
+                        Runway
+                        <span className="vr-badge vr-badge-orange">⚠ Low</span>
+                    </div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Raise Committed</div>
+                    <div className="vr-metric-value">62%</div>
+                    <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Burn Rate</div>
+                    <div className="vr-metric-value">$52K/mo</div>
+                    <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
+                </div>
             </div>
 
             {isOverdue && (
@@ -678,12 +975,54 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 </div>
             )}
 
-            {/* All update cards - current expanded, past collapsed */}
-            <div className="space-y-3">
-                {updates.map((update) => (
-                    <UpdateCard key={`${user.activeCompanyId || "default"}-${update.id}`} update={update} isCurrent={update.isCurrent} user={user} />
-                ))}
+            {/* Tabs + tab content */}
+            <div>
+                <div className="vr-tabs">
+                    <button
+                        type="button"
+                        className={clsx("vr-tab", activeTab === "current" && "is-active")}
+                        onClick={() => setActiveTab("current")}
+                    >
+                        Current Update
+                    </button>
+                    <button
+                        type="button"
+                        className={clsx("vr-tab", activeTab === "past" && "is-active")}
+                        onClick={() => setActiveTab("past")}
+                    >
+                        Past Updates
+                    </button>
+                </div>
+
+                <div className="mt-6">
+                    {activeTab === "current" ? (
+                        currentUpdate ? (
+                            <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                        ) : (
+                            <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                No current update yet — create your first one above.
+                            </p>
+                        )
+                    ) : (
+                        <div className="space-y-2">
+                            {pastUpdates.length > 0 ? (
+                                pastUpdates.map((u) => (
+                                    <VRPastUpdateRow
+                                        key={`${user.activeCompanyId || "default"}-${u.id}`}
+                                        update={u}
+                                        onClick={() => navigate(`/vibe-raising/create-update?edit=${u.id}`)}
+                                    />
+                                ))
+                            ) : (
+                                <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                    No past updates yet. Once you send one, it'll show up here.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
+
         </div>
     );
 }
