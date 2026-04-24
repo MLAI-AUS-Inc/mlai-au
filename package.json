@@ -22,6 +22,8 @@
     "typecheck": "react-router typegen && tsc -b && bun run check:article-internal-links"
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@radix-ui/react-slot": "^1.2.4",

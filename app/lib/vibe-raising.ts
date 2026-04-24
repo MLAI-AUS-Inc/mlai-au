@@ -19,14 +19,17 @@ import type {
   VibeRaisingStartupUpdateStepState,
   VibeRaisingStartupUpdateState,
   VibeRaisingStartupUpdateStatusResponse,
+  VibeRaisingVideoCompressionMetadata,
   VibeRaisingVideoUploadResponse,
+  VibeRaisingVideoUploadSessionResponse,
 } from "~/types/vibe-raising";
 
 const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
 const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
 const UPDATES_PATH = "/api/v1/vibe-raising/updates/";
-const VIDEO_UPLOAD_PATH = "/api/v1/vibe-raising/uploads/video/";
+const VIDEO_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/video/session/";
+const VIDEO_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/video/complete/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
 const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
@@ -1219,16 +1222,70 @@ export async function uploadVibeRaisingUpdateVideo(
   backendBaseUrl: string,
   file: File,
   signal?: AbortSignal,
+  compression?: VibeRaisingVideoCompressionMetadata,
+  onPhase?: (phase: "creating_session" | "uploading" | "finalizing") => void,
 ): Promise<VibeRaisingVideoUploadResponse> {
-  const formData = new FormData();
-  formData.append("video", file);
-
-  return requestBrowserJson<VibeRaisingVideoUploadResponse>(
+  onPhase?.("creating_session");
+  const session = await requestBrowserJson<VibeRaisingVideoUploadSessionResponse>(
     backendBaseUrl,
-    VIDEO_UPLOAD_PATH,
+    VIDEO_UPLOAD_SESSION_PATH,
     {
       method: "POST",
-      body: formData,
+      body: JSON.stringify({
+        originalFilename: file.name,
+        contentType: file.type,
+        fileSizeBytes: file.size,
+      }),
+      signal,
+    },
+  );
+
+  const uploadHeaders = new Headers(session.requiredHeaders || {});
+  if (!uploadHeaders.has("Content-Type")) {
+    uploadHeaders.set("Content-Type", session.contentType || file.type || "application/octet-stream");
+  }
+
+  onPhase?.("uploading");
+  let uploadResponse: Response;
+  try {
+    uploadResponse = await fetch(session.uploadUrl, {
+      method: "PUT",
+      headers: uploadHeaders,
+      body: file,
+      signal,
+    });
+  } catch (error: any) {
+    error.requestPath = "signed-storage-upload";
+    error.message = "Storage upload failed before the file reached Firebase. Check Firebase Storage CORS and try again.";
+    throw error;
+  }
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text().catch(() => "");
+    const error: any = new Error(
+      uploadResponse.status === 403
+        ? "The video upload session expired. Please select the video again."
+        : errorText || `Storage upload failed with status ${uploadResponse.status}`,
+    );
+    error.status = uploadResponse.status;
+    error.data = errorText;
+    error.requestPath = "signed-storage-upload";
+    throw error;
+  }
+
+  onPhase?.("finalizing");
+  return requestBrowserJson<VibeRaisingVideoUploadResponse>(
+    backendBaseUrl,
+    VIDEO_UPLOAD_COMPLETE_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        storagePath: session.storagePath,
+        originalFilename: file.name,
+        contentType: session.contentType || file.type,
+        fileSizeBytes: file.size,
+        compression,
+      }),
       signal,
     },
   );

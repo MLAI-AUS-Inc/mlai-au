@@ -88,6 +88,25 @@ export interface VibeRaisingVideoUploadResponse {
   originalFilename: string;
 }
 
+export interface VibeRaisingVideoUploadSessionResponse {
+  uploadUrl: string;
+  storagePath: string;
+  contentType: string;
+  fileSizeBytes?: number;
+  expiresAt: string;
+  maxUploadBytes: number;
+  requiredHeaders: Record<string, string>;
+}
+
+export interface VibeRaisingVideoCompressionMetadata {
+  compressed?: boolean;
+  originalFilename?: string;
+  originalContentType?: string;
+  originalFileSizeBytes?: number;
+  compressedFileSizeBytes?: number;
+  compressionRatio?: number | null;
+}
+
 export type VibeRaisingStartupUpdateState =
   | "needs_domain"
   | "auth_required"
