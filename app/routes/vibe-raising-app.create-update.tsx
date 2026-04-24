@@ -38,9 +38,44 @@ import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
+import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
-import type { VibeRaisingStartupUpdateStatusResponse, VibeRaisingVideoCompressionMetadata } from "~/types/vibe-raising";
+import type { VibeRaisingInputSourceKey, VibeRaisingStartupUpdateStatusResponse, VibeRaisingVideoCompressionMetadata } from "~/types/vibe-raising";
+
+const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
+    "gmail",
+    "stripe",
+    "xero",
+    "bank_feed",
+    "notion",
+    "google_drive",
+    "slack",
+]);
+
+const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
+    gmail: "Gmail",
+    stripe: "Stripe",
+    xero: "Xero",
+    bank_feed: "Bank Feed",
+    notion: "Notion",
+    google_drive: "Google Drive",
+    slack: "Slack",
+};
+
+function parseInputSources(value: string | null): VibeRaisingInputSourceKey[] {
+    if (!value) return [];
+    const seen = new Set<VibeRaisingInputSourceKey>();
+    value
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .forEach((item) => {
+            if (VALID_INPUT_SOURCE_KEYS.has(item as VibeRaisingInputSourceKey)) {
+                seen.add(item as VibeRaisingInputSourceKey);
+            }
+        });
+    return Array.from(seen);
+}
 
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
@@ -57,6 +92,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const resumeEmailDrafting =
         url.searchParams.get("email_draft") === "1" ||
         url.searchParams.get("draft_from_email") === "1";
+    const selectedInputSources = parseInputSources(url.searchParams.get("inputs"));
 
     let existingData = null;
     if (editId) {
@@ -79,6 +115,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         isEdit: !!editId,
         backendBaseUrl: String(env.BACKEND_BASE_URL || "http://localhost:8000"),
         resumeEmailDrafting,
+        selectedInputSources,
     };
 }
 
@@ -1330,12 +1367,27 @@ export default function CreateUpdate() {
         isEdit,
         backendBaseUrl,
         resumeEmailDrafting,
+        selectedInputSources,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const goToConnectDataStep = useCallback(() => {
+        const returnPath = `${location.pathname}${location.search || ""}`;
+        navigate(`/vibe-raising/connect-data?next=${encodeURIComponent(returnPath)}`);
+    }, [location.pathname, location.search, navigate]);
+    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
+        if (step === "connect") {
+            goToConnectDataStep();
+            return;
+        }
+
+        if (step === "draft") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, [goToConnectDataStep]);
     const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
@@ -1408,6 +1460,10 @@ export default function CreateUpdate() {
         if (initial.size === 0) initial.add("revenue");
         return initial;
     });
+    const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
+    const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
+        ? selectedInputSourceLabels.join(", ")
+        : "Manual materials only";
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
     const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
     const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
@@ -1736,7 +1792,10 @@ export default function CreateUpdate() {
             );
             const statusResponse = await runVibeRaisingStartupUpdate(
                 backendBaseUrl,
-                shouldForceRegenerate ? { forceRegenerate: true } : undefined,
+                {
+                    ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
+                    inputSources: selectedInputSources,
+                },
             );
             emailDraftIgnoredRunIdRef.current = null;
             if (statusResponse.state === "auth_required") {
@@ -1756,7 +1815,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources]);
 
     const handleGenerateDraftFromEmailClick = useCallback(async () => {
         if (!canGenerateDraftFromEmail) {
@@ -1767,6 +1826,10 @@ export default function CreateUpdate() {
         setEmailDraftActionBusy(true);
         setEmailDraftUiError(null);
         try {
+            if (!selectedInputSources.includes("gmail")) {
+                await startOrResumeEmailDraft();
+                return;
+            }
             const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
             if (bootstrap.googleConnected) {
                 await startOrResumeEmailDraft();
@@ -1781,7 +1844,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, startOrResumeEmailDraft]);
+    }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, selectedInputSources, startOrResumeEmailDraft]);
 
     const handleEmailWizardConnected = useCallback(() => {
         setShowEmailWizard(false);
@@ -1939,13 +2002,13 @@ export default function CreateUpdate() {
             ? emailDraftUiError
             : null;
     const emailDraftButtonTitle = emailDraftActionBusy
-        ? "Checking Gmail connection..."
-        : "AI Drafting";
+        ? "Checking selected inputs..."
+        : "Generate update from selected inputs";
     const emailDraftButtonDescription = emailDraftActionBusy
-        ? "Contacting the MLAI backend and checking whether Gmail is already connected."
+        ? "Contacting the MLAI backend and preparing the selected sources for drafting."
         : canGenerateDraftFromEmail
-            ? "Scan filtered Gmail data for key signals, metrics, wins, and asks, then turn them into a first draft."
-            : "Add a company domain first so Gmail emails can be matched to the right startup.";
+            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks, then turn them into a first draft.`
+            : "Add a company domain first so inputs can be matched to the right startup.";
     const isVideoUploadPending = videoUploadStatus === "validating" ||
         videoUploadStatus === "compressing" ||
         videoUploadStatus === "creating_session" ||
@@ -2403,8 +2466,38 @@ export default function CreateUpdate() {
             }
         };
 
+        const handleReviewStepperClick = (step: MonthlyUpdateStepKey) => {
+            if (step === "connect") {
+                goToConnectDataStep();
+                return;
+            }
+
+            if (step === "draft") {
+                setShowConfirmPopup(false);
+                setDismissedFeedback(true);
+                return;
+            }
+
+            if (step === "review") {
+                setShowConfirmPopup(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+
+            if (step === "publish") {
+                setShowConfirmPopup(true);
+            }
+        };
+
         return (
             <div className="max-w-5xl mx-auto pb-12">
+                <MonthlyUpdateStepper
+                    activeStep={showConfirmPopup ? "publish" : "review"}
+                    enabledSteps={["connect", "draft", "review", "publish"]}
+                    onStepClick={handleReviewStepperClick}
+                    className="mt-6 mb-6"
+                />
+
                 {/* Header — back arrow top-left, title center-left, X on right */}
                 <div className="flex items-center gap-3 py-6 mb-4">
                     <button
@@ -2742,7 +2835,14 @@ export default function CreateUpdate() {
 
                         return (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
-                                <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                                <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                                    <MonthlyUpdateStepper
+                                        activeStep="publish"
+                                        enabledSteps={["connect", "draft", "review", "publish"]}
+                                        onStepClick={handleReviewStepperClick}
+                                        compact
+                                        className="mb-6 text-left"
+                                    />
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                                         Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{count} investors</strong> matching your criteria: {criteria.join(", ")}.
@@ -2866,6 +2966,13 @@ export default function CreateUpdate() {
     // 3. Create/Edit Form View
     return (
         <div className="max-w-3xl mx-auto pb-12">
+            <MonthlyUpdateStepper
+                activeStep="draft"
+                enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                onStepClick={handleDraftStepperClick}
+                className="mt-6 mb-6"
+            />
+
             {/* Header */}
             <div className="sticky top-0 z-10 py-4 mb-6 flex items-center justify-between">
                 <h1 className="text-xl font-bold text-gray-900">
@@ -3088,6 +3195,35 @@ export default function CreateUpdate() {
                     {isEmailDraftBusy && (
                         <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
                     )}
+                </div>
+
+                <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">Selected inputs</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {selectedInputSourceLabels.length > 0 ? (
+                                    selectedInputSourceLabels.map((label) => (
+                                        <span key={label} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
+                                            {label}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500 ring-1 ring-gray-100">
+                                        Manual materials only
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        {!isEdit && (
+                            <Link
+                                to="/vibe-raising/connect-data"
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                            >
+                                Change inputs
+                            </Link>
+                        )}
+                    </div>
                 </div>
 
                 {emailDraftCardVisible ? (

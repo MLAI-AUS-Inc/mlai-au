@@ -4,6 +4,35 @@ export function shouldUseDevBackendStub() {
     return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
 }
 
+export function shouldUseDevBackendFallback(error?: unknown) {
+    if (!import.meta.env.DEV || shouldUseDevBackendStub()) {
+        return false;
+    }
+
+    const maybeError = error as {
+        response?: unknown;
+        code?: string;
+        message?: string;
+        cause?: { code?: string; message?: string };
+    } | null | undefined;
+    if (maybeError?.response) {
+        return false;
+    }
+
+    const code = String(maybeError?.code || maybeError?.cause?.code || "");
+    const message = String(maybeError?.message || maybeError?.cause?.message || "").toLowerCase();
+    return (
+        code === "ECONNREFUSED" ||
+        code === "ECONNRESET" ||
+        code === "ENOTFOUND" ||
+        code === "ETIMEDOUT" ||
+        message.includes("network connection lost") ||
+        message.includes("network error") ||
+        message.includes("failed to fetch") ||
+        message.includes("connection refused")
+    );
+}
+
 // Catch-all stub adapter for local development only. When
 // VITE_STUB_BACKEND=true, every API request short-circuits and returns a
 // fake empty response instead of hitting api.mlai.au.

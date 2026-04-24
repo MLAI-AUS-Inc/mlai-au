@@ -22,10 +22,12 @@ import type { User } from '~/types/user';
 interface AuthenticatedLayoutProps {
     children: React.ReactNode;
     user: User;
-    navigation?: { name: string; href: string; icon: any }[];
+    navigation?: NavigationItem[];
     userNavigation?: { name: string; href: string }[];
     logoutAction?: string;
 }
+
+type NavigationItem = { name: string; href: string; icon: any; exact?: boolean };
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
@@ -37,7 +39,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const location = useLocation();
     const pathname = location.pathname;
 
-    const defaultNavigation = [
+    const defaultNavigation: NavigationItem[] = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
         { name: 'Profile', href: '/esafety/profile', icon: UserCircleIcon },
         { name: 'Submissions', href: '/esafety/leaderboard', icon: TrophyIcon },
@@ -48,7 +50,9 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
     const updatedNavigation = navigation.map(item => ({
         ...item,
-        current: pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
+        current: item.exact
+            ? pathname === item.href
+            : pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
     }));
 
     const defaultUserNavigation = [

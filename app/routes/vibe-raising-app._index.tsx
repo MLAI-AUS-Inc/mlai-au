@@ -814,7 +814,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             consistent, transparent monthly updates.
                         </p>
                         <button
-                            onClick={() => triggerAnnouncement(() => navigate("/vibe-raising/create-update"))}
+                            onClick={() => triggerAnnouncement(() => navigate("/vibe-raising/connect-data"))}
                             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
                         >
                             Create Your First Update
@@ -898,7 +898,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         Analytics
                     </button>
                     <Link
-                        to="/vibe-raising/create-update"
+                        to="/vibe-raising/connect-data"
                         className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
                         style={{
                             background: "var(--vr-color-primary)",
@@ -1004,7 +1004,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             </div>
                         </div>
                         <Link
-                            to="/vibe-raising/create-update"
+                            to="/vibe-raising/connect-data"
                             className="px-6 py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Create Update Now

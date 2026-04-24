@@ -18,7 +18,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     // If not adding a new company and already registered, skip setup
     if (!isAddingNew && user.companyRegistered) {
-        throw redirect("/vibe-raising/create-update");
+        throw redirect("/vibe-raising/connect-data");
     }
 
     return { user, activeCompany, isAddingNew };
@@ -57,7 +57,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         await setVibeRaisingActiveCompany(env, request, companyId);
     }
 
-    return redirect("/vibe-raising/create-update");
+    return redirect("/vibe-raising/connect-data");
 }
 
 export default function CompanySetup() {
