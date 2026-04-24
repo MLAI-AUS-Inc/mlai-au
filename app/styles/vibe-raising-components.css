@@ -519,6 +519,120 @@
   border: 1px solid var(--vr-color-border-md);
 }
 
+/* ── Company showcase (active company hero on /vibe-raising/companies) ── */
+
+.vr-scope .vr-company-hero {
+  border: 1px solid var(--vr-color-border);
+  box-shadow: var(--vr-shadow-sm);
+  transition:
+    box-shadow 0.28s ease-out,
+    border-color 0.28s ease-out;
+}
+
+.vr-scope .vr-company-hero:hover {
+  box-shadow: var(--vr-shadow-md);
+}
+
+/* Gradient banner at the top of the hero card */
+.vr-scope .vr-company-hero-banner {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #6B30D9 0%, #00C8CC 100%);
+  min-height: 180px;
+}
+
+.vr-scope .vr-company-hero-banner-bubble-1 {
+  position: absolute;
+  top: -60px;
+  right: 80px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+
+.vr-scope .vr-company-hero-banner-bubble-2 {
+  position: absolute;
+  bottom: -40px;
+  right: -20px;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+/* Info grid inside the showcase body */
+.vr-scope .vr-company-info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 640px) {
+  .vr-scope .vr-company-info-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vr-scope .vr-company-info-label {
+  font-family: var(--vr-font-body);
+  font-size: 10px;
+  font-weight: var(--vr-font-weight-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--vr-color-text-sub);
+  margin-bottom: 4px;
+}
+
+.vr-scope .vr-company-info-value {
+  font-family: var(--vr-font-body);
+  font-size: var(--vr-font-size-base);
+  font-weight: var(--vr-font-weight-semibold);
+  color: var(--vr-color-text);
+  word-break: break-word;
+}
+
+/* Secondary compact card for non-active / other companies */
+.vr-scope .vr-company-compact {
+  border: 1px solid var(--vr-color-border);
+  background: var(--vr-color-bg);
+  box-shadow: var(--vr-shadow-sm);
+  transition:
+    transform 0.28s ease-out,
+    box-shadow 0.28s ease-out,
+    border-color 0.28s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-company-compact:hover {
+  transform: scale(1.008);
+  box-shadow: var(--vr-shadow-md);
+  border-color: rgba(107, 48, 217, 0.2);
+}
+
+/* "Register new company" dashed card (used in secondary row) */
+.vr-scope .vr-company-card-add {
+  border: 2px dashed var(--vr-color-border-md);
+  background: var(--vr-color-surface);
+  transition:
+    border-color 0.2s ease-out,
+    background-color 0.2s ease-out,
+    transform 0.2s ease-out;
+}
+
+.vr-scope .vr-company-card-add:hover {
+  border-color: var(--vr-color-primary);
+  background: var(--vr-color-purple-50);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vr-scope .vr-company-compact:hover {
+    transform: none;
+  }
+}
+
 /* ── Responsive tweaks ────────────────────────────────────── */
 
 @media (max-width: 640px) {
