@@ -2,6 +2,7 @@ import {
   BuildingOffice2Icon,
   GlobeAltIcon,
   IdentificationIcon,
+  LinkIcon,
   MapPinIcon,
   SparklesIcon,
   TagIcon,
@@ -12,6 +13,7 @@ import type { ChangeEvent, ReactNode } from "react";
 type StartupDetailsDefaults = {
   companyName?: string | null;
   domain?: string | null;
+  companyLinkedInUrl?: string | null;
   location?: string | null;
   abn?: string | null;
   brandName?: string | null;
@@ -26,6 +28,7 @@ type StartupDetailsDefaults = {
 export type StartupDetailsField =
   | "companyName"
   | "domain"
+  | "companyLinkedInUrl"
   | "location"
   | "abn"
   | "brandName"
@@ -104,6 +107,20 @@ export default function FounderStartupDetailsStep({
               {...inputProps("domain", defaults.domain ?? "")}
               autoComplete="url"
               placeholder="example.com"
+              className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+          </div>
+        </label>
+
+        <label className="block lg:col-span-2">
+          <span className="mb-2 block text-sm font-bold text-gray-700">Company LinkedIn URL{hint("companyLinkedInUrl")}</span>
+          <div className="relative">
+            <FieldIcon><LinkIcon /></FieldIcon>
+            <input
+              name="companyLinkedInUrl"
+              {...inputProps("companyLinkedInUrl", defaults.companyLinkedInUrl ?? "")}
+              autoComplete="url"
+              placeholder="https://www.linkedin.com/company/acme"
               className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
             />
           </div>

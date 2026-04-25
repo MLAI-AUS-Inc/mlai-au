@@ -86,6 +86,7 @@ export interface VibeMarketingAutofillKeywordGroup {
 
 export interface VibeMarketingAutofillResult {
   brandName?: string | null;
+  companyLinkedInUrl?: string | null;
   companyContext?: string | null;
   competitors?: string[];
   competitorSuggestions?: VibeMarketingAutofillCompetitor[];
@@ -104,6 +105,11 @@ export interface VibeMarketingAutofillResult {
   linkedinSimilarSignals?: VibeMarketingAutofillSource[];
   researchSummary?: string | null;
   researchDepth?: Record<string, number>;
+  researchQuality?: Record<string, unknown>;
+  modelTrace?: Record<string, unknown>[];
+  queryLog?: Record<string, unknown>[];
+  evidenceMap?: Record<string, unknown>;
+  stepDurations?: Record<string, number>;
   minimumsMet?: Record<string, boolean>;
   sourceCount?: number;
   competitorCount?: number;
@@ -115,6 +121,7 @@ export interface VibeMarketingCompany {
   id: string;
   name: string;
   domain?: string | null;
+  companyLinkedInUrl?: string | null;
   location?: string | null;
   abn?: string | null;
   organizationId?: number | null;
@@ -124,6 +131,7 @@ export interface VibeMarketingOrganization {
   id?: number | null;
   name: string;
   domain: string;
+  companyLinkedInUrl?: string | null;
   competitors: string[];
   seedKeywords: string[];
 }

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
@@ -102,16 +102,17 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyId: activeCompany?.id ?? null,
         name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
+        companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
         location: stringFromForm(formData, "location"),
         abn: stringFromForm(formData, "abn"),
-        registered: true,
-      });
-      await saveVibeMarketingSettings(env, request, {
-        domain: stringFromForm(formData, "domain"),
         brandName: stringFromForm(formData, "brandName"),
         companyContext: stringFromForm(formData, "companyContext"),
         competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
+        founderNames: listFromForm(formData.get("founderNames")),
+        stage: stringFromForm(formData, "stage"),
+        notes: stringFromForm(formData, "notes"),
+        registered: true,
       });
       if (companyId) {
         await setVibeRaisingActiveCompany(env, request, companyId);
@@ -124,6 +125,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyName: stringFromForm(formData, "companyName"),
         company_name: stringFromForm(formData, "companyName"),
         domain: stringFromForm(formData, "domain"),
+        companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
+        company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),
         location: stringFromForm(formData, "location"),
         abn: stringFromForm(formData, "abn"),
         brandName: stringFromForm(formData, "brandName"),
@@ -132,6 +135,7 @@ export async function action({ request, context }: Route.ActionArgs) {
           companyContext: stringFromForm(formData, "companyContext"),
           competitors: listFromForm(formData.get("competitors")),
           seedKeywords: listFromForm(formData.get("seedKeywords")),
+          companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
         },
         companyContext: stringFromForm(formData, "companyContext"),
         competitors: listFromForm(formData.get("competitors")),
@@ -249,6 +253,7 @@ function startupDefaultsFromBootstrap(bootstrap: VibeMarketingBootstrap): Startu
   return {
     companyName: bootstrap.company.name ?? "",
     domain: bootstrap.company.domain ?? bootstrap.organization.domain ?? "",
+    companyLinkedInUrl: bootstrap.organization.companyLinkedInUrl ?? bootstrap.company.companyLinkedInUrl ?? "",
     location: bootstrap.company.location ?? "",
     abn: bootstrap.company.abn ?? "",
     brandName: bootstrap.settings.brandName ?? bootstrap.organization.name ?? bootstrap.company.name ?? "",
@@ -263,6 +268,11 @@ function startupDefaultsFromBootstrap(bootstrap: VibeMarketingBootstrap): Startu
 
 function isBlank(value: string | null | undefined) {
   return !String(value ?? "").trim();
+}
+
+function startupValuesAreEqual(left: StartupDetailsFormValues | null | undefined, right: StartupDetailsFormValues | null | undefined) {
+  if (!left || !right) return false;
+  return (Object.keys(left) as StartupDetailsField[]).every((field) => String(left[field] ?? "") === String(right[field] ?? ""));
 }
 
 function listTextIsBlank(value: string | null | undefined) {
@@ -336,6 +346,21 @@ function researchDepth(value: unknown): Record<string, number> | undefined {
   return Object.keys(result).length ? result : undefined;
 }
 
+function autofillSources(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((source): source is Record<string, unknown> => Boolean(source && typeof source === "object"))
+    .map((source) => ({
+      url: String(source.url ?? ""),
+      title: source.title ? String(source.title) : undefined,
+      type: source.type ? String(source.type) : undefined,
+      query: source.query ? String(source.query) : undefined,
+      description: source.description ? String(source.description) : undefined,
+      source: source.source ? String(source.source) : undefined,
+    }))
+    .filter((source) => source.url);
+}
+
 function minimumsMet(value: unknown): Record<string, boolean> | undefined {
   if (!value || typeof value !== "object") return undefined;
   const result: Record<string, boolean> = {};
@@ -343,6 +368,14 @@ function minimumsMet(value: unknown): Record<string, boolean> | undefined {
     if (typeof rawValue === "boolean") result[key] = rawValue;
   }
   return Object.keys(result).length ? result : undefined;
+}
+
+function plainObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function objectArray(value: unknown): Record<string, unknown>[] | undefined {
+  return Array.isArray(value) ? value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item))) : undefined;
 }
 
 function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeMarketingAutofillResult | null {
@@ -386,6 +419,12 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
   const seenKeywords = new Set<string>();
   return {
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
+    companyLinkedInUrl:
+      typeof payload.companyLinkedInUrl === "string"
+        ? payload.companyLinkedInUrl
+        : typeof payload.company_linkedin_url === "string"
+          ? payload.company_linkedin_url
+          : null,
     companyContext:
       typeof payload.companyContext === "string"
         ? payload.companyContext
@@ -409,22 +448,34 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
       return true;
     }),
     keywordGroups: groups,
-    sources: Array.isArray(payload.sources)
-      ? payload.sources
-          .filter((source): source is Record<string, unknown> => Boolean(source && typeof source === "object"))
-          .map((source) => ({
-            url: String(source.url ?? ""),
-            title: source.title ? String(source.title) : undefined,
-            type: source.type ? String(source.type) : undefined,
-            query: source.query ? String(source.query) : undefined,
-          }))
-          .filter((source) => source.url)
-      : [],
+    sources: autofillSources(payload.sources),
+    linkedinProfile:
+      payload.linkedinProfile && typeof payload.linkedinProfile === "object"
+        ? {
+            url: String((payload.linkedinProfile as Record<string, unknown>).url ?? ""),
+            title: (payload.linkedinProfile as Record<string, unknown>).title
+              ? String((payload.linkedinProfile as Record<string, unknown>).title)
+              : undefined,
+            description: (payload.linkedinProfile as Record<string, unknown>).description
+              ? String((payload.linkedinProfile as Record<string, unknown>).description)
+              : undefined,
+            vanityName: (payload.linkedinProfile as Record<string, unknown>).vanityName
+              ? String((payload.linkedinProfile as Record<string, unknown>).vanityName)
+              : undefined,
+            blocked: Boolean((payload.linkedinProfile as Record<string, unknown>).blocked),
+          }
+        : undefined,
+    linkedinSimilarSignals: autofillSources(payload.linkedinSimilarSignals ?? payload.linkedin_similar_signals),
     sourceCount: numericValue(payload.sourceCount ?? payload.source_count),
     competitorCount: numericValue(payload.competitorCount ?? payload.competitor_count),
     seedKeywordCount: numericValue(payload.seedKeywordCount ?? payload.seed_keyword_count),
     researchSummary: typeof payload.researchSummary === "string" ? payload.researchSummary : typeof payload.research_summary === "string" ? payload.research_summary : null,
     researchDepth: researchDepth(payload.researchDepth ?? payload.research_depth),
+    researchQuality: plainObject(payload.researchQuality ?? payload.research_quality),
+    modelTrace: objectArray(payload.modelTrace ?? payload.model_trace),
+    queryLog: objectArray(payload.queryLog ?? payload.query_log),
+    evidenceMap: plainObject(payload.evidenceMap ?? payload.evidence_map),
+    stepDurations: researchDepth(payload.stepDurations ?? payload.step_durations),
     minimumsMet: minimumsMet(payload.minimumsMet ?? payload.minimums_met),
     warnings: Array.isArray(payload.warnings) ? payload.warnings.map(String).filter(Boolean) : [],
   };
@@ -474,6 +525,14 @@ function AutofillStatusCard({
   const sourceCount = autofill?.sourceCount ?? autofill?.sources?.length ?? 0;
   const competitorCount = autofill?.competitorCount ?? autofill?.competitorSuggestions?.length ?? autofill?.competitors?.length ?? 0;
   const seedKeywordCount = autofill?.seedKeywordCount ?? autofill?.seedKeywords?.length ?? 0;
+  const linkedinSimilarCount = autofill?.researchDepth?.linkedinSimilarSignals ?? autofill?.linkedinSimilarSignals?.length ?? 0;
+  const modelTrace = autofill?.modelTrace ?? [];
+  const completedModelTrace = modelTrace.filter((entry) => entry.status === "completed");
+  const lastModel = [...modelTrace].reverse().find((entry) => typeof entry.model === "string")?.model;
+  const quality = autofill?.researchQuality ?? {};
+  const liveResearchAttempted = Boolean(quality.liveResearchAttempted || completedModelTrace.length);
+  const localStub = Boolean(quality.status === "local_stub" || autofill?.warnings?.some((warning) => warning.toLowerCase().includes("local stub")));
+  const completedWithoutTrace = run?.status === "completed" && !localStub && !liveResearchAttempted && sourceCount === 0;
   return (
     <div
       className={clsx(
@@ -488,10 +547,18 @@ function AutofillStatusCard({
       {run?.errors?.length ? <p className="mt-2 font-semibold text-red-700">{run.errors[0]}</p> : null}
       {autofill ? (
         <div className="mt-2 flex flex-wrap gap-2 text-xs font-bold text-violet-800">
+          <span>{localStub ? "Local stub preview" : liveResearchAttempted ? "Live deep research" : "Research evidence pending"}</span>
           <span>{sourceCount} sources reviewed</span>
           <span>{competitorCount} competitors found</span>
           <span>{seedKeywordCount} seed keywords generated</span>
+          {lastModel ? <span>Model: {String(lastModel)}</span> : null}
+          {linkedinSimilarCount ? <span>{linkedinSimilarCount} LinkedIn similar signals</span> : null}
         </div>
+      ) : null}
+      {completedWithoutTrace ? (
+        <p className="mt-2 text-xs font-semibold text-amber-700">
+          This run completed without model or source evidence. Check that live content-factory research is connected instead of a fallback path.
+        </p>
       ) : null}
       {autofill?.sources?.length ? (
         <p className="mt-2 text-xs font-semibold text-violet-700">
@@ -563,6 +630,10 @@ function AutofillReviewPanel({
   const competitorCount = autofill.competitorCount ?? competitorSuggestions.length;
   const seedKeywordCount = autofill.seedKeywordCount ?? autofill.seedKeywords?.length ?? 0;
   const depth = autofill.researchDepth ?? {};
+  const modelTrace = autofill.modelTrace ?? [];
+  const lastModel = [...modelTrace].reverse().find((entry) => typeof entry.model === "string")?.model;
+  const completedModelCalls = modelTrace.filter((entry) => entry.status === "completed").length;
+  const quality = autofill.researchQuality ?? {};
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 text-sm">
@@ -572,6 +643,13 @@ function AutofillReviewPanel({
           <p className="mt-1 text-gray-600">
             {sourceCount} sources reviewed, {competitorCount} competitors found, {seedKeywordCount} seed keywords generated.
           </p>
+          {lastModel ? (
+            <p className="mt-1 text-xs font-bold text-violet-700">
+              {completedModelCalls} GPT research pass{completedModelCalls === 1 ? "" : "es"} completed with {String(lastModel)}.
+            </p>
+          ) : quality.status === "local_stub" ? (
+            <p className="mt-1 text-xs font-bold text-amber-700">Local stub preview: no live crawl, search, or GPT synthesis ran.</p>
+          ) : null}
         </div>
       </div>
       {Object.keys(depth).length ? (
@@ -580,6 +658,7 @@ function AutofillReviewPanel({
             ["Owned pages", depth.ownedPagesCrawled],
             ["Public sources", depth.publicSourcesReviewed],
             ["LinkedIn signals", depth.linkedinPublicSignals],
+            ["LinkedIn similar", depth.linkedinSimilarSignals],
             ["Candidates evaluated", depth.competitorCandidatesEvaluated],
             ["Keywords", depth.seedKeywordsGenerated],
           ]
@@ -594,6 +673,24 @@ function AutofillReviewPanel({
       ) : null}
       {autofill.researchSummary ? (
         <p className="mt-3 rounded-lg bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-800">{autofill.researchSummary}</p>
+      ) : null}
+      {autofill.linkedinProfile?.url || autofill.linkedinSimilarSignals?.length ? (
+        <div className="mt-4 rounded-lg border border-violet-100 bg-violet-50 px-3 py-2">
+          <p className="text-xs font-black uppercase tracking-wide text-violet-500">LinkedIn public signals</p>
+          {autofill.linkedinProfile?.url ? (
+            <p className="mt-1 truncate text-xs font-bold text-violet-900">
+              Profile: {autofill.linkedinProfile.title || autofill.linkedinProfile.url}
+            </p>
+          ) : null}
+          {autofill.linkedinProfile?.description ? (
+            <p className="mt-1 line-clamp-2 text-xs font-semibold text-violet-800">{autofill.linkedinProfile.description}</p>
+          ) : null}
+          {autofill.linkedinSimilarSignals?.length ? (
+            <p className="mt-2 text-xs font-semibold text-violet-800">
+              Similar/co-mention signals: {autofill.linkedinSimilarSignals.slice(0, 4).map((signal) => signal.title || signal.url).join(", ")}
+            </p>
+          ) : null}
+        </div>
       ) : null}
       {preservedFields.length ? (
         <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
@@ -799,8 +896,18 @@ export default function FounderToolsMarketingCreate() {
   const isSubmitting = navigation.state === "submitting";
   const startupDefaults = useMemo(() => startupDefaultsFromBootstrap(bootstrap), [bootstrap]);
   const startupDefaultsSignature = useMemo(() => JSON.stringify(startupDefaults), [startupDefaults]);
+  const activeCompanyKey = String(
+    bootstrap.company.id ||
+      bootstrap.company.organizationId ||
+      bootstrap.organization.id ||
+      bootstrap.organization.domain ||
+      bootstrap.company.domain ||
+      "no-company",
+  );
+  const activeCompanyKeyRef = useRef(activeCompanyKey);
   const [startupValues, setStartupValues] = useState<StartupDetailsFormValues>(startupDefaults);
   const [autofillRunId, setAutofillRunId] = useState<string | null>(null);
+  const [autofillRequestSnapshot, setAutofillRequestSnapshot] = useState<StartupDetailsFormValues | null>(null);
   const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
   const [appliedAutofillRunId, setAppliedAutofillRunId] = useState<string | null>(null);
   const [autofilledFields, setAutofilledFields] = useState<StartupDetailsField[]>([]);
@@ -822,9 +929,11 @@ export default function FounderToolsMarketingCreate() {
   const baselineMetrics = effectiveBaseline.metrics ?? {};
   const canStartBaseline = Boolean(bootstrap.organization.domain || startupValues.domain.trim()) && !baselinePending && !baselinePolling;
   const startAutofill = () => {
+    const snapshot = { ...startupValues };
+    setAutofillRequestSnapshot(snapshot);
     const formData = new FormData();
     formData.set("intent", "start-autofill");
-    for (const [field, value] of Object.entries(startupValues)) {
+    for (const [field, value] of Object.entries(snapshot)) {
       formData.set(field, value);
     }
     autofillStartFetcher.submit(formData, { method: "POST" });
@@ -863,12 +972,15 @@ export default function FounderToolsMarketingCreate() {
   };
 
   useEffect(() => {
+    if (activeCompanyKeyRef.current === activeCompanyKey) return;
+    activeCompanyKeyRef.current = activeCompanyKey;
     setStartupValues(startupDefaults);
+    setAutofillRequestSnapshot(null);
     setAutofilledFields([]);
     setAutofillRunId(null);
     setBaselineRunId(null);
     setAppliedAutofillRunId(null);
-  }, [startupDefaultsSignature]);
+  }, [activeCompanyKey, startupDefaults, startupDefaultsSignature]);
 
   useEffect(() => {
     if (autofillStartData?.autofillRunId) {
@@ -910,6 +1022,11 @@ export default function FounderToolsMarketingCreate() {
     if (!autofillRunId || appliedAutofillRunId === autofillRunId || autofillRun?.status !== "completed") return;
     const autofill = extractAutofill(autofillRun);
     if (!autofill) return;
+    if (autofillRequestSnapshot && !startupValuesAreEqual(startupValues, autofillRequestSnapshot)) {
+      setAutofilledFields([]);
+      setAppliedAutofillRunId(autofillRunId);
+      return;
+    }
 
     setStartupValues((current) => {
       const updates: Partial<StartupDetailsFormValues> = {};
@@ -934,7 +1051,7 @@ export default function FounderToolsMarketingCreate() {
       return Object.keys(updates).length ? { ...current, ...updates } : current;
     });
     setAppliedAutofillRunId(autofillRunId);
-  }, [appliedAutofillRunId, autofillRun, autofillRunId]);
+  }, [appliedAutofillRunId, autofillRequestSnapshot, autofillRun, autofillRunId, startupValues]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -960,6 +1077,7 @@ export default function FounderToolsMarketingCreate() {
                   defaults={{
                     companyName: bootstrap.company.name,
                     domain: bootstrap.company.domain ?? bootstrap.organization.domain,
+                    companyLinkedInUrl: bootstrap.organization.companyLinkedInUrl ?? bootstrap.company.companyLinkedInUrl,
                     location: bootstrap.company.location,
                     abn: bootstrap.company.abn,
                     brandName: bootstrap.settings.brandName ?? bootstrap.organization.name,
