@@ -48,10 +48,75 @@ export interface VibeMarketingRunSummary {
   result?: Record<string, unknown>;
 }
 
+export interface VibeMarketingAutofillSource {
+  url: string;
+  title?: string;
+  type?: string;
+  query?: string;
+  description?: string;
+  source?: string;
+}
+
+export interface VibeMarketingAutofillLinkedInProfile {
+  url?: string;
+  title?: string;
+  description?: string;
+  vanityName?: string;
+  blocked?: boolean;
+  warnings?: string[];
+}
+
+export interface VibeMarketingAutofillCompetitor {
+  name: string;
+  domain?: string;
+  linkedinUrl?: string;
+  type?: "direct" | "seo" | "adjacent" | string;
+  score?: number | null;
+  reason?: string;
+  source?: string;
+  evidence?: string[];
+  confidence?: "high" | "medium" | "low" | string;
+}
+
+export interface VibeMarketingAutofillKeywordGroup {
+  group?: string;
+  intent?: string;
+  keywords: string[];
+}
+
+export interface VibeMarketingAutofillResult {
+  brandName?: string | null;
+  companyContext?: string | null;
+  competitors?: string[];
+  competitorSuggestions?: VibeMarketingAutofillCompetitor[];
+  directCompetitors?: VibeMarketingAutofillCompetitor[];
+  seoCompetitors?: VibeMarketingAutofillCompetitor[];
+  adjacentOrganizations?: VibeMarketingAutofillCompetitor[];
+  competitorGroups?: {
+    directCompetitors: VibeMarketingAutofillCompetitor[];
+    seoCompetitors: VibeMarketingAutofillCompetitor[];
+    adjacentOrganizations: VibeMarketingAutofillCompetitor[];
+  };
+  seedKeywords?: string[];
+  keywordGroups?: VibeMarketingAutofillKeywordGroup[];
+  sources?: VibeMarketingAutofillSource[];
+  linkedinProfile?: VibeMarketingAutofillLinkedInProfile;
+  linkedinSimilarSignals?: VibeMarketingAutofillSource[];
+  researchSummary?: string | null;
+  researchDepth?: Record<string, number>;
+  minimumsMet?: Record<string, boolean>;
+  sourceCount?: number;
+  competitorCount?: number;
+  seedKeywordCount?: number;
+  warnings?: string[];
+}
+
 export interface VibeMarketingCompany {
   id: string;
   name: string;
   domain?: string | null;
+  location?: string | null;
+  abn?: string | null;
   organizationId?: number | null;
 }
 
@@ -74,6 +139,16 @@ export interface VibeMarketingSettings {
   githubConnectionState?: string | null;
 }
 
+export interface VibeMarketingStartupProfile {
+  founderNames: string[];
+  stage?: string | null;
+  notes?: string | null;
+  companyAliases?: string[];
+  domainAliases?: string[];
+  competitorDomains?: string[];
+  positiveKeywords?: string[];
+}
+
 export interface VibeMarketingCheck {
   passed: boolean;
   checks?: Record<string, boolean>;
@@ -82,12 +157,86 @@ export interface VibeMarketingCheck {
   articleSystem?: Record<string, unknown>;
 }
 
+export interface VibeMarketingTopicCandidate {
+  id: string;
+  keyword: string;
+  title: string;
+  reason?: string | null;
+  source?: string | null;
+  intent?: unknown;
+  difficulty?: unknown;
+  opportunityScore?: unknown;
+  volume?: unknown;
+}
+
+export interface VibeMarketingPublishEvidence {
+  runId?: string | null;
+  status?: string | null;
+  approvalState?: string | null;
+  previewUrl?: string | null;
+  prUrl?: string | null;
+  routePath?: string | null;
+  screenshots?: unknown[];
+  changedFiles?: unknown[];
+  warnings?: string[];
+  diagnostics?: Record<string, unknown>;
+}
+
+export interface VibeMarketingGuidedStep {
+  key: string;
+  label: string;
+  status: "pending" | "active" | "complete" | string;
+  passed: boolean;
+  href?: string;
+}
+
+export interface VibeMarketingWebsiteBaselineMetric {
+  status?: "measured" | "needs_connection" | "unavailable" | "error" | string;
+  score?: number | null;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export interface VibeMarketingWebsiteBaseline {
+  id?: number | null;
+  runId?: string | null;
+  domain?: string | null;
+  status?: string | null;
+  passed?: boolean;
+  stale?: boolean;
+  skipped?: boolean;
+  skippedAt?: string | null;
+  skipReason?: string | null;
+  collectedAt?: string | null;
+  overallScore?: number | null;
+  summary?: string | Record<string, unknown> | null;
+  metrics?: Record<string, VibeMarketingWebsiteBaselineMetric>;
+  sourceStatus?: Record<string, string>;
+  recommendations?: Array<Record<string, unknown>>;
+}
+
+export interface VibeMarketingGoogleBaselineConnection {
+  connected: boolean;
+  hasBaselineScopes: boolean;
+  email?: string | null;
+  status?: string | null;
+  connectUrl?: string | null;
+}
+
 export interface VibeMarketingBootstrap {
   company: VibeMarketingCompany;
   organization: VibeMarketingOrganization;
   settings: VibeMarketingSettings;
+  startupProfile: VibeMarketingStartupProfile;
+  websiteBaseline: VibeMarketingWebsiteBaseline;
+  googleBaselineConnection: VibeMarketingGoogleBaselineConnection;
   checks: Record<string, VibeMarketingCheck>;
   latestRuns: VibeMarketingRunSummary[];
+  latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
+  topicCandidates: VibeMarketingTopicCandidate[];
+  publishEvidence: VibeMarketingPublishEvidence;
+  guidedSteps: VibeMarketingGuidedStep[];
+  currentGuidedStep?: string | null;
   recommendedNextAction?: {
     key: string;
     label: string;
