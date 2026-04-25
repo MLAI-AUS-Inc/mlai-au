@@ -113,6 +113,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       id: String(company.id ?? ""),
       name: asNullableString(company.name) ?? "Company",
       domain: asNullableString(company.domain),
+      companyLinkedInUrl: asNullableString(company.companyLinkedInUrl) ?? asNullableString(company.company_linkedin_url),
       location: asNullableString(company.location),
       abn: asNullableString(company.abn),
       organizationId: Number(company.organizationId ?? company.organization_id ?? 0) || null,
@@ -121,6 +122,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       id: Number(organization.id ?? 0) || null,
       name: asNullableString(organization.name) ?? asNullableString(company.name) ?? "Company",
       domain: asNullableString(organization.domain) ?? asNullableString(company.domain) ?? "",
+      companyLinkedInUrl:
+        asNullableString(organization.companyLinkedInUrl) ??
+        asNullableString(organization.company_linkedin_url) ??
+        asNullableString(company.companyLinkedInUrl) ??
+        asNullableString(company.company_linkedin_url),
       competitors: asStringList(organization.competitors),
       seedKeywords: asStringList(organization.seedKeywords ?? organization.seed_keywords),
     },
@@ -279,54 +285,42 @@ function normalizeGoogleBaselineConnection(raw: unknown): VibeMarketingGoogleBas
 const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   company: {
     id: "dev-company",
-    name: "Dev Startup",
-    domain: "devstartup.com",
+    name: "",
+    domain: "",
+    companyLinkedInUrl: null,
     organizationId: 1,
   },
   organization: {
     id: 1,
-    name: "Dev Startup",
-    domain: "devstartup.com",
-    competitors: ["example.com"],
-    seedKeywords: ["startup investor updates"],
+    name: "",
+    domain: "",
+    companyLinkedInUrl: null,
+    competitors: [],
+    seedKeywords: [],
   },
   settings: {
-    brandName: "Dev Startup",
-    companyContext: "AI workflow automation for founders.",
+    brandName: null,
+    companyContext: null,
     articleDeliveryMode: "publish_code",
-    githubRepo: "samdonegan/devstartup",
+    githubRepo: null,
     dailyDiscoveryEnabled: false,
-    githubConnectionState: "connected",
+    githubConnectionState: null,
   },
   startupProfile: {
-    founderNames: ["Sam Founder"],
-    stage: "Seed",
-    notes: "Uses AI workflow automation to help founders ship faster.",
+    founderNames: [],
+    stage: null,
+    notes: null,
   },
   websiteBaseline: {
-    status: "completed",
-    passed: true,
-    domain: "devstartup.com",
-    collectedAt: new Date().toISOString(),
-    overallScore: 76,
-    summary: { text: "Website baseline is workable." },
-    sourceStatus: {
-      technicalHealth: "measured",
-      lighthouse: "measured",
-      authority: "unavailable",
-      organicSearch: "unavailable",
-      aiVisibility: "unavailable",
-      traffic: "needs_connection",
-    },
-    metrics: {
-      technicalHealth: { status: "measured", score: 84, pagesCrawled: 8 },
-      lighthouse: { status: "measured", score: 68 },
-      authority: { status: "unavailable", score: null },
-      organicSearch: { status: "unavailable", score: null },
-      aiVisibility: { status: "unavailable", score: null },
-      traffic: { status: "needs_connection", score: null },
-    },
-    recommendations: [{ priority: "medium", title: "Connect Google", source: "traffic" }],
+    status: "missing",
+    passed: false,
+    domain: "",
+    collectedAt: null,
+    overallScore: null,
+    summary: { text: "Run a baseline to capture website performance before generating articles." },
+    sourceStatus: {},
+    metrics: {},
+    recommendations: [],
   },
   googleBaselineConnection: {
     connected: false,
@@ -340,9 +334,172 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   topicCandidates: [],
   publishEvidence: {},
   guidedSteps: [],
-  currentGuidedStep: "scan",
-  recommendedNextAction: { key: "scan", label: "Scan repository" },
+  currentGuidedStep: "startupDetails",
+  recommendedNextAction: { key: "startupDetails", label: "Add startup details" },
 };
+
+const DEV_RUN_SNAPSHOTS = new Map<string, Record<string, unknown>>();
+
+function primaryBodyString(body: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = asNullableString(body[key]);
+    if (value) return value;
+  }
+  return "";
+}
+
+function existingFieldFromBody(body: Record<string, unknown>, key: string): unknown {
+  const existingFields =
+    body.existingFields && typeof body.existingFields === "object"
+      ? (body.existingFields as Record<string, unknown>)
+      : {};
+  return existingFields[key] ?? body[key];
+}
+
+function publicUrlForDomain(domain: string) {
+  if (!domain) return null;
+  return domain.startsWith("http://") || domain.startsWith("https://") ? domain : `https://${domain}`;
+}
+
+function devAutofillResultFromSnapshot(runId: string, snapshot: Record<string, unknown> = {}) {
+  const companyName = primaryBodyString(snapshot, "companyName", "company_name");
+  const domain = primaryBodyString(snapshot, "domain");
+  const brandName = primaryBodyString(snapshot, "brandName", "brand_name") || companyName || null;
+  const companyLinkedInUrl =
+    primaryBodyString(snapshot, "companyLinkedInUrl", "company_linkedin_url") ||
+    asNullableString(existingFieldFromBody(snapshot, "companyLinkedInUrl")) ||
+    null;
+  const companyContext = asNullableString(existingFieldFromBody(snapshot, "companyContext"));
+  const competitors = asStringList(existingFieldFromBody(snapshot, "competitors"));
+  const seedKeywords = asStringList(existingFieldFromBody(snapshot, "seedKeywords"));
+  const websiteUrl = publicUrlForDomain(domain);
+  const sources = [
+    websiteUrl ? { url: websiteUrl, title: domain || companyName || "Company website", type: "website" } : null,
+    companyLinkedInUrl ? { url: companyLinkedInUrl, title: "LinkedIn company profile", type: "linkedin" } : null,
+  ].filter(Boolean);
+  const warnings = [
+    "Local stub only: no live website crawl, public web search, or LinkedIn similarity research was performed.",
+    !companyContext ? "No company context suggestion was generated because the local stub only echoes submitted form context." : null,
+    competitors.length === 0 ? "No competitor suggestions were generated in local stub mode." : null,
+    seedKeywords.length === 0 ? "No seed keyword suggestions were generated in local stub mode." : null,
+  ].filter(Boolean);
+
+  return normalizeMarketingRun({
+    runId,
+    workflow: "startup_autofill",
+    domain,
+    status: "completed",
+    currentStep: "finalize",
+    stepOrder: [
+      "resolve_company_identity",
+      "crawl_owned_web",
+      "research_public_web",
+      "research_linkedin_public",
+      "discover_competitor_candidates",
+      "rank_competitors",
+      "generate_keyword_landscape",
+      "synthesize_company_profile",
+      "finalize",
+    ],
+    steps: [
+      { key: "resolve_company_identity", status: "completed", attempts: 1, artifacts: [] },
+      { key: "crawl_owned_web", status: "completed", attempts: 1, artifacts: [] },
+      { key: "research_public_web", status: "completed", attempts: 1, artifacts: [] },
+      { key: "research_linkedin_public", status: "completed", attempts: 1, artifacts: [] },
+      { key: "discover_competitor_candidates", status: "completed", attempts: 1, artifacts: [] },
+      { key: "rank_competitors", status: "completed", attempts: 1, artifacts: [] },
+      { key: "generate_keyword_landscape", status: "completed", attempts: 1, artifacts: [] },
+      { key: "synthesize_company_profile", status: "completed", attempts: 1, artifacts: [] },
+      { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
+    ],
+    result: {
+      autofill: {
+        brandName,
+        companyLinkedInUrl,
+        companyContext,
+        directCompetitors: competitors.map((competitor) => ({
+          name: competitor,
+          domain: competitor,
+          type: "direct",
+          reason: "Submitted in the current form before local stub research started.",
+          evidence: ["Submitted form value"],
+          confidence: "user_provided",
+        })),
+        seoCompetitors: [],
+        adjacentOrganizations: [],
+        competitors,
+        competitorGroups: {
+          directCompetitors: competitors.map((competitor) => ({
+            name: competitor,
+            domain: competitor,
+            type: "direct",
+            reason: "Submitted in the current form before local stub research started.",
+            evidence: ["Submitted form value"],
+            confidence: "user_provided",
+          })),
+          seoCompetitors: [],
+          adjacentOrganizations: [],
+        },
+        seedKeywords,
+        keywordGroups: seedKeywords.length
+          ? [{ group: "Submitted seed keywords", intent: "user_provided", keywords: seedKeywords }]
+          : [],
+        sources,
+        linkedinProfile: companyLinkedInUrl
+          ? {
+              url: companyLinkedInUrl,
+              title: companyName || brandName || "LinkedIn company profile",
+              vanityName: companyLinkedInUrl.split("/company/")[1]?.replace(/\/$/, ""),
+            }
+          : null,
+        linkedinSimilarSignals: [],
+        sourceCount: sources.length,
+        competitorCount: competitors.length,
+        seedKeywordCount: seedKeywords.length,
+        researchSummary: companyName || domain
+          ? `Local stub research used the submitted form identity for ${companyName || domain}.`
+          : "Local stub research started without a submitted company identity.",
+        researchDepth: {
+          ownedPagesCrawled: 0,
+          publicSourcesReviewed: sources.length,
+          linkedinPublicSignals: companyLinkedInUrl ? 1 : 0,
+          linkedinSimilarSignals: 0,
+          competitorCandidatesEvaluated: competitors.length,
+          competitorsReturned: competitors.length,
+          seedKeywordsGenerated: seedKeywords.length,
+        },
+        researchQuality: {
+          status: "local_stub",
+          researchMode: "stub",
+          liveResearchAttempted: false,
+          gptSynthesisCompleted: false,
+          providerAttempts: {
+            websiteCrawl: false,
+            publicWebSearch: false,
+            gptSynthesis: false,
+          },
+        },
+        modelTrace: [],
+        queryLog: [],
+        evidenceMap: {
+          sourcesByType: {
+            ownedWebsite: 0,
+            publicWeb: sources.length,
+            linkedinPublic: companyLinkedInUrl ? 1 : 0,
+            linkedinSimilar: 0,
+          },
+        },
+        stepDurations: {},
+        minimumsMet: {
+          companyContext: Boolean(companyContext),
+          directCompetitors: competitors.length >= 5,
+          seedKeywords: seedKeywords.length >= 20,
+        },
+        warnings,
+      },
+    },
+  });
+}
 
 export async function getVibeMarketingBootstrap(env: Env, request: Request, companyId?: string | null) {
   if (shouldUseDevBackendStub()) return DEV_BOOTSTRAP;
@@ -371,7 +528,9 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
 
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
   if (shouldUseDevBackendStub()) {
-    return { runId: `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-run`, status: "queued" };
+    const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
+    DEV_RUN_SNAPSHOTS.set(runId, { ...body });
+    return { runId, status: "queued" };
   }
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/${path}`, body);
@@ -417,159 +576,27 @@ export function replayVibeMarketingDaily(env: Env, request: Request, body: Recor
 
 export async function getVibeMarketingRun(env: Env, request: Request, runId: string, companyId?: string | null) {
   if (shouldUseDevBackendStub()) {
+    if (runId.includes("autofill")) {
+      return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
+    }
     return normalizeMarketingRun({
       runId,
-      workflow: runId.includes("autofill")
-        ? "startup_autofill"
-        : runId.includes("baseline")
-          ? "website_baseline"
-          : "article_generation",
+      workflow: runId.includes("baseline") ? "website_baseline" : "article_generation",
       domain: DEV_BOOTSTRAP.organization.domain,
       status: "completed",
       currentStep: "finalize",
-      stepOrder: runId.includes("autofill")
-        ? [
-            "resolve_company_identity",
-            "crawl_owned_web",
-            "research_public_web",
-            "research_linkedin_public",
-            "discover_competitor_candidates",
-            "rank_competitors",
-            "generate_keyword_landscape",
-            "synthesize_company_profile",
-            "finalize",
-          ]
-        : runId.includes("baseline")
-          ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
+      stepOrder: runId.includes("baseline")
+        ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
         : ["queued", "finalize"],
-      steps: runId.includes("autofill")
+      steps: runId.includes("baseline")
         ? [
-            { key: "resolve_company_identity", status: "completed", attempts: 1, artifacts: [] },
-            { key: "crawl_owned_web", status: "completed", attempts: 1, artifacts: [] },
-            { key: "research_public_web", status: "completed", attempts: 1, artifacts: [] },
-            { key: "research_linkedin_public", status: "completed", attempts: 1, artifacts: [] },
-            { key: "discover_competitor_candidates", status: "completed", attempts: 1, artifacts: [] },
-            { key: "rank_competitors", status: "completed", attempts: 1, artifacts: [] },
-            { key: "generate_keyword_landscape", status: "completed", attempts: 1, artifacts: [] },
-            { key: "synthesize_company_profile", status: "completed", attempts: 1, artifacts: [] },
+            { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
+            { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
+            { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
             { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
           ]
-        : runId.includes("baseline")
-          ? [
-              { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
-              { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
-              { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
-              { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
-            ]
         : [],
-      result: runId.includes("autofill")
-        ? {
-            autofill: {
-              brandName: "Dev Startup",
-              companyContext:
-                "## Positioning\nDev Startup builds AI workflow automation for founders, helping teams turn company context into investor updates, content operations, and repeatable growth workflows.\n\n## Audience\nEarly-stage founders and lean startup teams who need operating leverage without hiring a large ops function.",
-              directCompetitors: [
-                { name: "Build Club", domain: "buildclub.ai", linkedinUrl: "https://www.linkedin.com/company/build-club-ai", type: "direct", score: 0.93, reason: "Australian AI builder community with founder event and education overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                { name: "Aussie Founders Club", domain: "aussiefoundersclub.com", linkedinUrl: "https://www.linkedin.com/company/aussie-founders-club", type: "direct", score: 0.9, reason: "Local founder community with audience and event overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                { name: "Startup Victoria", domain: "startupvictoria.com.au", type: "direct", score: 0.76, reason: "Melbourne startup community and founder programming.", evidence: ["Public search snippet"], confidence: "medium" },
-                { name: "Fishburners", domain: "fishburners.org", type: "direct", score: 0.7, reason: "Australian founder community and startup support programs.", evidence: ["Public search snippet"], confidence: "medium" },
-                { name: "The Commons Startup Events", domain: "thecommons.com.au", type: "direct", score: 0.62, reason: "Local startup and operator events reaching a similar founder audience.", evidence: ["Public search snippet"], confidence: "medium" },
-              ],
-              seoCompetitors: [
-                { name: "Copy.ai", domain: "copy.ai", type: "seo", score: 0.42, reason: "Competes for broad AI workflow search demand, but is not a local founder community.", evidence: ["Public search snippet"], confidence: "medium" },
-                { name: "Jasper", domain: "jasper.ai", type: "seo", score: 0.38, reason: "Competes for broad AI marketing content searches.", evidence: ["Public search snippet"], confidence: "medium" },
-              ],
-              adjacentOrganizations: [
-                { name: "LaunchVic", domain: "launchvic.org", type: "adjacent", score: 0.52, reason: "Victorian startup ecosystem context.", evidence: ["Public search snippet"], confidence: "medium" },
-              ],
-              competitors: [
-                { name: "Build Club", domain: "buildclub.ai", linkedinUrl: "https://www.linkedin.com/company/build-club-ai", type: "direct", score: 0.93, reason: "Australian AI builder community with founder event and education overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                { name: "Aussie Founders Club", domain: "aussiefoundersclub.com", linkedinUrl: "https://www.linkedin.com/company/aussie-founders-club", type: "direct", score: 0.9, reason: "Local founder community with audience and event overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                { name: "Startup Victoria", domain: "startupvictoria.com.au", type: "direct", score: 0.76, reason: "Melbourne startup community and founder programming.", evidence: ["Public search snippet"], confidence: "medium" },
-                { name: "Fishburners", domain: "fishburners.org", type: "direct", score: 0.7, reason: "Australian founder community and startup support programs.", evidence: ["Public search snippet"], confidence: "medium" },
-                { name: "The Commons Startup Events", domain: "thecommons.com.au", type: "direct", score: 0.62, reason: "Local startup and operator events reaching a similar founder audience.", evidence: ["Public search snippet"], confidence: "medium" },
-              ],
-              competitorGroups: {
-                directCompetitors: [
-                  { name: "Build Club", domain: "buildclub.ai", linkedinUrl: "https://www.linkedin.com/company/build-club-ai", type: "direct", score: 0.93, reason: "Australian AI builder community with founder event and education overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                  { name: "Aussie Founders Club", domain: "aussiefoundersclub.com", linkedinUrl: "https://www.linkedin.com/company/aussie-founders-club", type: "direct", score: 0.9, reason: "Local founder community with audience and event overlap.", evidence: ["Public website", "LinkedIn public snippet"], confidence: "high" },
-                ],
-                seoCompetitors: [
-                  { name: "Copy.ai", domain: "copy.ai", type: "seo", score: 0.42, reason: "Competes for broad AI workflow search demand, but is not a local founder community.", evidence: ["Public search snippet"], confidence: "medium" },
-                  { name: "Jasper", domain: "jasper.ai", type: "seo", score: 0.38, reason: "Competes for broad AI marketing content searches.", evidence: ["Public search snippet"], confidence: "medium" },
-                ],
-                adjacentOrganizations: [
-                  { name: "LaunchVic", domain: "launchvic.org", type: "adjacent", score: 0.52, reason: "Victorian startup ecosystem context.", evidence: ["Public search snippet"], confidence: "medium" },
-                ],
-              },
-              seedKeywords: [
-                "ai workflow automation",
-                "founder marketing automation",
-                "startup update software",
-                "investor update automation",
-                "startup operations automation",
-                "ai tools for startup founders",
-                "founder productivity software",
-                "automated founder reports",
-                "startup content automation",
-                "ai marketing workflows",
-                "lean startup operations tools",
-                "startup growth workflow software",
-                "founder weekly update tool",
-                "automate startup marketing",
-                "ai startup operating system",
-                "startup reporting automation",
-                "founder ai assistant",
-                "investor relations automation",
-                "startup data workflow tools",
-                "daily founder workflow automation",
-              ],
-              sources: [
-                { url: "https://devstartup.com", title: "Home", type: "website" },
-                { url: "https://devstartup.com/about", title: "About", type: "website" },
-                { url: "https://www.linkedin.com/company/devstartup", title: "LinkedIn", type: "linkedin", query: "Dev Startup LinkedIn" },
-                { url: "https://www.buildclub.ai", title: "Build Club", type: "comparison", query: "Dev Startup competitors Melbourne" },
-              ],
-              linkedinProfile: {
-                url: "https://www.linkedin.com/company/devstartup",
-                title: "Dev Startup",
-                vanityName: "devstartup",
-                description: "Public LinkedIn profile snippet for an AI workflow automation company.",
-              },
-              linkedinSimilarSignals: [
-                {
-                  url: "https://www.linkedin.com/company/build-club-ai",
-                  title: "Build Club",
-                  type: "linkedin_similar",
-                  description: "Visible public LinkedIn similar-page signal.",
-                },
-                {
-                  url: "https://www.linkedin.com/company/aussie-founders-club",
-                  title: "Aussie Founders Club",
-                  type: "linkedin_similar",
-                  description: "Visible public LinkedIn people-also-viewed signal.",
-                },
-              ],
-              sourceCount: 16,
-              competitorCount: 8,
-              seedKeywordCount: 20,
-              researchSummary: "Public research found local founder-community and AI-event overlap, so local direct competitors rank above generic global AI tools.",
-              researchDepth: {
-                ownedPagesCrawled: 8,
-                publicSourcesReviewed: 16,
-                linkedinPublicSignals: 3,
-                linkedinSimilarSignals: 2,
-                competitorCandidatesEvaluated: 14,
-                competitorsReturned: 8,
-                seedKeywordsGenerated: 20,
-              },
-              minimumsMet: { companyContext: true, directCompetitors: true, seedKeywords: true },
-              warnings: ["Competitors are inferred from category signals and should be reviewed."],
-            },
-          }
-        : runId.includes("baseline")
-          ? { baseline: DEV_BOOTSTRAP.websiteBaseline }
-        : {},
+      result: runId.includes("baseline") ? { baseline: DEV_BOOTSTRAP.websiteBaseline } : {},
     });
   }
   const client = createApiClient(env, request);

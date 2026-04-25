@@ -6,6 +6,7 @@ export interface VibeRaisingCompany {
   id: string;
   name: string;
   domain?: string | null;
+  companyLinkedInUrl?: string | null;
   abn?: string | null;
   location?: string | null;
   registered: boolean;

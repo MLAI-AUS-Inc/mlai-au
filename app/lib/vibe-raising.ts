@@ -167,6 +167,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.abn) ??
     asNullableString(payload.companyAbn) ??
     asNullableString(payload.company_abn);
+  const companyLinkedInUrl =
+    asNullableString(payload.companyLinkedInUrl) ??
+    asNullableString(payload.company_linkedin_url);
   const location =
     asNullableString(payload.location) ??
     asNullableString(payload.companyLocation) ??
@@ -184,6 +187,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     id: String(id),
     name,
     domain,
+    companyLinkedInUrl,
     abn,
     location,
     registered,
@@ -1206,14 +1210,14 @@ export function hasSubmittedVibeRaisingUpdate(
 // render without hitting api.mlai.au.
 const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
   role: "founder",
-  organizationName: "Dev Startup Pty Ltd",
+  organizationName: null,
   companies: [
     {
       id: "dev-company",
-      name: "Dev Startup Pty Ltd",
-      domain: "devstartup.com",
-      abn: "51 824 753 556",
-      location: "Melbourne, Australia",
+      name: "",
+      domain: null,
+      abn: null,
+      location: null,
       registered: true,
     },
   ],
@@ -1339,9 +1343,21 @@ export async function saveVibeRaisingCompany(
     companyId?: string | null;
     name: string;
     domain?: string | null;
+    companyLinkedInUrl?: string | null;
     abn?: string | null;
     location?: string | null;
     registered?: boolean;
+    brandName?: string | null;
+    companyContext?: string | null;
+    competitors?: string[];
+    seedKeywords?: string[];
+    founderNames?: string[];
+    stage?: string | null;
+    notes?: string | null;
+    githubRepo?: string | null;
+    articleDeliveryMode?: string | null;
+    dailyDiscoveryEnabled?: boolean;
+    defaultTimezone?: string | null;
   },
 ): Promise<string | null> {
   const client = createApiClient(env, request);
