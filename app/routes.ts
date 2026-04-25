@@ -89,6 +89,8 @@ export default [
     route("updates/create", "routes/vibe-raising-app.create-update.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
     route("marketing", "routes/founder-tools.marketing.tsx"),
+    route("marketing/create", "routes/founder-tools.marketing.create.tsx"),
+    route("marketing/autofill-runs/:runId", "routes/founder-tools.marketing.autofill-run.tsx"),
     route("marketing/settings", "routes/founder-tools.marketing.settings.tsx"),
     route("marketing/runs/:runId", "routes/founder-tools.marketing.run.tsx"),
   ]),

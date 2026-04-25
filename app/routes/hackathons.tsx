@@ -99,18 +99,18 @@ export default function Hackathons() {
                                 </p>
 
                                 <h2 className="mt-6 max-w-xl text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                                    Vibe Raising - Build your investor network
+                                    Founder Tools - Build your investor network
                                 </h2>
 
                                 <p className="mt-4 max-w-xl text-base leading-7 text-white/72 sm:text-lg">
-                                    Most founders start raising when it's too late. Use the Vibe Raising tool to start building your investor network 6 months before you raise
+                                    Most founders start raising when it's too late. Use Founder Tools to create updates, sharpen your signal, and start building your investor network 6 months before you raise.
                                 </p>
 
                                 <a
                                     href="/platform/login?app=founder-tools&next=/founder-tools"
                                     className="mt-8 inline-flex min-h-14 items-center justify-center rounded-full bg-[var(--brutalist-yellow)] px-7 py-4 text-base font-semibold text-[var(--brutalist-black)] shadow-[0_18px_40px_rgba(254,252,34,0.2)] transition-transform duration-200 hover:scale-[1.02] hover:opacity-95"
                                 >
-                                    Go to Vibe Raising
+                                    Go to Founder Tools
                                 </a>
                             </div>
 

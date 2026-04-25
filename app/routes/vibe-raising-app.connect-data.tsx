@@ -27,10 +27,13 @@ import {
   getVibeRaisingBankFeedPreview,
   getVibeRaisingGmailPreview,
   getVibeRaisingInputSourcesStatus,
+  getVibeRaisingLinearPreview,
+  getVibeRaisingLinearProjects,
   getVibeRaisingSlackChannels,
   getVibeRaisingSlackPreview,
   getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
+  saveVibeRaisingLinearProjectSelections,
   saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
   syncVibeRaisingInputSources,
@@ -41,6 +44,9 @@ import type {
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
+  VibeRaisingLinearPreview,
+  VibeRaisingLinearProject,
+  VibeRaisingLinearProjectsResponse,
   VibeRaisingSlackChannel,
   VibeRaisingSlackChannelsResponse,
   VibeRaisingSlackPreview,
@@ -51,11 +57,12 @@ import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/Mo
 const DEFAULT_NEXT = "/founder-tools/updates/create";
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
-const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack"]);
+const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
 const POPULAR_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
   "gmail",
   "slack",
+  "linear",
   "stripe",
   "bank_feed",
   "notion",
@@ -64,6 +71,7 @@ const POPULAR_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
 ];
 const EXTRA_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
+const LINEAR_PROJECT_PAGE_LIMIT = 100;
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
@@ -111,6 +119,13 @@ const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
     key: "slack",
     label: "Slack",
+    capabilities: ["context"],
+    selected: false,
+    status: "not_connected",
+  },
+  {
+    key: "linear",
+    label: "Linear",
     capabilities: ["context"],
     selected: false,
     status: "not_connected",
@@ -176,6 +191,10 @@ const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; conn
   slack: {
     description: "Bring in important team updates and customer conversations.",
     connectedUse: "Team updates, conversations",
+  },
+  linear: {
+    description: "Pull project updates, active workstreams, and key tasks from Linear.",
+    connectedUse: "Projects, tasks, updates",
   },
 };
 
@@ -844,6 +863,304 @@ function SlackPreview({
   );
 }
 
+function mergeLinearProjectsById(
+  previous: Record<string, VibeRaisingLinearProject>,
+  projects: VibeRaisingLinearProject[],
+) {
+  if (projects.length === 0) return previous;
+  const next = { ...previous };
+  projects.forEach((project) => {
+    next[project.projectId] = { ...next[project.projectId], ...project };
+  });
+  return next;
+}
+
+function getSelectedLinearProjectIds(projects: VibeRaisingLinearProject[]) {
+  return projects.filter((project) => project.selected).map((project) => project.projectId);
+}
+
+function LinearPreview({
+  projects,
+  preview,
+  loadingProjects,
+  loadingPreview,
+  error,
+  saving,
+  syncing,
+  selectedProjectIds,
+  nextCursor,
+  loadingMoreProjects,
+  onToggleProject,
+  onLoadMoreProjects,
+  onSaveProjects,
+  onSync,
+}: {
+  projects: VibeRaisingLinearProject[];
+  preview: VibeRaisingLinearPreview | null;
+  loadingProjects: boolean;
+  loadingPreview: boolean;
+  error: string | null;
+  saving: boolean;
+  syncing: boolean;
+  selectedProjectIds: Set<string>;
+  nextCursor: string | null;
+  loadingMoreProjects: boolean;
+  onToggleProject: (projectId: string) => void;
+  onLoadMoreProjects: () => void;
+  onSaveProjects: () => void;
+  onSync: () => void;
+}) {
+  const [projectQuery, setProjectQuery] = useState("");
+  const projectsById = useMemo(() => new Map(projects.map((project) => [project.projectId, project])), [projects]);
+  const selectedProjects = useMemo(
+    () =>
+      Array.from(selectedProjectIds).map((projectId) => {
+        const project = projectsById.get(projectId);
+        if (project) return project;
+        return {
+          projectId,
+          linearProjectId: projectId,
+          projectName: projectId,
+          name: projectId,
+          selected: true,
+        } satisfies VibeRaisingLinearProject;
+      }),
+    [projectsById, selectedProjectIds],
+  );
+  const filteredProjects = useMemo(() => {
+    const normalizedQuery = projectQuery.trim().toLowerCase();
+    if (!normalizedQuery) return projects;
+    return projects.filter((project) =>
+      [project.projectName, project.name, project.projectId, project.status, project.health]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
+    );
+  }, [projectQuery, projects]);
+
+  const handleComboboxChange = (project: VibeRaisingLinearProject | null) => {
+    if (!project) return;
+    onToggleProject(project.projectId);
+    setProjectQuery("");
+  };
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Linear preview</h2>
+          <p className="mt-2 text-sm text-slate-500">Selected project context available for this update.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {loadingProjects || loadingPreview ? (
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-gray-700">
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              Loading
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onSync}
+            disabled={syncing || selectedProjectIds.size === 0}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
+            {syncing ? "Syncing" : "Sync Linear"}
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+      ) : null}
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Workspace</p>
+          <p className="mt-2 truncate text-sm font-black text-gray-950">{preview?.accountLabel || "Connected Linear"}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected projects</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{selectedProjectIds.size}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cached issues</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{preview?.totalCachedIssues ?? 0}</p>
+        </div>
+      </div>
+
+      {projects.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <div>
+              <p className="text-sm font-black text-gray-950">Projects</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{selectedProjectIds.size} selected</p>
+            </div>
+            <button
+              type="button"
+              onClick={onSaveProjects}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-lg bg-gray-950 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving" : "Save selection"}
+            </button>
+          </div>
+          <div className="px-4 py-4">
+            {selectedProjects.length > 0 ? (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {selectedProjects.map((project) => (
+                  <span
+                    key={project.projectId}
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-extrabold text-gray-800 ring-1 ring-gray-200"
+                  >
+                    <span className="truncate">{project.projectName}</span>
+                    <button
+                      type="button"
+                      onClick={() => onToggleProject(project.projectId)}
+                      className="rounded-full p-0.5 text-gray-600 transition hover:bg-gray-200 hover:text-gray-950"
+                      aria-label={`Remove ${project.projectName}`}
+                    >
+                      <XMarkIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            <Combobox value={null} onChange={handleComboboxChange}>
+              <div className="relative">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Combobox.Input
+                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-100"
+                    displayValue={() => projectQuery}
+                    onChange={(event) => setProjectQuery(event.target.value)}
+                    placeholder="Search and select Linear projects"
+                  />
+                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600">
+                    <ChevronDownIcon className="h-4 w-4" />
+                  </Combobox.Button>
+                </div>
+                <Combobox.Options className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none">
+                  {filteredProjects.length > 0 ? (
+                    filteredProjects.map((project) => {
+                      const selected = selectedProjectIds.has(project.projectId);
+                      return (
+                        <Combobox.Option
+                          key={project.projectId}
+                          value={project}
+                          className={({ active }) =>
+                            clsx(
+                              "relative flex cursor-pointer select-none items-center gap-3 px-4 py-3 font-semibold",
+                              active ? "bg-gray-50 text-gray-950" : "text-gray-800",
+                            )
+                          }
+                        >
+                          <span
+                            className={clsx(
+                              "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                              selected ? "border-gray-950 bg-gray-950 text-white" : "border-gray-300 bg-white text-transparent",
+                            )}
+                          >
+                            <CheckIcon className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">{project.projectName}</span>
+                          {project.health ? <span className="shrink-0 text-xs font-bold text-slate-400">{project.health}</span> : null}
+                        </Combobox.Option>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-4 text-sm font-semibold text-slate-500">No loaded projects match this search.</div>
+                  )}
+                  {nextCursor ? (
+                    <div className="border-t border-gray-100 p-2">
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={onLoadMoreProjects}
+                        disabled={loadingMoreProjects}
+                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-gray-800 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <ArrowPathIcon className={clsx("h-4 w-4", loadingMoreProjects && "animate-spin")} />
+                        {loadingMoreProjects ? "Loading projects" : "Load more projects"}
+                      </button>
+                    </div>
+                  ) : null}
+                </Combobox.Options>
+              </div>
+            </Combobox>
+          </div>
+        </div>
+      ) : !loadingProjects ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Linear is connected. Open the project picker again after the workspace project list is available.
+        </div>
+      ) : null}
+
+      {preview?.warnings.length ? (
+        <div className="mt-5 space-y-2">
+          {preview.warnings.map((warning) => (
+            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {preview?.projects.length ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {preview.projects.slice(0, 4).map((project) => (
+            <div key={project.projectId} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="truncate text-sm font-black text-gray-950">{project.name}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{project.statusName || project.statusType || "Project"}</p>
+              <p className="mt-3 text-xs font-bold text-slate-500">
+                {project.issueCount} issue{project.issueCount === 1 ? "" : "s"} - {project.updateCount} update{project.updateCount === 1 ? "" : "s"}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {preview?.projectUpdates.length ? (
+        <div className="mt-5 overflow-hidden rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Latest project updates</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {preview.projectUpdates.slice(0, 5).map((update) => (
+              <div key={update.id} className="px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="truncate text-sm font-bold text-gray-950">{update.projectName || "Linear project"}</p>
+                  <span className="text-xs font-semibold text-slate-500">{formatShortDate(update.updatedAt)}</span>
+                </div>
+                <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{update.body || "Project update"}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {preview?.issues.length ? (
+        <div className="mt-5 overflow-hidden rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Key issues</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {preview.issues.slice(0, 5).map((issue) => (
+              <div key={issue.id} className="grid gap-2 px-4 py-3 md:grid-cols-[1fr_auto] md:items-start">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-gray-950">{issue.identifier ? `${issue.identifier} - ` : ""}{issue.title}</p>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">{issue.projectName || issue.stateName || "Linear issue"}</p>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">{formatShortDate(issue.updatedAt)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
 function SourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }) {
   if (sourceKey === "gmail") {
     return (
@@ -890,6 +1207,14 @@ function SourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }) {
         <span className="absolute left-3 top-0 h-8 w-3 rotate-[30deg] rounded-sm bg-emerald-500" />
         <span className="absolute left-1 top-4 h-3 w-8 rounded-sm bg-blue-500" />
         <span className="absolute right-1 top-4 h-3 w-8 rotate-[-60deg] rounded-sm bg-yellow-400" />
+      </div>
+    );
+  }
+
+  if (sourceKey === "linear") {
+    return (
+      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-950 text-sm font-black text-white">
+        //
       </div>
     );
   }
@@ -1027,9 +1352,20 @@ export default function ConnectData() {
   const [slackError, setSlackError] = useState<string | null>(null);
   const [savingSlackChannels, setSavingSlackChannels] = useState(false);
   const [selectedSlackChannelIds, setSelectedSlackChannelIds] = useState<Set<string>>(new Set());
+  const [syncingLinear, setSyncingLinear] = useState(false);
+  const [linearProjectsById, setLinearProjectsById] = useState<Record<string, VibeRaisingLinearProject>>({});
+  const [linearProjectsNextCursor, setLinearProjectsNextCursor] = useState<string | null>(null);
+  const [loadingLinearProjects, setLoadingLinearProjects] = useState(false);
+  const [loadingMoreLinearProjects, setLoadingMoreLinearProjects] = useState(false);
+  const [linearPreview, setLinearPreview] = useState<VibeRaisingLinearPreview | null>(null);
+  const [loadingLinearPreview, setLoadingLinearPreview] = useState(false);
+  const [linearError, setLinearError] = useState<string | null>(null);
+  const [savingLinearProjects, setSavingLinearProjects] = useState(false);
+  const [selectedLinearProjectIds, setSelectedLinearProjectIds] = useState<Set<string>>(new Set());
   const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
+  const linearSelectionTouchedRef = useRef(false);
 
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
   const orderedVisibleSources = useMemo(() => {
@@ -1045,6 +1381,7 @@ export default function ConnectData() {
     [selectedSources, sources],
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
+  const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
   const hasManualMaterials = Boolean(manualMaterials.sourceUrl.trim() || manualMaterials.summary.trim());
   const hasConnectedFinance = connectedSources.some((source) => source.key === "stripe" || source.key === "xero" || source.key === "bank_feed");
   const gmailSource = sourceByKey.get("gmail");
@@ -1055,6 +1392,8 @@ export default function ConnectData() {
   const shouldShowXeroPreview = xeroSource?.status === "connected" || xeroSource?.status === "syncing" || xeroSource?.status === "error";
   const slackSource = sourceByKey.get("slack");
   const shouldShowSlackPreview = slackSource?.status === "connected" || slackSource?.status === "syncing" || slackSource?.status === "error";
+  const linearSource = sourceByKey.get("linear");
+  const shouldShowLinearPreview = linearSource?.status === "connected" || linearSource?.status === "syncing" || linearSource?.status === "error";
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
@@ -1253,6 +1592,91 @@ export default function ConnectData() {
     };
   }, [backendBaseUrl, shouldShowSlackPreview, slackSource?.lastSyncedAt, slackSource?.status]);
 
+  useEffect(() => {
+    if (!shouldShowLinearPreview) {
+      setLinearProjectsById({});
+      setLinearProjectsNextCursor(null);
+      setLinearPreview(null);
+      setLinearError(null);
+      setLoadingLinearProjects(false);
+      setLoadingMoreLinearProjects(false);
+      setLoadingLinearPreview(false);
+      setSelectedLinearProjectIds(new Set());
+      linearSelectionTouchedRef.current = false;
+      return;
+    }
+
+    let cancelled = false;
+    linearSelectionTouchedRef.current = false;
+    setLinearProjectsById({});
+    setLinearProjectsNextCursor(null);
+    setSelectedLinearProjectIds(new Set());
+    setLoadingLinearProjects(true);
+    setLinearError(null);
+    getVibeRaisingLinearProjects(backendBaseUrl, { limit: LINEAR_PROJECT_PAGE_LIMIT })
+      .then((payload: VibeRaisingLinearProjectsResponse) => {
+        if (cancelled) return;
+        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
+        setLinearProjectsNextCursor(payload.nextCursor ?? null);
+        const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
+        if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
+          setSelectedLinearProjectIds((previous) => {
+            const nextSelected = new Set(previous);
+            selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
+            return nextSelected;
+          });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLinearError(error instanceof Error ? error.message : "We couldn't load Linear projects.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLinearProjects(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowLinearPreview, linearSource?.status]);
+
+  useEffect(() => {
+    if (!shouldShowLinearPreview) {
+      setLinearPreview(null);
+      setLoadingLinearPreview(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingLinearPreview(true);
+    getVibeRaisingLinearPreview(backendBaseUrl)
+      .then((preview) => {
+        if (cancelled) return;
+        setLinearPreview(preview);
+        setLinearProjectsById((previous) => mergeLinearProjectsById(previous, preview.selectedProjects));
+        if (!linearSelectionTouchedRef.current && preview.selectedProjects.length > 0) {
+          setSelectedLinearProjectIds((previous) => {
+            const nextSelected = new Set(previous);
+            preview.selectedProjects.forEach((project) => nextSelected.add(project.projectId));
+            return nextSelected;
+          });
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setLinearError(error instanceof Error ? error.message : "We couldn't load Linear preview.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLinearPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowLinearPreview, linearSource?.lastSyncedAt, linearSource?.status]);
+
   const currentReturnPath = `${location.pathname}${location.search || ""}`;
 
   const handleConnect = async (source: VibeRaisingInputSourceSummary) => {
@@ -1286,6 +1710,10 @@ export default function ConnectData() {
     if (source.status !== "connected" && source.status !== "syncing") return;
     if (source.key === "slack" && selectedSlackChannelIds.size === 0 && !selectedSources.has("slack")) {
       setStatusMessage("Select at least one Slack channel before using Slack in this update.");
+      return;
+    }
+    if (source.key === "linear" && selectedLinearProjectIds.size === 0 && !selectedSources.has("linear")) {
+      setStatusMessage("Select at least one Linear project before using Linear in this update.");
       return;
     }
 
@@ -1409,11 +1837,108 @@ export default function ConnectData() {
     }
   };
 
+  const handleToggleLinearProject = (projectId: string) => {
+    linearSelectionTouchedRef.current = true;
+    setSelectedLinearProjectIds((previous) => {
+      const nextSelected = new Set(previous);
+      if (nextSelected.has(projectId)) {
+        nextSelected.delete(projectId);
+      } else {
+        nextSelected.add(projectId);
+      }
+      return nextSelected;
+    });
+  };
+
+  const handleLoadMoreLinearProjects = async () => {
+    if (!linearProjectsNextCursor || loadingMoreLinearProjects) return;
+    setLoadingMoreLinearProjects(true);
+    setLinearError(null);
+    try {
+      const payload = await getVibeRaisingLinearProjects(backendBaseUrl, {
+        cursor: linearProjectsNextCursor,
+        limit: LINEAR_PROJECT_PAGE_LIMIT,
+      });
+      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, payload.projects));
+      setLinearProjectsNextCursor(payload.nextCursor ?? null);
+      const selectedProjectIds = getSelectedLinearProjectIds(payload.projects);
+      if (!linearSelectionTouchedRef.current && selectedProjectIds.length > 0) {
+        setSelectedLinearProjectIds((previous) => {
+          const nextSelected = new Set(previous);
+          selectedProjectIds.forEach((projectId) => nextSelected.add(projectId));
+          return nextSelected;
+        });
+      }
+    } catch (error) {
+      setLinearError(error instanceof Error ? error.message : "We couldn't load more Linear projects.");
+    } finally {
+      setLoadingMoreLinearProjects(false);
+    }
+  };
+
+  const handleSaveLinearProjects = async () => {
+    setSavingLinearProjects(true);
+    setStatusMessage(null);
+    try {
+      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
+      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        if (selectedLinearProjectIds.size > 0) {
+          nextSelected.add("linear");
+        } else {
+          nextSelected.delete("linear");
+        }
+        return nextSelected;
+      });
+      await Promise.all([
+        refreshStatuses(),
+        getVibeRaisingLinearPreview(backendBaseUrl).then(setLinearPreview),
+      ]);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save Linear project selection.");
+    } finally {
+      setSavingLinearProjects(false);
+    }
+  };
+
+  const handleSyncLinear = async () => {
+    setSyncingLinear(true);
+    setStatusMessage(null);
+    try {
+      const selectionResponse = await saveVibeRaisingLinearProjectSelections(backendBaseUrl, Array.from(selectedLinearProjectIds));
+      setLinearProjectsById((previous) => mergeLinearProjectsById(previous, selectionResponse.projects));
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        if (selectedLinearProjectIds.size > 0) nextSelected.add("linear");
+        return nextSelected;
+      });
+      await syncVibeRaisingInputSources(backendBaseUrl, ["linear"]);
+      await Promise.all([
+        refreshStatuses(),
+        getVibeRaisingLinearPreview(backendBaseUrl).then(setLinearPreview),
+      ]);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't sync Linear.");
+    } finally {
+      setSyncingLinear(false);
+    }
+  };
+
   const navigateBackToUpdates = () => {
     navigate("/founder-tools/updates");
   };
 
   const navigateToDraft = (includeInputs: boolean) => {
+    if (
+      includeInputs &&
+      selectedSources.has("linear") &&
+      selectedLinearProjectIds.size === 0 &&
+      !(sourceByKey.get("linear")?.selectedProjectCount ?? 0)
+    ) {
+      setStatusMessage("Select at least one Linear project before using Linear in this update.");
+      return;
+    }
     writeStoredManualMaterials(manualMaterials);
     const target = new URL(next, "http://mlai.local");
     if (includeInputs && selectedSources.size > 0) {
@@ -1639,6 +2164,11 @@ export default function ConnectData() {
                         {selectedSlackChannelIds.size || source.selectedChannelCount || 0} selected channel{(selectedSlackChannelIds.size || source.selectedChannelCount || 0) === 1 ? "" : "s"}
                       </p>
                     ) : null}
+                    {source.key === "linear" ? (
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        {selectedLinearProjectIds.size || source.selectedProjectCount || 0} selected project{(selectedLinearProjectIds.size || source.selectedProjectCount || 0) === 1 ? "" : "s"}
+                      </p>
+                    ) : null}
                   </div>
                   <button
                     type="button"
@@ -1695,6 +2225,25 @@ export default function ConnectData() {
           onLoadMoreChannels={() => void handleLoadMoreSlackChannels()}
           onSaveChannels={() => void handleSaveSlackChannels()}
           onSync={() => void handleSyncSlack()}
+        />
+      ) : null}
+
+      {shouldShowLinearPreview ? (
+        <LinearPreview
+          projects={linearProjects}
+          preview={linearPreview}
+          loadingProjects={loadingLinearProjects}
+          loadingPreview={loadingLinearPreview}
+          error={linearError}
+          saving={savingLinearProjects}
+          syncing={syncingLinear}
+          selectedProjectIds={selectedLinearProjectIds}
+          nextCursor={linearProjectsNextCursor}
+          loadingMoreProjects={loadingMoreLinearProjects}
+          onToggleProject={handleToggleLinearProject}
+          onLoadMoreProjects={() => void handleLoadMoreLinearProjects()}
+          onSaveProjects={() => void handleSaveLinearProjects()}
+          onSync={() => void handleSyncLinear()}
         />
       ) : null}
 

@@ -6,6 +6,7 @@ export interface VibeRaisingCompany {
   id: string;
   name: string;
   domain?: string | null;
+  companyLinkedInUrl?: string | null;
   abn?: string | null;
   location?: string | null;
   registered: boolean;
@@ -114,7 +115,8 @@ export type VibeRaisingInputSourceKey =
   | "bank_feed"
   | "notion"
   | "google_drive"
-  | "slack";
+  | "slack"
+  | "linear";
 
 export type VibeRaisingInputSourceStatus =
   | "connected"
@@ -140,6 +142,7 @@ export interface VibeRaisingInputSourceSummary {
   lastSyncedAt?: string | null;
   warning?: string | null;
   selectedChannelCount?: number;
+  selectedProjectCount?: number;
 }
 
 export interface VibeRaisingInputSourcesStatusResponse {
@@ -243,6 +246,84 @@ export interface VibeRaisingSlackPreview {
   totalCachedMessages: number;
   warnings: string[];
   messages: VibeRaisingSlackMessagePreview[];
+}
+
+export interface VibeRaisingLinearProject {
+  id?: number | string;
+  projectId: string;
+  linearProjectId?: string;
+  projectName: string;
+  name?: string | null;
+  status?: string | null;
+  health?: string | null;
+  selected: boolean;
+  lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingLinearProjectsResponse {
+  accountLabel?: string | null;
+  workspaceId?: string | null;
+  projects: VibeRaisingLinearProject[];
+  nextCursor?: string | null;
+  warnings: string[];
+}
+
+export interface VibeRaisingLinearIssuePreview {
+  id: string;
+  identifier?: string | null;
+  projectId?: string | null;
+  projectName?: string | null;
+  title: string;
+  stateName?: string | null;
+  stateType?: string | null;
+  priorityLabel?: string | null;
+  assigneeName?: string | null;
+  updatedAt?: string | null;
+  url?: string | null;
+}
+
+export interface VibeRaisingLinearProjectUpdatePreview {
+  id: string;
+  projectId?: string | null;
+  projectName?: string | null;
+  body: string;
+  health?: string | null;
+  authorName?: string | null;
+  updatedAt?: string | null;
+  url?: string | null;
+}
+
+export interface VibeRaisingLinearProjectPreview {
+  id: number | string;
+  projectId: string;
+  name: string;
+  description?: string | null;
+  statusName?: string | null;
+  statusType?: string | null;
+  health?: string | null;
+  progress?: number | null;
+  scope?: number | null;
+  priority?: number | null;
+  leadName?: string | null;
+  teamNames: string[];
+  targetDate?: string | null;
+  url?: string | null;
+  issueCount: number;
+  updateCount: number;
+}
+
+export interface VibeRaisingLinearPreview {
+  accountLabel?: string | null;
+  workspaceId?: string | null;
+  lastSyncedAt?: string | null;
+  selectedProjects: VibeRaisingLinearProject[];
+  projects: VibeRaisingLinearProjectPreview[];
+  projectUpdates: VibeRaisingLinearProjectUpdatePreview[];
+  issues: VibeRaisingLinearIssuePreview[];
+  totalCachedProjects: number;
+  totalCachedIssues: number;
+  totalCachedUpdates: number;
+  warnings: string[];
 }
 
 export interface VibeRaisingXeroRecord {

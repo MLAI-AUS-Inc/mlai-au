@@ -17,6 +17,12 @@ import type {
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
   VibeRaisingInputSourcesStatusResponse,
+  VibeRaisingLinearIssuePreview,
+  VibeRaisingLinearPreview,
+  VibeRaisingLinearProject,
+  VibeRaisingLinearProjectPreview,
+  VibeRaisingLinearProjectsResponse,
+  VibeRaisingLinearProjectUpdatePreview,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
   VibeRaisingRole,
@@ -62,6 +68,9 @@ const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
 const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
 const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
 const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
+const LINEAR_PROJECTS_PATH = "/api/v1/integrations/linear/projects";
+const LINEAR_PROJECT_SELECTIONS_PATH = "/api/v1/integrations/linear/project-selections";
+const LINEAR_PREVIEW_PATH = "/api/v1/integrations/linear/preview";
 
 const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisingInputSourceSummary, "selected" | "status">> = {
   gmail: {
@@ -97,6 +106,11 @@ const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisi
   slack: {
     key: "slack",
     label: "Slack",
+    capabilities: ["context"],
+  },
+  linear: {
+    key: "linear",
+    label: "Linear",
     capabilities: ["context"],
   },
 };
@@ -167,6 +181,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.abn) ??
     asNullableString(payload.companyAbn) ??
     asNullableString(payload.company_abn);
+  const companyLinkedInUrl =
+    asNullableString(payload.companyLinkedInUrl) ??
+    asNullableString(payload.company_linkedin_url);
   const location =
     asNullableString(payload.location) ??
     asNullableString(payload.companyLocation) ??
@@ -184,6 +201,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     id: String(id),
     name,
     domain,
+    companyLinkedInUrl,
     abn,
     location,
     registered,
@@ -873,6 +891,7 @@ function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey
   if (normalized === "notion") return "notion";
   if (normalized === "google_drive" || normalized === "drive") return "google_drive";
   if (normalized === "slack") return "slack";
+  if (normalized === "linear") return "linear";
   return null;
 }
 
@@ -991,6 +1010,10 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       typeof connection.selectedChannelCount === "number" && Number.isFinite(connection.selectedChannelCount)
         ? connection.selectedChannelCount
         : Number(connection.selectedChannelCount ?? connection.selected_channel_count ?? 0) || 0;
+    const selectedProjectCount =
+      typeof connection.selectedProjectCount === "number" && Number.isFinite(connection.selectedProjectCount)
+        ? connection.selectedProjectCount
+        : Number(connection.selectedProjectCount ?? connection.selected_project_count ?? 0) || 0;
 
     summaries[provider] = createInputSourceSummary(provider, status, {
       accountLabel,
@@ -998,6 +1021,7 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       warning,
       selected,
       selectedChannelCount,
+      selectedProjectCount,
     });
   }
 
@@ -1206,14 +1230,14 @@ export function hasSubmittedVibeRaisingUpdate(
 // render without hitting api.mlai.au.
 const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
   role: "founder",
-  organizationName: "Dev Startup Pty Ltd",
+  organizationName: null,
   companies: [
     {
       id: "dev-company",
-      name: "Dev Startup Pty Ltd",
-      domain: "devstartup.com",
-      abn: "51 824 753 556",
-      location: "Melbourne, Australia",
+      name: "",
+      domain: null,
+      abn: null,
+      location: null,
       registered: true,
     },
   ],
@@ -1339,9 +1363,21 @@ export async function saveVibeRaisingCompany(
     companyId?: string | null;
     name: string;
     domain?: string | null;
+    companyLinkedInUrl?: string | null;
     abn?: string | null;
     location?: string | null;
     registered?: boolean;
+    brandName?: string | null;
+    companyContext?: string | null;
+    competitors?: string[];
+    seedKeywords?: string[];
+    founderNames?: string[];
+    stage?: string | null;
+    notes?: string | null;
+    githubRepo?: string | null;
+    articleDeliveryMode?: string | null;
+    dailyDiscoveryEnabled?: boolean;
+    defaultTimezone?: string | null;
   },
 ): Promise<string | null> {
   const client = createApiClient(env, request);
@@ -1676,7 +1712,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
   }
 
-  for (const key of ["notion", "google_drive", "slack"] as const) {
+  for (const key of ["notion", "google_drive", "slack", "linear"] as const) {
     sources.push(createInputSourceSummary(key, "unavailable", {
       selected: false,
       warning: "This connector is not available on this backend yet.",
@@ -1693,6 +1729,7 @@ const CONNECTOR_PROVIDER_SLUGS: Record<Exclude<VibeRaisingInputSourceKey, "gmail
   notion: "notion",
   google_drive: "google-drive",
   slack: "slack",
+  linear: "linear",
 };
 
 export function connectVibeRaisingInputSource(
@@ -2078,6 +2115,243 @@ export async function getVibeRaisingSlackPreview(
     messages: collectRawList(payload, ["messages"])
       .map(normalizeSlackMessagePreview)
       .filter((value): value is VibeRaisingSlackMessagePreview => value !== null),
+  };
+}
+
+function normalizeLinearProject(raw: unknown): VibeRaisingLinearProject | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.projectId ?? payload.project_id ?? payload.linearProjectId ?? payload.linear_project_id;
+  const projectId =
+    asNullableString(payload.projectId) ??
+    asNullableString(payload.project_id) ??
+    asNullableString(payload.linearProjectId) ??
+    asNullableString(payload.linear_project_id) ??
+    asNullableString(payload.id);
+  if (!projectId) return null;
+  const projectName =
+    asNullableString(payload.projectName) ??
+    asNullableString(payload.project_name) ??
+    asNullableString(payload.name) ??
+    projectId;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : projectId,
+    projectId,
+    linearProjectId: projectId,
+    projectName,
+    name: asNullableString(payload.name) ?? projectName,
+    status: asNullableString(payload.status) ?? asNullableString(payload.projectStatus) ?? asNullableString(payload.project_status),
+    health: asNullableString(payload.health) ?? asNullableString(payload.projectHealth) ?? asNullableString(payload.project_health),
+    selected: asBoolean(payload.selected),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+  };
+}
+
+export async function getVibeRaisingLinearProjects(
+  backendBaseUrl: string,
+  options: { cursor?: string | null; limit?: number } = {},
+): Promise<VibeRaisingLinearProjectsResponse> {
+  const searchParams = new URLSearchParams();
+  if (options.cursor) searchParams.set("cursor", options.cursor);
+  if (typeof options.limit === "number") searchParams.set("limit", String(options.limit));
+  const path = searchParams.toString() ? `${LINEAR_PROJECTS_PATH}?${searchParams.toString()}` : LINEAR_PROJECTS_PATH;
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    path,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    workspaceId:
+      asNullableString(payload.workspaceId) ??
+      asNullableString(payload.workspace_id),
+    projects: collectRawList(payload, ["projects"])
+      .map(normalizeLinearProject)
+      .filter((value): value is VibeRaisingLinearProject => value !== null),
+    nextCursor:
+      asNullableString(payload.nextCursor) ??
+      asNullableString(payload.next_cursor),
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+export async function saveVibeRaisingLinearProjectSelections(
+  backendBaseUrl: string,
+  projectIds: string[],
+): Promise<VibeRaisingLinearProjectsResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    LINEAR_PROJECT_SELECTIONS_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ projectIds }),
+    },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    workspaceId:
+      asNullableString(payload.workspaceId) ??
+      asNullableString(payload.workspace_id),
+    projects: collectRawList(payload, ["selectedProjects", "selected_projects", "projects"])
+      .map(normalizeLinearProject)
+      .filter((value): value is VibeRaisingLinearProject => value !== null),
+    nextCursor: null,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeLinearProjectPreview(raw: unknown): VibeRaisingLinearProjectPreview | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const projectId =
+    asNullableString(payload.projectId) ??
+    asNullableString(payload.project_id);
+  if (!projectId) return null;
+  const id = payload.id ?? projectId;
+  const rawTeamNames = payload.teamNames ?? payload.team_names;
+  const teamNames = Array.isArray(rawTeamNames)
+    ? rawTeamNames.map((item) => String(item || "").trim()).filter(Boolean)
+    : [];
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : projectId,
+    projectId,
+    name: asNullableString(payload.name) ?? projectId,
+    description: asNullableString(payload.description),
+    statusName:
+      asNullableString(payload.statusName) ??
+      asNullableString(payload.status_name),
+    statusType:
+      asNullableString(payload.statusType) ??
+      asNullableString(payload.status_type),
+    health: asNullableString(payload.health),
+    progress: asNullableNumber(payload.progress),
+    scope: asNullableNumber(payload.scope),
+    priority: asNullableNumber(payload.priority),
+    leadName:
+      asNullableString(payload.leadName) ??
+      asNullableString(payload.lead_name),
+    teamNames,
+    targetDate:
+      asNullableString(payload.targetDate) ??
+      asNullableString(payload.target_date),
+    url: asNullableString(payload.url),
+    issueCount: Number(payload.issueCount ?? payload.issue_count ?? 0) || 0,
+    updateCount: Number(payload.updateCount ?? payload.update_count ?? 0) || 0,
+  };
+}
+
+function normalizeLinearProjectUpdatePreview(raw: unknown): VibeRaisingLinearProjectUpdatePreview | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = asNullableString(payload.id);
+  if (!id) return null;
+  return {
+    id,
+    projectId:
+      asNullableString(payload.projectId) ??
+      asNullableString(payload.project_id),
+    projectName:
+      asNullableString(payload.projectName) ??
+      asNullableString(payload.project_name),
+    body: asNullableString(payload.body) ?? "",
+    health: asNullableString(payload.health),
+    authorName:
+      asNullableString(payload.authorName) ??
+      asNullableString(payload.author_name),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
+    url: asNullableString(payload.url),
+  };
+}
+
+function normalizeLinearIssuePreview(raw: unknown): VibeRaisingLinearIssuePreview | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = asNullableString(payload.id);
+  if (!id) return null;
+  return {
+    id,
+    identifier: asNullableString(payload.identifier),
+    projectId:
+      asNullableString(payload.projectId) ??
+      asNullableString(payload.project_id),
+    projectName:
+      asNullableString(payload.projectName) ??
+      asNullableString(payload.project_name),
+    title: asNullableString(payload.title) ?? "Linear issue",
+    stateName:
+      asNullableString(payload.stateName) ??
+      asNullableString(payload.state_name),
+    stateType:
+      asNullableString(payload.stateType) ??
+      asNullableString(payload.state_type),
+    priorityLabel:
+      asNullableString(payload.priorityLabel) ??
+      asNullableString(payload.priority_label),
+    assigneeName:
+      asNullableString(payload.assigneeName) ??
+      asNullableString(payload.assignee_name),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
+    url: asNullableString(payload.url),
+  };
+}
+
+export async function getVibeRaisingLinearPreview(
+  backendBaseUrl: string,
+  limit = 5,
+): Promise<VibeRaisingLinearPreview> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    `${LINEAR_PREVIEW_PATH}?limit=${encodeURIComponent(String(limit))}`,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    workspaceId:
+      asNullableString(payload.workspaceId) ??
+      asNullableString(payload.workspace_id),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+    selectedProjects: collectRawList(payload, ["selectedProjects", "selected_projects"])
+      .map(normalizeLinearProject)
+      .filter((value): value is VibeRaisingLinearProject => value !== null),
+    projects: collectRawList(payload, ["projects"])
+      .map(normalizeLinearProjectPreview)
+      .filter((value): value is VibeRaisingLinearProjectPreview => value !== null),
+    projectUpdates: collectRawList(payload, ["projectUpdates", "project_updates"])
+      .map(normalizeLinearProjectUpdatePreview)
+      .filter((value): value is VibeRaisingLinearProjectUpdatePreview => value !== null),
+    issues: collectRawList(payload, ["issues"])
+      .map(normalizeLinearIssuePreview)
+      .filter((value): value is VibeRaisingLinearIssuePreview => value !== null),
+    totalCachedProjects:
+      Number(payload.totalCachedProjects ?? payload.total_cached_projects ?? 0) || 0,
+    totalCachedIssues:
+      Number(payload.totalCachedIssues ?? payload.total_cached_issues ?? 0) || 0,
+    totalCachedUpdates:
+      Number(payload.totalCachedUpdates ?? payload.total_cached_updates ?? 0) || 0,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
   };
 }
 
