@@ -2,10 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.connect-data";
 import { redirect, useLoaderData, useLocation, useNavigate } from "react-router";
 import { clsx } from "clsx";
+import { Combobox } from "@headlessui/react";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
   BuildingLibraryIcon,
+  CheckIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   EllipsisHorizontalIcon,
@@ -13,8 +15,10 @@ import {
   FolderIcon,
   LinkIcon,
   LockClosedIcon,
+  MagnifyingGlassIcon,
   ShieldCheckIcon,
   SparklesIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -59,6 +63,7 @@ const POPULAR_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
   "xero",
 ];
 const EXTRA_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [];
+const SLACK_CHANNEL_PAGE_LIMIT = 100;
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
@@ -572,6 +577,22 @@ function GmailPreview({
   );
 }
 
+function mergeSlackChannelsById(
+  previous: Record<string, VibeRaisingSlackChannel>,
+  channels: VibeRaisingSlackChannel[],
+) {
+  if (channels.length === 0) return previous;
+  const next = { ...previous };
+  channels.forEach((channel) => {
+    next[channel.channelId] = { ...next[channel.channelId], ...channel };
+  });
+  return next;
+}
+
+function getSelectedSlackChannelIds(channels: VibeRaisingSlackChannel[]) {
+  return channels.filter((channel) => channel.selected).map((channel) => channel.channelId);
+}
+
 function SlackPreview({
   channels,
   preview,
@@ -581,7 +602,10 @@ function SlackPreview({
   saving,
   syncing,
   selectedChannelIds,
+  nextCursor,
+  loadingMoreChannels,
   onToggleChannel,
+  onLoadMoreChannels,
   onSaveChannels,
   onSync,
 }: {
@@ -593,10 +617,46 @@ function SlackPreview({
   saving: boolean;
   syncing: boolean;
   selectedChannelIds: Set<string>;
+  nextCursor: string | null;
+  loadingMoreChannels: boolean;
   onToggleChannel: (channelId: string) => void;
+  onLoadMoreChannels: () => void;
   onSaveChannels: () => void;
   onSync: () => void;
 }) {
+  const [channelQuery, setChannelQuery] = useState("");
+  const channelsById = useMemo(() => new Map(channels.map((channel) => [channel.channelId, channel])), [channels]);
+  const selectedChannels = useMemo(
+    () =>
+      Array.from(selectedChannelIds).map((channelId) => {
+        const channel = channelsById.get(channelId);
+        if (channel) return channel;
+        return {
+          channelId,
+          channelName: channelId,
+          name: channelId,
+          isPrivate: false,
+          selected: true,
+        } satisfies VibeRaisingSlackChannel;
+      }),
+    [channelsById, selectedChannelIds],
+  );
+  const filteredChannels = useMemo(() => {
+    const normalizedQuery = channelQuery.trim().toLowerCase();
+    if (!normalizedQuery) return channels;
+    return channels.filter((channel) =>
+      [channel.channelName, channel.name, channel.channelId]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(normalizedQuery)),
+    );
+  }, [channelQuery, channels]);
+
+  const handleComboboxChange = (channel: VibeRaisingSlackChannel | null) => {
+    if (!channel) return;
+    onToggleChannel(channel.channelId);
+    setChannelQuery("");
+  };
+
   return (
     <section className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -645,7 +705,10 @@ function SlackPreview({
       {channels.length > 0 ? (
         <div className="mt-5 rounded-lg border border-gray-100">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
-            <p className="text-sm font-black text-gray-950">Channels</p>
+            <div>
+              <p className="text-sm font-black text-gray-950">Channels</p>
+              <p className="mt-1 text-xs font-bold text-slate-500">{selectedChannelIds.size} selected</p>
+            </div>
             <button
               type="button"
               onClick={onSaveChannels}
@@ -655,21 +718,91 @@ function SlackPreview({
               {saving ? "Saving" : "Save selection"}
             </button>
           </div>
-          <div className="grid max-h-72 gap-0 overflow-auto md:grid-cols-2">
-            {channels.map((channel) => (
-              <label key={channel.channelId} className="flex cursor-pointer items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">
-                <input
-                  type="checkbox"
-                  checked={selectedChannelIds.has(channel.channelId)}
-                  onChange={() => onToggleChannel(channel.channelId)}
-                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-                />
-                <span className="min-w-0 flex-1 truncate">#{channel.channelName}</span>
-                {channel.isPrivate ? (
-                  <LockClosedIcon className="h-4 w-4 text-slate-400" />
-                ) : null}
-              </label>
-            ))}
+          <div className="px-4 py-4">
+            {selectedChannels.length > 0 ? (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {selectedChannels.map((channel) => (
+                  <span
+                    key={channel.channelId}
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100"
+                  >
+                    {channel.isPrivate ? <LockClosedIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> : null}
+                    <span className="truncate">#{channel.channelName}</span>
+                    <button
+                      type="button"
+                      onClick={() => onToggleChannel(channel.channelId)}
+                      className="rounded-full p-0.5 text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-900"
+                      aria-label={`Remove #${channel.channelName}`}
+                    >
+                      <XMarkIcon className="h-3.5 w-3.5" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : null}
+
+            <Combobox value={null} onChange={handleComboboxChange}>
+              <div className="relative">
+                <div className="relative">
+                  <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Combobox.Input
+                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    displayValue={() => channelQuery}
+                    onChange={(event) => setChannelQuery(event.target.value)}
+                    placeholder="Search and select Slack channels"
+                  />
+                  <Combobox.Button className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600">
+                    <ChevronDownIcon className="h-4 w-4" />
+                  </Combobox.Button>
+                </div>
+                <Combobox.Options className="absolute z-20 mt-2 max-h-80 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 text-sm shadow-lg focus:outline-none">
+                  {filteredChannels.length > 0 ? (
+                    filteredChannels.map((channel) => {
+                      const selected = selectedChannelIds.has(channel.channelId);
+                      return (
+                        <Combobox.Option
+                          key={channel.channelId}
+                          value={channel}
+                          className={({ active }) =>
+                            clsx(
+                              "relative flex cursor-pointer select-none items-center gap-3 px-4 py-3 font-semibold",
+                              active ? "bg-emerald-50 text-emerald-900" : "text-gray-800",
+                            )
+                          }
+                        >
+                          <span
+                            className={clsx(
+                              "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
+                              selected ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-transparent",
+                            )}
+                          >
+                            <CheckIcon className="h-3.5 w-3.5" />
+                          </span>
+                          <span className="min-w-0 flex-1 truncate">#{channel.channelName}</span>
+                          {channel.isPrivate ? <LockClosedIcon className="h-4 w-4 shrink-0 text-slate-400" /> : null}
+                        </Combobox.Option>
+                      );
+                    })
+                  ) : (
+                    <div className="px-4 py-4 text-sm font-semibold text-slate-500">No loaded channels match this search.</div>
+                  )}
+                  {nextCursor ? (
+                    <div className="border-t border-gray-100 p-2">
+                      <button
+                        type="button"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={onLoadMoreChannels}
+                        disabled={loadingMoreChannels}
+                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <ArrowPathIcon className={clsx("h-4 w-4", loadingMoreChannels && "animate-spin")} />
+                        {loadingMoreChannels ? "Loading channels" : "Load more channels"}
+                      </button>
+                    </div>
+                  ) : null}
+                </Combobox.Options>
+              </div>
+            </Combobox>
           </div>
         </div>
       ) : !loadingChannels ? (
@@ -885,8 +1018,10 @@ export default function ConnectData() {
   const [xeroPreview, setXeroPreview] = useState<VibeRaisingXeroPreview | null>(null);
   const [loadingXeroPreview, setLoadingXeroPreview] = useState(false);
   const [xeroPreviewError, setXeroPreviewError] = useState<string | null>(null);
-  const [slackChannels, setSlackChannels] = useState<VibeRaisingSlackChannel[]>([]);
+  const [slackChannelsById, setSlackChannelsById] = useState<Record<string, VibeRaisingSlackChannel>>({});
+  const [slackChannelsNextCursor, setSlackChannelsNextCursor] = useState<string | null>(null);
   const [loadingSlackChannels, setLoadingSlackChannels] = useState(false);
+  const [loadingMoreSlackChannels, setLoadingMoreSlackChannels] = useState(false);
   const [slackPreview, setSlackPreview] = useState<VibeRaisingSlackPreview | null>(null);
   const [loadingSlackPreview, setLoadingSlackPreview] = useState(false);
   const [slackError, setSlackError] = useState<string | null>(null);
@@ -894,6 +1029,7 @@ export default function ConnectData() {
   const [selectedSlackChannelIds, setSelectedSlackChannelIds] = useState<Set<string>>(new Set());
   const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
   const defaultSelectionAppliedRef = useRef(false);
+  const slackSelectionTouchedRef = useRef(false);
 
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
   const orderedVisibleSources = useMemo(() => {
@@ -908,6 +1044,7 @@ export default function ConnectData() {
     () => sources.filter((source) => selectedSources.has(source.key)),
     [selectedSources, sources],
   );
+  const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
   const hasManualMaterials = Boolean(manualMaterials.sourceUrl.trim() || manualMaterials.summary.trim());
   const hasConnectedFinance = connectedSources.some((source) => source.key === "stripe" || source.key === "xero" || source.key === "bank_feed");
   const gmailSource = sourceByKey.get("gmail");
@@ -1033,23 +1170,38 @@ export default function ConnectData() {
 
   useEffect(() => {
     if (!shouldShowSlackPreview) {
-      setSlackChannels([]);
+      setSlackChannelsById({});
+      setSlackChannelsNextCursor(null);
       setSlackPreview(null);
       setSlackError(null);
       setLoadingSlackChannels(false);
+      setLoadingMoreSlackChannels(false);
       setLoadingSlackPreview(false);
       setSelectedSlackChannelIds(new Set());
+      slackSelectionTouchedRef.current = false;
       return;
     }
 
     let cancelled = false;
+    slackSelectionTouchedRef.current = false;
+    setSlackChannelsById({});
+    setSlackChannelsNextCursor(null);
+    setSelectedSlackChannelIds(new Set());
     setLoadingSlackChannels(true);
     setSlackError(null);
-    getVibeRaisingSlackChannels(backendBaseUrl)
+    getVibeRaisingSlackChannels(backendBaseUrl, { limit: SLACK_CHANNEL_PAGE_LIMIT })
       .then((payload: VibeRaisingSlackChannelsResponse) => {
         if (cancelled) return;
-        setSlackChannels(payload.channels);
-        setSelectedSlackChannelIds(new Set(payload.channels.filter((channel) => channel.selected).map((channel) => channel.channelId)));
+        setSlackChannelsById((previous) => mergeSlackChannelsById(previous, payload.channels));
+        setSlackChannelsNextCursor(payload.nextCursor ?? null);
+        const selectedChannelIds = getSelectedSlackChannelIds(payload.channels);
+        if (!slackSelectionTouchedRef.current && selectedChannelIds.length > 0) {
+          setSelectedSlackChannelIds((previous) => {
+            const nextSelected = new Set(previous);
+            selectedChannelIds.forEach((channelId) => nextSelected.add(channelId));
+            return nextSelected;
+          });
+        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -1076,7 +1228,16 @@ export default function ConnectData() {
     setLoadingSlackPreview(true);
     getVibeRaisingSlackPreview(backendBaseUrl)
       .then((preview) => {
-        if (!cancelled) setSlackPreview(preview);
+        if (cancelled) return;
+        setSlackPreview(preview);
+        setSlackChannelsById((previous) => mergeSlackChannelsById(previous, preview.selectedChannels));
+        if (!slackSelectionTouchedRef.current && preview.selectedChannels.length > 0) {
+          setSelectedSlackChannelIds((previous) => {
+            const nextSelected = new Set(previous);
+            preview.selectedChannels.forEach((channel) => nextSelected.add(channel.channelId));
+            return nextSelected;
+          });
+        }
       })
       .catch((error) => {
         if (!cancelled) {
@@ -1161,6 +1322,7 @@ export default function ConnectData() {
   };
 
   const handleToggleSlackChannel = (channelId: string) => {
+    slackSelectionTouchedRef.current = true;
     setSelectedSlackChannelIds((previous) => {
       const nextSelected = new Set(previous);
       if (nextSelected.has(channelId)) {
@@ -1172,11 +1334,38 @@ export default function ConnectData() {
     });
   };
 
+  const handleLoadMoreSlackChannels = async () => {
+    if (!slackChannelsNextCursor || loadingMoreSlackChannels) return;
+    setLoadingMoreSlackChannels(true);
+    setSlackError(null);
+    try {
+      const payload = await getVibeRaisingSlackChannels(backendBaseUrl, {
+        cursor: slackChannelsNextCursor,
+        limit: SLACK_CHANNEL_PAGE_LIMIT,
+      });
+      setSlackChannelsById((previous) => mergeSlackChannelsById(previous, payload.channels));
+      setSlackChannelsNextCursor(payload.nextCursor ?? null);
+      const selectedChannelIds = getSelectedSlackChannelIds(payload.channels);
+      if (!slackSelectionTouchedRef.current && selectedChannelIds.length > 0) {
+        setSelectedSlackChannelIds((previous) => {
+          const nextSelected = new Set(previous);
+          selectedChannelIds.forEach((channelId) => nextSelected.add(channelId));
+          return nextSelected;
+        });
+      }
+    } catch (error) {
+      setSlackError(error instanceof Error ? error.message : "We couldn't load more Slack channels.");
+    } finally {
+      setLoadingMoreSlackChannels(false);
+    }
+  };
+
   const handleSaveSlackChannels = async () => {
     setSavingSlackChannels(true);
     setStatusMessage(null);
     try {
-      await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      const selectionResponse = await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      setSlackChannelsById((previous) => mergeSlackChannelsById(previous, selectionResponse.channels));
       setSelectedSources((previous) => {
         const nextSelected = new Set(previous);
         if (selectedSlackChannelIds.size > 0) {
@@ -1201,7 +1390,8 @@ export default function ConnectData() {
     setSyncingSlack(true);
     setStatusMessage(null);
     try {
-      await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      const selectionResponse = await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      setSlackChannelsById((previous) => mergeSlackChannelsById(previous, selectionResponse.channels));
       setSelectedSources((previous) => {
         const nextSelected = new Set(previous);
         if (selectedSlackChannelIds.size > 0) nextSelected.add("slack");
@@ -1499,7 +1689,10 @@ export default function ConnectData() {
           saving={savingSlackChannels}
           syncing={syncingSlack}
           selectedChannelIds={selectedSlackChannelIds}
+          nextCursor={slackChannelsNextCursor}
+          loadingMoreChannels={loadingMoreSlackChannels}
           onToggleChannel={handleToggleSlackChannel}
+          onLoadMoreChannels={() => void handleLoadMoreSlackChannels()}
           onSaveChannels={() => void handleSaveSlackChannels()}
           onSync={() => void handleSyncSlack()}
         />
