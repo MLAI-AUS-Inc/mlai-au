@@ -32,7 +32,7 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
   const [showIntro, setShowIntro] = useState(false);
 
   const enterApp = useCallback(() => {
-    navigate("/vibe-raising");
+    navigate("/founder-tools/updates");
   }, [navigate]);
 
   return (

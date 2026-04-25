@@ -1,20 +1,23 @@
 import { axiosInstance, API_URL, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
-export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
+export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "founder-tools" | "vibe-raising";
 
 function resolveAuthApp(body: {
     app?: AuthAppName;
     next?: string;
 }): AuthAppName {
+    if (body.app === "vibe-raising") {
+        return "founder-tools";
+    }
     return (
         body.app ||
         (body.next?.startsWith("/esafety")
             ? "esafety"
             : body.next?.startsWith("/innovate-connect-alliance")
               ? "innovate-connect-alliance"
-            : body.next?.startsWith("/vibe-raising")
-              ? "vibe-raising"
+            : body.next?.startsWith("/founder-tools") || body.next?.startsWith("/vibe-raising")
+              ? "founder-tools"
               : "hospital")
     );
 }

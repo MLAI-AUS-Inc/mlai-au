@@ -39,7 +39,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             await setVibeRaisingActiveCompany(env, request, companyId);
         }
 
-        return redirect("/vibe-raising");
+        return redirect("/founder-tools/updates");
     }
     
     return null;
@@ -70,7 +70,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                 </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                     <Link
-                        to="/vibe-raising/company-setup?new=true"
+                        to="/founder-tools/company-setup?new=true"
                         className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
                         style={{
                             background: "var(--vr-color-primary)",
@@ -192,7 +192,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                             style={{ borderTop: "1px solid var(--vr-color-border)" }}
                         >
                             <Link
-                                to="/vibe-raising"
+                                to="/founder-tools/updates"
                                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all mt-5"
                                 style={{
                                     background: "var(--vr-color-primary)",
@@ -205,7 +205,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                 <ArrowRightIcon className="w-4 h-4" />
                             </Link>
                             <Link
-                                to="/vibe-raising/company-setup"
+                                to="/founder-tools/company-setup"
                                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors mt-5"
                                 style={{
                                     color: "var(--vr-color-text-mid)",
@@ -283,7 +283,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
 
             {/* Register new company — subtle dashed card at the bottom */}
             <Link
-                to="/vibe-raising/company-setup?new=true"
+                to="/founder-tools/company-setup?new=true"
                 className="vr-company-card-add flex items-center justify-center gap-3 p-5 text-center group"
                 style={{ borderRadius: "var(--vr-radius-lg)" }}
             >

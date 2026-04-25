@@ -6,6 +6,7 @@ import {
     cancelVibeRaisingStartupUpdate,
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
+    getVibeRaisingMonthlyUpdates,
     getVibeRaisingStartupUpdateActiveRun,
     getVibeRaisingStartupUpdateDraftResults,
     getVibeRaisingStartupUpdateStatus,
@@ -41,7 +42,12 @@ import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
-import type { VibeRaisingInputSourceKey, VibeRaisingStartupUpdateStatusResponse, VibeRaisingVideoCompressionMetadata } from "~/types/vibe-raising";
+import type {
+    VibeRaisingInputSourceKey,
+    VibeRaisingMonthlyUpdate,
+    VibeRaisingStartupUpdateStatusResponse,
+    VibeRaisingVideoCompressionMetadata,
+} from "~/types/vibe-raising";
 
 const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "gmail",
@@ -63,6 +69,24 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     slack: "Slack",
 };
 
+const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
+const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
+
+function readStoredManualMaterials(): { summary: string; sourceUrl: string } {
+    if (typeof window === "undefined") return { summary: "", sourceUrl: "" };
+    try {
+        const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+        if (!raw) return { summary: "", sourceUrl: "" };
+        const parsed = JSON.parse(raw) as { summary?: unknown; sourceUrl?: unknown };
+        return {
+            summary: typeof parsed.summary === "string" ? parsed.summary : "",
+            sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
+        };
+    } catch {
+        return { summary: "", sourceUrl: "" };
+    }
+}
+
 function parseInputSources(value: string | null): VibeRaisingInputSourceKey[] {
     if (!value) return [];
     const seen = new Set<VibeRaisingInputSourceKey>();
@@ -77,13 +101,33 @@ function parseInputSources(value: string | null): VibeRaisingInputSourceKey[] {
     return Array.from(seen);
 }
 
+function getMonthlyUpdateKey(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return "";
+    return `${parsedYear}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
+    const isoMonth = String(update.isoMonth || "").trim();
+    const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
+    if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}`;
+
+    if (update.monthName && update.year) {
+        return getMonthlyUpdateKey(update.monthName, update.year);
+    }
+
+    const parsed = parseVibeRaisingMonthYear(update.month);
+    return getMonthlyUpdateKey(parsed.month, parsed.year);
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
     // Require company registration before creating updates
     if (!user.companyRegistered) {
-        throw redirect("/vibe-raising/company-setup");
+        throw redirect("/founder-tools/company-setup");
     }
 
     // Check for edit mode
@@ -109,13 +153,16 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         };
     }
 
+    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request);
+
     return {
         user,
         existingData,
         isEdit: !!editId,
-        backendBaseUrl: String(env.BACKEND_BASE_URL || "http://localhost:8000"),
+        backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
         resumeEmailDrafting,
         selectedInputSources,
+        existingMonthlyUpdates,
     };
 }
 
@@ -148,7 +195,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "publish") {
-        const metricKeys = ["revenue", "activeUsers", "mrr", "burnRate", "runway"];
+        const dynamicMetricKeys = String(formData.get("metricKeys") || "")
+            .split(",")
+            .map((key) => key.trim())
+            .filter(Boolean);
+        const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...dynamicMetricKeys]));
         const metrics = Object.fromEntries(
             metricKeys
                 .map((key) => [key, String(formData.get(key) || "").trim()] as const)
@@ -173,7 +224,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             metrics,
         });
 
-        return redirect("/vibe-raising");
+        return redirect("/founder-tools/updates");
     }
 
     return null;
@@ -195,7 +246,61 @@ const METRIC_OPTIONS: MetricOption[] = [
     { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly recurring revenue from active subscriptions." },
     { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "How much capital the company is spending per month." },
     { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Estimated time before the company needs more funding." },
+    { key: "invoiceRevenue", label: "Invoice Revenue", placeholder: "45,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice revenue from accounting data." },
+    { key: "cashCollected", label: "Cash Collected", placeholder: "42,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Cash received from accounting payments." },
+    { key: "revenueGrowthRate", label: "Revenue Growth", placeholder: "12%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Month-on-month revenue or MRR growth when source data supports it." },
+    { key: "customerCount", label: "Customers", placeholder: "24", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of active or paying customers when source data supports it." },
+    { key: "churn", label: "Churn", placeholder: "2%", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Customer or revenue churn when source data supports it." },
+    { key: "invoiceCount", label: "Invoices", placeholder: "12", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice count from accounting data." },
+    { key: "recurringInvoiceCount", label: "Recurring Invoices", placeholder: "6", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Active recurring invoice count from accounting data." },
 ];
+
+const METRIC_OPTION_MAP = new Map(METRIC_OPTIONS.map((option) => [option.key, option]));
+const METRIC_FORM_KEYS = METRIC_OPTIONS.map((option) => option.key);
+
+function humanizeMetricKey(key: string) {
+    return key
+        .replace(/[_-]+/g, " ")
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function getMetricOption(key: string): MetricOption {
+    return METRIC_OPTION_MAP.get(key) ?? {
+        key,
+        label: humanizeMetricKey(key),
+        placeholder: "Value",
+        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
+        info: "Source-backed metric.",
+    };
+}
+
+function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
+    const keys = Object.keys(metrics || {}).filter((key) => String(metrics?.[key] || "").trim());
+    const known = METRIC_OPTIONS.filter((option) => keys.includes(option.key));
+    const extra = keys
+        .filter((key) => !METRIC_OPTION_MAP.has(key))
+        .map((key) => getMetricOption(key));
+    return [...known, ...extra];
+}
+
+function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
+    const extra = Object.keys(metrics || {})
+        .filter((key) => !METRIC_OPTION_MAP.has(key))
+        .map((key) => getMetricOption(key));
+    return [...METRIC_OPTIONS, ...extra];
+}
+
+function getEditableMetricOptions(metrics?: Record<string, string>, selected?: Set<string>) {
+    const keys = new Set<string>([
+        ...Object.keys(metrics || {}),
+        ...Array.from(selected || []),
+    ]);
+    const extra = Array.from(keys)
+        .filter((key) => !METRIC_OPTION_MAP.has(key))
+        .map((key) => getMetricOption(key));
+    return [...METRIC_OPTIONS, ...extra];
+}
 
 function MetricInfoBadge({ info }: { info?: string }) {
     if (!info) return null;
@@ -808,7 +913,7 @@ function appendEmailDraftDiagnostics(message: string, error: unknown) {
 function getEmailDraftErrorMessage(error: unknown) {
     const statusCode = (error as { status?: number })?.status;
     const payload = (error as { data?: { error?: string; detail?: string } })?.data;
-    let message = "We couldn't draft your update from Gmail. Please try again.";
+    let message = "We couldn't draft your update from the selected inputs. Please try again.";
     if (typeof payload === "string" && isHtmlErrorDocument(payload)) {
         if (statusCode === 404) {
             message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
@@ -1126,7 +1231,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                     <h4 className="text-sm font-bold text-gray-700">{pm.month}</h4>
                     {!open && Object.keys(pm.metrics).length > 0 && (
                         <span className="flex items-center gap-2 text-xs text-gray-400">
-                            {METRIC_OPTIONS.filter(m => m.key in pm.metrics).map(m => (
+                            {getMetricOptionsForMetrics(pm.metrics).map(m => (
                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{pm.metrics[m.key]}</span>
                             ))}
                         </span>
@@ -1139,7 +1244,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                     {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                            {METRIC_OPTIONS.map(m => {
+                            {getMetricOptionsForDisplay(pm.metrics).map(m => {
                                 const val = pm.metrics[m.key];
                                 return (
                                     <div
@@ -1368,6 +1473,7 @@ export default function CreateUpdate() {
         backendBaseUrl,
         resumeEmailDrafting,
         selectedInputSources,
+        existingMonthlyUpdates,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
@@ -1376,7 +1482,7 @@ export default function CreateUpdate() {
     const isSubmitting = navigation.state === "submitting";
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
-        navigate(`/vibe-raising/connect-data?next=${encodeURIComponent(returnPath)}`);
+        navigate(`/founder-tools/data-sources?next=${encodeURIComponent(returnPath)}`);
     }, [location.pathname, location.search, navigate]);
     const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
         if (step === "connect") {
@@ -1408,6 +1514,11 @@ export default function CreateUpdate() {
         if (typeof window === "undefined") return false;
         return !!localStorage.getItem("vibe_draft");
     });
+    const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+    const [pendingDraftRequest, setPendingDraftRequest] = useState<{
+        forceRegenerate?: boolean;
+        clearPersistedRun?: boolean;
+    } | null>(null);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
@@ -1417,11 +1528,8 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const [summary, setSummary] = useState<string>(defaultData?.summary || "");
-    const [sourceUrl, setSourceUrl] = useState<string>(defaultData?.sourceUrl || "");
-    const [showImportPanel, setShowImportPanel] = useState<boolean>(
-        Boolean(defaultData?.summary || defaultData?.sourceUrl || defaultData?.videoUrl),
-    );
+    const [summary, setSummary] = useState<string>(() => defaultData?.summary || readStoredManualMaterials().summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || readStoredManualMaterials().sourceUrl || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -1439,6 +1547,11 @@ export default function CreateUpdate() {
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || 2026);
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
+    const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
+    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
+        (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
+    );
+    const selectedMonthLabel = `${selectedMonth} ${selectedYear}`;
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -1503,9 +1616,6 @@ export default function CreateUpdate() {
             setVideoUploadError(null);
             setPreviewMediaKind("video");
         }
-        if (data.summary || data.sourceUrl || data.source_url || data.videoUrl || data.video_url) {
-            setShowImportPanel(true);
-        }
         setMetricValues(data.metrics || {});
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
@@ -1561,7 +1671,6 @@ export default function CreateUpdate() {
         setVideoFileSizeBytes(file.size);
         setVideoOriginalFilename(file.name);
         setPreviewMediaKind("video");
-        setShowImportPanel(true);
         revokeVideoPreviewObjectUrl();
         setVideoPreviewUrl(null);
 
@@ -1817,9 +1926,9 @@ export default function CreateUpdate() {
         }
     }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources]);
 
-    const handleGenerateDraftFromEmailClick = useCallback(async () => {
+    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
         if (!canGenerateDraftFromEmail) {
-            navigate("/vibe-raising/companies");
+            navigate("/founder-tools/companies");
             return;
         }
 
@@ -1827,12 +1936,12 @@ export default function CreateUpdate() {
         setEmailDraftUiError(null);
         try {
             if (!selectedInputSources.includes("gmail")) {
-                await startOrResumeEmailDraft();
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
                 return;
             }
             const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
             if (bootstrap.googleConnected) {
-                await startOrResumeEmailDraft();
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
                 return;
             }
             setShowEmailWizard(true);
@@ -1845,6 +1954,44 @@ export default function CreateUpdate() {
             setEmailDraftActionBusy(false);
         }
     }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, selectedInputSources, startOrResumeEmailDraft]);
+
+    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+        if (request?.clearPersistedRun) {
+            clearPersistedEmailDraftRun();
+        }
+        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate });
+    }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
+
+    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+        if (existingUpdateForSelectedMonth) {
+            setPendingDraftRequest({
+                ...request,
+                forceRegenerate: true,
+            });
+            setShowRegenerateConfirm(true);
+            return;
+        }
+        executeDraftRequest(request);
+    }, [executeDraftRequest, existingUpdateForSelectedMonth]);
+
+    const handleGenerateDraftFromEmailClick = useCallback(() => {
+        requestDraftFromSelectedInputs();
+    }, [requestDraftFromSelectedInputs]);
+
+    const handleConfirmRegenerateDraft = useCallback(() => {
+        const request = pendingDraftRequest ?? {};
+        setShowRegenerateConfirm(false);
+        setPendingDraftRequest(null);
+        executeDraftRequest({
+            ...request,
+            forceRegenerate: true,
+        });
+    }, [executeDraftRequest, pendingDraftRequest]);
+
+    const handleCancelRegenerateDraft = useCallback(() => {
+        setShowRegenerateConfirm(false);
+        setPendingDraftRequest(null);
+    }, []);
 
     const handleEmailWizardConnected = useCallback(() => {
         setShowEmailWizard(false);
@@ -1979,7 +2126,7 @@ export default function CreateUpdate() {
             : emailDraftStatus?.displayStage) ||
         emailDraftStatus?.progress?.displayStage ||
         (emailDraftUiError
-            ? "We couldn't start the Gmail draft."
+            ? "We couldn't start drafting from the selected inputs."
             : "Preparing company context");
     const emailDraftCardCompletedSteps =
         emailDraftStatus?.completedSteps ??
@@ -1994,7 +2141,7 @@ export default function CreateUpdate() {
             ? (
                 emailDraftStatus?.error ||
                 emailDraftUiError ||
-                "We couldn't draft your update from Gmail. Please try again."
+                "We couldn't draft your update from the selected inputs. Please try again."
             )
             : undefined;
     const emailDraftCardNotice =
@@ -2031,8 +2178,7 @@ export default function CreateUpdate() {
                                 : null;
 
     const handleRetryEmailDraft = () => {
-        clearPersistedEmailDraftRun();
-        void startOrResumeEmailDraft({ forceRegenerate: true });
+        requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
     };
 
     const handleCancelEmailDraft = useCallback(async () => {
@@ -2040,7 +2186,7 @@ export default function CreateUpdate() {
         if (!runId) return;
         if (typeof window !== "undefined") {
             const confirmed = window.confirm(
-                "Cancel this Gmail draft run and reset the monthly update so you can try again?",
+                "Cancel this draft run and reset the monthly update so you can try again?",
             );
             if (!confirmed) {
                 return;
@@ -2067,7 +2213,7 @@ export default function CreateUpdate() {
             }
 
             emailDraftIgnoredRunIdRef.current = null;
-            setEmailDraftUiError("We couldn't cancel that Gmail draft run. We'll keep polling the current status.");
+            setEmailDraftUiError("We couldn't cancel that draft run. We'll keep polling the current status.");
         } catch (error) {
             emailDraftIgnoredRunIdRef.current = null;
             setEmailDraftUiError(getEmailDraftErrorMessage(error));
@@ -2129,7 +2275,6 @@ export default function CreateUpdate() {
                         setVideoPreviewUrl(audioPreviewUrl);
                         setPreviewMediaKind("audio");
                     }
-                    setShowImportPanel(true);
                 }
                 recordedChunksRef.current = [];
                 mediaRecorderRef.current = null;
@@ -2190,7 +2335,6 @@ export default function CreateUpdate() {
             setVideoUploadStatus(draft.videoUrl ? "ready" : "idle");
             setVideoUploadError(null);
             setPreviewMediaKind(draft.videoUrl ? "video" : null);
-            setShowImportPanel(Boolean(draft.summary || draft.sourceUrl || draft.videoUrl));
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
@@ -2428,7 +2572,6 @@ export default function CreateUpdate() {
         setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
     }, [uploadVideoFile]);
     const onDropRejected = useCallback((fileRejections: any[]) => {
-        setShowImportPanel(true);
         setVideoUploadStatus("error");
         setVideoUploadError(getDropzoneRejectionMessage(fileRejections));
     }, []);
@@ -2587,8 +2730,8 @@ export default function CreateUpdate() {
                             {/* Metrics — square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                    {METRIC_OPTIONS.map(m => {
-                                        const val = (data as any)?.[m.key];
+                                    {getMetricOptionsForDisplay(((data as any)?.metrics || data) as Record<string, string>).map(m => {
+                                        const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
                                         return (
                                             <div
                                                 key={m.key}
@@ -2978,7 +3121,7 @@ export default function CreateUpdate() {
                 <h1 className="text-xl font-bold text-gray-900">
                     {isEdit ? "Edit Monthly Update" : "Create Monthly Update"}
                 </h1>
-                <Link to="/vibe-raising" className="text-gray-400 hover:text-gray-600">
+                <Link to="/founder-tools/updates" className="text-gray-400 hover:text-gray-600">
                     <XMarkIcon className="w-6 h-6" />
                 </Link>
             </div>
@@ -3015,8 +3158,52 @@ export default function CreateUpdate() {
                 </div>
             )}
 
+            {showRegenerateConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+                        <div className="border-b border-gray-100 px-6 py-5">
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                                    <ExclamationTriangleIcon className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-950">Draft another update?</h2>
+                                    <p className="mt-2 text-sm leading-6 text-gray-600">
+                                        You already have a monthly update for <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong>. Creating a new draft from these inputs can take up to 20 minutes. Previous dot points will not be overwritten; matching points will be refreshed and new points will be added.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col-reverse gap-3 px-6 py-4 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={handleCancelRegenerateDraft}
+                                disabled={emailDraftActionBusy}
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmRegenerateDraft}
+                                disabled={emailDraftActionBusy}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                                Draft again
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
+                <input
+                    type="hidden"
+                    name="metricKeys"
+                    value={Array.from(new Set([...Object.keys(metricValues), ...Object.keys(activeMetricValues)])).join(",")}
+                />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
                 <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
@@ -3111,85 +3298,39 @@ export default function CreateUpdate() {
                                 {recordingError && (
                                     <p className="mt-4 text-sm font-semibold text-red-600">{recordingError}</p>
                                 )}
-                            </div>
-                        </div>
-
-                        <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                            <button
-                                type="button"
-                                onClick={() => setShowImportPanel((value) => !value)}
-                                className="flex w-full items-center justify-between gap-4 text-left"
-                            >
-                                <div>
-                                    <h2 className="text-sm font-bold text-gray-900">Manual materials</h2>
-                                    <p className="mt-1 text-sm text-gray-500">
-                                        Add a source URL, a short summary, or a quick recorded note for this update.
-                                    </p>
-                                </div>
-                                <ChevronDownIcon className={clsx("h-5 w-5 flex-shrink-0 text-gray-400 transition-transform", showImportPanel && "rotate-180")} />
-                            </button>
-
-                            {showImportPanel && (
-                                <div className="mt-5 space-y-4">
-                                    <label className="block">
-                                        <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
-                                            <LinkIcon className="h-4 w-4 text-gray-400" />
-                                            Source URL
-                                        </span>
-                                        <input
-                                            type="url"
-                                            value={sourceUrl}
-                                            onChange={(event) => setSourceUrl(event.target.value)}
-                                            placeholder="https://docs.google.com/document/..."
-                                            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                                        />
-                                    </label>
-
-                                    <label className="block">
-                                        <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
-                                        <textarea
-                                            value={summary}
-                                            onChange={(event) => setSummary(event.target.value)}
-                                            rows={3}
-                                            placeholder="Topline context investors should read before the detailed sections..."
-                                            className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                                        />
-                                    </label>
-
-                                    {videoPreviewUrl && (
-                                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                                            <div className="mb-2 flex items-center justify-between gap-3">
-                                                <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                                                    {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
-                                                </p>
-                                                <button
-                                                    type="button"
-                                                    onClick={resetVideoUpload}
-                                                    className="text-xs font-bold text-gray-400 hover:text-gray-700"
-                                                >
-                                                    Remove
-                                                </button>
-                                            </div>
-                                            {previewMediaKind === "audio" ? (
-                                                <audio src={videoPreviewUrl} controls className="w-full" />
-                                            ) : (
-                                                <VideoAssetPreview
-                                                    src={videoPreviewUrl}
-                                                    contentType={videoContentType}
-                                                    fileName={videoOriginalFilename || videoPreviewUrl}
-                                                    fileSizeBytes={videoFileSizeBytes}
-                                                    className="aspect-video w-full"
-                                                />
-                                            )}
-                                            {videoUploadStatus === "ready" && uploadedVideoUrl && (
-                                                <p className="mt-2 text-xs font-medium text-green-600">
-                                                    Uploaded and ready to publish.
-                                                </p>
-                                            )}
+                                {videoPreviewUrl && (
+                                    <div className="mt-5 w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left">
+                                        <div className="mb-2 flex items-center justify-between gap-3">
+                                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                                {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                onClick={resetVideoUpload}
+                                                className="text-xs font-bold text-gray-400 hover:text-gray-700"
+                                            >
+                                                Remove
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
-                            )}
+                                        {previewMediaKind === "audio" ? (
+                                            <audio src={videoPreviewUrl} controls className="w-full" />
+                                        ) : (
+                                            <VideoAssetPreview
+                                                src={videoPreviewUrl}
+                                                contentType={videoContentType}
+                                                fileName={videoOriginalFilename || videoPreviewUrl}
+                                                fileSizeBytes={videoFileSizeBytes}
+                                                className="aspect-video w-full"
+                                            />
+                                        )}
+                                        {videoUploadStatus === "ready" && uploadedVideoUrl && (
+                                            <p className="mt-2 text-xs font-medium text-green-600">
+                                                Uploaded and ready to publish.
+                                            </p>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </fieldset>
                     {isEmailDraftBusy && (
@@ -3217,7 +3358,7 @@ export default function CreateUpdate() {
                         </div>
                         {!isEdit && (
                             <Link
-                                to="/vibe-raising/connect-data"
+                                to="/founder-tools/data-sources"
                                 className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
                             >
                                 Change inputs
@@ -3232,6 +3373,7 @@ export default function CreateUpdate() {
                         displayStage={emailDraftCardDisplayStage}
                         completedSteps={emailDraftCardCompletedSteps}
                         totalSteps={emailDraftCardTotalSteps}
+                        sourceLabel="inputs"
                         error={emailDraftCardError}
                         notice={emailDraftCardNotice}
                         pollingDegraded={emailDraftPollingDegraded}
@@ -3328,7 +3470,7 @@ export default function CreateUpdate() {
                                                 <>
                                                     {Object.keys(card.metrics).length > 0 && (
                                                         <span className="flex items-center gap-2 text-xs text-gray-400">
-                                                            {METRIC_OPTIONS.filter(m => m.key in card.metrics).map(m => (
+                                                            {getMetricOptionsForMetrics(card.metrics).map(m => (
                                                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{card.metrics[m.key]}</span>
                                                             ))}
                                                         </span>
@@ -3353,7 +3495,7 @@ export default function CreateUpdate() {
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
                                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
-                                                {METRIC_OPTIONS.map(m => {
+                                                {getEditableMetricOptions(card.metrics, new Set(Object.keys(card.metrics))).map(m => {
                                                     const active = m.key in card.metrics;
                                                     return (
                                                         <div
@@ -3460,7 +3602,8 @@ export default function CreateUpdate() {
 	                                    <input type="hidden" name="highlights" value={highlights} />
 	                                    <input type="hidden" name="challenges" value={challenges} />
 	                                    <input type="hidden" name="asks" value={asks} />
-	                                    {METRIC_OPTIONS.map((metric) => (
+	                                    <input type="hidden" name="metricKeys" value={Object.keys(metricValues).join(",")} />
+	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
 	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
 	                                    ))}
 	                                </>
@@ -3472,7 +3615,7 @@ export default function CreateUpdate() {
                                     Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                                 </label>
 	                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-	                                    {METRIC_OPTIONS.map((m) => {
+	                                    {getEditableMetricOptions(activeMetricValues, activeSelectedMetrics).map((m) => {
 	                                        const active = activeSelectedMetrics.has(m.key);
 	                                        return (
 	                                            <div
@@ -3572,7 +3715,7 @@ export default function CreateUpdate() {
                                 Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
                             </label>
                             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                {METRIC_OPTIONS.map((m) => {
+                                {getEditableMetricOptions(metricValues, selectedMetrics).map((m) => {
                                     const active = selectedMetrics.has(m.key);
                                     return (
                                         <div
@@ -3649,7 +3792,7 @@ export default function CreateUpdate() {
                         <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
                             <button
                                 type="button"
-                                onClick={() => navigate("/vibe-raising")}
+                                onClick={() => navigate("/founder-tools/updates")}
                                 disabled={isEmailDraftBusy}
                                 className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
                             >

@@ -22,19 +22,14 @@ import {
   BuildingOffice2Icon,
   CircleStackIcon,
   DocumentTextIcon,
-  UsersIcon,
+  MegaphoneIcon,
 } from "@heroicons/react/24/outline";
 
 const FOUNDER_NAVIGATION = [
-  { name: "My Updates", href: "/vibe-raising", icon: DocumentTextIcon, exact: true },
-  { name: "Data Sources", href: "/vibe-raising/connect-data", icon: CircleStackIcon },
-  { name: "Discover Investors", href: "/vibe-raising/discover", icon: UsersIcon },
-  { name: "Manage Companies", href: "/vibe-raising/companies", icon: BuildingOffice2Icon },
-];
-
-const INVESTOR_NAVIGATION = [
-  { name: "Portfolio Updates", href: "/vibe-raising", icon: DocumentTextIcon, exact: true },
-  { name: "Connections", href: "/vibe-raising/discover", icon: UsersIcon },
+  { name: "Vibe Raising", href: "/founder-tools/updates", icon: DocumentTextIcon, exact: true },
+  { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
+  { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
+  { name: "Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
 ];
 
 export const meta: Route.MetaFunction = () => [
@@ -71,33 +66,29 @@ export async function action({ request, context }: Route.ActionArgs) {
     return null;
   }
 
-  const role = formData.get("role")?.toString();
+  const role = "founder";
   const organizationName = formData.get("organizationName")?.toString().trim();
 
-  if ((role !== "founder" && role !== "investor") || !organizationName) {
-    return { error: "Please choose a role and provide your startup or firm name." };
+  if (!organizationName) {
+    return { error: "Please provide your startup name." };
   }
 
   try {
     await saveVibeRaisingProfile(env, request, {
       role,
-      organizationName: role === "investor" ? organizationName : null,
+      organizationName: null,
     });
 
-    if (role === "founder") {
-      const companyId = await saveVibeRaisingCompany(env, request, {
-        name: organizationName,
-        registered: false,
-      });
+    const companyId = await saveVibeRaisingCompany(env, request, {
+      name: organizationName,
+      registered: false,
+    });
 
-      if (companyId) {
-        await setVibeRaisingActiveCompany(env, request, companyId);
-      }
-
-      return redirect("/vibe-raising/company-setup");
+    if (companyId) {
+      await setVibeRaisingActiveCompany(env, request, companyId);
     }
 
-    return redirect("/vibe-raising");
+    return redirect("/founder-tools/company-setup");
   } catch (error) {
     console.error("Failed to complete Vibe Raising onboarding:", error);
     return {
@@ -138,17 +129,14 @@ export default function VibeRaisingApp() {
     );
   }
 
-  const nav =
-    appUser.role === "investor" ? INVESTOR_NAVIGATION : FOUNDER_NAVIGATION;
-
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={nav}
+      navigation={FOUNDER_NAVIGATION}
       userNavigation={[]}
-      logoutAction="/vibe-raising/logout"
+      logoutAction="/founder-tools/logout"
     >
-      {appUser.role === "founder" && showAnnouncement ? (
+      {showAnnouncement ? (
         <VibeRaisingIntroPopup
           onDismiss={() => setShowAnnouncement(false)}
           onComplete={onCompleteCallback}

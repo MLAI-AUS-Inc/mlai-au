@@ -37,7 +37,7 @@ async function handleLogout(context: Route.ActionArgs["context"], request: Reque
         console.error("Logout failed:", error);
     }
 
-    return redirect(getVibeRaisingLoginHref(request, "/vibe-raising"), { headers });
+    return redirect(getVibeRaisingLoginHref(request, "/founder-tools/updates"), { headers });
 }
 
 export async function action({ request, context }: Route.ActionArgs) {

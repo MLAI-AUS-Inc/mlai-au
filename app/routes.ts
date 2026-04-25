@@ -80,15 +80,20 @@ export default [
   // Vibe Raising public landing
   route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx"),
 
-  // Vibe Raising App routes
-  route("/vibe-raising", "routes/vibe-raising-app.tsx", [
-    index("routes/vibe-raising-app._index.tsx"),
+  // Founder Tools App routes
+  route("/founder-tools", "routes/vibe-raising-app.tsx", [
+    index("routes/founder-tools.index.tsx"),
+    route("updates", "routes/vibe-raising-app._index.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
-    route("connect-data", "routes/vibe-raising-app.connect-data.tsx"),
-    route("create-update", "routes/vibe-raising-app.create-update.tsx"),
-    route("discover", "routes/vibe-raising-app.investors.tsx"),
+    route("data-sources", "routes/vibe-raising-app.connect-data.tsx"),
+    route("updates/create", "routes/vibe-raising-app.create-update.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
+    route("marketing", "routes/founder-tools.marketing.tsx"),
+    route("marketing/settings", "routes/founder-tools.marketing.settings.tsx"),
+    route("marketing/runs/:runId", "routes/founder-tools.marketing.run.tsx"),
   ]),
-  route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx"),
+  route("/founder-tools/logout", "routes/vibe-raising-app.logout.tsx", { id: "founder-tools-logout" }),
+  route("/vibe-raising/logout", "routes/vibe-raising-app.logout.tsx", { id: "vibe-raising-logout" }),
+  route("/vibe-raising/*", "routes/vibe-raising-redirect.tsx"),
 
 ] satisfies RouteConfig;

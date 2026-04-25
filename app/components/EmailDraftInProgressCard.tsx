@@ -6,6 +6,7 @@ interface EmailDraftInProgressCardProps {
   displayStage: string;
   completedSteps: number;
   totalSteps: number;
+  sourceLabel?: string;
   error?: string | null;
   notice?: string | null;
   pollingDegraded?: boolean;
@@ -52,6 +53,7 @@ export default function EmailDraftInProgressCard({
   displayStage,
   completedSteps,
   totalSteps,
+  sourceLabel = "inputs",
   error,
   notice,
   pollingDegraded = false,
@@ -62,7 +64,10 @@ export default function EmailDraftInProgressCard({
   isCancelling = false,
 }: EmailDraftInProgressCardProps) {
   const isFailed = status === "failed" || status === "denied";
-  const title = isFailed ? "Draft from Email Needs Attention" : "Drafting Update from Email";
+  const safeSourceLabel = sourceLabel.trim() || "inputs";
+  const title = isFailed
+    ? `Draft from ${safeSourceLabel} needs attention`
+    : `Drafting update from ${safeSourceLabel}`;
   const progressLabel = `${Math.min(completedSteps, totalSteps)} of ${Math.max(totalSteps, 1)} steps complete`;
 
   return (
@@ -151,7 +156,7 @@ export default function EmailDraftInProgressCard({
           {isFailed && (
             <>
               <p className="mt-3 rounded-xl border border-red-200 bg-white/80 px-4 py-3 text-sm text-red-700">
-                {error || "We couldn&apos;t finish drafting from Gmail. Please retry draft generation."}
+                {error || "We couldn't draft your update from the selected inputs. Please try again."}
               </p>
               {onRetry ? (
                 <button
@@ -161,7 +166,7 @@ export default function EmailDraftInProgressCard({
                   className="mt-4 inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <ArrowPathIcon className="h-4 w-4" />
-                  Retry draft from email
+                  Retry draft from {safeSourceLabel}
                 </button>
               ) : null}
             </>
