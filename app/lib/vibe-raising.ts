@@ -1953,10 +1953,15 @@ function normalizeSlackChannel(raw: unknown): VibeRaisingSlackChannel | null {
 
 export async function getVibeRaisingSlackChannels(
   backendBaseUrl: string,
+  options: { cursor?: string | null; limit?: number } = {},
 ): Promise<VibeRaisingSlackChannelsResponse> {
+  const searchParams = new URLSearchParams();
+  if (options.cursor) searchParams.set("cursor", options.cursor);
+  if (typeof options.limit === "number") searchParams.set("limit", String(options.limit));
+  const path = searchParams.toString() ? `${SLACK_CHANNELS_PATH}?${searchParams.toString()}` : SLACK_CHANNELS_PATH;
   const payload = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
-    SLACK_CHANNELS_PATH,
+    path,
     { method: "GET" },
   );
   const rawWarnings = payload.warnings;
