@@ -57,6 +57,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "notion",
     "google_drive",
     "slack",
+    "linear",
 ]);
 
 const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
@@ -67,6 +68,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     notion: "Notion",
     google_drive: "Google Drive",
     slack: "Slack",
+    linear: "Linear",
 };
 
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
