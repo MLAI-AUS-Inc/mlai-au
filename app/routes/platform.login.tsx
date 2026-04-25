@@ -17,12 +17,13 @@ function getDefaultNext(app: AuthAppName | null | undefined): string {
     if (app === "hospital") return "/hospital/app";
     if (app === "esafety") return "/esafety/dashboard";
     if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
-    if (app === "vibe-raising") return "/vibe-raising";
+    if (app === "founder-tools" || app === "vibe-raising") return "/founder-tools";
     return "/hackathons";
 }
 
 function parseAuthApp(value: string | null): AuthAppName | null {
-    return value === "esafety" || value === "hospital" || value === "innovate-connect-alliance" || value === "vibe-raising"
+    if (value === "vibe-raising") return "founder-tools";
+    return value === "esafety" || value === "hospital" || value === "innovate-connect-alliance" || value === "founder-tools"
         ? value
         : null;
 }
@@ -96,7 +97,7 @@ export default function PlatformLogin() {
     const data = useActionData<typeof action>();
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
-    const isVibeRaising = app === "vibe-raising";
+    const isFounderTools = app === "founder-tools";
     const next = searchParams.get("next") || getDefaultNext(app);
     const error = searchParams.get("error");
     const submit = useSubmit();
@@ -143,13 +144,13 @@ export default function PlatformLogin() {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
         if (app === "innovate-connect-alliance") return "Sign in to Innovate Connect Alliance";
-        if (app === "vibe-raising") return "Sign in to Vibe Raising";
+        if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";
     };
 
     const getSupportText = () => {
-        if (app === "vibe-raising") {
-            return "Use your email to sign in to Vibe Raising. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
+        if (app === "founder-tools") {
+            return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
         }
 
         if (app === "innovate-connect-alliance") {
@@ -233,12 +234,12 @@ export default function PlatformLogin() {
         <main
             className={clsx(
                 "relative min-h-screen overflow-hidden",
-                isVibeRaising
+                isFounderTools
                     ? "bg-[linear-gradient(180deg,var(--brutalist-beige)_0%,#f7f2e8_100%)]"
                     : "bg-gray-50"
             )}
         >
-            {isVibeRaising ? (
+            {isFounderTools ? (
                 <div className="pointer-events-none absolute inset-0" aria-hidden="true">
                     <div className="absolute left-[8%] top-[14%] h-36 w-36 rounded-full bg-[var(--brutalist-mint)]/10 blur-3xl" />
                     <div className="absolute right-[10%] top-[24%] h-40 w-40 rounded-full bg-[var(--brutalist-orange)]/10 blur-3xl" />

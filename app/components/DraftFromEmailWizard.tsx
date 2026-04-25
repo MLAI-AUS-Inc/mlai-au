@@ -188,7 +188,7 @@ function ProviderStep({
       {!companyDomain && (
         <p className="mt-4 text-sm text-amber-700">
           Add a company domain in{" "}
-          <a href="/vibe-raising/companies" className="font-semibold underline">
+          <a href="/founder-tools/companies" className="font-semibold underline">
             Companies
           </a>{" "}
           before connecting Gmail.

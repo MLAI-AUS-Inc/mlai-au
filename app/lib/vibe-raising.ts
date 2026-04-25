@@ -5,9 +5,14 @@ import { getCurrentUser } from "~/lib/auth";
 import type {
   VibeRaisingDraftResultsResponse,
   VibeRaisingAppUser,
+  VibeRaisingBankFeedAccount,
+  VibeRaisingBankFeedPreview,
+  VibeRaisingBankFeedTransaction,
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
   VibeRaisingEmailDraftMonth,
+  VibeRaisingGmailMessagePreview,
+  VibeRaisingGmailPreview,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
@@ -15,6 +20,10 @@ import type {
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
   VibeRaisingRole,
+  VibeRaisingSlackChannel,
+  VibeRaisingSlackChannelsResponse,
+  VibeRaisingSlackMessagePreview,
+  VibeRaisingSlackPreview,
   VibeRaisingStartupUpdateBootstrapResponse,
   VibeRaisingStartupUpdateBindingSummary,
   VibeRaisingStartupUpdateCancelResponse,
@@ -26,11 +35,13 @@ import type {
   VibeRaisingVideoCompressionMetadata,
   VibeRaisingVideoUploadResponse,
   VibeRaisingVideoUploadSessionResponse,
+  VibeRaisingXeroPreview,
+  VibeRaisingXeroRecord,
 } from "~/types/vibe-raising";
 
-const PROFILE_PATH = "/api/v1/vibe-raising/profile/";
-const COMPANIES_PATH = "/api/v1/vibe-raising/companies/";
-const ACTIVE_COMPANY_PATH = "/api/v1/vibe-raising/active-company/";
+const PROFILE_PATH = "/api/v1/founder-tools/profile/";
+const COMPANIES_PATH = "/api/v1/founder-tools/companies/";
+const ACTIVE_COMPANY_PATH = "/api/v1/founder-tools/active-company/";
 const UPDATES_PATH = "/api/v1/vibe-raising/updates/";
 const VIDEO_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/video/session/";
 const VIDEO_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/video/complete/";
@@ -43,6 +54,14 @@ const EMAIL_DRAFT_CANCEL_RUNS_PATH = "/api/v1/vibe-raising/email-draft/runs/";
 const INPUT_SOURCES_STATUS_PATH = "/api/v1/integrations/sources/status";
 const FINANCIAL_STATUS_PATH = "/api/v1/integrations/financial/status";
 const FINANCIAL_SYNC_PATH = "/api/v1/integrations/financial/sync";
+const BANK_FEED_ACCOUNTS_PATH = "/api/v1/integrations/financial/bank-feed/accounts";
+const BANK_FEED_TRANSACTIONS_PATH = "/api/v1/integrations/financial/bank-feed/transactions";
+const XERO_PREVIEW_PATH = "/api/v1/integrations/financial/xero/preview";
+const GMAIL_PREVIEW_PATH = "/api/v1/integrations/gmail/preview";
+const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
+const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
+const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
+const SLACK_PREVIEW_PATH = "/api/v1/integrations/slack/preview";
 
 const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisingInputSourceSummary, "selected" | "status">> = {
   gmail: {
@@ -89,10 +108,6 @@ type OptionalContext = {
 };
 
 export function isVibeRaisingProfileComplete(profile: VibeRaisingProfile): boolean {
-  if (profile.role === "investor") {
-    return Boolean(profile.organizationName);
-  }
-
   return profile.companies.length > 0;
 }
 
@@ -110,6 +125,15 @@ function asNullableString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+function asBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    return ["true", "1", "yes"].includes(value.trim().toLowerCase());
+  }
+  return false;
 }
 
 function normalizeRole(value: unknown): VibeRaisingRole {
@@ -740,6 +764,28 @@ function createBrowserRequestId(): string {
   return `mlai-vibe-${randomId}`;
 }
 
+function readableBrowserError(data: unknown, status: number): string {
+  if (data && typeof data === "object") {
+    const payload = data as Record<string, unknown>;
+    const message =
+      asNullableString(payload.error) ??
+      asNullableString(payload.detail) ??
+      asNullableString(payload.message);
+    if (message) return message;
+  }
+
+  if (typeof data === "string") {
+    const trimmed = data.trim();
+    const looksLikeHtml = /^<!doctype\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed) || /<title>.*<\/title>/i.test(trimmed);
+    if (looksLikeHtml) {
+      return `Request failed with status ${status}. Check backend logs.`;
+    }
+    return trimmed.length > 240 ? `${trimmed.slice(0, 237)}...` : trimmed;
+  }
+
+  return `Request failed with status ${status}`;
+}
+
 async function requestBrowserJson<T>(
   backendBaseUrl: string,
   path: string,
@@ -783,12 +829,7 @@ async function requestBrowserJson<T>(
   }
 
   if (!response.ok) {
-    const error: any = new Error(
-      data?.error ??
-        data?.detail ??
-        (typeof data === "string" && data) ??
-        `Request failed with status ${response.status}`,
-    );
+    const error: any = new Error(readableBrowserError(data, response.status));
     error.status = response.status;
     error.data = data;
     error.requestId = response.headers.get("X-Request-ID") || requestId;
@@ -857,16 +898,16 @@ function collectRawFinancialConnections(payload: Record<string, unknown>): unkno
   return [];
 }
 
-function normalizeFinancialSourceSummaries(raw: unknown): Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> {
+function normalizeFinancialSourceSummaries(raw: unknown): Partial<Record<"stripe" | "xero" | "bank_feed", VibeRaisingInputSourceSummary>> {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
-  const summaries: Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> = {};
+  const summaries: Partial<Record<"stripe" | "xero" | "bank_feed", VibeRaisingInputSourceSummary>> = {};
   const connections = collectRawFinancialConnections(payload);
 
   for (const rawConnection of connections) {
     if (!rawConnection || typeof rawConnection !== "object") continue;
     const connection = rawConnection as Record<string, unknown>;
     const provider = normalizeInputSourceProvider(connection.provider ?? connection.key ?? connection.source);
-    if (provider !== "stripe" && provider !== "xero") continue;
+    if (provider !== "stripe" && provider !== "xero" && provider !== "bank_feed") continue;
 
     const status = normalizeInputSourceStatus(
       connection.status ??
@@ -946,12 +987,17 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       typeof connection.selected === "boolean"
         ? connection.selected
         : status === "connected" || status === "syncing";
+    const selectedChannelCount =
+      typeof connection.selectedChannelCount === "number" && Number.isFinite(connection.selectedChannelCount)
+        ? connection.selectedChannelCount
+        : Number(connection.selectedChannelCount ?? connection.selected_channel_count ?? 0) || 0;
 
     summaries[provider] = createInputSourceSummary(provider, status, {
       accountLabel,
       lastSyncedAt,
       warning,
       selected,
+      selectedChannelCount,
     });
   }
 
@@ -959,11 +1005,24 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
 }
 
 function buildConnectorReturnPath(nextUrl?: string) {
+  if (nextUrl?.startsWith("/founder-tools/data-sources")) {
+    try {
+      const parsed = new URL(nextUrl, "https://mlai.local");
+      const nestedNext = parsed.searchParams.get("next") || "/founder-tools/updates/create";
+      const sanitizedNestedNext = nestedNext.startsWith("/founder-tools/updates/create")
+        ? nestedNext
+        : "/founder-tools/updates/create";
+      return `/founder-tools/data-sources?next=${encodeURIComponent(sanitizedNestedNext)}`;
+    } catch {
+      return "/founder-tools/data-sources?next=%2Ffounder-tools%2Fupdates%2Fcreate";
+    }
+  }
+
   const sanitizedNext =
-    nextUrl && nextUrl.startsWith("/vibe-raising/create-update")
+    nextUrl && nextUrl.startsWith("/founder-tools/updates/create")
       ? nextUrl
-      : "/vibe-raising/create-update";
-  return `/vibe-raising/connect-data?next=${encodeURIComponent(sanitizedNext)}`;
+      : "/founder-tools/updates/create";
+  return `/founder-tools/data-sources?next=${encodeURIComponent(sanitizedNext)}`;
 }
 
 function normalizeStartupUpdateStatus(
@@ -1114,7 +1173,7 @@ export function getVibeRaisingLoginHref(
   const url = new URL(request.url);
   const next = nextOverride ?? `${url.pathname}${url.search}`;
   const params = new URLSearchParams({
-    app: "vibe-raising",
+    app: "founder-tools",
     next,
   });
 
@@ -1227,7 +1286,7 @@ export async function requireVibeRaisingProfile(
   }
 
   if (!context.profile || !context.appUser) {
-    throw redirect("/vibe-raising");
+    throw redirect("/founder-tools/updates");
   }
 
   return {
@@ -1244,7 +1303,7 @@ export async function requireVibeRaisingFounder(
   const context = await requireVibeRaisingProfile(env, request);
 
   if (context.appUser.role !== "founder") {
-    throw redirect("/vibe-raising");
+    throw redirect("/founder-tools/updates");
   }
 
   return context;
@@ -1601,14 +1660,14 @@ export async function getVibeRaisingInputSourcesStatus(
   }
 
   let financeUnavailable = false;
-  let financialSummaries: Partial<Record<"stripe" | "xero", VibeRaisingInputSourceSummary>> = {};
+  let financialSummaries: Partial<Record<"stripe" | "xero" | "bank_feed", VibeRaisingInputSourceSummary>> = {};
   if (financeResult.status === "fulfilled") {
     financialSummaries = normalizeFinancialSourceSummaries(financeResult.value);
   } else {
     financeUnavailable = true;
   }
 
-  for (const key of ["stripe", "xero"] as const) {
+  for (const key of ["stripe", "xero", "bank_feed"] as const) {
     sources.push(
       financialSummaries[key] ??
         createInputSourceSummary(key, financeUnavailable ? "unavailable" : "not_connected", {
@@ -1617,7 +1676,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
   }
 
-  for (const key of ["bank_feed", "notion", "google_drive", "slack"] as const) {
+  for (const key of ["notion", "google_drive", "slack"] as const) {
     sources.push(createInputSourceSummary(key, "unavailable", {
       selected: false,
       warning: "This connector is not available on this backend yet.",
@@ -1649,12 +1708,459 @@ export function connectVibeRaisingInputSource(
 
 export async function syncVibeRaisingFinancialSources(
   backendBaseUrl: string,
+  providers?: Array<Extract<VibeRaisingInputSourceKey, "stripe" | "xero" | "bank_feed">>,
 ): Promise<Record<string, unknown>> {
   return requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
     FINANCIAL_SYNC_PATH,
-    { method: "POST" },
+    {
+      method: "POST",
+      body: providers?.length ? JSON.stringify({ providers }) : undefined,
+    },
   );
+}
+
+export async function syncVibeRaisingInputSources(
+  backendBaseUrl: string,
+  providers?: VibeRaisingInputSourceKey[],
+): Promise<Record<string, unknown>> {
+  return requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    INPUT_SOURCES_SYNC_PATH,
+    {
+      method: "POST",
+      body: providers?.length ? JSON.stringify({ providers }) : undefined,
+    },
+  );
+}
+
+function normalizeBankFeedAccount(raw: unknown): VibeRaisingBankFeedAccount | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.accountId ?? payload.account_id ?? payload.externalAccountId ?? payload.external_account_id;
+  const externalAccountId =
+    asNullableString(payload.externalAccountId) ??
+    asNullableString(payload.external_account_id) ??
+    asNullableString(payload.accountId) ??
+    asNullableString(payload.account_id) ??
+    String(id ?? "");
+  if (!externalAccountId) return null;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : externalAccountId,
+    connectionId: (payload.connectionId ?? payload.connection_id) as number | string | null | undefined,
+    externalAccountId,
+    institutionName:
+      asNullableString(payload.institutionName) ??
+      asNullableString(payload.institution_name),
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label) ??
+      asNullableString(payload.name) ??
+      externalAccountId,
+    accountType:
+      asNullableString(payload.accountType) ??
+      asNullableString(payload.account_type) ??
+      asNullableString(payload.type),
+    status: asNullableString(payload.status),
+    currency: asNullableString(payload.currency),
+    balance: asNullableString(payload.balance),
+    availableFunds:
+      asNullableString(payload.availableFunds) ??
+      asNullableString(payload.available_funds),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+  };
+}
+
+function normalizeBankFeedTransaction(raw: unknown): VibeRaisingBankFeedTransaction | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.transactionId ?? payload.transaction_id ?? payload.externalTransactionId ?? payload.external_transaction_id;
+  const externalTransactionId =
+    asNullableString(payload.externalTransactionId) ??
+    asNullableString(payload.external_transaction_id) ??
+    asNullableString(payload.transactionId) ??
+    asNullableString(payload.transaction_id) ??
+    String(id ?? "");
+  const externalAccountId =
+    asNullableString(payload.externalAccountId) ??
+    asNullableString(payload.external_account_id) ??
+    asNullableString(payload.accountExternalId) ??
+    asNullableString(payload.account_external_id) ??
+    "";
+  if (!externalTransactionId || !externalAccountId) return null;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : externalTransactionId,
+    connectionId: (payload.connectionId ?? payload.connection_id) as number | string | null | undefined,
+    accountId: (payload.accountId ?? payload.account_id) as number | string | null | undefined,
+    externalAccountId,
+    externalTransactionId,
+    amount: asNullableString(payload.amount),
+    currency: asNullableString(payload.currency),
+    direction: asNullableString(payload.direction),
+    status: asNullableString(payload.status),
+    postedAt:
+      asNullableString(payload.postedAt) ??
+      asNullableString(payload.posted_at),
+    transactionDate:
+      asNullableString(payload.transactionDate) ??
+      asNullableString(payload.transaction_date),
+    description: asNullableString(payload.description),
+    merchantName:
+      asNullableString(payload.merchantName) ??
+      asNullableString(payload.merchant_name),
+    category: asNullableString(payload.category),
+    className:
+      asNullableString(payload.className) ??
+      asNullableString(payload.class_name),
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+  };
+}
+
+function collectRawList(payload: Record<string, unknown>, keys: string[]): unknown[] {
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value;
+  }
+  const data = payload.data;
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    for (const key of keys) {
+      const value = (data as Record<string, unknown>)[key];
+      if (Array.isArray(value)) return value;
+    }
+  }
+  return [];
+}
+
+export async function getVibeRaisingBankFeedPreview(
+  backendBaseUrl: string,
+): Promise<VibeRaisingBankFeedPreview> {
+  const [accountsPayload, transactionsPayload] = await Promise.all([
+    requestBrowserJson<Record<string, unknown>>(
+      backendBaseUrl,
+      BANK_FEED_ACCOUNTS_PATH,
+      { method: "GET" },
+    ),
+    requestBrowserJson<Record<string, unknown>>(
+      backendBaseUrl,
+      `${BANK_FEED_TRANSACTIONS_PATH}?limit=5`,
+      { method: "GET" },
+    ),
+  ]);
+
+  return {
+    accounts: collectRawList(accountsPayload, ["accounts"])
+      .map(normalizeBankFeedAccount)
+      .filter((value): value is VibeRaisingBankFeedAccount => value !== null),
+    transactions: collectRawList(transactionsPayload, ["transactions"])
+      .map(normalizeBankFeedTransaction)
+      .filter((value): value is VibeRaisingBankFeedTransaction => value !== null),
+  };
+}
+
+function normalizeGmailMessagePreview(raw: unknown): VibeRaisingGmailMessagePreview | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.gmailMessageId ?? payload.gmail_message_id;
+  const gmailMessageId =
+    asNullableString(payload.gmailMessageId) ??
+    asNullableString(payload.gmail_message_id) ??
+    String(id ?? "");
+  if (!gmailMessageId) return null;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : gmailMessageId,
+    gmailMessageId,
+    gmailThreadId:
+      asNullableString(payload.gmailThreadId) ??
+      asNullableString(payload.gmail_thread_id),
+    subject: asNullableString(payload.subject) || "(No subject)",
+    fromAddress:
+      asNullableString(payload.fromAddress) ??
+      asNullableString(payload.from_address),
+    date:
+      asNullableString(payload.date) ??
+      asNullableString(payload.internalDate) ??
+      asNullableString(payload.internal_date),
+    internalDate:
+      asNullableString(payload.internalDate) ??
+      asNullableString(payload.internal_date),
+    snippet: asNullableString(payload.snippet),
+    relevanceLabel:
+      asNullableString(payload.relevanceLabel) ??
+      asNullableString(payload.relevance_label),
+    hasAttachments: asBoolean(payload.hasAttachments ?? payload.has_attachments),
+  };
+}
+
+export async function getVibeRaisingGmailPreview(
+  backendBaseUrl: string,
+  limit = 5,
+): Promise<VibeRaisingGmailPreview> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    `${GMAIL_PREVIEW_PATH}?limit=${encodeURIComponent(String(limit))}`,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+    totalCachedMessages:
+      Number(payload.totalCachedMessages ?? payload.total_cached_messages ?? 0) || 0,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+    messages: collectRawList(payload, ["messages"])
+      .map(normalizeGmailMessagePreview)
+      .filter((value): value is VibeRaisingGmailMessagePreview => value !== null),
+  };
+}
+
+function normalizeSlackChannel(raw: unknown): VibeRaisingSlackChannel | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.channelId ?? payload.channel_id;
+  const channelId =
+    asNullableString(payload.channelId) ??
+    asNullableString(payload.channel_id) ??
+    asNullableString(payload.id);
+  if (!channelId) return null;
+  const channelName =
+    asNullableString(payload.channelName) ??
+    asNullableString(payload.channel_name) ??
+    asNullableString(payload.name) ??
+    channelId;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : channelId,
+    channelId,
+    channelName,
+    name: asNullableString(payload.name) ?? channelName,
+    isPrivate: asBoolean(payload.isPrivate ?? payload.is_private),
+    selected: asBoolean(payload.selected),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+  };
+}
+
+export async function getVibeRaisingSlackChannels(
+  backendBaseUrl: string,
+): Promise<VibeRaisingSlackChannelsResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    SLACK_CHANNELS_PATH,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    teamId:
+      asNullableString(payload.teamId) ??
+      asNullableString(payload.team_id),
+    channels: collectRawList(payload, ["channels"])
+      .map(normalizeSlackChannel)
+      .filter((value): value is VibeRaisingSlackChannel => value !== null),
+    nextCursor:
+      asNullableString(payload.nextCursor) ??
+      asNullableString(payload.next_cursor),
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+export async function saveVibeRaisingSlackChannelSelections(
+  backendBaseUrl: string,
+  channelIds: string[],
+): Promise<VibeRaisingSlackChannelsResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    SLACK_CHANNEL_SELECTIONS_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({ channelIds }),
+    },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    teamId:
+      asNullableString(payload.teamId) ??
+      asNullableString(payload.team_id),
+    channels: collectRawList(payload, ["selectedChannels", "selected_channels", "channels"])
+      .map(normalizeSlackChannel)
+      .filter((value): value is VibeRaisingSlackChannel => value !== null),
+    nextCursor: null,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
+}
+
+function normalizeSlackMessagePreview(raw: unknown): VibeRaisingSlackMessagePreview | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const channelId =
+    asNullableString(payload.channelId) ??
+    asNullableString(payload.channel_id);
+  const messageTs =
+    asNullableString(payload.messageTs) ??
+    asNullableString(payload.message_ts);
+  const text = asNullableString(payload.text) ?? "";
+  if (!channelId || !messageTs) return null;
+  return {
+    channelId,
+    channelName:
+      asNullableString(payload.channelName) ??
+      asNullableString(payload.channel_name),
+    messageTs,
+    threadTs:
+      asNullableString(payload.threadTs) ??
+      asNullableString(payload.thread_ts),
+    authorLabel:
+      asNullableString(payload.authorLabel) ??
+      asNullableString(payload.author_label),
+    postedAt:
+      asNullableString(payload.postedAt) ??
+      asNullableString(payload.posted_at),
+    text,
+    relevanceLabel:
+      asNullableString(payload.relevanceLabel) ??
+      asNullableString(payload.relevance_label),
+  };
+}
+
+export async function getVibeRaisingSlackPreview(
+  backendBaseUrl: string,
+  limit = 5,
+): Promise<VibeRaisingSlackPreview> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    `${SLACK_PREVIEW_PATH}?limit=${encodeURIComponent(String(limit))}`,
+    { method: "GET" },
+  );
+  const rawWarnings = payload.warnings;
+  return {
+    accountLabel:
+      asNullableString(payload.accountLabel) ??
+      asNullableString(payload.account_label),
+    teamId:
+      asNullableString(payload.teamId) ??
+      asNullableString(payload.team_id),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+    selectedChannels: collectRawList(payload, ["selectedChannels", "selected_channels"])
+      .map(normalizeSlackChannel)
+      .filter((value): value is VibeRaisingSlackChannel => value !== null),
+    totalCachedMessages:
+      Number(payload.totalCachedMessages ?? payload.total_cached_messages ?? 0) || 0,
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+    messages: collectRawList(payload, ["messages"])
+      .map(normalizeSlackMessagePreview)
+      .filter((value): value is VibeRaisingSlackMessagePreview => value !== null),
+  };
+}
+
+function normalizeXeroRecord(raw: unknown): VibeRaisingXeroRecord | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = payload.id ?? payload.externalRecordId ?? payload.external_record_id;
+  const externalRecordId =
+    asNullableString(payload.externalRecordId) ??
+    asNullableString(payload.external_record_id) ??
+    String(id ?? "");
+  if (!externalRecordId) return null;
+  return {
+    id: (typeof id === "number" || typeof id === "string") ? id : externalRecordId,
+    connectionId: (payload.connectionId ?? payload.connection_id) as number | string | null | undefined,
+    recordType:
+      asNullableString(payload.recordType) ??
+      asNullableString(payload.record_type) ??
+      "xero_invoice",
+    externalRecordId,
+    externalTenantId:
+      asNullableString(payload.externalTenantId) ??
+      asNullableString(payload.external_tenant_id),
+    invoiceNumber:
+      asNullableString(payload.invoiceNumber) ??
+      asNullableString(payload.invoice_number),
+    amount: asNullableString(payload.amount),
+    currency: asNullableString(payload.currency),
+    direction: asNullableString(payload.direction),
+    status: asNullableString(payload.status),
+    postedAt:
+      asNullableString(payload.postedAt) ??
+      asNullableString(payload.posted_at),
+    transactionDate:
+      asNullableString(payload.transactionDate) ??
+      asNullableString(payload.transaction_date),
+    description: asNullableString(payload.description),
+    contactName:
+      asNullableString(payload.contactName) ??
+      asNullableString(payload.contact_name),
+    category: asNullableString(payload.category),
+    className:
+      asNullableString(payload.className) ??
+      asNullableString(payload.class_name),
+  };
+}
+
+export async function getVibeRaisingXeroPreview(
+  backendBaseUrl: string,
+): Promise<VibeRaisingXeroPreview> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    XERO_PREVIEW_PATH,
+    { method: "GET" },
+  );
+  const recurringInvoices = collectRawList(payload, ["recurringInvoices", "recurring_invoices"])
+    .map(normalizeXeroRecord)
+    .filter((value): value is VibeRaisingXeroRecord => value !== null);
+  const recentInvoices = collectRawList(payload, ["recentInvoices", "recent_invoices"])
+    .map(normalizeXeroRecord)
+    .filter((value): value is VibeRaisingXeroRecord => value !== null);
+  const rawCurrencies = payload.currencies;
+  const rawWarnings = payload.warnings;
+  return {
+    tenantLabel:
+      asNullableString(payload.tenantLabel) ??
+      asNullableString(payload.tenant_label),
+    tenantId:
+      asNullableString(payload.tenantId) ??
+      asNullableString(payload.tenant_id),
+    lastSyncedAt:
+      asNullableString(payload.lastSyncedAt) ??
+      asNullableString(payload.last_synced_at),
+    monthlyRecurringRevenue:
+      asNullableString(payload.monthlyRecurringRevenue) ??
+      asNullableString(payload.monthly_recurring_revenue),
+    cashCollected:
+      asNullableString(payload.cashCollected) ??
+      asNullableString(payload.cash_collected),
+    currencies: Array.isArray(rawCurrencies)
+      ? rawCurrencies.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+    warnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+    recurringInvoices,
+    recentInvoices,
+  };
 }
 
 export async function runVibeRaisingStartupUpdate(

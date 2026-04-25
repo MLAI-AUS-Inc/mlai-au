@@ -60,7 +60,10 @@ export default function Layout() {
   const isVibeRaisingApp =
     location.pathname === "/vibe-raising" ||
     location.pathname.startsWith("/vibe-raising/");
-  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
+  const isFounderToolsApp =
+    location.pathname === "/founder-tools" ||
+    location.pathname.startsWith("/founder-tools/");
+  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp || isFounderToolsApp;
 
   return (
     <html lang="en" suppressHydrationWarning>

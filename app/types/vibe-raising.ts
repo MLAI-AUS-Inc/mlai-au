@@ -139,11 +139,141 @@ export interface VibeRaisingInputSourceSummary {
   status: VibeRaisingInputSourceStatus;
   lastSyncedAt?: string | null;
   warning?: string | null;
+  selectedChannelCount?: number;
 }
 
 export interface VibeRaisingInputSourcesStatusResponse {
   sources: VibeRaisingInputSourceSummary[];
   financeUnavailable: boolean;
+}
+
+export interface VibeRaisingBankFeedAccount {
+  id: number | string;
+  connectionId?: number | string | null;
+  externalAccountId: string;
+  institutionName?: string | null;
+  accountLabel: string;
+  accountType?: string | null;
+  status?: string | null;
+  currency?: string | null;
+  balance?: string | null;
+  availableFunds?: string | null;
+  lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingBankFeedTransaction {
+  id: number | string;
+  connectionId?: number | string | null;
+  accountId?: number | string | null;
+  externalAccountId: string;
+  externalTransactionId: string;
+  amount?: string | null;
+  currency?: string | null;
+  direction?: string | null;
+  status?: string | null;
+  postedAt?: string | null;
+  transactionDate?: string | null;
+  description?: string | null;
+  merchantName?: string | null;
+  category?: string | null;
+  className?: string | null;
+  accountLabel?: string | null;
+}
+
+export interface VibeRaisingBankFeedPreview {
+  accounts: VibeRaisingBankFeedAccount[];
+  transactions: VibeRaisingBankFeedTransaction[];
+}
+
+export interface VibeRaisingGmailMessagePreview {
+  id: number | string;
+  gmailMessageId: string;
+  gmailThreadId?: string | null;
+  subject: string;
+  fromAddress?: string | null;
+  date?: string | null;
+  internalDate?: string | null;
+  snippet?: string | null;
+  relevanceLabel?: string | null;
+  hasAttachments: boolean;
+}
+
+export interface VibeRaisingGmailPreview {
+  accountLabel?: string | null;
+  lastSyncedAt?: string | null;
+  totalCachedMessages: number;
+  warnings: string[];
+  messages: VibeRaisingGmailMessagePreview[];
+}
+
+export interface VibeRaisingSlackChannel {
+  id?: number | string;
+  channelId: string;
+  channelName: string;
+  name?: string | null;
+  isPrivate: boolean;
+  selected: boolean;
+  lastSyncedAt?: string | null;
+}
+
+export interface VibeRaisingSlackChannelsResponse {
+  accountLabel?: string | null;
+  teamId?: string | null;
+  channels: VibeRaisingSlackChannel[];
+  nextCursor?: string | null;
+  warnings: string[];
+}
+
+export interface VibeRaisingSlackMessagePreview {
+  channelId: string;
+  channelName?: string | null;
+  messageTs: string;
+  threadTs?: string | null;
+  authorLabel?: string | null;
+  postedAt?: string | null;
+  text: string;
+  relevanceLabel?: string | null;
+}
+
+export interface VibeRaisingSlackPreview {
+  accountLabel?: string | null;
+  teamId?: string | null;
+  lastSyncedAt?: string | null;
+  selectedChannels: VibeRaisingSlackChannel[];
+  totalCachedMessages: number;
+  warnings: string[];
+  messages: VibeRaisingSlackMessagePreview[];
+}
+
+export interface VibeRaisingXeroRecord {
+  id: number | string;
+  connectionId?: number | string | null;
+  recordType: string;
+  externalRecordId: string;
+  externalTenantId?: string | null;
+  invoiceNumber?: string | null;
+  amount?: string | null;
+  currency?: string | null;
+  direction?: string | null;
+  status?: string | null;
+  postedAt?: string | null;
+  transactionDate?: string | null;
+  description?: string | null;
+  contactName?: string | null;
+  category?: string | null;
+  className?: string | null;
+}
+
+export interface VibeRaisingXeroPreview {
+  tenantLabel?: string | null;
+  tenantId?: string | null;
+  lastSyncedAt?: string | null;
+  monthlyRecurringRevenue?: string | null;
+  cashCollected?: string | null;
+  currencies: string[];
+  warnings: string[];
+  recurringInvoices: VibeRaisingXeroRecord[];
+  recentInvoices: VibeRaisingXeroRecord[];
 }
 
 export type VibeRaisingStartupUpdateState =

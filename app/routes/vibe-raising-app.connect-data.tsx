@@ -11,6 +11,7 @@ import {
   EllipsisHorizontalIcon,
   EnvelopeIcon,
   FolderIcon,
+  LinkIcon,
   LockClosedIcon,
   ShieldCheckIcon,
   SparklesIcon,
@@ -19,28 +20,45 @@ import { getEnv } from "~/lib/env.server";
 import {
   bootstrapVibeRaisingStartupUpdate,
   connectVibeRaisingInputSource,
+  getVibeRaisingBankFeedPreview,
+  getVibeRaisingGmailPreview,
   getVibeRaisingInputSourcesStatus,
+  getVibeRaisingSlackChannels,
+  getVibeRaisingSlackPreview,
+  getVibeRaisingXeroPreview,
   requireVibeRaisingFounder,
+  saveVibeRaisingSlackChannelSelections,
   syncVibeRaisingFinancialSources,
+  syncVibeRaisingInputSources,
 } from "~/lib/vibe-raising";
 import type {
+  VibeRaisingBankFeedPreview,
+  VibeRaisingGmailPreview,
   VibeRaisingInputSourceKey,
   VibeRaisingInputSourceStatus,
   VibeRaisingInputSourceSummary,
+  VibeRaisingSlackChannel,
+  VibeRaisingSlackChannelsResponse,
+  VibeRaisingSlackPreview,
+  VibeRaisingXeroPreview,
 } from "~/types/vibe-raising";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 
-const DEFAULT_NEXT = "/vibe-raising/create-update";
+const DEFAULT_NEXT = "/founder-tools/updates/create";
+const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
+const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack"]);
+const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
 const POPULAR_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
   "gmail",
+  "slack",
   "stripe",
   "bank_feed",
   "notion",
   "google_drive",
   "xero",
 ];
-const EXTRA_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["slack"];
+const EXTRA_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [];
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
@@ -94,6 +112,37 @@ const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   },
 ];
 
+type ManualMaterialsState = {
+  sourceUrl: string;
+  summary: string;
+};
+
+function readStoredManualMaterials(): ManualMaterialsState {
+  if (typeof window === "undefined") return { sourceUrl: "", summary: "" };
+  try {
+    const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+    if (!raw) return { sourceUrl: "", summary: "" };
+    const parsed = JSON.parse(raw) as { sourceUrl?: unknown; summary?: unknown };
+    return {
+      sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
+      summary: typeof parsed.summary === "string" ? parsed.summary : "",
+    };
+  } catch {
+    return { sourceUrl: "", summary: "" };
+  }
+}
+
+function writeStoredManualMaterials(materials: ManualMaterialsState) {
+  if (typeof window === "undefined") return;
+  const sourceUrl = materials.sourceUrl.trim();
+  const summary = materials.summary.trim();
+  if (!sourceUrl && !summary) {
+    window.localStorage.removeItem(MANUAL_MATERIALS_STORAGE_KEY);
+    return;
+  }
+  window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ sourceUrl, summary }));
+}
+
 const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; connectedUse: string }> = {
   gmail: {
     description: "Scan emails for key updates, investor feedback, and important threads.",
@@ -139,7 +188,7 @@ function sanitizeNext(value: string | null) {
     return DEFAULT_NEXT;
   }
 
-  if (!candidate.startsWith("/vibe-raising/create-update")) {
+  if (!candidate.startsWith("/founder-tools/updates/create")) {
     return DEFAULT_NEXT;
   }
   return candidate;
@@ -150,14 +199,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
   if (!user.companyRegistered) {
-    throw redirect("/vibe-raising/company-setup");
+    throw redirect("/founder-tools/company-setup");
   }
 
   const url = new URL(request.url);
   return {
     user,
     next: sanitizeNext(url.searchParams.get("next")),
-    backendBaseUrl: String(env.BACKEND_BASE_URL || "http://localhost:8000"),
+    backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
   };
 }
 
@@ -206,6 +255,460 @@ function capabilityLabel(capability: VibeRaisingInputSourceSummary["capabilities
     default:
       return "Context";
   }
+}
+
+function formatMoney(value?: string | null, currency?: string | null) {
+  if (!value) return "Balance unavailable";
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return currency ? `${value} ${currency}` : value;
+  try {
+    return new Intl.NumberFormat("en-AU", {
+      style: "currency",
+      currency: currency || "AUD",
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return currency ? `${value} ${currency}` : value;
+  }
+}
+
+function formatShortDate(value?: string | null) {
+  if (!value) return "Date unavailable";
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return new Intl.DateTimeFormat("en-AU", { day: "numeric", month: "short" }).format(parsed);
+}
+
+function BankFeedPreview({
+  preview,
+  loading,
+  error,
+}: {
+  preview: VibeRaisingBankFeedPreview | null;
+  loading: boolean;
+  error: string | null;
+}) {
+  return (
+    <section className="rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Bank feed preview</h2>
+          <p className="mt-2 text-sm text-slate-500">Recent account and transaction context available for this update.</p>
+        </div>
+        {loading ? (
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-violet-600">
+            <ArrowPathIcon className="h-4 w-4 animate-spin" />
+            Loading
+          </span>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+      ) : null}
+
+      {!loading && !error && preview && preview.accounts.length === 0 && preview.transactions.length === 0 ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Bank Feed is connected. Run a sync after completing Basiq consent to load accounts and transactions.
+        </div>
+      ) : null}
+
+      {preview && preview.accounts.length > 0 ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {preview.accounts.slice(0, 4).map((account) => (
+            <div key={`${account.externalAccountId}-${account.id}`} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-sm font-extrabold text-gray-950">{account.accountLabel}</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">{account.institutionName || account.accountType || "Bank account"}</p>
+              <p className="mt-3 text-sm font-black text-gray-900">{formatMoney(account.balance, account.currency)}</p>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {preview && preview.transactions.length > 0 ? (
+        <div className="mt-6 overflow-hidden rounded-lg border border-gray-100">
+          <div className="divide-y divide-gray-100">
+            {preview.transactions.slice(0, 5).map((transaction) => (
+              <div key={`${transaction.externalAccountId}-${transaction.externalTransactionId}`} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto_auto] sm:items-center">
+                <div>
+                  <p className="text-sm font-bold text-gray-950">{transaction.merchantName || transaction.description || "Bank transaction"}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{transaction.accountLabel || transaction.category || transaction.direction || "Transaction"}</p>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">{formatShortDate(transaction.transactionDate || transaction.postedAt)}</span>
+                <span className={clsx("text-sm font-black", transaction.direction === "debit" ? "text-slate-600" : "text-emerald-700")}>
+                  {formatMoney(transaction.amount, transaction.currency)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function XeroPreview({
+  preview,
+  loading,
+  error,
+  syncing,
+  onSync,
+}: {
+  preview: VibeRaisingXeroPreview | null;
+  loading: boolean;
+  error: string | null;
+  syncing: boolean;
+  onSync: () => void;
+}) {
+  return (
+    <section className="rounded-xl border border-sky-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Xero revenue preview</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Accounting revenue context from recurring invoices, sales invoices, and payments.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {loading ? (
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-sky-600">
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              Loading
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onSync}
+            disabled={syncing}
+            className="inline-flex items-center gap-2 rounded-lg border border-sky-100 px-3 py-2 text-xs font-extrabold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
+            {syncing ? "Syncing" : "Sync Xero"}
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+      ) : null}
+
+      {preview ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Tenant</p>
+            <p className="mt-2 text-sm font-black text-gray-950">{preview.tenantLabel || preview.tenantId || "Xero tenant"}</p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Recurring MRR</p>
+            <p className="mt-2 text-sm font-black text-gray-950">
+              {formatMoney(preview.monthlyRecurringRevenue, preview.currencies[0] || "AUD")}
+            </p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cash collected</p>
+            <p className="mt-2 text-sm font-black text-gray-950">
+              {formatMoney(preview.cashCollected, preview.currencies[0] || "AUD")}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      {!loading && !error && preview && preview.recurringInvoices.length === 0 && preview.recentInvoices.length === 0 ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Xero is connected. Sync to load invoices and payments.
+        </div>
+      ) : null}
+
+      {preview?.warnings.length ? (
+        <div className="mt-5 space-y-2">
+          {preview.warnings.map((warning) => (
+            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {preview && (preview.recurringInvoices.length > 0 || preview.recentInvoices.length > 0) ? (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="overflow-hidden rounded-lg border border-gray-100">
+            <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-sm font-black text-gray-950">Recurring invoices</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {(preview.recurringInvoices.length ? preview.recurringInvoices : []).slice(0, 3).map((invoice) => (
+                <div key={invoice.externalRecordId} className="px-4 py-3">
+                  <p className="text-sm font-bold text-gray-950">{invoice.contactName || invoice.description || "Repeating invoice"}</p>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{invoice.status || "Authorised"}</p>
+                  <p className="mt-2 text-sm font-black text-gray-900">{formatMoney(invoice.amount, invoice.currency)}</p>
+                </div>
+              ))}
+              {preview.recurringInvoices.length === 0 ? (
+                <div className="px-4 py-4 text-sm font-semibold text-slate-500">No active repeating invoices synced yet.</div>
+              ) : null}
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-gray-100">
+            <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-sm font-black text-gray-950">Recent sales invoices</p>
+            </div>
+            <div className="divide-y divide-gray-100">
+              {preview.recentInvoices.slice(0, 3).map((invoice) => (
+                <div key={invoice.externalRecordId} className="grid gap-2 px-4 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+                  <div>
+                    <p className="text-sm font-bold text-gray-950">{invoice.invoiceNumber || invoice.description || "Sales invoice"}</p>
+                    <p className="mt-1 text-xs font-medium text-slate-500">{invoice.contactName || invoice.status || "Invoice"}</p>
+                  </div>
+                  <div className="sm:text-right">
+                    <p className="text-xs font-semibold text-slate-500">{formatShortDate(invoice.transactionDate || invoice.postedAt)}</p>
+                    <p className="mt-1 text-sm font-black text-gray-900">{formatMoney(invoice.amount, invoice.currency)}</p>
+                  </div>
+                </div>
+              ))}
+              {preview.recentInvoices.length === 0 ? (
+                <div className="px-4 py-4 text-sm font-semibold text-slate-500">No recent sales invoices synced yet.</div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function GmailPreview({
+  preview,
+  loading,
+  error,
+}: {
+  preview: VibeRaisingGmailPreview | null;
+  loading: boolean;
+  error: string | null;
+}) {
+  return (
+    <section className="rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Gmail preview</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Recent email context available for this update.
+          </p>
+        </div>
+        {loading ? (
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-violet-600">
+            <ArrowPathIcon className="h-4 w-4 animate-spin" />
+            Loading
+          </span>
+        ) : null}
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+      ) : null}
+
+      {preview ? (
+        <div className="mt-5 grid gap-3 md:grid-cols-3">
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Account</p>
+            <p className="mt-2 truncate text-sm font-black text-gray-950">{preview.accountLabel || "Connected Gmail"}</p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cached messages</p>
+            <p className="mt-2 text-sm font-black text-gray-950">{preview.totalCachedMessages}</p>
+          </div>
+          <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Last sync</p>
+            <p className="mt-2 text-sm font-black text-gray-950">{formatShortDate(preview.lastSyncedAt)}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {preview?.warnings.length ? (
+        <div className="mt-5 space-y-2">
+          {preview.warnings.map((warning) => (
+            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {!loading && !error && preview && preview.messages.length === 0 ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Gmail is connected. Continue to draft to scan recent emails.
+        </div>
+      ) : null}
+
+      {preview?.messages.length ? (
+        <div className="mt-5 overflow-hidden rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Recent messages</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {preview.messages.slice(0, 5).map((message) => (
+              <div key={message.gmailMessageId} className="grid gap-2 px-4 py-3 md:grid-cols-[1fr_auto] md:items-start">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-gray-950">{message.subject}</p>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">{message.fromAddress || "Unknown sender"}</p>
+                  {message.snippet ? (
+                    <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{message.snippet}</p>
+                  ) : null}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 md:justify-end">
+                  <span className="text-xs font-semibold text-slate-500">{formatShortDate(message.date || message.internalDate)}</span>
+                  {message.relevanceLabel ? (
+                    <span className="rounded-full bg-violet-50 px-2 py-1 text-xs font-bold capitalize text-violet-700">{message.relevanceLabel.replace(/_/g, " ")}</span>
+                  ) : null}
+                  {message.hasAttachments ? (
+                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-slate-600">Attachment</span>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function SlackPreview({
+  channels,
+  preview,
+  loadingChannels,
+  loadingPreview,
+  error,
+  saving,
+  syncing,
+  selectedChannelIds,
+  onToggleChannel,
+  onSaveChannels,
+  onSync,
+}: {
+  channels: VibeRaisingSlackChannel[];
+  preview: VibeRaisingSlackPreview | null;
+  loadingChannels: boolean;
+  loadingPreview: boolean;
+  error: string | null;
+  saving: boolean;
+  syncing: boolean;
+  selectedChannelIds: Set<string>;
+  onToggleChannel: (channelId: string) => void;
+  onSaveChannels: () => void;
+  onSync: () => void;
+}) {
+  return (
+    <section className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Slack preview</h2>
+          <p className="mt-2 text-sm text-slate-500">Selected channel context available for this update.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {loadingChannels || loadingPreview ? (
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-600">
+              <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              Loading
+            </span>
+          ) : null}
+          <button
+            type="button"
+            onClick={onSync}
+            disabled={syncing || selectedChannelIds.size === 0}
+            className="inline-flex items-center gap-2 rounded-lg border border-emerald-100 px-3 py-2 text-xs font-extrabold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
+            {syncing ? "Syncing" : "Sync Slack"}
+          </button>
+        </div>
+      </div>
+
+      {error ? (
+        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+      ) : null}
+
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Workspace</p>
+          <p className="mt-2 truncate text-sm font-black text-gray-950">{preview?.accountLabel || "Connected Slack"}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Selected channels</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{selectedChannelIds.size}</p>
+        </div>
+        <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">Cached messages</p>
+          <p className="mt-2 text-sm font-black text-gray-950">{preview?.totalCachedMessages ?? 0}</p>
+        </div>
+      </div>
+
+      {channels.length > 0 ? (
+        <div className="mt-5 rounded-lg border border-gray-100">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Channels</p>
+            <button
+              type="button"
+              onClick={onSaveChannels}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {saving ? "Saving" : "Save selection"}
+            </button>
+          </div>
+          <div className="grid max-h-72 gap-0 overflow-auto md:grid-cols-2">
+            {channels.map((channel) => (
+              <label key={channel.channelId} className="flex cursor-pointer items-center gap-3 border-b border-gray-100 px-4 py-3 text-sm font-semibold text-gray-800">
+                <input
+                  type="checkbox"
+                  checked={selectedChannelIds.has(channel.channelId)}
+                  onChange={() => onToggleChannel(channel.channelId)}
+                  className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                />
+                <span className="min-w-0 flex-1 truncate">#{channel.channelName}</span>
+                {channel.isPrivate ? (
+                  <LockClosedIcon className="h-4 w-4 text-slate-400" />
+                ) : null}
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : !loadingChannels ? (
+        <div className="mt-5 rounded-lg bg-gray-50 px-4 py-4 text-sm font-semibold text-slate-500">
+          Slack is connected. Open the channel picker again after the workspace channel list is available.
+        </div>
+      ) : null}
+
+      {preview?.warnings.length ? (
+        <div className="mt-5 space-y-2">
+          {preview.warnings.map((warning) => (
+            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+              {warning}
+            </p>
+          ))}
+        </div>
+      ) : null}
+
+      {preview?.messages.length ? (
+        <div className="mt-5 overflow-hidden rounded-lg border border-gray-100">
+          <div className="border-b border-gray-100 bg-gray-50 px-4 py-3">
+            <p className="text-sm font-black text-gray-950">Recent Slack messages</p>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {preview.messages.slice(0, 5).map((message) => (
+              <div key={`${message.channelId}-${message.messageTs}`} className="grid gap-2 px-4 py-3 md:grid-cols-[1fr_auto] md:items-start">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-gray-950">#{message.channelName || message.channelId}</p>
+                  <p className="mt-1 truncate text-xs font-semibold text-slate-500">{message.authorLabel || "Slack user"}</p>
+                  <p className="mt-2 line-clamp-2 text-sm leading-5 text-slate-500">{message.text}</p>
+                </div>
+                <span className="text-xs font-semibold text-slate-500">{formatShortDate(message.postedAt)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  );
 }
 
 function SourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }) {
@@ -272,25 +775,41 @@ function ConnectorCard({
   source,
   selected,
   busy,
+  connectHref,
   onConnect,
   onToggle,
 }: {
   source: VibeRaisingInputSourceSummary;
   selected: boolean;
   busy: boolean;
+  connectHref?: string;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
 }) {
   const selectable = FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing");
-  const canConnect = FUNCTIONAL_SOURCES.has(source.key) && source.status !== "connected" && source.status !== "syncing" && source.status !== "unavailable";
-  const disabled = source.status === "coming_soon" || source.status === "unavailable";
+  const canConnectWhenUnavailable =
+    source.status === "unavailable" && OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key);
+  const canConnect =
+    FUNCTIONAL_SOURCES.has(source.key) &&
+    source.status !== "connected" &&
+    source.status !== "syncing" &&
+    (source.status !== "unavailable" || canConnectWhenUnavailable);
+  const disabled = source.status === "coming_soon" || (source.status === "unavailable" && !canConnectWhenUnavailable);
+  const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
+  const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
+  const connectClassName = clsx(
+    "block w-full rounded-lg px-4 py-3 text-center text-sm font-extrabold transition",
+    disabled || !canConnect
+      ? "cursor-not-allowed bg-gray-100 text-gray-400"
+      : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+  );
 
   return (
     <div className="flex min-h-[240px] flex-col rounded-xl border border-gray-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <SourceLogo sourceKey={source.key} />
-        <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-[11px] font-bold ring-1", statusClassName(source.status))}>
-          {statusLabel(source.status)}
+        <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-[11px] font-bold ring-1", statusClassName(displayedStatus))}>
+          {displayedStatusLabel}
         </span>
       </div>
 
@@ -321,19 +840,20 @@ function ConnectorCard({
             <CheckCircleIcon className={clsx("h-5 w-5", selected ? "text-white" : "text-violet-300")} />
           </button>
         ) : (
-          <button
-            type="button"
-            disabled={disabled || busy || !canConnect}
-            onClick={() => onConnect(source)}
-            className={clsx(
-              "w-full rounded-lg px-4 py-3 text-sm font-extrabold transition",
-              disabled || !canConnect
-                ? "cursor-not-allowed bg-gray-100 text-gray-400"
-                : "bg-violet-50 text-violet-700 hover:bg-violet-100",
-            )}
-          >
-            {busy ? "Connecting..." : disabled ? statusLabel(source.status) : "Connect"}
-          </button>
+          connectHref && canConnect && !disabled ? (
+            <a href={connectHref} className={connectClassName}>
+              Connect
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled={disabled || busy || !canConnect}
+              onClick={() => onConnect(source)}
+              className={connectClassName}
+            >
+              {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
+            </button>
+          )
         )}
 
         {source.warning && source.status !== "coming_soon" ? (
@@ -353,8 +873,26 @@ export default function ConnectData() {
   const [showAllSources, setShowAllSources] = useState(false);
   const [loadingStatus, setLoadingStatus] = useState(true);
   const [syncingFinance, setSyncingFinance] = useState(false);
+  const [syncingSlack, setSyncingSlack] = useState(false);
   const [busyProvider, setBusyProvider] = useState<VibeRaisingInputSourceKey | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [bankFeedPreview, setBankFeedPreview] = useState<VibeRaisingBankFeedPreview | null>(null);
+  const [loadingBankFeedPreview, setLoadingBankFeedPreview] = useState(false);
+  const [bankFeedPreviewError, setBankFeedPreviewError] = useState<string | null>(null);
+  const [gmailPreview, setGmailPreview] = useState<VibeRaisingGmailPreview | null>(null);
+  const [loadingGmailPreview, setLoadingGmailPreview] = useState(false);
+  const [gmailPreviewError, setGmailPreviewError] = useState<string | null>(null);
+  const [xeroPreview, setXeroPreview] = useState<VibeRaisingXeroPreview | null>(null);
+  const [loadingXeroPreview, setLoadingXeroPreview] = useState(false);
+  const [xeroPreviewError, setXeroPreviewError] = useState<string | null>(null);
+  const [slackChannels, setSlackChannels] = useState<VibeRaisingSlackChannel[]>([]);
+  const [loadingSlackChannels, setLoadingSlackChannels] = useState(false);
+  const [slackPreview, setSlackPreview] = useState<VibeRaisingSlackPreview | null>(null);
+  const [loadingSlackPreview, setLoadingSlackPreview] = useState(false);
+  const [slackError, setSlackError] = useState<string | null>(null);
+  const [savingSlackChannels, setSavingSlackChannels] = useState(false);
+  const [selectedSlackChannelIds, setSelectedSlackChannelIds] = useState<Set<string>>(new Set());
+  const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
   const defaultSelectionAppliedRef = useRef(false);
 
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
@@ -370,7 +908,16 @@ export default function ConnectData() {
     () => sources.filter((source) => selectedSources.has(source.key)),
     [selectedSources, sources],
   );
+  const hasManualMaterials = Boolean(manualMaterials.sourceUrl.trim() || manualMaterials.summary.trim());
   const hasConnectedFinance = connectedSources.some((source) => source.key === "stripe" || source.key === "xero" || source.key === "bank_feed");
+  const gmailSource = sourceByKey.get("gmail");
+  const shouldShowGmailPreview = gmailSource?.status === "connected" || gmailSource?.status === "syncing" || gmailSource?.status === "error";
+  const bankFeedSource = sourceByKey.get("bank_feed");
+  const shouldShowBankFeedPreview = bankFeedSource?.status === "connected" || bankFeedSource?.status === "syncing" || bankFeedSource?.status === "error";
+  const xeroSource = sourceByKey.get("xero");
+  const shouldShowXeroPreview = xeroSource?.status === "connected" || xeroSource?.status === "syncing" || xeroSource?.status === "error";
+  const slackSource = sourceByKey.get("slack");
+  const shouldShowSlackPreview = slackSource?.status === "connected" || slackSource?.status === "syncing" || slackSource?.status === "error";
 
   const refreshStatuses = async () => {
     setLoadingStatus(true);
@@ -382,7 +929,7 @@ export default function ConnectData() {
         defaultSelectionAppliedRef.current = true;
         setSelectedSources(new Set(
           response.sources
-            .filter((source) => FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing"))
+            .filter((source) => FUNCTIONAL_SOURCES.has(source.key) && source.selected && (source.status === "connected" || source.status === "syncing"))
             .map((source) => source.key),
         ));
       }
@@ -396,6 +943,154 @@ export default function ConnectData() {
   useEffect(() => {
     void refreshStatuses();
   }, [backendBaseUrl]);
+
+  useEffect(() => {
+    if (!shouldShowGmailPreview) {
+      setGmailPreview(null);
+      setGmailPreviewError(null);
+      setLoadingGmailPreview(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingGmailPreview(true);
+    setGmailPreviewError(null);
+    getVibeRaisingGmailPreview(backendBaseUrl)
+      .then((preview) => {
+        if (!cancelled) setGmailPreview(preview);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setGmailPreviewError(error instanceof Error ? error.message : "We couldn't load Gmail preview.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingGmailPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowGmailPreview, gmailSource?.lastSyncedAt, gmailSource?.status]);
+
+  useEffect(() => {
+    if (!shouldShowBankFeedPreview) {
+      setBankFeedPreview(null);
+      setBankFeedPreviewError(null);
+      setLoadingBankFeedPreview(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingBankFeedPreview(true);
+    setBankFeedPreviewError(null);
+    getVibeRaisingBankFeedPreview(backendBaseUrl)
+      .then((preview) => {
+        if (!cancelled) setBankFeedPreview(preview);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setBankFeedPreviewError(error instanceof Error ? error.message : "We couldn't load Bank Feed preview.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingBankFeedPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowBankFeedPreview, bankFeedSource?.lastSyncedAt, bankFeedSource?.status]);
+
+  useEffect(() => {
+    if (!shouldShowXeroPreview) {
+      setXeroPreview(null);
+      setXeroPreviewError(null);
+      setLoadingXeroPreview(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingXeroPreview(true);
+    setXeroPreviewError(null);
+    getVibeRaisingXeroPreview(backendBaseUrl)
+      .then((preview) => {
+        if (!cancelled) setXeroPreview(preview);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setXeroPreviewError(error instanceof Error ? error.message : "We couldn't load Xero preview.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingXeroPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowXeroPreview, xeroSource?.lastSyncedAt, xeroSource?.status]);
+
+  useEffect(() => {
+    if (!shouldShowSlackPreview) {
+      setSlackChannels([]);
+      setSlackPreview(null);
+      setSlackError(null);
+      setLoadingSlackChannels(false);
+      setLoadingSlackPreview(false);
+      setSelectedSlackChannelIds(new Set());
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSlackChannels(true);
+    setSlackError(null);
+    getVibeRaisingSlackChannels(backendBaseUrl)
+      .then((payload: VibeRaisingSlackChannelsResponse) => {
+        if (cancelled) return;
+        setSlackChannels(payload.channels);
+        setSelectedSlackChannelIds(new Set(payload.channels.filter((channel) => channel.selected).map((channel) => channel.channelId)));
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setSlackError(error instanceof Error ? error.message : "We couldn't load Slack channels.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlackChannels(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowSlackPreview, slackSource?.status]);
+
+  useEffect(() => {
+    if (!shouldShowSlackPreview) {
+      setSlackPreview(null);
+      setLoadingSlackPreview(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingSlackPreview(true);
+    getVibeRaisingSlackPreview(backendBaseUrl)
+      .then((preview) => {
+        if (!cancelled) setSlackPreview(preview);
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setSlackError(error instanceof Error ? error.message : "We couldn't load Slack preview.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingSlackPreview(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl, shouldShowSlackPreview, slackSource?.lastSyncedAt, slackSource?.status]);
 
   const currentReturnPath = `${location.pathname}${location.search || ""}`;
 
@@ -418,7 +1113,7 @@ export default function ConnectData() {
         return;
       }
 
-      window.location.assign(connectVibeRaisingInputSource(backendBaseUrl, source.key, next));
+      window.location.assign(connectVibeRaisingInputSource(backendBaseUrl, source.key, currentReturnPath));
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : `We couldn't connect ${source.label}.`);
       setBusyProvider(null);
@@ -428,6 +1123,10 @@ export default function ConnectData() {
   const handleToggle = (source: VibeRaisingInputSourceSummary) => {
     if (!FUNCTIONAL_SOURCES.has(source.key)) return;
     if (source.status !== "connected" && source.status !== "syncing") return;
+    if (source.key === "slack" && selectedSlackChannelIds.size === 0 && !selectedSources.has("slack")) {
+      setStatusMessage("Select at least one Slack channel before using Slack in this update.");
+      return;
+    }
 
     setSelectedSources((previous) => {
       const nextSelected = new Set(previous);
@@ -440,11 +1139,19 @@ export default function ConnectData() {
     });
   };
 
-  const handleSyncFinance = async () => {
+  const getOAuthConnectHref = (source: VibeRaisingInputSourceSummary) => {
+    if (source.key === "gmail") return undefined;
+    if (!FUNCTIONAL_SOURCES.has(source.key)) return undefined;
+    if (source.status === "connected" || source.status === "syncing" || source.status === "coming_soon") return undefined;
+    if (source.status === "unavailable" && !OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key)) return undefined;
+    return connectVibeRaisingInputSource(backendBaseUrl, source.key, currentReturnPath);
+  };
+
+  const handleSyncFinance = async (providers?: Array<Extract<VibeRaisingInputSourceKey, "stripe" | "xero" | "bank_feed">>) => {
     setSyncingFinance(true);
     setStatusMessage(null);
     try {
-      await syncVibeRaisingFinancialSources(backendBaseUrl);
+      await syncVibeRaisingFinancialSources(backendBaseUrl, providers);
       await refreshStatuses();
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "We couldn't start the financial sync.");
@@ -453,11 +1160,71 @@ export default function ConnectData() {
     }
   };
 
+  const handleToggleSlackChannel = (channelId: string) => {
+    setSelectedSlackChannelIds((previous) => {
+      const nextSelected = new Set(previous);
+      if (nextSelected.has(channelId)) {
+        nextSelected.delete(channelId);
+      } else {
+        nextSelected.add(channelId);
+      }
+      return nextSelected;
+    });
+  };
+
+  const handleSaveSlackChannels = async () => {
+    setSavingSlackChannels(true);
+    setStatusMessage(null);
+    try {
+      await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        if (selectedSlackChannelIds.size > 0) {
+          nextSelected.add("slack");
+        } else {
+          nextSelected.delete("slack");
+        }
+        return nextSelected;
+      });
+      await Promise.all([
+        refreshStatuses(),
+        getVibeRaisingSlackPreview(backendBaseUrl).then(setSlackPreview),
+      ]);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't save Slack channel selection.");
+    } finally {
+      setSavingSlackChannels(false);
+    }
+  };
+
+  const handleSyncSlack = async () => {
+    setSyncingSlack(true);
+    setStatusMessage(null);
+    try {
+      await saveVibeRaisingSlackChannelSelections(backendBaseUrl, Array.from(selectedSlackChannelIds));
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        if (selectedSlackChannelIds.size > 0) nextSelected.add("slack");
+        return nextSelected;
+      });
+      await syncVibeRaisingInputSources(backendBaseUrl, ["slack"]);
+      await Promise.all([
+        refreshStatuses(),
+        getVibeRaisingSlackPreview(backendBaseUrl).then(setSlackPreview),
+      ]);
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't sync Slack.");
+    } finally {
+      setSyncingSlack(false);
+    }
+  };
+
   const navigateBackToUpdates = () => {
-    navigate("/vibe-raising");
+    navigate("/founder-tools/updates");
   };
 
   const navigateToDraft = (includeInputs: boolean) => {
+    writeStoredManualMaterials(manualMaterials);
     const target = new URL(next, "http://mlai.local");
     if (includeInputs && selectedSources.size > 0) {
       target.searchParams.set("inputs", Array.from(selectedSources).join(","));
@@ -465,6 +1232,14 @@ export default function ConnectData() {
       target.searchParams.delete("inputs");
     }
     navigate(`${target.pathname}${target.search}`);
+  };
+
+  const updateManualMaterials = (patch: Partial<ManualMaterialsState>) => {
+    setManualMaterials((previous) => {
+      const nextMaterials = { ...previous, ...patch };
+      writeStoredManualMaterials(nextMaterials);
+      return nextMaterials;
+    });
   };
 
   const handleStepperClick = (step: MonthlyUpdateStepKey) => {
@@ -555,12 +1330,14 @@ export default function ConnectData() {
               source={source}
               selected={selectedSources.has(source.key)}
               busy={busyProvider === source.key}
+              connectHref={getOAuthConnectHref(source)}
               onConnect={handleConnect}
               onToggle={handleToggle}
             />
           ))}
         </div>
 
+        {EXTRA_SOURCE_KEYS.length > 0 ? (
         <div className="mt-8 flex justify-center">
           <button
             type="button"
@@ -570,6 +1347,61 @@ export default function ConnectData() {
             {showAllSources ? "Show fewer sources" : "View all sources"}
             <ChevronDownIcon className={clsx("h-4 w-4 text-slate-400 transition", showAllSources && "rotate-180")} />
           </button>
+        </div>
+        ) : null}
+      </section>
+
+      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-xl">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-600 ring-1 ring-gray-100">
+                <FolderIcon className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-gray-950">Manual materials</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Add a source URL or short summary alongside your connected tools.
+                </p>
+              </div>
+            </div>
+          </div>
+          {hasManualMaterials ? (
+            <button
+              type="button"
+              onClick={() => updateManualMaterials({ sourceUrl: "", summary: "" })}
+              className="inline-flex w-fit items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-500 transition hover:bg-gray-50 hover:text-gray-800"
+            >
+              Clear materials
+            </button>
+          ) : null}
+        </div>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
+              <LinkIcon className="h-4 w-4 text-gray-400" />
+              Source URL
+            </span>
+            <input
+              type="url"
+              value={manualMaterials.sourceUrl}
+              onChange={(event) => updateManualMaterials({ sourceUrl: event.target.value })}
+              placeholder="https://docs.google.com/document/..."
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
+            <textarea
+              value={manualMaterials.summary}
+              onChange={(event) => updateManualMaterials({ summary: event.target.value })}
+              rows={3}
+              placeholder="Topline context investors should read before the detailed sections..."
+              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+          </label>
         </div>
       </section>
 
@@ -582,7 +1414,7 @@ export default function ConnectData() {
           {hasConnectedFinance ? (
             <button
               type="button"
-              onClick={handleSyncFinance}
+              onClick={() => void handleSyncFinance()}
               disabled={syncingFinance}
               className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-extrabold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
             >
@@ -610,7 +1442,14 @@ export default function ConnectData() {
                     <span className="h-1.5 w-1.5 rounded-full bg-current" />
                     {statusLabel(source.status)}
                   </span>
-                  <p className="text-sm text-slate-500">{SOURCE_COPY[source.key].connectedUse}</p>
+                  <div>
+                    <p className="text-sm text-slate-500">{SOURCE_COPY[source.key].connectedUse}</p>
+                    {source.key === "slack" ? (
+                      <p className="mt-1 text-xs font-semibold text-slate-500">
+                        {selectedSlackChannelIds.size || source.selectedChannelCount || 0} selected channel{(selectedSlackChannelIds.size || source.selectedChannelCount || 0) === 1 ? "" : "s"}
+                      </p>
+                    ) : null}
+                  </div>
                   <button
                     type="button"
                     onClick={() => handleToggle(source)}
@@ -641,6 +1480,48 @@ export default function ConnectData() {
           )}
         </div>
       </section>
+
+      {shouldShowGmailPreview ? (
+        <GmailPreview
+          preview={gmailPreview}
+          loading={loadingGmailPreview}
+          error={gmailPreviewError}
+        />
+      ) : null}
+
+      {shouldShowSlackPreview ? (
+        <SlackPreview
+          channels={slackChannels}
+          preview={slackPreview}
+          loadingChannels={loadingSlackChannels}
+          loadingPreview={loadingSlackPreview}
+          error={slackError}
+          saving={savingSlackChannels}
+          syncing={syncingSlack}
+          selectedChannelIds={selectedSlackChannelIds}
+          onToggleChannel={handleToggleSlackChannel}
+          onSaveChannels={() => void handleSaveSlackChannels()}
+          onSync={() => void handleSyncSlack()}
+        />
+      ) : null}
+
+      {shouldShowXeroPreview ? (
+        <XeroPreview
+          preview={xeroPreview}
+          loading={loadingXeroPreview}
+          error={xeroPreviewError}
+          syncing={syncingFinance}
+          onSync={() => void handleSyncFinance(["xero"])}
+        />
+      ) : null}
+
+      {shouldShowBankFeedPreview ? (
+        <BankFeedPreview
+          preview={bankFeedPreview}
+          loading={loadingBankFeedPreview}
+          error={bankFeedPreviewError}
+        />
+      ) : null}
 
       <section className="rounded-xl bg-black p-8 text-white sm:p-10">
         <h2 className="text-2xl font-black">Your data, transformed</h2>
@@ -707,7 +1588,7 @@ export default function ConnectData() {
           <p className="text-sm font-bold text-gray-950">
             {selectedSourceList.length > 0
               ? `${selectedSourceList.length} source${selectedSourceList.length === 1 ? "" : "s"} selected`
-              : "No external sources selected"}
+              : hasManualMaterials ? "Manual materials only" : "No external sources selected"}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
