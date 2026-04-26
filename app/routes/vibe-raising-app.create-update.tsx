@@ -44,6 +44,7 @@ import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
+    VibeRaisingMetricSuggestion,
     VibeRaisingMonthlyUpdate,
     VibeRaisingStartupUpdateStatusResponse,
     VibeRaisingVideoCompressionMetadata,
@@ -200,13 +201,15 @@ export async function action({ request, context }: Route.ActionArgs) {
         const dynamicMetricKeys = String(formData.get("metricKeys") || "")
             .split(",")
             .map((key) => key.trim())
-            .filter(Boolean);
-        const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...dynamicMetricKeys]));
+            .filter((key) => key && METRIC_OPTION_MAP.has(key));
+        const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
+        const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
         const metrics = Object.fromEntries(
             metricKeys
                 .map((key) => [key, String(formData.get(key) || "").trim()] as const)
                 .filter(([, value]) => value.length > 0),
         );
+        const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
         const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
         const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
 
@@ -224,6 +227,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             challenges: String(formData.get("challenges") || ""),
             asks: String(formData.get("asks") || ""),
             metrics,
+            metricSuggestions,
         });
 
         return redirect("/founder-tools/updates");
@@ -254,55 +258,58 @@ const METRIC_OPTIONS: MetricOption[] = [
     { key: "revenueGrowthRate", label: "Revenue Growth", placeholder: "12%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Month-on-month revenue or MRR growth when source data supports it." },
     { key: "customerCount", label: "Customers", placeholder: "24", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of active or paying customers when source data supports it." },
     { key: "churn", label: "Churn", placeholder: "2%", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Customer or revenue churn when source data supports it." },
-    { key: "invoiceCount", label: "Invoices", placeholder: "12", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice count from accounting data." },
+    { key: "invoiceCount", label: "Invoices", placeholder: "12", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice count or invoices sent this month." },
     { key: "recurringInvoiceCount", label: "Recurring Invoices", placeholder: "6", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Active recurring invoice count from accounting data." },
+    { key: "websiteVisitors", label: "Website Visitors", placeholder: "1,200", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Visitors to the company website this month." },
+    { key: "waitlistSignups", label: "Waitlist Signups", placeholder: "85", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "People who joined the waitlist this month." },
+    { key: "demoRequests", label: "Demo Requests", placeholder: "14", icon: <ArrowRightIcon className="w-4 h-4 text-gray-400" />, info: "Inbound requests to see or try the product." },
+    { key: "customerInterviews", label: "Customer Interviews", placeholder: "10", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Potential or current customers interviewed this month." },
+    { key: "experimentsRun", label: "Experiments Run", placeholder: "4", icon: <LightBulbIcon className="w-4 h-4 text-gray-400" />, info: "Validation, growth, product, or pricing experiments completed." },
+    { key: "pilotCount", label: "Pilots", placeholder: "3", icon: <SparklesIcon className="w-4 h-4 text-gray-400" />, info: "Active pilots, design partners, or trials." },
+    { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
 ];
 
 const METRIC_OPTION_MAP = new Map(METRIC_OPTIONS.map((option) => [option.key, option]));
 const METRIC_FORM_KEYS = METRIC_OPTIONS.map((option) => option.key);
 
-function humanizeMetricKey(key: string) {
-    return key
-        .replace(/[_-]+/g, " ")
-        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-        .replace(/\b\w/g, (char) => char.toUpperCase());
-}
-
-function getMetricOption(key: string): MetricOption {
-    return METRIC_OPTION_MAP.get(key) ?? {
-        key,
-        label: humanizeMetricKey(key),
-        placeholder: "Value",
-        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
-        info: "Source-backed metric.",
-    };
-}
-
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
     const keys = Object.keys(metrics || {}).filter((key) => String(metrics?.[key] || "").trim());
-    const known = METRIC_OPTIONS.filter((option) => keys.includes(option.key));
-    const extra = keys
-        .filter((key) => !METRIC_OPTION_MAP.has(key))
-        .map((key) => getMetricOption(key));
-    return [...known, ...extra];
+    return METRIC_OPTIONS.filter((option) => keys.includes(option.key));
 }
 
 function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
-    const extra = Object.keys(metrics || {})
-        .filter((key) => !METRIC_OPTION_MAP.has(key))
-        .map((key) => getMetricOption(key));
-    return [...METRIC_OPTIONS, ...extra];
+    return getMetricOptionsForMetrics(metrics);
 }
 
 function getEditableMetricOptions(metrics?: Record<string, string>, selected?: Set<string>) {
-    const keys = new Set<string>([
-        ...Object.keys(metrics || {}),
-        ...Array.from(selected || []),
-    ]);
-    const extra = Array.from(keys)
-        .filter((key) => !METRIC_OPTION_MAP.has(key))
-        .map((key) => getMetricOption(key));
-    return [...METRIC_OPTIONS, ...extra];
+    return METRIC_OPTIONS.filter((option) => {
+        const hasKnownValue = Object.prototype.hasOwnProperty.call(metrics || {}, option.key);
+        const isSelected = selected?.has(option.key) ?? false;
+        return hasKnownValue || isSelected || METRIC_OPTION_MAP.has(option.key);
+    });
+}
+
+function metricKeysFromSuggestions(suggestions?: VibeRaisingMetricSuggestion[]) {
+    return (suggestions || [])
+        .map((suggestion) => suggestion.metricKey)
+        .filter((key) => METRIC_OPTION_MAP.has(key));
+}
+
+function metricSuggestionsFromKeys(keys: string[], metrics: Record<string, string>) {
+    const suggestions: VibeRaisingMetricSuggestion[] = [];
+    const seen = new Set<string>();
+    keys.forEach((key) => {
+        if (seen.has(key) || !METRIC_OPTION_MAP.has(key) || String(metrics[key] || "").trim()) return;
+        seen.add(key);
+        const option = METRIC_OPTION_MAP.get(key);
+        suggestions.push({ metricKey: key, label: option?.label || key, reason: "" });
+    });
+    return suggestions;
+}
+
+function metricOptionsFromKeys(keys: string[]) {
+    const selected = new Set(keys.filter((key) => METRIC_OPTION_MAP.has(key)));
+    return METRIC_OPTIONS.filter((option) => selected.has(option.key));
 }
 
 function MetricInfoBadge({ info }: { info?: string }) {
@@ -1232,7 +1239,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
             >
                 <div className="flex items-center gap-3">
                     <h4 className="text-sm font-bold text-gray-700">{pm.month}</h4>
-                    {!open && Object.keys(pm.metrics).length > 0 && (
+                    {!open && getMetricOptionsForMetrics(pm.metrics).length > 0 && (
                         <span className="flex items-center gap-2 text-xs text-gray-400">
                             {getMetricOptionsForMetrics(pm.metrics).map(m => (
                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{pm.metrics[m.key]}</span>
@@ -1573,7 +1580,6 @@ export default function CreateUpdate() {
                 initial.add(opt.key);
             }
         });
-        if (initial.size === 0) initial.add("revenue");
         return initial;
     });
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
@@ -1619,21 +1625,26 @@ export default function CreateUpdate() {
             setVideoUploadError(null);
             setPreviewMediaKind("video");
         }
-        setMetricValues(data.metrics || {});
+        const currentMetrics = data.metrics || {};
+        setMetricValues(currentMetrics);
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
             month: pm.month || "Unknown",
             highlights: pm.highlights || "",
             challenges: pm.challenges || "",
             asks: pm.asks || "",
-            metrics: pm.metrics || {}
+            metrics: {
+                ...Object.fromEntries(metricKeysFromSuggestions(pm.metricSuggestions).map((key) => [key, ""])),
+                ...(pm.metrics || {}),
+            }
         })));
         
         const newMetrics = new Set<string>();
-        Object.keys(data.metrics || {}).forEach(key => {
-            if (data.metrics[key]) newMetrics.add(key);
+        Object.keys(currentMetrics).forEach(key => {
+            if (METRIC_OPTION_MAP.has(key) && currentMetrics[key]) newMetrics.add(key);
         });
-        setSelectedMetrics(newMetrics.size > 0 ? newMetrics : new Set(["revenue"]));
+        metricKeysFromSuggestions(data.metricSuggestions).forEach((key) => newMetrics.add(key));
+        setSelectedMetrics(newMetrics);
     };
 
     const revokeVideoPreviewObjectUrl = useCallback(() => {
@@ -2348,8 +2359,14 @@ export default function CreateUpdate() {
                 if (draft[opt.key]) metrics[opt.key] = draft[opt.key];
             });
             setMetricValues(metrics);
-            const newSelected = new Set<string>(Object.keys(metrics).filter(k => metrics[k]));
-            if (newSelected.size === 0) newSelected.add("revenue");
+            const restoredMetricKeys = String(draft.metricKeys || "")
+                .split(",")
+                .map((key: string) => key.trim())
+                .filter((key: string) => METRIC_OPTION_MAP.has(key));
+            const newSelected = new Set<string>([
+                ...restoredMetricKeys,
+                ...Object.keys(metrics).filter(k => metrics[k]),
+            ]);
             setSelectedMetrics(newSelected);
 
             // Reconstruct past month cards from flat pastMonth_N_* fields
@@ -2389,15 +2406,23 @@ export default function CreateUpdate() {
     };
 
     const toggleMetric = (key: string) => {
+        const wasSelected = selectedMetrics.has(key);
         setSelectedMetrics(prev => {
             const next = new Set(prev);
             if (next.has(key)) {
-                if (next.size > 1) next.delete(key);
+                next.delete(key);
             } else {
                 next.add(key);
             }
             return next;
         });
+        if (wasSelected) {
+            setMetricValues(values => {
+                const updated = { ...values };
+                delete updated[key];
+                return updated;
+            });
+        }
     };
 
     const updatePastMonthField = (index: number, field: string, value: string) => {
@@ -2420,7 +2445,11 @@ export default function CreateUpdate() {
     const activeMetricValues = isViewingCurrentUpdate ? metricValues : activePastCard?.metrics || {};
     const activeSelectedMetrics = isViewingCurrentUpdate
         ? selectedMetrics
-        : new Set(Object.keys(activeMetricValues).filter((key) => activeMetricValues[key]));
+        : new Set(Object.keys(activeMetricValues).filter((key) => METRIC_OPTION_MAP.has(key)));
+    const formMetricKeys = Array.from(new Set([
+        ...Array.from(selectedMetrics),
+        ...Object.keys(metricValues),
+    ])).filter((key) => METRIC_OPTION_MAP.has(key));
     const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
     const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
     const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
@@ -2455,7 +2484,7 @@ export default function CreateUpdate() {
             const nextMetrics = { ...card.metrics };
             if (key in nextMetrics) {
                 delete nextMetrics[key];
-                return Object.keys(nextMetrics).length > 0 ? { ...card, metrics: nextMetrics } : card;
+                return { ...card, metrics: nextMetrics };
             }
             return { ...card, metrics: { ...nextMetrics, [key]: "" } };
         }));
@@ -2511,6 +2540,8 @@ export default function CreateUpdate() {
             isSelected: activePeriodKey === "current"
         }
     ];
+    const hasRevenueChart = chartData.some((item) => item.value > 0);
+    const hasActiveUsersChart = activeUsersChartData.some((item) => item.value > 0);
 
     // Chart click: always expand + scroll
     const expandCardFromChart = (index: number) => {
@@ -2733,7 +2764,16 @@ export default function CreateUpdate() {
                             {/* Metrics — square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                    {getMetricOptionsForDisplay(((data as any)?.metrics || data) as Record<string, string>).map(m => {
+                                    {(() => {
+                                        const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
+                                        const selectedReviewKeys = String((data as any)?.metricKeys || "")
+                                            .split(",")
+                                            .map((key) => key.trim())
+                                            .filter(Boolean);
+                                        const options = selectedReviewKeys.length > 0
+                                            ? metricOptionsFromKeys(selectedReviewKeys)
+                                            : getMetricOptionsForDisplay(metricRecord);
+                                        return options.map(m => {
                                         const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
                                         return (
                                             <div
@@ -2764,7 +2804,8 @@ export default function CreateUpdate() {
                                                 )}>{m.label}</p>
                                             </div>
                                         );
-                                    })}
+                                    });
+                                    })()}
                                 </div>
                             </div>
 
@@ -3205,7 +3246,7 @@ export default function CreateUpdate() {
                 <input
                     type="hidden"
                     name="metricKeys"
-                    value={Array.from(new Set([...Object.keys(metricValues), ...Object.keys(activeMetricValues)])).join(",")}
+                    value={formMetricKeys.join(",")}
                 />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
@@ -3430,22 +3471,26 @@ export default function CreateUpdate() {
                 <div className="relative">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
 	                        {/* ─── Growth Charts ─── */}
-                        {pastMonthCards.length > 0 && (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <GrowthChart
-                                    data={chartData}
-                                    onSelect={expandCardFromChart}
-                                    title="Revenue"
-                                    subtitle="Monthly revenue with MoM growth"
-                                    formatter={formatCompact}
-                                />
-                                <GrowthChart
-                                    data={activeUsersChartData}
-                                    onSelect={expandCardFromChart}
-                                    title="Active Users"
-                                    subtitle="Monthly active users with MoM growth"
-                                    formatter={formatUsers}
-                                />
+                        {pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
+                            <div className={clsx("grid gap-4", hasRevenueChart && hasActiveUsersChart ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+                                {hasRevenueChart && (
+                                    <GrowthChart
+                                        data={chartData}
+                                        onSelect={expandCardFromChart}
+                                        title="Revenue"
+                                        subtitle="Monthly revenue with MoM growth"
+                                        formatter={formatCompact}
+                                    />
+                                )}
+                                {hasActiveUsersChart && (
+                                    <GrowthChart
+                                        data={activeUsersChartData}
+                                        onSelect={expandCardFromChart}
+                                        title="Active Users"
+                                        subtitle="Monthly active users with MoM growth"
+                                        formatter={formatUsers}
+                                    />
+                                )}
                             </div>
                         )}
 
@@ -3471,14 +3516,14 @@ export default function CreateUpdate() {
                                             <h4 className="text-sm font-bold text-gray-600">{card.month}</h4>
                                             {!expandedCards.has(index) && (
                                                 <>
-                                                    {Object.keys(card.metrics).length > 0 && (
+                                                    {getMetricOptionsForMetrics(card.metrics).length > 0 && (
                                                         <span className="flex items-center gap-2 text-xs text-gray-400">
                                                             {getMetricOptionsForMetrics(card.metrics).map(m => (
                                                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{card.metrics[m.key]}</span>
                                                             ))}
                                                         </span>
                                                     )}
-                                                    {Object.keys(card.metrics).length === 0 && (
+                                                    {getMetricOptionsForMetrics(card.metrics).length === 0 && (
                                                         <span className="text-xs text-gray-400 truncate max-w-[300px]">{(card.highlights || "").slice(0, 80)}...</span>
                                                     )}
                                                 </>
@@ -3507,9 +3552,7 @@ export default function CreateUpdate() {
                                                                 if (active) {
                                                                     const updated = { ...card.metrics };
                                                                     delete updated[m.key];
-                                                                    if (Object.keys(updated).length > 0) {
-                                                                        setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
-                                                                    }
+                                                                    setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
                                                                 } else {
                                                                     updatePastMonthMetric(index, m.key, "");
                                                                 }
@@ -3605,7 +3648,7 @@ export default function CreateUpdate() {
 	                                    <input type="hidden" name="highlights" value={highlights} />
 	                                    <input type="hidden" name="challenges" value={challenges} />
 	                                    <input type="hidden" name="asks" value={asks} />
-	                                    <input type="hidden" name="metricKeys" value={Object.keys(metricValues).join(",")} />
+	                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
 	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
 	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
 	                                    ))}
