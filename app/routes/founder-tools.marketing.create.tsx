@@ -838,8 +838,27 @@ function baselineSummaryText(summary: VibeMarketingWebsiteBaseline["summary"]) {
   return "Run a baseline to capture website performance before generating articles.";
 }
 
-function metricScore(metric?: VibeMarketingWebsiteBaselineMetric) {
-  return typeof metric?.score === "number" ? Math.round(metric.score) : null;
+function hasLegacyPageSpeedRateLimitMessage(metric?: VibeMarketingWebsiteBaselineMetric) {
+  const message = typeof metric?.message === "string" ? metric.message : "";
+  return /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message);
+}
+
+function metricStatus(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
+  if (label === "Lighthouse" && (metric?.reasonCode === "rate_limited" || hasLegacyPageSpeedRateLimitMessage(metric))) {
+    return "unavailable";
+  }
+  return metric?.status;
+}
+
+function metricScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, status?: string | null) {
+  return status === "measured" && typeof metric?.score === "number" ? Math.round(metric.score) : null;
+}
+
+function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
+  if (label === "Lighthouse" && (metric?.reasonCode === "rate_limited" || hasLegacyPageSpeedRateLimitMessage(metric))) {
+    return "PageSpeed Insights is temporarily rate limited. Try again later.";
+  }
+  return typeof metric?.message === "string" ? metric.message : null;
 }
 
 function sourceStatusLabel(status?: string | null) {
@@ -872,15 +891,17 @@ function BaselineMetricCard({
   label: string;
   metric?: VibeMarketingWebsiteBaselineMetric;
 }) {
-  const score = metricScore(metric);
+  const status = metricStatus(label, metric);
+  const score = metricScore(metric, status);
+  const message = metricMessage(label, metric);
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <p className="text-sm font-black text-gray-950">{label}</p>
-        <SourceStatusBadge status={metric?.status} />
+        <SourceStatusBadge status={status} />
       </div>
       <p className="mt-3 text-2xl font-black text-gray-950">{score === null ? "—" : score}</p>
-      {typeof metric?.message === "string" ? <p className="mt-2 text-xs font-semibold text-gray-500">{metric.message}</p> : null}
+      {message ? <p className="mt-2 line-clamp-4 break-words text-xs font-semibold text-gray-500">{message}</p> : null}
     </div>
   );
 }
