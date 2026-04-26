@@ -40,6 +40,8 @@ export interface VibeRaisingPastMonthSummary {
   highlights: string;
   challenges: string;
   asks: string;
+  learnings: string;
+  next30Days: string;
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
 }
@@ -63,6 +65,8 @@ export interface VibeRaisingDraftedContent {
   highlights: string;
   challenges: string;
   asks: string;
+  learnings: string;
+  next30Days: string;
   pastMonths: VibeRaisingPastMonthSummary[];
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
@@ -88,6 +92,8 @@ export interface VibeRaisingMonthlyUpdate {
   highlights: string;
   challenges: string;
   asks: string;
+  learnings: string;
+  next30Days: string;
 }
 
 export interface VibeRaisingVideoUploadResponse {
@@ -152,6 +158,24 @@ export interface VibeRaisingInputSourceSummary {
   warning?: string | null;
   selectedChannelCount?: number;
   selectedProjectCount?: number;
+  hasReportScope?: boolean;
+  needsReportReconnect?: boolean;
+  requiredReportScopes?: string[];
+}
+
+export interface VibeRaisingFinancialSyncRun {
+  provider: string;
+  status: string;
+  error?: string | null;
+  hasReportScope?: boolean;
+  needsReportReconnect?: boolean;
+  metricsPublishedCount?: number;
+  metricWarnings: string[];
+}
+
+export interface VibeRaisingFinancialSyncResponse {
+  status: string;
+  syncRuns: VibeRaisingFinancialSyncRun[];
 }
 
 export interface VibeRaisingInputSourcesStatusResponse {
@@ -373,6 +397,9 @@ export interface VibeRaisingXeroPreview {
   cashCollected?: string | null;
   currencies: string[];
   warnings: string[];
+  hasReportScope: boolean;
+  needsReportReconnect: boolean;
+  requiredReportScopes: string[];
   recurringInvoices: VibeRaisingXeroRecord[];
   recentInvoices: VibeRaisingXeroRecord[];
 }
@@ -412,6 +439,7 @@ export interface VibeRaisingStartupUpdateRunSummary {
   domain: string;
   status: string;
   currentStep?: string | null;
+  targetMonth?: string | null;
   stepOrder?: string[];
   stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
   createdAt?: string;
@@ -429,6 +457,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   canRetry: boolean;
   terminalState?: string | null;
   generatedDraftMonths: string[];
+  targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth {
   draftId?: number;
@@ -445,6 +474,8 @@ export interface VibeRaisingEmailDraftMonth {
   highlights: string;
   challenges: string;
   asks: string;
+  learnings: string;
+  next30Days: string;
   metrics?: Record<string, string>;
   metricSuggestions?: VibeRaisingMetricSuggestion[];
 }
@@ -476,6 +507,10 @@ export interface VibeRaisingStartupUpdateStatusResponse {
   canRetry: boolean;
   terminalState?: string | null;
   generatedDraftMonths: string[];
+  targetMonth?: string | null;
+  requestedTargetMonth?: string | null;
+  activeTargetMonth?: string | null;
+  targetMonthConflict?: boolean;
   reusedExistingRun?: boolean;
   currentMonth?: VibeRaisingEmailDraftMonth | null;
   pastMonths: VibeRaisingEmailDraftMonth[];

@@ -11,6 +11,8 @@ import type {
   VibeRaisingCompany,
   VibeRaisingDraftedContent,
   VibeRaisingEmailDraftMonth,
+  VibeRaisingFinancialSyncResponse,
+  VibeRaisingFinancialSyncRun,
   VibeRaisingGmailMessagePreview,
   VibeRaisingGmailPreview,
   VibeRaisingInputSourceKey,
@@ -326,6 +328,11 @@ function normalizePastMonthSummary(raw: unknown) {
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
+    learnings: asNullableString(payload.learnings) ?? "",
+    next30Days:
+      asNullableString(payload.next30Days) ??
+      asNullableString(payload.next_30_days) ??
+      "",
     metrics: normalizeMetrics(payload.metrics),
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
@@ -387,6 +394,11 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
+    learnings: asNullableString(payload.learnings) ?? "",
+    next30Days:
+      asNullableString(payload.next30Days) ??
+      asNullableString(payload.next_30_days) ??
+      "",
     metrics: normalizeMetrics(payload.metrics),
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
@@ -486,6 +498,11 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
+    learnings: asNullableString(payload.learnings) ?? "",
+    next30Days:
+      asNullableString(payload.next30Days) ??
+      asNullableString(payload.next_30_days) ??
+      "",
     metrics: normalizeMetrics(payload.metrics),
     metricSuggestions: normalizeMetricSuggestions(
       payload.metricSuggestions ?? payload.metric_suggestions,
@@ -560,6 +577,11 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
+    learnings: asNullableString(payload.learnings) ?? "",
+    next30Days:
+      asNullableString(payload.next30Days) ??
+      asNullableString(payload.next_30_days) ??
+      "",
   };
 }
 function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSummary | null {
@@ -586,6 +608,10 @@ function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSum
     currentStep:
       asNullableString(payload.currentStep) ??
       asNullableString(payload.current_step),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      null,
     stepOrder: Array.isArray(payload.stepOrder ?? payload.step_order)
       ? ((payload.stepOrder ?? payload.step_order) as unknown[]).map((item: unknown) => String(item))
       : [],
@@ -788,6 +814,11 @@ function normalizeStartupUpdateProgress(
       payload.generatedDraftMonths ??
         payload.generated_draft_months,
     ),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      run?.targetMonth ??
+      null,
   };
 }
 
@@ -989,11 +1020,18 @@ function normalizeFinancialSourceSummaries(raw: unknown): Partial<Record<"stripe
       asNullableString(connection.lastError) ??
       asNullableString(connection.last_error) ??
       asNullableString(connection.error);
+    const rawRequiredReportScopes = connection.requiredReportScopes ?? connection.required_report_scopes;
+    const requiredReportScopes = Array.isArray(rawRequiredReportScopes)
+      ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
 
     summaries[provider] = createInputSourceSummary(provider, status, {
       accountLabel,
       lastSyncedAt,
       warning,
+      hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
+      needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
+      requiredReportScopes,
     });
   }
 
@@ -1049,6 +1087,10 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       typeof connection.selectedProjectCount === "number" && Number.isFinite(connection.selectedProjectCount)
         ? connection.selectedProjectCount
         : Number(connection.selectedProjectCount ?? connection.selected_project_count ?? 0) || 0;
+    const rawRequiredReportScopes = connection.requiredReportScopes ?? connection.required_report_scopes;
+    const requiredReportScopes = Array.isArray(rawRequiredReportScopes)
+      ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
 
     summaries[provider] = createInputSourceSummary(provider, status, {
       accountLabel,
@@ -1057,6 +1099,9 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       selected,
       selectedChannelCount,
       selectedProjectCount,
+      hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
+      needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
+      requiredReportScopes,
     });
   }
 
@@ -1177,6 +1222,24 @@ function normalizeStartupUpdateStatus(
         payload.generated_draft_months ??
         progress?.generatedDraftMonths ??
         [],
+    ),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      progress?.targetMonth ??
+      run?.targetMonth ??
+      null,
+    requestedTargetMonth:
+      asNullableString(payload.requestedTargetMonth) ??
+      asNullableString(payload.requested_target_month) ??
+      null,
+    activeTargetMonth:
+      asNullableString(payload.activeTargetMonth) ??
+      asNullableString(payload.active_target_month) ??
+      null,
+    targetMonthConflict: Boolean(
+      payload.targetMonthConflict ??
+        payload.target_month_conflict,
     ),
     reusedExistingRun: Boolean(
       payload.reusedExistingRun ??
@@ -1454,6 +1517,10 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
       "Sales cycle for enterprise is running 6-8 weeks longer than forecast. Hiring a second AE has stalled after two declined offers.",
     asks:
       "Intros to Sydney-based CTOs evaluating internal tooling, and warm leads to senior AEs open to pre-Series A equity.",
+    learnings:
+      "The strongest activation lift came from guided onboarding, not additional dashboard depth.",
+    next30Days:
+      "Convert two enterprise pilots to paid annual agreements. Restart AE hiring with a narrower candidate profile.",
   },
   {
     id: "update-2026-03",
@@ -1476,6 +1543,10 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
       "Churn ticked up to 4.1% as a large cohort from the Q4 promo ended their trial without converting.",
     asks:
       "Feedback on our pricing experiment - considering a usage-based tier for teams under 20 seats.",
+    learnings:
+      "Self-serve teams need clearer usage limits before pricing conversations become productive.",
+    next30Days:
+      "Finish pricing interviews and ship the retention prompts for the Q4 promo cohort.",
   },
   {
     id: "update-2026-02",
@@ -1497,6 +1568,10 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     challenges:
       "Infra costs rose 22% as we scaled the ML inference layer - investigating GPU spot instances.",
     asks: "Intros to AI infra investors who have conviction on vertical SaaS.",
+    learnings:
+      "Healthcare design partners want workflow ownership more than generic model accuracy claims.",
+    next30Days:
+      "Complete the healthcare workflow prototype and benchmark GPU spot savings.",
   },
 ];
 
@@ -1538,6 +1613,8 @@ export async function saveVibeRaisingMonthlyUpdate(
     highlights: string;
     challenges: string;
     asks: string;
+    learnings: string;
+    next30Days: string;
     metrics: Record<string, string>;
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     summary?: string | null;
@@ -1556,7 +1633,12 @@ export async function saveVibeRaisingMonthlyUpdate(
   } catch (error: any) {
     const status = error.response?.status;
     const hasOptionalFields = Boolean(
-      body.summary || body.sourceUrl || body.videoUrl || (body.metricSuggestions || []).length > 0,
+      body.summary ||
+        body.sourceUrl ||
+        body.videoUrl ||
+        body.learnings ||
+        body.next30Days ||
+        (body.metricSuggestions || []).length > 0,
     );
     if (!hasOptionalFields || (status !== 400 && status !== 422)) {
       throw error;
@@ -1568,6 +1650,8 @@ export async function saveVibeRaisingMonthlyUpdate(
       highlights: body.highlights,
       challenges: body.challenges,
       asks: body.asks,
+      learnings: body.learnings,
+      next30Days: body.next30Days,
       metrics: body.metrics,
     });
     return normalizeMonthlyUpdate(response.data?.update ?? response.data);
@@ -1784,8 +1868,8 @@ export function connectVibeRaisingInputSource(
 export async function syncVibeRaisingFinancialSources(
   backendBaseUrl: string,
   providers?: Array<Extract<VibeRaisingInputSourceKey, "stripe" | "xero" | "bank_feed">>,
-): Promise<Record<string, unknown>> {
-  return requestBrowserJson<Record<string, unknown>>(
+): Promise<VibeRaisingFinancialSyncResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
     backendBaseUrl,
     FINANCIAL_SYNC_PATH,
     {
@@ -1793,6 +1877,40 @@ export async function syncVibeRaisingFinancialSources(
       body: providers?.length ? JSON.stringify({ providers }) : undefined,
     },
   );
+  const runs = collectRawList(payload, ["syncRuns", "sync_runs"])
+    .map(normalizeFinancialSyncRun)
+    .filter((run): run is VibeRaisingFinancialSyncRun => run !== null);
+  return {
+    status: asNullableString(payload.status) ?? "queued",
+    syncRuns: runs,
+  };
+}
+
+function normalizeFinancialSyncRun(raw: unknown): VibeRaisingFinancialSyncRun | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const rawWarnings = payload.metricWarnings ?? payload.metric_warnings;
+  const rawMetricsPublishedCount = payload.metricsPublishedCount ?? payload.metrics_published_count;
+  const metricsPublishedCount =
+    typeof rawMetricsPublishedCount === "number" && Number.isFinite(rawMetricsPublishedCount)
+      ? rawMetricsPublishedCount
+      : Number(rawMetricsPublishedCount ?? 0) || 0;
+  return {
+    provider:
+      asNullableString(payload.provider) ??
+      asNullableString(payload.source) ??
+      "unknown",
+    status: asNullableString(payload.status) ?? "queued",
+    error:
+      asNullableString(payload.error) ??
+      asNullableString(payload.detail),
+    hasReportScope: asBoolean(payload.hasReportScope ?? payload.has_report_scope),
+    needsReportReconnect: asBoolean(payload.needsReportReconnect ?? payload.needs_report_reconnect),
+    metricsPublishedCount,
+    metricWarnings: Array.isArray(rawWarnings)
+      ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
+  };
 }
 
 export async function syncVibeRaisingInputSources(
@@ -2453,6 +2571,7 @@ export async function getVibeRaisingXeroPreview(
     .filter((value): value is VibeRaisingXeroRecord => value !== null);
   const rawCurrencies = payload.currencies;
   const rawWarnings = payload.warnings;
+  const rawRequiredReportScopes = payload.requiredReportScopes ?? payload.required_report_scopes;
   return {
     tenantLabel:
       asNullableString(payload.tenantLabel) ??
@@ -2506,6 +2625,11 @@ export async function getVibeRaisingXeroPreview(
     warnings: Array.isArray(rawWarnings)
       ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
       : [],
+    hasReportScope: asBoolean(payload.hasReportScope ?? payload.has_report_scope),
+    needsReportReconnect: asBoolean(payload.needsReportReconnect ?? payload.needs_report_reconnect),
+    requiredReportScopes: Array.isArray(rawRequiredReportScopes)
+      ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
+      : [],
     recurringInvoices,
     recentInvoices,
   };
@@ -2513,11 +2637,20 @@ export async function getVibeRaisingXeroPreview(
 
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
-  options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] },
+  options?: {
+    forceRegenerate?: boolean;
+    inputSources?: VibeRaisingInputSourceKey[];
+    targetMonth?: string | null;
+  },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
   if (options?.forceRegenerate) {
     body.forceRegenerate = true;
+  }
+  const targetMonth = String(options?.targetMonth || "").trim();
+  if (targetMonth) {
+    body.targetMonth = targetMonth;
+    body.target_month = targetMonth;
   }
   const inputSources = Array.from(new Set(options?.inputSources ?? []));
   if (inputSources.length > 0) {

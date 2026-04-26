@@ -111,6 +111,19 @@ function getMonthlyUpdateKey(month: string, year: number | string) {
     return `${parsedYear}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
+function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
+    const key = getMonthlyUpdateKey(month, year);
+    return key ? `${key}-01` : "";
+}
+
+function isFutureMonthlyUpdate(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return true;
+    const now = new Date();
+    return parsedYear > now.getFullYear() || (parsedYear === now.getFullYear() && monthIndex > now.getMonth());
+}
+
 function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
     const isoMonth = String(update.isoMonth || "").trim();
     const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
@@ -152,7 +165,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
             activeUsers: "3420",
             highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
             challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket."
+            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
+            learnings: "Enterprise buyers care most about implementation speed once the security review is complete.",
+            next30Days: "Reduce onboarding time to 10 days and close two more enterprise pilots."
         };
     }
 
@@ -226,6 +241,8 @@ export async function action({ request, context }: Route.ActionArgs) {
             highlights: String(formData.get("highlights") || ""),
             challenges: String(formData.get("challenges") || ""),
             asks: String(formData.get("asks") || ""),
+            learnings: String(formData.get("learnings") || ""),
+            next30Days: String(formData.get("next30Days") || ""),
             metrics,
             metricSuggestions,
         });
@@ -964,6 +981,16 @@ const SECTION_HINTS: Record<string, string[]> = {
         "e.g. Churn rate increased from 3% to 5% this month.",
         "e.g. Struggling to close enterprise deals over $50K.",
     ],
+    learnings: [
+        "e.g. Enterprise buyers care most about security posture before pricing.",
+        "e.g. Founder-led demos convert better when the problem is framed by workflow.",
+        "e.g. Smaller customers need onboarding templates before they expand usage.",
+    ],
+    next30Days: [
+        "e.g. Convert two pilots into paid annual agreements.",
+        "e.g. Ship the onboarding checklist and measure activation lift.",
+        "e.g. Complete 12 customer interviews before pricing changes.",
+    ],
     asks: [
         "e.g. Intros to VP of Customer Success at B2B SaaS companies.",
         "e.g. Feedback on our pricing strategy for enterprise tier.",
@@ -1228,7 +1255,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
 }
 
 // Collapsible past month card for investor preview
-function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; metrics: Record<string, string> } }) {
+function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
     const [open, setOpen] = useState(false);
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -1307,6 +1334,24 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                 <BulletList text={pm.challenges} className="text-xs text-gray-600" />
                             </div>
                         )}
+                        {pm.learnings && (
+                            <div>
+                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <LightBulbIcon className="w-3 h-3 text-amber-500" />
+                                    Learnings
+                                </h5>
+                                <BulletList text={pm.learnings} className="text-xs text-gray-600" />
+                            </div>
+                        )}
+                        {pm.next30Days && (
+                            <div>
+                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <ArrowRightIcon className="w-3 h-3 text-blue-500" />
+                                    Next 30 Days
+                                </h5>
+                                <BulletList text={pm.next30Days} className="text-xs text-gray-600" />
+                            </div>
+                        )}
                         {pm.asks && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
@@ -1342,6 +1387,17 @@ interface ChartData {
     isCurrent?: boolean;
     isSelected?: boolean;
 }
+
+type EditorMonthCard = {
+    month: string;
+    expanded: boolean;
+    highlights: string;
+    challenges: string;
+    asks: string;
+    learnings: string;
+    next30Days: string;
+    metrics: Record<string, string>;
+};
 
 function parseRevenue(raw: string): number {
     return parseInt(String(raw).replace(/[$,\s]/g, "")) || 0;
@@ -1543,14 +1599,9 @@ export default function CreateUpdate() {
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
-    const [pastMonthCards, setPastMonthCards] = useState<Array<{
-        month: string;
-        expanded: boolean;
-        highlights: string;
-        challenges: string;
-        asks: string;
-        metrics: Record<string, string>;
-    }>>([]);
+    const [learnings, setLearnings] = useState<string>(defaultData?.learnings || "");
+    const [next30Days, setNext30Days] = useState<string>(defaultData?.next30Days || "");
+    const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || "February");
@@ -1558,6 +1609,8 @@ export default function CreateUpdate() {
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
+    const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
+    const isSelectedMonthInFuture = isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
     );
@@ -1603,6 +1656,8 @@ export default function CreateUpdate() {
     const videoUploadAbortRef = useRef<AbortController | null>(null);
     const videoUploadSequenceRef = useRef(0);
     const videoPreviewObjectUrlRef = useRef<string | null>(null);
+    const loadedExistingUpdateKeyRef = useRef<string | null>(null);
+    const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
 
     const handleDraftComplete = (data: any) => {
         setActivePeriodKey("current");
@@ -1611,6 +1666,8 @@ export default function CreateUpdate() {
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
+        setLearnings(data.learnings || "");
+        setNext30Days(data.next30Days || "");
         setSummary(data.summary || "");
         setSourceUrl(data.sourceUrl || data.source_url || "");
         if (data.videoUrl || data.video_url) {
@@ -1630,9 +1687,12 @@ export default function CreateUpdate() {
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
             month: pm.month || "Unknown",
+            expanded: Boolean(pm.expanded),
             highlights: pm.highlights || "",
             challenges: pm.challenges || "",
             asks: pm.asks || "",
+            learnings: pm.learnings || "",
+            next30Days: pm.next30Days || "",
             metrics: {
                 ...Object.fromEntries(metricKeysFromSuggestions(pm.metricSuggestions).map((key) => [key, ""])),
                 ...(pm.metrics || {}),
@@ -1848,6 +1908,14 @@ export default function CreateUpdate() {
             persistEmailDraftRun(statusResponse);
         }
 
+        if (statusResponse.targetMonthConflict) {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(statusResponse.error ?? "Another monthly update is already generating.");
+            });
+            return;
+        }
+
         if (statusResponse.state === "queued" || statusResponse.state === "running") {
             startTransition(() => {
                 setEmailDraftStatus(statusResponse);
@@ -1918,6 +1986,7 @@ export default function CreateUpdate() {
                 {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: selectedInputSources,
+                    targetMonth: targetMonthIso,
                 },
             );
             emailDraftIgnoredRunIdRef.current = null;
@@ -1938,11 +2007,15 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources, targetMonthIso]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
         if (!canGenerateDraftFromEmail) {
             navigate("/founder-tools/companies");
+            return;
+        }
+        if (isSelectedMonthInFuture || !targetMonthIso) {
+            setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
 
@@ -1967,7 +2040,15 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, selectedInputSources, startOrResumeEmailDraft]);
+    }, [
+        backendBaseUrl,
+        canGenerateDraftFromEmail,
+        isSelectedMonthInFuture,
+        navigate,
+        selectedInputSources,
+        startOrResumeEmailDraft,
+        targetMonthIso,
+    ]);
 
     const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
         if (request?.clearPersistedRun) {
@@ -2126,6 +2207,55 @@ export default function CreateUpdate() {
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    useEffect(() => {
+        if (isEmailDraftBusy) return;
+
+        if (!existingUpdateForSelectedMonth) {
+            loadedExistingUpdateKeyRef.current = null;
+            if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
+                editorMonthKeyRef.current = selectedMonthUpdateKey;
+                setSummary("");
+                setSourceUrl("");
+                resetVideoUpload();
+                setHighlights("");
+                setChallenges("");
+                setAsks("");
+                setLearnings("");
+                setNext30Days("");
+                setMetricValues({});
+                setSelectedMetrics(new Set());
+                setPastMonthCards([]);
+                setExpandedCards(new Set());
+                setActivePeriodKey("current");
+            }
+            return;
+        }
+        if (loadedExistingUpdateKeyRef.current === selectedMonthUpdateKey) return;
+        loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
+        editorMonthKeyRef.current = selectedMonthUpdateKey;
+
+        setSummary(existingUpdateForSelectedMonth.summary || "");
+        setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
+        setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
+        setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
+        setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
+        setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
+        setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
+        setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
+        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl ? "video" : null);
+        setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
+        setVideoUploadError(null);
+        setHighlights(existingUpdateForSelectedMonth.highlights || "");
+        setChallenges(existingUpdateForSelectedMonth.challenges || "");
+        setAsks(existingUpdateForSelectedMonth.asks || "");
+        setLearnings(existingUpdateForSelectedMonth.learnings || "");
+        setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
+        const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
+        setMetricValues(nextMetrics);
+        setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
+        setActivePeriodKey("current");
+    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey]);
+
     const emailDraftCardVisible =
         isEmailDraftBusy ||
         emailDraftStatus?.state === "failed" ||
@@ -2162,13 +2292,16 @@ export default function CreateUpdate() {
         isEmailDraftBusy && emailDraftStatus?.state !== "failed"
             ? emailDraftUiError
             : null;
+    const selectedMonthGenerationVerb = existingUpdateForSelectedMonth ? "Regenerate" : "Generate";
     const emailDraftButtonTitle = emailDraftActionBusy
-        ? "Checking selected inputs..."
-        : "Generate update from selected inputs";
+        ? `Generating ${selectedMonthLabel} update`
+        : `${selectedMonthGenerationVerb} ${selectedMonthLabel} update`;
     const emailDraftButtonDescription = emailDraftActionBusy
         ? "Contacting the MLAI backend and preparing the selected sources for drafting."
+        : isSelectedMonthInFuture
+            ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
         : canGenerateDraftFromEmail
-            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks, then turn them into a first draft.`
+            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks for ${selectedMonthLabel}, then turn them into a first draft.`
             : "Add a company domain first so inputs can be matched to the right startup.";
     const isVideoUploadPending = videoUploadStatus === "validating" ||
         videoUploadStatus === "compressing" ||
@@ -2352,6 +2485,8 @@ export default function CreateUpdate() {
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
+            setLearnings(draft.learnings || "");
+            setNext30Days(draft.next30Days || "");
 
             // Restore current month metrics
             const metrics: Record<string, string> = {};
@@ -2370,11 +2505,7 @@ export default function CreateUpdate() {
             setSelectedMetrics(newSelected);
 
             // Reconstruct past month cards from flat pastMonth_N_* fields
-            const restoredPastMonths: Array<{
-                month: string; expanded: boolean;
-                highlights: string; challenges: string; asks: string;
-                metrics: Record<string, string>;
-            }> = [];
+            const restoredPastMonths: EditorMonthCard[] = [];
             for (let i = 0; draft[`pastMonth_${i}_month`]; i++) {
                 const pmMetrics: Record<string, string> = {};
                 METRIC_OPTIONS.forEach(opt => {
@@ -2387,6 +2518,8 @@ export default function CreateUpdate() {
                     highlights: draft[`pastMonth_${i}_highlights`] || "",
                     challenges: draft[`pastMonth_${i}_challenges`] || "",
                     asks: draft[`pastMonth_${i}_asks`] || "",
+                    learnings: draft[`pastMonth_${i}_learnings`] || "",
+                    next30Days: draft[`pastMonth_${i}_next30Days`] || "",
                     metrics: pmMetrics,
                 });
             }
@@ -2453,6 +2586,8 @@ export default function CreateUpdate() {
     const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
     const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
     const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
+    const activeLearnings = isViewingCurrentUpdate ? learnings : activePastCard?.learnings || "";
+    const activeNext30Days = isViewingCurrentUpdate ? next30Days : activePastCard?.next30Days || "";
     const periodTabs = [
         { key: "current", month: selectedMonth, year: selectedYear },
         ...pastMonthCards.map((card, index) => {
@@ -2503,6 +2638,16 @@ export default function CreateUpdate() {
     const updateActiveAsks = (value: string) => {
         if (isViewingCurrentUpdate) setAsks(value);
         else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "asks", value);
+    };
+
+    const updateActiveLearnings = (value: string) => {
+        if (isViewingCurrentUpdate) setLearnings(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "learnings", value);
+    };
+
+    const updateActiveNext30Days = (value: string) => {
+        if (isViewingCurrentUpdate) setNext30Days(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "next30Days", value);
     };
 
     useEffect(() => {
@@ -2848,6 +2993,24 @@ export default function CreateUpdate() {
                                         <BulletList text={(data as any).challenges} />
                                     </div>
                                 )}
+                                {(data as any)?.learnings && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                            <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                                            Learnings
+                                        </h4>
+                                        <BulletList text={(data as any).learnings} />
+                                    </div>
+                                )}
+                                {(data as any)?.next30Days && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                            <ArrowRightIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            Next 30 Days
+                                        </h4>
+                                        <BulletList text={(data as any).next30Days} />
+                                    </div>
+                                )}
                                 {(data as any)?.asks && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -2863,9 +3026,17 @@ export default function CreateUpdate() {
                         {/* Revenue + Active Users charts + Past month previews */}
                         {(() => {
                             const d = data as any;
-                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; metrics: Record<string, string> }> = [];
+                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
                             for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
-                                const pm: any = { month: d[`pastMonth_${i}_month`], highlights: d[`pastMonth_${i}_highlights`] || "", challenges: d[`pastMonth_${i}_challenges`] || "", asks: d[`pastMonth_${i}_asks`] || "", metrics: {} };
+                                const pm: any = {
+                                    month: d[`pastMonth_${i}_month`],
+                                    highlights: d[`pastMonth_${i}_highlights`] || "",
+                                    challenges: d[`pastMonth_${i}_challenges`] || "",
+                                    asks: d[`pastMonth_${i}_asks`] || "",
+                                    learnings: d[`pastMonth_${i}_learnings`] || "",
+                                    next30Days: d[`pastMonth_${i}_next30Days`] || "",
+                                    metrics: {},
+                                };
                                 for (const m of METRIC_OPTIONS) {
                                     if (d[`pastMonth_${i}_${m.key}`]) pm.metrics[m.key] = d[`pastMonth_${i}_${m.key}`];
                                 }
@@ -2941,7 +3112,7 @@ export default function CreateUpdate() {
                         {/* Your Audience Block */}
                         {(() => {
                             const d = data as any;
-                            const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                            const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
                             
                             const criteria = [];
                             if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
@@ -3006,7 +3177,7 @@ export default function CreateUpdate() {
                     {/* Pre-Publish Confirmation Popup */}
                     {showConfirmPopup && (() => {
                         const d = data as any;
-                        const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                        const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
                         
                         const criteria = [];
                         if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
@@ -3234,7 +3405,7 @@ export default function CreateUpdate() {
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                                Draft again
+                                Regenerate {selectedMonthLabel}
                             </button>
                         </div>
                     </div>
@@ -3411,13 +3582,41 @@ export default function CreateUpdate() {
                     </div>
                 </div>
 
+                <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="mb-4 flex flex-col gap-1">
+                        <p className="text-sm font-bold text-gray-900">Selected update month</p>
+                        <p className="text-xs font-medium text-gray-500">
+                            AI generation and edits below apply to {selectedMonthLabel}.
+                        </p>
+                    </div>
+                    <MonthYearTabs
+                        month={selectedMonth}
+                        year={selectedYear}
+                        onMonthChange={setSelectedMonth}
+                        onYearChange={setSelectedYear}
+                        onPeriodChange={setActivePeriodKey}
+                        isDateEditable={!isEmailDraftBusy}
+                        statusLabel="Selected month"
+                    />
+                    {isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                            Future monthly updates can be generated once that month starts.
+                        </p>
+                    )}
+                    {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700">
+                            An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                        </p>
+                    )}
+                </section>
+
                 {emailDraftCardVisible ? (
                     <EmailDraftInProgressCard
                         status={emailDraftCardStatus}
                         displayStage={emailDraftCardDisplayStage}
                         completedSteps={emailDraftCardCompletedSteps}
                         totalSteps={emailDraftCardTotalSteps}
-                        sourceLabel="inputs"
+                        sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
                         error={emailDraftCardError}
                         notice={emailDraftCardNotice}
                         pollingDegraded={emailDraftPollingDegraded}
@@ -3432,39 +3631,35 @@ export default function CreateUpdate() {
                 ) : (
                     <button
                         type="button"
-                        disabled={emailDraftActionBusy}
+                        disabled={emailDraftActionBusy || isSelectedMonthInFuture}
                         onClick={() => {
                             void handleGenerateDraftFromEmailClick();
                         }}
                         className={clsx(
-                            "group relative w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
-                            canGenerateDraftFromEmail
+                            "group flex w-full items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-60",
+                            canGenerateDraftFromEmail && !isSelectedMonthInFuture
                                 ? "cursor-pointer"
-                                : "cursor-pointer opacity-80",
-                            emailDraftActionBusy && "opacity-70",
+                                : "cursor-not-allowed",
                         )}
                     >
-                        <div className="relative z-10">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
+                        <div className="flex min-w-0 items-center gap-4">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
                                 {emailDraftActionBusy ? (
-                                    <ArrowPathIcon className="h-7 w-7 animate-spin" />
+                                    <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                 ) : (
-                                    <SparklesIcon className="h-7 w-7" />
+                                    <SparklesIcon className="h-5 w-5" />
                                 )}
                             </div>
-
-                            <div className="mt-4 flex items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-xl font-bold text-white">
-                                        {emailDraftButtonTitle}
-                                    </h2>
-                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72">
-                                        {emailDraftButtonDescription}
-                                    </p>
-                                </div>
-                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
+                            <div className="min-w-0">
+                                <h2 className="text-base font-bold text-gray-950">
+                                    {emailDraftButtonTitle}
+                                </h2>
+                                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                    {emailDraftButtonDescription}
+                                </p>
                             </div>
                         </div>
+                        <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
                     </button>
                 )}
 
@@ -3601,6 +3796,14 @@ export default function CreateUpdate() {
                                             <BulletInput value={card.challenges} onChange={(v) => updatePastMonthField(index, "challenges", v)} placeholder="Challenge faced..." section="challenges" />
                                         </div>
                                         <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Learnings</label>
+                                            <BulletInput value={card.learnings} onChange={(v) => updatePastMonthField(index, "learnings", v)} placeholder="Learning from this month..." section="learnings" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Next 30 Days</label>
+                                            <BulletInput value={card.next30Days} onChange={(v) => updatePastMonthField(index, "next30Days", v)} placeholder="Priority for the next month..." section="next30Days" />
+                                        </div>
+                                        <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1">Asks</label>
                                             <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Ask from investors..." section="asks" />
                                         </div>
@@ -3612,6 +3815,8 @@ export default function CreateUpdate() {
                                 <input type="hidden" name={`pastMonth_${index}_highlights`} value={card.highlights} />
                                 <input type="hidden" name={`pastMonth_${index}_challenges`} value={card.challenges} />
                                 <input type="hidden" name={`pastMonth_${index}_asks`} value={card.asks} />
+                                <input type="hidden" name={`pastMonth_${index}_learnings`} value={card.learnings} />
+                                <input type="hidden" name={`pastMonth_${index}_next30Days`} value={card.next30Days} />
                                 {Object.entries(card.metrics).map(([key, value]) => (
                                     <input key={key} type="hidden" name={`pastMonth_${index}_${key}`} value={value} />
                                 ))}
@@ -3627,19 +3832,14 @@ export default function CreateUpdate() {
 	                                activeMonthTheme.ringClass,
 	                            )}
 	                        >
-	                            <MonthYearTabs
-	                                month={activeDisplayMonth}
-	                                year={activeDisplayYear}
-	                                onMonthChange={setSelectedMonth}
-	                                onYearChange={setSelectedYear}
-	                                periodTabs={periodTabs}
-	                                activePeriodKey={activePeriodKey}
-	                                onPeriodChange={selectPeriod}
-	                                submitDateFields={isViewingCurrentUpdate}
-	                                isDateEditable={isViewingCurrentUpdate}
-	                                statusLabel={isViewingCurrentUpdate ? "Current Update" : "Previous Update"}
-	                                showInfoControl={pastMonthCards.length > 0}
-	                            />
+	                            <div className="flex flex-col gap-1">
+	                                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+	                                    {isViewingCurrentUpdate ? "Generated update" : "Previous update"}
+	                                </p>
+	                                <h2 className="text-lg font-black text-gray-950">
+	                                    {activeDisplayMonth} {activeDisplayYear}
+	                                </h2>
+	                            </div>
 
 	                            {!isViewingCurrentUpdate && (
 	                                <>
@@ -3648,6 +3848,8 @@ export default function CreateUpdate() {
 	                                    <input type="hidden" name="highlights" value={highlights} />
 	                                    <input type="hidden" name="challenges" value={challenges} />
 	                                    <input type="hidden" name="asks" value={asks} />
+	                                    <input type="hidden" name="learnings" value={learnings} />
+	                                    <input type="hidden" name="next30Days" value={next30Days} />
 	                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
 	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
 	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
@@ -3725,6 +3927,24 @@ export default function CreateUpdate() {
                                     icon={ExclamationCircleIcon}
                                 />
 	                                <SectionWithExample
+	                                    label="Learnings"
+	                                    name={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
+	                                    value={activeLearnings}
+	                                    onChange={updateActiveLearnings}
+                                    rows={3}
+                                    placeholder="What did you learn from customers, experiments, or execution this month?"
+                                    icon={LightBulbIcon}
+                                />
+	                                <SectionWithExample
+	                                    label="Next 30 Days"
+	                                    name={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
+	                                    value={activeNext30Days}
+	                                    onChange={updateActiveNext30Days}
+                                    rows={3}
+                                    placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
+                                    icon={ArrowRightIcon}
+                                />
+	                                <SectionWithExample
 	                                    label="Ask from Investors"
 	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
 	                                    value={activeAsks}
@@ -3747,13 +3967,10 @@ export default function CreateUpdate() {
                             selectedMonthTheme.ringClass,
                         )}
                     >
-	                        <MonthYearTabs
-	                            month={selectedMonth}
-	                            year={selectedYear}
-	                            onMonthChange={setSelectedMonth}
-	                            onYearChange={setSelectedYear}
-	                            statusLabel="Current Update"
-	                        />
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Update draft</p>
+                            <h2 className="text-lg font-black text-gray-950">{selectedMonthLabel}</h2>
+                        </div>
 
                         {/* Metrics — square boxes, click to activate */}
                         <div>
@@ -3821,6 +4038,22 @@ export default function CreateUpdate() {
                                 onChange={setChallenges}
                                 placeholder="What obstacles are you facing? Where do you need help?"
                                 icon={ExclamationCircleIcon}
+                            />
+                            <SectionWithExample
+                                label="Learnings"
+                                name="learnings"
+                                value={learnings}
+                                onChange={setLearnings}
+                                placeholder="What did you learn from customers, experiments, or execution this month?"
+                                icon={LightBulbIcon}
+                            />
+                            <SectionWithExample
+                                label="Next 30 Days"
+                                name="next30Days"
+                                value={next30Days}
+                                onChange={setNext30Days}
+                                placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
+                                icon={ArrowRightIcon}
                             />
                             <SectionWithExample
                                 label="Ask from Investors"
