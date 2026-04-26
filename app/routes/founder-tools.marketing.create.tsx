@@ -158,14 +158,17 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "connect-github") {
       const githubRepo = stringFromForm(formData, "githubRepo");
-      await saveVibeMarketingSettings(env, request, {
-        githubRepo,
-        github_repo: githubRepo,
-      });
       const response = await connectVibeMarketingGithub(env, request, { githubRepo, github_repo: githubRepo });
       const authUrl = response.auth_url ?? response.authUrl;
       if (authUrl) throw redirect(authUrl);
-      return redirect("/founder-tools/marketing/create?step=scan");
+      const connectionState = response.connection_state ?? response.connectionState;
+      if (response.status === "already_connected" || response.status === "connected" || connectionState === "connected") {
+        return redirect("/founder-tools/marketing/create?step=scan");
+      }
+      return {
+        intent,
+        error: response.detail ?? response.error ?? "GitHub connection could not be completed.",
+      };
     }
 
     if (intent === "start-scan") {
@@ -212,6 +215,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   } catch (error: any) {
     if (error instanceof Response) throw error;
     return {
+      intent,
       error:
         error?.data?.detail ??
         error?.data?.error ??
@@ -222,6 +226,31 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   return null;
+}
+
+function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
+  if (!intent) return null;
+  if (intent === "connect-github") return "github";
+  if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
+  if (intent === "start-scan") return "scan";
+  if (intent === "save-article-system") return "articleSystem";
+  if (intent === "start-discovery") return "research";
+  if (intent === "start-article") return "chooseArticle";
+  if (intent === "save-startup-details" || intent === "start-autofill") return "startupDetails";
+  if (intent === "start-baseline" || intent === "skip-baseline") return "baseline";
+  return null;
+}
+
+function actionDataIntent(data: unknown): string | null {
+  if (!data || typeof data !== "object" || !("intent" in data)) return null;
+  const intent = (data as { intent?: unknown }).intent;
+  return typeof intent === "string" ? intent : null;
+}
+
+function actionDataError(data: unknown): string | null {
+  if (!data || typeof data !== "object" || !("error" in data)) return null;
+  const error = (data as { error?: unknown }).error;
+  return typeof error === "string" ? error : null;
 }
 
 function StatusBadge({ passed }: { passed: boolean }) {
@@ -909,6 +938,14 @@ function BaselineMetricCard({
 export default function FounderToolsMarketingCreate() {
   const { bootstrap, activeStep } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const latestActionIntent = actionDataIntent(actionData);
+  const latestActionError = actionDataError(actionData);
+  const actionErrorStep = actionIntentStep(latestActionIntent);
+  const githubConnectError = activeStep === "github" && latestActionIntent === "connect-github" ? latestActionError : null;
+  const topActionError =
+    latestActionError && latestActionIntent !== "connect-github" && (!actionErrorStep || actionErrorStep === activeStep)
+      ? latestActionError
+      : null;
   const autofillStartFetcher = useFetcher<{ autofillRunId?: string | null; status?: string; error?: string }>();
   const autofillRunFetcher = useFetcher<VibeMarketingRunSummary>();
   const baselineStartFetcher = useFetcher<{ baselineRunId?: string | null; status?: string; error?: string }>();
@@ -1078,9 +1115,9 @@ export default function FounderToolsMarketingCreate() {
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <VibeMarketingStepper activeStep={activeStep} completedSteps={completedSteps} />
 
-      {actionData?.error ? (
+      {topActionError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-          {actionData.error}
+          {topActionError}
         </div>
       ) : null}
 
@@ -1291,6 +1328,11 @@ export default function FounderToolsMarketingCreate() {
                   {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
                   Connect GitHub
                 </button>
+                {githubConnectError ? (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                    {githubConnectError}
+                  </div>
+                ) : null}
               </Form>
             </>
           ) : null}
