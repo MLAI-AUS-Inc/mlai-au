@@ -377,12 +377,14 @@ function XeroPreview({
   error,
   syncing,
   onSync,
+  reconnectHref,
 }: {
   preview: VibeRaisingXeroPreview | null;
   loading: boolean;
   error: string | null;
   syncing: boolean;
   onSync: () => void;
+  reconnectHref?: string | null;
 }) {
   const previewMetrics = preview
     ? [
@@ -416,11 +418,25 @@ function XeroPreview({
               Loading
             </span>
           ) : null}
+          {preview?.needsReportReconnect && reconnectHref ? (
+            <a
+              href={reconnectHref}
+              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-sky-700"
+            >
+              <LinkIcon className="h-4 w-4" />
+              Reconnect Xero
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={onSync}
             disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-lg border border-sky-100 px-3 py-2 text-xs font-extrabold text-sky-700 transition hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className={clsx(
+              "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60",
+              preview?.needsReportReconnect
+                ? "border-gray-200 text-slate-600 hover:bg-gray-50"
+                : "border-sky-100 text-sky-700 hover:bg-sky-50",
+            )}
           >
             <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
             {syncing ? "Syncing" : "Sync Xero"}
@@ -1767,8 +1783,33 @@ export default function ConnectData() {
     setSyncingFinance(true);
     setStatusMessage(null);
     try {
-      await syncVibeRaisingFinancialSources(backendBaseUrl, providers);
+      const response = await syncVibeRaisingFinancialSources(backendBaseUrl, providers);
       await refreshStatuses();
+      if (!providers?.length || providers.includes("xero")) {
+        setLoadingXeroPreview(true);
+        setXeroPreviewError(null);
+        try {
+          setXeroPreview(await getVibeRaisingXeroPreview(backendBaseUrl));
+        } catch (previewError) {
+          setXeroPreviewError(previewError instanceof Error ? previewError.message : "We couldn't load Xero preview.");
+        } finally {
+          setLoadingXeroPreview(false);
+        }
+      }
+      const xeroRun = response.syncRuns.find((run) => run.provider === "xero");
+      if (xeroRun?.needsReportReconnect) {
+        setStatusMessage("Xero invoices and payments synced. Reconnect Xero to allow Profit and Loss and Balance Sheet report metrics.");
+      } else if (xeroRun?.metricWarnings.length) {
+        setStatusMessage(xeroRun.metricWarnings[0]);
+      } else if (xeroRun?.status === "synced") {
+        setStatusMessage(
+          xeroRun.metricsPublishedCount && xeroRun.metricsPublishedCount > 0
+            ? "Xero synced, including Profit and Loss and Balance Sheet metrics."
+            : "Xero synced.",
+        );
+      } else if (response.status === "synced") {
+        setStatusMessage("Financial sources synced.");
+      }
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "We couldn't start the financial sync.");
     } finally {
@@ -2281,6 +2322,7 @@ export default function ConnectData() {
           error={xeroPreviewError}
           syncing={syncingFinance}
           onSync={() => void handleSyncFinance(["xero"])}
+          reconnectHref={connectVibeRaisingInputSource(backendBaseUrl, "xero", currentReturnPath)}
         />
       ) : null}
 
