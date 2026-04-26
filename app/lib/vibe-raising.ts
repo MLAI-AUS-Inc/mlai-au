@@ -2428,6 +2428,28 @@ export async function getVibeRaisingXeroPreview(
     monthlyRecurringRevenue:
       asNullableString(payload.monthlyRecurringRevenue) ??
       asNullableString(payload.monthly_recurring_revenue),
+    revenue:
+      asNullableString(payload.revenue),
+    revenueGrowthRate:
+      asNullableString(payload.revenueGrowthRate) ??
+      asNullableString(payload.revenue_growth_rate),
+    burnRate:
+      asNullableString(payload.burnRate) ??
+      asNullableString(payload.burn_rate),
+    runway:
+      asNullableString(payload.runway),
+    invoiceRevenue:
+      asNullableString(payload.invoiceRevenue) ??
+      asNullableString(payload.invoice_revenue),
+    invoiceCount:
+      asNullableString(payload.invoiceCount) ??
+      asNullableString(payload.invoice_count),
+    customerCount:
+      asNullableString(payload.customerCount) ??
+      asNullableString(payload.customer_count),
+    recurringInvoiceCount:
+      asNullableString(payload.recurringInvoiceCount) ??
+      asNullableString(payload.recurring_invoice_count),
     cashCollected:
       asNullableString(payload.cashCollected) ??
       asNullableString(payload.cash_collected),

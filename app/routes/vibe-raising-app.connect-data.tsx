@@ -284,7 +284,7 @@ function capabilityLabel(capability: VibeRaisingInputSourceSummary["capabilities
 function formatMoney(value?: string | null, currency?: string | null) {
   if (!value) return "Balance unavailable";
   const amount = Number(value);
-  if (!Number.isFinite(amount)) return currency ? `${value} ${currency}` : value;
+  if (!Number.isFinite(amount)) return value;
   try {
     return new Intl.NumberFormat("en-AU", {
       style: "currency",
@@ -384,6 +384,19 @@ function XeroPreview({
   syncing: boolean;
   onSync: () => void;
 }) {
+  const previewMetrics = preview
+    ? [
+        { label: "P&L revenue", value: preview.revenue },
+        { label: "Revenue growth", value: preview.revenueGrowthRate },
+        { label: "Burn rate", value: preview.burnRate },
+        { label: "Runway", value: preview.runway },
+        { label: "Invoice revenue", value: preview.invoiceRevenue },
+        { label: "Invoice count", value: preview.invoiceCount },
+        { label: "Customers", value: preview.customerCount },
+        { label: "Recurring invoices", value: preview.recurringInvoiceCount },
+      ].filter((item) => item.value && item.value !== "0")
+    : [];
+
   return (
     <section className="rounded-xl border border-sky-100 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -434,6 +447,17 @@ function XeroPreview({
               {formatMoney(preview.cashCollected, preview.currencies[0] || "AUD")}
             </p>
           </div>
+        </div>
+      ) : null}
+
+      {previewMetrics.length ? (
+        <div className="mt-3 grid gap-3 md:grid-cols-4">
+          {previewMetrics.map((metric) => (
+            <div key={metric.label} className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{metric.label}</p>
+              <p className="mt-2 text-sm font-black text-gray-950">{metric.value}</p>
+            </div>
+          ))}
         </div>
       ) : null}
 
