@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/when-specialized-technical-services-beat-an-in-house-hire': {
+        title: "When Specialized Technical Services Beat an In House Hire",
+        date: "2026-04-26",
+        description: "Learn when specialized technical services create more value than hiring in-house, based on cost, speed, expertise breadth, and operational fit.",
+        author: "Dr Sam Donegan",
+        slug: "featured/when-specialized-technical-services-beat-an-in-house-hire",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2Fmlai_user%3A3%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-622c0dbe-9373-42ae-b8cd-68952eff03ce.jpg?alt=media&token=d93db21a-e9ae-4f08-9d31-07e5ea353491",
+        imageAlt: "Close-up of a manager and IT specialist reviewing project costs, weighing technical services",
+        hasContent: true,
+    },
     'featured/what-is-a-unicorn-startup-and-why-it-matters': {
         title: "What Is a Unicorn Startup and Why It Matters",
         date: "2026-04-23",

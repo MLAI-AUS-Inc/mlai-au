@@ -29,6 +29,13 @@ export type ArticleSeoConfig = {
 }
 
 export const BASE_ARTICLE_SEO_CONFIG: Record<string, ArticleSeoConfig> = {
+    '/articles/featured/when-specialized-technical-services-beat-an-in-house-hire': {
+        toc: true,
+        howTo: false,
+        mediaObject: false,
+        citations: true,
+        internalLinks: [],
+    },
     '/articles/featured/what-is-a-unicorn-startup-and-why-it-matters': {
         toc: true,
         howTo: false,
