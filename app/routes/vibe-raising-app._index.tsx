@@ -32,6 +32,7 @@ import {
     QuestionMarkCircleIcon,
     ExclamationCircleIcon,
     FireIcon,
+    LightBulbIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
@@ -248,6 +249,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     const [highlights, setHighlights] = useState(update.highlights);
     const [challenges, setChallenges] = useState(update.challenges);
     const [asks, setAsks] = useState(update.asks);
+    const [learnings, setLearnings] = useState(update.learnings || "");
+    const [next30Days, setNext30Days] = useState(update.next30Days || "");
     const [metrics, setMetrics] = useState<Record<string, string>>(update.metrics);
     const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(
         new Set(Object.keys(update.metrics).filter(k => update.metrics[k]))
@@ -267,6 +270,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
     const asksRef = useAutoResize(asks);
+    const learningsRef = useAutoResize(learnings);
+    const next30DaysRef = useAutoResize(next30Days);
 
     const handleSave = () => {
         setEditing(false);
@@ -278,6 +283,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
         setHighlights(update.highlights);
         setChallenges(update.challenges);
         setAsks(update.asks);
+        setLearnings(update.learnings || "");
+        setNext30Days(update.next30Days || "");
         setMetrics(update.metrics);
         setSelectedMetrics(new Set(Object.keys(update.metrics).filter(k => update.metrics[k])));
         setEditing(false);
@@ -550,6 +557,48 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             )}
                         </div>
 
+                        {/* Learnings */}
+                        {(editing || learnings) && (
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                    <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                                    Learnings
+                                </h4>
+                                {editing ? (
+                                    <textarea
+                                        ref={learningsRef}
+                                        value={learnings}
+                                        onChange={(e) => setLearnings(e.target.value)}
+                                        className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
+                                        rows={3}
+                                    />
+                                ) : (
+                                    <BulletList text={learnings} />
+                                )}
+                            </div>
+                        )}
+
+                        {/* Next 30 Days */}
+                        {(editing || next30Days) && (
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                    <CalendarIcon className="w-3.5 h-3.5 text-blue-500" />
+                                    Next 30 Days
+                                </h4>
+                                {editing ? (
+                                    <textarea
+                                        ref={next30DaysRef}
+                                        value={next30Days}
+                                        onChange={(e) => setNext30Days(e.target.value)}
+                                        className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
+                                        rows={3}
+                                    />
+                                ) : (
+                                    <BulletList text={next30Days} />
+                                )}
+                            </div>
+                        )}
+
                         {/* Asks */}
                         <div>
                             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -634,6 +683,8 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
     const highlights = splitItems(update.highlights || "");
     const challenges = splitItems(update.challenges || "");
     const asks = splitItems(update.asks || "");
+    const learnings = splitItems(update.learnings || "");
+    const next30Days = splitItems(update.next30Days || "");
     const initials = (user.fullName || user.companyName || "U")
         .split(" ")
         .map((p: string) => p[0])
@@ -708,6 +759,18 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
                     iconColorVar="--vr-color-brand-orange"
                     label="Challenges"
                     items={challenges}
+                />
+                <VRUpdateSection
+                    icon={LightBulbIcon}
+                    iconColorVar="--vr-color-warning"
+                    label="Learnings"
+                    items={learnings}
+                />
+                <VRUpdateSection
+                    icon={CalendarIcon}
+                    iconColorVar="--vr-color-primary"
+                    label="Next 30 Days"
+                    items={next30Days}
                 />
                 <VRUpdateSection
                     icon={QuestionMarkCircleIcon}
