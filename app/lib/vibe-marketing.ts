@@ -523,7 +523,17 @@ export async function saveVibeMarketingSettings(env: Env, request: Request, body
 export async function connectVibeMarketingGithub(env: Env, request: Request, body: Record<string, unknown>) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/github/connect`, body);
-  return response.data as { auth_url?: string; authUrl?: string };
+  return response.data as {
+    auth_url?: string;
+    authUrl?: string;
+    status?: string;
+    connection_state?: string;
+    connectionState?: string;
+    github_repo?: string;
+    githubRepo?: string;
+    detail?: string;
+    error?: string;
+  };
 }
 
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
