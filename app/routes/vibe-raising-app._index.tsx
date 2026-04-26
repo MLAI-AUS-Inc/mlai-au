@@ -229,6 +229,7 @@ const METRIC_OPTIONS = [
     { key: "mrr", label: "MRR", icon: CurrencyDollarIcon, colorClass: "bg-emerald-50/50 border-emerald-100" },
     { key: "burnRate", label: "Burn Rate", icon: FireIcon, colorClass: "bg-red-50/50 border-red-100" },
     { key: "runway", label: "Runway", icon: ChartBarIcon, colorClass: "bg-amber-50/50 border-amber-100" },
+    { key: "monthlyCosts", label: "Costs", icon: CurrencyDollarIcon, colorClass: "bg-slate-50/50 border-slate-100" },
 ];
 
 const GRADIENTS = [
@@ -689,6 +690,9 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
                     )}
                     {update.metrics?.burnRate && (
                         <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
+                    )}
+                    {update.metrics?.monthlyCosts && (
+                        <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
                     )}
                 </div>
 
@@ -1156,6 +1160,7 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                                 {update.metrics.mrr && <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />}
                                 {update.metrics.burnRate && <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />}
                                 {update.metrics.runway && <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />}
+                                {update.metrics.monthlyCosts && <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
