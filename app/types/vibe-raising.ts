@@ -350,6 +350,14 @@ export interface VibeRaisingXeroPreview {
   tenantId?: string | null;
   lastSyncedAt?: string | null;
   monthlyRecurringRevenue?: string | null;
+  revenue?: string | null;
+  revenueGrowthRate?: string | null;
+  burnRate?: string | null;
+  runway?: string | null;
+  invoiceRevenue?: string | null;
+  invoiceCount?: string | null;
+  customerCount?: string | null;
+  recurringInvoiceCount?: string | null;
   cashCollected?: string | null;
   currencies: string[];
   warnings: string[];
