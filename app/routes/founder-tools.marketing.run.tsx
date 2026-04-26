@@ -4,7 +4,6 @@ import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavi
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
-  ChatBubbleLeftRightIcon,
   CheckCircleIcon,
   ExclamationTriangleIcon,
   PaperAirplaneIcon,
@@ -394,20 +393,17 @@ function LiveArticlePreviewPanel({
   run,
   selectedComponent,
   onSelectComponent,
-  commentCounts,
   isSubmitting,
 }: {
   run: VibeMarketingRunSummary;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
-  commentCounts: Map<string, number>;
   isSubmitting: boolean;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
   const preview = run.livePreview;
   const canRenderPreview = Boolean(preview?.available && preview.previewUrl);
-  const [hoveredComponentId, setHoveredComponentId] = useState<string | null>(null);
   const [componentMeasurements, setComponentMeasurements] = useState<Record<string, InspectorComponentMeasurement>>({});
   const [pendingPin, setPendingPin] = useState<PendingCommentPin | null>(null);
   const [openCommentId, setOpenCommentId] = useState<string | null>(null);
@@ -429,6 +425,19 @@ function LiveArticlePreviewPanel({
   );
   const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
   const commentModeActive = Boolean(preview?.exactRender && inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
+  const sourceRunId =
+    latestBatch?.sourceRunId ||
+    (typeof run.result?.["source_run_id"] === "string" ? run.result["source_run_id"] : "") ||
+    "";
+  const batchId =
+    latestBatch?.id ||
+    (typeof run.result?.["feedback_batch_id"] === "string" ? run.result["feedback_batch_id"] : "") ||
+    "";
+  const canAcceptRevision =
+    run.workflow === "article_revision" &&
+    run.status === "completed" &&
+    latestBatch?.status !== "accepted" &&
+    Boolean(batchId);
 
   const sendInspectorCommand = useCallback((message: Record<string, unknown>) => {
     iframeRef.current?.contentWindow?.postMessage({ source: "founder-tools-inspector", ...message }, "*");
@@ -437,19 +446,6 @@ function LiveArticlePreviewPanel({
   const mergeMeasurement = useCallback((measurement: InspectorComponentMeasurement) => {
     setComponentMeasurements((current) => ({ ...current, [measurement.id]: measurement }));
   }, []);
-
-  const selectComponent = useCallback(
-    (component: VibeMarketingComponentManifestItem, options: { scroll?: boolean } = {}) => {
-      onSelectComponent(component);
-      setPendingPin(null);
-      setOpenCommentId(null);
-      sendInspectorCommand({
-        type: options.scroll ? "scrollToComponent" : "setSelectedComponent",
-        componentId: component.id,
-      });
-    },
-    [onSelectComponent, sendInspectorCommand],
-  );
 
   useEffect(() => {
     setInspectorProtocolVersion(preview?.inspectorProtocolVersion ?? null);
@@ -491,9 +487,6 @@ function LiveArticlePreviewPanel({
       const measurement = measurementFromInspectorPayload(payload, components);
       if (measurement) mergeMeasurement(measurement);
 
-      if (payload.type === "hover") {
-        setHoveredComponentId(component.id);
-      }
       if (payload.type === "comment:create") {
         const anchor = anchorFromPayload(payload.anchor);
         onSelectComponent(component);
@@ -600,18 +593,35 @@ function LiveArticlePreviewPanel({
               {commentModeActive ? "Comment mode active" : "Waiting for comment bridge"}
             </p>
           </div>
-          <Form method="POST">
-            <button
-              type="submit"
-              name="intent"
-              value="submit-component-comments"
-              disabled={isSubmitting || !canSendRevisionRequest}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
-            >
-              {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-              {canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
-            </button>
-          </Form>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {canAcceptRevision ? (
+              <Form method="POST">
+                <input type="hidden" name="intent" value="accept-component-revision" />
+                <input type="hidden" name="batchId" value={batchId} />
+                <input type="hidden" name="sourceRunId" value={sourceRunId} />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                >
+                  <CheckCircleIcon className="h-4 w-4" />
+                  Accept revised article
+                </button>
+              </Form>
+            ) : null}
+            <Form method="POST">
+              <button
+                type="submit"
+                name="intent"
+                value="submit-component-comments"
+                disabled={isSubmitting || !canSendRevisionRequest}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+              >
+                {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                {canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
+              </button>
+            </Form>
+          </div>
         </div>
 
         <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
@@ -652,39 +662,6 @@ function LiveArticlePreviewPanel({
             </div>
           )}
         </div>
-        <aside className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-          <p className="px-1 text-xs font-black uppercase tracking-wide text-gray-500">Components</p>
-          <div className="mt-3 grid max-h-72 gap-2 overflow-auto pr-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {components.length > 0 ? (
-              components.map((component) => (
-                <button
-                  key={component.id}
-                  type="button"
-                  onClick={() => selectComponent(component, { scroll: true })}
-                  className={clsx(
-                    "w-full rounded-lg border px-3 py-2 text-left transition",
-                    selectedComponent?.id === component.id || hoveredComponentId === component.id
-                      ? "border-violet-300 bg-white shadow-sm"
-                      : "border-transparent bg-white/70 hover:border-gray-200 hover:bg-white",
-                  )}
-                >
-                  <span className="block text-sm font-black text-gray-900">{component.label ?? component.id}</span>
-                  <span className="mt-0.5 block font-mono text-[11px] text-gray-500">{component.id}</span>
-                  {commentCounts.get(component.id) ? (
-                    <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-violet-50 px-2 py-0.5 text-[11px] font-black text-violet-700">
-                      <ChatBubbleLeftRightIcon className="h-3 w-3" />
-                      {commentCounts.get(component.id)}
-                    </span>
-                  ) : null}
-                </button>
-              ))
-            ) : (
-              <p className="rounded-lg bg-white px-3 py-4 text-sm font-semibold text-gray-500">
-                No component manifest was reported for this run.
-              </p>
-            )}
-          </div>
-        </aside>
       </div>
     </section>
   );
@@ -1111,6 +1088,12 @@ export default function FounderToolsMarketingRun() {
   const isSubmitting = navigation.state === "submitting";
   const shouldPoll = POLLING_STATUSES.has(run.status);
   const workflow = String(run.workflow ?? "");
+  const contentPackage = run.contentPackage;
+  const hasArticlePreview =
+    ["article_generation", "article_revision"].includes(workflow) &&
+    Boolean(contentPackage?.contentPackaged || run.componentManifest);
+  const isCompletedArticleReviewPage =
+    hasArticlePreview && run.status === "completed";
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation";
@@ -1121,15 +1104,6 @@ export default function FounderToolsMarketingRun() {
   const canApprove = isScaffoldApproval || hasPublishApprovalTarget;
   const canDeny = isScaffoldApproval || hasPublishApprovalTarget;
   const discoveryCandidates = isDiscoveryConfirmation ? topicCandidatesFromRun(run) : [];
-  const contentPackage = run.contentPackage;
-  const commentCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const comment of run.componentFeedback?.comments ?? []) {
-      counts.set(comment.componentId, (counts.get(comment.componentId) ?? 0) + 1);
-    }
-    return counts;
-  }, [run.componentFeedback?.comments]);
-
   useEffect(() => {
     if (!shouldPoll) return;
     const timer = window.setInterval(() => {
@@ -1177,19 +1151,19 @@ export default function FounderToolsMarketingRun() {
         </div>
       ) : null}
 
-      {contentPackage?.contentPackaged || run.componentManifest ? (
+      {hasArticlePreview ? (
         <LiveArticlePreviewPanel
           run={run}
           selectedComponent={selectedComponent}
           onSelectComponent={setSelectedComponent}
-          commentCounts={commentCounts}
           isSubmitting={isSubmitting}
         />
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-        <main className="space-y-6">
-          <MarketingRunProgressCard run={run} pollingDegraded={revalidator.state === "loading"} />
+      {!isCompletedArticleReviewPage ? (
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <main className="space-y-6">
+            <MarketingRunProgressCard run={run} pollingDegraded={revalidator.state === "loading"} />
 
           {isDiscoveryConfirmation ? (
             <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">
@@ -1313,10 +1287,11 @@ export default function FounderToolsMarketingRun() {
           {contentPackage?.contentPackaged || run.componentManifest ? (
             <ComponentCommentsPanel run={run} selectedComponent={selectedComponent} isSubmitting={isSubmitting} />
           ) : null}
-        </main>
+          </main>
 
-        <MarketingEvidencePanel run={run} />
-      </div>
+          <MarketingEvidencePanel run={run} />
+        </div>
+      ) : null}
     </div>
   );
 }
