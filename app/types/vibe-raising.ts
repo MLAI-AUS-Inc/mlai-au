@@ -439,6 +439,7 @@ export interface VibeRaisingStartupUpdateRunSummary {
   domain: string;
   status: string;
   currentStep?: string | null;
+  targetMonth?: string | null;
   stepOrder?: string[];
   stepStates?: Record<string, VibeRaisingStartupUpdateStepState>;
   createdAt?: string;
@@ -456,6 +457,7 @@ export interface VibeRaisingStartupUpdateRunProgress {
   canRetry: boolean;
   terminalState?: string | null;
   generatedDraftMonths: string[];
+  targetMonth?: string | null;
 }
 export interface VibeRaisingEmailDraftMonth {
   draftId?: number;
@@ -505,6 +507,10 @@ export interface VibeRaisingStartupUpdateStatusResponse {
   canRetry: boolean;
   terminalState?: string | null;
   generatedDraftMonths: string[];
+  targetMonth?: string | null;
+  requestedTargetMonth?: string | null;
+  activeTargetMonth?: string | null;
+  targetMonthConflict?: boolean;
   reusedExistingRun?: boolean;
   currentMonth?: VibeRaisingEmailDraftMonth | null;
   pastMonths: VibeRaisingEmailDraftMonth[];

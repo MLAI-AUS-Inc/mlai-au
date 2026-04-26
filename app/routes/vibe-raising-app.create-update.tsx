@@ -111,6 +111,19 @@ function getMonthlyUpdateKey(month: string, year: number | string) {
     return `${parsedYear}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
+function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
+    const key = getMonthlyUpdateKey(month, year);
+    return key ? `${key}-01` : "";
+}
+
+function isFutureMonthlyUpdate(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return true;
+    const now = new Date();
+    return parsedYear > now.getFullYear() || (parsedYear === now.getFullYear() && monthIndex > now.getMonth());
+}
+
 function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
     const isoMonth = String(update.isoMonth || "").trim();
     const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
@@ -1596,6 +1609,8 @@ export default function CreateUpdate() {
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
+    const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
+    const isSelectedMonthInFuture = isFutureMonthlyUpdate(selectedMonth, selectedYear);
     const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
         (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
     );
@@ -1641,6 +1656,8 @@ export default function CreateUpdate() {
     const videoUploadAbortRef = useRef<AbortController | null>(null);
     const videoUploadSequenceRef = useRef(0);
     const videoPreviewObjectUrlRef = useRef<string | null>(null);
+    const loadedExistingUpdateKeyRef = useRef<string | null>(null);
+    const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
 
     const handleDraftComplete = (data: any) => {
         setActivePeriodKey("current");
@@ -1891,6 +1908,14 @@ export default function CreateUpdate() {
             persistEmailDraftRun(statusResponse);
         }
 
+        if (statusResponse.targetMonthConflict) {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(statusResponse.error ?? "Another monthly update is already generating.");
+            });
+            return;
+        }
+
         if (statusResponse.state === "queued" || statusResponse.state === "running") {
             startTransition(() => {
                 setEmailDraftStatus(statusResponse);
@@ -1961,6 +1986,7 @@ export default function CreateUpdate() {
                 {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: selectedInputSources,
+                    targetMonth: targetMonthIso,
                 },
             );
             emailDraftIgnoredRunIdRef.current = null;
@@ -1981,11 +2007,15 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources, targetMonthIso]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
         if (!canGenerateDraftFromEmail) {
             navigate("/founder-tools/companies");
+            return;
+        }
+        if (isSelectedMonthInFuture || !targetMonthIso) {
+            setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
             return;
         }
 
@@ -2010,7 +2040,15 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, canGenerateDraftFromEmail, navigate, selectedInputSources, startOrResumeEmailDraft]);
+    }, [
+        backendBaseUrl,
+        canGenerateDraftFromEmail,
+        isSelectedMonthInFuture,
+        navigate,
+        selectedInputSources,
+        startOrResumeEmailDraft,
+        targetMonthIso,
+    ]);
 
     const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
         if (request?.clearPersistedRun) {
@@ -2169,6 +2207,55 @@ export default function CreateUpdate() {
     ]);
 
     const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    useEffect(() => {
+        if (isEmailDraftBusy) return;
+
+        if (!existingUpdateForSelectedMonth) {
+            loadedExistingUpdateKeyRef.current = null;
+            if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
+                editorMonthKeyRef.current = selectedMonthUpdateKey;
+                setSummary("");
+                setSourceUrl("");
+                resetVideoUpload();
+                setHighlights("");
+                setChallenges("");
+                setAsks("");
+                setLearnings("");
+                setNext30Days("");
+                setMetricValues({});
+                setSelectedMetrics(new Set());
+                setPastMonthCards([]);
+                setExpandedCards(new Set());
+                setActivePeriodKey("current");
+            }
+            return;
+        }
+        if (loadedExistingUpdateKeyRef.current === selectedMonthUpdateKey) return;
+        loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
+        editorMonthKeyRef.current = selectedMonthUpdateKey;
+
+        setSummary(existingUpdateForSelectedMonth.summary || "");
+        setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
+        setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
+        setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
+        setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
+        setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
+        setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
+        setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
+        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl ? "video" : null);
+        setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
+        setVideoUploadError(null);
+        setHighlights(existingUpdateForSelectedMonth.highlights || "");
+        setChallenges(existingUpdateForSelectedMonth.challenges || "");
+        setAsks(existingUpdateForSelectedMonth.asks || "");
+        setLearnings(existingUpdateForSelectedMonth.learnings || "");
+        setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
+        const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
+        setMetricValues(nextMetrics);
+        setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
+        setActivePeriodKey("current");
+    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey]);
+
     const emailDraftCardVisible =
         isEmailDraftBusy ||
         emailDraftStatus?.state === "failed" ||
@@ -2205,13 +2292,16 @@ export default function CreateUpdate() {
         isEmailDraftBusy && emailDraftStatus?.state !== "failed"
             ? emailDraftUiError
             : null;
+    const selectedMonthGenerationVerb = existingUpdateForSelectedMonth ? "Regenerate" : "Generate";
     const emailDraftButtonTitle = emailDraftActionBusy
-        ? "Checking selected inputs..."
-        : "Generate update from selected inputs";
+        ? `Generating ${selectedMonthLabel} update`
+        : `${selectedMonthGenerationVerb} ${selectedMonthLabel} update`;
     const emailDraftButtonDescription = emailDraftActionBusy
         ? "Contacting the MLAI backend and preparing the selected sources for drafting."
+        : isSelectedMonthInFuture
+            ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
         : canGenerateDraftFromEmail
-            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks, then turn them into a first draft.`
+            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks for ${selectedMonthLabel}, then turn them into a first draft.`
             : "Add a company domain first so inputs can be matched to the right startup.";
     const isVideoUploadPending = videoUploadStatus === "validating" ||
         videoUploadStatus === "compressing" ||
@@ -3315,7 +3405,7 @@ export default function CreateUpdate() {
                                 className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
-                                Draft again
+                                Regenerate {selectedMonthLabel}
                             </button>
                         </div>
                     </div>
@@ -3492,13 +3582,41 @@ export default function CreateUpdate() {
                     </div>
                 </div>
 
+                <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="mb-4 flex flex-col gap-1">
+                        <p className="text-sm font-bold text-gray-900">Selected update month</p>
+                        <p className="text-xs font-medium text-gray-500">
+                            AI generation and edits below apply to {selectedMonthLabel}.
+                        </p>
+                    </div>
+                    <MonthYearTabs
+                        month={selectedMonth}
+                        year={selectedYear}
+                        onMonthChange={setSelectedMonth}
+                        onYearChange={setSelectedYear}
+                        onPeriodChange={setActivePeriodKey}
+                        isDateEditable={!isEmailDraftBusy}
+                        statusLabel="Selected month"
+                    />
+                    {isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                            Future monthly updates can be generated once that month starts.
+                        </p>
+                    )}
+                    {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700">
+                            An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                        </p>
+                    )}
+                </section>
+
                 {emailDraftCardVisible ? (
                     <EmailDraftInProgressCard
                         status={emailDraftCardStatus}
                         displayStage={emailDraftCardDisplayStage}
                         completedSteps={emailDraftCardCompletedSteps}
                         totalSteps={emailDraftCardTotalSteps}
-                        sourceLabel="inputs"
+                        sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
                         error={emailDraftCardError}
                         notice={emailDraftCardNotice}
                         pollingDegraded={emailDraftPollingDegraded}
@@ -3513,39 +3631,35 @@ export default function CreateUpdate() {
                 ) : (
                     <button
                         type="button"
-                        disabled={emailDraftActionBusy}
+                        disabled={emailDraftActionBusy || isSelectedMonthInFuture}
                         onClick={() => {
                             void handleGenerateDraftFromEmailClick();
                         }}
                         className={clsx(
-                            "group relative w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
-                            canGenerateDraftFromEmail
+                            "group flex w-full items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-60",
+                            canGenerateDraftFromEmail && !isSelectedMonthInFuture
                                 ? "cursor-pointer"
-                                : "cursor-pointer opacity-80",
-                            emailDraftActionBusy && "opacity-70",
+                                : "cursor-not-allowed",
                         )}
                     >
-                        <div className="relative z-10">
-                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white ring-1 ring-white/15">
+                        <div className="flex min-w-0 items-center gap-4">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
                                 {emailDraftActionBusy ? (
-                                    <ArrowPathIcon className="h-7 w-7 animate-spin" />
+                                    <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                 ) : (
-                                    <SparklesIcon className="h-7 w-7" />
+                                    <SparklesIcon className="h-5 w-5" />
                                 )}
                             </div>
-
-                            <div className="mt-4 flex items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-xl font-bold text-white">
-                                        {emailDraftButtonTitle}
-                                    </h2>
-                                    <p className="mt-3 max-w-2xl text-sm leading-6 text-white/72">
-                                        {emailDraftButtonDescription}
-                                    </p>
-                                </div>
-                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-white/60 transition-transform group-hover:translate-x-1" />
+                            <div className="min-w-0">
+                                <h2 className="text-base font-bold text-gray-950">
+                                    {emailDraftButtonTitle}
+                                </h2>
+                                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                    {emailDraftButtonDescription}
+                                </p>
                             </div>
                         </div>
+                        <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
                     </button>
                 )}
 
@@ -3718,19 +3832,14 @@ export default function CreateUpdate() {
 	                                activeMonthTheme.ringClass,
 	                            )}
 	                        >
-	                            <MonthYearTabs
-	                                month={activeDisplayMonth}
-	                                year={activeDisplayYear}
-	                                onMonthChange={setSelectedMonth}
-	                                onYearChange={setSelectedYear}
-	                                periodTabs={periodTabs}
-	                                activePeriodKey={activePeriodKey}
-	                                onPeriodChange={selectPeriod}
-	                                submitDateFields={isViewingCurrentUpdate}
-	                                isDateEditable={isViewingCurrentUpdate}
-	                                statusLabel={isViewingCurrentUpdate ? "Current Update" : "Previous Update"}
-	                                showInfoControl={pastMonthCards.length > 0}
-	                            />
+	                            <div className="flex flex-col gap-1">
+	                                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+	                                    {isViewingCurrentUpdate ? "Generated update" : "Previous update"}
+	                                </p>
+	                                <h2 className="text-lg font-black text-gray-950">
+	                                    {activeDisplayMonth} {activeDisplayYear}
+	                                </h2>
+	                            </div>
 
 	                            {!isViewingCurrentUpdate && (
 	                                <>
@@ -3858,13 +3967,10 @@ export default function CreateUpdate() {
                             selectedMonthTheme.ringClass,
                         )}
                     >
-	                        <MonthYearTabs
-	                            month={selectedMonth}
-	                            year={selectedYear}
-	                            onMonthChange={setSelectedMonth}
-	                            onYearChange={setSelectedYear}
-	                            statusLabel="Current Update"
-	                        />
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Update draft</p>
+                            <h2 className="text-lg font-black text-gray-950">{selectedMonthLabel}</h2>
+                        </div>
 
                         {/* Metrics — square boxes, click to activate */}
                         <div>

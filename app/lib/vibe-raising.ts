@@ -608,6 +608,10 @@ function normalizeStartupUpdateRun(raw: unknown): VibeRaisingStartupUpdateRunSum
     currentStep:
       asNullableString(payload.currentStep) ??
       asNullableString(payload.current_step),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      null,
     stepOrder: Array.isArray(payload.stepOrder ?? payload.step_order)
       ? ((payload.stepOrder ?? payload.step_order) as unknown[]).map((item: unknown) => String(item))
       : [],
@@ -810,6 +814,11 @@ function normalizeStartupUpdateProgress(
       payload.generatedDraftMonths ??
         payload.generated_draft_months,
     ),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      run?.targetMonth ??
+      null,
   };
 }
 
@@ -1213,6 +1222,24 @@ function normalizeStartupUpdateStatus(
         payload.generated_draft_months ??
         progress?.generatedDraftMonths ??
         [],
+    ),
+    targetMonth:
+      asNullableString(payload.targetMonth) ??
+      asNullableString(payload.target_month) ??
+      progress?.targetMonth ??
+      run?.targetMonth ??
+      null,
+    requestedTargetMonth:
+      asNullableString(payload.requestedTargetMonth) ??
+      asNullableString(payload.requested_target_month) ??
+      null,
+    activeTargetMonth:
+      asNullableString(payload.activeTargetMonth) ??
+      asNullableString(payload.active_target_month) ??
+      null,
+    targetMonthConflict: Boolean(
+      payload.targetMonthConflict ??
+        payload.target_month_conflict,
     ),
     reusedExistingRun: Boolean(
       payload.reusedExistingRun ??
@@ -2610,11 +2637,20 @@ export async function getVibeRaisingXeroPreview(
 
 export async function runVibeRaisingStartupUpdate(
   backendBaseUrl: string,
-  options?: { forceRegenerate?: boolean; inputSources?: VibeRaisingInputSourceKey[] },
+  options?: {
+    forceRegenerate?: boolean;
+    inputSources?: VibeRaisingInputSourceKey[];
+    targetMonth?: string | null;
+  },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
   if (options?.forceRegenerate) {
     body.forceRegenerate = true;
+  }
+  const targetMonth = String(options?.targetMonth || "").trim();
+  if (targetMonth) {
+    body.targetMonth = targetMonth;
+    body.target_month = targetMonth;
   }
   const inputSources = Array.from(new Set(options?.inputSources ?? []));
   if (inputSources.length > 0) {
