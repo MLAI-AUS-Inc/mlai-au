@@ -26,9 +26,50 @@ export default function MarketingEvidencePanel({
   const changedFiles = asList(evidence?.changedFiles ?? run?.result?.["changed_files"] ?? run?.result?.["files"]);
   const screenshots = asList(evidence?.screenshots ?? run?.result?.["screenshots"]);
   const warnings = evidence?.warnings ?? run?.warnings ?? [];
+  const contentPackage = run?.contentPackage ?? evidence?.contentPackage;
+  const artifactEntries = Object.entries(contentPackage?.artifactPaths ?? {});
 
   return (
     <aside className="space-y-4">
+      {contentPackage?.contentPackaged ? (
+        <div className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center gap-2">
+            <DocumentTextIcon className="h-5 w-5 text-emerald-600" />
+            <h2 className="text-sm font-black text-gray-950">Content package</h2>
+          </div>
+          <div className="mt-4 space-y-3 text-sm">
+            <div className="rounded-lg bg-emerald-50 px-3 py-2">
+              <p className="font-black text-emerald-950">{contentPackage.title ?? contentPackage.slug ?? "Generated article"}</p>
+              {contentPackage.targetKeyword ? <p className="mt-1 text-xs font-bold text-emerald-700">{contentPackage.targetKeyword}</p> : null}
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs font-black text-gray-700">
+              <div className="rounded-lg bg-gray-50 px-2 py-2">
+                <p>{contentPackage.heroImagePresent ? "Yes" : "No"}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">Hero</p>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-2 py-2">
+                <p>{contentPackage.generatedInlineImageCount ?? 0}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">Inline</p>
+              </div>
+              <div className="rounded-lg bg-gray-50 px-2 py-2">
+                <p>{contentPackage.imageErrorCount ?? 0}</p>
+                <p className="mt-1 text-[10px] uppercase tracking-wide text-gray-400">Errors</p>
+              </div>
+            </div>
+            {artifactEntries.length > 0 ? (
+              <ul className="space-y-2">
+                {artifactEntries.slice(0, 6).map(([name, path]) => (
+                  <li key={name} className="rounded-lg bg-gray-50 px-3 py-2">
+                    <p className="text-xs font-black text-gray-700">{name}</p>
+                    <p className="mt-1 break-all font-mono text-[11px] text-gray-500">{path}</p>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-2">
           <DocumentTextIcon className="h-5 w-5 text-violet-600" />

@@ -71,12 +71,23 @@ export function ArticleHeroHeader({
     const highlightColor = headerBgColor === 'cyan' ? 'text-[#ff3d00]' : 'text-[#ff3d00]'
 
     return (
-        <div className="not-prose mb-8">
+        <div
+            className="not-prose mb-8"
+            data-cf-component-id="hero-header"
+            data-cf-component-type="hero"
+            data-cf-component-label="Hero header"
+        >
             {/* Hero Banner */}
             <div className={`${bgColorMap[headerBgColor]} rounded-2xl px-6 py-8 sm:px-10 sm:py-12 lg:px-14 lg:py-16`}>
                 {/* Breadcrumbs */}
                 {breadcrumbs && breadcrumbs.length > 0 && (
-                    <nav aria-label="Breadcrumb" className="mb-4">
+                    <nav
+                        aria-label="Breadcrumb"
+                        className="mb-4"
+                        data-cf-component-id="breadcrumb"
+                        data-cf-component-type="breadcrumb"
+                        data-cf-component-label="Breadcrumb"
+                    >
                         <ol className="flex items-center gap-2 text-sm font-medium">
                             {breadcrumbs.map((item, index) => (
                                 <li key={index} className="flex items-center gap-2">
@@ -105,6 +116,9 @@ export function ArticleHeroHeader({
                 <h1
                     className={`text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight ${textColorMap[headerBgColor]}`}
                     style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
+                    data-cf-component-id="title"
+                    data-cf-component-type="title"
+                    data-cf-component-label="Title"
                 >
                     {titleParts.map((part, index) => (
                         <span
@@ -150,7 +164,12 @@ export function ArticleHeroHeader({
 
                     {/* Hero Image */}
                     {heroImage && (
-                        <div className="rounded-2xl overflow-hidden">
+                        <div
+                            className="rounded-2xl overflow-hidden"
+                            data-cf-component-id="hero-image"
+                            data-cf-component-type="image"
+                            data-cf-component-label="Hero image"
+                        >
                             <ImageWithFallback
                                 src={heroImage}
                                 fallbackSrc={ARTICLE_FALLBACK_IMAGE}

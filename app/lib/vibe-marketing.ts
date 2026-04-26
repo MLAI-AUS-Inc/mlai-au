@@ -1,7 +1,15 @@
 import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import type {
   VibeMarketingBootstrap,
+  VibeMarketingComponentFeedback,
+  VibeMarketingComponentCommentAnchor,
+  VibeMarketingComponentFeedbackBatch,
+  VibeMarketingComponentFeedbackComment,
+  VibeMarketingComponentManifest,
+  VibeMarketingComponentManifestItem,
+  VibeMarketingContentPackage,
   VibeMarketingGuidedStep,
+  VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
   VibeMarketingStepState,
@@ -30,6 +38,36 @@ function asStringList(value: unknown): string[] {
       .filter(Boolean);
   }
   return [];
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function asStringRecord(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const entries = Object.entries(value as Record<string, unknown>)
+    .map(([key, item]) => [key, asNullableString(item)] as const)
+    .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
+  return Object.fromEntries(entries);
+}
+
+function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCommentAnchor | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const x = asNumber(payload.x);
+  const y = asNumber(payload.y);
+  if (x === null || y === null) return null;
+  return {
+    x: Math.max(0, Math.min(1, x)),
+    y: Math.max(0, Math.min(1, y)),
+    createdFrom: asNullableString(payload.createdFrom) ?? asNullableString(payload.created_from),
+  };
 }
 
 function normalizeStep(raw: unknown): VibeMarketingStepState {
@@ -73,6 +111,10 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       payload.diagnostics && typeof payload.diagnostics === "object"
         ? (payload.diagnostics as Record<string, unknown>)
         : {},
+    contentPackage: normalizeContentPackage(payload.contentPackage ?? payload.content_package),
+    componentManifest: normalizeComponentManifest(payload.componentManifest ?? payload.component_manifest),
+    livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
+    componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
     result:
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)
@@ -194,11 +236,135 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     title: asNullableString(payload.title) ?? asNullableString(payload.angle) ?? keyword,
     reason: asNullableString(payload.reason),
     source: asNullableString(payload.source),
+    sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
     intent: payload.intent,
     difficulty: payload.difficulty,
     opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
     volume: payload.volume,
   };
+}
+
+function normalizeContentPackage(raw: unknown): VibeMarketingContentPackage | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const artifactPaths = asStringRecord(payload.artifactPaths ?? payload.artifact_paths);
+  const contentPackaged = Boolean(payload.contentPackaged ?? payload.content_packaged ?? Object.keys(artifactPaths).length);
+  if (!contentPackaged && !asNullableString(payload.title) && !asNullableString(payload.slug)) return null;
+  return {
+    title: asNullableString(payload.title),
+    slug: asNullableString(payload.slug),
+    targetKeyword: asNullableString(payload.targetKeyword) ?? asNullableString(payload.target_keyword),
+    artifactPaths,
+    imageManifestStatus:
+      asNullableString(payload.imageManifestStatus) ?? asNullableString(payload.image_manifest_status),
+    heroImagePresent: Boolean(payload.heroImagePresent ?? payload.hero_image_present),
+    generatedInlineImageCount:
+      asNumber(payload.generatedInlineImageCount) ?? asNumber(payload.generated_inline_image_count),
+    imageErrorCount: asNumber(payload.imageErrorCount) ?? asNumber(payload.image_error_count),
+    contentPackaged,
+  };
+}
+
+function normalizeComponentManifestItem(raw: unknown): VibeMarketingComponentManifestItem | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  if (!id) return null;
+  return {
+    id,
+    type: asNullableString(payload.type) ?? asNullableString(payload.componentType) ?? "component",
+    label: asNullableString(payload.label) ?? undefined,
+    selector: asNullableString(payload.selector) ?? undefined,
+    sourceSectionId:
+      asNullableString(payload.sourceSectionId) ?? asNullableString(payload.source_section_id) ?? undefined,
+    editable: payload.editable === undefined ? true : Boolean(payload.editable),
+  };
+}
+
+function normalizeComponentManifest(raw: unknown): VibeMarketingComponentManifest | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const components = Array.isArray(payload.components)
+    ? payload.components
+        .map(normalizeComponentManifestItem)
+        .filter((item): item is VibeMarketingComponentManifestItem => item !== null)
+    : [];
+  if (!components.length && !asNullableString(payload.artifactPath) && !asNullableString(payload.artifact_path)) return null;
+  return {
+    components,
+    artifactPath: asNullableString(payload.artifactPath) ?? asNullableString(payload.artifact_path),
+    routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
+    articlePath: asNullableString(payload.articlePath) ?? asNullableString(payload.article_path),
+  };
+}
+
+function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const status = asNullableString(payload.status) ?? "not_started";
+  return {
+    available: Boolean(payload.available),
+    status,
+    previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
+    exactRender: Boolean(payload.exactRender ?? payload.exact_render),
+    inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
+    inspectorMode: asNullableString(payload.inspectorMode) ?? asNullableString(payload.inspector_mode),
+    error: asNullableString(payload.error),
+    workspacePath: asNullableString(payload.workspacePath) ?? asNullableString(payload.workspace_path),
+    logPath: asNullableString(payload.logPath) ?? asNullableString(payload.log_path),
+  };
+}
+
+function normalizeComponentFeedbackComment(raw: unknown): VibeMarketingComponentFeedbackComment | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  const componentId = asNullableString(payload.componentId) ?? asNullableString(payload.component_id);
+  if (!id || !componentId) return null;
+  return {
+    id,
+    componentId,
+    componentType:
+      asNullableString(payload.componentType) ?? asNullableString(payload.component_type) ?? "component",
+    componentLabel: asNullableString(payload.componentLabel) ?? asNullableString(payload.component_label),
+    sourceSectionId: asNullableString(payload.sourceSectionId) ?? asNullableString(payload.source_section_id),
+    selector: asNullableString(payload.selector),
+    anchor: normalizeComponentCommentAnchor(payload.anchor),
+    body: asNullableString(payload.body) ?? "",
+    status: asNullableString(payload.status) ?? "draft",
+    batchId: asNullableString(payload.batchId) ?? asNullableString(payload.batch_id),
+    createdAt: asNullableString(payload.createdAt) ?? asNullableString(payload.created_at),
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+  };
+}
+
+function normalizeComponentFeedbackBatch(raw: unknown): VibeMarketingComponentFeedbackBatch | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  if (!id) return null;
+  return {
+    id,
+    sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id) ?? "",
+    revisionRunId: asNullableString(payload.revisionRunId) ?? asNullableString(payload.revision_run_id),
+    status: asNullableString(payload.status) ?? "submitted",
+    error: asNullableString(payload.error),
+    promotedLearningCount:
+      asNumber(payload.promotedLearningCount) ?? asNumber(payload.promoted_learning_count),
+  };
+}
+
+function normalizeComponentFeedback(raw: unknown): VibeMarketingComponentFeedback | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const comments = Array.isArray(payload.comments)
+    ? payload.comments
+        .map(normalizeComponentFeedbackComment)
+        .filter((item): item is VibeMarketingComponentFeedbackComment => item !== null)
+    : [];
+  const latestBatch = normalizeComponentFeedbackBatch(payload.latestBatch ?? payload.latest_batch);
+  return { comments, latestBatch };
 }
 
 function normalizePublishEvidence(raw: unknown): VibeMarketingPublishEvidence {
@@ -217,6 +383,7 @@ function normalizePublishEvidence(raw: unknown): VibeMarketingPublishEvidence {
       payload.diagnostics && typeof payload.diagnostics === "object"
         ? (payload.diagnostics as Record<string, unknown>)
         : {},
+    contentPackage: normalizeContentPackage(payload.contentPackage ?? payload.content_package),
   };
 }
 
@@ -627,6 +794,23 @@ export async function controlVibeMarketingRun(
   return normalizeMarketingRun(response.data);
 }
 
+export async function startVibeMarketingLivePreview(
+  env: Env,
+  request: Request,
+  runId: string,
+  body: Record<string, unknown> = {},
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`, body);
+  return normalizeMarketingRun(response.data);
+}
+
+export async function stopVibeMarketingLivePreview(env: Env, request: Request, runId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.delete(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`);
+  return normalizeMarketingRun(response.data);
+}
+
 export async function reviseVibeMarketingRun(
   env: Env,
   request: Request,
@@ -634,4 +818,63 @@ export async function reviseVibeMarketingRun(
   body: Record<string, unknown>,
 ) {
   return controlVibeMarketingRun(env, request, runId, "revise", body);
+}
+
+export async function addVibeMarketingComponentComment(
+  env: Env,
+  request: Request,
+  runId: string,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments`, body);
+  return response.data;
+}
+
+export async function updateVibeMarketingComponentComment(
+  env: Env,
+  request: Request,
+  runId: string,
+  commentId: string,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.patch(
+    `${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/${encodeURIComponent(commentId)}`,
+    body,
+  );
+  return response.data;
+}
+
+export async function deleteVibeMarketingComponentComment(
+  env: Env,
+  request: Request,
+  runId: string,
+  commentId: string,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.delete(
+    `${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/${encodeURIComponent(commentId)}`,
+  );
+  return response.data;
+}
+
+export async function submitVibeMarketingComponentComments(env: Env, request: Request, runId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/submit`, {});
+  return normalizeMarketingRun(response.data);
+}
+
+export async function acceptVibeMarketingComponentRevision(
+  env: Env,
+  request: Request,
+  runId: string,
+  body: Record<string, unknown> = {},
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(
+    `${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/accept-revision`,
+    body,
+  );
+  return normalizeMarketingRun(response.data);
 }
