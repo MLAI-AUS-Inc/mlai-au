@@ -45,6 +45,10 @@ export interface VibeMarketingRunSummary {
   prUrl?: string | null;
   routePath?: string | null;
   diagnostics: Record<string, unknown>;
+  contentPackage?: VibeMarketingContentPackage | null;
+  componentManifest?: VibeMarketingComponentManifest | null;
+  livePreview?: VibeMarketingLivePreview | null;
+  componentFeedback?: VibeMarketingComponentFeedback | null;
   result?: Record<string, unknown>;
 }
 
@@ -171,10 +175,89 @@ export interface VibeMarketingTopicCandidate {
   title: string;
   reason?: string | null;
   source?: string | null;
+  sourceRunId?: string | null;
   intent?: unknown;
   difficulty?: unknown;
   opportunityScore?: unknown;
   volume?: unknown;
+}
+
+export interface VibeMarketingContentPackage {
+  title?: string | null;
+  slug?: string | null;
+  targetKeyword?: string | null;
+  artifactPaths?: Record<string, string>;
+  imageManifestStatus?: string | null;
+  heroImagePresent?: boolean;
+  generatedInlineImageCount?: number | null;
+  imageErrorCount?: number | null;
+  contentPackaged?: boolean;
+}
+
+export interface VibeMarketingComponentManifestItem {
+  id: string;
+  type: string;
+  label?: string;
+  selector?: string;
+  sourceSectionId?: string;
+  editable?: boolean;
+}
+
+export interface VibeMarketingComponentManifest {
+  components: VibeMarketingComponentManifestItem[];
+  artifactPath?: string | null;
+  routePath?: string | null;
+  articlePath?: string | null;
+}
+
+export interface VibeMarketingLivePreview {
+  available: boolean;
+  status: string;
+  previewUrl?: string | null;
+  routePath?: string | null;
+  exactRender?: boolean;
+  inspectorProtocolVersion?: number | null;
+  inspectorMode?: string | null;
+  error?: string | null;
+  workspacePath?: string | null;
+  logPath?: string | null;
+}
+
+export type VibeMarketingComponentCommentStatus = "draft" | "submitted" | "applied" | "superseded" | string;
+
+export interface VibeMarketingComponentCommentAnchor {
+  x: number;
+  y: number;
+  createdFrom?: string | null;
+}
+
+export interface VibeMarketingComponentFeedbackComment {
+  id: string;
+  componentId: string;
+  componentType: string;
+  componentLabel?: string | null;
+  sourceSectionId?: string | null;
+  selector?: string | null;
+  anchor?: VibeMarketingComponentCommentAnchor | null;
+  body: string;
+  status: VibeMarketingComponentCommentStatus;
+  batchId?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface VibeMarketingComponentFeedbackBatch {
+  id: string;
+  sourceRunId: string;
+  revisionRunId?: string | null;
+  status: "draft" | "submitted" | "running" | "completed" | "accepted" | "failed" | string;
+  error?: string | null;
+  promotedLearningCount?: number | null;
+}
+
+export interface VibeMarketingComponentFeedback {
+  comments: VibeMarketingComponentFeedbackComment[];
+  latestBatch?: VibeMarketingComponentFeedbackBatch | null;
 }
 
 export interface VibeMarketingPublishEvidence {
@@ -188,6 +271,7 @@ export interface VibeMarketingPublishEvidence {
   changedFiles?: unknown[];
   warnings?: string[];
   diagnostics?: Record<string, unknown>;
+  contentPackage?: VibeMarketingContentPackage | null;
 }
 
 export interface VibeMarketingGuidedStep {

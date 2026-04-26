@@ -186,15 +186,32 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-article") {
-      const topic = stringFromForm(formData, "topic");
+      const bootstrap = await getVibeMarketingBootstrap(env, request);
+      const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const selectedCandidate =
+        topicCandidateId && topicCandidateId !== "__custom__"
+          ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
+          : null;
+      const customKeyword = stringFromForm(formData, "targetKeyword");
+      const customTitle = stringFromForm(formData, "customTitle") || stringFromForm(formData, "titleAngle");
+      const topic = customTitle || selectedCandidate?.title || customKeyword || selectedCandidate?.keyword || "";
+      const targetKeyword = customKeyword || selectedCandidate?.keyword || topic;
+      if (!topic && !targetKeyword) {
+        return {
+          intent,
+          error: "Choose a discovered topic or enter a custom title or keyword before generating an article.",
+        };
+      }
       const result = await startVibeMarketingArticle(env, request, {
         topic,
-        targetKeyword: stringFromForm(formData, "targetKeyword") || topic,
-        titleAngle: stringFromForm(formData, "titleAngle"),
+        targetKeyword,
+        customTitle: customTitle || selectedCandidate?.title || "",
+        selectedTitle: selectedCandidate?.title ?? "",
+        topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
         deliveryMode: stringFromForm(formData, "deliveryMode"),
         deliveryModeConfirmed: true,
-        sourceDiscoveryRunId: stringFromForm(formData, "sourceDiscoveryRunId"),
+        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=writeCheck");
@@ -973,6 +990,8 @@ export default function FounderToolsMarketingCreate() {
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
+  const latestContentPackage = latestArticle?.contentPackage ?? bootstrap.publishEvidence?.contentPackage ?? null;
+  const contentPackageReady = Boolean(latestContentPackage?.contentPackaged);
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
   const autofillStartData = autofillStartFetcher.data;
   const autofillRun = autofillRunFetcher.data as VibeMarketingRunSummary | undefined;
@@ -1413,7 +1432,7 @@ export default function FounderToolsMarketingCreate() {
                 <div className="grid gap-3">
                   {bootstrap.topicCandidates.slice(0, 5).map((candidate, index) => (
                     <label key={candidate.id} className="flex cursor-pointer gap-3 rounded-xl border border-gray-200 p-4 transition hover:bg-violet-50/60">
-                      <input type="radio" name="topic" value={candidate.keyword} defaultChecked={index === 0} className="mt-1 h-4 w-4 text-violet-600" />
+                      <input type="radio" name="topicCandidateId" value={candidate.id} defaultChecked={index === 0} className="mt-1 h-4 w-4 text-violet-600" />
                       <span>
                         <span className="block text-sm font-black text-gray-950">{candidate.title}</span>
                         <span className="mt-1 block text-xs font-semibold text-gray-500">{candidate.keyword}</span>
@@ -1421,12 +1440,25 @@ export default function FounderToolsMarketingCreate() {
                       </span>
                     </label>
                   ))}
+                  <label className="flex cursor-pointer gap-3 rounded-xl border border-gray-200 p-4 transition hover:bg-violet-50/60">
+                    <input type="radio" name="topicCandidateId" value="__custom__" defaultChecked={bootstrap.topicCandidates.length === 0} className="mt-1 h-4 w-4 text-violet-600" />
+                    <span>
+                      <span className="block text-sm font-black text-gray-950">Custom article</span>
+                      <span className="mt-1 block text-xs font-semibold text-gray-500">Use the keyword and title fields below.</span>
+                    </span>
+                  </label>
                 </div>
                 <div className="grid gap-4 lg:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
                     <input name="targetKeyword" placeholder="Optional keyword override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
                   </label>
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-gray-700">Custom title</span>
+                    <input name="customTitle" placeholder="Optional article title override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                  </label>
+                </div>
+                <div className="grid gap-4 lg:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
                     <select name="deliveryMode" defaultValue={bootstrap.settings.articleDeliveryMode ?? "publish_code"} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
@@ -1451,14 +1483,27 @@ export default function FounderToolsMarketingCreate() {
             <>
               <PanelHeader
                 title={activeStep === "editArticle" ? "Edit article" : activeStep === "reviewPublish" ? "Review publish" : "Write and check"}
-                description="The run workspace shows generation status, verification evidence, revision controls, preview links, PR links, and publish approval."
-                passed={activeStep === "reviewPublish" ? Boolean(bootstrap.checks.publish?.passed) : Boolean(bootstrap.checks.write?.passed)}
+                description="The run workspace shows generation status, content package evidence, revision controls, preview links, PR links, and publish approval."
+                passed={
+                  activeStep === "reviewPublish"
+                    ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
+                    : Boolean(bootstrap.checks.write?.passed)
+                }
               />
               {latestArticle ? (
-                <Link to={`/founder-tools/marketing/runs/${latestArticle.runId}`} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black">
-                  Open article run
-                  <ArrowRightIcon className="h-4 w-4" />
-                </Link>
+                <div className="space-y-4">
+                  {latestContentPackage ? (
+                    <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">
+                      <p className="font-black">Content package ready</p>
+                      <p className="mt-1 font-semibold">{latestContentPackage.title ?? latestContentPackage.slug ?? "Generated article package"}</p>
+                      {latestContentPackage.targetKeyword ? <p className="mt-1 text-xs font-bold">Keyword: {latestContentPackage.targetKeyword}</p> : null}
+                    </div>
+                  ) : null}
+                  <Link to={`/founder-tools/marketing/runs/${latestArticle.runId}`} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black">
+                    Open article run
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
+                </div>
               ) : (
                 <Link to="/founder-tools/marketing/create?step=chooseArticle" className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700">
                   Choose an article first
