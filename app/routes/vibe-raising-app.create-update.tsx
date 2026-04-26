@@ -226,6 +226,8 @@ export async function action({ request, context }: Route.ActionArgs) {
             highlights: String(formData.get("highlights") || ""),
             challenges: String(formData.get("challenges") || ""),
             asks: String(formData.get("asks") || ""),
+            learnings: String(formData.get("learnings") || ""),
+            next30Days: String(formData.get("next30Days") || ""),
             metrics,
             metricSuggestions,
         });
