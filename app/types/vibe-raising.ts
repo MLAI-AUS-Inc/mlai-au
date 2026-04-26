@@ -41,6 +41,13 @@ export interface VibeRaisingPastMonthSummary {
   challenges: string;
   asks: string;
   metrics?: Record<string, string>;
+  metricSuggestions?: VibeRaisingMetricSuggestion[];
+}
+
+export interface VibeRaisingMetricSuggestion {
+  metricKey: string;
+  label: string;
+  reason?: string;
 }
 
 export interface VibeRaisingDraftedContent {
@@ -58,6 +65,7 @@ export interface VibeRaisingDraftedContent {
   asks: string;
   pastMonths: VibeRaisingPastMonthSummary[];
   metrics?: Record<string, string>;
+  metricSuggestions?: VibeRaisingMetricSuggestion[];
 }
 
 export interface VibeRaisingMonthlyUpdate {
@@ -76,6 +84,7 @@ export interface VibeRaisingMonthlyUpdate {
   videoFileSizeBytes?: number | null;
   videoOriginalFilename?: string | null;
   metrics: Record<string, string>;
+  metricSuggestions?: VibeRaisingMetricSuggestion[];
   highlights: string;
   challenges: string;
   asks: string;
@@ -437,6 +446,7 @@ export interface VibeRaisingEmailDraftMonth {
   challenges: string;
   asks: string;
   metrics?: Record<string, string>;
+  metricSuggestions?: VibeRaisingMetricSuggestion[];
 }
 
 export interface VibeRaisingStartupUpdateBootstrapResponse {

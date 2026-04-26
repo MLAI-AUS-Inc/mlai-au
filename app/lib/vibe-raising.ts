@@ -23,6 +23,7 @@ import type {
   VibeRaisingLinearProjectPreview,
   VibeRaisingLinearProjectsResponse,
   VibeRaisingLinearProjectUpdatePreview,
+  VibeRaisingMetricSuggestion,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
   VibeRaisingRole,
@@ -287,6 +288,28 @@ function normalizeMetrics(raw: unknown): Record<string, string> {
   return metrics;
 }
 
+function normalizeMetricSuggestions(raw: unknown): VibeRaisingMetricSuggestion[] {
+  if (!Array.isArray(raw)) return [];
+
+  const suggestions: VibeRaisingMetricSuggestion[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (!item || typeof item !== "object") continue;
+    const payload = item as Record<string, unknown>;
+    const metricKey =
+      asNullableString(payload.metricKey) ??
+      asNullableString(payload.metric_key);
+    if (!metricKey || seen.has(metricKey)) continue;
+    seen.add(metricKey);
+    suggestions.push({
+      metricKey,
+      label: asNullableString(payload.label) ?? metricKey,
+      reason: asNullableString(payload.reason) ?? undefined,
+    });
+  }
+  return suggestions;
+}
+
 function asNullableNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   if (typeof value === "string" && value.trim()) {
@@ -304,6 +327,9 @@ function normalizePastMonthSummary(raw: unknown) {
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
     metrics: normalizeMetrics(payload.metrics),
+    metricSuggestions: normalizeMetricSuggestions(
+      payload.metricSuggestions ?? payload.metric_suggestions,
+    ),
   };
 }
 
@@ -362,6 +388,9 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
     metrics: normalizeMetrics(payload.metrics),
+    metricSuggestions: normalizeMetricSuggestions(
+      payload.metricSuggestions ?? payload.metric_suggestions,
+    ),
     pastMonths: Array.isArray(payload.pastMonths)
       ? payload.pastMonths.map(normalizePastMonthSummary)
       : [],
@@ -458,6 +487,9 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
     metrics: normalizeMetrics(payload.metrics),
+    metricSuggestions: normalizeMetricSuggestions(
+      payload.metricSuggestions ?? payload.metric_suggestions,
+    ),
   };
 }
 
@@ -522,6 +554,9 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
       asNullableString(payload.videoOriginalFilename) ??
       asNullableString(payload.video_original_filename),
     metrics: normalizeMetrics(payload.metrics),
+    metricSuggestions: normalizeMetricSuggestions(
+      payload.metricSuggestions ?? payload.metric_suggestions,
+    ),
     highlights: asNullableString(payload.highlights) ?? "",
     challenges: asNullableString(payload.challenges) ?? "",
     asks: asNullableString(payload.asks) ?? "",
@@ -1504,6 +1539,7 @@ export async function saveVibeRaisingMonthlyUpdate(
     challenges: string;
     asks: string;
     metrics: Record<string, string>;
+    metricSuggestions?: VibeRaisingMetricSuggestion[];
     summary?: string | null;
     sourceUrl?: string | null;
     videoUrl?: string | null;
@@ -1519,7 +1555,9 @@ export async function saveVibeRaisingMonthlyUpdate(
     return normalizeMonthlyUpdate(response.data?.update ?? response.data);
   } catch (error: any) {
     const status = error.response?.status;
-    const hasOptionalFields = Boolean(body.summary || body.sourceUrl || body.videoUrl);
+    const hasOptionalFields = Boolean(
+      body.summary || body.sourceUrl || body.videoUrl || (body.metricSuggestions || []).length > 0,
+    );
     if (!hasOptionalFields || (status !== 400 && status !== 422)) {
       throw error;
     }
