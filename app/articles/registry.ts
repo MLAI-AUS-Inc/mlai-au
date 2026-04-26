@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-a-builders-club-looks-like-for-ai-builders': {
+        title: "What a Builders Club Looks Like for AI Builders",
+        date: "2026-04-26",
+        description: "Learn what a builders club looks like in AI, how it works in practice, and why shared feedback, short build cycles, and community momentum help people build faster.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-a-builders-club-looks-like-for-ai-builders",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2Fmlai_user%3A1%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-73ed5eef-5158-4589-855a-78541d91cbcd.jpg?alt=media&token=92288c4c-abb1-4909-bf9b-dc6cd768b875",
+        imageAlt: "What a Builders Club Looks Like for AI Builders",
+        hasContent: true,
+    },
     'featured/what-is-a-unicorn-startup-and-why-it-matters': {
         title: "What Is a Unicorn Startup and Why It Matters",
         date: "2026-04-23",
