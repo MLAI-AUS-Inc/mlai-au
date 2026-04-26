@@ -2438,6 +2438,15 @@ export async function getVibeRaisingXeroPreview(
       asNullableString(payload.burn_rate),
     runway:
       asNullableString(payload.runway),
+    monthlyCosts:
+      asNullableString(payload.monthlyCosts) ??
+      asNullableString(payload.monthly_costs),
+    operatingExpenses:
+      asNullableString(payload.operatingExpenses) ??
+      asNullableString(payload.operating_expenses),
+    costOfSales:
+      asNullableString(payload.costOfSales) ??
+      asNullableString(payload.cost_of_sales),
     invoiceRevenue:
       asNullableString(payload.invoiceRevenue) ??
       asNullableString(payload.invoice_revenue),

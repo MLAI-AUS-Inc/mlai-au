@@ -354,6 +354,9 @@ export interface VibeRaisingXeroPreview {
   revenueGrowthRate?: string | null;
   burnRate?: string | null;
   runway?: string | null;
+  monthlyCosts?: string | null;
+  operatingExpenses?: string | null;
+  costOfSales?: string | null;
   invoiceRevenue?: string | null;
   invoiceCount?: string | null;
   customerCount?: string | null;
