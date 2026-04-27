@@ -1471,6 +1471,7 @@ export async function saveVibeRaisingCompany(
     seedKeywords?: string[];
     founderNames?: string[];
     stage?: string | null;
+    organizationKind?: string | null;
     notes?: string | null;
     githubRepo?: string | null;
     articleDeliveryMode?: string | null;
