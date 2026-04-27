@@ -17,6 +17,9 @@ import type {
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingTopicCandidate,
+  VibeMarketingWorkflowAction,
+  VibeMarketingWorkflowProgress,
+  VibeMarketingWorkflowStep,
 } from "~/types/vibe-marketing";
 
 const BASE_PATH = "/api/v1/vibe-marketing";
@@ -115,6 +118,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     componentManifest: normalizeComponentManifest(payload.componentManifest ?? payload.component_manifest),
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
+    workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
     result:
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)
@@ -212,6 +216,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       payload.recommendedNextAction && typeof payload.recommendedNextAction === "object"
         ? (payload.recommendedNextAction as VibeMarketingBootstrap["recommendedNextAction"])
         : undefined,
+    workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
   };
 }
 
@@ -219,6 +224,7 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
   return {
     founderNames: asStringList(payload.founderNames ?? payload.founder_names),
     stage: asNullableString(payload.stage),
+    organizationKind: asNullableString(payload.organizationKind) ?? asNullableString(payload.organization_kind),
     notes: asNullableString(payload.notes),
     companyAliases: asStringList(payload.companyAliases ?? payload.company_aliases),
     domainAliases: asStringList(payload.domainAliases ?? payload.domain_aliases),
@@ -398,6 +404,52 @@ function normalizeGuidedStep(raw: unknown): VibeMarketingGuidedStep {
   };
 }
 
+function normalizeWorkflowAction(raw: unknown): VibeMarketingWorkflowAction | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const label = asNullableString(payload.label);
+  if (!label) return null;
+  return {
+    label,
+    href: asNullableString(payload.href),
+    intent: asNullableString(payload.intent),
+    variant: asNullableString(payload.variant) ?? "primary",
+  };
+}
+
+function normalizeWorkflowStep(raw: unknown): VibeMarketingWorkflowStep | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  if (!id) return null;
+  return {
+    id,
+    label: asNullableString(payload.label) ?? id,
+    phase: asNullableString(payload.phase) ?? "Workflow",
+    status: asNullableString(payload.status) ?? "locked",
+    href: asNullableString(payload.href) ?? "/founder-tools/marketing",
+    runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id),
+    summary: asNullableString(payload.summary),
+    primaryAction: normalizeWorkflowAction(payload.primaryAction ?? payload.primary_action),
+    order: asNumber(payload.order),
+  };
+}
+
+function normalizeWorkflowProgress(raw: unknown): VibeMarketingWorkflowProgress | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const steps = Array.isArray(payload.steps)
+    ? payload.steps.map(normalizeWorkflowStep).filter((step): step is VibeMarketingWorkflowStep => step !== null)
+    : [];
+  if (!steps.length) return null;
+  const currentStepId = asNullableString(payload.currentStepId) ?? asNullableString(payload.current_step_id) ?? steps[0].id;
+  return {
+    currentStepId,
+    nextStepId: asNullableString(payload.nextStepId) ?? asNullableString(payload.next_step_id),
+    steps,
+  };
+}
+
 function normalizeWebsiteBaseline(raw: unknown): VibeMarketingWebsiteBaseline {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const summary = payload.summary;
@@ -476,6 +528,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   startupProfile: {
     founderNames: [],
     stage: null,
+    organizationKind: null,
     notes: null,
   },
   websiteBaseline: {
@@ -493,7 +546,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
     connected: false,
     hasBaselineScopes: false,
     status: "needs_connection",
-    connectUrl: "http://localhost:8000/integrations/connect/google?scope=website_baseline&next=/founder-tools/marketing/create?step=baseline",
+    connectUrl: "http://localhost:8000/integrations/connect/google?scope=website_baseline&next=/founder-tools/marketing/create?step=baseline%26googleBaseline=refresh",
   },
   checks: {},
   latestRuns: [],
@@ -503,6 +556,22 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   guidedSteps: [],
   currentGuidedStep: "startupDetails",
   recommendedNextAction: { key: "startupDetails", label: "Add startup details" },
+  workflowProgress: {
+    currentStepId: "profile",
+    nextStepId: "baseline",
+    steps: [
+      {
+        id: "profile",
+        label: "Startup profile",
+        phase: "Setup",
+        status: "needs_action",
+        href: "/founder-tools/marketing/create?step=startupDetails",
+        summary: "Company, audience, competitors, and seed keywords.",
+        primaryAction: { label: "Save startup profile", href: "/founder-tools/marketing/create?step=startupDetails" },
+        order: 1,
+      },
+    ],
+  },
 };
 
 const DEV_RUN_SNAPSHOTS = new Map<string, Record<string, unknown>>();
@@ -687,6 +756,96 @@ export async function saveVibeMarketingSettings(env: Env, request: Request, body
   return normalizeBootstrap(response.data);
 }
 
+export type VibeMarketingLocationSuggestion = {
+  id: string;
+  label: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  placeId?: string;
+};
+
+export type VibeMarketingAbnSuggestion = {
+  abn: string;
+  entityName?: string;
+  businessName?: string;
+  status?: string;
+  state?: string;
+  postcode?: string;
+};
+
+type LookupResponse<T> = {
+  configured: boolean;
+  suggestions: T[];
+  error?: string;
+};
+
+function normalizeLocationSuggestion(raw: unknown): VibeMarketingLocationSuggestion | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const label = asNullableString(payload.label);
+  if (!label) return null;
+  return {
+    id: asNullableString(payload.id) ?? asNullableString(payload.placeId) ?? label,
+    label,
+    city: asNullableString(payload.city) ?? undefined,
+    region: asNullableString(payload.region) ?? undefined,
+    country: asNullableString(payload.country) ?? undefined,
+    placeId: asNullableString(payload.placeId) ?? undefined,
+  };
+}
+
+function normalizeAbnSuggestion(raw: unknown): VibeMarketingAbnSuggestion | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const abn = asNullableString(payload.abn);
+  if (!abn) return null;
+  return {
+    abn,
+    entityName: asNullableString(payload.entityName) ?? asNullableString(payload.entity_name) ?? undefined,
+    businessName: asNullableString(payload.businessName) ?? asNullableString(payload.business_name) ?? undefined,
+    status: asNullableString(payload.status) ?? undefined,
+    state: asNullableString(payload.state) ?? undefined,
+    postcode: asNullableString(payload.postcode) ?? undefined,
+  };
+}
+
+function normalizeLookupResponse<T>(raw: unknown, normalizeItem: (item: unknown) => T | null): LookupResponse<T> {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+  const suggestions = Array.isArray(payload.suggestions)
+    ? payload.suggestions.map(normalizeItem).filter((item): item is T => Boolean(item))
+    : [];
+  return {
+    configured: Boolean(payload.configured),
+    suggestions,
+    error: asNullableString(payload.error) ?? undefined,
+  };
+}
+
+export async function lookupVibeMarketingLocations(
+  env: Env,
+  request: Request,
+  query: string,
+  sessionToken?: string | null,
+): Promise<LookupResponse<VibeMarketingLocationSuggestion>> {
+  const client = createApiClient(env, request);
+  const params = new URLSearchParams({ q: query });
+  if (sessionToken) params.set("sessionToken", sessionToken);
+  const response = await client.get(`${BASE_PATH}/lookups/locations/?${params.toString()}`);
+  return normalizeLookupResponse(response.data, normalizeLocationSuggestion);
+}
+
+export async function lookupVibeMarketingAbns(
+  env: Env,
+  request: Request,
+  query: string,
+): Promise<LookupResponse<VibeMarketingAbnSuggestion>> {
+  const client = createApiClient(env, request);
+  const params = new URLSearchParams({ q: query });
+  const response = await client.get(`${BASE_PATH}/lookups/abns/?${params.toString()}`);
+  return normalizeLookupResponse(response.data, normalizeAbnSuggestion);
+}
+
 export async function connectVibeMarketingGithub(env: Env, request: Request, body: Record<string, unknown>) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/github/connect`, body);
@@ -742,6 +901,74 @@ export async function skipVibeMarketingBaseline(env: Env, request: Request, body
 }
 
 export async function refreshVibeMarketingBaselineGoogle(env: Env, request: Request, body: Record<string, unknown>) {
+  if (shouldUseDevBackendStub()) {
+    const end = new Date();
+    const daily = Array.from({ length: 28 }, (_, index) => {
+      const date = new Date(end);
+      date.setDate(end.getDate() - (27 - index));
+      const clicks = 6 + ((index * 3) % 11);
+      const impressions = 140 + index * 12 + ((index * 29) % 90);
+      return {
+        keys: [date.toISOString().slice(0, 10)],
+        clicks,
+        impressions,
+        ctr: clicks / impressions,
+        position: 9.4 - Math.min(3.2, index / 9),
+      };
+    });
+    const clicks = daily.reduce((total, row) => total + row.clicks, 0);
+    const impressions = daily.reduce((total, row) => total + row.impressions, 0);
+    return normalizeWebsiteBaseline({
+      ...DEV_BOOTSTRAP.websiteBaseline,
+      status: "completed",
+      passed: true,
+      collectedAt: new Date().toISOString(),
+      overallScore: 74,
+      metrics: {
+        ...DEV_BOOTSTRAP.websiteBaseline.metrics,
+        traffic: {
+          status: "measured",
+          verified: true,
+          score: 42,
+          googleSearchConsole: {
+            status: "measured",
+            siteUrl: "sc-domain:example.com",
+            last28Days: {
+              clicks,
+              impressions,
+              ctr: impressions ? clicks / impressions : 0,
+              position: 7.6,
+            },
+            last90Days: {
+              clicks: clicks * 3,
+              impressions: impressions * 3,
+              ctr: impressions ? clicks / impressions : 0,
+              position: 8.1,
+            },
+            daily,
+            topQueries: [
+              { keys: ["startup marketing automation"], clicks: 42, impressions: 620, ctr: 0.068, position: 5.9 },
+              { keys: ["content factory for founders"], clicks: 31, impressions: 540, ctr: 0.057, position: 7.3 },
+            ],
+            topPages: [
+              { keys: ["https://example.com/articles/startup-marketing"], clicks: 55, impressions: 780, ctr: 0.071, position: 6.2 },
+              { keys: ["https://example.com/articles/content-ops"], clicks: 28, impressions: 490, ctr: 0.057, position: 8.0 },
+            ],
+          },
+          googleAnalytics: {
+            status: "needs_connection",
+            message: "Select or provide a GA4 property ID to include verified user metrics.",
+          },
+        },
+      },
+      sourceStatus: {
+        ...DEV_BOOTSTRAP.websiteBaseline.sourceStatus,
+        traffic: "measured",
+        googleSearchConsole: "measured",
+        googleAnalytics: "needs_connection",
+      },
+    });
+  }
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/baseline/google-refresh`, body);
   return normalizeWebsiteBaseline(response.data?.websiteBaseline ?? response.data?.website_baseline);

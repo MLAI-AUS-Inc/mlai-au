@@ -7,7 +7,6 @@ import {
   ChartBarIcon,
   CheckCircleIcon,
   CodeBracketIcon,
-  ExclamationTriangleIcon,
   GlobeAltIcon,
   MagnifyingGlassIcon,
   PlayIcon,
@@ -21,12 +20,14 @@ import FounderStartupDetailsStep, {
   type StartupDetailsFormValues,
 } from "~/components/FounderStartupDetailsStep";
 import MarketingEvidencePanel from "~/components/MarketingEvidencePanel";
-import VibeMarketingStepper, { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
+import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
 import {
   connectVibeMarketingGithub,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
+  refreshVibeMarketingBaselineGoogle,
   saveVibeMarketingSettings,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
@@ -86,7 +87,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   const bootstrap = await getVibeMarketingBootstrap(env, request);
   const url = new URL(request.url);
   const activeStep = normalizeStep(url.searchParams.get("step"), bootstrap.currentGuidedStep);
-  return { bootstrap, activeStep };
+  return { bootstrap, activeStep, shouldRefreshGoogleBaseline: url.searchParams.get("googleBaseline") === "refresh" };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -105,13 +106,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
         location: stringFromForm(formData, "location"),
         abn: stringFromForm(formData, "abn"),
-        brandName: stringFromForm(formData, "brandName"),
         companyContext: stringFromForm(formData, "companyContext"),
         competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
         founderNames: listFromForm(formData.get("founderNames")),
         stage: stringFromForm(formData, "stage"),
-        notes: stringFromForm(formData, "notes"),
+        organizationKind: stringFromForm(formData, "organizationKind"),
         registered: true,
       });
       if (companyId) {
@@ -129,8 +129,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),
         location: stringFromForm(formData, "location"),
         abn: stringFromForm(formData, "abn"),
-        brandName: stringFromForm(formData, "brandName"),
-        brand_name: stringFromForm(formData, "brandName"),
+        organizationKind: stringFromForm(formData, "organizationKind"),
+        organization_kind: stringFromForm(formData, "organizationKind"),
         existingFields: {
           companyContext: stringFromForm(formData, "companyContext"),
           competitors: listFromForm(formData.get("competitors")),
@@ -147,6 +147,11 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-baseline") {
       const result = await startVibeMarketingBaseline(env, request, {});
       return { baselineRunId: result.runId, status: result.status };
+    }
+
+    if (intent === "refresh-baseline-google") {
+      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, {});
+      return { intent, websiteBaseline };
     }
 
     if (intent === "skip-baseline") {
@@ -254,7 +259,7 @@ function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (intent === "start-discovery") return "research";
   if (intent === "start-article") return "chooseArticle";
   if (intent === "save-startup-details" || intent === "start-autofill") return "startupDetails";
-  if (intent === "start-baseline" || intent === "skip-baseline") return "baseline";
+  if (intent === "start-baseline" || intent === "skip-baseline" || intent === "refresh-baseline-google") return "baseline";
   return null;
 }
 
@@ -308,6 +313,7 @@ function startupDefaultsFromBootstrap(bootstrap: VibeMarketingBootstrap): Startu
     seedKeywords: (bootstrap.organization.seedKeywords ?? []).join("\n"),
     founderNames: (bootstrap.startupProfile.founderNames ?? []).join(", "),
     stage: bootstrap.startupProfile.stage ?? "",
+    organizationKind: bootstrap.startupProfile.organizationKind ?? "",
     notes: bootstrap.startupProfile.notes ?? "",
   };
 }
@@ -618,7 +624,7 @@ function AutofillStatusCard({
   );
 }
 
-type AutofillApplyField = "brandName" | "companyContext" | "competitors" | "seedKeywords";
+type AutofillApplyField = "companyContext" | "competitors" | "seedKeywords";
 type AutofillApplyMode = "replace" | "append" | "keep";
 
 function ReviewActionButtons({
@@ -661,7 +667,6 @@ function AutofillReviewPanel({
   const autofill = extractAutofill(run);
   if (!autofill) return null;
   const preservedFields = [
-    !autofilledFields.includes("brandName") && !isBlank(values.brandName) && autofill.brandName ? "brand name" : null,
     !autofilledFields.includes("companyContext") && !isBlank(values.companyContext) && autofill.companyContext ? "company context" : null,
     !autofilledFields.includes("competitors") && !listTextIsBlank(values.competitors) && autofill.competitors?.length ? "competitors" : null,
     !autofilledFields.includes("seedKeywords") && !listTextIsBlank(values.seedKeywords) && autofill.seedKeywords?.length ? "seed keywords" : null,
@@ -741,13 +746,6 @@ function AutofillReviewPanel({
       {preservedFields.length ? (
         <div className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-xs font-bold text-amber-800">
           Existing {preservedFields.join(", ")} were kept. Use the actions below to replace, append, or keep each field before saving.
-        </div>
-      ) : null}
-      {!autofilledFields.includes("brandName") && !isBlank(values.brandName) && autofill.brandName ? (
-        <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-          <p className="text-xs font-black uppercase tracking-wide text-gray-500">Researched brand name</p>
-          <p className="mt-1 font-bold text-gray-950">{autofill.brandName}</p>
-          <ReviewActionButtons field="brandName" replaceLabel="Use researched brand" onApplyField={onApplyField} />
         </div>
       ) : null}
       {!autofilledFields.includes("companyContext") && !isBlank(values.companyContext) && autofill.companyContext ? (
@@ -907,6 +905,70 @@ function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetri
   return typeof metric?.message === "string" ? metric.message : null;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function recordsFrom(value: unknown): Record<string, unknown>[] {
+  return Array.isArray(value)
+    ? value.map(asRecord).filter((item): item is Record<string, unknown> => item !== null)
+    : [];
+}
+
+function recordNumber(record: Record<string, unknown> | null | undefined, key: string) {
+  return numericValue(record?.[key]) ?? 0;
+}
+
+function rowLabel(row: Record<string, unknown>) {
+  const keys = Array.isArray(row.keys) ? row.keys : [];
+  return String(keys[0] ?? row.page ?? row.query ?? row.date ?? "");
+}
+
+function formatInteger(value: unknown) {
+  return new Intl.NumberFormat("en-AU").format(Math.round(numericValue(value) ?? 0));
+}
+
+function formatPercent(value: unknown) {
+  const numberValue = numericValue(value) ?? 0;
+  const percent = Math.abs(numberValue) > 1 ? numberValue : numberValue * 100;
+  return `${percent.toFixed(1)}%`;
+}
+
+function formatPosition(value: unknown) {
+  const numberValue = numericValue(value);
+  return numberValue === undefined ? "—" : numberValue.toFixed(1);
+}
+
+function formatDateLabel(value: string) {
+  if (!value) return "";
+  const parsed = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path
+        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"
+        fill="#4285F4"
+      />
+      <path
+        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+        fill="#34A853"
+      />
+      <path
+        d="M5.84 14.09A6.6 6.6 0 0 1 5.49 12c0-.73.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+        fill="#FBBC05"
+      />
+      <path
+        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+        fill="#EA4335"
+      />
+    </svg>
+  );
+}
+
 function sourceStatusLabel(status?: string | null) {
   if (status === "measured") return "Verified";
   if (status === "needs_connection") return "Needs connection";
@@ -952,8 +1014,168 @@ function BaselineMetricCard({
   );
 }
 
+function SearchConsoleTrendChart({ rows }: { rows: Record<string, unknown>[] }) {
+  if (!rows.length) return null;
+  const width = 640;
+  const height = 180;
+  const padding = 18;
+  const clicks = rows.map((row) => recordNumber(row, "clicks"));
+  const impressions = rows.map((row) => recordNumber(row, "impressions"));
+  const clickMax = Math.max(1, ...clicks);
+  const impressionMax = Math.max(1, ...impressions);
+  const points = (values: number[], max: number) =>
+    values
+      .map((value, index) => {
+        const x = padding + (index * (width - padding * 2)) / Math.max(1, values.length - 1);
+        const y = height - padding - (value / max) * (height - padding * 2);
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+  const firstLabel = formatDateLabel(rowLabel(rows[0]));
+  const lastLabel = formatDateLabel(rowLabel(rows[rows.length - 1]));
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm font-black text-gray-950">Search performance trend</p>
+        <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-gray-500">
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#34A853]" />Clicks</span>
+          <span className="inline-flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-[#4285F4]" />Impressions</span>
+        </div>
+      </div>
+      <div className="mt-3 aspect-[16/5] w-full">
+        <svg viewBox={`0 0 ${width} ${height}`} className="h-full w-full" role="img" aria-label="Search Console clicks and impressions trend">
+          {[0, 1, 2, 3].map((line) => {
+            const y = padding + (line * (height - padding * 2)) / 3;
+            return <line key={line} x1={padding} x2={width - padding} y1={y} y2={y} stroke="#E5E7EB" strokeWidth="1" />;
+          })}
+          <polyline points={points(impressions, impressionMax)} fill="none" stroke="#4285F4" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <polyline points={points(clicks, clickMax)} fill="none" stroke="#34A853" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </div>
+      {firstLabel || lastLabel ? (
+        <div className="mt-2 flex justify-between text-xs font-bold text-gray-400">
+          <span>{firstLabel}</span>
+          <span>{lastLabel}</span>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function SearchConsoleRowsTable({
+  title,
+  rows,
+  emptyLabel,
+}: {
+  title: string;
+  rows: Record<string, unknown>[];
+  emptyLabel: string;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4">
+      <p className="text-sm font-black text-gray-950">{title}</p>
+      {rows.length ? (
+        <div className="mt-3 overflow-hidden rounded-lg border border-gray-100">
+          <table className="min-w-full divide-y divide-gray-100 text-left text-xs">
+            <thead className="bg-gray-50 text-[11px] font-black uppercase text-gray-400">
+              <tr>
+                <th className="px-3 py-2">Item</th>
+                <th className="px-3 py-2 text-right">Clicks</th>
+                <th className="px-3 py-2 text-right">Impressions</th>
+                <th className="px-3 py-2 text-right">CTR</th>
+                <th className="px-3 py-2 text-right">Position</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 bg-white">
+              {rows.slice(0, 6).map((row, index) => (
+                <tr key={`${rowLabel(row)}-${index}`}>
+                  <td className="max-w-[260px] truncate px-3 py-2 font-bold text-gray-700">{rowLabel(row) || "—"}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-600">{formatInteger(row.clicks)}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-600">{formatInteger(row.impressions)}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-600">{formatPercent(row.ctr)}</td>
+                  <td className="px-3 py-2 text-right font-semibold text-gray-600">{formatPosition(row.position)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500">{emptyLabel}</p>
+      )}
+    </div>
+  );
+}
+
+function SearchConsolePanel({ traffic }: { traffic?: VibeMarketingWebsiteBaselineMetric }) {
+  const searchConsole = asRecord(traffic?.googleSearchConsole);
+  if (!searchConsole || searchConsole.status !== "measured") return null;
+  const summary = asRecord(searchConsole.last28Days) ?? {};
+  const dailyRows = recordsFrom(searchConsole.daily);
+  const topQueries = recordsFrom(searchConsole.topQueries);
+  const topPages = recordsFrom(searchConsole.topPages);
+  const analytics = asRecord(traffic?.googleAnalytics);
+  const analyticsSummary = asRecord(analytics?.last28Days);
+  const hasAnalytics = analytics?.status === "measured" && analyticsSummary;
+
+  return (
+    <div className="space-y-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-base font-black text-gray-950">Google Search Console</p>
+          <p className="text-xs font-semibold text-gray-500">{String(searchConsole.siteUrl ?? "Verified property")}</p>
+        </div>
+        <SourceStatusBadge status="measured" />
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-black uppercase text-gray-400">Clicks</p>
+          <p className="mt-2 text-2xl font-black text-gray-950">{formatInteger(summary.clicks)}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-black uppercase text-gray-400">Impressions</p>
+          <p className="mt-2 text-2xl font-black text-gray-950">{formatInteger(summary.impressions)}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-black uppercase text-gray-400">CTR</p>
+          <p className="mt-2 text-2xl font-black text-gray-950">{formatPercent(summary.ctr)}</p>
+        </div>
+        <div className="rounded-xl border border-gray-200 bg-white p-4">
+          <p className="text-xs font-black uppercase text-gray-400">Avg position</p>
+          <p className="mt-2 text-2xl font-black text-gray-950">{formatPosition(summary.position)}</p>
+        </div>
+      </div>
+
+      <SearchConsoleTrendChart rows={dailyRows} />
+
+      <div className="grid gap-3 xl:grid-cols-2">
+        <SearchConsoleRowsTable title="Top queries" rows={topQueries} emptyLabel="No query rows returned." />
+        <SearchConsoleRowsTable title="Top pages" rows={topPages} emptyLabel="No page rows returned." />
+      </div>
+
+      {hasAnalytics ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-xs font-black uppercase text-gray-400">Active users</p>
+            <p className="mt-2 text-2xl font-black text-gray-950">{formatInteger(analyticsSummary.activeUsers)}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-xs font-black uppercase text-gray-400">Sessions</p>
+            <p className="mt-2 text-2xl font-black text-gray-950">{formatInteger(analyticsSummary.sessions)}</p>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-white p-4">
+            <p className="text-xs font-black uppercase text-gray-400">Engagement</p>
+            <p className="mt-2 text-2xl font-black text-gray-950">{formatPercent(analyticsSummary.engagementRate)}</p>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, activeStep } = useLoaderData<typeof loader>();
+  const { bootstrap, activeStep, shouldRefreshGoogleBaseline } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const latestActionIntent = actionDataIntent(actionData);
   const latestActionError = actionDataError(actionData);
@@ -967,6 +1189,7 @@ export default function FounderToolsMarketingCreate() {
   const autofillRunFetcher = useFetcher<VibeMarketingRunSummary>();
   const baselineStartFetcher = useFetcher<{ baselineRunId?: string | null; status?: string; error?: string }>();
   const baselineRunFetcher = useFetcher<VibeMarketingRunSummary>();
+  const googleBaselineFetcher = useFetcher<{ intent?: string; websiteBaseline?: VibeMarketingWebsiteBaseline; error?: string }>();
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const startupDefaults = useMemo(() => startupDefaultsFromBootstrap(bootstrap), [bootstrap]);
@@ -984,9 +1207,10 @@ export default function FounderToolsMarketingCreate() {
   const [autofillRunId, setAutofillRunId] = useState<string | null>(null);
   const [autofillRequestSnapshot, setAutofillRequestSnapshot] = useState<StartupDetailsFormValues | null>(null);
   const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
+  const [googleBaseline, setGoogleBaseline] = useState<VibeMarketingWebsiteBaseline | null>(null);
   const [appliedAutofillRunId, setAppliedAutofillRunId] = useState<string | null>(null);
   const [autofilledFields, setAutofilledFields] = useState<StartupDetailsField[]>([]);
-  const completedSteps = bootstrap.guidedSteps.filter((step) => step.passed).map((step) => step.key);
+  const googleAutoRefreshSubmittedRef = useRef(false);
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
@@ -999,12 +1223,19 @@ export default function FounderToolsMarketingCreate() {
   const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
   const autofillPending = autofillStartFetcher.state !== "idle";
   const baselinePending = baselineStartFetcher.state !== "idle";
+  const googleBaselinePending = googleBaselineFetcher.state !== "idle";
   const autofillPolling = Boolean(autofillRunId && (!autofillRun || ["queued", "running"].includes(autofillRun.status)));
   const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
   const canStartAutofill = Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) && !autofillPending && !autofillPolling;
-  const effectiveBaseline = baselineFromRun(baselineRun) ?? bootstrap.websiteBaseline;
+  const effectiveBaseline = googleBaseline ?? baselineFromRun(baselineRun) ?? bootstrap.websiteBaseline;
   const baselineMetrics = effectiveBaseline.metrics ?? {};
   const canStartBaseline = Boolean(bootstrap.organization.domain || startupValues.domain.trim()) && !baselinePending && !baselinePolling;
+  const trafficMetric = baselineMetrics.traffic;
+  const trafficStatus = metricStatus("Traffic/users", trafficMetric);
+  const hasGoogleBaselineScopes = Boolean(bootstrap.googleBaselineConnection?.hasBaselineScopes);
+  const canRefreshGoogleBaseline = hasGoogleBaselineScopes && effectiveBaseline.status !== "missing" && !googleBaselinePending;
+  const googleBaselineButtonLabel =
+    trafficStatus === "measured" ? "Refresh Search Console data" : "Load Search Console data";
   const startAutofill = () => {
     const snapshot = { ...startupValues };
     setAutofillRequestSnapshot(snapshot);
@@ -1016,16 +1247,21 @@ export default function FounderToolsMarketingCreate() {
     autofillStartFetcher.submit(formData, { method: "POST" });
   };
   const startBaseline = () => {
+    setGoogleBaseline(null);
     const formData = new FormData();
     formData.set("intent", "start-baseline");
     baselineStartFetcher.submit(formData, { method: "POST" });
+  };
+  const refreshGoogleBaseline = () => {
+    const formData = new FormData();
+    formData.set("intent", "refresh-baseline-google");
+    googleBaselineFetcher.submit(formData, { method: "POST" });
   };
   const applyAutofillField = (field: AutofillApplyField, mode: AutofillApplyMode) => {
     if (mode === "keep") return;
     const autofill = extractAutofill(autofillRun);
     if (!autofill) return;
     const researchedValues: Record<AutofillApplyField, string> = {
-      brandName: autofill.brandName ?? "",
       companyContext: autofill.companyContext ?? "",
       competitors: (autofill.directCompetitors?.length ? autofill.directCompetitors : autofill.competitorSuggestions ?? [])
         .map((competitor) => competitor.domain || competitor.name)
@@ -1056,7 +1292,9 @@ export default function FounderToolsMarketingCreate() {
     setAutofilledFields([]);
     setAutofillRunId(null);
     setBaselineRunId(null);
+    setGoogleBaseline(null);
     setAppliedAutofillRunId(null);
+    googleAutoRefreshSubmittedRef.current = false;
   }, [activeCompanyKey, startupDefaults, startupDefaultsSignature]);
 
   useEffect(() => {
@@ -1070,8 +1308,22 @@ export default function FounderToolsMarketingCreate() {
   useEffect(() => {
     if (baselineStartData?.baselineRunId) {
       setBaselineRunId(baselineStartData.baselineRunId);
+      setGoogleBaseline(null);
     }
   }, [baselineStartData?.baselineRunId]);
+
+  useEffect(() => {
+    if (googleBaselineFetcher.data?.websiteBaseline) {
+      setGoogleBaseline(googleBaselineFetcher.data.websiteBaseline);
+    }
+  }, [googleBaselineFetcher.data?.websiteBaseline]);
+
+  useEffect(() => {
+    if (!shouldRefreshGoogleBaseline || googleAutoRefreshSubmittedRef.current) return;
+    if (activeStep !== "baseline" || !hasGoogleBaselineScopes || googleBaselinePending) return;
+    googleAutoRefreshSubmittedRef.current = true;
+    refreshGoogleBaseline();
+  }, [activeStep, googleBaselinePending, hasGoogleBaselineScopes, shouldRefreshGoogleBaseline]);
 
   useEffect(() => {
     if (!autofillRunId) return;
@@ -1108,10 +1360,6 @@ export default function FounderToolsMarketingCreate() {
     setStartupValues((current) => {
       const updates: Partial<StartupDetailsFormValues> = {};
       const applied: StartupDetailsField[] = [];
-      if (isBlank(current.brandName) && autofill.brandName) {
-        updates.brandName = autofill.brandName;
-        applied.push("brandName");
-      }
       if (isBlank(current.companyContext) && autofill.companyContext) {
         updates.companyContext = autofill.companyContext;
         applied.push("companyContext");
@@ -1132,7 +1380,11 @@ export default function FounderToolsMarketingCreate() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <VibeMarketingStepper activeStep={activeStep} completedSteps={completedSteps} />
+      <MarketingWorkflowShell
+        progress={bootstrap.workflowProgress}
+        title="Create and publish article"
+        isSubmitting={isSubmitting}
+      />
 
       {topActionError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -1163,6 +1415,7 @@ export default function FounderToolsMarketingCreate() {
                     seedKeywords: bootstrap.organization.seedKeywords,
                     founderNames: bootstrap.startupProfile.founderNames,
                     stage: bootstrap.startupProfile.stage,
+                    organizationKind: bootstrap.startupProfile.organizationKind,
                     notes: bootstrap.startupProfile.notes,
                   }}
                   values={startupValues}
@@ -1239,6 +1492,34 @@ export default function FounderToolsMarketingCreate() {
                         {baselinePending || baselinePolling ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ChartBarIcon className="h-4 w-4" />}
                         {effectiveBaseline.overallScore === null || effectiveBaseline.status === "missing" ? "Run baseline" : "Rerun baseline"}
                       </button>
+                      {hasGoogleBaselineScopes ? (
+                        <button
+                          type="button"
+                          onClick={refreshGoogleBaseline}
+                          disabled={!canRefreshGoogleBaseline}
+                          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                        >
+                          {googleBaselinePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                          {googleBaselinePending ? "Loading Search Console..." : googleBaselineButtonLabel}
+                        </button>
+                      ) : bootstrap.googleBaselineConnection?.connectUrl ? (
+                        <a
+                          href={bootstrap.googleBaselineConnection.connectUrl}
+                          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-800 shadow-sm transition hover:bg-gray-50"
+                        >
+                          <GoogleIcon />
+                          Connect Google Search Console
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled
+                          className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-500 shadow-sm opacity-50"
+                        >
+                          <GoogleIcon />
+                          Connect Google Search Console
+                        </button>
+                      )}
                       <Form method="POST">
                         <input type="hidden" name="intent" value="skip-baseline" />
                         <input type="hidden" name="reason" value="Skipped during onboarding" />
@@ -1251,6 +1532,11 @@ export default function FounderToolsMarketingCreate() {
                   {baselineStartData?.error ? (
                     <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                       {baselineStartData.error}
+                    </div>
+                  ) : null}
+                  {googleBaselineFetcher.data?.error ? (
+                    <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                      {googleBaselineFetcher.data.error}
                     </div>
                   ) : null}
                   {baselineRunId ? (
@@ -1283,25 +1569,10 @@ export default function FounderToolsMarketingCreate() {
                   <BaselineMetricCard label="Organic search" metric={baselineMetrics.organicSearch} />
                   <BaselineMetricCard label="AI visibility" metric={baselineMetrics.aiVisibility} />
                   <BaselineMetricCard label="Authority" metric={baselineMetrics.authority} />
-                  <BaselineMetricCard label="Traffic/users" metric={baselineMetrics.traffic} />
+                  <BaselineMetricCard label="Traffic/users" metric={trafficMetric} />
                 </div>
 
-                {bootstrap.googleBaselineConnection?.hasBaselineScopes ? null : (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                    <div className="flex items-start gap-3">
-                      <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-none text-amber-600" />
-                      <div>
-                        <p className="font-black">Verified traffic needs Google</p>
-                        <p className="mt-1 font-semibold">Connect Search Console or GA4 to add clicks, impressions, average position, and active users.</p>
-                        {bootstrap.googleBaselineConnection?.connectUrl ? (
-                          <a href={bootstrap.googleBaselineConnection.connectUrl} className="mt-3 inline-flex rounded-lg bg-white px-3 py-2 text-xs font-black text-amber-800 ring-1 ring-amber-200">
-                            Connect Google
-                          </a>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                <SearchConsolePanel traffic={trafficMetric} />
 
                 {effectiveBaseline.recommendations?.length ? (
                   <div className="rounded-xl border border-gray-200 bg-white p-4">
