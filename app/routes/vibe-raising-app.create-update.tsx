@@ -1,18 +1,23 @@
-import { Form, Link, useActionData, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
-import React, { useState, useCallback, useEffect, useRef } from "react";
+import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
+import React, { startTransition, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
+import { getEnv } from "~/lib/env.server";
 import {
-    requireFounder,
-    getActiveCompany,
-    createVibeRaisingPublishedUpdateCookie,
-    createVibeRaisingSubmittedCookie,
-    VIBE_RAISING_APP_PATH,
-    VIBE_RAISING_COMPANY_SETUP_PATH,
-    type PublishedVibeRaisingUpdate,
-} from "~/lib/vibe-raising-session";
+    cancelVibeRaisingStartupUpdate,
+    requireVibeRaisingFounder,
+    bootstrapVibeRaisingStartupUpdate,
+    getVibeRaisingMonthlyUpdates,
+    getVibeRaisingStartupUpdateActiveRun,
+    getVibeRaisingStartupUpdateDraftResults,
+    getVibeRaisingStartupUpdateStatus,
+    runVibeRaisingStartupUpdate,
+    saveVibeRaisingMonthlyUpdate,
+    uploadVibeRaisingUpdateVideo,
+} from "~/lib/vibe-raising";
 import {
     XMarkIcon,
     SparklesIcon,
+    ArrowPathIcon,
     CloudArrowUpIcon,
     ChevronDownIcon,
     LightBulbIcon,
@@ -24,73 +29,130 @@ import {
     ChartBarIcon,
     UsersIcon,
     FireIcon,
+    ArrowRightIcon,
     BanknotesIcon,
     InformationCircleIcon,
-    PlusIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
+import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
+import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
-import {
-    getVibeRaisingMonthTheme,
-    parseVibeRaisingMonthYear,
-    VibeRaisingDateTabs,
-    VIBE_RAISING_MONTH_OPTIONS,
-} from "~/components/VibeRaisingDateTabs";
+import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import type {
+    VibeRaisingInputSourceKey,
+    VibeRaisingMetricSuggestion,
+    VibeRaisingMonthlyUpdate,
+    VibeRaisingStartupUpdateStatusResponse,
+    VibeRaisingVideoCompressionMetadata,
+} from "~/types/vibe-raising";
 
-function formatMetricValue(value: string | null, prefix = "", suffix = ""): string {
-    const trimmedValue = value?.trim() || "";
-    if (!trimmedValue) return "";
-    return `${prefix}${trimmedValue}${suffix}`;
+const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
+    "gmail",
+    "stripe",
+    "xero",
+    "bank_feed",
+    "notion",
+    "google_drive",
+    "slack",
+    "linear",
+]);
+
+const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
+    gmail: "Gmail",
+    stripe: "Stripe",
+    xero: "Xero",
+    bank_feed: "Bank Feed",
+    notion: "Notion",
+    google_drive: "Google Drive",
+    slack: "Slack",
+    linear: "Linear",
+};
+
+const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
+const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
+
+function readStoredManualMaterials(): { summary: string; sourceUrl: string } {
+    if (typeof window === "undefined") return { summary: "", sourceUrl: "" };
+    try {
+        const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
+        if (!raw) return { summary: "", sourceUrl: "" };
+        const parsed = JSON.parse(raw) as { summary?: unknown; sourceUrl?: unknown };
+        return {
+            summary: typeof parsed.summary === "string" ? parsed.summary : "",
+            sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
+        };
+    } catch {
+        return { summary: "", sourceUrl: "" };
+    }
 }
 
-function buildPublishedUpdate(formData: FormData, companyId: string): PublishedVibeRaisingUpdate {
-    const month = formData.get("month")?.toString().trim() || "Update";
-    const year = formData.get("year")?.toString().trim() || new Date().getFullYear().toString();
-    const date = new Date().toISOString();
-    const rawVideoUrl = formData.get("videoUrl")?.toString().trim() || "";
-    const videoUrl = rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : undefined;
-
-    return {
-        id: `published-${companyId}-${Date.now()}`,
-        month: `${month} ${year}`,
-        date,
-        score: formData.get("grade")?.toString().trim() || "A+",
-        summary: formData.get("summary")?.toString().trim() || "",
-        sourceUrl: formData.get("sourceUrl")?.toString().trim() || "",
-        videoUrl,
-        metrics: {
-            revenue: formatMetricValue(formData.get("revenue")?.toString() || "", "$"),
-            users: formatMetricValue(formData.get("activeUsers")?.toString() || ""),
-            mrr: formatMetricValue(formData.get("mrr")?.toString() || "", "$"),
-            burnRate: formatMetricValue(formData.get("burnRate")?.toString() || "", "$"),
-            runway: formatMetricValue(formData.get("runway")?.toString() || ""),
-        },
-        highlights: formData.get("highlights")?.toString() || "",
-        challenges: formData.get("challenges")?.toString() || "",
-        asks: formData.get("asks")?.toString() || "",
-        likes: 0,
-        comments: 0,
-        investorsSentTo: 12,
-        investorsViewed: 0,
-        isCurrent: true,
-    };
+function parseInputSources(value: string | null): VibeRaisingInputSourceKey[] {
+    if (!value) return [];
+    const seen = new Set<VibeRaisingInputSourceKey>();
+    value
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .forEach((item) => {
+            if (VALID_INPUT_SOURCE_KEYS.has(item as VibeRaisingInputSourceKey)) {
+                seen.add(item as VibeRaisingInputSourceKey);
+            }
+        });
+    return Array.from(seen);
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = requireFounder(request);
+function getMonthlyUpdateKey(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return "";
+    return `${parsedYear}-${String(monthIndex + 1).padStart(2, "0")}`;
+}
+
+function getMonthlyUpdateIsoMonth(month: string, year: number | string) {
+    const key = getMonthlyUpdateKey(month, year);
+    return key ? `${key}-01` : "";
+}
+
+function isFutureMonthlyUpdate(month: string, year: number | string) {
+    const monthIndex = VIBE_RAISING_MONTH_OPTIONS.findIndex((option) => option.name === month);
+    const parsedYear = Number(year);
+    if (monthIndex < 0 || !Number.isFinite(parsedYear)) return true;
+    const now = new Date();
+    return parsedYear > now.getFullYear() || (parsedYear === now.getFullYear() && monthIndex > now.getMonth());
+}
+
+function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
+    const isoMonth = String(update.isoMonth || "").trim();
+    const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
+    if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}`;
+
+    if (update.monthName && update.year) {
+        return getMonthlyUpdateKey(update.monthName, update.year);
+    }
+
+    const parsed = parseVibeRaisingMonthYear(update.month);
+    return getMonthlyUpdateKey(parsed.month, parsed.year);
+}
+
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
 
     // Require company registration before creating updates
     if (!user.companyRegistered) {
-        throw redirect(VIBE_RAISING_COMPANY_SETUP_PATH);
+        throw redirect("/founder-tools/company-setup");
     }
 
     // Check for edit mode
     const url = new URL(request.url);
     const editId = url.searchParams.get("edit");
+    const resumeEmailDrafting =
+        url.searchParams.get("email_draft") === "1" ||
+        url.searchParams.get("draft_from_email") === "1";
+    const selectedInputSources = parseInputSources(url.searchParams.get("inputs"));
 
     let existingData = null;
     if (editId) {
@@ -103,15 +165,28 @@ export async function loader({ request }: Route.LoaderArgs) {
             activeUsers: "3420",
             highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
             challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket."
+            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
+            learnings: "Enterprise buyers care most about implementation speed once the security review is complete.",
+            next30Days: "Reduce onboarding time to 10 days and close two more enterprise pilots."
         };
     }
 
-    return { user, existingData, isEdit: !!editId };
+    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request);
+
+    return {
+        user,
+        existingData,
+        isEdit: !!editId,
+        backendBaseUrl: String(env.BACKEND_BASE_URL || DEFAULT_BACKEND_BASE_URL),
+        resumeEmailDrafting,
+        selectedInputSources,
+        existingMonthlyUpdates,
+    };
 }
 
-export async function action({ request }: Route.ActionArgs) {
-    const user = requireFounder(request);
+export async function action({ request, context }: Route.ActionArgs) {
+    const env = getEnv(context);
+    const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const formData = await request.formData();
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
@@ -138,15 +213,41 @@ export async function action({ request }: Route.ActionArgs) {
     }
 
     if (intent === "publish") {
-        console.log("Publishing update:", updates);
-        const company = getActiveCompany(user);
-        const publishedUpdate = buildPublishedUpdate(formData, company.id);
-        const headers = new Headers();
-        headers.append("Set-Cookie", createVibeRaisingSubmittedCookie(company.id));
-        headers.append("Set-Cookie", createVibeRaisingPublishedUpdateCookie(company.id, publishedUpdate));
-        return redirect(VIBE_RAISING_APP_PATH, {
-            headers,
+        const dynamicMetricKeys = String(formData.get("metricKeys") || "")
+            .split(",")
+            .map((key) => key.trim())
+            .filter((key) => key && METRIC_OPTION_MAP.has(key));
+        const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
+        const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
+        const metrics = Object.fromEntries(
+            metricKeys
+                .map((key) => [key, String(formData.get(key) || "").trim()] as const)
+                .filter(([, value]) => value.length > 0),
+        );
+        const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
+        const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
+        const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
+
+        await saveVibeRaisingMonthlyUpdate(env, request, {
+            month: String(formData.get("month") || "").trim(),
+            year: Number(formData.get("year") || 0),
+            summary: String(formData.get("summary") || "").trim() || null,
+            sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
+            videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
+            videoStoragePath: String(formData.get("videoStoragePath") || "").trim() || null,
+            videoContentType: String(formData.get("videoContentType") || "").trim() || null,
+            videoFileSizeBytes: Number.isFinite(rawVideoFileSizeBytes) && rawVideoFileSizeBytes > 0 ? rawVideoFileSizeBytes : null,
+            videoOriginalFilename: String(formData.get("videoOriginalFilename") || "").trim() || null,
+            highlights: String(formData.get("highlights") || ""),
+            challenges: String(formData.get("challenges") || ""),
+            asks: String(formData.get("asks") || ""),
+            learnings: String(formData.get("learnings") || ""),
+            next30Days: String(formData.get("next30Days") || ""),
+            metrics,
+            metricSuggestions,
         });
+
+        return redirect("/founder-tools/updates");
     }
 
     return null;
@@ -162,29 +263,87 @@ interface MetricOption {
     info?: string;
 }
 
-interface CustomMetric {
-    key: string;
-    label: string;
-    prefix: string;
-    value: string;
-}
-
-interface SectionWithExampleProps {
-    label: string;
-    name: string;
-    placeholder: string;
-    icon: React.ElementType<{ className?: string }>;
-    value: string;
-    onChange?: (value: string) => void;
-    rows?: number;
-}
-
 const METRIC_OPTIONS: MetricOption[] = [
     { key: "revenue", label: "Revenue (AUD)", placeholder: "50,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Your total income this month." },
-    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of unique users who engaged with your product." },
-    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly Recurring Revenue - the predictable revenue your business expects every month." },
-    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "The rate at which your company is spending its capital reserves to finance overhead." },
+    { key: "activeUsers", label: "Active Users", placeholder: "1,500", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Unique users who engaged with your product this month." },
+    { key: "mrr", label: "MRR (AUD)", placeholder: "10,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Monthly recurring revenue from active subscriptions." },
+    { key: "burnRate", label: "Burn Rate (AUD)", placeholder: "20,000", prefix: "$", icon: <FireIcon className="w-4 h-4 text-gray-400" />, info: "How much capital the company is spending per month." },
+    { key: "runway", label: "Runway", placeholder: "18 months", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Estimated time before the company needs more funding." },
+    { key: "monthlyCosts", label: "Costs (AUD)", placeholder: "25,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Total monthly costs from Xero Profit and Loss expense rows." },
+    { key: "invoiceRevenue", label: "Invoice Revenue", placeholder: "45,000", prefix: "$", icon: <CurrencyDollarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice revenue from accounting data." },
+    { key: "cashCollected", label: "Cash Collected", placeholder: "42,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Cash received from accounting payments." },
+    { key: "revenueGrowthRate", label: "Revenue Growth", placeholder: "12%", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Month-on-month revenue or MRR growth when source data supports it." },
+    { key: "customerCount", label: "Customers", placeholder: "24", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Number of active or paying customers when source data supports it." },
+    { key: "churn", label: "Churn", placeholder: "2%", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Customer or revenue churn when source data supports it." },
+    { key: "invoiceCount", label: "Invoices", placeholder: "12", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Sales invoice count or invoices sent this month." },
+    { key: "recurringInvoiceCount", label: "Recurring Invoices", placeholder: "6", icon: <ArrowPathIcon className="w-4 h-4 text-gray-400" />, info: "Active recurring invoice count from accounting data." },
+    { key: "websiteVisitors", label: "Website Visitors", placeholder: "1,200", icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />, info: "Visitors to the company website this month." },
+    { key: "waitlistSignups", label: "Waitlist Signups", placeholder: "85", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "People who joined the waitlist this month." },
+    { key: "demoRequests", label: "Demo Requests", placeholder: "14", icon: <ArrowRightIcon className="w-4 h-4 text-gray-400" />, info: "Inbound requests to see or try the product." },
+    { key: "customerInterviews", label: "Customer Interviews", placeholder: "10", icon: <UsersIcon className="w-4 h-4 text-gray-400" />, info: "Potential or current customers interviewed this month." },
+    { key: "experimentsRun", label: "Experiments Run", placeholder: "4", icon: <LightBulbIcon className="w-4 h-4 text-gray-400" />, info: "Validation, growth, product, or pricing experiments completed." },
+    { key: "pilotCount", label: "Pilots", placeholder: "3", icon: <SparklesIcon className="w-4 h-4 text-gray-400" />, info: "Active pilots, design partners, or trials." },
+    { key: "qualifiedPipeline", label: "Qualified Pipeline", placeholder: "250,000", prefix: "$", icon: <BanknotesIcon className="w-4 h-4 text-gray-400" />, info: "Qualified sales pipeline with customer intent." },
 ];
+
+const METRIC_OPTION_MAP = new Map(METRIC_OPTIONS.map((option) => [option.key, option]));
+const METRIC_FORM_KEYS = METRIC_OPTIONS.map((option) => option.key);
+
+function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
+    const keys = Object.keys(metrics || {}).filter((key) => String(metrics?.[key] || "").trim());
+    return METRIC_OPTIONS.filter((option) => keys.includes(option.key));
+}
+
+function getMetricOptionsForDisplay(metrics?: Record<string, string>) {
+    return getMetricOptionsForMetrics(metrics);
+}
+
+function getEditableMetricOptions(metrics?: Record<string, string>, selected?: Set<string>) {
+    return METRIC_OPTIONS.filter((option) => {
+        const hasKnownValue = Object.prototype.hasOwnProperty.call(metrics || {}, option.key);
+        const isSelected = selected?.has(option.key) ?? false;
+        return hasKnownValue || isSelected || METRIC_OPTION_MAP.has(option.key);
+    });
+}
+
+function metricKeysFromSuggestions(suggestions?: VibeRaisingMetricSuggestion[]) {
+    return (suggestions || [])
+        .map((suggestion) => suggestion.metricKey)
+        .filter((key) => METRIC_OPTION_MAP.has(key));
+}
+
+function metricSuggestionsFromKeys(keys: string[], metrics: Record<string, string>) {
+    const suggestions: VibeRaisingMetricSuggestion[] = [];
+    const seen = new Set<string>();
+    keys.forEach((key) => {
+        if (seen.has(key) || !METRIC_OPTION_MAP.has(key) || String(metrics[key] || "").trim()) return;
+        seen.add(key);
+        const option = METRIC_OPTION_MAP.get(key);
+        suggestions.push({ metricKey: key, label: option?.label || key, reason: "" });
+    });
+    return suggestions;
+}
+
+function metricOptionsFromKeys(keys: string[]) {
+    const selected = new Set(keys.filter((key) => METRIC_OPTION_MAP.has(key)));
+    return METRIC_OPTIONS.filter((option) => selected.has(option.key));
+}
+
+function MetricInfoBadge({ info }: { info?: string }) {
+    if (!info) return null;
+
+    return (
+        <div className="group absolute right-1.5 top-1.5">
+            <div className="cursor-help text-gray-300 transition-colors hover:text-gray-500">
+                <InformationCircleIcon className="h-3.5 w-3.5" />
+            </div>
+            <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-48 translate-y-1 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+                {info}
+                <div className="absolute right-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900" />
+            </div>
+        </div>
+    );
+}
 
 function MonthYearTabs({
     month,
@@ -226,11 +385,9 @@ function MonthYearTabs({
 
         const closeOnOutsideClick = (event: MouseEvent) => {
             const target = event.target as Node;
-
             if (isMonthMenuOpen && !monthMenuRef.current?.contains(target)) {
                 setIsMonthMenuOpen(false);
             }
-
             if (isYearMenuOpen && !yearMenuRef.current?.contains(target)) {
                 setIsYearMenuOpen(false);
             }
@@ -253,11 +410,11 @@ function MonthYearTabs({
     }, [isMonthMenuOpen, isYearMenuOpen]);
 
     return (
-        <div className="absolute -top-3 left-4 z-20 flex items-stretch gap-2">
-            <div ref={monthMenuRef} className="relative w-[360px] sm:w-[470px]">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
+            <div ref={monthMenuRef} className="relative min-w-0 flex-1">
                 <div
                     className={clsx(
-                        "relative z-10 flex w-full text-base font-black uppercase tracking-[0.12em] text-white shadow-xl ring-1 ring-white/30 transition-all duration-150",
+                        "relative z-10 flex w-full overflow-hidden text-sm font-black uppercase tracking-[0.12em] text-white shadow-xl ring-1 ring-white/30 transition-all duration-150",
                         isMonthMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
                         monthTheme.tabClass,
                     )}
@@ -271,7 +428,7 @@ function MonthYearTabs({
                             setIsMonthMenuOpen((current) => !current);
                         }}
                         className={clsx(
-                            "flex min-w-0 flex-1 items-center justify-between gap-4 px-5 py-3 text-left transition-colors",
+                            "flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-left transition-colors",
                             isDateEditable ? "cursor-pointer hover:bg-white/10" : "cursor-default",
                         )}
                         aria-label="Select update month"
@@ -280,7 +437,7 @@ function MonthYearTabs({
                     >
                         <span className="min-w-0 flex-1 truncate">{month}</span>
                         {statusLabel && (
-                            <span className="shrink-0 text-[10px] font-medium normal-case tracking-normal text-white/75">
+                            <span className="hidden shrink-0 text-[10px] font-medium normal-case tracking-normal text-white/75 sm:inline">
                                 {statusLabel}
                             </span>
                         )}
@@ -292,14 +449,13 @@ function MonthYearTabs({
                         <div className="flex shrink-0 items-stretch border-l border-white/30 text-xs tracking-[0.16em]">
                             {visibleSecondaryMonths.map((period) => {
                                 const periodTheme = getVibeRaisingMonthTheme(period.month);
-
                                 return (
                                     <button
                                         key={period.key}
                                         type="button"
                                         onClick={() => onPeriodChange?.(period.key)}
                                         className={clsx(
-                                            "flex min-w-[58px] items-center justify-center px-3 font-black text-white/90 transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70",
+                                            "flex min-w-[48px] items-center justify-center px-2 font-black text-white/90 transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:min-w-[58px] sm:px-3",
                                             periodTheme.tabClass,
                                         )}
                                     >
@@ -318,8 +474,8 @@ function MonthYearTabs({
                             >
                                 i
                             </button>
-                            <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-72 translate-y-1 rounded-2xl bg-gray-950 px-4 py-3 text-left text-[11px] font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-2xl shadow-black/25 ring-1 ring-white/10 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100">
-                                We generated three months for you: the current month and the two earlier months. Click any month button to check and edit that update.
+                            <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-64 translate-y-1 rounded-2xl bg-gray-950 px-4 py-3 text-left text-[11px] font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-2xl shadow-black/25 ring-1 ring-white/10 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-72">
+                                We generated the current month and earlier months from Gmail. Click any month button to check and edit that update.
                                 <div className="absolute right-4 top-0 h-3 w-3 -translate-y-1.5 rotate-45 bg-gray-950" />
                             </div>
                         </div>
@@ -337,7 +493,6 @@ function MonthYearTabs({
                     <div role="listbox" aria-label="Update month" className="max-h-80 overflow-y-auto py-1">
                         {VIBE_RAISING_MONTH_OPTIONS.map((option) => {
                             const isSelected = option.name === month;
-
                             return (
                                 <button
                                     key={option.name}
@@ -365,7 +520,7 @@ function MonthYearTabs({
                 </div>
             </div>
 
-            <div ref={yearMenuRef} className="relative min-w-[108px]">
+            <div ref={yearMenuRef} className="relative sm:min-w-[108px]">
                 <div
                     className={clsx(
                         "relative z-10 flex h-full items-center overflow-hidden bg-gray-950 text-white shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-150",
@@ -406,7 +561,6 @@ function MonthYearTabs({
                     <div role="listbox" aria-label="Update year" className="max-h-72 overflow-y-auto py-1">
                         {yearOptions.map((optionYear) => {
                             const isSelected = optionYear === year;
-
                             return (
                                 <button
                                     key={optionYear}
@@ -435,13 +589,384 @@ function MonthYearTabs({
     );
 }
 
+const EMAIL_DRAFT_POLL_INTERVAL_MS = 5000;
+const EMAIL_DRAFT_POLL_BACKOFF_MS = 10000;
+
+type PersistedEmailDraftRun = {
+    runId: string;
+    domain: string;
+    bindingId?: number | null;
+    googleConnectionId?: number | null;
+};
+
+type RecordedMediaKind = "video" | "audio";
+type VideoUploadStatus = "idle" | "validating" | "compressing" | "creating_session" | "uploading" | "finalizing" | "ready" | "error";
+
+const MAX_VIDEO_UPLOAD_BYTES = 250 * 1024 * 1024;
+const MAX_SOURCE_VIDEO_BYTES = 750 * 1024 * 1024;
+const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
+const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+const SUPPORTED_VIDEO_EXTENSIONS = [
+    ".mp4",
+    ".mov",
+    ".m4v",
+    ".webm",
+    ".avi",
+    ".mpeg",
+    ".mpg",
+    ".3gp",
+    ".3g2",
+    ".ogv",
+    ".mkv",
+];
+const VIDEO_ACCEPT = {
+    "video/mp4": [".mp4", ".m4v"],
+    "video/quicktime": [".mov"],
+    "video/webm": [".webm"],
+    "video/x-msvideo": [".avi"],
+    "video/mpeg": [".mpeg", ".mpg"],
+    "video/3gpp": [".3gp"],
+    "video/3gpp2": [".3g2"],
+    "video/ogg": [".ogv"],
+    "video/x-matroska": [".mkv"],
+    "video/*": SUPPORTED_VIDEO_EXTENSIONS,
+    "application/octet-stream": [".mkv", ".avi", ".mov", ".mp4"],
+};
+const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".m4v": "video/x-m4v",
+    ".webm": "video/webm",
+    ".avi": "video/x-msvideo",
+    ".mpeg": "video/mpeg",
+    ".mpg": "video/mpeg",
+    ".3gp": "video/3gpp",
+    ".3g2": "video/3gpp2",
+    ".ogv": "video/ogg",
+    ".mkv": "video/x-matroska",
+};
+const BROWSER_PLAYABLE_VIDEO_TYPES = new Set([
+    "video/mp4",
+    "video/x-m4v",
+    "video/webm",
+    "video/ogg",
+    "video/quicktime",
+]);
+
+let ffmpegLoaderPromise: Promise<{
+    ffmpeg: any;
+    fetchFile: (input: File | Blob | string) => Promise<Uint8Array>;
+}> | null = null;
+
+function formatFileSize(bytes?: number | null) {
+    if (!bytes || !Number.isFinite(bytes)) return "";
+    if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+    if (bytes >= 1024) return `${Math.round(bytes / 1024)} KB`;
+    return `${bytes} B`;
+}
+
+function getFileExtension(fileName?: string | null) {
+    const cleanName = String(fileName || "").split("?")[0].toLowerCase();
+    const dotIndex = cleanName.lastIndexOf(".");
+    return dotIndex >= 0 ? cleanName.slice(dotIndex) : "";
+}
+
+function inferVideoContentType(contentType?: string | null, fileName?: string | null) {
+    const normalized = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (normalized) return normalized;
+    return VIDEO_EXTENSION_CONTENT_TYPES[getFileExtension(fileName)] || "";
+}
+
+function isBrowserPlayableVideo(contentType?: string | null, fileName?: string | null) {
+    const inferredType = inferVideoContentType(contentType, fileName);
+    if (!inferredType) return true;
+    if (!BROWSER_PLAYABLE_VIDEO_TYPES.has(inferredType)) return false;
+    if (typeof document === "undefined") return true;
+    return document.createElement("video").canPlayType(inferredType).length > 0;
+}
+
+function isSupportedVideoFile(file: File) {
+    const contentType = String(file.type || "").toLowerCase();
+    if (contentType.startsWith("video/")) return true;
+    return SUPPORTED_VIDEO_EXTENSIONS.includes(getFileExtension(file.name));
+}
+
+function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
+    const firstError = fileRejections[0]?.errors[0];
+    if (!firstError) return "We couldn't use that file. Please try another video.";
+    if (firstError.code === "file-too-large") return "Video is too large to compress in the browser. Use a file under 750 MB.";
+    if (firstError.code === "file-invalid-type") {
+        return "Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
+    }
+    return firstError.message || "We couldn't use that file. Please try another video.";
+}
+
+function shouldCompressVideo(file: File, forceCompress?: boolean) {
+    return forceCompress || file.size > VIDEO_COMPRESSION_THRESHOLD_BYTES;
+}
+
+function getCompressedVideoName(file: File) {
+    const stem = String(file.name || "update-video").replace(/\.[^.]+$/, "") || "update-video";
+    return `${stem}-compressed.mp4`;
+}
+
+async function getFfmpegVideoCompressor() {
+    if (!ffmpegLoaderPromise) {
+        ffmpegLoaderPromise = (async () => {
+            const [{ FFmpeg }, { fetchFile, toBlobURL }] = await Promise.all([
+                import("@ffmpeg/ffmpeg"),
+                import("@ffmpeg/util"),
+            ]);
+            const ffmpeg = new FFmpeg();
+            await ffmpeg.load({
+                coreURL: await toBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.js`, "text/javascript"),
+                wasmURL: await toBlobURL(`${FFMPEG_CORE_BASE_URL}/ffmpeg-core.wasm`, "application/wasm"),
+            });
+            return { ffmpeg, fetchFile };
+        })();
+    }
+    return ffmpegLoaderPromise;
+}
+
+async function compressVideoForUpload(file: File, signal: AbortSignal): Promise<{ file: File; metadata: VibeRaisingVideoCompressionMetadata }> {
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+
+    const { ffmpeg, fetchFile } = await getFfmpegVideoCompressor();
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+
+    const inputName = `input-${Date.now()}${getFileExtension(file.name) || ".video"}`;
+    const outputName = `output-${Date.now()}.mp4`;
+    await ffmpeg.writeFile(inputName, await fetchFile(file));
+    const exitCode = await ffmpeg.exec([
+        "-i",
+        inputName,
+        "-vf",
+        "scale='min(1280,iw)':-2",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "veryfast",
+        "-b:v",
+        "2000k",
+        "-maxrate",
+        "2400k",
+        "-bufsize",
+        "4000k",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "faststart",
+        outputName,
+    ]);
+    if (signal.aborted) throw new DOMException("Upload cancelled", "AbortError");
+    if (exitCode !== 0) throw new Error("Video compression failed.");
+
+    const data = await ffmpeg.readFile(outputName);
+    await Promise.allSettled([
+        ffmpeg.deleteFile(inputName),
+        ffmpeg.deleteFile(outputName),
+    ]);
+    const bytes = data instanceof Uint8Array ? data : new TextEncoder().encode(String(data));
+    const outputBuffer = new ArrayBuffer(bytes.byteLength);
+    new Uint8Array(outputBuffer).set(bytes);
+    const compressedFile = new File([outputBuffer], getCompressedVideoName(file), { type: "video/mp4" });
+    return {
+        file: compressedFile,
+        metadata: {
+            compressed: true,
+            originalFilename: file.name,
+            originalContentType: file.type || inferVideoContentType(null, file.name),
+            originalFileSizeBytes: file.size,
+            compressedFileSizeBytes: compressedFile.size,
+            compressionRatio: file.size > 0 ? Number((compressedFile.size / file.size).toFixed(4)) : null,
+        },
+    };
+}
+
+function getVideoUploadErrorMessage(error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestPath = String((error as { requestPath?: string })?.requestPath || "");
+    const data = (error as { data?: { detail?: string; error?: string } | string })?.data;
+    const detail =
+        typeof data === "string"
+            ? data
+            : data?.detail || data?.error || (error instanceof Error ? error.message : "");
+
+    if (statusCode === 404 && requestPath.includes("/uploads/video/session/")) {
+        return "Video uploads are not available on the backend yet. Deploy the latest backend release and try again.";
+    }
+    if (statusCode === 413) {
+        return "This video is too large for the current upload path. Try a shorter clip or compress it before uploading.";
+    }
+    if (statusCode === 403 && requestPath === "signed-storage-upload") {
+        return "The video upload session expired. Please select the video again.";
+    }
+    if (requestPath === "signed-storage-upload") {
+        return "Firebase Storage rejected the upload. Check Storage CORS and try again.";
+    }
+    return detail || "Video upload failed. Please try again.";
+}
+
+function VideoAssetPreview({
+    src,
+    contentType,
+    fileName,
+    fileSizeBytes,
+    className,
+}: {
+    src: string;
+    contentType?: string | null;
+    fileName?: string | null;
+    fileSizeBytes?: number | null;
+    className?: string;
+}) {
+    const [playbackFailed, setPlaybackFailed] = useState(false);
+    const canPreview = !playbackFailed && isBrowserPlayableVideo(contentType, fileName || src);
+
+    useEffect(() => {
+        setPlaybackFailed(false);
+    }, [src, contentType, fileName]);
+
+    if (canPreview) {
+        return (
+            <video
+                src={src}
+                controls
+                onError={() => setPlaybackFailed(true)}
+                className={clsx("bg-black object-contain", className)}
+            />
+        );
+    }
+
+    return (
+        <div className={clsx("flex min-h-40 flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-950 p-6 text-center text-white", className)}>
+            <CloudArrowUpIcon className="h-8 w-8 text-white/50" />
+            <p className="mt-3 text-sm font-bold">Video uploaded</p>
+            <p className="mt-1 max-w-sm text-xs leading-5 text-white/60">
+                {fileName || "This format may not preview in your browser."}
+                {formatFileSize(fileSizeBytes) ? ` · ${formatFileSize(fileSizeBytes)}` : ""}
+            </p>
+            <a
+                href={src}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 hover:bg-gray-100"
+            >
+                Open video
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+            </a>
+        </div>
+    );
+}
+
+function getEmailDraftStorageKey(domain?: string | null) {
+    const normalized = String(domain || "").trim().toLowerCase() || "unknown";
+    return `vibe_raising_email_draft:${normalized}`;
+}
+
+function getEmailDraftForceRegenerateKey(domain?: string | null) {
+    const normalized = String(domain || "").trim().toLowerCase() || "unknown";
+    return `vibe_raising_email_draft_force_regenerate:${normalized}`;
+}
+
+function readPersistedEmailDraftRun(storageKey: string): PersistedEmailDraftRun | null {
+    if (typeof window === "undefined") return null;
+
+    try {
+        const raw = localStorage.getItem(storageKey);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as Partial<PersistedEmailDraftRun>;
+        const runId = String(parsed.runId || "").trim();
+        const domain = String(parsed.domain || "").trim();
+        if (!runId || !domain) return null;
+        return {
+            runId,
+            domain,
+            bindingId:
+                typeof parsed.bindingId === "number" && Number.isFinite(parsed.bindingId)
+                    ? parsed.bindingId
+                    : null,
+            googleConnectionId:
+                typeof parsed.googleConnectionId === "number" && Number.isFinite(parsed.googleConnectionId)
+                    ? parsed.googleConnectionId
+                    : null,
+        };
+    } catch {
+        return null;
+    }
+}
+
+function hasPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(storageKey) === "1";
+}
+
+function setPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(storageKey, "1");
+}
+
+function clearPendingEmailDraftForceRegenerate(storageKey: string) {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(storageKey);
+}
+
+function isEmailDraftRunning(statusResponse: VibeRaisingStartupUpdateStatusResponse | null) {
+    return statusResponse?.state === "queued" || statusResponse?.state === "running";
+}
+
+function isHtmlErrorDocument(value: unknown) {
+    if (typeof value !== "string") return false;
+    const normalized = value.trim().toLowerCase();
+    return normalized.startsWith("<!doctype html") || normalized.startsWith("<html");
+}
+
+function appendEmailDraftDiagnostics(message: string, error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestId = (error as { requestId?: string })?.requestId;
+    const diagnostics = [
+        statusCode ? `status ${statusCode}` : null,
+        requestId ? `request ${requestId}` : null,
+    ].filter(Boolean);
+
+    if (diagnostics.length === 0) return message;
+
+    const separator = message.endsWith(".") ? " " : ". ";
+    return `${message}${separator}Reference: ${diagnostics.join(" · ")}.`;
+}
+
+function getEmailDraftErrorMessage(error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const payload = (error as { data?: { error?: string; detail?: string } })?.data;
+    let message = "We couldn't draft your update from the selected inputs. Please try again.";
+    if (typeof payload === "string" && isHtmlErrorDocument(payload)) {
+        if (statusCode === 404) {
+            message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+            return appendEmailDraftDiagnostics(message, error);
+        }
+        message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+        return appendEmailDraftDiagnostics(message, error);
+    }
+    if (payload?.error) return appendEmailDraftDiagnostics(payload.error, error);
+    if (payload?.detail) return appendEmailDraftDiagnostics(payload.detail, error);
+    if (error instanceof Error && error.message) {
+        if (isHtmlErrorDocument(error.message)) {
+            if (statusCode === 404) {
+                message = "This email draft action is not available on the current backend deploy yet. Deploy the latest mlai-backend and try again.";
+                return appendEmailDraftDiagnostics(message, error);
+            }
+            message = "The server returned an HTML error page instead of a draft response. Please retry after the backend deploy is updated.";
+            return appendEmailDraftDiagnostics(message, error);
+        }
+        return appendEmailDraftDiagnostics(error.message, error);
+    }
+    return appendEmailDraftDiagnostics(message, error);
+}
+
 // Hint suggestions per section, cycled through as user adds points
 const SECTION_HINTS: Record<string, string[]> = {
-    summary: [
-        "e.g. Building an AI-powered financial copilot for CFOs of series B software startups.",
-        "e.g. Revolutionizing the $100B global freight industry with autonomous docking systems.",
-        "e.g. Creating a next-gen marketplace that connects verified creative freelancers with agencies.",
-    ],
     highlights: [
         "e.g. Closed 3 new enterprise deals worth $50K ARR.",
         "e.g. Launched v2.0 with 5 new features.",
@@ -456,6 +981,16 @@ const SECTION_HINTS: Record<string, string[]> = {
         "e.g. Churn rate increased from 3% to 5% this month.",
         "e.g. Struggling to close enterprise deals over $50K.",
     ],
+    learnings: [
+        "e.g. Enterprise buyers care most about security posture before pricing.",
+        "e.g. Founder-led demos convert better when the problem is framed by workflow.",
+        "e.g. Smaller customers need onboarding templates before they expand usage.",
+    ],
+    next30Days: [
+        "e.g. Convert two pilots into paid annual agreements.",
+        "e.g. Ship the onboarding checklist and measure activation lift.",
+        "e.g. Complete 12 customer interviews before pricing changes.",
+    ],
     asks: [
         "e.g. Intros to VP of Customer Success at B2B SaaS companies.",
         "e.g. Feedback on our pricing strategy for enterprise tier.",
@@ -465,111 +1000,117 @@ const SECTION_HINTS: Record<string, string[]> = {
     ],
 };
 
-type RecordingMode = "video" | "audio";
-type RecordingAttemptKey = "video-audio" | "video-only" | "audio-only";
-
-interface RecordingAttempt {
-    key: RecordingAttemptKey;
-    constraints: MediaStreamConstraints;
-    mode: RecordingMode;
-    notice: string | null;
-    blockedMessage: string;
-    missingDeviceMessage: string;
+// Collapsible Helper Component
+interface SectionWithExampleProps {
+    label: string;
+    name: string;
+    placeholder: string;
+    rows?: number;
+    icon: any;
+    defaultValue?: string;
+    value?: string;
+    onChange?: (value: string) => void;
 }
 
-function buildRecordingAttempts(hasVideoInput: boolean | null, hasAudioInput: boolean | null): RecordingAttempt[] {
-    const attemptsByKey: Record<RecordingAttemptKey, RecordingAttempt> = {
-        "video-audio": {
-            key: "video-audio",
-            constraints: { video: true, audio: true },
-            mode: "video",
-            notice: null,
-            blockedMessage: "Camera and microphone access was blocked. Please allow access and try again.",
-            missingDeviceMessage: "We couldn't find both a camera and a microphone for video recording.",
-        },
-        "video-only": {
-            key: "video-only",
-            constraints: { video: true, audio: false },
-            mode: "video",
-            notice: "Microphone unavailable. Recording video without audio.",
-            blockedMessage: "Camera access was blocked. Please allow access and try again.",
-            missingDeviceMessage: "We couldn't find a camera for recording.",
-        },
-        "audio-only": {
-            key: "audio-only",
-            constraints: { video: false, audio: true },
-            mode: "audio",
-            notice: "Camera unavailable. Recording audio only.",
-            blockedMessage: "Microphone access was blocked. Please allow access and try again.",
-            missingDeviceMessage: "We couldn't find a microphone for recording.",
-        },
-    };
+function parseBulletItems(value?: string) {
+    const normalized = String(value || "").replace(/\r\n/g, "\n").trim();
+    if (!normalized) return [""];
 
-    if (hasVideoInput === false && hasAudioInput === false) {
-        return [];
-    }
+    const paragraphs = normalized.includes("\n")
+        ? normalized.split(/\n+/)
+        : normalized.length >= 160
+            ? normalized.split(/(?<=[.!?])\s+(?=[A-Z0-9])/)
+            : [normalized];
 
-    const orderedKeys: RecordingAttemptKey[] = [];
+    const items = paragraphs
+        .map((item) => item.replace(/^\s*•\s*/, "").trim())
+        .filter(Boolean);
 
-    if (hasVideoInput === true && hasAudioInput === true) {
-        orderedKeys.push("video-audio", "video-only", "audio-only");
-    } else if (hasVideoInput === true && hasAudioInput === false) {
-        orderedKeys.push("video-only");
-    } else if (hasVideoInput === false && hasAudioInput === true) {
-        orderedKeys.push("audio-only");
-    } else {
-        if (hasVideoInput !== false && hasAudioInput !== false) {
-            orderedKeys.push("video-audio");
-        }
-        if (hasVideoInput !== false) {
-            orderedKeys.push("video-only");
-        }
-        if (hasAudioInput !== false) {
-            orderedKeys.push("audio-only");
-        }
-    }
-
-    return [...new Set(orderedKeys)].map((key) => attemptsByKey[key]);
+    return items.length ? items : [""];
 }
 
-function getRecordingErrorMessage(error: unknown, lastAttempt: RecordingAttempt | null): string {
-    if (error instanceof DOMException) {
-        if (error.name === "NotAllowedError" || error.name === "SecurityError") {
-            return lastAttempt?.blockedMessage || "Camera and microphone access was blocked. Please allow access and try again.";
-        }
-
-        if (["NotFoundError", "DevicesNotFoundError", "OverconstrainedError"].includes(error.name)) {
-            return lastAttempt?.missingDeviceMessage || "We couldn't find a camera or microphone for recording.";
-        }
-
-        if (["NotReadableError", "TrackStartError", "AbortError"].includes(error.name)) {
-            return "Your camera or microphone is busy in another app. Close it there and try again.";
-        }
-    }
-
-    return "Unable to start recording right now. Please try again.";
+function serializeBulletItems(items: string[]) {
+    return items
+        .map((item) => item.trim())
+        .filter(Boolean)
+        .join("\n");
 }
 
-function MetricTooltip({ m, active, className }: { m: MetricOption; active: boolean; className?: string }) {
+function useBulletItemsState(
+    value: string | undefined,
+    onChange?: (value: string) => void,
+) {
+    const [items, setItems] = useState<string[]>(() => parseBulletItems(value));
+    const lastCommittedValueRef = React.useRef(String(value || ""));
+
+    useEffect(() => {
+        const normalizedValue = String(value || "").replace(/\r\n/g, "\n").trim();
+        const parsedItems = parseBulletItems(normalizedValue);
+        const serialized = serializeBulletItems(parsedItems);
+        if (normalizedValue && serialized !== normalizedValue) {
+            setItems(parsedItems);
+            lastCommittedValueRef.current = serialized;
+            onChange?.(serialized);
+            return;
+        }
+
+        if (normalizedValue === lastCommittedValueRef.current) return;
+
+        setItems(parsedItems);
+        lastCommittedValueRef.current = normalizedValue;
+    }, [value, onChange]);
+
+    const commitItems = useCallback((nextItems: string[]) => {
+        const safeItems = nextItems.length ? nextItems : [""];
+        setItems(safeItems);
+
+        const serialized = serializeBulletItems(nextItems);
+        lastCommittedValueRef.current = serialized;
+        onChange?.(serialized);
+    }, [onChange]);
+
+    return { items, commitItems };
+}
+
+function BulletTextarea({
+    value,
+    placeholder,
+    onChange,
+    onFocus,
+    className,
+}: {
+    value: string;
+    placeholder: string;
+    onChange: (value: string) => void;
+    onFocus?: () => void;
+    className?: string;
+}) {
+    const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+    useEffect(() => {
+        const textarea = textareaRef.current;
+        if (!textarea) return;
+        textarea.style.height = "0px";
+        textarea.style.height = `${textarea.scrollHeight}px`;
+    }, [value]);
+
     return (
-        <div className="mt-0.5">
-            <p className={clsx("font-semibold uppercase tracking-wide text-center", active ? "text-gray-600" : "text-gray-400", className)}>{m.label}</p>
-        </div>
-    );
-}
-
-function MetricInfoBadge({ info }: { info?: string }) {
-    if (!info) return null;
-    return (
-        <div className="group absolute right-1.5 top-1.5">
-            <div className="cursor-help text-gray-300 transition-colors duration-150 hover:text-gray-400">
-                <InformationCircleIcon className="h-3.5 w-3.5" />
-            </div>
-            <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-48 translate-y-1 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover:translate-y-0 group-hover:opacity-100">
-                {info}
-                <div className="absolute right-2 top-full h-0 w-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-900" />
-            </div>
-        </div>
+        <textarea
+            ref={textareaRef}
+            rows={1}
+            value={value}
+            onChange={(event) => {
+                event.currentTarget.style.height = "0px";
+                event.currentTarget.style.height = `${event.currentTarget.scrollHeight}px`;
+                onChange(event.target.value);
+            }}
+            onFocus={onFocus}
+            placeholder={placeholder}
+            className={clsx(
+                "w-full resize-none overflow-hidden whitespace-pre-wrap break-words",
+                className,
+            )}
+        />
     );
 }
 
@@ -581,53 +1122,48 @@ function SectionWithExample({
     value,
     onChange,
 }: SectionWithExampleProps) {
-    // We split by newline for internal management - it's much more stable than periods
-    const items = (value || "").split("\n");
+    const { items, commitItems } = useBulletItemsState(value, onChange);
     const hints = SECTION_HINTS[name] || [];
 
     const updateItem = (index: number, text: string) => {
         const updated = [...items];
         updated[index] = text;
-        onChange?.(updated.join("\n"));
+        commitItems(updated);
     };
 
     const addItem = () => {
-        const current = value || "";
-        onChange?.(current + (current ? "\n" : "") + "");
+        commitItems([...items, ""]);
     };
 
     const removeItem = (index: number) => {
         const updated = items.filter((_, i) => i !== index);
-        onChange?.(updated.join("\n"));
+        commitItems(updated.length ? updated : [""]);
     };
 
     return (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
             <div className="flex items-center gap-2 bg-black px-4 py-2.5">
                 <Icon className="w-4 h-4 text-white/80" />
                 <label className="block text-xs font-bold uppercase tracking-wider text-white">
                     {label}
                 </label>
             </div>
-            {/* Hidden input for form submission */}
             <input type="hidden" name={name} value={value || ""} />
-            <div className="p-4 space-y-3">
+            <div className="space-y-3 p-4">
                 {items.map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
-                        <span className="mt-2.5 text-violet-400 text-sm select-none flex-shrink-0 animate-pulse">•</span>
-                        <input
-                            type="text"
+                        <span className="mt-2.5 text-sm text-violet-400 select-none flex-shrink-0">•</span>
+                        <BulletTextarea
                             value={item}
-                            onChange={(e) => updateItem(i, e.target.value)}
-                            onClick={(e) => e.stopPropagation()}
+                            onChange={(text) => updateItem(i, text)}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 px-4 py-2 text-sm border-2 border-gray-100 rounded-xl focus:border-violet-400 focus:ring-0 text-gray-900 placeholder:text-gray-300 placeholder:italic transition-all bg-white"
+                            className="flex-1 rounded-xl border-2 border-gray-100 bg-white px-4 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-0"
                         />
-                        {items.length > 1 && (
+                        {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 p-1.5 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-lg transition-all"
+                                className="mt-1.5 rounded-lg p-1.5 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400"
                             >
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
@@ -638,9 +1174,10 @@ function SectionWithExample({
             <button
                 type="button"
                 onClick={addItem}
-                className="w-full py-3 text-xs text-violet-600 font-bold hover:bg-violet-50 flex items-center justify-center gap-1.5 border-t border-dashed border-gray-100 transition-colors"
+                className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-gray-100 py-3 text-xs font-bold text-violet-600 transition-colors hover:bg-violet-50"
             >
-                <span className="text-base">+</span> Add point
+                <span className="text-base leading-none">+</span>
+                Add point
             </button>
         </div>
     );
@@ -648,40 +1185,41 @@ function SectionWithExample({
 
 // Bullet-point input for past month cards
 function BulletInput({ value, onChange, placeholder, section }: { value: string; onChange: (v: string) => void; placeholder?: string; section?: string }) {
-    const items = (value || "").split("\n");
+    const { items, commitItems } = useBulletItemsState(value, onChange);
     const hints = section ? (SECTION_HINTS[section] || []) : [];
 
     const update = (i: number, text: string) => {
         const updated = [...items];
         updated[i] = text;
-        onChange(updated.join("\n"));
+        commitItems(updated);
     };
-    const remove = (i: number) => onChange(items.filter((_, j) => j !== i).join("\n"));
+    const remove = (i: number) => {
+        const updated = items.filter((_, j) => j !== i);
+        commitItems(updated.length ? updated : [""]);
+    };
     const add = () => {
-        onChange((value || "") + "\n");
+        commitItems([...items, ""]);
     };
 
     return (
         <div className="space-y-1.5 pt-1">
             {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-2">
-                    <span className="text-violet-400 text-xs select-none">•</span>
-                    <input
-                        type="text"
+                <div key={i} className="flex items-start gap-2">
+                    <span className="mt-2 text-xs text-violet-400 select-none">•</span>
+                    <BulletTextarea
                         value={item}
-                        onChange={(e) => update(i, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
+                        onChange={(text) => update(i, text)}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
-                        className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:ring-violet-400 focus:border-violet-400 bg-white shadow-sm text-gray-900 placeholder:text-gray-300 placeholder:italic transition-all"
+                        className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-violet-400"
                     />
-                    {items.length > 1 && (
-                        <button type="button" onClick={() => remove(i)} className="p-1 px-2 text-gray-300 hover:text-red-400 hover:bg-red-50 rounded-md transition-all">
+                    {(items.length > 1 || item.trim().length > 0) && (
+                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md p-1 px-2 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="mt-1 px-2 py-1.5 text-[10px] text-violet-600 font-bold hover:bg-violet-50 rounded-lg flex items-center gap-1 transition-all">
+            <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-violet-600 transition-all hover:bg-violet-50">
                 <span className="text-sm leading-none">+</span> Add point
             </button>
         </div>
@@ -717,7 +1255,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
 }
 
 // Collapsible past month card for investor preview
-function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; metrics: Record<string, string> } }) {
+function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
     const [open, setOpen] = useState(false);
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -728,9 +1266,9 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
             >
                 <div className="flex items-center gap-3">
                     <h4 className="text-sm font-bold text-gray-700">{pm.month}</h4>
-                    {!open && Object.keys(pm.metrics).length > 0 && (
+                    {!open && getMetricOptionsForMetrics(pm.metrics).length > 0 && (
                         <span className="flex items-center gap-2 text-xs text-gray-400">
-                            {METRIC_OPTIONS.filter(m => m.key in pm.metrics).map(m => (
+                            {getMetricOptionsForMetrics(pm.metrics).map(m => (
                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{pm.metrics[m.key]}</span>
                             ))}
                         </span>
@@ -742,8 +1280,8 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                 <>
                     {/* Metrics - square boxes (read-only) */}
                     <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
-                        <div className="grid grid-cols-4 gap-2">
-                            {METRIC_OPTIONS.map(m => {
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                            {getMetricOptionsForDisplay(pm.metrics).map(m => {
                                 const val = pm.metrics[m.key];
                                 return (
                                     <div
@@ -754,9 +1292,9 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                                 ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                 : "border-gray-200 bg-gray-50 opacity-40"
                                         )}
-                                    >
+	                                    >
                                         <MetricInfoBadge info={m.info} />
-                                        <div className={clsx(
+	                                        <div className={clsx(
                                             "w-5 h-5 rounded-full flex items-center justify-center mb-1",
                                             val ? "bg-violet-100" : "bg-white"
                                         )}>
@@ -766,9 +1304,12 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                             "text-xs font-extrabold leading-tight",
                                             val ? "text-gray-900" : "text-gray-300"
                                         )}>
-                                            {val ? `${m.prefix || ""}${val}` : "-"}
+                                            {val ? `${m.prefix || ""}${val}` : "—"}
                                         </p>
-                                        <MetricTooltip m={m} active={!!val} className="text-[8px]" />
+                                        <p className={clsx(
+                                            "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
+                                            val ? "text-gray-600" : "text-gray-400"
+                                        )}>{m.label}</p>
                                     </div>
                                 );
                             })}
@@ -791,6 +1332,24 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                     Challenges
                                 </h5>
                                 <BulletList text={pm.challenges} className="text-xs text-gray-600" />
+                            </div>
+                        )}
+                        {pm.learnings && (
+                            <div>
+                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <LightBulbIcon className="w-3 h-3 text-amber-500" />
+                                    Learnings
+                                </h5>
+                                <BulletList text={pm.learnings} className="text-xs text-gray-600" />
+                            </div>
+                        )}
+                        {pm.next30Days && (
+                            <div>
+                                <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
+                                    <ArrowRightIcon className="w-3 h-3 text-blue-500" />
+                                    Next 30 Days
+                                </h5>
+                                <BulletList text={pm.next30Days} className="text-xs text-gray-600" />
                             </div>
                         )}
                         {pm.asks && (
@@ -821,15 +1380,6 @@ function BulletList({ text, className = "text-sm text-gray-700" }: { text: strin
     );
 }
 
-function isHttpUrl(value: string) {
-    try {
-        const url = new URL(value);
-        return url.protocol === "http:" || url.protocol === "https:";
-    } catch {
-        return false;
-    }
-}
-
 // ─── Revenue Chart Component ────────────────────────────────────────
 interface ChartData {
     month: string;
@@ -837,6 +1387,17 @@ interface ChartData {
     isCurrent?: boolean;
     isSelected?: boolean;
 }
+
+type EditorMonthCard = {
+    month: string;
+    expanded: boolean;
+    highlights: string;
+    challenges: string;
+    asks: string;
+    learnings: string;
+    next30Days: string;
+    metrics: Record<string, string>;
+};
 
 function parseRevenue(raw: string): number {
     return parseInt(String(raw).replace(/[$,\s]/g, "")) || 0;
@@ -903,9 +1464,7 @@ function GrowthChart({
                 {data.map((d, i) => {
                     const width = max > 0 ? (d.value / max) * 100 : 0;
                     const rate = momRates[i];
-                    const color = getBarColor(rate);
-                    const monthName = d.month.trim().split(/\s+/)[0] || d.month;
-                    const monthTheme = getVibeRaisingMonthTheme(monthName);
+                    const color = d.isCurrent ? null : getBarColor(rate);
                     return (
                         <button
                             key={i}
@@ -919,7 +1478,7 @@ function GrowthChart({
                             {/* Month label */}
                             <span className={clsx(
                                 "w-10 text-[11px] font-bold uppercase tracking-tight text-right flex-shrink-0",
-                                d.isSelected ? "text-gray-900" : color?.label || "text-gray-400"
+                                d.isCurrent ? "text-violet-600" : color?.label || "text-gray-400"
                             )}>
                                 {d.month.slice(0, 3)}
                             </span>
@@ -929,12 +1488,15 @@ function GrowthChart({
                                 <div
                                     className={clsx(
                                         "h-full rounded-md transition-all duration-500 ease-out relative overflow-hidden",
-                                        monthTheme.tabClass,
-                                        d.isSelected ? "brightness-100" : "opacity-80 group-hover:opacity-100"
+                                        d.isCurrent
+                                            ? "bg-violet-600 shadow-sm"
+                                            : d.isSelected
+                                                ? color?.selected
+                                                : clsx(color?.bar, color?.hover)
                                     )}
                                     style={{ width: `${Math.max(width, 3)}%` }}
                                 >
-                                    {d.isSelected && (
+                                    {d.isCurrent && (
                                         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-full animate-[shimmer_2s_infinite]" />
                                     )}
                                 </div>
@@ -943,7 +1505,7 @@ function GrowthChart({
                             {/* Value */}
                             <span className={clsx(
                                 "w-16 text-right text-sm font-bold flex-shrink-0",
-                                d.isSelected ? "text-gray-900" : "text-gray-600"
+                                d.isCurrent ? "text-gray-900" : "text-gray-600"
                             )}>
                                 {formatter(d.value)}
                             </span>
@@ -951,7 +1513,7 @@ function GrowthChart({
                             {/* MoM rate */}
                             <span className="w-14 text-right flex-shrink-0">
                                 {rate === null ? (
-                                    <span className="text-[10px] text-gray-300">-</span>
+                                    <span className="text-[10px] text-gray-300">—</span>
                                 ) : (
                                     <span className={clsx(
                                         "text-xs font-bold",
@@ -970,62 +1532,89 @@ function GrowthChart({
 }
 
 export default function CreateUpdate() {
-    const { user, existingData, isEdit } = useLoaderData<typeof loader>();
-    const activeCompany = getActiveCompany(user);
-    const companyName = activeCompany.name || user.companyName;
-    const companyDomain = activeCompany.domain || user.domain;
-    const companyLocation = activeCompany.location || user.location;
+    const {
+        user,
+        existingData,
+        isEdit,
+        backendBaseUrl,
+        resumeEmailDrafting,
+        selectedInputSources,
+        existingMonthlyUpdates,
+    } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const navigate = useNavigate();
+    const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const goToConnectDataStep = useCallback(() => {
+        const returnPath = `${location.pathname}${location.search || ""}`;
+        navigate(`/founder-tools/data-sources?next=${encodeURIComponent(returnPath)}`);
+    }, [location.pathname, location.search, navigate]);
+    const handleDraftStepperClick = useCallback((step: MonthlyUpdateStepKey) => {
+        if (step === "connect") {
+            goToConnectDataStep();
+            return;
+        }
+
+        if (step === "draft") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, [goToConnectDataStep]);
+    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(null);
+    const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(defaultData?.videoUrl || null);
+    const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
+    const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
+    const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+    const [videoStoragePath, setVideoStoragePath] = useState<string>(defaultData?.videoStoragePath || "");
+    const [videoContentType, setVideoContentType] = useState<string>(defaultData?.videoContentType || "");
+    const [videoFileSizeBytes, setVideoFileSizeBytes] = useState<number | null>(defaultData?.videoFileSizeBytes || null);
+    const [videoOriginalFilename, setVideoOriginalFilename] = useState<string>(defaultData?.videoOriginalFilename || "");
+    const [previewMediaKind, setPreviewMediaKind] = useState<RecordedMediaKind | null>(defaultData?.videoUrl ? "video" : null);
+    const [recordingMode, setRecordingMode] = useState<RecordedMediaKind | null>(null);
     const [recordingError, setRecordingError] = useState<string | null>(null);
-    const [recordingNotice, setRecordingNotice] = useState<string | null>(null);
-    const [recordingMode, setRecordingMode] = useState<RecordingMode | null>(null);
-    const [previewMediaKind, setPreviewMediaKind] = useState<RecordingMode | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
     const [hasDraft, setHasDraft] = useState<boolean>(() => {
         if (typeof window === "undefined") return false;
         return !!localStorage.getItem("vibe_draft");
     });
-    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-    const mediaStreamRef = useRef<MediaStream | null>(null);
-    const livePreviewRef = useRef<HTMLVideoElement | null>(null);
-    const recordedChunksRef = useRef<Blob[]>([]);
-    const discardNextRecordingRef = useRef(false);
+    const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+    const [pendingDraftRequest, setPendingDraftRequest] = useState<{
+        forceRegenerate?: boolean;
+        clearPersistedRun?: boolean;
+    } | null>(null);
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
         if (actionData?.step === "feedback") setDismissedFeedback(false);
     }, [actionData]);
 
-    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
-
     // State declarations
+    const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const [summary, setSummary] = useState<string>(defaultData?.summary || "");
-    const [sourceUrl, setSourceUrl] = useState<string>(defaultData?.sourceUrl || "");
-    const [showImportPanel, setShowImportPanel] = useState<boolean>(Boolean(defaultData?.sourceUrl));
+    const [summary, setSummary] = useState<string>(() => defaultData?.summary || readStoredManualMaterials().summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || readStoredManualMaterials().sourceUrl || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
-    const [pastMonthCards, setPastMonthCards] = useState<Array<{
-        month: string;
-        expanded: boolean;
-        highlights: string;
-        challenges: string;
-        asks: string;
-        metrics: Record<string, string>;
-    }>>([]);
+    const [learnings, setLearnings] = useState<string>(defaultData?.learnings || "");
+    const [next30Days, setNext30Days] = useState<string>(defaultData?.next30Days || "");
+    const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
     const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || "February");
     const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || 2026);
-    const [activeMonthKey, setActiveMonthKey] = useState("current");
+    const [activePeriodKey, setActivePeriodKey] = useState("current");
+    const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
+    const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
+    const targetMonthIso = getMonthlyUpdateIsoMonth(selectedMonth, selectedYear);
+    const isSelectedMonthInFuture = isFutureMonthlyUpdate(selectedMonth, selectedYear);
+    const existingUpdateForSelectedMonth = existingMonthlyUpdates.find(
+        (update) => getMonthlyUpdateStorageKey(update) === selectedMonthUpdateKey,
+    );
+    const selectedMonthLabel = `${selectedMonth} ${selectedYear}`;
     
     const [metricValues, setMetricValues] = useState<Record<string, string>>(() => {
         const initial: Record<string, string> = {};
@@ -1044,51 +1633,860 @@ export default function CreateUpdate() {
                 initial.add(opt.key);
             }
         });
-        if (initial.size === 0) initial.add("revenue");
         return initial;
     });
+    const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
+    const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
+        ? selectedInputSourceLabels.join(", ")
+        : "Manual materials only";
+    const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
+    const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
+    const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
+    const [emailDraftStatus, setEmailDraftStatus] = useState<VibeRaisingStartupUpdateStatusResponse | null>(null);
+    const [emailDraftUiError, setEmailDraftUiError] = useState<string | null>(null);
+    const [emailDraftActionBusy, setEmailDraftActionBusy] = useState(false);
+    const [emailDraftCancelBusy, setEmailDraftCancelBusy] = useState(false);
+    const [emailDraftPollingDegraded, setEmailDraftPollingDegraded] = useState(false);
+    const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
+    const emailDraftRecoveryKeyRef = useRef<string | null>(null);
+    const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
+    const recordedChunksRef = useRef<BlobPart[]>([]);
+    const videoUploadAbortRef = useRef<AbortController | null>(null);
+    const videoUploadSequenceRef = useRef(0);
+    const videoPreviewObjectUrlRef = useRef<string | null>(null);
+    const loadedExistingUpdateKeyRef = useRef<string | null>(null);
+    const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
 
     const handleDraftComplete = (data: any) => {
-        setActiveMonthKey("current");
+        setActivePeriodKey("current");
         if (data.month) setSelectedMonth(data.month);
         if (data.year) setSelectedYear(data.year);
-        if (data.summary) setSummary(data.summary);
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
-        setMetricValues(data.metrics || {});
+        setLearnings(data.learnings || "");
+        setNext30Days(data.next30Days || "");
+        setSummary(data.summary || "");
+        setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (data.videoUrl || data.video_url) {
+            const nextVideoUrl = data.videoUrl || data.video_url;
+            setUploadedVideoUrl(nextVideoUrl);
+            setVideoPreviewUrl(nextVideoUrl);
+            setVideoStoragePath(data.videoStoragePath || data.video_storage_path || "");
+            setVideoContentType(data.videoContentType || data.video_content_type || "");
+            setVideoFileSizeBytes(data.videoFileSizeBytes || data.video_file_size_bytes || null);
+            setVideoOriginalFilename(data.videoOriginalFilename || data.video_original_filename || "");
+            setVideoUploadStatus("ready");
+            setVideoUploadError(null);
+            setPreviewMediaKind("video");
+        }
+        const currentMetrics = data.metrics || {};
+        setMetricValues(currentMetrics);
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
             month: pm.month || "Unknown",
+            expanded: Boolean(pm.expanded),
             highlights: pm.highlights || "",
             challenges: pm.challenges || "",
             asks: pm.asks || "",
-            metrics: pm.metrics || {}
+            learnings: pm.learnings || "",
+            next30Days: pm.next30Days || "",
+            metrics: {
+                ...Object.fromEntries(metricKeysFromSuggestions(pm.metricSuggestions).map((key) => [key, ""])),
+                ...(pm.metrics || {}),
+            }
         })));
         
         const newMetrics = new Set<string>();
-        Object.keys(data.metrics).forEach(key => {
-            if (data.metrics[key]) newMetrics.add(key);
+        Object.keys(currentMetrics).forEach(key => {
+            if (METRIC_OPTION_MAP.has(key) && currentMetrics[key]) newMetrics.add(key);
         });
+        metricKeysFromSuggestions(data.metricSuggestions).forEach((key) => newMetrics.add(key));
         setSelectedMetrics(newMetrics);
     };
+
+    const revokeVideoPreviewObjectUrl = useCallback(() => {
+        if (videoPreviewObjectUrlRef.current) {
+            URL.revokeObjectURL(videoPreviewObjectUrlRef.current);
+            videoPreviewObjectUrlRef.current = null;
+        }
+    }, []);
+
+    const resetVideoUpload = useCallback(() => {
+        videoUploadAbortRef.current?.abort();
+        videoUploadAbortRef.current = null;
+        videoUploadSequenceRef.current += 1;
+        revokeVideoPreviewObjectUrl();
+        setVideoPreviewUrl(null);
+        setUploadedVideoUrl("");
+        setVideoStoragePath("");
+        setVideoContentType("");
+        setVideoFileSizeBytes(null);
+        setVideoOriginalFilename("");
+        setPreviewMediaKind(null);
+        setVideoUploadStatus("idle");
+        setVideoUploadError(null);
+    }, [revokeVideoPreviewObjectUrl]);
+
+    const uploadVideoFile = useCallback(async (file: File, options?: { forceCompress?: boolean }) => {
+        const sequence = videoUploadSequenceRef.current + 1;
+        videoUploadSequenceRef.current = sequence;
+        videoUploadAbortRef.current?.abort();
+        const abortController = new AbortController();
+        videoUploadAbortRef.current = abortController;
+
+        setVideoUploadStatus("validating");
+        setVideoUploadError(null);
+        setUploadedVideoUrl("");
+        setVideoStoragePath("");
+        setVideoContentType(file.type || inferVideoContentType(null, file.name));
+        setVideoFileSizeBytes(file.size);
+        setVideoOriginalFilename(file.name);
+        setPreviewMediaKind("video");
+        revokeVideoPreviewObjectUrl();
+        setVideoPreviewUrl(null);
+
+        if (!isSupportedVideoFile(file)) {
+            setVideoUploadStatus("error");
+            setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
+            return;
+        }
+
+        if (file.size > MAX_SOURCE_VIDEO_BYTES) {
+            setVideoUploadStatus("error");
+            setVideoUploadError("Video is too large to compress in the browser. Use a file under 750 MB.");
+            return;
+        }
+
+        const localPreviewUrl = URL.createObjectURL(file);
+        videoPreviewObjectUrlRef.current = localPreviewUrl;
+        setVideoPreviewUrl(localPreviewUrl);
+
+        try {
+            let uploadCandidate = file;
+            let compression: VibeRaisingVideoCompressionMetadata | undefined;
+            if (shouldCompressVideo(file, options?.forceCompress)) {
+                setVideoUploadStatus("compressing");
+                try {
+                    const compressed = await compressVideoForUpload(file, abortController.signal);
+                    if (videoUploadSequenceRef.current !== sequence) return;
+                    if (compressed.file.size < file.size) {
+                        uploadCandidate = compressed.file;
+                        compression = compressed.metadata;
+                    }
+                } catch (compressionError) {
+                    if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
+                    if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
+                        throw new Error("Video exceeds the 250 MB upload limit after compression. Try a shorter clip.");
+                    }
+                }
+            }
+
+            if (uploadCandidate.size > MAX_VIDEO_UPLOAD_BYTES) {
+                throw new Error("Video exceeds the 250 MB upload limit.");
+            }
+
+            setVideoContentType(uploadCandidate.type || inferVideoContentType(null, uploadCandidate.name));
+            setVideoFileSizeBytes(uploadCandidate.size);
+            setVideoOriginalFilename(uploadCandidate.name);
+
+            const uploaded = await uploadVibeRaisingUpdateVideo(
+                backendBaseUrl,
+                uploadCandidate,
+                abortController.signal,
+                compression,
+                (phase) => {
+                    if (videoUploadSequenceRef.current !== sequence) return;
+                    setVideoUploadStatus(phase);
+                },
+            );
+            if (videoUploadSequenceRef.current !== sequence) return;
+
+            setUploadedVideoUrl(uploaded.videoUrl);
+            setVideoStoragePath(uploaded.storagePath || "");
+            setVideoContentType(uploaded.contentType || uploadCandidate.type || "");
+            setVideoFileSizeBytes(uploaded.fileSizeBytes || uploadCandidate.size);
+            setVideoOriginalFilename(uploaded.originalFilename || uploadCandidate.name);
+            setVideoUploadStatus("ready");
+            setVideoUploadError(null);
+        } catch (error) {
+            if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
+            setUploadedVideoUrl("");
+            setVideoStoragePath("");
+            setVideoUploadStatus("error");
+            setVideoUploadError(getVideoUploadErrorMessage(error));
+        } finally {
+            if (videoUploadSequenceRef.current === sequence) {
+                videoUploadAbortRef.current = null;
+            }
+        }
+    }, [backendBaseUrl, revokeVideoPreviewObjectUrl]);
+
+    const persistEmailDraftRun = useEffectEvent((statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        if (typeof window === "undefined" || !statusResponse.runId) return;
+
+        localStorage.setItem(
+            emailDraftStorageKey,
+            JSON.stringify({
+                runId: statusResponse.runId,
+                domain: String(user.domain || "").trim().toLowerCase(),
+                bindingId: statusResponse.binding?.id ?? null,
+                googleConnectionId: statusResponse.binding?.googleConnectionId ?? null,
+            }),
+        );
+    });
+
+    const clearPersistedEmailDraftRun = useEffectEvent(() => {
+        if (typeof window === "undefined") return;
+        localStorage.removeItem(emailDraftStorageKey);
+    });
+
+    const resetEmailDraftUi = useEffectEvent(() => {
+        setEmailDraftStatus(null);
+        setEmailDraftUiError(null);
+        setEmailDraftPollingDegraded(false);
+        setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+    });
+
+    const clearEmailDraftingParams = useCallback(() => {
+        const params = new URLSearchParams(location.search);
+        let changed = false;
+
+        ["gmail_connected", "draft_from_email", "email_draft"].forEach((key) => {
+            if (params.has(key)) {
+                params.delete(key);
+                changed = true;
+            }
+        });
+
+        if (!changed) return;
+
+        const nextSearch = params.toString();
+        navigate(
+            `${location.pathname}${nextSearch ? `?${nextSearch}` : ""}`,
+            { replace: true },
+        );
+    }, [location.pathname, location.search, navigate]);
+
+    const handleEmailWizardClose = useCallback(() => {
+        setShowEmailWizard(false);
+        if (resumeEmailDrafting) {
+            clearEmailDraftingParams();
+        }
+    }, [clearEmailDraftingParams, resumeEmailDrafting]);
+
+    useEffect(() => {
+        setIsClientMounted(true);
+    }, []);
+
+    const hydrateCompletedEmailDraft = useEffectEvent(async (runId?: string | null) => {
+        const results = await getVibeRaisingStartupUpdateDraftResults(backendBaseUrl, runId);
+        if (!results.draft) {
+            throw new Error("Draft generation completed, but no draft payload was returned.");
+        }
+
+        startTransition(() => {
+            handleDraftComplete(results.draft);
+            resetEmailDraftUi();
+        });
+        clearPersistedEmailDraftRun();
+    });
+
+    const processEmailDraftStatus = useEffectEvent(async (statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
+        if (
+            statusResponse.runId &&
+            emailDraftIgnoredRunIdRef.current === statusResponse.runId &&
+            statusResponse.state !== "completed" &&
+            statusResponse.state !== "cancelled"
+        ) {
+            return;
+        }
+
+        if (statusResponse.runId) {
+            persistEmailDraftRun(statusResponse);
+        }
+
+        if (statusResponse.targetMonthConflict) {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(statusResponse.error ?? "Another monthly update is already generating.");
+            });
+            return;
+        }
+
+        if (statusResponse.state === "queued" || statusResponse.state === "running") {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(null);
+            });
+            return;
+        }
+
+        if (statusResponse.state === "completed") {
+            startTransition(() => {
+                setEmailDraftStatus({
+                    ...statusResponse,
+                    state: "running",
+                    displayStage:
+                        statusResponse.displayStage ||
+                        statusResponse.progress?.displayStage ||
+                        "Loading drafted update",
+                });
+                setEmailDraftUiError(null);
+            });
+            try {
+                await hydrateCompletedEmailDraft(statusResponse.runId ?? null);
+                return;
+            } catch (error) {
+                startTransition(() => {
+                    setEmailDraftPollingDegraded(true);
+                    setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_BACKOFF_MS);
+                });
+                throw error;
+            }
+        }
+
+        if (statusResponse.state === "failed") {
+            startTransition(() => {
+                setEmailDraftStatus(statusResponse);
+                setEmailDraftUiError(null);
+                setEmailDraftPollingDegraded(false);
+                setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            });
+            return;
+        }
+
+        if (statusResponse.state === "cancelled") {
+            clearPersistedEmailDraftRun();
+            resetEmailDraftUi();
+            return;
+        }
+
+        clearPersistedEmailDraftRun();
+        startTransition(() => {
+            setEmailDraftStatus(null);
+            setEmailDraftUiError(statusResponse.error ?? null);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+        });
+    });
+
+    const startOrResumeEmailDraft = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+        setEmailDraftActionBusy(true);
+        setEmailDraftUiError(null);
+
+        try {
+            const shouldForceRegenerate = Boolean(
+                options?.forceRegenerate || hasPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey),
+            );
+            const statusResponse = await runVibeRaisingStartupUpdate(
+                backendBaseUrl,
+                {
+                    ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
+                    inputSources: selectedInputSources,
+                    targetMonth: targetMonthIso,
+                },
+            );
+            emailDraftIgnoredRunIdRef.current = null;
+            if (statusResponse.state === "auth_required") {
+                setShowEmailWizard(true);
+                return;
+            }
+
+            if (shouldForceRegenerate) {
+                clearPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
+            }
+            await processEmailDraftStatus(statusResponse);
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftStatus(null);
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+        }
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources, targetMonthIso]);
+
+    const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+        if (!canGenerateDraftFromEmail) {
+            navigate("/founder-tools/companies");
+            return;
+        }
+        if (isSelectedMonthInFuture || !targetMonthIso) {
+            setEmailDraftUiError("Choose the current month or a previous month before generating an update.");
+            return;
+        }
+
+        setEmailDraftActionBusy(true);
+        setEmailDraftUiError(null);
+        try {
+            if (!selectedInputSources.includes("gmail")) {
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+                return;
+            }
+            const bootstrap = await bootstrapVibeRaisingStartupUpdate(backendBaseUrl);
+            if (bootstrap.googleConnected) {
+                await startOrResumeEmailDraft({ forceRegenerate: options?.forceRegenerate });
+                return;
+            }
+            setShowEmailWizard(true);
+        } catch (error) {
+            startTransition(() => {
+                setEmailDraftStatus(null);
+                setEmailDraftUiError(getEmailDraftErrorMessage(error));
+            });
+        } finally {
+            setEmailDraftActionBusy(false);
+        }
+    }, [
+        backendBaseUrl,
+        canGenerateDraftFromEmail,
+        isSelectedMonthInFuture,
+        navigate,
+        selectedInputSources,
+        startOrResumeEmailDraft,
+        targetMonthIso,
+    ]);
+
+    const executeDraftRequest = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+        if (request?.clearPersistedRun) {
+            clearPersistedEmailDraftRun();
+        }
+        void startDraftFromSelectedInputs({ forceRegenerate: request?.forceRegenerate });
+    }, [clearPersistedEmailDraftRun, startDraftFromSelectedInputs]);
+
+    const requestDraftFromSelectedInputs = useCallback((request?: { forceRegenerate?: boolean; clearPersistedRun?: boolean }) => {
+        if (existingUpdateForSelectedMonth) {
+            setPendingDraftRequest({
+                ...request,
+                forceRegenerate: true,
+            });
+            setShowRegenerateConfirm(true);
+            return;
+        }
+        executeDraftRequest(request);
+    }, [executeDraftRequest, existingUpdateForSelectedMonth]);
+
+    const handleGenerateDraftFromEmailClick = useCallback(() => {
+        requestDraftFromSelectedInputs();
+    }, [requestDraftFromSelectedInputs]);
+
+    const handleConfirmRegenerateDraft = useCallback(() => {
+        const request = pendingDraftRequest ?? {};
+        setShowRegenerateConfirm(false);
+        setPendingDraftRequest(null);
+        executeDraftRequest({
+            ...request,
+            forceRegenerate: true,
+        });
+    }, [executeDraftRequest, pendingDraftRequest]);
+
+    const handleCancelRegenerateDraft = useCallback(() => {
+        setShowRegenerateConfirm(false);
+        setPendingDraftRequest(null);
+    }, []);
+
+    const handleEmailWizardConnected = useCallback(() => {
+        setShowEmailWizard(false);
+        void startOrResumeEmailDraft();
+    }, [startOrResumeEmailDraft]);
+
+    const pollEmailDraftStatus = useEffectEvent(async (runId: string) => {
+        try {
+            const statusResponse = await getVibeRaisingStartupUpdateStatus(backendBaseUrl, runId);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            await processEmailDraftStatus(statusResponse);
+        } catch {
+            setEmailDraftPollingDegraded(true);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_BACKOFF_MS);
+        }
+    });
+
+    useEffect(() => {
+        if (!isClientMounted) return;
+
+        const recoveryKey = `${backendBaseUrl}:${emailDraftStorageKey}:${resumeEmailDrafting ? "resume" : "idle"}`;
+        if (emailDraftRecoveryKeyRef.current === recoveryKey) {
+            return;
+        }
+        emailDraftRecoveryKeyRef.current = recoveryKey;
+
+        let cancelled = false;
+        void (async () => {
+            setEmailDraftActionBusy(true);
+            try {
+                const activeRun = await getVibeRaisingStartupUpdateActiveRun(backendBaseUrl);
+                if (cancelled) return;
+                if (activeRun) {
+                    await processEmailDraftStatus(activeRun);
+                    return;
+                }
+
+                const persistedRun = readPersistedEmailDraftRun(emailDraftStorageKey);
+                if (persistedRun?.runId) {
+                    try {
+                        const storedStatus = await getVibeRaisingStartupUpdateStatus(
+                            backendBaseUrl,
+                            persistedRun.runId,
+                        );
+                        if (cancelled) return;
+                        await processEmailDraftStatus(storedStatus);
+                        return;
+                    } catch {
+                        clearPersistedEmailDraftRun();
+                    }
+                }
+
+                if (resumeEmailDrafting) {
+                    await startOrResumeEmailDraft();
+                    return;
+                }
+
+                try {
+                    await hydrateCompletedEmailDraft();
+                    return;
+                } catch (error) {
+                    if ((error as { status?: number })?.status !== 404) {
+                        throw error;
+                    }
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    startTransition(() => {
+                        setEmailDraftUiError(getEmailDraftErrorMessage(error));
+                    });
+                }
+            } finally {
+                if (!cancelled) {
+                    setEmailDraftActionBusy(false);
+                    if (resumeEmailDrafting) {
+                        clearEmailDraftingParams();
+                    }
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [
+        backendBaseUrl,
+        clearEmailDraftingParams,
+        emailDraftStorageKey,
+        isClientMounted,
+        resumeEmailDrafting,
+        startOrResumeEmailDraft,
+    ]);
+
+    useEffect(() => {
+        if (
+            !isClientMounted ||
+            emailDraftCancelBusy ||
+            !emailDraftStatus?.runId ||
+            !isEmailDraftRunning(emailDraftStatus)
+        ) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            void pollEmailDraftStatus(emailDraftStatus.runId ?? "");
+        }, emailDraftPollDelayMs);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [
+        emailDraftPollDelayMs,
+        emailDraftCancelBusy,
+        emailDraftStatus?.runId,
+        emailDraftStatus?.state,
+        isClientMounted,
+    ]);
+
+    const isEmailDraftBusy = isEmailDraftRunning(emailDraftStatus);
+    useEffect(() => {
+        if (isEmailDraftBusy) return;
+
+        if (!existingUpdateForSelectedMonth) {
+            loadedExistingUpdateKeyRef.current = null;
+            if (editorMonthKeyRef.current !== selectedMonthUpdateKey) {
+                editorMonthKeyRef.current = selectedMonthUpdateKey;
+                setSummary("");
+                setSourceUrl("");
+                resetVideoUpload();
+                setHighlights("");
+                setChallenges("");
+                setAsks("");
+                setLearnings("");
+                setNext30Days("");
+                setMetricValues({});
+                setSelectedMetrics(new Set());
+                setPastMonthCards([]);
+                setExpandedCards(new Set());
+                setActivePeriodKey("current");
+            }
+            return;
+        }
+        if (loadedExistingUpdateKeyRef.current === selectedMonthUpdateKey) return;
+        loadedExistingUpdateKeyRef.current = selectedMonthUpdateKey;
+        editorMonthKeyRef.current = selectedMonthUpdateKey;
+
+        setSummary(existingUpdateForSelectedMonth.summary || "");
+        setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
+        setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
+        setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
+        setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
+        setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
+        setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
+        setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
+        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl ? "video" : null);
+        setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
+        setVideoUploadError(null);
+        setHighlights(existingUpdateForSelectedMonth.highlights || "");
+        setChallenges(existingUpdateForSelectedMonth.challenges || "");
+        setAsks(existingUpdateForSelectedMonth.asks || "");
+        setLearnings(existingUpdateForSelectedMonth.learnings || "");
+        setNext30Days(existingUpdateForSelectedMonth.next30Days || "");
+        const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
+        setMetricValues(nextMetrics);
+        setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
+        setActivePeriodKey("current");
+    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey]);
+
+    const emailDraftCardVisible =
+        isEmailDraftBusy ||
+        emailDraftStatus?.state === "failed" ||
+        (!emailDraftStatus && Boolean(emailDraftUiError));
+    const emailDraftCardStatus =
+        emailDraftStatus?.state === "failed" || (!emailDraftStatus && emailDraftUiError)
+            ? "failed"
+            : "running";
+    const emailDraftCardDisplayStage =
+        (emailDraftCancelBusy
+            ? "Cancelling draft..."
+            : emailDraftStatus?.displayStage) ||
+        emailDraftStatus?.progress?.displayStage ||
+        (emailDraftUiError
+            ? "We couldn't start drafting from the selected inputs."
+            : "Preparing company context");
+    const emailDraftCardCompletedSteps =
+        emailDraftStatus?.completedSteps ??
+        emailDraftStatus?.progress?.completedSteps ??
+        0;
+    const emailDraftCardTotalSteps =
+        emailDraftStatus?.totalSteps ??
+        emailDraftStatus?.progress?.totalSteps ??
+        8;
+    const emailDraftCardError =
+        emailDraftStatus?.state === "failed" || !emailDraftStatus
+            ? (
+                emailDraftStatus?.error ||
+                emailDraftUiError ||
+                "We couldn't draft your update from the selected inputs. Please try again."
+            )
+            : undefined;
+    const emailDraftCardNotice =
+        isEmailDraftBusy && emailDraftStatus?.state !== "failed"
+            ? emailDraftUiError
+            : null;
+    const selectedMonthGenerationVerb = existingUpdateForSelectedMonth ? "Regenerate" : "Generate";
+    const emailDraftButtonTitle = emailDraftActionBusy
+        ? `Generating ${selectedMonthLabel} update`
+        : `${selectedMonthGenerationVerb} ${selectedMonthLabel} update`;
+    const emailDraftButtonDescription = emailDraftActionBusy
+        ? "Contacting the MLAI backend and preparing the selected sources for drafting."
+        : isSelectedMonthInFuture
+            ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
+        : canGenerateDraftFromEmail
+            ? `Use ${selectedInputSourceDescription} to find key signals, metrics, wins, and asks for ${selectedMonthLabel}, then turn them into a first draft.`
+            : "Add a company domain first so inputs can be matched to the right startup.";
+    const isVideoUploadPending = videoUploadStatus === "validating" ||
+        videoUploadStatus === "compressing" ||
+        videoUploadStatus === "creating_session" ||
+        videoUploadStatus === "uploading" ||
+        videoUploadStatus === "finalizing";
+    const isVideoUploadBlocking = isVideoUploadPending || (videoUploadStatus === "error" && previewMediaKind === "video" && Boolean(videoPreviewUrl));
+    const videoUploadStatusLabel =
+        videoUploadStatus === "validating"
+            ? "Checking video..."
+            : videoUploadStatus === "compressing"
+                ? "Compressing video..."
+                : videoUploadStatus === "creating_session"
+                    ? "Preparing upload..."
+                    : videoUploadStatus === "uploading"
+                        ? "Uploading video..."
+                        : videoUploadStatus === "finalizing"
+                            ? "Finalizing video..."
+                            : videoUploadStatus === "ready"
+                                ? "Video ready"
+                                : null;
+
+    const handleRetryEmailDraft = () => {
+        requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
+    };
+
+    const handleCancelEmailDraft = useCallback(async () => {
+        const runId = String(emailDraftStatus?.runId || "").trim();
+        if (!runId) return;
+        if (typeof window !== "undefined") {
+            const confirmed = window.confirm(
+                "Cancel this draft run and reset the monthly update so you can try again?",
+            );
+            if (!confirmed) {
+                return;
+            }
+        }
+
+        setEmailDraftCancelBusy(true);
+        setEmailDraftUiError(null);
+        emailDraftIgnoredRunIdRef.current = runId;
+
+        try {
+            const cancelResponse = await cancelVibeRaisingStartupUpdate(backendBaseUrl, runId);
+            if (cancelResponse.status === "completed" || cancelResponse.terminalState === "completed") {
+                emailDraftIgnoredRunIdRef.current = null;
+                await hydrateCompletedEmailDraft(cancelResponse.runId);
+                return;
+            }
+
+            if (cancelResponse.status === "cancelled" || cancelResponse.terminalState === "cancelled") {
+                clearPersistedEmailDraftRun();
+                setPendingEmailDraftForceRegenerate(emailDraftForceRegenerateKey);
+                resetEmailDraftUi();
+                return;
+            }
+
+            emailDraftIgnoredRunIdRef.current = null;
+            setEmailDraftUiError("We couldn't cancel that draft run. We'll keep polling the current status.");
+        } catch (error) {
+            emailDraftIgnoredRunIdRef.current = null;
+            setEmailDraftUiError(getEmailDraftErrorMessage(error));
+        } finally {
+            setEmailDraftCancelBusy(false);
+        }
+    }, [
+        backendBaseUrl,
+        emailDraftForceRegenerateKey,
+        emailDraftStatus?.runId,
+    ]);
+
+    const stopMediaStream = useCallback(() => {
+        mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+    }, []);
+
+    const startRecording = useCallback(async () => {
+        if (typeof window === "undefined" || typeof navigator === "undefined") {
+            return;
+        }
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+            setRecordingError("Recording is not supported in this browser. Upload a file or add a source URL instead.");
+            return;
+        }
+
+        try {
+            setRecordingError(null);
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                .catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
+            const hasVideo = stream.getVideoTracks().length > 0;
+            recordedChunksRef.current = [];
+            mediaStreamRef.current = stream;
+            setRecordingMode(hasVideo ? "video" : "audio");
+
+            const recorder = new MediaRecorder(stream);
+            mediaRecorderRef.current = recorder;
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunksRef.current.push(event.data);
+                }
+            };
+            recorder.onstop = () => {
+                const blob = new Blob(recordedChunksRef.current, {
+                    type: recorder.mimeType || (hasVideo ? "video/webm" : "audio/webm"),
+                });
+                if (blob.size > 0) {
+                    if (hasVideo) {
+                        const recordedVideo = new File(
+                            [blob],
+                            `recorded-update-${Date.now()}.webm`,
+                            { type: blob.type || "video/webm" },
+                        );
+                        void uploadVideoFile(recordedVideo, { forceCompress: true });
+                    } else {
+                        resetVideoUpload();
+                        const audioPreviewUrl = URL.createObjectURL(blob);
+                        videoPreviewObjectUrlRef.current = audioPreviewUrl;
+                        setVideoPreviewUrl(audioPreviewUrl);
+                        setPreviewMediaKind("audio");
+                    }
+                }
+                recordedChunksRef.current = [];
+                mediaRecorderRef.current = null;
+                setIsRecording(false);
+                setRecordingMode(null);
+                stopMediaStream();
+            };
+            recorder.start();
+            setIsRecording(true);
+        } catch {
+            setRecordingError("We couldn't access your camera or microphone. Upload a file or add a source URL instead.");
+            setIsRecording(false);
+            setRecordingMode(null);
+            stopMediaStream();
+        }
+    }, [resetVideoUpload, stopMediaStream, uploadVideoFile]);
+
+    const stopRecording = useCallback(() => {
+        const recorder = mediaRecorderRef.current;
+        if (recorder?.state === "recording") {
+            recorder.stop();
+            return;
+        }
+        setIsRecording(false);
+        setRecordingMode(null);
+        stopMediaStream();
+    }, [stopMediaStream]);
+
+    useEffect(() => {
+        return () => {
+            videoUploadAbortRef.current?.abort();
+            revokeVideoPreviewObjectUrl();
+            if (mediaRecorderRef.current?.state === "recording") {
+                mediaRecorderRef.current.stop();
+            }
+            stopMediaStream();
+        };
+    }, [revokeVideoPreviewObjectUrl, stopMediaStream]);
 
     const resumeDraft = () => {
         try {
             const raw = localStorage.getItem("vibe_draft");
             if (!raw) return;
             const draft = JSON.parse(raw);
-            setActiveMonthKey("current");
 
             // Restore current month fields
             if (draft.month) setSelectedMonth(draft.month);
             if (draft.year) setSelectedYear(Number(draft.year));
             setSummary(draft.summary || "");
             setSourceUrl(draft.sourceUrl || "");
-            setShowImportPanel(Boolean(draft.sourceUrl));
+            revokeVideoPreviewObjectUrl();
+            setUploadedVideoUrl(draft.videoUrl || "");
+            setVideoPreviewUrl(draft.videoUrl || null);
+            setVideoStoragePath(draft.videoStoragePath || "");
+            setVideoContentType(draft.videoContentType || "");
+            setVideoFileSizeBytes(draft.videoFileSizeBytes ? Number(draft.videoFileSizeBytes) : null);
+            setVideoOriginalFilename(draft.videoOriginalFilename || "");
+            setVideoUploadStatus(draft.videoUrl ? "ready" : "idle");
+            setVideoUploadError(null);
+            setPreviewMediaKind(draft.videoUrl ? "video" : null);
             setHighlights(draft.highlights || "");
             setChallenges(draft.challenges || "");
             setAsks(draft.asks || "");
+            setLearnings(draft.learnings || "");
+            setNext30Days(draft.next30Days || "");
 
             // Restore current month metrics
             const metrics: Record<string, string> = {};
@@ -1096,16 +2494,18 @@ export default function CreateUpdate() {
                 if (draft[opt.key]) metrics[opt.key] = draft[opt.key];
             });
             setMetricValues(metrics);
-            const newSelected = new Set<string>(Object.keys(metrics).filter(k => metrics[k]));
-            if (newSelected.size === 0) newSelected.add("revenue");
+            const restoredMetricKeys = String(draft.metricKeys || "")
+                .split(",")
+                .map((key: string) => key.trim())
+                .filter((key: string) => METRIC_OPTION_MAP.has(key));
+            const newSelected = new Set<string>([
+                ...restoredMetricKeys,
+                ...Object.keys(metrics).filter(k => metrics[k]),
+            ]);
             setSelectedMetrics(newSelected);
 
             // Reconstruct past month cards from flat pastMonth_N_* fields
-            const restoredPastMonths: Array<{
-                month: string; expanded: boolean;
-                highlights: string; challenges: string; asks: string;
-                metrics: Record<string, string>;
-            }> = [];
+            const restoredPastMonths: EditorMonthCard[] = [];
             for (let i = 0; draft[`pastMonth_${i}_month`]; i++) {
                 const pmMetrics: Record<string, string> = {};
                 METRIC_OPTIONS.forEach(opt => {
@@ -1118,6 +2518,8 @@ export default function CreateUpdate() {
                     highlights: draft[`pastMonth_${i}_highlights`] || "",
                     challenges: draft[`pastMonth_${i}_challenges`] || "",
                     asks: draft[`pastMonth_${i}_asks`] || "",
+                    learnings: draft[`pastMonth_${i}_learnings`] || "",
+                    next30Days: draft[`pastMonth_${i}_next30Days`] || "",
                     metrics: pmMetrics,
                 });
             }
@@ -1136,238 +2538,24 @@ export default function CreateUpdate() {
         setHasDraft(false);
     };
 
-    useEffect(() => {
-        if (activeMonthKey === "current") return;
-        const activeIndex = Number(activeMonthKey.replace("past-", ""));
-        if (!Number.isInteger(activeIndex) || !pastMonthCards[activeIndex]) {
-            setActiveMonthKey("current");
-        }
-    }, [activeMonthKey, pastMonthCards]);
-
-    // Custom metrics added by founders
-    const [customMetrics, setCustomMetrics] = useState<CustomMetric[]>([]);
-    const [addingCustom, setAddingCustom] = useState(false);
-    const [newMetricLabel, setNewMetricLabel] = useState('');
-    const [newMetricPrefix, setNewMetricPrefix] = useState('');
-    const [newMetricValue, setNewMetricValue] = useState('');
-    const hasValidSourceUrl = isHttpUrl(sourceUrl);
-    const manualPathActive = isRecording || Boolean(videoPreviewUrl) || showImportPanel || Boolean(sourceUrl);
-    const emailPathActive = showEmailWizard;
-
-    const replacePreviewMedia = useCallback((nextUrl: string | null, nextKind: RecordingMode | null) => {
-        setVideoPreviewUrl((currentUrl) => {
-            if (currentUrl && currentUrl !== nextUrl && currentUrl.startsWith("blob:")) {
-                URL.revokeObjectURL(currentUrl);
-            }
-            return nextUrl;
-        });
-        setPreviewMediaKind(nextKind);
-    }, []);
-
-    const stopMediaStream = useCallback(() => {
-        const stream = mediaStreamRef.current;
-        if (stream) {
-            stream.getTracks().forEach((track) => track.stop());
-            mediaStreamRef.current = null;
-        }
-
-        if (livePreviewRef.current) {
-            livePreviewRef.current.srcObject = null;
-        }
-    }, []);
-
-    const stopRecording = useCallback(() => {
-        const recorder = mediaRecorderRef.current;
-
-        if (recorder && recorder.state !== "inactive") {
-            recorder.stop();
-        } else {
-            stopMediaStream();
-        }
-
-        setIsRecording(false);
-        setRecordingMode(null);
-    }, [stopMediaStream]);
-
-    const openEmailDraftFlow = useCallback(() => {
-        if (isRecording) {
-            discardNextRecordingRef.current = true;
-            stopRecording();
-        }
-
-        setShowEmailWizard(true);
-    }, [isRecording, stopRecording]);
-
-    const startRecording = useCallback(async () => {
-        if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-            setRecordingError("Video recording is not supported in this browser.");
-            return;
-        }
-
-        setRecordingError(null);
-        setRecordingNotice(null);
-        let lastAttempt: RecordingAttempt | null = null;
-
-        try {
-            stopMediaStream();
-            recordedChunksRef.current = [];
-            discardNextRecordingRef.current = false;
-            setRecordingMode(null);
-            let hasAudioInput: boolean | null = null;
-            let hasVideoInput: boolean | null = null;
-
-            if (navigator.mediaDevices.enumerateDevices) {
-                try {
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const inputDevices = devices.filter(
-                        (device) => device.kind === "audioinput" || device.kind === "videoinput"
-                    );
-
-                    if (inputDevices.length > 0) {
-                        hasAudioInput = inputDevices.some((device) => device.kind === "audioinput");
-                        hasVideoInput = inputDevices.some((device) => device.kind === "videoinput");
-                    }
-                } catch {
-                    hasAudioInput = null;
-                    hasVideoInput = null;
-                }
-            }
-
-            const attempts = buildRecordingAttempts(hasVideoInput, hasAudioInput);
-
-            if (attempts.length === 0) {
-                setRecordingError("No camera or microphone was detected on this device.");
-                setIsRecording(false);
-                return;
-            }
-
-            let stream: MediaStream | null = null;
-            let activeMode: RecordingMode | null = null;
-            let activeNotice: string | null = null;
-            let lastError: unknown = null;
-
-            for (const attempt of attempts) {
-                try {
-                    lastAttempt = attempt;
-                    stream = await navigator.mediaDevices.getUserMedia(attempt.constraints);
-                    activeMode = attempt.mode;
-                    activeNotice = attempt.notice;
-                    break;
-                } catch (error) {
-                    lastError = error;
-
-                    if (
-                        error instanceof DOMException &&
-                        ["NotFoundError", "DevicesNotFoundError", "OverconstrainedError"].includes(error.name)
-                    ) {
-                        continue;
-                    }
-
-                    throw error;
-                }
-            }
-
-            if (!stream || !activeMode) {
-                throw lastError instanceof Error ? lastError : new DOMException("No recording devices found.", "NotFoundError");
-            }
-
-            mediaStreamRef.current = stream;
-            setRecordingMode(activeMode);
-            setRecordingNotice(activeNotice);
-
-            if (activeMode === "video" && livePreviewRef.current) {
-                livePreviewRef.current.srcObject = stream;
-                void livePreviewRef.current.play().catch(() => {});
-            }
-
-            const supportedMimeType = (
-                activeMode === "audio"
-                    ? [
-                        "audio/webm;codecs=opus",
-                        "audio/webm",
-                    ]
-                    : [
-                        "video/webm;codecs=vp9,opus",
-                        "video/webm;codecs=vp8,opus",
-                        "video/webm",
-                    ]
-            ).find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
-
-            const recorder = supportedMimeType
-                ? new MediaRecorder(stream, { mimeType: supportedMimeType })
-                : new MediaRecorder(stream);
-
-            recorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    recordedChunksRef.current.push(event.data);
-                }
-            };
-
-            recorder.onerror = () => {
-                setRecordingError("Something went wrong while recording. Please try again.");
-                setIsRecording(false);
-                stopMediaStream();
-            };
-
-            recorder.onstop = () => {
-                const hasRecordedData = recordedChunksRef.current.some((chunk) => chunk.size > 0);
-                const blobType = supportedMimeType || recorder.mimeType || (activeMode === "audio" ? "audio/webm" : "video/webm");
-                const shouldDiscardRecording = discardNextRecordingRef.current;
-                discardNextRecordingRef.current = false;
-
-                if (hasRecordedData && !shouldDiscardRecording) {
-                    const recordedBlob = new Blob(recordedChunksRef.current, { type: blobType });
-                    replacePreviewMedia(URL.createObjectURL(recordedBlob), activeMode);
-                }
-
-                recordedChunksRef.current = [];
-                mediaRecorderRef.current = null;
-                setRecordingMode(null);
-                stopMediaStream();
-            };
-
-            mediaRecorderRef.current = recorder;
-            recorder.start(250);
-            setIsRecording(true);
-        } catch (error) {
-            const message = getRecordingErrorMessage(error, lastAttempt ?? null);
-
-            setRecordingError(message);
-            setRecordingNotice(null);
-            setIsRecording(false);
-            setRecordingMode(null);
-            stopMediaStream();
-        }
-    }, [replacePreviewMedia, stopMediaStream]);
-
-    const addCustomMetric = () => {
-        if (!newMetricLabel.trim()) return;
-        const key = 'custom_' + Date.now();
-        setCustomMetrics(prev => [...prev, { key, label: newMetricLabel.trim(), prefix: newMetricPrefix.trim(), value: newMetricValue.trim() }]);
-        setNewMetricLabel('');
-        setNewMetricPrefix('');
-        setNewMetricValue('');
-        setAddingCustom(false);
-    };
-
-    const removeCustomMetric = (key: string) => {
-        setCustomMetrics(prev => prev.filter(m => m.key !== key));
-    };
-
-    const updateCustomMetricValue = (key: string, value: string) => {
-        setCustomMetrics(prev => prev.map(m => m.key === key ? { ...m, value } : m));
-    };
-
     const toggleMetric = (key: string) => {
+        const wasSelected = selectedMetrics.has(key);
         setSelectedMetrics(prev => {
             const next = new Set(prev);
             if (next.has(key)) {
-                if (next.size > 1) next.delete(key);
+                next.delete(key);
             } else {
                 next.add(key);
             }
             return next;
         });
+        if (wasSelected) {
+            setMetricValues(values => {
+                const updated = { ...values };
+                delete updated[key];
+                return updated;
+            });
+        }
     };
 
     const updatePastMonthField = (index: number, field: string, value: string) => {
@@ -1378,13 +2566,28 @@ export default function CreateUpdate() {
         setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: { ...c.metrics, [key]: value } } : c));
     };
 
-    const activePastIndex = activeMonthKey.startsWith("past-") ? Number(activeMonthKey.replace("past-", "")) : -1;
+    const activePastIndex = activePeriodKey.startsWith("past-")
+        ? Number(activePeriodKey.replace("past-", ""))
+        : -1;
     const activePastCard = Number.isInteger(activePastIndex) ? pastMonthCards[activePastIndex] : undefined;
-    const isViewingCurrentUpdate = activeMonthKey === "current" || !activePastCard;
+    const isViewingCurrentUpdate = activePeriodKey === "current" || !activePastCard;
     const activePastPeriod = activePastCard ? parseVibeRaisingMonthYear(activePastCard.month) : null;
     const activeDisplayMonth = isViewingCurrentUpdate ? selectedMonth : activePastPeriod?.month || selectedMonth;
     const activeDisplayYear = isViewingCurrentUpdate ? selectedYear : activePastPeriod?.year || selectedYear;
     const activeMonthTheme = getVibeRaisingMonthTheme(activeDisplayMonth);
+    const activeMetricValues = isViewingCurrentUpdate ? metricValues : activePastCard?.metrics || {};
+    const activeSelectedMetrics = isViewingCurrentUpdate
+        ? selectedMetrics
+        : new Set(Object.keys(activeMetricValues).filter((key) => METRIC_OPTION_MAP.has(key)));
+    const formMetricKeys = Array.from(new Set([
+        ...Array.from(selectedMetrics),
+        ...Object.keys(metricValues),
+    ])).filter((key) => METRIC_OPTION_MAP.has(key));
+    const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
+    const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
+    const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
+    const activeLearnings = isViewingCurrentUpdate ? learnings : activePastCard?.learnings || "";
+    const activeNext30Days = isViewingCurrentUpdate ? next30Days : activePastCard?.next30Days || "";
     const periodTabs = [
         { key: "current", month: selectedMonth, year: selectedYear },
         ...pastMonthCards.map((card, index) => {
@@ -1392,15 +2595,8 @@ export default function CreateUpdate() {
             return { key: `past-${index}`, month: period.month, year: period.year };
         }),
     ];
-    const activeMetricValues = isViewingCurrentUpdate ? metricValues : activePastCard?.metrics || {};
-    const activeSelectedMetrics = isViewingCurrentUpdate
-        ? selectedMetrics
-        : new Set(Object.keys(activeMetricValues).filter((key) => activeMetricValues[key]));
-    const activeHighlights = isViewingCurrentUpdate ? highlights : activePastCard?.highlights || "";
-    const activeChallenges = isViewingCurrentUpdate ? challenges : activePastCard?.challenges || "";
-    const activeAsks = isViewingCurrentUpdate ? asks : activePastCard?.asks || "";
 
-    const updateActiveMetricValue = (key: string, value: string) => {
+    const updateActiveMetric = (key: string, value: string) => {
         if (isViewingCurrentUpdate) {
             setMetricValues(prev => ({ ...prev, [key]: value }));
             return;
@@ -1418,14 +2614,15 @@ export default function CreateUpdate() {
         }
 
         if (activePastIndex < 0 || !activePastCard) return;
-
-        if (key in activePastCard.metrics) {
-            const updated = { ...activePastCard.metrics };
-            delete updated[key];
-            setPastMonthCards(prev => prev.map((card, index) => index === activePastIndex ? { ...card, metrics: updated } : card));
-        } else {
-            updatePastMonthMetric(activePastIndex, key, "");
-        }
+        setPastMonthCards(prev => prev.map((card, index) => {
+            if (index !== activePastIndex) return card;
+            const nextMetrics = { ...card.metrics };
+            if (key in nextMetrics) {
+                delete nextMetrics[key];
+                return { ...card, metrics: nextMetrics };
+            }
+            return { ...card, metrics: { ...nextMetrics, [key]: "" } };
+        }));
     };
 
     const updateActiveHighlights = (value: string) => {
@@ -1443,18 +2640,34 @@ export default function CreateUpdate() {
         else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "asks", value);
     };
 
-    // Prepare chart data - revenue bars with auto-calculated MoM
+    const updateActiveLearnings = (value: string) => {
+        if (isViewingCurrentUpdate) setLearnings(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "learnings", value);
+    };
+
+    const updateActiveNext30Days = (value: string) => {
+        if (isViewingCurrentUpdate) setNext30Days(value);
+        else if (activePastIndex >= 0) updatePastMonthField(activePastIndex, "next30Days", value);
+    };
+
+    useEffect(() => {
+        if (activePeriodKey === "current") return;
+        if (activePastCard) return;
+        setActivePeriodKey("current");
+    }, [activePastCard, activePeriodKey]);
+
+    // Prepare chart data — revenue bars with auto-calculated MoM
     const chartData: ChartData[] = [
         ...pastMonthCards.map((card, i) => ({
             month: card.month,
             value: parseRevenue(card.metrics.revenue || "0"),
-            isSelected: activeMonthKey === `past-${i}`
+            isSelected: activePeriodKey === `past-${i}`
         })),
         {
             month: selectedMonth,
             value: parseRevenue(metricValues.revenue || "0"),
             isCurrent: true,
-            isSelected: isViewingCurrentUpdate
+            isSelected: activePeriodKey === "current"
         }
     ];
 
@@ -1463,26 +2676,39 @@ export default function CreateUpdate() {
         ...pastMonthCards.map((card, i) => ({
             month: card.month,
             value: parseUsers(card.metrics.activeUsers || "0"),
-            isSelected: activeMonthKey === `past-${i}`
+            isSelected: activePeriodKey === `past-${i}`
         })),
         {
             month: selectedMonth,
             value: parseUsers(metricValues.activeUsers || "0"),
             isCurrent: true,
-            isSelected: isViewingCurrentUpdate
+            isSelected: activePeriodKey === "current"
         }
     ];
+    const hasRevenueChart = chartData.some((item) => item.value > 0);
+    const hasActiveUsersChart = activeUsersChartData.some((item) => item.value > 0);
 
     // Chart click: always expand + scroll
     const expandCardFromChart = (index: number) => {
-        setActiveMonthKey(index === pastMonthCards.length ? "current" : `past-${index}`);
         if (index === pastMonthCards.length) {
+            setActivePeriodKey("current");
             const el = document.getElementById("current-month-card");
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             return;
         }
-        const el = document.getElementById("current-month-card");
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        setActivePeriodKey(`past-${index}`);
+
+        setExpandedCards(prev => {
+            const next = new Set(prev);
+            next.add(index);
+            return next;
+        });
+
+        setTimeout(() => {
+            const el = document.getElementById(`past-month-${index}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
     };
 
     // Card header click: toggle expand/collapse
@@ -1495,64 +2721,62 @@ export default function CreateUpdate() {
         });
     };
 
-    // Dropzone setup
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-        console.log(acceptedFiles);
-        setRecordingError(null);
-        setRecordingNotice(null);
-        if (isRecording) {
-            discardNextRecordingRef.current = true;
-        }
-        stopRecording();
-        const video = acceptedFiles.find(f => f.type.startsWith("video/"));
-        const audio = acceptedFiles.find(f => f.type.startsWith("audio/"));
-        if (video) {
-            replacePreviewMedia(URL.createObjectURL(video), "video");
-        } else if (audio) {
-            replacePreviewMedia(URL.createObjectURL(audio), "audio");
-        }
-    }, [isRecording, replacePreviewMedia, stopRecording]);
-    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-        onDrop,
-        noClick: true,
-        maxSize: 20 * 1024 * 1024, // 20MB
-        accept: {
-            'image/*': [],
-            'application/pdf': [],
-            'application/msword': [],
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': [],
-            'application/vnd.ms-excel': [],
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': [],
-            'video/quicktime': ['.mov'],
-            'video/mp4': [],
-            'audio/*': []
-        }
-    });
-
-    useEffect(() => {
-        return () => {
-            stopMediaStream();
-            mediaRecorderRef.current = null;
-            if (videoPreviewUrl?.startsWith("blob:")) {
-                URL.revokeObjectURL(videoPreviewUrl);
-            }
-        };
-    }, [stopMediaStream, videoPreviewUrl]);
-
-    useEffect(() => {
-        if (!isRecording || !livePreviewRef.current || !mediaStreamRef.current) {
+    const selectPeriod = (periodKey: string) => {
+        setActivePeriodKey(periodKey);
+        if (periodKey === "current") {
+            document.getElementById("current-month-card")?.scrollIntoView({ behavior: "smooth", block: "center" });
             return;
         }
 
-        livePreviewRef.current.srcObject = mediaStreamRef.current;
-        void livePreviewRef.current.play().catch(() => {});
-    }, [isRecording]);
+        const index = Number(periodKey.replace("past-", ""));
+        if (!Number.isFinite(index)) return;
+        setExpandedCards((prev) => {
+            const next = new Set(prev);
+            next.add(index);
+            return next;
+        });
+        setTimeout(() => {
+            document.getElementById(`past-month-${index}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        }, 100);
+    };
 
-    // 1. Feedback View - preview-dominant with rating sidebar
+    // Dropzone setup
+    const onDrop = useCallback((acceptedFiles: File[]) => {
+        const video = acceptedFiles.find(isSupportedVideoFile);
+        if (video) {
+            void uploadVideoFile(video);
+            return;
+        }
+        setVideoUploadStatus("error");
+        setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
+    }, [uploadVideoFile]);
+    const onDropRejected = useCallback((fileRejections: any[]) => {
+        setVideoUploadStatus("error");
+        setVideoUploadError(getDropzoneRejectionMessage(fileRejections));
+    }, []);
+    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+        onDrop,
+        onDropRejected,
+        maxFiles: 1,
+        multiple: false,
+        noClick: true,
+        maxSize: MAX_SOURCE_VIDEO_BYTES,
+        accept: VIDEO_ACCEPT,
+    });
+
+    // 1. Feedback View — preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
         const { feedback, data } = actionData;
-        const reviewMonth = (data as any)?.month || selectedMonth;
-        const reviewYear = Number((data as any)?.year || selectedYear);
+        const reviewData = data as any;
+        const reviewMonth = String(reviewData?.month || selectedMonth);
+        const reviewYear = Number(reviewData?.year || selectedYear);
+        const reviewSummary = String(reviewData?.summary || "").trim();
+        const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
+        const reviewVideoUrl = String(reviewData?.videoUrl || (previewMediaKind === "video" ? videoPreviewUrl : "") || "").trim();
+        const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
+        const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
+        const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
+        const reviewVideoFileSizeBytes = Number(reviewData?.videoFileSizeBytes || videoFileSizeBytes || 0) || null;
 
         const handleSaveDraft = () => {
             try {
@@ -1564,9 +2788,39 @@ export default function CreateUpdate() {
             }
         };
 
+        const handleReviewStepperClick = (step: MonthlyUpdateStepKey) => {
+            if (step === "connect") {
+                goToConnectDataStep();
+                return;
+            }
+
+            if (step === "draft") {
+                setShowConfirmPopup(false);
+                setDismissedFeedback(true);
+                return;
+            }
+
+            if (step === "review") {
+                setShowConfirmPopup(false);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+
+            if (step === "publish") {
+                setShowConfirmPopup(true);
+            }
+        };
+
         return (
             <div className="max-w-5xl mx-auto pb-12">
-                {/* Header - back arrow top-left, title center-left, X on right */}
+                <MonthlyUpdateStepper
+                    activeStep={showConfirmPopup ? "publish" : "review"}
+                    enabledSteps={["connect", "draft", "review", "publish"]}
+                    onStepClick={handleReviewStepperClick}
+                    className="mt-6 mb-6"
+                />
+
+                {/* Header — back arrow top-left, title center-left, X on right */}
                 <div className="flex items-center gap-3 py-6 mb-4">
                     <button
                         onClick={() => setDismissedFeedback(true)}
@@ -1586,40 +2840,28 @@ export default function CreateUpdate() {
                     </button>
                 </div>
 
-                {/* Main layout: Preview + thin rating bar */}
-                <div className="flex gap-4 items-start">
+                {/* Main layout: Preview + thin rating bar.
+                    Mobile: stacked (preview first, feedback below).
+                    Desktop: preview left, sticky sidebar right. */}
+                <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
-                    {/* PREVIEW - dominant, takes most of the width */}
+                    {/* PREVIEW — dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
-                        <div className="relative bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            <StartupRegionBadge
-                                location={companyLocation}
-                                variant="inverse"
-                                className="absolute right-4 top-4 z-10"
-                            />
-                            {/* Hero banner - video or gradient */}
-                            {videoPreviewUrl ? (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            {/* Hero banner — video or gradient */}
+                            {reviewVideoUrl ? (
                                 <div className="relative w-full aspect-video bg-black">
-                                    {previewMediaKind === "audio" ? (
-                                        <div className="flex h-full items-center justify-center px-6">
-                                            <audio
-                                                src={videoPreviewUrl}
-                                                controls
-                                                className="w-full max-w-md"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <video
-                                            src={videoPreviewUrl}
-                                            controls
-                                            className="w-full h-full object-contain"
-                                            poster=""
-                                        />
-                                    )}
+                                    <VideoAssetPreview
+                                        src={reviewVideoUrl}
+                                        contentType={reviewVideoContentType}
+                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
+                                        fileSizeBytes={reviewVideoFileSizeBytes}
+                                        className="h-full w-full rounded-none"
+                                    />
                                 </div>
                             ) : (
                                 <div className="relative w-full h-32 overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-violet-500 via-purple-500 to-pink-400" />
+                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400" />
                                     <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
                                         <circle cx="120" cy="80" r="100" fill="white" />
                                         <circle cx="650" cy="140" r="70" fill="white" />
@@ -1628,19 +2870,19 @@ export default function CreateUpdate() {
                                     </svg>
                                     <div className="absolute inset-0 flex items-end px-6 pb-4">
                                         <div className="flex items-center gap-3">
-                                            {companyDomain ? (
+                                            {user.domain ? (
                                                 <img
-                                                    src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
+                                                    src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                                     alt=""
                                                     className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                                    <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
+                                                    <span className="text-sm font-bold text-white">{user.companyName.charAt(0)}</span>
                                                 </div>
                                             )}
                                             <div>
-                                                <p className="text-white font-bold text-sm drop-shadow-sm">{companyName}</p>
+                                                <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
                                                 <p className="text-white/70 text-xs">Investor Update</p>
                                             </div>
                                         </div>
@@ -1650,44 +2892,34 @@ export default function CreateUpdate() {
 
                             {/* Preview header */}
                             <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-                                <div className="flex flex-wrap items-center justify-between gap-4">
-                                    <h3 className="text-lg font-bold text-gray-900">
-                                        Investor Update
-                                    </h3>
-                                    <VibeRaisingDateTabs month={reviewMonth} year={reviewYear} />
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">
+                                            {reviewMonth} {reviewYear} Update
+                                        </h3>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <VibeRaisingDateTabs month={reviewMonth} year={reviewYear} size="compact" />
+                                            <StartupRegionBadge location={user.location} />
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                             </div>
 
-                            {(data as any)?.sourceUrl && (
-                                <div className="px-6 py-3 border-b border-sky-100 bg-sky-50/50">
-                                    <a
-                                        href={(data as any).sourceUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition-colors hover:text-sky-800"
-                                    >
-                                        <LinkIcon className="w-4 h-4" />
-                                        Open source update link
-                                        <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                    </a>
-                                </div>
-                            )}
-
-                            
-                            {(data as any)?.summary && (
-                                <div className="px-6 py-4 bg-violet-50/40 border-b border-violet-100">
-                                    <h2 className="text-xl font-extrabold text-gray-900 leading-snug tracking-tight italic">
-                                        {(data as any).summary}
-                                    </h2>
-                                </div>
-                            )}
-
-
-                            {/* Metrics - square boxes */}
+                            {/* Metrics — square boxes */}
                             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <div className="grid grid-cols-4 gap-3">
-                                    {METRIC_OPTIONS.map(m => {
-                                        const val = (data as any)?.[m.key];
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                    {(() => {
+                                        const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
+                                        const selectedReviewKeys = String((data as any)?.metricKeys || "")
+                                            .split(",")
+                                            .map((key) => key.trim())
+                                            .filter(Boolean);
+                                        const options = selectedReviewKeys.length > 0
+                                            ? metricOptionsFromKeys(selectedReviewKeys)
+                                            : getMetricOptionsForDisplay(metricRecord);
+                                        return options.map(m => {
+                                        const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
                                         return (
                                             <div
                                                 key={m.key}
@@ -1697,9 +2929,9 @@ export default function CreateUpdate() {
                                                         ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-40"
                                                 )}
-                                            >
+	                                            >
                                                 <MetricInfoBadge info={m.info} />
-                                                <div className={clsx(
+	                                                <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
                                                     val ? "bg-violet-100" : "bg-white"
                                                 )}>
@@ -1709,18 +2941,40 @@ export default function CreateUpdate() {
                                                     "text-base font-extrabold leading-tight",
                                                     val ? "text-gray-900" : "text-gray-300"
                                                 )}>
-                                                    {val ? `${m.prefix || ""}${val}` : "-"}
+                                                    {val ? `${m.prefix || ""}${val}` : "—"}
                                                 </p>
-                                                <MetricTooltip m={m} active={!!val} className="text-[10px]" />
+                                                <p className={clsx(
+                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                    val ? "text-gray-600" : "text-gray-400"
+                                                )}>{m.label}</p>
                                             </div>
                                         );
-                                    })}
+                                    });
+                                    })()}
                                 </div>
                             </div>
 
                             {/* Content sections */}
                             <div className="px-6 py-5 space-y-5">
-                                
+                                {(reviewSummary || reviewSourceUrl) && (
+                                    <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                                        {reviewSummary && (
+                                            <p className="text-sm font-medium leading-relaxed text-gray-700">{reviewSummary}</p>
+                                        )}
+                                        {reviewSourceUrl && (
+                                            <a
+                                                href={reviewSourceUrl}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="inline-flex items-center gap-2 text-xs font-bold text-violet-700 hover:text-violet-900"
+                                            >
+                                                <LinkIcon className="h-3.5 w-3.5" />
+                                                Source materials
+                                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                            </a>
+                                        )}
+                                    </div>
+                                )}
                                 {(data as any)?.highlights && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -1739,6 +2993,24 @@ export default function CreateUpdate() {
                                         <BulletList text={(data as any).challenges} />
                                     </div>
                                 )}
+                                {(data as any)?.learnings && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                            <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                                            Learnings
+                                        </h4>
+                                        <BulletList text={(data as any).learnings} />
+                                    </div>
+                                )}
+                                {(data as any)?.next30Days && (
+                                    <div>
+                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                            <ArrowRightIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            Next 30 Days
+                                        </h4>
+                                        <BulletList text={(data as any).next30Days} />
+                                    </div>
+                                )}
                                 {(data as any)?.asks && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -1754,9 +3026,17 @@ export default function CreateUpdate() {
                         {/* Revenue + Active Users charts + Past month previews */}
                         {(() => {
                             const d = data as any;
-                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; metrics: Record<string, string> }> = [];
+                            const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
                             for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
-                                const pm: any = { month: d[`pastMonth_${i}_month`], highlights: d[`pastMonth_${i}_highlights`] || "", challenges: d[`pastMonth_${i}_challenges`] || "", asks: d[`pastMonth_${i}_asks`] || "", metrics: {} };
+                                const pm: any = {
+                                    month: d[`pastMonth_${i}_month`],
+                                    highlights: d[`pastMonth_${i}_highlights`] || "",
+                                    challenges: d[`pastMonth_${i}_challenges`] || "",
+                                    asks: d[`pastMonth_${i}_asks`] || "",
+                                    learnings: d[`pastMonth_${i}_learnings`] || "",
+                                    next30Days: d[`pastMonth_${i}_next30Days`] || "",
+                                    metrics: {},
+                                };
                                 for (const m of METRIC_OPTIONS) {
                                     if (d[`pastMonth_${i}_${m.key}`]) pm.metrics[m.key] = d[`pastMonth_${i}_${m.key}`];
                                 }
@@ -1796,7 +3076,7 @@ export default function CreateUpdate() {
                             return (
                                 <>
                                     {hasAnyChart && (
-                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-2" : "grid-cols-1"}`}>
+                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
                                             {hasRevenue && (
                                                 <GrowthChart
                                                     data={reviewChartData}
@@ -1832,7 +3112,7 @@ export default function CreateUpdate() {
                         {/* Your Audience Block */}
                         {(() => {
                             const d = data as any;
-                            const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                            const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
                             
                             const criteria = [];
                             if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
@@ -1847,17 +3127,17 @@ export default function CreateUpdate() {
                             const count = 18 + (criteria.length * 14);
 
                             return (
-                                <div className="mt-6 bg-gradient-to-br from-violet-50 to-violet-50 border border-violet-100 rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-sm font-bold text-violet-900 mb-2 flex items-center gap-2">
-                                        <UsersIcon className="w-4 h-4 text-violet-500" />
+                                <div className="mt-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
+                                    <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
+                                        <UsersIcon className="w-4 h-4 text-indigo-500" />
                                         Your Audience
                                     </h3>
-                                    <p className="text-sm text-violet-800/80 mb-3">
-                                        We found <strong className="text-violet-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
+                                    <p className="text-sm text-indigo-800/80 mb-3">
+                                        We found <strong className="text-indigo-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {criteria.map(c => (
-                                            <span key={c} className="px-2.5 py-1 bg-white border border-violet-200 text-violet-700 text-xs font-semibold rounded-lg shadow-sm">
+                                            <span key={c} className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg shadow-sm">
                                                 {c}
                                             </span>
                                         ))}
@@ -1866,7 +3146,7 @@ export default function CreateUpdate() {
                             );
                         })()}
 
-                        {/* Action buttons - below preview */}
+                        {/* Action buttons — below preview */}
                         <div className="flex items-center gap-3 mt-6">
                             <button
                                 type="button"
@@ -1897,7 +3177,7 @@ export default function CreateUpdate() {
                     {/* Pre-Publish Confirmation Popup */}
                     {showConfirmPopup && (() => {
                         const d = data as any;
-                        const text = [(d.highlights || ''), (d.challenges || ''), (d.asks || '')].join(" ").toLowerCase();
+                        const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
                         
                         const criteria = [];
                         if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
@@ -1913,7 +3193,14 @@ export default function CreateUpdate() {
 
                         return (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
-                                <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                                <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                                    <MonthlyUpdateStepper
+                                        activeStep="publish"
+                                        enabledSteps={["connect", "draft", "review", "publish"]}
+                                        onStepClick={handleReviewStepperClick}
+                                        compact
+                                        className="mb-6 text-left"
+                                    />
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                                         Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{count} investors</strong> matching your criteria: {criteria.join(", ")}.
@@ -1927,11 +3214,18 @@ export default function CreateUpdate() {
                                         }}
                                     >
                                         <input type="hidden" name="intent" value="publish" />
-                                        <input type="hidden" name="grade" value={feedback?.grade || "A+"} />
-                                        <input type="hidden" name="videoUrl" value={videoPreviewUrl || ""} />
-                                        {Object.entries(data || {}).map(([key, value]) => (
-                                            <input key={key} type="hidden" name={key} value={value as any} />
-                                        ))}
+                                        <input type="hidden" name="summary" value={reviewSummary} />
+                                        <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
+                                        <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
+                                        <input type="hidden" name="videoStoragePath" value={reviewVideoStoragePath} />
+                                        <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
+                                        <input type="hidden" name="videoFileSizeBytes" value={reviewVideoFileSizeBytes ?? ""} />
+                                        <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
+                                        {Object.entries(data || {})
+                                            .filter(([key]) => !["summary", "sourceUrl", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename"].includes(key))
+                                            .map(([key, value]) => (
+                                                <input key={key} type="hidden" name={key} value={value as any} />
+                                            ))}
                                         
                                         <button
                                             type="submit"
@@ -1953,9 +3247,9 @@ export default function CreateUpdate() {
                         );
                     })()}
 
-                    {/* RATING SIDEBAR - thin vertical bar on right */}
-                    <div className="w-56 flex-shrink-0 sticky top-6 space-y-3">
-                        {/* Company identity */}
+                    {/* RATING SIDEBAR — stacked below on mobile, sticky right on desktop */}
+                    <div className="w-full lg:w-56 lg:flex-shrink-0 lg:sticky lg:top-6 space-y-3">
+                        {/* Company identity (primary) with AI grade as supporting badge */}
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-center text-center">
                             {user.domain ? (
                                 <img
@@ -1964,7 +3258,7 @@ export default function CreateUpdate() {
                                     className="w-12 h-12 rounded-xl mb-2 bg-gray-50"
                                 />
                             ) : (
-                                <div className="w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-purple-100 to-violet-100 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
                                     <span className="text-lg font-bold text-purple-600">{user.companyName.charAt(0)}</span>
                                 </div>
                             )}
@@ -1972,15 +3266,16 @@ export default function CreateUpdate() {
                             {user.domain && (
                                 <p className="text-[11px] text-gray-400 mt-0.5">{user.domain}</p>
                             )}
+                            <StartupRegionBadge location={user.location} className="mt-3" />
+                            {feedback?.grade && (
+                                <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
+                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700">AI Grade</span>
+                                    <span className="text-sm font-bold text-green-700 leading-none">{feedback.grade}</span>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Grade pill */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">AI Grade</p>
-                            <div className="text-4xl font-bold text-green-600 leading-none">{feedback?.grade}</div>
-                        </div>
-
-                        {/* Strengths - collapsible */}
+                        {/* Strengths — collapsible */}
                         <CollapsibleFeedback
                             icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
                             headline={`${feedback?.strengths.length} strengths found`}
@@ -1996,7 +3291,7 @@ export default function CreateUpdate() {
                             </ul>
                         </CollapsibleFeedback>
 
-                        {/* Improvements - collapsible */}
+                        {/* Improvements — collapsible */}
                         <CollapsibleFeedback
                             icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
                             headline={`${feedback?.improvements.length} areas to improve`}
@@ -2012,7 +3307,7 @@ export default function CreateUpdate() {
                             </ul>
                         </CollapsibleFeedback>
 
-                        {/* Pro Tip - collapsible */}
+                        {/* Pro Tip — collapsible */}
                         <CollapsibleFeedback
                             icon={<LightBulbIcon className="w-3.5 h-3.5" />}
                             headline="Pro tip from AI"
@@ -2028,13 +3323,20 @@ export default function CreateUpdate() {
 
     // 3. Create/Edit Form View
     return (
-        <div className="max-w-5xl mx-auto pb-12">
+        <div className="max-w-3xl mx-auto pb-12">
+            <MonthlyUpdateStepper
+                activeStep="draft"
+                enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                onStepClick={handleDraftStepperClick}
+                className="mt-6 mb-6"
+            />
+
             {/* Header */}
             <div className="sticky top-0 z-10 py-4 mb-6 flex items-center justify-between">
                 <h1 className="text-xl font-bold text-gray-900">
                     {isEdit ? "Edit Monthly Update" : "Create Monthly Update"}
                 </h1>
-                <Link to={VIBE_RAISING_APP_PATH} className="text-gray-400 hover:text-gray-600">
+                <Link to="/founder-tools/updates" className="text-gray-400 hover:text-gray-600">
                     <XMarkIcon className="w-6 h-6" />
                 </Link>
             </div>
@@ -2054,13 +3356,15 @@ export default function CreateUpdate() {
                     <button
                         type="button"
                         onClick={resumeDraft}
-                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+                        disabled={isEmailDraftBusy}
+                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-60"
                     >
                         Resume Draft
                     </button>
                     <button
                         type="button"
                         onClick={dismissDraft}
+                        disabled={isEmailDraftBusy}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
                         aria-label="Dismiss"
                     >
@@ -2069,293 +3373,328 @@ export default function CreateUpdate() {
                 </div>
             )}
 
+            {showRegenerateConfirm && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
+                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
+                        <div className="border-b border-gray-100 px-6 py-5">
+                            <div className="flex items-start gap-4">
+                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                                    <ExclamationTriangleIcon className="h-6 w-6" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-black text-gray-950">Draft another update?</h2>
+                                    <p className="mt-2 text-sm leading-6 text-gray-600">
+                                        You already have a monthly update for <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong>. Creating a new draft from these inputs can take up to 20 minutes. Previous dot points will not be overwritten; matching points will be refreshed and new points will be added.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex flex-col-reverse gap-3 px-6 py-4 sm:flex-row sm:justify-end">
+                            <button
+                                type="button"
+                                onClick={handleCancelRegenerateDraft}
+                                disabled={emailDraftActionBusy}
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleConfirmRegenerateDraft}
+                                disabled={emailDraftActionBusy}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                                {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                                Regenerate {selectedMonthLabel}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <Form method="POST" className="space-y-6">
                 <input type="hidden" name="intent" value="review" />
-                <input type="hidden" name="videoUrl" value={videoPreviewUrl || ""} />
-                {!isViewingCurrentUpdate && (
-                    <>
-                        <input type="hidden" name="month" value={selectedMonth} />
-                        <input type="hidden" name="year" value={selectedYear} />
-                        <input type="hidden" name="highlights" value={highlights} />
-                        <input type="hidden" name="challenges" value={challenges} />
-                        <input type="hidden" name="asks" value={asks} />
-                        {METRIC_OPTIONS.map((metric) => (
-                            <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
-                        ))}
-                    </>
-                )}
+                <input
+                    type="hidden"
+                    name="metricKeys"
+                    value={formMetricKeys.join(",")}
+                />
+                <input type="hidden" name="summary" value={summary} />
+                <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
+                <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
+                <input type="hidden" name="videoContentType" value={videoContentType} />
+                <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
+                <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
 
-                {/* Input Sections */}
-                <div className="space-y-6">
-                            <div>
-                                <div
-                                    className={clsx(
-                                        "relative overflow-hidden rounded-2xl border bg-white p-8 transition-all shadow-sm",
-                                        manualPathActive ? "border-violet-200 shadow-[0_24px_70px_-50px_rgba(109,40,217,0.25)]" : "border-gray-100",
-                                        isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "hover:bg-gray-50/50"
-                                    )}
-                                >
-                                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-200 to-transparent" />
+                <div className="relative">
+                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+                        {/* Upload Section */}
+                        <div
+                            {...getRootProps()}
+                            className={clsx(
+                                "relative border border-gray-100 rounded-2xl p-6 sm:p-12 transition-all flex flex-col items-center justify-center text-center",
+                                isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
+                            )}
+                        >
+                            <input {...getInputProps()} />
 
-                                    <div className="flex flex-col gap-6">
-                        <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-                            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-50 text-gray-400">
-                                <CloudArrowUpIcon className="h-7 w-7 stroke-1" />
-                            </div>
+                            <div className="flex flex-col items-center max-w-sm">
+                                <div className="w-12 h-12 text-gray-400 mb-4">
+                                    <CloudArrowUpIcon className="w-full h-full stroke-1" />
+                                </div>
 
-                            <div className="mb-4 flex items-center gap-2">
-                                <h3 className="text-xl font-bold text-gray-900">
-                                    Say it your way
+                                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                                    Drag a video here to upload
                                 </h3>
-                            </div>
 
-                            <p className="max-w-2xl text-sm leading-6 text-gray-500">
-                                Tell us what you&apos;ve been building, record a video, upload a file, or share a link.
-                            </p>
-
-                            <div className="mt-6 flex flex-wrap items-center gap-3">
-                                <button 
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (isRecording) {
-                                            stopRecording();
-                                        } else {
-                                            void startRecording();
-                                        }
-                                    }}
-                                    className={clsx(
-                                        "flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
-                                        isRecording 
-                                            ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse" 
-                                            : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
-                                    )}
-                                >
-                                    <span className={clsx(
-                                        "w-2.5 h-2.5 rounded-full",
-                                        isRecording ? "bg-red-600" : "bg-red-500"
-                                    )} />
-                                    {isRecording ? "Stop Recording" : "Record"}
-                                </button>
-
-                                <button 
-                                    type="button"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setShowImportPanel(prev => !prev);
-                                    }}
-                                    className="px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm"
-                                >
-                                    {showImportPanel ? "Hide file and link" : "Add local file or link"}
-                                </button>
-                            </div>
-
-                            {recordingNotice && !recordingError && (
-                                <p className="mt-4 text-sm font-medium text-amber-600">
-                                    {recordingNotice}
+                                <p className="text-sm text-gray-600 font-medium mb-1">
+                                    MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV
                                 </p>
-                            )}
 
-                            {recordingError && (
-                                <p className="mt-4 text-sm font-medium text-red-600">
-                                    {recordingError}
+                                <p className="text-sm text-gray-500 mb-6">
+                                    Larger videos are compressed first. Final upload limit: 250 MB.
                                 </p>
-                            )}
-                        </div>
 
-                        {showImportPanel && (
-                            <div className="rounded-2xl border border-sky-100 bg-sky-50/50 p-5 shadow-sm">
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-sky-600 shadow-sm">
-                                            <LinkIcon className="h-5 w-5" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <input
-                                                type="url"
-                                                name="sourceUrl"
-                                                value={sourceUrl}
-                                                onChange={(e) => setSourceUrl(e.target.value)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                placeholder="Paste a Notion, Google Doc, or similar link"
-                                                inputMode="url"
-                                                autoComplete="url"
-                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10"
-                                            />
-                                        </div>
-                                        {hasValidSourceUrl && (
-                                            <a
-                                                href={sourceUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
-                                            >
-                                                Open link
-                                                <ArrowTopRightOnSquareIcon className="h-4 w-4" />
-                                            </a>
-                                        )}
-                                    </div>
-
-                                    <div
-                                        {...getRootProps()}
-                                        className={clsx(
-                                            "rounded-2xl border-2 border-dashed p-8 text-center transition-all cursor-pointer bg-white",
-                                            isDragActive
-                                                ? "border-violet-300 bg-violet-50"
-                                                : "border-gray-200 hover:border-violet-200 hover:bg-violet-50/40"
-                                        )}
+                                <div className="flex flex-col sm:flex-row gap-3 w-full">
+                                    <button
+                                        type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            if (isRecording) {
+                                                stopRecording();
+                                            } else {
+                                                void startRecording();
+                                            }
+                                        }}
+                                        disabled={isEmailDraftBusy}
+                                        className={clsx(
+                                            "flex-1 flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
+                                            isRecording
+                                                ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse"
+                                                : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
+                                        )}
+                                    >
+                                        <span className={clsx(
+                                            "w-2.5 h-2.5 rounded-full",
+                                            isRecording ? "bg-red-600" : "bg-red-500"
+                                        )} />
+                                        {isRecording ? "Stop Recording" : "Record"}
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        disabled={isEmailDraftBusy}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
                                             open();
                                         }}
+                                        className="flex-1 px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
                                     >
-                                        <input {...getInputProps()} />
-                                        <div className="flex flex-col items-center justify-center gap-3">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-violet-50 text-violet-600">
-                                                <CloudArrowUpIcon className="h-6 w-6" />
-                                            </div>
-                                            <p className="text-sm font-bold text-gray-900">
-                                                Drop file
-                                            </p>
-                                        </div>
-                                    </div>
+                                        Select file
+                                    </button>
                                 </div>
-                            </div>
-                        )}
-
-                        {(isRecording || videoPreviewUrl) && (
-                            <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-5 shadow-sm">
-                                <div className="flex flex-col gap-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div>
-                                            <p className="text-sm font-bold text-gray-900">
-                                                {isRecording
-                                                    ? recordingMode === "audio"
-                                                        ? "Recording audio"
-                                                        : "Recording live preview"
-                                                    : previewMediaKind === "audio"
-                                                    ? "Recorded audio ready"
-                                                    : "Recorded video ready"}
+                                {videoUploadStatusLabel && (
+                                    <p className={clsx(
+                                        "mt-4 text-sm font-semibold",
+                                        videoUploadStatus === "ready" ? "text-green-600" : "text-violet-600",
+                                    )}>
+                                        {videoUploadStatusLabel}
+                                    </p>
+                                )}
+                                {videoUploadError && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">{videoUploadError}</p>
+                                )}
+                                {isRecording && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">
+                                        {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
+                                    </p>
+                                )}
+                                {recordingError && (
+                                    <p className="mt-4 text-sm font-semibold text-red-600">{recordingError}</p>
+                                )}
+                                {videoPreviewUrl && (
+                                    <div className="mt-5 w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left">
+                                        <div className="mb-2 flex items-center justify-between gap-3">
+                                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                                {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
                                             </p>
-                                            <p className="text-xs text-gray-500">
-                                                {isRecording
-                                                    ? recordingMode === "audio"
-                                                        ? "Microphone is active. Click stop when you’re done."
-                                                        : recordingNotice === "Microphone unavailable. Recording video without audio."
-                                                        ? "Camera is active. Click stop when you’re done."
-                                                        : "Camera and microphone are active. Click stop when you’re done."
-                                                    : "This preview will be shown in review while you draft your update."}
-                                            </p>
-                                        </div>
-                                        {!isRecording && videoPreviewUrl && (
                                             <button
                                                 type="button"
-                                                onClick={() => {
-                                                    setRecordingNotice(null);
-                                                    replacePreviewMedia(null, null);
-                                                }}
-                                                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600 transition-colors hover:bg-gray-50"
+                                                onClick={resetVideoUpload}
+                                                className="text-xs font-bold text-gray-400 hover:text-gray-700"
                                             >
-                                                Remove media
+                                                Remove
                                             </button>
-                                        )}
-                                    </div>
-
-                                    <div className="overflow-hidden rounded-2xl bg-black">
-                                        {isRecording && recordingMode === "video" ? (
-                                            <video
-                                                ref={livePreviewRef}
-                                                muted
-                                                autoPlay
-                                                playsInline
-                                                className="aspect-video w-full object-cover"
-                                            />
-                                        ) : isRecording && recordingMode === "audio" ? (
-                                            <div className="flex aspect-video w-full flex-col items-center justify-center gap-3 px-6 text-center text-white">
-                                                <div className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-                                                <p className="text-sm font-semibold">Recording audio only</p>
-                                                <p className="max-w-xs text-xs text-white/70">
-                                                    We couldn&apos;t access a camera, so this recording will capture microphone audio.
-                                                </p>
-                                            </div>
-                                        ) : previewMediaKind === "audio" ? (
-                                            <div className="flex aspect-video w-full items-center justify-center px-6">
-                                                <audio
-                                                    src={videoPreviewUrl || undefined}
-                                                    controls
-                                                    className="w-full max-w-md"
-                                                />
-                                            </div>
+                                        </div>
+                                        {previewMediaKind === "audio" ? (
+                                            <audio src={videoPreviewUrl} controls className="w-full" />
                                         ) : (
-                                            <video
-                                                src={videoPreviewUrl || undefined}
-                                                controls
-                                                className="aspect-video w-full object-contain"
+                                            <VideoAssetPreview
+                                                src={videoPreviewUrl}
+                                                contentType={videoContentType}
+                                                fileName={videoOriginalFilename || videoPreviewUrl}
+                                                fileSizeBytes={videoFileSizeBytes}
+                                                className="aspect-video w-full"
                                             />
                                         )}
+                                        {videoUploadStatus === "ready" && uploadedVideoUrl && (
+                                            <p className="mt-2 text-xs font-medium text-green-600">
+                                                Uploaded and ready to publish.
+                                            </p>
+                                        )}
                                     </div>
-                                </div>
+                                )}
                             </div>
-                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div>
-                                <button
-                                    type="button"
-                                    onClick={openEmailDraftFlow}
-                                    className={clsx(
-                                        "group w-full overflow-hidden rounded-2xl border border-black bg-black p-6 text-left shadow-[0_24px_70px_-50px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-0.5 hover:shadow-[0_28px_80px_-50px_rgba(0,0,0,0.8)]",
-                                        emailPathActive
-                                            ? "ring-2 ring-purple-400/40"
-                                            : ""
-                                    )}
-                                >
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-white">
-                                        <SparklesIcon className="h-7 w-7" />
-                                    </div>
-
-                                    <div className="mt-4 flex items-center gap-2">
-                                        <h3 className="text-xl font-bold text-white">
-                                            AI Drafting
-                                        </h3>
-                                    </div>
-
-                                    <p className="mt-4 max-w-2xl text-sm leading-6 text-white/72">
-                                        AI agent will scan your filtered email to find key signals, metrics, wins, and asks, then help you make your first draft in seconds.
-                                    </p>
-                                </button>
-                            </div>
+                        </div>
+                    </fieldset>
+                    {isEmailDraftBusy && (
+                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
+                    )}
                 </div>
 
-                {/* ─── Growth Charts ─── */}
-                {pastMonthCards.length > 0 && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <GrowthChart
-                            data={chartData}
-                            onSelect={expandCardFromChart}
-                            title="Revenue"
-                            subtitle="Monthly revenue with MoM growth"
-                            formatter={formatCompact}
-                        />
-                        <GrowthChart
-                            data={activeUsersChartData}
-                            onSelect={expandCardFromChart}
-                            title="Active Users"
-                            subtitle="Monthly active users with MoM growth"
-                            formatter={formatUsers}
-                        />
+                <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-gray-900">Selected inputs</p>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {selectedInputSourceLabels.length > 0 ? (
+                                    selectedInputSourceLabels.map((label) => (
+                                        <span key={label} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
+                                            {label}
+                                        </span>
+                                    ))
+                                ) : (
+                                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-gray-500 ring-1 ring-gray-100">
+                                        Manual materials only
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                        {!isEdit && (
+                            <Link
+                                to="/founder-tools/data-sources"
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                            >
+                                Change inputs
+                            </Link>
+                        )}
                     </div>
+                </div>
+
+                <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                    <div className="mb-4 flex flex-col gap-1">
+                        <p className="text-sm font-bold text-gray-900">Selected update month</p>
+                        <p className="text-xs font-medium text-gray-500">
+                            AI generation and edits below apply to {selectedMonthLabel}.
+                        </p>
+                    </div>
+                    <MonthYearTabs
+                        month={selectedMonth}
+                        year={selectedYear}
+                        onMonthChange={setSelectedMonth}
+                        onYearChange={setSelectedYear}
+                        onPeriodChange={setActivePeriodKey}
+                        isDateEditable={!isEmailDraftBusy}
+                        statusLabel="Selected month"
+                    />
+                    {isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
+                            Future monthly updates can be generated once that month starts.
+                        </p>
+                    )}
+                    {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
+                        <p className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700">
+                            An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                        </p>
+                    )}
+                </section>
+
+                {emailDraftCardVisible ? (
+                    <EmailDraftInProgressCard
+                        status={emailDraftCardStatus}
+                        displayStage={emailDraftCardDisplayStage}
+                        completedSteps={emailDraftCardCompletedSteps}
+                        totalSteps={emailDraftCardTotalSteps}
+                        sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
+                        error={emailDraftCardError}
+                        notice={emailDraftCardNotice}
+                        pollingDegraded={emailDraftPollingDegraded}
+                        onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
+                        retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                        onCancel={isEmailDraftBusy ? () => {
+                            void handleCancelEmailDraft();
+                        } : undefined}
+                        cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                        isCancelling={emailDraftCancelBusy}
+                    />
+                ) : (
+                    <button
+                        type="button"
+                        disabled={emailDraftActionBusy || isSelectedMonthInFuture}
+                        onClick={() => {
+                            void handleGenerateDraftFromEmailClick();
+                        }}
+                        className={clsx(
+                            "group flex w-full items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-60",
+                            canGenerateDraftFromEmail && !isSelectedMonthInFuture
+                                ? "cursor-pointer"
+                                : "cursor-not-allowed",
+                        )}
+                    >
+                        <div className="flex min-w-0 items-center gap-4">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+                                {emailDraftActionBusy ? (
+                                    <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                ) : (
+                                    <SparklesIcon className="h-5 w-5" />
+                                )}
+                            </div>
+                            <div className="min-w-0">
+                                <h2 className="text-base font-bold text-gray-950">
+                                    {emailDraftButtonTitle}
+                                </h2>
+                                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                    {emailDraftButtonDescription}
+                                </p>
+                            </div>
+                        </div>
+                        <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
+                    </button>
                 )}
+
+                <div className="relative">
+                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+	                        {/* ─── Growth Charts ─── */}
+                        {pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
+                            <div className={clsx("grid gap-4", hasRevenueChart && hasActiveUsersChart ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1")}>
+                                {hasRevenueChart && (
+                                    <GrowthChart
+                                        data={chartData}
+                                        onSelect={expandCardFromChart}
+                                        title="Revenue"
+                                        subtitle="Monthly revenue with MoM growth"
+                                        formatter={formatCompact}
+                                    />
+                                )}
+                                {hasActiveUsersChart && (
+                                    <GrowthChart
+                                        data={activeUsersChartData}
+                                        onSelect={expandCardFromChart}
+                                        title="Active Users"
+                                        subtitle="Monthly active users with MoM growth"
+                                        formatter={formatUsers}
+                                    />
+                                )}
+                            </div>
+                        )}
 
                 {/* ─── Stacked Card Layout ─── */}
                 {pastMonthCards.length > 0 && (
                     <div className="relative">
-                        {/* Past month cards - grayed-out, peeking behind current */}
-                        {pastMonthCards.map((card, index) => (
-                            <div key={index} id={`past-month-${index}`} className="hidden">
+                        {/* Past month cards — grayed-out, peeking behind current */}
+	                        {pastMonthCards.map((card, index) => (
+	                            <div key={index} id={`past-month-${index}`} className="hidden">
                                 {/* Collapsed: gray card strip peeking behind */}
                                 <button
                                     type="button"
@@ -2372,14 +3711,14 @@ export default function CreateUpdate() {
                                             <h4 className="text-sm font-bold text-gray-600">{card.month}</h4>
                                             {!expandedCards.has(index) && (
                                                 <>
-                                                    {Object.keys(card.metrics).length > 0 && (
+                                                    {getMetricOptionsForMetrics(card.metrics).length > 0 && (
                                                         <span className="flex items-center gap-2 text-xs text-gray-400">
-                                                            {METRIC_OPTIONS.filter(m => m.key in card.metrics).map(m => (
+                                                            {getMetricOptionsForMetrics(card.metrics).map(m => (
                                                                 <span key={m.key} className="whitespace-nowrap">{m.label}: {m.prefix || ""}{card.metrics[m.key]}</span>
                                                             ))}
                                                         </span>
                                                     )}
-                                                    {Object.keys(card.metrics).length === 0 && (
+                                                    {getMetricOptionsForMetrics(card.metrics).length === 0 && (
                                                         <span className="text-xs text-gray-400 truncate max-w-[300px]">{(card.highlights || "").slice(0, 80)}...</span>
                                                     )}
                                                 </>
@@ -2395,11 +3734,11 @@ export default function CreateUpdate() {
                                 {/* Expanded: full editable content */}
                                 {expandedCards.has(index) && (
                                     <div className="border border-t-0 border-gray-300 rounded-b-xl bg-white px-5 py-4 space-y-3 -mt-1">
-                                        {/* Metrics - square boxes */}
+                                        {/* Metrics — square boxes */}
                                         <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1.5">Metrics</label>
-                                            <div className="grid grid-cols-4 gap-2">
-                                                {METRIC_OPTIONS.map(m => {
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                                                {getEditableMetricOptions(card.metrics, new Set(Object.keys(card.metrics))).map(m => {
                                                     const active = m.key in card.metrics;
                                                     return (
                                                         <div
@@ -2408,9 +3747,7 @@ export default function CreateUpdate() {
                                                                 if (active) {
                                                                     const updated = { ...card.metrics };
                                                                     delete updated[m.key];
-                                                                    if (Object.keys(updated).length > 0) {
-                                                                        setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
-                                                                    }
+                                                                    setPastMonthCards(prev => prev.map((c, i) => i === index ? { ...c, metrics: updated } : c));
                                                                 } else {
                                                                     updatePastMonthMetric(index, m.key, "");
                                                                 }
@@ -2421,34 +3758,30 @@ export default function CreateUpdate() {
                                                                     ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
                                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                             )}
-                                                        >
+	                                                        >
                                                             <MetricInfoBadge info={m.info} />
-                                                            <div className={clsx(
+	                                                            <div className={clsx(
                                                                 "w-5 h-5 rounded-full flex items-center justify-center mb-1",
                                                                 active ? "bg-violet-100" : "bg-white"
                                                             )}>
                                                                 {m.icon}
                                                             </div>
-                                                             {active ? (
-                                                                <div className="flex items-center justify-center gap-0.5 w-full" onClick={(e) => e.stopPropagation()}>
-                                                                    {m.prefix && (
-                                                                        <span className="text-xs font-extrabold text-gray-900">{m.prefix}</span>
-                                                                    )}
-                                                                    <input
-                                                                        autoFocus
-                                                                        onFocus={(e) => e.currentTarget.select()}
-                                                                        type="text"
-                                                                        value={card.metrics[m.key] ?? ""}
-                                                                        onClick={(e) => e.stopPropagation()}
-                                                                        onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
-                                                                        placeholder={m.placeholder}
-                                                                        className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5 min-w-0"
-                                                                    />
-                                                                </div>
+                                                            {active ? (
+                                                                <input
+                                                                    type="text"
+                                                                    value={card.metrics[m.key] || ""}
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
+                                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
+                                                                    className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                                />
                                                             ) : (
-                                                                <p className="text-xs font-extrabold text-gray-300">-</p>
+                                                                <p className="text-xs font-extrabold text-gray-300">—</p>
                                                             )}
-                                                            <MetricTooltip m={m} active={!!card.metrics[m.key]} className="text-[8px]" />
+                                                            <p className={clsx(
+                                                                "text-[8px] font-semibold uppercase tracking-wide mt-0.5",
+                                                                active ? "text-gray-600" : "text-gray-400"
+                                                            )}>{m.label}</p>
                                                         </div>
                                                     );
                                                 })}
@@ -2463,6 +3796,14 @@ export default function CreateUpdate() {
                                             <BulletInput value={card.challenges} onChange={(v) => updatePastMonthField(index, "challenges", v)} placeholder="Challenge faced..." section="challenges" />
                                         </div>
                                         <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Learnings</label>
+                                            <BulletInput value={card.learnings} onChange={(v) => updatePastMonthField(index, "learnings", v)} placeholder="Learning from this month..." section="learnings" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-medium text-gray-500 mb-1">Next 30 Days</label>
+                                            <BulletInput value={card.next30Days} onChange={(v) => updatePastMonthField(index, "next30Days", v)} placeholder="Priority for the next month..." section="next30Days" />
+                                        </div>
+                                        <div>
                                             <label className="block text-xs font-medium text-gray-500 mb-1">Asks</label>
                                             <BulletInput value={card.asks} onChange={(v) => updatePastMonthField(index, "asks", v)} placeholder="Ask from investors..." section="asks" />
                                         </div>
@@ -2474,192 +3815,140 @@ export default function CreateUpdate() {
                                 <input type="hidden" name={`pastMonth_${index}_highlights`} value={card.highlights} />
                                 <input type="hidden" name={`pastMonth_${index}_challenges`} value={card.challenges} />
                                 <input type="hidden" name={`pastMonth_${index}_asks`} value={card.asks} />
+                                <input type="hidden" name={`pastMonth_${index}_learnings`} value={card.learnings} />
+                                <input type="hidden" name={`pastMonth_${index}_next30Days`} value={card.next30Days} />
                                 {Object.entries(card.metrics).map(([key, value]) => (
                                     <input key={key} type="hidden" name={`pastMonth_${index}_${key}`} value={value} />
                                 ))}
                             </div>
                         ))}
 
-                        {/* Current month card - prominent, always visible */}
+                        {/* Current month card — prominent, always visible */}
                         <div
                             id="current-month-card"
                             className={clsx(
-                                "relative rounded-xl border-2 bg-white p-6 pt-14 space-y-5 shadow-md ring-1 scroll-mt-24",
-                                activeMonthTheme.borderClass,
-                                activeMonthTheme.ringClass,
-                            )}
-                        >
-                            <MonthYearTabs
-                                month={activeDisplayMonth}
-                                year={activeDisplayYear}
-                                onMonthChange={setSelectedMonth}
-                                onYearChange={setSelectedYear}
-                                periodTabs={periodTabs}
-                                activePeriodKey={activeMonthKey}
-                                onPeriodChange={setActiveMonthKey}
-                                submitDateFields={isViewingCurrentUpdate}
-                                isDateEditable={isViewingCurrentUpdate}
-                                statusLabel={isViewingCurrentUpdate ? "Current Update" : "Previous Update"}
-                                showInfoControl={pastMonthCards.length > 0}
-                            />
+	                                "rounded-xl border-2 bg-white p-6 space-y-5 shadow-md ring-1 scroll-mt-24",
+	                                activeMonthTheme.borderClass,
+	                                activeMonthTheme.ringClass,
+	                            )}
+	                        >
+	                            <div className="flex flex-col gap-1">
+	                                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
+	                                    {isViewingCurrentUpdate ? "Generated update" : "Previous update"}
+	                                </p>
+	                                <h2 className="text-lg font-black text-gray-950">
+	                                    {activeDisplayMonth} {activeDisplayYear}
+	                                </h2>
+	                            </div>
 
-                            
-                            {/* Company Summary / One-Liner */}
-                            <div className={clsx("p-5 rounded-2xl border shadow-sm mb-6", activeMonthTheme.softClass, activeMonthTheme.borderClass)}>
-                                <div className="flex items-center gap-2 mb-3">
-                                    <LightBulbIcon className="w-5 h-5 text-violet-500" />
-                                    <label className="block text-sm font-bold text-gray-900 uppercase tracking-widest">
-                                        What does your company do?
-                                    </label>
+	                            {!isViewingCurrentUpdate && (
+	                                <>
+	                                    <input type="hidden" name="month" value={selectedMonth} />
+	                                    <input type="hidden" name="year" value={selectedYear} />
+	                                    <input type="hidden" name="highlights" value={highlights} />
+	                                    <input type="hidden" name="challenges" value={challenges} />
+	                                    <input type="hidden" name="asks" value={asks} />
+	                                    <input type="hidden" name="learnings" value={learnings} />
+	                                    <input type="hidden" name="next30Days" value={next30Days} />
+	                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+	                                    {getMetricOptionsForMetrics(metricValues).map((metric) => (
+	                                        <input key={metric.key} type="hidden" name={metric.key} value={metricValues[metric.key] || ""} />
+	                                    ))}
+	                                </>
+	                            )}
+
+                            {/* Metrics — square boxes, click to activate */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
+                                </label>
+	                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+	                                    {getEditableMetricOptions(activeMetricValues, activeSelectedMetrics).map((m) => {
+	                                        const active = activeSelectedMetrics.has(m.key);
+	                                        return (
+	                                            <div
+	                                                key={m.key}
+	                                                onClick={() => toggleActiveMetric(m.key)}
+                                                className={clsx(
+                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                    active
+                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                        : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                )}
+	                                            >
+                                                <MetricInfoBadge info={m.info} />
+	                                                <div className={clsx(
+                                                    "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                                                    active ? "bg-violet-100" : "bg-white"
+                                                )}>
+                                                    {m.icon}
+                                                </div>
+                                                {active ? (
+                                                    <input
+	                                                        type="text"
+	                                                        name={isViewingCurrentUpdate ? m.key : undefined}
+	                                                        value={activeMetricValues[m.key] || ""}
+	                                                        onClick={(e) => e.stopPropagation()}
+	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
+                                                        placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
+                                                        className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                    />
+                                                ) : (
+                                                    <p className="text-base font-extrabold text-gray-300">—</p>
+                                                )}
+                                                <p className={clsx(
+                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                    active ? "text-gray-600" : "text-gray-400"
+                                                )}>{m.label}</p>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                                <textarea
-                                    name="summary"
-                                    value={summary}
-                                    onChange={(e) => setSummary(e.target.value)}
-                                    rows={2}
-                                    placeholder={(SECTION_HINTS.summary || [])[0]}
-                                    className={clsx("w-full px-4 py-3 text-base font-semibold text-gray-900 bg-white border-2 rounded-xl focus:ring-0 placeholder:text-gray-300 placeholder:italic transition-all resize-none shadow-sm", activeMonthTheme.inputClass)}
-                                />
-                                <p className="mt-2 text-[10px] font-medium text-gray-400 uppercase tracking-widest italic text-center">A very short summary (max 2 lines) that clearly explains your business</p>
                             </div>
 
-
-                            {/* Metrics - square boxes, click to activate */}
-                            {(() => {
-                                const allMetrics = [
-                                    ...METRIC_OPTIONS,
-                                    ...(isViewingCurrentUpdate ? customMetrics.map(cm => ({
-                                        key: cm.key,
-                                        label: cm.label,
-                                        placeholder: "Value",
-                                        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
-                                        isCustom: true
-                                    })) : [])
-                                ];
-                                
-                                const addCustomMetric = () => {
-                                    const key = `customMetric_${Date.now()}`;
-                                    setCustomMetrics(prev => [...prev, { key, label: "Custom Metric", prefix: "", value: "" }]);
-                                    setSelectedMetrics(prev => {
-                                        const next = new Set(prev);
-                                        next.add(key);
-                                        return next;
-                                    });
-                                };
-
-                                return (
-                                <div className="w-full">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                                    </label>
-                                    <div className="flex flex-wrap gap-3">
-                                        {allMetrics.map((m: any) => {
-                                            const active = activeSelectedMetrics.has(m.key);
-                                            return (
-                                                <div
-                                                    key={m.key}
-                                                    onClick={() => toggleActiveMetric(m.key)}
-                                                    className={clsx(
-                                                        "relative flex-1 min-w-[calc(25%-10px)] max-w-full rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                        active
-                                                            ? clsx(activeMonthTheme.borderClass, activeMonthTheme.softClass, activeMonthTheme.ringClass, "ring-1 shadow-sm")
-                                                            : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
-                                                    )}
-                                                >
-                                                    {m.info && <MetricInfoBadge info={m.info} />}
-                                                    {m.isCustom && (
-                                                        <input type="hidden" name={`${m.key}_label`} value={m.label} />
-                                                    )}
-                                                    <div className={clsx(
-                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                        active ? "bg-violet-100" : "bg-white"
-                                                    )}>
-                                                        {m.icon}
-                                                    </div>
-                                                    {active ? (
-                                                        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
-                                                            {m.prefix && (
-                                                                <span className="text-base font-extrabold text-gray-900 pl-1">{m.prefix}</span>
-                                                            )}
-                                                            <input
-                                                                autoFocus={m.isCustom}
-                                                                onFocus={(e) => e.currentTarget.select()}
-                                                                type="text"
-                                                                name={isViewingCurrentUpdate ? m.key : undefined}
-                                                                value={activeMetricValues[m.key] ?? ""}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                onChange={(e) => updateActiveMetricValue(m.key, e.target.value)}
-                                                                placeholder={m.placeholder}
-                                                                className={clsx("w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 focus:outline-none text-center py-0.5 min-w-0", activeMonthTheme.inputClass)}
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-base font-extrabold text-gray-300">-</p>
-                                                    )}
-                                                    
-                                                    {/* Tooltip or Editable Label for custom metrics */}
-                                                    <div className="mt-0.5" onClick={e => e.stopPropagation()}>
-                                                        {m.isCustom ? (
-                                                            <input
-                                                                type="text"
-                                                                value={m.label}
-                                                                onChange={(e) => {
-                                                                    setCustomMetrics(prev => prev.map((cm) => cm.key === m.key ? { ...cm, label: e.target.value } : cm));
-                                                                }}
-                                                                className={clsx("font-semibold uppercase tracking-wide text-center bg-transparent border-b border-dashed focus:outline-none text-[10px] w-full", active ? "text-gray-600 border-gray-400 focus:border-violet-500" : "text-gray-400 border-gray-300")}
-                                                            />
-                                                        ) : (
-                                                            <MetricTooltip m={m} active={!!activeMetricValues[m.key]} className="text-[10px]" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        
-                                        {/* Add Custom Metric Card */}
-                                        {isViewingCurrentUpdate && (
-                                            <div
-                                                onClick={addCustomMetric}
-                                                className="relative min-w-[calc(25%-10px)] max-w-[calc(25%-10px)] rounded-xl border border-dashed border-gray-300 bg-white hover:bg-gray-50 flex flex-col items-center justify-center text-center py-4 px-2 cursor-pointer transition-all shadow-sm group"
-                                            >
-                                                <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center mb-1 group-hover:bg-violet-50 group-hover:border-violet-200 group-hover:text-violet-500 transition-colors">
-                                                    <PlusIcon className="w-4 h-4 text-gray-400 group-hover:text-violet-500" />
-                                                </div>
-                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-violet-500">
-                                                    Add Metric
-                                                </span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                                );
-                            })()}
-
-                            {/* Qualitative fields - auto-expanding, no scroll */}
+                            {/* Qualitative fields — auto-expanding, no scroll */}
                             <div className="space-y-4">
-                                <SectionWithExample
-                                    label="Key Highlights"
-                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
-                                    value={activeHighlights}
-                                    onChange={updateActiveHighlights}
+	                                <SectionWithExample
+	                                    label="Key Highlights"
+	                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
+	                                    value={activeHighlights}
+	                                    onChange={updateActiveHighlights}
                                     rows={3}
                                     placeholder="What went well this month? Major wins, product launches, partnerships..."
                                     icon={SparklesIcon}
                                 />
-                                <SectionWithExample
-                                    label="Challenges"
-                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
-                                    value={activeChallenges}
-                                    onChange={updateActiveChallenges}
+	                                <SectionWithExample
+	                                    label="Challenges"
+	                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
+	                                    value={activeChallenges}
+	                                    onChange={updateActiveChallenges}
                                     rows={3}
                                     placeholder="What obstacles are you facing? Where do you need help?"
                                     icon={ExclamationCircleIcon}
                                 />
-                                <SectionWithExample
-                                    label="Ask from Investors"
-                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
-                                    value={activeAsks}
-                                    onChange={updateActiveAsks}
+	                                <SectionWithExample
+	                                    label="Learnings"
+	                                    name={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
+	                                    value={activeLearnings}
+	                                    onChange={updateActiveLearnings}
+                                    rows={3}
+                                    placeholder="What did you learn from customers, experiments, or execution this month?"
+                                    icon={LightBulbIcon}
+                                />
+	                                <SectionWithExample
+	                                    label="Next 30 Days"
+	                                    name={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
+	                                    value={activeNext30Days}
+	                                    onChange={updateActiveNext30Days}
+                                    rows={3}
+                                    placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
+                                    icon={ArrowRightIcon}
+                                />
+	                                <SectionWithExample
+	                                    label="Ask from Investors"
+	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
+	                                    value={activeAsks}
+	                                    onChange={updateActiveAsks}
                                     rows={3}
                                     placeholder="How can your investors help? Introductions, advice, specific expertise..."
                                     icon={QuestionMarkCircleIcon}
@@ -2673,146 +3962,64 @@ export default function CreateUpdate() {
                 {pastMonthCards.length === 0 && (
                     <div
                         className={clsx(
-                            "relative rounded-xl border-2 bg-white p-6 pt-14 space-y-5 shadow-sm ring-1",
-                            activeMonthTheme.borderClass,
-                            activeMonthTheme.ringClass,
+                            "rounded-xl border bg-white p-6 space-y-5 ring-1",
+                            selectedMonthTheme.borderClass,
+                            selectedMonthTheme.ringClass,
                         )}
                     >
-                        <MonthYearTabs
-                            month={selectedMonth}
-                            year={selectedYear}
-                            onMonthChange={setSelectedMonth}
-                            onYearChange={setSelectedYear}
-                            statusLabel="Current Update"
-                        />
-                        
-                        {/* Company Summary / One-Liner */}
-                        <div className={clsx("p-5 rounded-2xl border shadow-sm mb-6", activeMonthTheme.softClass, activeMonthTheme.borderClass)}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <LightBulbIcon className="w-5 h-5 text-violet-500" />
-                                <label className="block text-sm font-bold text-gray-900 uppercase tracking-widest">
-                                    What does your company do?
-                                </label>
-                            </div>
-                            <textarea
-                                name="summary"
-                                value={summary}
-                                onChange={(e) => setSummary(e.target.value)}
-                                rows={2}
-                                placeholder={(SECTION_HINTS.summary || [])[0]}
-                                className={clsx("w-full px-4 py-3 text-base font-semibold text-gray-900 bg-white border-2 rounded-xl focus:ring-0 placeholder:text-gray-300 placeholder:italic transition-all resize-none shadow-sm", activeMonthTheme.inputClass)}
-                            />
-                            <p className="mt-2 text-[10px] font-medium text-gray-400 uppercase tracking-widest italic text-center">A very short summary (max 2 lines) that clearly explains your business</p>
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Update draft</p>
+                            <h2 className="text-lg font-black text-gray-950">{selectedMonthLabel}</h2>
                         </div>
 
-                        {/* Metrics - square boxes, click to activate */}
-                            {(() => {
-                                const allMetrics = [
-                                    ...METRIC_OPTIONS,
-                                    ...customMetrics.map(cm => ({
-                                        key: cm.key,
-                                        label: cm.label,
-                                        placeholder: "Value",
-                                        icon: <ChartBarIcon className="w-4 h-4 text-gray-400" />,
-                                        isCustom: true
-                                    }))
-                                ];
-                                
-                                const addCustomMetric = () => {
-                                    const key = `customMetric_${Date.now()}`;
-                                    setCustomMetrics(prev => [...prev, { key, label: "Custom Metric", prefix: "", value: "" }]);
-                                    setSelectedMetrics(prev => {
-                                        const next = new Set(prev);
-                                        next.add(key);
-                                        return next;
-                                    });
-                                };
-
-                                return (
-                                <div className="w-full">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
-                                    </label>
-                                    <div className="flex flex-wrap gap-3">
-                                        {allMetrics.map((m: any) => {
-                                            const active = selectedMetrics.has(m.key);
-                                            return (
-                                                <div
-                                                    key={m.key}
-                                                    onClick={() => toggleMetric(m.key)}
-                                                    className={clsx(
-                                                        "relative flex-1 min-w-[calc(25%-10px)] max-w-full rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
-                                                        active
-                                                            ? clsx(activeMonthTheme.borderClass, activeMonthTheme.softClass, activeMonthTheme.ringClass, "ring-1 shadow-sm")
-                                                            : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
-                                                    )}
-                                                >
-                                                    {m.info && <MetricInfoBadge info={m.info} />}
-                                                    {m.isCustom && (
-                                                        <input type="hidden" name={`${m.key}_label`} value={m.label} />
-                                                    )}
-                                                    <div className={clsx(
-                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                        active ? "bg-violet-100" : "bg-white"
-                                                    )}>
-                                                        {m.icon}
-                                                    </div>
-                                                    {active ? (
-                                                        <div className="flex items-center justify-center w-full" onClick={(e) => e.stopPropagation()}>
-                                                            {m.prefix && (
-                                                                <span className="text-base font-extrabold text-gray-900 pl-1">{m.prefix}</span>
-                                                            )}
-                                                            <input
-                                                                autoFocus={m.isCustom}
-                                                                onFocus={(e) => e.currentTarget.select()}
-                                                                type="text"
-                                                                name={m.key}
-                                                                value={metricValues[m.key] ?? ""}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
-                                                                placeholder={m.placeholder}
-                                                                className={clsx("w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 focus:outline-none text-center py-0.5 min-w-0", activeMonthTheme.inputClass)}
-                                                            />
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-base font-extrabold text-gray-300">-</p>
-                                                    )}
-                                                    
-                                                    {/* Tooltip or Editable Label for custom metrics */}
-                                                    <div className="mt-0.5" onClick={e => e.stopPropagation()}>
-                                                        {m.isCustom ? (
-                                                            <input
-                                                                type="text"
-                                                                value={m.label}
-                                                                onChange={(e) => {
-                                                                    setCustomMetrics(prev => prev.map((cm) => cm.key === m.key ? { ...cm, label: e.target.value } : cm));
-                                                                }}
-                                                                className={clsx("font-semibold uppercase tracking-wide text-center bg-transparent border-b border-dashed focus:outline-none text-[10px] w-full", active ? "text-gray-600 border-gray-400 focus:border-violet-500" : "text-gray-400 border-gray-300")}
-                                                            />
-                                                        ) : (
-                                                            <MetricTooltip m={m} active={!!metricValues[m.key]} className="text-[10px]" />
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        
-                                        {/* Add Custom Metric Card */}
+                        {/* Metrics — square boxes, click to activate */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Metrics <span className="text-gray-400 font-normal">(click to toggle)</span>
+                            </label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                {getEditableMetricOptions(metricValues, selectedMetrics).map((m) => {
+                                    const active = selectedMetrics.has(m.key);
+                                    return (
                                         <div
-                                            onClick={addCustomMetric}
-                                            className="relative min-w-[calc(25%-10px)] max-w-[calc(25%-10px)] rounded-xl border border-dashed border-gray-300 bg-white hover:bg-gray-50 flex flex-col items-center justify-center text-center py-4 px-2 cursor-pointer transition-all shadow-sm group"
-                                        >
-                                            <div className="w-8 h-8 rounded-full border border-gray-200 bg-gray-50 flex items-center justify-center mb-1 group-hover:bg-violet-50 group-hover:border-violet-200 group-hover:text-violet-500 transition-colors">
-                                                <PlusIcon className="w-4 h-4 text-gray-400 group-hover:text-violet-500" />
+                                            key={m.key}
+                                            onClick={() => toggleMetric(m.key)}
+                                            className={clsx(
+                                                "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+                                                active
+                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                    : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                            )}
+	                                        >
+                                            <MetricInfoBadge info={m.info} />
+	                                            <div className={clsx(
+                                                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                                                active ? "bg-violet-100" : "bg-white"
+                                            )}>
+                                                {m.icon}
                                             </div>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-violet-500">
-                                                Add Metric
-                                            </span>
+                                            {active ? (
+                                                <input
+                                                    type="text"
+                                                    name={m.key}
+                                                    value={metricValues[m.key] || ""}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
+                                                    placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
+                                                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                />
+                                            ) : (
+                                                <p className="text-base font-extrabold text-gray-300">—</p>
+                                            )}
+                                            <p className={clsx(
+                                                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                active ? "text-gray-600" : "text-gray-400"
+                                            )}>{m.label}</p>
                                         </div>
-                                    </div>
-                                </div>
-                                );
-                            })()}
+                                    );
+                                })}
+                            </div>
+                        </div>
 
                         {/* Qualitative Sections */}
                         <div className="space-y-5">
@@ -2833,6 +4040,22 @@ export default function CreateUpdate() {
                                 icon={ExclamationCircleIcon}
                             />
                             <SectionWithExample
+                                label="Learnings"
+                                name="learnings"
+                                value={learnings}
+                                onChange={setLearnings}
+                                placeholder="What did you learn from customers, experiments, or execution this month?"
+                                icon={LightBulbIcon}
+                            />
+                            <SectionWithExample
+                                label="Next 30 Days"
+                                name="next30Days"
+                                value={next30Days}
+                                onChange={setNext30Days}
+                                placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
+                                icon={ArrowRightIcon}
+                            />
+                            <SectionWithExample
                                 label="Ask from Investors"
                                 name="asks"
                                 value={asks}
@@ -2844,31 +4067,40 @@ export default function CreateUpdate() {
                     </div>
                 )}
 
-                {/* Footer Buttons */}
-                <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-                    <button
-                        type="button"
-                        onClick={() => navigate(VIBE_RAISING_APP_PATH)}
-                        className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm"
-                    >
-                        {isSubmitting ? "Reviewing..." : "Review"}
-                    </button>
+                        {/* Footer Buttons */}
+                        <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => navigate("/founder-tools/updates")}
+                                disabled={isEmailDraftBusy}
+                                className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
+                            >
+                                Cancel
+                            </button>
+	                            <button
+	                                type="submit"
+	                                disabled={isSubmitting || isEmailDraftBusy || isVideoUploadBlocking}
+	                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm disabled:opacity-60"
+	                            >
+	                                {isSubmitting ? "Reviewing..." : isVideoUploadPending ? "Uploading video..." : "Review"}
+	                            </button>
+                        </div>
+                    </fieldset>
+                    {isEmailDraftBusy && (
+                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
+                    )}
                 </div>
-
             </Form>
 
-            <DraftFromEmailWizard
-                isOpen={showEmailWizard}
-                onClose={() => setShowEmailWizard(false)}
-                onDraftComplete={handleDraftComplete}
-            />
+            {isClientMounted ? (
+                <DraftFromEmailWizard
+                    isOpen={showEmailWizard}
+                    onClose={handleEmailWizardClose}
+                    onGoogleConnected={handleEmailWizardConnected}
+                    backendBaseUrl={backendBaseUrl}
+                    companyDomain={user.domain}
+                />
+            ) : null}
         </div>
     );
 }

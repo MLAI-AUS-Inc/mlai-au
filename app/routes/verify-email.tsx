@@ -6,7 +6,7 @@ import { verifyMagicLinkWithCookies } from "~/lib/auth";
 function getDefaultNext(app: string | null): string {
     if (app === "hospital") return "/hospital/app";
     if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
-    if (app === "vibe-raising") return "/vibe-raising";
+    if (app === "founder-tools" || app === "vibe-raising") return "/founder-tools";
     return "/esafety/dashboard";
 }
 

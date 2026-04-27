@@ -1,20 +1,14 @@
-import { Link, useLoaderData, useOutletContext, useNavigate, redirect } from "react-router";
+import { Link, redirect, useLoaderData, useOutletContext, useNavigate } from "react-router";
 import { format, differenceInDays } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
-    getVibeRaisingUser,
-    getActiveCompany,
-    getVibeRaisingPublishedUpdate,
-    hasSubmittedVibeRaisingUpdate,
-    VIBE_RAISING_COMPANY_SETUP_PATH,
-    VIBE_RAISING_CREATE_UPDATE_PATH,
-} from "~/lib/vibe-raising-session";
+    getVibeRaisingMonthlyUpdates,
+    getOptionalVibeRaisingContext,
+    getVibeRaisingLoginHref,
+} from "~/lib/vibe-raising";
 import { clsx } from "clsx";
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
-import StartupRegionBadge from "~/components/StartupRegionBadge";
-import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
-import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
     ExclamationTriangleIcon,
@@ -38,91 +32,39 @@ import {
     QuestionMarkCircleIcon,
     ExclamationCircleIcon,
     FireIcon,
+    LightBulbIcon,
     LinkIcon,
     ArrowTopRightOnSquareIcon,
+    InformationCircleIcon,
 } from "@heroicons/react/24/outline";
+import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
+import StartupRegionBadge from "~/components/StartupRegionBadge";
+import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = getVibeRaisingUser(request);
-    if (!user) return { user: null, updates: [], portfolioUpdates: [] };
+export async function loader({ request, context }: Route.LoaderArgs) {
+    const env = getEnv(context);
+    const vibeContext = await getOptionalVibeRaisingContext(env, request);
 
-    const activeCompany = getActiveCompany(user);
-    const hasSubmitted = hasSubmittedVibeRaisingUpdate(request, user, activeCompany.id);
-    const publishedUpdate = getVibeRaisingPublishedUpdate(request, activeCompany.id);
-
-    if (user.role === "founder") {
-        if (!user.companyRegistered) {
-            throw redirect(VIBE_RAISING_COMPANY_SETUP_PATH);
-        }
-
-        if (!hasSubmitted) {
-            throw redirect(VIBE_RAISING_CREATE_UPDATE_PATH);
-        }
+    if (!vibeContext.authUser) {
+        throw redirect(getVibeRaisingLoginHref(request));
     }
 
-    // Founder mock history
-    const historicalUpdates = [
-        {
-            id: 2,
-            month: "January 2026",
-            score: "A",
-            date: "2026-01-15T00:00:00.000Z",
-            metrics: {
-                revenue: "$32,000",
-                growth: "15%",
-                users: "820"
-            },
-            highlights: "Launched v2.0 with enterprise features. Revenue reached $32K MoM with 15% growth from new pricing tier.",
-            challenges: "Hiring pipeline slower than expected for engineering roles. Onboarding new enterprise customers taking longer than projected.",
-            asks: "Seeking referrals for senior full-stack engineers. Would love intros to heads of procurement at mid-market companies.",
-            likes: 3,
-            comments: 1,
-            investorsSentTo: 12,
-            investorsViewed: 10,
-            isCurrent: false,
-        },
-        {
-            id: 3,
-            month: "December 2025",
-            score: "B+",
-            date: "2025-12-10T00:00:00.000Z",
-            metrics: {
-                revenue: "$18,000",
-                growth: "",
-                users: "500"
-            },
-            highlights: "Closed pre-seed round of $250K from angel investors. Onboarded first 5 beta customers and hit 500 active users milestone.",
-            challenges: "Product stability issues during beta launch. Needed to prioritize bug fixes over new features.",
-            asks: "Looking for introductions to early-stage B2B SaaS founders for peer learning and advice on product-market fit.",
-            likes: 5,
-            comments: 2,
-            investorsSentTo: 12,
-            investorsViewed: 11,
-            isCurrent: false,
-        }
-    ];
+    if (!vibeContext.appUser) {
+        return null;
+    }
 
-    const currentUpdate = publishedUpdate || (hasSubmitted ? {
-        id: 1,
-        month: "February 2026",
-        score: "A+",
-        date: new Date().toISOString(),
-        metrics: {
-            revenue: "$127,500",
-            growth: "18%",
-            users: "3,420"
-        },
-        highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
-        challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-        asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
-        likes: 0,
-        comments: 0,
-        investorsSentTo: 12,
-        investorsViewed: 8,
-        isCurrent: true,
-    } : null);
-
-    const founderUpdates = currentUpdate ? [currentUpdate, ...historicalUpdates] : [];
+    const user = vibeContext.appUser;
+    const updates = user.role === "founder"
+        ? (await getVibeRaisingMonthlyUpdates(env, request)).map((update, index) => ({
+            ...update,
+            isCurrent: index === 0,
+            score: null,
+            likes: 0,
+            comments: 0,
+            investorsSentTo: 0,
+            investorsViewed: 0,
+        }))
+        : [];
 
     // Investor Mock Data
     const portfolioUpdates = [
@@ -142,7 +84,7 @@ export async function loader({ request }: Route.LoaderArgs) {
         }
     ];
 
-    return { user, updates: founderUpdates, portfolioUpdates };
+    return { user, updates, portfolioUpdates };
 }
 
 // ─── Auto-resize textarea hook ──────────────────────────────────
@@ -159,7 +101,9 @@ function useAutoResize(value?: string) {
 
 // ─── Bullet list helper ──────────────────────────────────────────
 function BulletList({ text, className = "text-sm text-gray-600" }: { text: string; className?: string }) {
-    const items = text.split(/(?<=\.)\s+/).filter(s => s.trim());
+    const items = text.includes("\n")
+        ? text.split(/\n+/).filter(s => s.trim())
+        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
     return (
         <ul className={clsx("space-y-1 list-disc list-inside", className)}>
             {items.map((item, i) => (
@@ -169,8 +113,56 @@ function BulletList({ text, className = "text-sm text-gray-600" }: { text: strin
     );
 }
 
+function canPreviewUpdateVideo(contentType?: string | null) {
+    const normalized = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (!normalized) return true;
+    return ["video/mp4", "video/x-m4v", "video/webm", "video/ogg", "video/quicktime"].includes(normalized);
+}
+
+function UpdateVideoHero({ update }: { update: { videoUrl?: string | null; videoContentType?: string | null; videoOriginalFilename?: string | null } }) {
+    const [playbackFailed, setPlaybackFailed] = useState(false);
+    if (!update.videoUrl) return null;
+
+    if (!playbackFailed && canPreviewUpdateVideo(update.videoContentType)) {
+        return (
+            <div className="absolute inset-0">
+                <video
+                    src={update.videoUrl}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    onError={() => setPlaybackFailed(true)}
+                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950 px-5 text-center text-white">
+            <p className="relative z-10 text-sm font-bold">Video uploaded</p>
+            <p className="relative z-10 mt-1 max-w-xs text-xs text-white/60">
+                {update.videoOriginalFilename || "This video format may not preview in your browser."}
+            </p>
+            <a
+                href={update.videoUrl}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(event) => event.stopPropagation()}
+                className="relative z-10 mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-gray-950 hover:bg-gray-100"
+            >
+                Open video
+                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+            </a>
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
+        </div>
+    );
+}
+
 // Reuseable Components
-function MetricCard({ label, value, icon: Icon, active = true, info }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, info?: string }) {
+function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
     return (
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
@@ -187,32 +179,18 @@ function MetricCard({ label, value, icon: Icon, active = true, info }: { label: 
             <p className={clsx(
                 "text-base font-extrabold leading-tight",
                 active ? "text-gray-900" : "text-gray-300"
-            )}>{active ? value : "-"}</p>
-            <div className="flex items-center justify-center gap-1 mt-1 relative group">
-                <p className={clsx(
-                    "text-[10px] font-semibold uppercase tracking-wide",
-                    active ? "text-gray-600" : "text-gray-400"
-                )}>{label}</p>
-                {info && (
-                    <>
-                        <InformationCircleIcon className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600 transition-colors cursor-help" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none normal-case tracking-normal text-left">
-                            {info}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 flex justify-center w-full">
-                                <div className="w-0 h-0 border-l-[5px] border-l-transparent border-t-[5px] border-t-gray-900 border-r-[5px] border-r-transparent" />
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+            )}>{active ? value : "—"}</p>
+            <p className={clsx(
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                active ? "text-gray-600" : "text-gray-400"
+            )}>{label}</p>
         </div>
     );
 }
 
 // Editable metric input for inline editing
-// Editable metric input for inline editing
-function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange, info }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void, info?: string }) {
-    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} info={info} />;
+function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
+    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} />;
     return (
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
@@ -235,25 +213,12 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
                     className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
                 />
             ) : (
-                <p className="text-base font-extrabold text-gray-300">-</p>
+                <p className="text-base font-extrabold text-gray-300">—</p>
             )}
-            <div className="flex items-center justify-center gap-1 mt-1 relative group">
-                <p className={clsx(
-                    "text-[10px] font-semibold uppercase tracking-wide",
-                    active ? "text-gray-600" : "text-gray-400"
-                )}>{label}</p>
-                {info && (
-                    <>
-                        <InformationCircleIcon className="w-3.5 h-3.5 text-gray-400 hover:text-violet-600 transition-colors cursor-help" />
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-gray-900 text-white text-[11px] rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 pointer-events-none normal-case tracking-normal text-left">
-                            {info}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 flex justify-center w-full">
-                                <div className="w-0 h-0 border-l-[5px] border-l-transparent border-t-[5px] border-t-gray-900 border-r-[5px] border-r-transparent" />
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
+            <p className={clsx(
+                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                active ? "text-gray-600" : "text-gray-400"
+            )}>{label}</p>
         </div>
     );
 }
@@ -264,6 +229,8 @@ const METRIC_OPTIONS = [
     { key: "users", label: "Users", icon: UserGroupIcon, colorClass: "bg-purple-50/50 border-purple-100" },
     { key: "mrr", label: "MRR", icon: CurrencyDollarIcon, colorClass: "bg-emerald-50/50 border-emerald-100" },
     { key: "burnRate", label: "Burn Rate", icon: FireIcon, colorClass: "bg-red-50/50 border-red-100" },
+    { key: "runway", label: "Runway", icon: ChartBarIcon, colorClass: "bg-amber-50/50 border-amber-100" },
+    { key: "monthlyCosts", label: "Costs", icon: CurrencyDollarIcon, colorClass: "bg-slate-50/50 border-slate-100" },
 ];
 
 const GRADIENTS = [
@@ -282,6 +249,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     const [highlights, setHighlights] = useState(update.highlights);
     const [challenges, setChallenges] = useState(update.challenges);
     const [asks, setAsks] = useState(update.asks);
+    const [learnings, setLearnings] = useState(update.learnings || "");
+    const [next30Days, setNext30Days] = useState(update.next30Days || "");
     const [metrics, setMetrics] = useState<Record<string, string>>(update.metrics);
     const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(
         new Set(Object.keys(update.metrics).filter(k => update.metrics[k]))
@@ -291,16 +260,18 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     // Hash numeric or string ID to pick a deterministic gradient
     const hashId = typeof update.id === 'number' ? update.id : update.id?.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0) || 0;
     const gradientClass = GRADIENTS[hashId % GRADIENTS.length];
-    const activeCompany = getActiveCompany(user);
-    const companyName = activeCompany.name || user.companyName;
-    const companyDomain = activeCompany.domain || user.domain;
-    const companyLocation = activeCompany.location || user.location;
-    const cardExcerpt = update.summary || highlights;
-    const updatePeriod = parseVibeRaisingMonthYear(update.month);
+    const updatePeriod = update.year
+        ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
+        : parseVibeRaisingMonthYear(update.month);
+    const updateSummary = update.summary || "";
+    const updateSourceUrl = update.sourceUrl || "";
+    const cardExcerpt = updateSummary || highlights;
 
     const highlightsRef = useAutoResize(highlights);
     const challengesRef = useAutoResize(challenges);
     const asksRef = useAutoResize(asks);
+    const learningsRef = useAutoResize(learnings);
+    const next30DaysRef = useAutoResize(next30Days);
 
     const handleSave = () => {
         setEditing(false);
@@ -312,6 +283,8 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
         setHighlights(update.highlights);
         setChallenges(update.challenges);
         setAsks(update.asks);
+        setLearnings(update.learnings || "");
+        setNext30Days(update.next30Days || "");
         setMetrics(update.metrics);
         setSelectedMetrics(new Set(Object.keys(update.metrics).filter(k => update.metrics[k])));
         setEditing(false);
@@ -343,30 +316,37 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     onClick={() => !editing && setExpanded(true)}
                     className="w-full p-5 flex items-center justify-between text-left cursor-pointer hover:bg-gray-50/50 transition-colors"
                 >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                         {isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-violet-500 flex-shrink-0" />}
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
-                        <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
+                        <h3 className="text-base font-bold text-gray-900 truncate">{update.month}</h3>
                         {isCurrent && <span className="text-[10px] font-bold text-violet-600 bg-violet-50 px-2 py-0.5 rounded-full border border-violet-100">Current</span>}
-                        <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
-                            {update.score}
-                        </span>
+                        {update.score && (
+                            <span className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded-full border border-purple-100">
+                                {update.score}
+                            </span>
+                        )}
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="flex items-center gap-1 text-violet-600 text-xs font-medium">
-                            <UserGroupIcon className="w-3.5 h-3.5" />
-                            {update.investorsSentTo} sent
-                        </span>
-                        <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                            <EyeIcon className="w-3.5 h-3.5" />
-                            {update.investorsViewed} viewed
-                        </span>
-                        <span className="w-px h-3 bg-gray-200" />
-                        <span className="text-xs text-gray-400 max-w-[200px] truncate">
-                            {cardExcerpt ? `${cardExcerpt.slice(0, 60)}...` : "No update summary yet"}
-                        </span>
-                        <StartupRegionBadge location={companyLocation} />
-                        <ChevronDownIcon className="w-4 h-4 text-gray-400" />
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                        <div className="hidden sm:flex items-center gap-3">
+                            {update.investorsSentTo > 0 && (
+                                <span className="flex items-center gap-1 text-violet-600 text-xs font-medium">
+                                    <UserGroupIcon className="w-3.5 h-3.5" />
+                                    {update.investorsSentTo} sent
+                                </span>
+                            )}
+                            {update.investorsViewed > 0 && (
+                                <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
+                                    <EyeIcon className="w-3.5 h-3.5" />
+                                    {update.investorsViewed} viewed
+                                </span>
+                            )}
+                            {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
+                                <span className="w-px h-3 bg-gray-200" />
+                            )}
+                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                        </div>
+                        <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
                 </button>
             )}
@@ -381,17 +361,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         className="relative w-full h-32 overflow-hidden text-left cursor-pointer group bg-black"
                     >
                         {update.videoUrl ? (
-                            <div className="absolute inset-0">
-                                <video 
-                                    src={update.videoUrl} 
-                                    autoPlay 
-                                    muted 
-                                    loop 
-                                    playsInline 
-                                    className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity duration-300"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                            </div>
+                            <UpdateVideoHero update={update} />
                         ) : (
                             <>
                                 <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} transition-colors duration-300`} />
@@ -404,45 +374,51 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             </>
                         )}
                         {/* Top row: date + collapse chevron */}
-                        <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex items-center justify-between">
+                        <div className="absolute top-0 left-0 right-0 px-5 pt-3 flex flex-wrap items-center justify-between gap-2">
                             <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
-                            <div className="flex items-center gap-2">
-                                <StartupRegionBadge location={companyLocation} variant="inverse" />
-                                <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
-                            </div>
+                            <span className="text-white/60 text-[11px] font-medium">{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                            <ChevronDownIcon className="w-4 h-4 text-white/60 rotate-180" />
                         </div>
                         {/* Bottom row: company + month + badges + stats */}
                         <div className="absolute bottom-0 left-0 right-0 px-5 pb-3 flex items-end justify-between">
                             <div className="flex items-center gap-2.5">
-                                {companyDomain ? (
+                                {user?.domain ? (
                                     <img
-                                        src={`https://www.google.com/s2/favicons?domain=${companyDomain}&sz=64`}
+                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
                                         alt=""
+                                        aria-hidden="true"
                                         className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
                                     />
                                 ) : (
                                     <div className="w-9 h-9 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                        <span className="text-sm font-bold text-white">{companyName?.charAt(0) || "?"}</span>
+                                        <span className="text-sm font-bold text-white">{user?.companyName?.charAt(0) || "?"}</span>
                                     </div>
                                 )}
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <p className="text-white font-bold text-sm drop-shadow-sm">{companyName}</p>
+                                        <p className="text-white font-bold text-sm drop-shadow-sm">{update.month}</p>
                                         {isCurrent && <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">Current</span>}
-                                        <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
+                                        {update.score && (
+                                            <span className="text-[9px] font-bold text-white bg-white/20 backdrop-blur-sm px-1.5 py-0.5 rounded-full">{update.score}</span>
+                                        )}
+                                        <StartupRegionBadge location={user?.location} variant="inverse" />
                                     </div>
-                                    <p className="text-white/60 text-[11px]">Investor Update</p>
+                                    <p className="text-white/60 text-[11px]">{user?.companyName}</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">
-                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
-                                    <UserGroupIcon className="w-3.5 h-3.5" />
-                                    {update.investorsSentTo} sent
-                                </span>
-                                <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
-                                    <EyeIcon className="w-3.5 h-3.5" />
-                                    {update.investorsViewed} viewed
-                                </span>
+                                {update.investorsSentTo > 0 && (
+                                    <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                        <UserGroupIcon className="w-3.5 h-3.5" />
+                                        {update.investorsSentTo} sent
+                                    </span>
+                                )}
+                                {update.investorsViewed > 0 && (
+                                    <span className="flex items-center gap-1 text-white/80 text-xs font-medium">
+                                        <EyeIcon className="w-3.5 h-3.5" />
+                                        {update.investorsViewed} viewed
+                                    </span>
+                                )}
                             </div>
                         </div>
                     </button>
@@ -488,29 +464,6 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                     </div>
 
                     <div className="p-5 space-y-5">
-                        {update.sourceUrl && (
-                            <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-4 py-3">
-                                <a
-                                    href={update.sourceUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex items-center gap-2 text-sm font-semibold text-sky-700 transition-colors hover:text-sky-800"
-                                >
-                                    <LinkIcon className="w-4 h-4" />
-                                    Open source update link
-                                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                                </a>
-                            </div>
-                        )}
-
-                        {update.summary && (
-                            <div className="rounded-xl border border-violet-100 bg-violet-50/40 px-4 py-4">
-                                <p className="text-lg font-extrabold italic leading-snug tracking-tight text-gray-900">
-                                    {update.summary}
-                                </p>
-                            </div>
-                        )}
-
                         {/* Metrics */}
                         {editing && (
                             <div className="flex flex-wrap gap-2">
@@ -531,7 +484,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 ))}
                             </div>
                         )}
-                        <div className="grid gap-3 grid-cols-5">
+                        <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                             {(editing ? METRIC_OPTIONS : METRIC_OPTIONS.filter(m => selectedMetrics.has(m.key))).map(m => (
                                 <div key={m.key} onClick={() => editing && toggleMetric(m.key)}>
                                     <EditableMetricCard
@@ -545,6 +498,26 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 </div>
                             ))}
                         </div>
+
+                        {(updateSummary || updateSourceUrl) && (
+                            <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+                                {updateSummary && (
+                                    <p className="text-sm font-medium leading-relaxed text-gray-700">{updateSummary}</p>
+                                )}
+                                {updateSourceUrl && (
+                                    <a
+                                        href={updateSourceUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-2 text-xs font-bold text-violet-700 hover:text-violet-900"
+                                    >
+                                        <LinkIcon className="h-3.5 w-3.5" />
+                                        Source materials
+                                        <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                    </a>
+                                )}
+                            </div>
+                        )}
 
                         {/* Highlights */}
                         <div>
@@ -584,6 +557,48 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             )}
                         </div>
 
+                        {/* Learnings */}
+                        {(editing || learnings) && (
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                    <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                                    Learnings
+                                </h4>
+                                {editing ? (
+                                    <textarea
+                                        ref={learningsRef}
+                                        value={learnings}
+                                        onChange={(e) => setLearnings(e.target.value)}
+                                        className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
+                                        rows={3}
+                                    />
+                                ) : (
+                                    <BulletList text={learnings} />
+                                )}
+                            </div>
+                        )}
+
+                        {/* Next 30 Days */}
+                        {(editing || next30Days) && (
+                            <div>
+                                <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
+                                    <CalendarIcon className="w-3.5 h-3.5 text-blue-500" />
+                                    Next 30 Days
+                                </h4>
+                                {editing ? (
+                                    <textarea
+                                        ref={next30DaysRef}
+                                        value={next30Days}
+                                        onChange={(e) => setNext30Days(e.target.value)}
+                                        className="w-full text-sm text-gray-700 leading-relaxed px-3 py-2 border border-gray-200 rounded-lg focus:ring-violet-500 focus:border-violet-500 resize-none overflow-hidden"
+                                        rows={3}
+                                    />
+                                ) : (
+                                    <BulletList text={next30Days} />
+                                )}
+                            </div>
+                        )}
+
                         {/* Asks */}
                         <div>
                             <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
@@ -609,6 +624,221 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     );
 }
 
+// ── Vibe Raising design-system components (scoped via .vr-scope on the page wrapper) ──
+// Split a text blob into bullet items on newlines or sentence boundaries.
+function splitItems(text: string): string[] {
+    if (!text) return [];
+    return text.includes("\n")
+        ? text.split(/\n+/).filter(s => s.trim())
+        : text.split(/(?<=\.)\s+/).filter(s => s.trim());
+}
+
+function VRAlertInfo({ title, body }: { title: string; body: string }) {
+    return (
+        <div className="vr-alert vr-alert-info">
+            <span className="vr-alert-icon">
+                <InformationCircleIcon className="w-4 h-4" />
+            </span>
+            <div>
+                <div className="vr-alert-title">{title}</div>
+                <div className="vr-alert-body">{body}</div>
+            </div>
+        </div>
+    );
+}
+
+function VRUpdateSection({
+    icon: Icon,
+    iconColorVar,
+    label,
+    items,
+}: {
+    icon: any;
+    iconColorVar: string;
+    label: string;
+    items: string[];
+}) {
+    if (items.length === 0) return null;
+    return (
+        <div className="vr-us-block">
+            <div className="vr-us-heading">
+                <span className="vr-us-heading-icon" style={{ color: `var(${iconColorVar})` }}>
+                    <Icon className="w-3.5 h-3.5" />
+                </span>
+                <span className="vr-us-heading-text">{label}</span>
+            </div>
+            <div className="vr-us-list">
+                {items.map((item, i) => (
+                    <div className="vr-us-item" key={i}>
+                        <span className="vr-us-item-dot">•</span>
+                        <span className="vr-us-item-text">{item.trim()}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
+    const highlights = splitItems(update.highlights || "");
+    const challenges = splitItems(update.challenges || "");
+    const asks = splitItems(update.asks || "");
+    const learnings = splitItems(update.learnings || "");
+    const next30Days = splitItems(update.next30Days || "");
+    const initials = (user.fullName || user.companyName || "U")
+        .split(" ")
+        .map((p: string) => p[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase();
+
+    return (
+        <div className="vr-update-card">
+            {/* Header with teal gradient + bubbles + hover-triggered purple flash */}
+            <div className="vr-uch">
+                <div className="vr-uch-bubble-1" />
+                <div className="vr-uch-bubble-2" />
+                <div className="vr-uch-glow" aria-hidden="true" />
+                <div className="vr-uch-date">{format(new Date(update.date), "MMMM d, yyyy")}</div>
+                <div className="vr-uch-main">
+                    <div className="vr-uch-emoji" aria-hidden="true">🦘</div>
+                    <div>
+                        <div className="vr-uch-title-row">
+                            <span className="vr-uch-title">{update.month}</span>
+                            <span className="vr-current-chip">Current</span>
+                        </div>
+                        <div className="vr-uch-company">{user.companyName}</div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Body */}
+            <div className="vr-ucb">
+                <div className="vr-ucb-actions">
+                    <Link
+                        to={`/founder-tools/updates/create?edit=${update.id}`}
+                        className="inline-flex items-center gap-1.5 text-sm font-medium"
+                        style={{ color: "var(--vr-color-text-mid)" }}
+                    >
+                        <PencilSquareIcon className="w-4 h-4" />
+                        Edit
+                    </Link>
+                </div>
+
+                {/* Per-update KPI grid — uses existing MetricCard, untouched */}
+                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
+                    {update.metrics?.revenue && (
+                        <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
+                    )}
+                    {update.metrics?.users && (
+                        <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
+                    )}
+                    {update.metrics?.runway && (
+                        <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
+                    )}
+                    {update.metrics?.mrr && (
+                        <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
+                    )}
+                    {update.metrics?.burnRate && (
+                        <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
+                    )}
+                    {update.metrics?.monthlyCosts && (
+                        <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
+                    )}
+                </div>
+
+                {/* Sections */}
+                <VRUpdateSection
+                    icon={SparklesIcon}
+                    iconColorVar="--vr-color-warning"
+                    label="Key Highlights"
+                    items={highlights}
+                />
+                <VRUpdateSection
+                    icon={ExclamationCircleIcon}
+                    iconColorVar="--vr-color-brand-orange"
+                    label="Challenges"
+                    items={challenges}
+                />
+                <VRUpdateSection
+                    icon={LightBulbIcon}
+                    iconColorVar="--vr-color-warning"
+                    label="Learnings"
+                    items={learnings}
+                />
+                <VRUpdateSection
+                    icon={CalendarIcon}
+                    iconColorVar="--vr-color-primary"
+                    label="Next 30 Days"
+                    items={next30Days}
+                />
+                <VRUpdateSection
+                    icon={QuestionMarkCircleIcon}
+                    iconColorVar="--vr-color-primary"
+                    label="Ask from Investors"
+                    items={asks}
+                />
+            </div>
+
+            {/* Footer */}
+            <div className="vr-ucf">
+                <div className="vr-ucf-left">
+                    <div className="vr-ucf-avatar">{initials}</div>
+                    <div>
+                        <div className="vr-ucf-name">{user.companyName}</div>
+                        <div className="vr-ucf-company">Sent to 14 investors · 78% open rate</div>
+                    </div>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                    >
+                        Share Link
+                    </button>
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg"
+                        style={{
+                            background: "var(--vr-color-primary)",
+                            color: "#fff",
+                        }}
+                    >
+                        Resend to Unopened
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => void }) {
+    const previewSource = update.highlights || update.challenges || "";
+    const preview = previewSource.length > 0
+        ? (previewSource.split(/(?<=\.)\s+/)[0] || previewSource).slice(0, 80) + (previewSource.length > 80 ? "…" : "")
+        : "No content yet";
+    return (
+        <button type="button" className="vr-past-row" onClick={onClick}>
+            <div className="vr-past-left">
+                <span className="vr-past-dot" />
+                <div>
+                    <div className="vr-past-month">{update.month}</div>
+                    <div className="vr-past-preview">{preview}</div>
+                </div>
+            </div>
+            <div className="vr-past-right">
+                <span className="vr-badge vr-badge-teal">Sent</span>
+                <span className="vr-past-arrow" aria-hidden="true">›</span>
+            </div>
+        </button>
+    );
+}
+
 // 1. Founder Dashboard View
 function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
@@ -621,12 +851,17 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const isOverdue = daysSinceLast > 21;
     const daysOverdue = daysSinceLast - 21;
 
+    // Current vs past update split for the tabs below
+    const currentUpdate = updates.find(u => u.isCurrent) || updates[0] || null;
+    const pastUpdates = updates.filter(u => u !== currentUpdate);
+    const [activeTab, setActiveTab] = useState<"current" | "past">("current");
+
     if (!hasUpdates) {
         return (
             <div className="-m-6 sm:-m-8 lg:-m-10">
                 {/* Hero section with background image */}
-                <div className="relative h-[calc(100vh-64px)] overflow-hidden">
-                    {/* Background image - cropped to viewport height */}
+                <div className="relative min-h-[60vh] sm:min-h-[calc(100vh-64px)] overflow-hidden">
+                    {/* Background image — cropped to viewport height */}
                     <img
                         src="/hero-bg.jpg"
                         alt=""
@@ -637,7 +872,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
                     {/* Content over the image */}
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-16">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg whitespace-nowrap">
+                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">
                             Let's get you ready to raise, {firstName}.
                         </h1>
                         <p className="text-base sm:text-lg text-white/80 max-w-md mx-auto mb-8 leading-snug">
@@ -646,7 +881,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             consistent, transparent monthly updates.
                         </p>
                         <button
-                            onClick={() => triggerAnnouncement(() => navigate(VIBE_RAISING_CREATE_UPDATE_PATH))}
+                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
                             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
                         >
                             Create Your First Update
@@ -707,32 +942,125 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     }
 
     return (
-        <div className="space-y-8 pb-12">
-            <div className="flex items-center justify-between">
+        <div className="vr-scope space-y-8 pb-12">
+            <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Your Monthly Updates</h1>
-                    <p className="text-gray-500 mt-1">Share progress with your investors</p>
+                    <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
+                    <h1 className="vr-text-page-title">Your Monthly Updates</h1>
+                    <p className="vr-text-body-small mt-1" style={{ color: "var(--vr-color-text-mid)" }}>
+                        Share progress with your investors. Ship fast, build trust from day one.
+                    </p>
                 </div>
-                <Link
-                    to={VIBE_RAISING_CREATE_UPDATE_PATH}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors"
-                >
-                    <PlusIcon className="w-4 h-4" />
-                    Create Update
-                </Link>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                        onClick={() => navigate("/founder-tools/updates")}
+                    >
+                        Analytics
+                    </button>
+                    <Link
+                        to="/founder-tools/data-sources"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
+                        style={{
+                            background: "var(--vr-color-primary)",
+                            color: "#fff",
+                            boxShadow: "var(--vr-shadow-sm)",
+                        }}
+                    >
+                        <PlusIcon className="w-4 h-4" />
+                        Create Update
+                    </Link>
+                </div>
+            </div>
+
+            {/* Info alert — investor engagement signal */}
+            <VRAlertInfo
+                title="3 investors opened your last update"
+                body="AirTree, Blackbird, and Antler viewed your most recent update. Consider following up with personalised notes."
+            />
+
+            {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
+            <div className="vr-metrics-row">
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
+                    />
+                    <div className="vr-metric-eyebrow">
+                        MRR
+                        <span className="vr-badge vr-badge-purple">↗ vs last mo</span>
+                    </div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Active Users</div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "var(--vr-color-brand-orange)" }}
+                    />
+                    <div className="vr-metric-eyebrow">
+                        Runway
+                        <span className="vr-badge vr-badge-orange">⚠ Low</span>
+                    </div>
+                    <div className="vr-metric-value">
+                        {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
+                    </div>
+                    <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Raise Committed</div>
+                    <div className="vr-metric-value">62%</div>
+                    <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
+                </div>
+
+                <div className="vr-metric-card">
+                    <div
+                        className="vr-metric-card-bar"
+                        style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
+                    />
+                    <div className="vr-metric-eyebrow">Burn Rate</div>
+                    <div className="vr-metric-value">$52K/mo</div>
+                    <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
+                </div>
             </div>
 
             {isOverdue && (
-                <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
+                <div className="bg-violet-50 border border-violet-200 rounded-xl p-6 shadow-sm relative overflow-hidden">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-start gap-4">
-                            <div className="p-3 bg-white rounded-full border border-orange-100 shadow-sm text-orange-500">
+                            <div className="p-3 bg-white rounded-full border border-violet-100 shadow-sm text-violet-600">
                                 <ClockIcon className="w-8 h-8" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="px-2.5 py-0.5 bg-orange-200 text-orange-800 text-xs font-bold rounded-full">
+                                    <span className="px-2.5 py-0.5 bg-violet-200 text-violet-800 text-xs font-bold rounded-full">
                                         {daysOverdue} days overdue
                                     </span>
                                 </div>
@@ -743,8 +1071,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             </div>
                         </div>
                         <Link
-                            to={VIBE_RAISING_CREATE_UPDATE_PATH}
-                            className="px-6 py-3 bg-orange-600 text-white font-bold rounded-lg hover:bg-orange-700 transition-colors shadow-sm whitespace-nowrap"
+                            to="/founder-tools/data-sources"
+                            className="px-6 py-3 bg-violet-600 text-white font-bold rounded-lg hover:bg-violet-700 transition-colors shadow-sm whitespace-nowrap"
                         >
                             Create Update Now
                         </Link>
@@ -752,12 +1080,54 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 </div>
             )}
 
-            {/* All update cards - current expanded, past collapsed */}
-            <div className="space-y-3">
-                {updates.map((update) => (
-                    <UpdateCard key={`${user.activeCompanyId || "default"}-${update.id}`} update={update} isCurrent={update.isCurrent} user={user} />
-                ))}
+            {/* Tabs + tab content */}
+            <div>
+                <div className="vr-tabs">
+                    <button
+                        type="button"
+                        className={clsx("vr-tab", activeTab === "current" && "is-active")}
+                        onClick={() => setActiveTab("current")}
+                    >
+                        Current Update
+                    </button>
+                    <button
+                        type="button"
+                        className={clsx("vr-tab", activeTab === "past" && "is-active")}
+                        onClick={() => setActiveTab("past")}
+                    >
+                        Past Updates
+                    </button>
+                </div>
+
+                <div className="mt-6">
+                    {activeTab === "current" ? (
+                        currentUpdate ? (
+                            <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                        ) : (
+                            <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                No current update yet — create your first one above.
+                            </p>
+                        )
+                    ) : (
+                        <div className="space-y-2">
+                            {pastUpdates.length > 0 ? (
+                                pastUpdates.map((u) => (
+                                    <VRPastUpdateRow
+                                        key={`${user.activeCompanyId || "default"}-${u.id}`}
+                                        update={u}
+                                        onClick={() => navigate(`/founder-tools/updates/create?edit=${u.id}`)}
+                                    />
+                                ))
+                            ) : (
+                                <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
+                                    No past updates yet. Once you send one, it'll show up here.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
+
         </div>
     );
 }
@@ -847,12 +1217,13 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
                         </div>
 
                         <div className="p-6 space-y-6">
-                            <div className="grid gap-3 grid-cols-5">
+                            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
                                 {update.metrics.revenue && <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />}
                                 {update.metrics.users && <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />}
                                 {update.metrics.mrr && <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />}
                                 {update.metrics.burnRate && <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />}
                                 {update.metrics.runway && <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />}
+                                {update.metrics.monthlyCosts && <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />}
                             </div>
                             <div>
                                 <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
@@ -881,7 +1252,13 @@ function InvestorDashboard({ portfolioUpdates }: { portfolioUpdates: any[] }) {
 }
 
 export default function VibeRaisingHome() {
-    const { user, updates, portfolioUpdates } = useLoaderData<typeof loader>();
+    const data = useLoaderData<typeof loader>();
+
+    if (!data) {
+        return null;
+    }
+
+    const { user, updates, portfolioUpdates } = data;
     if (!user) return null;
 
     if (user.role === 'investor') {

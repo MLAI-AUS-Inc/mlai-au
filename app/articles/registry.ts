@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-unicorn-startup-and-why-it-matters': {
+        title: "What Is a Unicorn Startup and Why It Matters",
+        date: "2026-04-23",
+        description: "What is unicorn startup? Learn the definition, how private valuations work, why the label matters, and why it does not guarantee profitability or long-term success.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-unicorn-startup-and-why-it-matters",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-d806828c-a396-45ac-899e-2757423ebb86.jpg?alt=media&token=68db8b05-de8f-473e-aff2-f3bc4ecec96a",
+        imageAlt: "Startup founders reviewing unicorn startup valuation on a laptop in a candid",
+        hasContent: true,
+    },
     'featured/what-an-entrepreneur-does-and-how-to-start-well': {
         title: "What an Entrepreneur Does and How to Start Well",
         date: "2026-04-20",
@@ -297,6 +307,18 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "Team collaborating on AI data charts with laptops and whiteboard",
     hasContent: true,
   },
+  "featured/best-way-to-learn-about-ai-2026": {
+    title: "Best way to learn about AI in 2026",
+    date: "2025-01-15",
+    description:
+      "A 2026-ready roadmap for Australians to learn AI: fundamentals, hands-on projects, ethics, and career moves tailored to local pathways.",
+    author: "Dr Sam Donegan",
+    slug: "featured/best-way-to-learn-about-ai-2026",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1d8313de-82ba-4ddc-a776-52cee7f2fa1b.jpg?alt=media&token=e14f4ba6-f385-40ec-8453-017f0d7efffa",
+    imageAlt: "Person studying AI concepts on a laptop with diagrams on screen",
+    hasContent: true,
+  },
   "featured/learn-ai-melbourne": {
     title: "Learn AI Melbourne: courses, meetups, and pathways",
     date: "2026-01-28",
@@ -321,6 +343,18 @@ export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
       "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-e8d91d69-4aa4-49a0-b1e4-a8b32d3f54ab.jpg?alt=media&token=3d3573bf-5a7d-416f-a7be-61be2dd87a04",
     imageAlt:
       "Retro 90s tech startup scene with diverse individuals brainstorming and collaborating in a creative workspace.",
+  },
+  "featured/how-vcs-value-startups": {
+    title: "How VCs value startups",
+    date: "2026-01-22",
+    description:
+      "How venture capital investors value startups in 2026: methods, metrics, and term-sheet mechanics with context for Australian founders and AI teams.",
+    author: "Dr Sam Donegan",
+    slug: "featured/how-vcs-value-startups",
+    image:
+      "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-aab7aebb-f326-4ee4-b06c-48702edb6ddf.jpg?alt=media&token=fc7e98eb-7918-4997-a2e0-26a4964b64e6",
+    imageAlt: "Founders reviewing a cap table and metrics on paper and laptop",
+    hasContent: true,
   },
   "featured/how-to-foster-community-engagement": {
     title: "How to foster community engagement (2026)",

@@ -1,40 +1,49 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.logout";
+import { logout } from "~/lib/auth";
+import { getEnv } from "~/lib/env.server";
 import {
-    clearVibeRaisingSessionCookie,
-    clearVibeRaisingPublishedUpdateCookie,
     clearVibeRaisingSubmittedCookie,
-    getVibeRaisingUser,
-    VIBE_RAISING_LANDING_PATH,
-} from "~/lib/vibe-raising-session";
+    getVibeRaisingLoginHref,
+    getVibeRaisingProfile,
+} from "~/lib/vibe-raising";
 
-export async function action({ request }: Route.ActionArgs) {
-    // Clear per-company submitted cookies for all companies
-    const user = getVibeRaisingUser(request);
-    const clearHeaders: [string, string][] = [
-        ["Set-Cookie", clearVibeRaisingSessionCookie()],
-    ];
-    if (user?.companies?.length) {
-        for (const company of user.companies) {
-            clearHeaders.push(["Set-Cookie", clearVibeRaisingSubmittedCookie(company.id)]);
-            clearHeaders.push(["Set-Cookie", clearVibeRaisingPublishedUpdateCookie(company.id)]);
+async function handleLogout(context: Route.ActionArgs["context"], request: Request) {
+    const env = getEnv(context);
+    const headers = new Headers();
+
+    try {
+        const profile = await getVibeRaisingProfile(env, request);
+        if (profile?.companies.length) {
+            for (const company of profile.companies) {
+                headers.append("Set-Cookie", clearVibeRaisingSubmittedCookie(company.id));
+            }
         }
+    } catch (error) {
+        console.error("Failed to load Vibe Raising profile during logout:", error);
     }
-    return redirect(VIBE_RAISING_LANDING_PATH, { headers: clearHeaders });
+
+    try {
+        const response = await logout(env, request);
+        if (response.headers["set-cookie"]) {
+            const cookies = response.headers["set-cookie"];
+            if (Array.isArray(cookies)) {
+                cookies.forEach((cookie) => headers.append("Set-Cookie", cookie));
+            } else {
+                headers.append("Set-Cookie", cookies);
+            }
+        }
+    } catch (error) {
+        console.error("Logout failed:", error);
+    }
+
+    return redirect(getVibeRaisingLoginHref(request, "/founder-tools/updates"), { headers });
 }
 
-export async function loader({ request }: Route.LoaderArgs) {
-    const user = getVibeRaisingUser(request);
-    const clearHeaders: [string, string][] = [
-        ["Set-Cookie", clearVibeRaisingSessionCookie()],
-    ];
+export async function action({ request, context }: Route.ActionArgs) {
+    return handleLogout(context, request);
+}
 
-    if (user?.companies?.length) {
-        for (const company of user.companies) {
-            clearHeaders.push(["Set-Cookie", clearVibeRaisingSubmittedCookie(company.id)]);
-            clearHeaders.push(["Set-Cookie", clearVibeRaisingPublishedUpdateCookie(company.id)]);
-        }
-    }
-
-    return redirect(VIBE_RAISING_LANDING_PATH, { headers: clearHeaders });
+export async function loader({ request, context }: Route.LoaderArgs) {
+    return handleLogout(context, request);
 }

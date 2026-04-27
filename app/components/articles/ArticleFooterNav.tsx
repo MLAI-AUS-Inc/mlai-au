@@ -14,7 +14,12 @@ export function ArticleFooterNav({
     className = '',
 }: ArticleFooterNavProps) {
     return (
-        <div className={`mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between ${className}`}>
+        <div
+            className={`mt-12 pt-6 border-t border-gray-100 text-sm text-gray-500 flex justify-between ${className}`}
+            data-cf-component-id="footer-nav"
+            data-cf-component-type="footer-nav"
+            data-cf-component-label="Footer navigation"
+        >
             <Link to={backHref} className="hover:text-[--brand-ink] underline-offset-4 hover:underline">
                 {backLabel}
             </Link>

@@ -44,6 +44,11 @@ export const links: Route.LinksFunction = () => [
     rel: "stylesheet",
     href: "https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap",
   },
+  {
+    // DM Sans — used by the Vibe Raising design system (scoped via .vr-scope).
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap",
+  },
 ];
 
 export default function Layout() {
@@ -55,7 +60,10 @@ export default function Layout() {
   const isVibeRaisingApp =
     location.pathname === "/vibe-raising" ||
     location.pathname.startsWith("/vibe-raising/");
-  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp;
+  const isFounderToolsApp =
+    location.pathname === "/founder-tools" ||
+    location.pathname.startsWith("/founder-tools/");
+  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingApp || isFounderToolsApp;
 
   return (
     <html lang="en" suppressHydrationWarning>

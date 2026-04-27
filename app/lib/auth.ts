@@ -1,20 +1,23 @@
-import { axiosInstance, API_URL, shouldUseDevBackendStub } from "./api";
+import { axiosInstance, API_URL, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
-export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "vibe-raising";
+export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "founder-tools" | "vibe-raising";
 
 function resolveAuthApp(body: {
     app?: AuthAppName;
     next?: string;
 }): AuthAppName {
+    if (body.app === "vibe-raising") {
+        return "founder-tools";
+    }
     return (
         body.app ||
         (body.next?.startsWith("/esafety")
             ? "esafety"
             : body.next?.startsWith("/innovate-connect-alliance")
               ? "innovate-connect-alliance"
-            : body.next?.startsWith("/vibe-raising")
-              ? "vibe-raising"
+            : body.next?.startsWith("/founder-tools") || body.next?.startsWith("/vibe-raising")
+              ? "founder-tools"
               : "hospital")
     );
 }
@@ -125,6 +128,10 @@ export async function getCurrentUser(env: Env, request?: Request) {
     } catch (error: any) {
         if (error.response && error.response.status === 401) {
             return null;
+        }
+        if (shouldUseDevBackendFallback(error)) {
+            console.warn("Backend unavailable in local dev; using auth stub for preview.");
+            return DEV_AUTH_STUB;
         }
         // Log the error for debugging
         console.error("getCurrentUser error:", error.message, error.response?.status, error.response?.data);
