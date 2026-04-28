@@ -8,6 +8,7 @@ import type {
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
+  VibeMarketingDeliveryMode,
   VibeMarketingGuidedStep,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
@@ -28,6 +29,14 @@ function asNullableString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
+}
+
+export function normalizeArticleDeliveryMode(
+  value: unknown,
+  fallback: VibeMarketingDeliveryMode = "publish_code",
+): VibeMarketingDeliveryMode {
+  const normalized = asNullableString(value);
+  return normalized === "publish_code" || normalized === "content_only" ? normalized : fallback;
 }
 
 function asStringList(value: unknown): string[] {
@@ -179,10 +188,9 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     settings: {
       brandName: asNullableString(settings.brandName) ?? asNullableString(settings.brand_name),
       companyContext: asNullableString(settings.companyContext) ?? asNullableString(settings.company_context),
-      articleDeliveryMode:
-        asNullableString(settings.articleDeliveryMode) ??
-        asNullableString(settings.article_delivery_mode) ??
-        "publish_code",
+      articleDeliveryMode: normalizeArticleDeliveryMode(
+        settings.articleDeliveryMode ?? settings.article_delivery_mode,
+      ),
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,

@@ -24,6 +24,7 @@ import {
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
+  normalizeArticleDeliveryMode,
   submitVibeMarketingComponentComments,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
@@ -101,7 +102,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       }
     } else if (intent === "delivery-mode") {
       await controlVibeMarketingRun(env, request, runId, "delivery-mode", {
-        deliveryMode: String(formData.get("deliveryMode") ?? ""),
+        deliveryMode: normalizeArticleDeliveryMode(formData.get("deliveryMode"), "content_only"),
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
@@ -125,7 +126,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
+        deliveryMode: normalizeArticleDeliveryMode(
+          stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
+          "content_only",
+        ),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
