@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-the-future-of-artificial-intelligence': {
+        title: "What Is the Future of Artificial Intelligence?",
+        date: "2026-04-28",
+        description: "What is the future of artificial intelligence? Explore the main AI trends, biggest opportunities, key risks, and the practical skills worth learning now.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-the-future-of-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2Fmlai_user%3A1%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-1f8443da-ff58-4702-a9f2-ff636230d4e7.jpg?alt=media&token=c7a88c45-6b28-454b-947a-bd3c1a1492b9",
+        imageAlt: "Close-up of coworkers reviewing AI trend charts",
+        hasContent: true,
+    },
     'featured/what-is-a-unicorn-startup-and-why-it-matters': {
         title: "What Is a Unicorn Startup and Why It Matters",
         date: "2026-04-23",
