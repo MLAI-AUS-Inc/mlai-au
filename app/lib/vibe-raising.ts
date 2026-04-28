@@ -1031,6 +1031,10 @@ function normalizeFinancialSourceSummaries(raw: unknown): Partial<Record<"stripe
       warning,
       hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
       needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
+      canRequestReportScopes: asBoolean(connection.canRequestReportScopes ?? connection.can_request_report_scopes),
+      needsReportScopeConfiguration: asBoolean(
+        connection.needsReportScopeConfiguration ?? connection.needs_report_scope_configuration,
+      ),
       requiredReportScopes,
     });
   }
@@ -1101,6 +1105,10 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       selectedProjectCount,
       hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
       needsReportReconnect: asBoolean(connection.needsReportReconnect ?? connection.needs_report_reconnect),
+      canRequestReportScopes: asBoolean(connection.canRequestReportScopes ?? connection.can_request_report_scopes),
+      needsReportScopeConfiguration: asBoolean(
+        connection.needsReportScopeConfiguration ?? connection.needs_report_scope_configuration,
+      ),
       requiredReportScopes,
     });
   }
@@ -1907,6 +1915,10 @@ function normalizeFinancialSyncRun(raw: unknown): VibeRaisingFinancialSyncRun | 
       asNullableString(payload.detail),
     hasReportScope: asBoolean(payload.hasReportScope ?? payload.has_report_scope),
     needsReportReconnect: asBoolean(payload.needsReportReconnect ?? payload.needs_report_reconnect),
+    canRequestReportScopes: asBoolean(payload.canRequestReportScopes ?? payload.can_request_report_scopes),
+    needsReportScopeConfiguration: asBoolean(
+      payload.needsReportScopeConfiguration ?? payload.needs_report_scope_configuration,
+    ),
     metricsPublishedCount,
     metricWarnings: Array.isArray(rawWarnings)
       ? rawWarnings.map((item) => String(item || "").trim()).filter(Boolean)
@@ -2628,6 +2640,10 @@ export async function getVibeRaisingXeroPreview(
       : [],
     hasReportScope: asBoolean(payload.hasReportScope ?? payload.has_report_scope),
     needsReportReconnect: asBoolean(payload.needsReportReconnect ?? payload.needs_report_reconnect),
+    canRequestReportScopes: asBoolean(payload.canRequestReportScopes ?? payload.can_request_report_scopes),
+    needsReportScopeConfiguration: asBoolean(
+      payload.needsReportScopeConfiguration ?? payload.needs_report_scope_configuration,
+    ),
     requiredReportScopes: Array.isArray(rawRequiredReportScopes)
       ? rawRequiredReportScopes.map((item) => String(item || "").trim()).filter(Boolean)
       : [],
