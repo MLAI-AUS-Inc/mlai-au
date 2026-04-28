@@ -26,6 +26,7 @@ import { getEnv } from "~/lib/env.server";
 import {
   connectVibeMarketingGithub,
   getVibeMarketingBootstrap,
+  normalizeArticleDeliveryMode,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   saveVibeMarketingSettings,
@@ -214,7 +215,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode"),
+        deliveryMode: normalizeArticleDeliveryMode(stringFromForm(formData, "deliveryMode")),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });

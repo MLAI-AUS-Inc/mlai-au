@@ -4,7 +4,11 @@ import { ArrowLeftIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/
 
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
 import { getEnv } from "~/lib/env.server";
-import { getVibeMarketingBootstrap, saveVibeMarketingSettings } from "~/lib/vibe-marketing";
+import {
+  getVibeMarketingBootstrap,
+  normalizeArticleDeliveryMode,
+  saveVibeMarketingSettings,
+} from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
@@ -33,6 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const activeCompany = getActiveVibeRaisingCompany(appUser);
   const formData = await request.formData();
+  const articleDeliveryMode = normalizeArticleDeliveryMode(stringFromForm(formData, "articleDeliveryMode"));
 
   try {
     await saveVibeRaisingCompany(env, request, {
@@ -49,7 +54,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       stage: stringFromForm(formData, "stage"),
       organizationKind: stringFromForm(formData, "organizationKind"),
       githubRepo: stringFromForm(formData, "githubRepo"),
-      articleDeliveryMode: stringFromForm(formData, "articleDeliveryMode"),
+      articleDeliveryMode,
       dailyDiscoveryEnabled: formData.get("dailyDiscoveryEnabled") === "on",
       defaultTimezone: stringFromForm(formData, "defaultTimezone"),
       registered: true,
@@ -62,7 +67,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
       githubRepo: stringFromForm(formData, "githubRepo"),
-      articleDeliveryMode: stringFromForm(formData, "articleDeliveryMode"),
+      articleDeliveryMode,
       dailyDiscoveryEnabled: formData.get("dailyDiscoveryEnabled") === "on",
       defaultTimezone: stringFromForm(formData, "defaultTimezone"),
     });
