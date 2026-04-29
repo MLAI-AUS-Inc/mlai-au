@@ -15,6 +15,7 @@ import { clsx } from "clsx";
 
 import MarketingEvidencePanel from "~/components/MarketingEvidencePanel";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { getEnv } from "~/lib/env.server";
 import {
   controlVibeMarketingRun,
@@ -23,6 +24,7 @@ import {
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
+  normalizeArticleDeliveryMode,
   submitVibeMarketingComponentComments,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
@@ -93,11 +95,14 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       });
     } else if (intent === "stop-live-preview") {
       await stopVibeMarketingLivePreview(env, request, runId);
-    } else if (["approve", "deny", "resume", "promote-bundle"].includes(intent)) {
-      await controlVibeMarketingRun(env, request, runId, intent);
+    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr"].includes(intent)) {
+      const result = await controlVibeMarketingRun(env, request, runId, intent);
+      if (result.runId && result.runId !== runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
     } else if (intent === "delivery-mode") {
       await controlVibeMarketingRun(env, request, runId, "delivery-mode", {
-        deliveryMode: String(formData.get("deliveryMode") ?? ""),
+        deliveryMode: normalizeArticleDeliveryMode(formData.get("deliveryMode"), "content_only"),
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
@@ -121,7 +126,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
+        deliveryMode: normalizeArticleDeliveryMode(
+          stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
+          "content_only",
+        ),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
@@ -1079,6 +1087,102 @@ function ComponentCommentsPanel({
   );
 }
 
+function ArticleWorkflowPrimaryAction({
+  run,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  isSubmitting: boolean;
+}) {
+  const comments = run.componentFeedback?.comments ?? [];
+  const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
+  const latestBatch = run.componentFeedback?.latestBatch ?? null;
+  const canRetryFailedRevisionBatch = Boolean(
+    latestBatch?.id && run.workflow === "article_revision" && run.status === "failed" && draftComments.length === 0,
+  );
+  const canRetrySubmittedBatch = Boolean(
+    latestBatch?.id &&
+      (!latestBatch.revisionRunId || canRetryFailedRevisionBatch) &&
+      draftComments.length === 0 &&
+      (canRetryFailedRevisionBatch || ["submitted", "failed"].includes(String(latestBatch.status || ""))),
+  );
+  const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
+  const sourceRunId =
+    latestBatch?.sourceRunId ||
+    (typeof run.result?.["source_run_id"] === "string" ? run.result["source_run_id"] : "") ||
+    "";
+  const batchId =
+    latestBatch?.id ||
+    (typeof run.result?.["feedback_batch_id"] === "string" ? run.result["feedback_batch_id"] : "") ||
+    "";
+  const canAcceptRevision =
+    run.workflow === "article_revision" &&
+    run.status === "completed" &&
+    latestBatch?.status !== "accepted" &&
+    Boolean(batchId);
+  const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
+  const publishUrl = run.previewUrl || run.prUrl || (typeof run.result?.["preview_url"] === "string" ? run.result["preview_url"] : "") || (typeof run.result?.["pr_url"] === "string" ? run.result["pr_url"] : "");
+  const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
+
+  if (canAcceptRevision) {
+    return (
+      <Form method="POST">
+        <input type="hidden" name="intent" value="accept-component-revision" />
+        <input type="hidden" name="batchId" value={batchId} />
+        <input type="hidden" name="sourceRunId" value={sourceRunId} />
+        <button type="submit" disabled={isSubmitting} className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}>
+          <CheckCircleIcon className="h-4 w-4" />
+          Accept revised article
+        </button>
+      </Form>
+    );
+  }
+
+  if (canSendRevisionRequest) {
+    return (
+      <Form method="POST">
+        <button type="submit" name="intent" value="submit-component-comments" disabled={isSubmitting} className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
+          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+          {canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
+        </button>
+      </Form>
+    );
+  }
+
+  if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
+    return (
+      <Form method="POST">
+        <button type="submit" name="intent" value={publishStep.primaryAction.intent} disabled={isSubmitting} className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
+          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+          {publishStep.primaryAction.label || "Publish to website"}
+        </button>
+      </Form>
+    );
+  }
+
+  if (publishStep?.status === "complete" && publishUrl) {
+    return (
+      <a href={publishUrl} target="_blank" rel="noreferrer" className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
+        Open publish evidence
+      </a>
+    );
+  }
+
+  if (!run.livePreview?.previewUrl) {
+    return (
+      <Form method="POST">
+        <input type="hidden" name="intent" value="start-live-preview" />
+        <button type="submit" disabled={isSubmitting} className={`${buttonClass} bg-violet-600 text-white hover:bg-violet-700`}>
+          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+          Start preview
+        </button>
+      </Form>
+    );
+  }
+
+  return null;
+}
+
 export default function FounderToolsMarketingRun() {
   const { run, bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -1088,9 +1192,10 @@ export default function FounderToolsMarketingRun() {
   const isSubmitting = navigation.state === "submitting";
   const shouldPoll = POLLING_STATUSES.has(run.status);
   const workflow = String(run.workflow ?? "");
+  const isArticleWorkflow = ["article_generation", "content_factory_article", "article_revision"].includes(workflow);
   const contentPackage = run.contentPackage;
   const hasArticlePreview =
-    ["article_generation", "article_revision"].includes(workflow) &&
+    ["article_generation", "content_factory_article", "article_revision"].includes(workflow) &&
     Boolean(contentPackage?.contentPackaged || run.componentManifest);
   const isCompletedArticleReviewPage =
     hasArticlePreview && run.status === "completed";
@@ -1123,26 +1228,28 @@ export default function FounderToolsMarketingRun() {
           <h1 className="text-2xl font-black text-gray-950">Marketing run</h1>
           <p className="mt-2 break-all font-mono text-xs text-gray-500">{run.runId}</p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Form method="POST">
-            <button type="submit" name="intent" value="resume" disabled={isSubmitting || !run.resumeAvailable} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50">
-              <PlayIcon className="h-4 w-4" />
-              Resume
-            </button>
-          </Form>
-          <Form method="POST">
-            <button type="submit" name="intent" value="deny" disabled={isSubmitting || !canDeny} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50">
-              <XCircleIcon className="h-4 w-4" />
-              Deny
-            </button>
-          </Form>
-          <Form method="POST">
-            <button type="submit" name="intent" value="approve" disabled={isSubmitting || !canApprove} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50">
-              <CheckCircleIcon className="h-4 w-4" />
-              Approve
-            </button>
-          </Form>
-        </div>
+        {!isArticleWorkflow ? (
+          <div className="flex flex-wrap gap-3">
+            <Form method="POST">
+              <button type="submit" name="intent" value="resume" disabled={isSubmitting || !run.resumeAvailable} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50">
+                <PlayIcon className="h-4 w-4" />
+                Resume
+              </button>
+            </Form>
+            <Form method="POST">
+              <button type="submit" name="intent" value="deny" disabled={isSubmitting || !canDeny} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50">
+                <XCircleIcon className="h-4 w-4" />
+                Deny
+              </button>
+            </Form>
+            <Form method="POST">
+              <button type="submit" name="intent" value="approve" disabled={isSubmitting || !canApprove} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50">
+                <CheckCircleIcon className="h-4 w-4" />
+                Approve
+              </button>
+            </Form>
+          </div>
+        ) : null}
       </div>
 
       {actionData?.error ? (
@@ -1150,6 +1257,13 @@ export default function FounderToolsMarketingRun() {
           {actionData.error}
         </div>
       ) : null}
+
+      <MarketingWorkflowShell
+        progress={run.workflowProgress ?? bootstrap.workflowProgress}
+        title="Create and publish article"
+        isSubmitting={isSubmitting}
+        primaryActionSlot={isArticleWorkflow ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+      />
 
       {hasArticlePreview ? (
         <LiveArticlePreviewPanel

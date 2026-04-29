@@ -160,6 +160,8 @@ export interface VibeRaisingInputSourceSummary {
   selectedProjectCount?: number;
   hasReportScope?: boolean;
   needsReportReconnect?: boolean;
+  canRequestReportScopes?: boolean;
+  needsReportScopeConfiguration?: boolean;
   requiredReportScopes?: string[];
 }
 
@@ -169,6 +171,8 @@ export interface VibeRaisingFinancialSyncRun {
   error?: string | null;
   hasReportScope?: boolean;
   needsReportReconnect?: boolean;
+  canRequestReportScopes?: boolean;
+  needsReportScopeConfiguration?: boolean;
   metricsPublishedCount?: number;
   metricWarnings: string[];
 }
@@ -399,6 +403,8 @@ export interface VibeRaisingXeroPreview {
   warnings: string[];
   hasReportScope: boolean;
   needsReportReconnect: boolean;
+  canRequestReportScopes: boolean;
+  needsReportScopeConfiguration: boolean;
   requiredReportScopes: string[];
   recurringInvoices: VibeRaisingXeroRecord[];
   recentInvoices: VibeRaisingXeroRecord[];

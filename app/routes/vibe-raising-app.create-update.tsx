@@ -1312,7 +1312,16 @@ type EditorMonthCard = {
 };
 
 function parseRevenue(raw: string): number {
-    return parseInt(String(raw).replace(/[$,\s]/g, "")) || 0;
+    const text = String(raw || "").trim();
+    if (!text) return 0;
+
+    const isAccountingNegative = /^\(.*\)$/.test(text);
+    const match = text.replace(/,/g, "").match(/-?\d+(?:\.\d+)?/);
+    if (!match) return 0;
+
+    const value = Number.parseFloat(match[0]);
+    if (!Number.isFinite(value)) return 0;
+    return isAccountingNegative ? -Math.abs(value) : value;
 }
 
 function formatCompact(n: number): string {

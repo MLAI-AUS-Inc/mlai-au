@@ -4,7 +4,11 @@ import { ArrowLeftIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/
 
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
 import { getEnv } from "~/lib/env.server";
-import { getVibeMarketingBootstrap, saveVibeMarketingSettings } from "~/lib/vibe-marketing";
+import {
+  getVibeMarketingBootstrap,
+  normalizeArticleDeliveryMode,
+  saveVibeMarketingSettings,
+} from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
@@ -33,6 +37,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const activeCompany = getActiveVibeRaisingCompany(appUser);
   const formData = await request.formData();
+  const articleDeliveryMode = normalizeArticleDeliveryMode(stringFromForm(formData, "articleDeliveryMode"));
 
   try {
     await saveVibeRaisingCompany(env, request, {
@@ -42,15 +47,14 @@ export async function action({ request, context }: Route.ActionArgs) {
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
       location: stringFromForm(formData, "location"),
       abn: stringFromForm(formData, "abn"),
-      brandName: stringFromForm(formData, "brandName"),
       companyContext: stringFromForm(formData, "companyContext"),
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
       founderNames: listFromForm(formData.get("founderNames")),
       stage: stringFromForm(formData, "stage"),
-      notes: stringFromForm(formData, "notes"),
+      organizationKind: stringFromForm(formData, "organizationKind"),
       githubRepo: stringFromForm(formData, "githubRepo"),
-      articleDeliveryMode: stringFromForm(formData, "articleDeliveryMode"),
+      articleDeliveryMode,
       dailyDiscoveryEnabled: formData.get("dailyDiscoveryEnabled") === "on",
       defaultTimezone: stringFromForm(formData, "defaultTimezone"),
       registered: true,
@@ -59,12 +63,11 @@ export async function action({ request, context }: Route.ActionArgs) {
       domain: stringFromForm(formData, "domain"),
       companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
       company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),
-      brandName: stringFromForm(formData, "brandName"),
       companyContext: stringFromForm(formData, "companyContext"),
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
       githubRepo: stringFromForm(formData, "githubRepo"),
-      articleDeliveryMode: stringFromForm(formData, "articleDeliveryMode"),
+      articleDeliveryMode,
       dailyDiscoveryEnabled: formData.get("dailyDiscoveryEnabled") === "on",
       defaultTimezone: stringFromForm(formData, "defaultTimezone"),
     });
@@ -119,6 +122,7 @@ export default function FounderToolsMarketingSettings() {
             seedKeywords: bootstrap.organization.seedKeywords,
             founderNames: bootstrap.startupProfile.founderNames,
             stage: bootstrap.startupProfile.stage,
+            organizationKind: bootstrap.startupProfile.organizationKind,
             notes: bootstrap.startupProfile.notes,
           }}
         />

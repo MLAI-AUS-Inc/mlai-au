@@ -400,6 +400,8 @@ function XeroPreview({
         { label: "Recurring invoices", value: preview.recurringInvoiceCount },
       ].filter((item) => item.value && item.value !== "0")
     : [];
+  const reportReconnectHref =
+    preview?.needsReportReconnect && preview.canRequestReportScopes ? reconnectHref || undefined : undefined;
 
   return (
     <section className="rounded-xl border border-sky-100 bg-white p-6 shadow-sm">
@@ -417,9 +419,9 @@ function XeroPreview({
               Loading
             </span>
           ) : null}
-          {preview?.needsReportReconnect && reconnectHref ? (
+          {reportReconnectHref ? (
             <a
-              href={reconnectHref}
+              href={reportReconnectHref}
               className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-palette-blue)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)]"
             >
               <LinkIcon className="h-4 w-4" />
@@ -432,7 +434,7 @@ function XeroPreview({
             disabled={syncing}
             className={clsx(
               "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60",
-              preview?.needsReportReconnect
+              reportReconnectHref
                 ? "border-gray-200 text-slate-600 hover:bg-gray-50"
                 : "border-[rgba(76,110,245,0.24)] text-[var(--vr-palette-blue)] hover:bg-[rgba(76,110,245,0.10)]",
             )}
@@ -1948,7 +1950,9 @@ export default function ConnectData() {
         }
       }
       const xeroRun = response.syncRuns.find((run) => run.provider === "xero");
-      if (xeroRun?.needsReportReconnect) {
+      if (xeroRun?.needsReportScopeConfiguration) {
+        setStatusMessage("Xero invoices and payments synced. Report metrics are disabled until Profit and Loss and Balance Sheet report scopes are configured.");
+      } else if (xeroRun?.needsReportReconnect) {
         setStatusMessage("Xero invoices and payments synced. Reconnect Xero to allow Profit and Loss and Balance Sheet report metrics.");
       } else if (xeroRun?.metricWarnings.length) {
         setStatusMessage(xeroRun.metricWarnings[0]);

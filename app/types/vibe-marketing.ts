@@ -12,6 +12,8 @@ export type VibeMarketingRunStatus =
   | "denied"
   | string;
 
+export type VibeMarketingDeliveryMode = "publish_code" | "content_only";
+
 export interface VibeMarketingStepState {
   key: string;
   name: string;
@@ -49,6 +51,7 @@ export interface VibeMarketingRunSummary {
   componentManifest?: VibeMarketingComponentManifest | null;
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
+  workflowProgress?: VibeMarketingWorkflowProgress | null;
   result?: Record<string, unknown>;
 }
 
@@ -143,7 +146,7 @@ export interface VibeMarketingOrganization {
 export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
-  articleDeliveryMode?: string | null;
+  articleDeliveryMode?: VibeMarketingDeliveryMode | null;
   githubRepo?: string | null;
   dailyDiscoveryEnabled: boolean;
   dailyDiscoveryPriority?: number | null;
@@ -154,6 +157,7 @@ export interface VibeMarketingSettings {
 export interface VibeMarketingStartupProfile {
   founderNames: string[];
   stage?: string | null;
+  organizationKind?: string | null;
   notes?: string | null;
   companyAliases?: string[];
   domainAliases?: string[];
@@ -282,6 +286,40 @@ export interface VibeMarketingGuidedStep {
   href?: string;
 }
 
+export type VibeMarketingWorkflowStepStatus =
+  | "locked"
+  | "ready"
+  | "running"
+  | "needs_action"
+  | "complete"
+  | "blocked"
+  | string;
+
+export interface VibeMarketingWorkflowAction {
+  label: string;
+  href?: string | null;
+  intent?: string | null;
+  variant?: "primary" | "secondary" | "danger" | string;
+}
+
+export interface VibeMarketingWorkflowStep {
+  id: string;
+  label: string;
+  phase: string;
+  status: VibeMarketingWorkflowStepStatus;
+  href: string;
+  runId?: string | null;
+  summary?: string | null;
+  primaryAction?: VibeMarketingWorkflowAction | null;
+  order?: number | null;
+}
+
+export interface VibeMarketingWorkflowProgress {
+  currentStepId: string;
+  nextStepId?: string | null;
+  steps: VibeMarketingWorkflowStep[];
+}
+
 export interface VibeMarketingWebsiteBaselineMetric {
   status?: "measured" | "needs_connection" | "unavailable" | "error" | string;
   score?: number | null;
@@ -333,4 +371,5 @@ export interface VibeMarketingBootstrap {
     key: string;
     label: string;
   };
+  workflowProgress?: VibeMarketingWorkflowProgress | null;
 }
