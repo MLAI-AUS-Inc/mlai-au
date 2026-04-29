@@ -63,10 +63,10 @@ function ProviderStep({
 
   return (
     <div className="relative">
-      <h3 className="mb-2 text-center text-lg font-bold text-gray-900">
+      <h3 className="mb-2 text-center text-lg font-bold text-[var(--vr-color-text)]">
         Connect Your Email
       </h3>
-      <p className="mb-8 text-center text-sm text-gray-500">
+      <p className="mb-8 text-center text-sm text-[var(--vr-color-text-sub)]">
         We&apos;ll only scan filtered emails relevant to drafting your investor update.
       </p>
 
@@ -78,8 +78,8 @@ function ProviderStep({
           className={clsx(
             "relative flex flex-col items-center gap-4 rounded-xl border-2 p-6 transition-all duration-200",
             gmailBusy
-              ? "border-violet-300 bg-violet-50"
-              : "border-gray-200 hover:border-red-300 hover:bg-red-50/30 hover:shadow-md",
+              ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
+              : "border-[var(--vr-color-border)] hover:border-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.08)] hover:shadow-md",
             connectingProvider !== null && !gmailBusy && "cursor-not-allowed opacity-50",
           )}
         >
@@ -105,7 +105,7 @@ function ProviderStep({
               />
             </svg>
           )}
-          <span className="font-bold text-gray-900">
+          <span className="font-bold text-[var(--vr-color-text)]">
             {gmailBusy ? "Connecting..." : "Gmail"}
           </span>
         </button>
@@ -114,11 +114,11 @@ function ProviderStep({
           disabled
           aria-disabled="true"
           title="Outlook support is coming soon"
-          className="relative flex cursor-not-allowed flex-col items-center gap-4 rounded-xl border-2 border-gray-200 bg-gray-50 p-6 opacity-60 transition-all duration-200"
+          className="relative flex cursor-not-allowed flex-col items-center gap-4 rounded-xl border-2 border-[var(--vr-color-border)] bg-[var(--vr-color-neutral-50)] p-6 opacity-60 transition-all duration-200"
         >
-          <EnvelopeIcon className="h-12 w-12 text-blue-500" />
-          <span className="font-bold text-gray-900">Outlook</span>
-          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-gray-500">
+          <EnvelopeIcon className="h-12 w-12 text-[var(--vr-palette-blue)]" />
+          <span className="font-bold text-[var(--vr-color-text)]">Outlook</span>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[var(--vr-color-text-sub)]">
             Coming soon
           </span>
         </button>
@@ -126,26 +126,26 @@ function ProviderStep({
 
       <Transition show={showGmailNotice} as={Fragment}>
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 p-3 backdrop-blur-sm sm:p-4">
-          <div className="w-full max-w-sm rounded-2xl border border-violet-100 bg-white p-5 shadow-xl">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-color-card)] p-5 shadow-xl">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-violet-50">
-                <ShieldCheckIcon className="h-6 w-6 text-violet-600" />
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,255,215,0.14)]">
+                <ShieldCheckIcon className="h-6 w-6 text-[var(--vr-color-primary)]" />
               </div>
               <div>
-                <h4 className="text-base font-bold text-gray-900">
+                <h4 className="text-base font-bold text-[var(--vr-color-text)]">
                   Before you connect Gmail
                 </h4>
-                <p className="mt-2 text-sm leading-6 text-gray-600">
+                <p className="mt-2 text-sm leading-6 text-[var(--vr-color-text-mid)]">
                   MLAI only scans filtered email data needed to draft your investor update.
                   The Gmail data used for this step is deleted after processing.
                 </p>
-                <p className="mt-2 text-sm leading-6 text-gray-600">
+                <p className="mt-2 text-sm leading-6 text-[var(--vr-color-text-mid)]">
                   By continuing, you agree to our{" "}
                   <Link
                     to="/terms"
                     target="_blank"
                     rel="noreferrer"
-                    className="font-semibold text-violet-600 underline underline-offset-2"
+                    className="font-semibold text-[var(--vr-color-primary)] underline underline-offset-2"
                   >
                     Terms
                   </Link>{" "}
@@ -154,7 +154,7 @@ function ProviderStep({
                     to="/privacy"
                     target="_blank"
                     rel="noreferrer"
-                    className="font-semibold text-violet-600 underline underline-offset-2"
+                    className="font-semibold text-[var(--vr-color-primary)] underline underline-offset-2"
                   >
                     Privacy Policy
                   </Link>
@@ -168,7 +168,7 @@ function ProviderStep({
                 type="button"
                 onClick={onCancelGmailNotice}
                 disabled={connectingProvider !== null}
-                className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-60"
+                className="flex-1 rounded-xl border border-[var(--vr-color-border)] px-4 py-2.5 text-sm font-semibold text-[var(--vr-color-text-mid)] transition-colors hover:bg-[var(--vr-color-neutral-50)] disabled:opacity-60"
               >
                 Cancel
               </button>
@@ -176,7 +176,7 @@ function ProviderStep({
                 type="button"
                 onClick={onConnectGmail}
                 disabled={connectingProvider !== null}
-                className="flex-1 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-[var(--vr-color-primary)] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[var(--vr-palette-black)] disabled:opacity-60"
               >
                 {gmailBusy ? "Connecting..." : "Continue"}
               </button>
@@ -186,7 +186,7 @@ function ProviderStep({
       </Transition>
 
       {!companyDomain && (
-        <p className="mt-4 text-sm text-amber-700">
+        <p className="mt-4 text-sm text-[var(--vr-color-text)]">
           Add a company domain in{" "}
           <a href="/founder-tools/companies" className="font-semibold underline">
             Companies
@@ -196,7 +196,7 @@ function ProviderStep({
       )}
 
       {errorMessage && (
-        <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="mt-4 rounded-xl border border-[rgba(242,114,63,0.35)] bg-[rgba(242,114,63,0.10)] px-4 py-3 text-sm text-[var(--vr-color-text)]">
           {errorMessage}
         </div>
       )}
@@ -283,11 +283,11 @@ export default function DraftFromEmailWizard({
               leaveFrom="opacity-100 translate-y-0 sm:scale-100"
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
-              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-white px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-8">
+              <Dialog.Panel className="relative transform overflow-hidden rounded-2xl bg-[var(--vr-color-card)] px-6 pb-6 pt-6 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-8">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                  className="absolute right-4 top-4 text-[var(--vr-color-text-sub)] hover:text-[var(--vr-color-text)]"
                 >
                   <XMarkIcon className="h-5 w-5" />
                 </button>

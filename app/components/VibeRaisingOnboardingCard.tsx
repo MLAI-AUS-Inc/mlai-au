@@ -18,21 +18,21 @@ export default function VibeRaisingOnboardingCard({
 }: VibeRaisingOnboardingCardProps) {
   return (
     <div className="w-full max-w-lg">
-      <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-100">
+      <div className="rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-color-card)] p-8 shadow-lg sm:p-12">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3 tracking-tight">
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-[var(--vr-color-text)]">
             Vibe Raising
           </h1>
-          <p className="text-gray-500 text-sm">
+          <p className="text-sm text-[var(--vr-color-text-sub)]">
             Connect founders with investors through monthly updates
           </p>
-          <p className="mt-3 text-xs font-medium uppercase tracking-[0.2em] text-gray-400">
+          <p className="mt-3 text-xs font-medium uppercase tracking-[0.2em] text-[var(--vr-color-text-sub)]">
             Signed in as {email}
           </p>
         </div>
 
         {error ? (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-6 rounded-xl border border-[rgba(242,114,63,0.35)] bg-[rgba(242,114,63,0.10)] px-4 py-3 text-sm text-[var(--vr-color-text)]">
             {error}
           </div>
         ) : null}
@@ -41,15 +41,15 @@ export default function VibeRaisingOnboardingCard({
           <input type="hidden" name="intent" value="complete-onboarding" />
           <input type="hidden" name="role" value="founder" />
 
-          <div className="flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm font-semibold text-blue-900">
-            <BuildingOffice2Icon className="h-5 w-5 text-blue-600" />
+          <div className="flex items-center gap-3 rounded-xl border border-[rgba(0,128,128,0.22)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+            <BuildingOffice2Icon className="h-5 w-5 text-[var(--vr-color-primary)]" />
             Founder workspace
           </div>
 
           <div>
             <label
               htmlFor="organizationName"
-              className="block text-sm font-bold text-gray-700 mb-2"
+              className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]"
             >
               Startup Name
             </label>
@@ -60,17 +60,17 @@ export default function VibeRaisingOnboardingCard({
               defaultValue={defaultOrganizationName}
               placeholder="Acme Inc."
               required
-              className="w-full px-4 py-3.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200 text-gray-900 placeholder:text-gray-400 font-medium"
+              className="w-full rounded-xl border border-[var(--vr-color-border)] px-4 py-3.5 font-medium text-[var(--vr-color-text)] outline-none transition-all duration-200 placeholder:text-[var(--vr-color-text-sub)] focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full py-4 px-6 bg-blue-600 text-white font-bold rounded-xl transition-all duration-200 mt-6 shadow-lg shadow-blue-500/20 ${
+            className={`mt-6 w-full rounded-xl bg-[var(--vr-color-primary)] px-6 py-4 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all duration-200 ${
               isSubmitting
                 ? "opacity-70 cursor-not-allowed"
-                : "hover:bg-blue-700 hover:shadow-xl active:scale-[0.98]"
+                : "hover:bg-[var(--vr-palette-black)] hover:shadow-xl active:scale-[0.98]"
             }`}
           >
             {isSubmitting ? "Saving..." : "Continue"}

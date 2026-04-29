@@ -10,8 +10,6 @@ import {
   CheckIcon,
   CheckCircleIcon,
   ChevronDownIcon,
-  EllipsisHorizontalIcon,
-  EnvelopeIcon,
   FolderIcon,
   LinkIcon,
   LockClosedIcon,
@@ -53,6 +51,7 @@ import type {
   VibeRaisingXeroPreview,
 } from "~/types/vibe-raising";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
+import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 
 const DEFAULT_NEXT = "/founder-tools/updates/create";
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
@@ -254,17 +253,17 @@ function statusLabel(status: VibeRaisingInputSourceStatus) {
 function statusClassName(status: VibeRaisingInputSourceStatus) {
   switch (status) {
     case "connected":
-      return "bg-emerald-50 text-emerald-700 ring-emerald-100";
+      return "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]";
     case "syncing":
-      return "bg-blue-50 text-blue-700 ring-blue-100";
+      return "bg-[rgba(76,110,245,0.10)] text-[var(--vr-palette-blue)] ring-[rgba(76,110,245,0.22)]";
     case "error":
-      return "bg-amber-50 text-amber-700 ring-amber-100";
+      return "bg-[rgba(255,200,1,0.16)] text-[var(--vr-color-text)] ring-[rgba(255,200,1,0.32)]";
     case "coming_soon":
       return "bg-gray-100 text-gray-500 ring-gray-200";
     case "unavailable":
       return "bg-gray-100 text-gray-500 ring-gray-200";
     default:
-      return "bg-violet-50 text-violet-700 ring-violet-100";
+      return "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]";
   }
 }
 
@@ -313,14 +312,14 @@ function BankFeedPreview({
   error: string | null;
 }) {
   return (
-    <section className="rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-black text-gray-950">Bank feed preview</h2>
-          <p className="mt-2 text-sm text-slate-500">Recent account and transaction context available for this update.</p>
+          <p className="mt-2 text-sm text-[var(--vr-color-text-sub)]">Recent account and transaction context available for this update.</p>
         </div>
         {loading ? (
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-violet-600">
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
             <ArrowPathIcon className="h-4 w-4 animate-spin" />
             Loading
           </span>
@@ -328,7 +327,7 @@ function BankFeedPreview({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
       ) : null}
 
       {!loading && !error && preview && preview.accounts.length === 0 && preview.transactions.length === 0 ? (
@@ -421,7 +420,7 @@ function XeroPreview({
           {preview?.needsReportReconnect && reconnectHref ? (
             <a
               href={reconnectHref}
-              className="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-sky-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-palette-blue)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)]"
             >
               <LinkIcon className="h-4 w-4" />
               Reconnect Xero
@@ -435,7 +434,7 @@ function XeroPreview({
               "inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60",
               preview?.needsReportReconnect
                 ? "border-gray-200 text-slate-600 hover:bg-gray-50"
-                : "border-sky-100 text-sky-700 hover:bg-sky-50",
+                : "border-[rgba(76,110,245,0.24)] text-[var(--vr-palette-blue)] hover:bg-[rgba(76,110,245,0.10)]",
             )}
           >
             <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
@@ -445,7 +444,7 @@ function XeroPreview({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
       ) : null}
 
       {preview ? (
@@ -489,7 +488,7 @@ function XeroPreview({
       {preview?.warnings.length ? (
         <div className="mt-5 space-y-2">
           {preview.warnings.map((warning) => (
-            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+            <p key={warning} className="rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-xs font-semibold text-[var(--vr-color-text)]">
               {warning}
             </p>
           ))}
@@ -553,7 +552,7 @@ function GmailPreview({
   error: string | null;
 }) {
   return (
-    <section className="rounded-xl border border-violet-100 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-black text-gray-950">Gmail preview</h2>
@@ -562,7 +561,7 @@ function GmailPreview({
           </p>
         </div>
         {loading ? (
-          <span className="inline-flex items-center gap-2 text-sm font-bold text-violet-600">
+          <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
             <ArrowPathIcon className="h-4 w-4 animate-spin" />
             Loading
           </span>
@@ -570,7 +569,7 @@ function GmailPreview({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
       ) : null}
 
       {preview ? (
@@ -593,7 +592,7 @@ function GmailPreview({
       {preview?.warnings.length ? (
         <div className="mt-5 space-y-2">
           {preview.warnings.map((warning) => (
-            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+            <p key={warning} className="rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-xs font-semibold text-[var(--vr-color-text)]">
               {warning}
             </p>
           ))}
@@ -624,7 +623,7 @@ function GmailPreview({
                 <div className="flex flex-wrap items-center gap-2 md:justify-end">
                   <span className="text-xs font-semibold text-slate-500">{formatShortDate(message.date || message.internalDate)}</span>
                   {message.relevanceLabel ? (
-                    <span className="rounded-full bg-violet-50 px-2 py-1 text-xs font-bold capitalize text-violet-700">{message.relevanceLabel.replace(/_/g, " ")}</span>
+                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-2 py-1 text-xs font-bold capitalize text-[var(--vr-color-primary)]">{message.relevanceLabel.replace(/_/g, " ")}</span>
                   ) : null}
                   {message.hasAttachments ? (
                     <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-bold text-slate-600">Attachment</span>
@@ -720,7 +719,7 @@ function SlackPreview({
   };
 
   return (
-    <section className="rounded-xl border border-emerald-100 bg-white p-6 shadow-sm">
+    <section className="rounded-xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-black text-gray-950">Slack preview</h2>
@@ -728,7 +727,7 @@ function SlackPreview({
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {loadingChannels || loadingPreview ? (
-            <span className="inline-flex items-center gap-2 text-sm font-bold text-emerald-600">
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
               Loading
             </span>
@@ -737,7 +736,7 @@ function SlackPreview({
             type="button"
             onClick={onSync}
             disabled={syncing || selectedChannelIds.size === 0}
-            className="inline-flex items-center gap-2 rounded-lg border border-emerald-100 px-3 py-2 text-xs font-extrabold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-lg border border-[rgba(0,255,215,0.26)] px-3 py-2 text-xs font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
           >
             <ArrowPathIcon className={clsx("h-4 w-4", syncing && "animate-spin")} />
             {syncing ? "Syncing" : "Sync Slack"}
@@ -746,7 +745,7 @@ function SlackPreview({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
       ) : null}
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -775,7 +774,7 @@ function SlackPreview({
               type="button"
               onClick={onSaveChannels}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg bg-[var(--vr-color-primary)] px-3 py-2 text-xs font-extrabold text-white transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {saving ? "Saving" : "Save selection"}
             </button>
@@ -786,14 +785,14 @@ function SlackPreview({
                 {selectedChannels.map((channel) => (
                   <span
                     key={channel.channelId}
-                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-extrabold text-emerald-800 ring-1 ring-emerald-100"
+                    className="inline-flex max-w-full items-center gap-1.5 rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1.5 text-xs font-extrabold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]"
                   >
-                    {channel.isPrivate ? <LockClosedIcon className="h-3.5 w-3.5 shrink-0 text-emerald-600" /> : null}
+                    {channel.isPrivate ? <LockClosedIcon className="h-3.5 w-3.5 shrink-0 text-[var(--vr-color-primary)]" /> : null}
                     <span className="truncate">#{channel.channelName}</span>
                     <button
                       type="button"
                       onClick={() => onToggleChannel(channel.channelId)}
-                      className="rounded-full p-0.5 text-emerald-700 transition hover:bg-emerald-100 hover:text-emerald-900"
+                      className="rounded-full p-0.5 text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.18)] hover:text-[var(--vr-palette-black)]"
                       aria-label={`Remove #${channel.channelName}`}
                     >
                       <XMarkIcon className="h-3.5 w-3.5" />
@@ -808,7 +807,7 @@ function SlackPreview({
                 <div className="relative">
                   <MagnifyingGlassIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                   <Combobox.Input
-                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+                    className="w-full rounded-lg border border-gray-200 bg-white py-3 pl-9 pr-10 text-sm font-semibold text-gray-950 placeholder:text-slate-400 focus:border-[var(--vr-color-primary)] focus:outline-none focus:ring-2 focus:ring-[rgba(0,128,128,0.10)]"
                     displayValue={() => channelQuery}
                     onChange={(event) => setChannelQuery(event.target.value)}
                     placeholder="Search and select Slack channels"
@@ -828,14 +827,14 @@ function SlackPreview({
                           className={({ active }) =>
                             clsx(
                               "relative flex cursor-pointer select-none items-center gap-3 px-4 py-3 font-semibold",
-                              active ? "bg-emerald-50 text-emerald-900" : "text-gray-800",
+                              active ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-text)]" : "text-gray-800",
                             )
                           }
                         >
                           <span
                             className={clsx(
                               "flex h-5 w-5 shrink-0 items-center justify-center rounded border",
-                              selected ? "border-emerald-600 bg-emerald-600 text-white" : "border-gray-300 bg-white text-transparent",
+                              selected ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white" : "border-gray-300 bg-white text-transparent",
                             )}
                           >
                             <CheckIcon className="h-3.5 w-3.5" />
@@ -855,7 +854,7 @@ function SlackPreview({
                         onMouseDown={(event) => event.preventDefault()}
                         onClick={onLoadMoreChannels}
                         disabled={loadingMoreChannels}
-                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-emerald-700 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <ArrowPathIcon className={clsx("h-4 w-4", loadingMoreChannels && "animate-spin")} />
                         {loadingMoreChannels ? "Loading channels" : "Load more channels"}
@@ -876,7 +875,7 @@ function SlackPreview({
       {preview?.warnings.length ? (
         <div className="mt-5 space-y-2">
           {preview.warnings.map((warning) => (
-            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+            <p key={warning} className="rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-xs font-semibold text-[var(--vr-color-text)]">
               {warning}
             </p>
           ))}
@@ -1013,7 +1012,7 @@ function LinearPreview({
       </div>
 
       {error ? (
-        <div className="mt-5 rounded-lg bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">{error}</div>
+        <div className="mt-5 rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">{error}</div>
       ) : null}
 
       <div className="mt-5 grid gap-3 md:grid-cols-3">
@@ -1142,7 +1141,7 @@ function LinearPreview({
       {preview?.warnings.length ? (
         <div className="mt-5 space-y-2">
           {preview.warnings.map((warning) => (
-            <p key={warning} className="rounded-lg bg-amber-50 px-4 py-3 text-xs font-semibold text-amber-800">
+            <p key={warning} className="rounded-lg bg-[rgba(255,200,1,0.16)] px-4 py-3 text-xs font-semibold text-[var(--vr-color-text)]">
               {warning}
             </p>
           ))}
@@ -1204,70 +1203,83 @@ function LinearPreview({
   );
 }
 
-function SourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }) {
+function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputSourceKey; large?: boolean }) {
+  const badgeClassName = clsx(
+    "flex shrink-0 items-center justify-center bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300",
+    large ? "h-16 w-16 rounded-2xl" : "h-10 w-10 rounded-xl",
+  );
+  const iconClassName = large ? "h-11 w-11" : "h-7 w-7";
+  const officialLogoClassName = clsx("object-contain", large ? "h-12 w-12" : "h-7 w-7");
+
   if (sourceKey === "gmail") {
     return (
-      <div className="relative h-9 w-9 rounded-lg bg-white">
-        <span className="absolute left-1 top-2 h-5 w-1.5 rotate-[-35deg] rounded-full bg-red-500" />
-        <span className="absolute left-[14px] top-2 h-5 w-1.5 rotate-[35deg] rounded-full bg-yellow-400" />
-        <span className="absolute right-1 top-2 h-5 w-1.5 rotate-[35deg] rounded-full bg-emerald-500" />
-        <span className="absolute bottom-2 left-1 h-1.5 w-7 rounded-full bg-blue-500" />
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/gmail.svg" alt="" className={officialLogoClassName} />
       </div>
     );
   }
 
-  if (sourceKey === "stripe") {
+  if (sourceKey === "slack") {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#635bff] text-[10px] font-extrabold lowercase text-white">
-        stripe
-      </div>
-    );
-  }
-
-  if (sourceKey === "xero") {
-    return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#13b5ea] text-sm font-extrabold text-white">
-        xe
-      </div>
-    );
-  }
-
-  if (sourceKey === "bank_feed") {
-    return <BuildingLibraryIcon className="h-9 w-9 text-violet-600" />;
-  }
-
-  if (sourceKey === "notion") {
-    return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-black bg-white text-xl font-black text-black">
-        N
-      </div>
-    );
-  }
-
-  if (sourceKey === "google_drive") {
-    return (
-      <div className="relative h-9 w-9">
-        <span className="absolute left-3 top-0 h-8 w-3 rotate-[30deg] rounded-sm bg-emerald-500" />
-        <span className="absolute left-1 top-4 h-3 w-8 rounded-sm bg-blue-500" />
-        <span className="absolute right-1 top-4 h-3 w-8 rotate-[-60deg] rounded-sm bg-yellow-400" />
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/slack.png" alt="" className={officialLogoClassName} />
       </div>
     );
   }
 
   if (sourceKey === "linear") {
     return (
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-950 text-sm font-black text-white">
-        //
+      <div className={clsx("flex shrink-0 items-center justify-center bg-gray-950 shadow-sm transition-all duration-300", large ? "h-16 w-16 rounded-2xl" : "h-10 w-10 rounded-xl")}>
+        <svg viewBox="0 0 36 36" className={iconClassName} aria-hidden>
+          <path d="M8 25l17-17" stroke="white" strokeLinecap="round" strokeWidth="3" />
+          <path d="M14 28l14-14" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.85" />
+          <path d="M8 17l9-9" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.7" />
+          <path d="M22 28l6-6" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.55" />
+        </svg>
+      </div>
+    );
+  }
+
+  if (sourceKey === "stripe") {
+    return (
+      <div className={clsx("flex shrink-0 items-center justify-center bg-[#635bff] font-black text-white shadow-sm transition-all duration-300", large ? "h-16 w-16 rounded-2xl text-3xl" : "h-10 w-10 rounded-xl text-lg")}>
+        S
+      </div>
+    );
+  }
+
+  if (sourceKey === "bank_feed") {
+    return (
+      <div className={badgeClassName}>
+        <BuildingLibraryIcon className={clsx("text-[var(--vr-color-primary)]", large ? "h-9 w-9" : "h-6 w-6")} />
+      </div>
+    );
+  }
+
+  if (sourceKey === "notion") {
+    return (
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/notion.png" alt="" className={clsx(officialLogoClassName, "rounded-xl")} />
+      </div>
+    );
+  }
+
+  if (sourceKey === "google_drive") {
+    return (
+      <div className={badgeClassName}>
+        <svg viewBox="0 0 36 32" className={iconClassName} aria-hidden>
+          <path d="M13 2h10l11 19H24z" fill="#34a853" />
+          <path d="M13 2L2 21l5 9 11-19z" fill="#fbbc05" />
+          <path d="M7 30h22l5-9H12z" fill="#4285f4" />
+          <path d="M13 2l5 9h10l-5-9z" fill="#188038" opacity="0.55" />
+        </svg>
       </div>
     );
   }
 
   return (
-    <div className="grid h-9 w-9 grid-cols-2 gap-1">
-      <span className="rounded-full bg-[#36c5f0]" />
-      <span className="rounded-full bg-[#2eb67d]" />
-      <span className="rounded-full bg-[#ecb22e]" />
-      <span className="rounded-full bg-[#e01e5a]" />
+    <div className={clsx("flex shrink-0 items-center justify-center rounded-full bg-[#13b5ea] font-black uppercase text-white shadow-sm transition-all duration-300", large ? "h-16 w-16 text-base" : "h-10 w-10 text-xs")}>
+      xero
     </div>
   );
 }
@@ -1276,14 +1288,12 @@ function ConnectorCard({
   source,
   selected,
   busy,
-  connectHref,
   onConnect,
   onToggle,
 }: {
   source: VibeRaisingInputSourceSummary;
   selected: boolean;
   busy: boolean;
-  connectHref?: string;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
 }) {
@@ -1296,55 +1306,80 @@ function ConnectorCard({
     source.status !== "syncing" &&
     (source.status !== "unavailable" || canConnectWhenUnavailable);
   const disabled = source.status === "coming_soon" || (source.status === "unavailable" && !canConnectWhenUnavailable);
+  const isConnected = source.status === "connected" || source.status === "syncing";
   const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
   const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
   const connectClassName = clsx(
-    "block w-full rounded-lg px-4 py-3 text-center text-sm font-extrabold transition",
+    "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
     disabled || !canConnect
       ? "cursor-not-allowed bg-gray-100 text-gray-400"
-      : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)]",
   );
 
   return (
-    <div className="flex min-h-[240px] flex-col rounded-xl border border-gray-200 bg-white p-7 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start justify-between gap-3">
-        <SourceLogo sourceKey={source.key} />
-        <span className={clsx("inline-flex items-center rounded-full px-2 py-1 text-[11px] font-bold ring-1", statusClassName(displayedStatus))}>
-          {displayedStatusLabel}
-        </span>
+    <div className={clsx(
+      "group/source-card relative flex min-h-[220px] flex-col overflow-hidden rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)]",
+      isConnected
+        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
+        : selected
+          ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
+          : "border-gray-200 bg-white",
+    )} tabIndex={0}>
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 transition-all duration-300 ease-out group-hover/source-card:left-4 group-hover/source-card:top-4 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-4 group-focus-within/source-card:top-4 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2">
+        <SourceLogo sourceKey={source.key} large />
+        <h3 className={clsx(
+          "text-center text-base font-black transition-all duration-300 group-hover/source-card:text-left group-hover/source-card:text-sm group-focus-within/source-card:text-left group-focus-within/source-card:text-sm",
+          isConnected ? "text-white" : "text-gray-950",
+        )}>
+          {source.label}
+        </h3>
       </div>
 
-      <div className="mt-6">
-        <h3 className="text-base font-bold text-gray-950">{source.label}</h3>
-        <p className="mt-4 min-h-[48px] text-sm leading-6 text-slate-500">{SOURCE_COPY[source.key].description}</p>
-      </div>
+      <span className={clsx(
+        "absolute right-4 top-4 inline-flex max-w-[112px] items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold opacity-0 ring-1 transition-opacity duration-200 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100",
+        isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
+      )}>
+        {displayedStatusLabel}
+      </span>
 
-      <div className="mt-5 flex flex-wrap gap-1.5">
-        {source.capabilities.map((capability) => (
-          <span key={capability} className="rounded-full bg-gray-50 px-2 py-1 text-[11px] font-bold text-slate-500">
-            {capabilityLabel(capability)}
-          </span>
-        ))}
-      </div>
+      <div className="pointer-events-none flex flex-1 flex-col pt-24 opacity-0 transition-all duration-200 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100">
+        <p className={clsx("mt-2 line-clamp-2 min-h-10 text-xs leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
+          {SOURCE_COPY[source.key].description}
+        </p>
 
-      <div className="mt-auto pt-6">
-        {selectable ? (
-          <button
-            type="button"
-            onClick={() => onToggle(source)}
-            className={clsx(
-              "flex w-full items-center justify-between rounded-lg px-4 py-3 text-sm font-extrabold transition",
-              selected ? "bg-violet-600 text-white" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
-            )}
-          >
-            <span>{selected ? "Using in this update" : "Use in this update"}</span>
-            <CheckCircleIcon className={clsx("h-5 w-5", selected ? "text-white" : "text-violet-300")} />
-          </button>
-        ) : (
-          connectHref && canConnect && !disabled ? (
-            <a href={connectHref} className={connectClassName}>
-              Connect
-            </a>
+        <div className="mt-3 flex flex-wrap gap-1">
+          {source.capabilities.map((capability) => (
+            <span
+              key={capability}
+              className={clsx(
+                "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
+              )}
+            >
+              {capabilityLabel(capability)}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-auto pt-4">
+          {selectable ? (
+            <button
+              type="button"
+              onClick={() => onToggle(source)}
+              className={clsx(
+                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-extrabold transition",
+                isConnected && selected
+                  ? "bg-white text-[var(--vr-color-primary)] hover:bg-white/90"
+                : isConnected
+                    ? "bg-white/[0.14] text-white ring-1 ring-white/[0.24] hover:bg-white/[0.20]"
+                    : selected
+                      ? "bg-[var(--vr-color-primary)] text-white"
+                      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)]",
+              )}
+            >
+              <span>{selected ? "Using in this update" : "Use in this update"}</span>
+              <CheckCircleIcon className={clsx("h-5 w-5", isConnected && selected ? "text-[var(--vr-color-primary)]" : selected || isConnected ? "text-white" : "text-[var(--vr-palette-teal-soft)]")} />
+            </button>
           ) : (
             <button
               type="button"
@@ -1354,19 +1389,119 @@ function ConnectorCard({
             >
               {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
             </button>
-          )
-        )}
+          )}
 
-        {source.warning && source.status !== "coming_soon" ? (
-          <p className="mt-3 text-xs font-medium leading-5 text-amber-700">{source.warning}</p>
-        ) : null}
+          {source.warning && source.status !== "coming_soon" ? (
+            <p className={clsx("mt-2 line-clamp-2 text-[11px] font-medium leading-4", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
+          ) : null}
+        </div>
       </div>
     </div>
   );
 }
 
+function ManualMaterialsCard({
+  expanded,
+  hasManualMaterials,
+  summary,
+  onToggle,
+}: {
+  expanded: boolean;
+  hasManualMaterials: boolean;
+  summary: string;
+  onToggle: () => void;
+}) {
+  const cardCaption = "Add a source link or a short written summary for context outside your connected tools.";
+
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+      aria-controls="manual-materials-panel"
+      className={clsx(
+        "group/source-card relative flex min-h-[220px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)]",
+        expanded || hasManualMaterials
+          ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
+          : "border-gray-200 bg-white",
+      )}
+    >
+      <div
+        className={clsx(
+          "pointer-events-none absolute z-10 flex flex-col items-center gap-3 transition-all duration-300 ease-out",
+          expanded
+            ? "left-4 top-4 translate-x-0 translate-y-0 items-start gap-2"
+            : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group-hover/source-card:left-4 group-hover/source-card:top-4 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-4 group-focus-within/source-card:top-4 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2",
+        )}
+      >
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
+          <LinkIcon className="h-8 w-8" />
+        </div>
+        <h3
+          className={clsx(
+            "text-center text-base font-black text-gray-950 transition-all duration-300",
+            expanded
+              ? "text-left text-sm"
+              : "group-hover/source-card:text-left group-hover/source-card:text-sm group-focus-within/source-card:text-left group-focus-within/source-card:text-sm",
+          )}
+        >
+          Manual input
+        </h3>
+      </div>
+
+      <span
+        className={clsx(
+          "absolute right-4 top-4 inline-flex max-w-[112px] items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 transition-opacity duration-200",
+          hasManualMaterials
+            ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
+            : "bg-gray-100 text-slate-500 ring-gray-200",
+          expanded ? "opacity-100" : "opacity-0 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100",
+        )}
+      >
+        {hasManualMaterials ? "Added" : "Optional"}
+      </span>
+
+      <div
+        className={clsx(
+          "pointer-events-none flex flex-1 flex-col pt-24 transition-all duration-200",
+          expanded
+            ? "pointer-events-auto opacity-100"
+            : "opacity-0 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100",
+        )}
+      >
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          {cardCaption}
+        </p>
+
+        <div className="mt-3 flex flex-wrap gap-1">
+          {["Link", "Summary"].map((item) => (
+            <span
+              key={item}
+              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[10px] font-bold text-slate-500"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-auto pt-4">
+          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-3 py-2 text-xs font-extrabold text-[var(--vr-color-primary)]">
+            <span>{expanded ? "Hide form" : "Open form"}</span>
+          </div>
+
+          {hasManualMaterials ? (
+            <p className="mt-2 text-[11px] font-medium leading-4 text-[var(--vr-color-text)]">
+              {summary}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </button>
+  );
+}
+
 export default function ConnectData() {
-  const { backendBaseUrl, next, user } = useLoaderData<typeof loader>();
+  const { backendBaseUrl, next } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const location = useLocation();
   const [sources, setSources] = useState<VibeRaisingInputSourceSummary[]>(EMPTY_SOURCES);
@@ -1376,6 +1511,8 @@ export default function ConnectData() {
   const [syncingFinance, setSyncingFinance] = useState(false);
   const [syncingSlack, setSyncingSlack] = useState(false);
   const [busyProvider, setBusyProvider] = useState<VibeRaisingInputSourceKey | null>(null);
+  const [pendingConnectSource, setPendingConnectSource] = useState<VibeRaisingInputSourceSummary | null>(null);
+  const [showNoSourcesModal, setShowNoSourcesModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [bankFeedPreview, setBankFeedPreview] = useState<VibeRaisingBankFeedPreview | null>(null);
   const [loadingBankFeedPreview, setLoadingBankFeedPreview] = useState(false);
@@ -1406,6 +1543,7 @@ export default function ConnectData() {
   const [savingLinearProjects, setSavingLinearProjects] = useState(false);
   const [selectedLinearProjectIds, setSelectedLinearProjectIds] = useState<Set<string>>(new Set());
   const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
+  const [manualMaterialsExpanded, setManualMaterialsExpanded] = useState(false);
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
@@ -1415,10 +1553,6 @@ export default function ConnectData() {
     const keys = showAllSources ? [...POPULAR_SOURCE_KEYS, ...EXTRA_SOURCE_KEYS] : POPULAR_SOURCE_KEYS;
     return keys.map((key) => sourceByKey.get(key)).filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
   }, [showAllSources, sourceByKey]);
-  const connectedSources = useMemo(
-    () => sources.filter((source) => FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing")),
-    [sources],
-  );
   const selectedSourceList = useMemo(
     () => sources.filter((source) => selectedSources.has(source.key)),
     [selectedSources, sources],
@@ -1426,7 +1560,12 @@ export default function ConnectData() {
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
   const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
   const hasManualMaterials = Boolean(manualMaterials.sourceUrl.trim() || manualMaterials.summary.trim());
-  const hasConnectedFinance = connectedSources.some((source) => source.key === "stripe" || source.key === "xero" || source.key === "bank_feed");
+  const manualMaterialsSummary = hasManualMaterials
+    ? [
+      manualMaterials.sourceUrl.trim() ? "URL added" : null,
+      manualMaterials.summary.trim() ? "summary added" : null,
+    ].filter((value): value is string => Boolean(value)).join(" and ")
+    : "Add a source link or a short written summary when you want extra context in the draft.";
   const gmailSource = sourceByKey.get("gmail");
   const shouldShowGmailPreview = gmailSource?.status === "connected" || gmailSource?.status === "syncing" || gmailSource?.status === "error";
   const bankFeedSource = sourceByKey.get("bank_feed");
@@ -1462,6 +1601,12 @@ export default function ConnectData() {
   useEffect(() => {
     void refreshStatuses();
   }, [backendBaseUrl]);
+
+  useEffect(() => {
+    if (hasManualMaterials) {
+      setManualMaterialsExpanded(true);
+    }
+  }, [hasManualMaterials]);
 
   useEffect(() => {
     if (!shouldShowGmailPreview) {
@@ -1722,6 +1867,20 @@ export default function ConnectData() {
 
   const currentReturnPath = `${location.pathname}${location.search || ""}`;
 
+  const requestConnectSource = (source: VibeRaisingInputSourceSummary) => {
+    if (!FUNCTIONAL_SOURCES.has(source.key)) return;
+    if (source.status === "connected" || source.status === "syncing" || source.status === "coming_soon") return;
+    if (source.status === "unavailable" && !OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key)) return;
+    setPendingConnectSource(source);
+  };
+
+  const confirmConnectSource = () => {
+    if (!pendingConnectSource) return;
+    const source = pendingConnectSource;
+    setPendingConnectSource(null);
+    void handleConnect(source);
+  };
+
   const handleConnect = async (source: VibeRaisingInputSourceSummary) => {
     if (!FUNCTIONAL_SOURCES.has(source.key)) return;
     setBusyProvider(source.key);
@@ -1769,14 +1928,6 @@ export default function ConnectData() {
       }
       return nextSelected;
     });
-  };
-
-  const getOAuthConnectHref = (source: VibeRaisingInputSourceSummary) => {
-    if (source.key === "gmail") return undefined;
-    if (!FUNCTIONAL_SOURCES.has(source.key)) return undefined;
-    if (source.status === "connected" || source.status === "syncing" || source.status === "coming_soon") return undefined;
-    if (source.status === "unavailable" && !OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE.has(source.key)) return undefined;
-    return connectVibeRaisingInputSource(backendBaseUrl, source.key, currentReturnPath);
   };
 
   const handleSyncFinance = async (providers?: Array<Extract<VibeRaisingInputSourceKey, "stripe" | "xero" | "bank_feed">>) => {
@@ -1993,10 +2144,6 @@ export default function ConnectData() {
     }
   };
 
-  const navigateBackToUpdates = () => {
-    navigate("/founder-tools/updates");
-  };
-
   const navigateToDraft = (includeInputs: boolean) => {
     if (
       includeInputs &&
@@ -2017,12 +2164,29 @@ export default function ConnectData() {
     navigate(`${target.pathname}${target.search}`);
   };
 
+  const handleManualMaterialsContinue = () => {
+    if (selectedSourceList.length === 0) {
+      setShowNoSourcesModal(true);
+      return;
+    }
+    navigateToDraft(true);
+  };
+
+  const continueWithoutSources = () => {
+    setShowNoSourcesModal(false);
+    navigateToDraft(true);
+  };
+
   const updateManualMaterials = (patch: Partial<ManualMaterialsState>) => {
     setManualMaterials((previous) => {
       const nextMaterials = { ...previous, ...patch };
       writeStoredManualMaterials(nextMaterials);
       return nextMaterials;
     });
+  };
+
+  const clearManualMaterials = () => {
+    updateManualMaterials({ sourceUrl: "", summary: "" });
   };
 
   const handleStepperClick = (step: MonthlyUpdateStepKey) => {
@@ -2036,49 +2200,50 @@ export default function ConnectData() {
     }
   };
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-16">
-      <MonthlyUpdateStepper
-        activeStep="connect"
-        enabledSteps={["connect", "draft"]}
-        onStepClick={handleStepperClick}
-        className="mt-8"
-      />
-
-      <div className="grid gap-6 pt-8 lg:grid-cols-[1fr_430px] lg:items-start">
-        <div>
-          <p className="text-sm font-bold uppercase tracking-wide text-violet-600">Vibe Raising</p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">Connect your data</h1>
-          <p className="mt-5 max-w-xl text-base leading-7 text-slate-500">
-            Add data sources to give your AI agent the full context it needs to create your monthly investor update.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => navigateToDraft(true)}
-              className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-black"
-            >
-              Continue to draft
-              <ArrowRightIcon className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={navigateBackToUpdates}
-              className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 shadow-sm transition hover:bg-gray-50"
-            >
-              Back
-            </button>
-          </div>
+  const stickyStatusTitle = selectedSourceList.length > 0
+    ? `${selectedSourceList.length} external source${selectedSourceList.length === 1 ? "" : "s"} selected`
+    : hasManualMaterials
+      ? "Manual materials added"
+      : "No external sources selected";
+  const stickyStatusDetail = selectedSourceList.length > 0
+    ? selectedSourceList.map((source) => source.label).join(", ")
+    : hasManualMaterials
+      ? "Your URL or summary will be included in the draft."
+      : "Continue with manual input only, or connect a source first.";
+  const stickyStatusIcon = selectedSourceList.length > 0 ? (
+    <div className="flex -space-x-2">
+      {selectedSourceList.slice(0, 3).map((source) => (
+        <div key={source.key} className="rounded-xl ring-2 ring-white">
+          <SourceLogo sourceKey={source.key} />
         </div>
+      ))}
+    </div>
+  ) : (
+    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
+      <FolderIcon className="h-5 w-5" />
+    </div>
+  );
 
-        <div className="rounded-xl border border-violet-100 bg-violet-50/70 p-6">
-          <div className="flex gap-5">
-            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white text-violet-600 shadow-sm">
-              <SparklesIcon className="h-6 w-6" />
+  return (
+    <div className="mx-auto max-w-6xl space-y-10 pb-32">
+      <div className="space-y-4">
+        <MonthlyUpdateStepper
+          activeStep="connect"
+          enabledSteps={["connect", "draft"]}
+          onStepClick={handleStepperClick}
+          expandOnHover
+          frameless
+          className="mt-8"
+        />
+
+        <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
+          <div className="flex min-w-0 gap-4">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+              <SparklesIcon className="h-5 w-5" />
             </div>
-            <div>
-              <h2 className="text-sm font-extrabold text-violet-700">How it works</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
+            <div className="min-w-0">
+              <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
                 Connect your tools below. Our AI securely pulls in the most relevant data and turns it into your monthly update.
               </p>
             </div>
@@ -2087,7 +2252,7 @@ export default function ConnectData() {
       </div>
 
       {statusMessage ? (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold text-amber-800">
+        <div className="rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-5 py-4 text-sm font-semibold text-[var(--vr-color-text)]">
           {statusMessage}
         </div>
       ) : null}
@@ -2099,22 +2264,21 @@ export default function ConnectData() {
             <p className="mt-3 text-sm text-slate-500">Quickly connect the most common tools startups use.</p>
           </div>
           {loadingStatus ? (
-            <span className="inline-flex items-center gap-2 text-sm font-bold text-violet-600">
+            <span className="inline-flex items-center gap-2 text-sm font-bold text-[var(--vr-color-primary)]">
               <ArrowPathIcon className="h-4 w-4 animate-spin" />
               Checking status
             </span>
           ) : null}
         </div>
 
-        <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {orderedVisibleSources.map((source) => (
             <ConnectorCard
               key={source.key}
               source={source}
               selected={selectedSources.has(source.key)}
               busy={busyProvider === source.key}
-              connectHref={getOAuthConnectHref(source)}
-              onConnect={handleConnect}
+              onConnect={requestConnectSource}
               onToggle={handleToggle}
             />
           ))}
@@ -2132,150 +2296,62 @@ export default function ConnectData() {
           </button>
         </div>
         ) : null}
-      </section>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <ManualMaterialsCard
+            expanded={manualMaterialsExpanded}
+            hasManualMaterials={hasManualMaterials}
+            summary={manualMaterialsSummary}
+            onToggle={() => setManualMaterialsExpanded((value) => !value)}
+          />
 
-      <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="max-w-xl">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-50 text-gray-600 ring-1 ring-gray-100">
-                <FolderIcon className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-black text-gray-950">Manual materials</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Add a source URL or short summary alongside your connected tools.
+          {manualMaterialsExpanded ? (
+            <div
+              id="manual-materials-panel"
+              className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:col-span-2 lg:col-span-3"
+            >
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm font-bold text-slate-500">
+                  Add a source URL or a short written summary for extra context.
                 </p>
-              </div>
-            </div>
-          </div>
-          {hasManualMaterials ? (
-            <button
-              type="button"
-              onClick={() => updateManualMaterials({ sourceUrl: "", summary: "" })}
-              className="inline-flex w-fit items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-500 transition hover:bg-gray-50 hover:text-gray-800"
-            >
-              Clear materials
-            </button>
-          ) : null}
-        </div>
-
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <label className="block">
-            <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
-              <LinkIcon className="h-4 w-4 text-gray-400" />
-              Source URL
-            </span>
-            <input
-              type="url"
-              value={manualMaterials.sourceUrl}
-              onChange={(event) => updateManualMaterials({ sourceUrl: event.target.value })}
-              placeholder="https://docs.google.com/document/..."
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-            />
-          </label>
-
-          <label className="block">
-            <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
-            <textarea
-              value={manualMaterials.summary}
-              onChange={(event) => updateManualMaterials({ summary: event.target.value })}
-              rows={3}
-              placeholder="Topline context investors should read before the detailed sections..."
-              className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-            />
-          </label>
-        </div>
-      </section>
-
-      <section>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-black text-gray-950">Connected sources</h2>
-            <p className="mt-3 text-sm text-slate-500">Manage the data connections available for this update.</p>
-          </div>
-          {hasConnectedFinance ? (
-            <button
-              type="button"
-              onClick={() => void handleSyncFinance()}
-              disabled={syncingFinance}
-              className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-extrabold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60"
-            >
-              <ArrowPathIcon className={clsx("h-4 w-4", syncingFinance && "animate-spin")} />
-              Sync financials
-            </button>
-          ) : null}
-        </div>
-
-        <div className="mt-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-          {connectedSources.length > 0 ? (
-            <div className="divide-y divide-gray-100">
-              {connectedSources.map((source) => (
-                <div key={source.key} className="grid gap-4 px-6 py-5 md:grid-cols-[1.2fr_0.8fr_1.2fr_auto] md:items-center">
-                  <div className="flex items-center gap-4">
-                    <SourceLogo sourceKey={source.key} />
-                    <div>
-                      <p className="text-sm font-extrabold text-gray-950">{source.label}</p>
-                      <p className="mt-1 text-xs font-medium text-slate-500">
-                        {source.accountLabel || (source.key === "gmail" ? user.email : user.companyName)}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={clsx("inline-flex w-fit items-center gap-2 rounded-full px-2 py-1 text-xs font-bold ring-1", statusClassName(source.status))}>
-                    <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                    {statusLabel(source.status)}
-                  </span>
-                  <div>
-                    <p className="text-sm text-slate-500">{SOURCE_COPY[source.key].connectedUse}</p>
-                    {source.key === "slack" ? (
-                      <p className="mt-1 text-xs font-semibold text-slate-500">
-                        {selectedSlackChannelIds.size || source.selectedChannelCount || 0} selected channel{(selectedSlackChannelIds.size || source.selectedChannelCount || 0) === 1 ? "" : "s"}
-                      </p>
-                    ) : null}
-                    {source.key === "linear" ? (
-                      <p className="mt-1 text-xs font-semibold text-slate-500">
-                        {selectedLinearProjectIds.size || source.selectedProjectCount || 0} selected project{(selectedLinearProjectIds.size || source.selectedProjectCount || 0) === 1 ? "" : "s"}
-                      </p>
-                    ) : null}
-                  </div>
+                {hasManualMaterials ? (
                   <button
                     type="button"
-                    onClick={() => handleToggle(source)}
-                    className="inline-flex items-center justify-center rounded-lg p-2 text-slate-400 transition hover:bg-gray-50 hover:text-slate-700"
-                    aria-label={`Toggle ${source.label}`}
-                    title={selectedSources.has(source.key) ? "Remove from this update" : "Use in this update"}
+                    onClick={clearManualMaterials}
+                    className="inline-flex w-fit items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-500 transition hover:bg-gray-50 hover:text-gray-800"
                   >
-                    <EllipsisHorizontalIcon className="h-5 w-5" />
+                    Clear materials
                   </button>
-                </div>
-              ))}
-              <div className="px-5 py-4">
-                <button
-                  type="button"
-                  onClick={() => navigateToDraft(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-4 py-3 text-sm font-extrabold text-gray-900 transition hover:bg-gray-50"
-                >
-                  Continue to draft with {selectedSourceList.length || "no"} selected source{selectedSourceList.length === 1 ? "" : "s"}
-                  <ArrowRightIcon className="h-4 w-4 text-slate-400" />
-                </button>
+                ) : null}
               </div>
+
+              <label className="block">
+                <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
+                  <LinkIcon className="h-4 w-4 text-gray-400" />
+                  Source URL
+                </span>
+                <input
+                  type="url"
+                  value={manualMaterials.sourceUrl}
+                  onChange={(event) => updateManualMaterials({ sourceUrl: event.target.value })}
+                  placeholder="https://docs.google.com/document/..."
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
+                <textarea
+                  value={manualMaterials.summary}
+                  onChange={(event) => updateManualMaterials({ summary: event.target.value })}
+                  rows={4}
+                  placeholder="Topline context investors should read before the detailed sections..."
+                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+                />
+              </label>
             </div>
-          ) : (
-            <div className="px-6 py-8 text-center">
-              <p className="text-sm font-bold text-gray-950">No active connections yet</p>
-              <p className="mt-2 text-sm text-slate-500">Connect a source to make it available for this update.</p>
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
-
-      {shouldShowGmailPreview ? (
-        <GmailPreview
-          preview={gmailPreview}
-          loading={loadingGmailPreview}
-          error={gmailPreviewError}
-        />
-      ) : null}
 
       {shouldShowSlackPreview ? (
         <SlackPreview
@@ -2334,92 +2410,143 @@ export default function ConnectData() {
         />
       ) : null}
 
-      <section className="rounded-xl bg-black p-8 text-white sm:p-10">
-        <h2 className="text-2xl font-black">Your data, transformed</h2>
-        <p className="mt-4 max-w-xl text-sm leading-6 text-white/72">
-          Your connected data is securely processed to generate your monthly investor update.
-        </p>
-        <div className="mt-10 grid gap-6 lg:grid-cols-3">
-          {[
-            { title: "1. Connect", body: "Add your data sources in a few clicks.", icon: EnvelopeIcon },
-            { title: "2. Process", body: "Our AI extracts key signals, metrics, wins, and asks.", icon: ArrowPathIcon },
-            { title: "3. Generate", body: "Get a clear, investor-ready monthly update.", icon: SparklesIcon },
-          ].map((step, index) => (
-            <div key={step.title} className="flex items-center gap-5">
-              <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-white/10 text-violet-300">
-                <step.icon className="h-6 w-6" />
+      <VibeRaisingStickyStepBar
+        statusIcon={stickyStatusIcon}
+        statusTitle={stickyStatusTitle}
+        statusDetail={stickyStatusDetail}
+        onBack={() => navigate("/founder-tools/companies")}
+        primaryLabel="Continue to draft"
+        onPrimary={handleManualMaterialsContinue}
+      />
+
+      {showNoSourcesModal ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
+            <div className="px-6 pb-5 pt-6">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--vr-palette-mint)] text-[var(--vr-palette-black)]">
+                  <FolderIcon className="h-6 w-6" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowNoSourcesModal(false)}
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Close manual-only notice"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
               </div>
-              <div>
-                <h3 className="text-base font-black">{step.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/72">{step.body}</p>
-              </div>
-              {index < 2 ? <ArrowRightIcon className="ml-auto hidden h-5 w-5 text-white/35 xl:block" /> : null}
+              <h2 className="mt-5 text-2xl font-black text-gray-950">No source connected</h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                You have not connected an external source yet. If you continue, you will draft this update from manual input only.
+              </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="grid gap-8 lg:grid-cols-2">
-        <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="text-lg font-black text-gray-950">What we pull in</h2>
-          <ul className="mt-6 space-y-4 text-sm font-semibold text-slate-600">
-            {["Revenue and financial metrics", "Key milestones and updates", "Team and operational highlights", "Challenges and risks", "Upcoming asks and needs"].map((item) => (
-              <li key={item} className="flex items-center gap-3">
-                <CheckCircleIcon className="h-5 w-5 text-slate-400" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 flex items-center gap-3 rounded-lg bg-violet-50 px-4 py-4 text-sm font-bold text-violet-700">
-            <ShieldCheckIcon className="h-5 w-5" />
-            We only access the data you authorize and never share it.
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setShowNoSourcesModal(false)}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
+              >
+                Go back
+              </button>
+              <button
+                type="button"
+                onClick={continueWithoutSources}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-palette-mint)] px-5 py-3 text-sm font-extrabold text-[var(--vr-palette-black)] shadow-sm transition hover:bg-[var(--vr-color-primary)] hover:text-white"
+              >
+                Continue
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </section>
+        </div>
+      ) : null}
 
-        <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h2 className="text-lg font-black text-gray-950">Privacy and security</h2>
-          <ul className="mt-6 space-y-4 text-sm font-semibold text-slate-600">
-            {["Bank-level encryption", "Read-only access", "You're in control"].map((item) => (
-              <li key={item} className="flex items-center gap-3">
-                <CheckCircleIcon className="h-5 w-5 text-slate-400" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-8 flex items-center gap-3 rounded-lg bg-violet-50 px-4 py-4 text-sm font-bold text-violet-700">
-            <LockClosedIcon className="h-5 w-5" />
-            Your data is safe and secure with us.
+      {pendingConnectSource ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/10">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <div className="flex items-start gap-4">
+                <SourceLogo sourceKey={pendingConnectSource.key} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
+                    Before you connect
+                  </p>
+                  <h2 className="mt-1 text-2xl font-black text-gray-950">
+                    Connect {pendingConnectSource.label}?
+                  </h2>
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    We will only use authorized data to help draft your monthly investor update.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPendingConnectSource(null)}
+                  className="rounded-full p-2 text-slate-400 transition hover:bg-gray-50 hover:text-gray-700"
+                  aria-label="Cancel connection"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid gap-4 px-6 py-5 md:grid-cols-2">
+              <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm">
+                    <ShieldCheckIcon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-black text-gray-950">What we pull in</h3>
+                </div>
+                <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
+                  {["Revenue and financial metrics", "Key milestones and updates", "Team and operational highlights", "Challenges and risks", "Upcoming asks and needs"].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <CheckCircleIcon className="h-5 w-5 text-[var(--vr-color-primary)]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              <section className="rounded-2xl border border-gray-200 bg-gray-50/70 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm">
+                    <LockClosedIcon className="h-5 w-5" />
+                  </div>
+                  <h3 className="text-base font-black text-gray-950">Privacy and security</h3>
+                </div>
+                <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
+                  {["Read-only access where supported", "You control what is connected", "We only scan the filtered data needed for your draft"].map((item) => (
+                    <li key={item} className="flex items-center gap-3">
+                      <CheckCircleIcon className="h-5 w-5 text-[var(--vr-color-primary)]" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setPendingConnectSource(null)}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmConnectSource}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-extrabold text-white shadow-sm transition hover:bg-[var(--vr-palette-black)]"
+              >
+                Connect {pendingConnectSource.label}
+                <ArrowRightIcon className="h-4 w-4" />
+              </button>
+            </div>
           </div>
-        </section>
-      </div>
+        </div>
+      ) : null}
 
-      <div className="sticky bottom-4 z-10 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white/95 p-4 shadow-xl backdrop-blur sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <FolderIcon className="h-5 w-5 text-violet-600" />
-          <p className="text-sm font-bold text-gray-950">
-            {selectedSourceList.length > 0
-              ? `${selectedSourceList.length} source${selectedSourceList.length === 1 ? "" : "s"} selected`
-              : hasManualMaterials ? "Manual materials only" : "No external sources selected"}
-          </p>
-        </div>
-        <div className="flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={navigateBackToUpdates}
-            className="rounded-xl px-4 py-2.5 text-sm font-extrabold text-gray-500 transition hover:bg-gray-50"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateToDraft(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-extrabold text-white shadow-sm transition hover:bg-violet-700"
-          >
-            Continue to draft
-            <ArrowRightIcon className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

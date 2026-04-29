@@ -28,7 +28,7 @@ export default function VibeRaisingIntroPopup({
                 onClick={onDismiss}
             />
 
-            <div className="relative z-[110] flex h-[560px] w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="relative z-[110] flex h-[560px] w-full max-w-3xl overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl">
                 <div className="relative h-full w-[315px] flex-shrink-0 overflow-hidden bg-black">
                     <iframe
                         src="https://player.vimeo.com/video/1174236138?autoplay=1&muted=1&loop=0&title=0&byline=0&portrait=0"
@@ -40,19 +40,19 @@ export default function VibeRaisingIntroPopup({
                 </div>
 
                 <div className="flex min-w-0 flex-1 flex-col">
-                    <div className="flex items-center gap-3 border-b border-gray-100 px-6 pb-4 pt-6">
+                    <div className="flex items-center gap-3 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
                         <button
                             onClick={onDismiss}
-                            className="flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600"
+                            className="flex-shrink-0 text-[var(--vr-color-text-sub)] transition-colors hover:text-[var(--vr-color-text)]"
                             aria-label="Back"
                         >
                             <ArrowLeftIcon className="h-5 w-5" />
                         </button>
-                        <h2 className="flex-1 text-xl font-bold text-gray-900">Welcome to Vibe Raising</h2>
+                        <h2 className="flex-1 text-xl font-bold text-[var(--vr-color-text)]">Welcome to Vibe Raising</h2>
                     </div>
 
                     <div className="flex-1 px-6 py-6">
-                        <p className="text-sm leading-relaxed text-gray-600">
+                        <p className="text-sm leading-relaxed text-[var(--vr-color-text-mid)]">
                             Watch this short intro on how Vibe Raising connects founders with investors through
                             consistent, transparent monthly updates.
                         </p>
@@ -61,13 +61,13 @@ export default function VibeRaisingIntroPopup({
                     <div className="flex flex-col gap-3 px-6 pb-6">
                         <button
                             onClick={handleComplete}
-                            className="w-full rounded-xl bg-violet-600 px-6 py-3.5 font-bold text-white shadow-lg shadow-violet-500/20 transition-all duration-200 hover:bg-violet-700 active:scale-[0.98]"
+                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-6 py-3.5 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all duration-200 hover:bg-[var(--vr-palette-black)] active:scale-[0.98]"
                         >
                             Get Started →
                         </button>
                         <button
                             onClick={handleSkip}
-                            className="text-center text-sm text-gray-400 transition-colors hover:text-gray-600"
+                            className="text-center text-sm text-[var(--vr-color-text-sub)] transition-colors hover:text-[var(--vr-color-text)]"
                         >
                             Skip for now
                         </button>

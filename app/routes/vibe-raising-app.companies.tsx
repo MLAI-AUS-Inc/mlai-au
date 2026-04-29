@@ -155,9 +155,9 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                         <span
                                             className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                                             style={{
-                                                background: "rgba(0, 200, 204, 0.1)",
-                                                color: "#007a7d",
-                                                border: "1px solid rgba(0, 200, 204, 0.2)",
+                                                background: "rgba(0, 255, 215, 0.12)",
+                                                color: "var(--vr-color-primary)",
+                                                border: "1px solid rgba(0, 255, 215, 0.26)",
                                             }}
                                         >
                                             <CheckBadgeIcon className="w-3.5 h-3.5" />

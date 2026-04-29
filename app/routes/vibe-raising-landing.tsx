@@ -107,7 +107,7 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
             },
           ].map((item) => (
             <div key={item.title} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]">
                 <item.icon className="h-6 w-6" />
               </div>
               <h2 className="text-xl font-black tracking-tight text-gray-950">{item.title}</h2>
@@ -118,10 +118,10 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 pb-16">
-        <div className="relative rounded-2xl border border-red-100 bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
+        <div className="relative rounded-2xl border border-[rgba(242,114,63,0.24)] bg-white p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:p-10">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
-            <div className="rounded-lg bg-red-50 p-2">
-              <ExclamationTriangleIcon className="h-7 w-7 text-red-500" />
+            <div className="rounded-lg bg-[rgba(242,114,63,0.12)] p-2">
+              <ExclamationTriangleIcon className="h-7 w-7 text-[var(--vr-palette-coral)]" />
             </div>
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
@@ -134,7 +134,7 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
               </p>
             </div>
           </div>
-          <div className="absolute bottom-0 left-0 top-0 w-1.5 rounded-l-2xl bg-red-400" />
+          <div className="absolute bottom-0 left-0 top-0 w-1.5 rounded-l-2xl bg-[var(--vr-palette-coral)]" />
         </div>
       </section>
     </main>

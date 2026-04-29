@@ -4,6 +4,10 @@ export function shouldUseDevBackendStub() {
     return import.meta.env.DEV && import.meta.env.VITE_STUB_BACKEND === "true";
 }
 
+export function shouldUseDevAuthBypass() {
+    return import.meta.env.DEV && import.meta.env.VITE_DEV_AUTH_BYPASS === "true";
+}
+
 export function shouldUseDevBackendFallback(error?: unknown) {
     if (!import.meta.env.DEV || shouldUseDevBackendStub()) {
         return false;
