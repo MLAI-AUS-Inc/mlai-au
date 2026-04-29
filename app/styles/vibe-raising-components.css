@@ -82,14 +82,14 @@
   gap: 4px;
 }
 
-.vr-scope .vr-delta-up    { color: #00956E; }
+.vr-scope .vr-delta-up    { color: var(--vr-color-success); }
 .vr-scope .vr-delta-down  { color: var(--vr-color-brand-orange); }
 .vr-scope .vr-delta-neutral { color: var(--vr-color-text-sub); }
 
 .vr-scope .vr-badge-orange {
-  background: rgba(232, 69, 33, 0.1);
+  background: rgba(237, 95, 0, 0.1);
   color: var(--vr-color-brand-orange);
-  border: 1px solid rgba(232, 69, 33, 0.2);
+  border: 1px solid rgba(237, 95, 0, 0.2);
 }
 
 /* ── Alerts ───────────────────────────────────────────────── */
@@ -126,27 +126,27 @@
 }
 
 .vr-scope .vr-alert-info {
-  background: var(--vr-color-purple-50);
+  background: var(--vr-color-primary-soft);
   border-color: var(--vr-color-primary);
-  color: var(--vr-color-purple-700);
+  color: var(--vr-color-primary);
 }
 
 .vr-scope .vr-alert-success {
-  background: rgba(0, 200, 204, 0.07);
+  background: rgba(0, 255, 215, 0.12);
   border-color: var(--vr-color-featured);
-  color: #007a7d;
+  color: var(--vr-color-primary);
 }
 
 .vr-scope .vr-alert-warning {
-  background: rgba(245, 166, 35, 0.07);
+  background: rgba(255, 200, 1, 0.16);
   border-color: var(--vr-color-warning);
-  color: #8a5a00;
+  color: var(--vr-color-neutral-900);
 }
 
 .vr-scope .vr-alert-danger {
-  background: rgba(232, 69, 33, 0.07);
+  background: rgba(242, 114, 63, 0.12);
   border-color: var(--vr-color-danger);
-  color: #a02d13;
+  color: var(--vr-color-neutral-900);
 }
 
 /* ── Tabs ─────────────────────────────────────────────────── */
@@ -235,7 +235,7 @@
   pointer-events: none;
 }
 
-/* Hover-triggered purple glow on the teal header.
+/* Hover-triggered brand glow on the teal header.
    Gradient radiates from the top-left corner. Fades in on hover,
    stays while the cursor is over the header, fades out on leave. */
 .vr-scope .vr-uch-glow {
@@ -502,15 +502,15 @@
 }
 
 .vr-scope .vr-badge-teal {
-  background: rgba(0, 200, 204, 0.1);
-  color: #007a7d;
-  border: 1px solid rgba(0, 200, 204, 0.2);
+  background: rgba(0, 255, 215, 0.12);
+  color: var(--vr-color-primary);
+  border: 1px solid rgba(0, 255, 215, 0.26);
 }
 
 .vr-scope .vr-badge-blue {
-  background: rgba(80, 87, 228, 0.1);
+  background: rgba(76, 110, 245, 0.1);
   color: var(--vr-color-secondary);
-  border: 1px solid rgba(80, 87, 228, 0.2);
+  border: 1px solid rgba(76, 110, 245, 0.2);
 }
 
 .vr-scope .vr-badge-neutral {
@@ -537,7 +537,7 @@
 .vr-scope .vr-company-hero-banner {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #6B30D9 0%, #00C8CC 100%);
+  background: linear-gradient(135deg, var(--vr-palette-teal) 0%, var(--vr-palette-mint) 100%);
   min-height: 180px;
 }
 
@@ -609,7 +609,7 @@
 .vr-scope .vr-company-compact:hover {
   transform: scale(1.008);
   box-shadow: var(--vr-shadow-md);
-  border-color: rgba(107, 48, 217, 0.2);
+  border-color: rgba(0, 128, 128, 0.24);
 }
 
 /* "Register new company" dashed card (used in secondary row) */
@@ -624,7 +624,7 @@
 
 .vr-scope .vr-company-card-add:hover {
   border-color: var(--vr-color-primary);
-  background: var(--vr-color-purple-50);
+  background: rgba(0, 255, 215, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {

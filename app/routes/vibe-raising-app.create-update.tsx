@@ -41,6 +41,7 @@ import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
+import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
@@ -74,6 +75,8 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
+const SHOW_AI_REVIEW_FEEDBACK = false;
+const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 
 function readStoredManualMaterials(): { summary: string; sourceUrl: string } {
     if (typeof window === "undefined") return { summary: "", sourceUrl: "" };
@@ -350,44 +353,27 @@ function MonthYearTabs({
     year,
     onMonthChange,
     onYearChange,
-    periodTabs = [],
-    activePeriodKey = "current",
     onPeriodChange,
     submitDateFields = true,
     isDateEditable = true,
-    statusLabel,
-    showInfoControl = false,
 }: {
     month: string;
     year: number;
     onMonthChange: (month: string) => void;
     onYearChange: (year: number) => void;
-    periodTabs?: Array<{ key: string; month: string; year: number }>;
-    activePeriodKey?: string;
     onPeriodChange?: (key: string) => void;
     submitDateFields?: boolean;
     isDateEditable?: boolean;
-    statusLabel?: string;
-    showInfoControl?: boolean;
 }) {
-    const monthTheme = getVibeRaisingMonthTheme(month);
-    const [isMonthMenuOpen, setIsMonthMenuOpen] = useState(false);
     const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
-    const monthMenuRef = useRef<HTMLDivElement | null>(null);
     const yearMenuRef = useRef<HTMLDivElement | null>(null);
     const yearOptions = Array.from({ length: 11 }, (_, index) => year - 5 + index);
-    const visibleSecondaryMonths = periodTabs
-        .filter((period) => period.key !== activePeriodKey)
-        .slice(0, 2);
 
     useEffect(() => {
-        if (!isMonthMenuOpen && !isYearMenuOpen) return;
+        if (!isYearMenuOpen) return;
 
         const closeOnOutsideClick = (event: MouseEvent) => {
             const target = event.target as Node;
-            if (isMonthMenuOpen && !monthMenuRef.current?.contains(target)) {
-                setIsMonthMenuOpen(false);
-            }
             if (isYearMenuOpen && !yearMenuRef.current?.contains(target)) {
                 setIsYearMenuOpen(false);
             }
@@ -395,7 +381,6 @@ function MonthYearTabs({
 
         const closeOnEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                setIsMonthMenuOpen(false);
                 setIsYearMenuOpen(false);
             }
         };
@@ -407,90 +392,14 @@ function MonthYearTabs({
             document.removeEventListener("mousedown", closeOnOutsideClick);
             document.removeEventListener("keydown", closeOnEscape);
         };
-    }, [isMonthMenuOpen, isYearMenuOpen]);
+    }, [isYearMenuOpen]);
 
     return (
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
-            <div ref={monthMenuRef} className="relative min-w-0 flex-1">
-                <div
-                    className={clsx(
-                        "relative z-10 flex w-full overflow-hidden text-sm font-black uppercase tracking-[0.12em] text-white shadow-xl ring-1 ring-white/30 transition-all duration-150",
-                        isMonthMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
-                        monthTheme.tabClass,
-                    )}
-                >
-                    <button
-                        type="button"
-                        disabled={!isDateEditable}
-                        onClick={() => {
-                            if (!isDateEditable) return;
-                            setIsYearMenuOpen(false);
-                            setIsMonthMenuOpen((current) => !current);
-                        }}
-                        className={clsx(
-                            "flex min-w-0 flex-1 items-center justify-between gap-3 px-4 py-3 text-left transition-colors",
-                            isDateEditable ? "cursor-pointer hover:bg-white/10" : "cursor-default",
-                        )}
-                        aria-label="Select update month"
-                        aria-haspopup={isDateEditable ? "listbox" : undefined}
-                        aria-expanded={isDateEditable ? isMonthMenuOpen : undefined}
-                    >
-                        <span className="min-w-0 flex-1 truncate">{month}</span>
-                        {statusLabel && (
-                            <span className="hidden shrink-0 text-[10px] font-medium normal-case tracking-normal text-white/75 sm:inline">
-                                {statusLabel}
-                            </span>
-                        )}
-                        {isDateEditable && (
-                            <ChevronDownIcon className={clsx("h-4 w-4 shrink-0 text-white/80 transition-transform duration-150", isMonthMenuOpen && "rotate-180")} />
-                        )}
-                    </button>
-                    {visibleSecondaryMonths.length > 0 && (
-                        <div className="flex shrink-0 items-stretch border-l border-white/30 text-xs tracking-[0.16em]">
-                            {visibleSecondaryMonths.map((period) => {
-                                const periodTheme = getVibeRaisingMonthTheme(period.month);
-                                return (
-                                    <button
-                                        key={period.key}
-                                        type="button"
-                                        onClick={() => onPeriodChange?.(period.key)}
-                                        className={clsx(
-                                            "flex min-w-[48px] items-center justify-center px-2 font-black text-white/90 transition-all hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 sm:min-w-[58px] sm:px-3",
-                                            periodTheme.tabClass,
-                                        )}
-                                    >
-                                        {period.month.slice(0, 3).toUpperCase()}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    )}
-                    {showInfoControl && (
-                        <div className="group relative flex min-w-[30px] items-stretch border-l border-white/25">
-                            <button
-                                type="button"
-                                className="flex w-full items-center justify-center px-2 text-[13px] font-medium lowercase italic text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70"
-                                aria-label="How generated monthly updates work"
-                            >
-                                i
-                            </button>
-                            <div className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-64 translate-y-1 rounded-2xl bg-gray-950 px-4 py-3 text-left text-[11px] font-medium normal-case leading-5 tracking-normal text-white opacity-0 shadow-2xl shadow-black/25 ring-1 ring-white/10 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100 sm:w-72">
-                                We generated the current month and earlier months from Gmail. Click any month button to check and edit that update.
-                                <div className="absolute right-4 top-0 h-3 w-3 -translate-y-1.5 rotate-45 bg-gray-950" />
-                            </div>
-                        </div>
-                    )}
-                </div>
+            <div className="min-w-0 flex-1">
                 {submitDateFields && <input type="hidden" name="month" value={month} />}
-                <div
-                    className={clsx(
-                        "absolute left-0 top-full z-40 w-full origin-top overflow-hidden rounded-b-2xl border border-t-0 border-gray-200 bg-white shadow-2xl shadow-black/15 ring-1 ring-black/5 transition-all duration-150",
-                        isDateEditable && isMonthMenuOpen
-                            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
-                    )}
-                >
-                    <div role="listbox" aria-label="Update month" className="max-h-80 overflow-y-auto py-1">
+                <div className="overflow-hidden rounded-t-2xl rounded-b-lg border border-[var(--vr-color-border)] bg-white shadow-xl ring-1 ring-white/40">
+                    <div role="listbox" aria-label="Update month" className="grid w-full grid-cols-12">
                         {VIBE_RAISING_MONTH_OPTIONS.map((option) => {
                             const isSelected = option.name === month;
                             return (
@@ -499,20 +408,22 @@ function MonthYearTabs({
                                     type="button"
                                     role="option"
                                     aria-selected={isSelected}
+                                    disabled={!isDateEditable}
                                     onClick={() => {
+                                        if (!isDateEditable) return;
                                         onMonthChange(option.name);
                                         onPeriodChange?.("current");
-                                        setIsMonthMenuOpen(false);
+                                        setIsYearMenuOpen(false);
                                     }}
                                     className={clsx(
-                                        "flex w-full items-center justify-between px-4 py-2 text-left text-xs font-black uppercase tracking-[0.12em] transition-colors",
+                                        "flex min-h-[54px] min-w-0 items-center justify-center border-r border-[var(--vr-color-border)] px-1 text-center text-[9px] font-black uppercase tracking-[0.08em] transition-colors last:border-r-0 sm:text-[10px] md:text-[11px]",
+                                        isDateEditable ? "cursor-pointer" : "cursor-default",
                                         isSelected
-                                            ? `${option.tabClass} text-white`
-                                            : "text-gray-600 hover:bg-gray-950 hover:text-white",
+                                            ? `${option.tabClass} ${option.textClass} shadow-none`
+                                            : "bg-[var(--vr-palette-paper)] text-slate-500 hover:bg-white hover:text-gray-950",
                                     )}
                                 >
-                                    <span>{option.name}</span>
-                                    <span className={clsx("h-1.5 w-1.5 rounded-full", isSelected ? "bg-white" : option.tabClass)} />
+                                    <span className="truncate">{option.name.slice(0, 3).toUpperCase()}</span>
                                 </button>
                             );
                         })}
@@ -533,7 +444,6 @@ function MonthYearTabs({
                         disabled={!isDateEditable}
                         onClick={() => {
                             if (!isDateEditable) return;
-                            setIsMonthMenuOpen(false);
                             setIsYearMenuOpen((current) => !current);
                         }}
                         className={clsx(
@@ -602,8 +512,8 @@ type PersistedEmailDraftRun = {
 type RecordedMediaKind = "video" | "audio";
 type VideoUploadStatus = "idle" | "validating" | "compressing" | "creating_session" | "uploading" | "finalizing" | "ready" | "error";
 
-const MAX_VIDEO_UPLOAD_BYTES = 250 * 1024 * 1024;
-const MAX_SOURCE_VIDEO_BYTES = 750 * 1024 * 1024;
+const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024;
+const MAX_SOURCE_VIDEO_BYTES = 50 * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
 const SUPPORTED_VIDEO_EXTENSIONS = [
@@ -645,6 +555,8 @@ const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
     ".ogv": "video/ogg",
     ".mkv": "video/x-matroska",
 };
+
+type DraftStageKey = "reporting";
 const BROWSER_PLAYABLE_VIDEO_TYPES = new Set([
     "video/mp4",
     "video/x-m4v",
@@ -694,7 +606,7 @@ function isSupportedVideoFile(file: File) {
 function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
     const firstError = fileRejections[0]?.errors[0];
     if (!firstError) return "We couldn't use that file. Please try another video.";
-    if (firstError.code === "file-too-large") return "Video is too large to compress in the browser. Use a file under 750 MB.";
+    if (firstError.code === "file-too-large") return "File is too large. Use a file under 50 MB.";
     if (firstError.code === "file-invalid-type") {
         return "Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
     }
@@ -1141,29 +1053,28 @@ function SectionWithExample({
     };
 
     return (
-        <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
-            <div className="flex items-center gap-2 bg-black px-4 py-2.5">
-                <Icon className="w-4 h-4 text-white/80" />
-                <label className="block text-xs font-bold uppercase tracking-wider text-white">
-                    {label}
-                </label>
+        <div className="space-y-3">
+            <div className="flex items-center gap-2 px-1">
+                <Icon className="h-4 w-4 text-[var(--vr-color-primary)]" />
+                <p className="text-sm font-black text-gray-950">{label}</p>
             </div>
+            <div className="overflow-hidden rounded-xl border border-[var(--vr-color-border)] bg-white">
             <input type="hidden" name={name} value={value || ""} />
             <div className="space-y-3 p-4">
                 {items.map((item, i) => (
                     <div key={i} className="flex items-start gap-3">
-                        <span className="mt-2.5 text-sm text-violet-400 select-none flex-shrink-0">•</span>
+                        <span className="mt-2.5 flex-shrink-0 select-none text-sm text-[var(--vr-color-primary)]">•</span>
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 rounded-xl border-2 border-gray-100 bg-white px-4 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-0"
+                            className="flex-1 rounded-xl border-2 border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-0"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 rounded-lg p-1.5 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400"
+                                className="mt-1.5 rounded-lg p-1.5 text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
                             >
                                 <XMarkIcon className="w-4 h-4" />
                             </button>
@@ -1174,11 +1085,12 @@ function SectionWithExample({
             <button
                 type="button"
                 onClick={addItem}
-                className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-gray-100 py-3 text-xs font-bold text-violet-600 transition-colors hover:bg-violet-50"
+                className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-[var(--vr-color-border)] py-3 text-xs font-bold text-[var(--vr-color-primary)] transition-colors hover:bg-[rgba(0,255,215,0.12)]"
             >
                 <span className="text-base leading-none">+</span>
                 Add point
             </button>
+            </div>
         </div>
     );
 }
@@ -1205,21 +1117,21 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
         <div className="space-y-1.5 pt-1">
             {items.map((item, i) => (
                 <div key={i} className="flex items-start gap-2">
-                    <span className="mt-2 text-xs text-violet-400 select-none">•</span>
+                    <span className="mt-2 select-none text-xs text-[var(--vr-color-primary)]">•</span>
                     <BulletTextarea
                         value={item}
                         onChange={(text) => update(i, text)}
                         placeholder={hints[i % hints.length] || placeholder || "Add a point..."}
-                        className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-violet-400 focus:ring-violet-400"
+                        className="flex-1 rounded-lg border border-[var(--vr-color-border)] bg-white px-3 py-1.5 text-xs leading-5 text-gray-900 shadow-sm placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-[var(--vr-color-primary)]"
                     />
                     {(items.length > 1 || item.trim().length > 0) && (
-                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md p-1 px-2 text-gray-300 transition-all hover:bg-red-50 hover:text-red-400">
+                        <button type="button" onClick={() => remove(i)} className="mt-1 rounded-md p-1 px-2 text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]">
                             <XMarkIcon className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
             ))}
-            <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-violet-600 transition-all hover:bg-violet-50">
+            <button type="button" onClick={add} className="mt-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[10px] font-bold text-[var(--vr-color-primary)] transition-all hover:bg-[rgba(0,255,215,0.12)]">
                 <span className="text-sm leading-none">+</span> Add point
             </button>
         </div>
@@ -1230,9 +1142,9 @@ function BulletInput({ value, onChange, placeholder, section }: { value: string;
 function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.ReactNode; headline: string; color: "green" | "orange" | "blue"; children: React.ReactNode }) {
     const [open, setOpen] = useState(false);
     const colors = {
-        green: { bg: "bg-green-50", border: "border-green-100", text: "text-green-700", hoverBg: "hover:bg-green-50/80" },
-        orange: { bg: "bg-orange-50", border: "border-orange-100", text: "text-orange-700", hoverBg: "hover:bg-orange-50/80" },
-        blue: { bg: "bg-violet-50", border: "border-violet-100", text: "text-violet-700", hoverBg: "hover:bg-violet-50/80" },
+        green: { bg: "bg-[rgba(0,255,215,0.12)]", border: "border-[rgba(0,255,215,0.28)]", text: "text-[var(--vr-color-primary)]", hoverBg: "hover:bg-[rgba(0,255,215,0.18)]" },
+        orange: { bg: "bg-[rgba(237,95,0,0.10)]", border: "border-[rgba(237,95,0,0.24)]", text: "text-[var(--vr-palette-orange)]", hoverBg: "hover:bg-[rgba(237,95,0,0.16)]" },
+        blue: { bg: "bg-[rgba(76,110,245,0.10)]", border: "border-[rgba(76,110,245,0.24)]", text: "text-[var(--vr-palette-blue)]", hoverBg: "hover:bg-[rgba(76,110,245,0.16)]" },
     }[color];
     return (
         <div className={clsx("rounded-xl border overflow-hidden", colors.border, colors.bg)}>
@@ -1258,7 +1170,7 @@ function CollapsibleFeedback({ icon, headline, color, children }: { icon: React.
 function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> } }) {
     const [open, setOpen] = useState(false);
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="overflow-hidden rounded-xl border border-[var(--vr-color-border)] bg-white shadow-sm">
             <button
                 type="button"
                 onClick={() => setOpen(!open)}
@@ -1289,14 +1201,14 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                                         className={clsx(
                                             "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 transition-all",
                                             val
-                                                ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
                                                 : "border-gray-200 bg-gray-50 opacity-40"
                                         )}
 	                                    >
                                         <MetricInfoBadge info={m.info} />
 	                                        <div className={clsx(
                                             "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                            val ? "bg-violet-100" : "bg-white"
+                                            val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
                                         )}>
                                             {m.icon}
                                         </div>
@@ -1319,7 +1231,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.highlights && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <SparklesIcon className="w-3 h-3 text-purple-500" />
+                                    <SparklesIcon className="h-3 w-3 text-[var(--vr-palette-purple)]" />
                                     Key Highlights
                                 </h5>
                                 <BulletList text={pm.highlights} className="text-xs text-gray-600" />
@@ -1328,7 +1240,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.challenges && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <ExclamationCircleIcon className="w-3 h-3 text-orange-500" />
+                                    <ExclamationCircleIcon className="h-3 w-3 text-[var(--vr-palette-orange)]" />
                                     Challenges
                                 </h5>
                                 <BulletList text={pm.challenges} className="text-xs text-gray-600" />
@@ -1337,7 +1249,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.learnings && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <LightBulbIcon className="w-3 h-3 text-amber-500" />
+                                    <LightBulbIcon className="h-3 w-3 text-[var(--vr-palette-yellow)]" />
                                     Learnings
                                 </h5>
                                 <BulletList text={pm.learnings} className="text-xs text-gray-600" />
@@ -1346,7 +1258,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.next30Days && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <ArrowRightIcon className="w-3 h-3 text-blue-500" />
+                                    <ArrowRightIcon className="h-3 w-3 text-[var(--vr-palette-blue)]" />
                                     Next 30 Days
                                 </h5>
                                 <BulletList text={pm.next30Days} className="text-xs text-gray-600" />
@@ -1355,7 +1267,7 @@ function PastMonthPreviewCard({ pm }: { pm: { month: string; highlights: string;
                         {pm.asks && (
                             <div>
                                 <h5 className="text-[10px] font-bold text-gray-900 uppercase tracking-wide mb-1 flex items-center gap-1">
-                                    <QuestionMarkCircleIcon className="w-3 h-3 text-violet-500" />
+                                    <QuestionMarkCircleIcon className="h-3 w-3 text-[var(--vr-palette-lavender)]" />
                                     Ask from Investors
                                 </h5>
                                 <BulletList text={pm.asks} className="text-xs text-gray-600" />
@@ -1430,11 +1342,11 @@ function parseUsers(raw: string): number {
 
 // Pick bar color based on MoM growth rate - catchy colors for high growth
 function getBarColor(rate: number | null) {
-    if (rate === null) return { bar: "bg-slate-300", hover: "group-hover:bg-slate-400", selected: "bg-slate-400", label: "text-slate-400" };
-    if (rate >= 20)    return { bar: "bg-lime-400", hover: "group-hover:bg-lime-500", selected: "bg-lime-500", label: "text-lime-600" };
-    if (rate > 0)      return { bar: "bg-emerald-400", hover: "group-hover:bg-emerald-500", selected: "bg-emerald-500", label: "text-emerald-500" };
-    if (rate === 0)    return { bar: "bg-amber-300", hover: "group-hover:bg-amber-400", selected: "bg-amber-400", label: "text-amber-500" };
-    return               { bar: "bg-rose-300", hover: "group-hover:bg-rose-400", selected: "bg-rose-400", label: "text-rose-500" };
+    if (rate === null) return { bar: "bg-[var(--vr-palette-gray-soft)]", hover: "group-hover:bg-[var(--vr-palette-gray)]", selected: "bg-[var(--vr-palette-gray)]", label: "text-[var(--vr-color-text-sub)]" };
+    if (rate >= 20)    return { bar: "bg-[var(--vr-palette-mint)]", hover: "group-hover:bg-[var(--vr-palette-teal-soft)]", selected: "bg-[var(--vr-palette-teal-soft)]", label: "text-[var(--vr-color-primary)]" };
+    if (rate > 0)      return { bar: "bg-[var(--vr-palette-teal)]", hover: "group-hover:bg-[var(--vr-palette-teal-soft)]", selected: "bg-[var(--vr-palette-teal-soft)]", label: "text-[var(--vr-color-primary)]" };
+    if (rate === 0)    return { bar: "bg-[var(--vr-palette-yellow)]", hover: "group-hover:bg-[var(--vr-palette-gold)]", selected: "bg-[var(--vr-palette-gold)]", label: "text-[var(--vr-palette-orange)]" };
+    return               { bar: "bg-[var(--vr-palette-coral)]", hover: "group-hover:bg-[var(--vr-palette-orange)]", selected: "bg-[var(--vr-palette-orange)]", label: "text-[var(--vr-palette-coral)]" };
 }
 
 function GrowthChart({
@@ -1461,7 +1373,7 @@ function GrowthChart({
     });
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm mb-6">
+        <div className="mb-6 rounded-2xl border border-[var(--vr-color-border)] bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-5">
                 <div>
                     <h3 className="text-sm font-bold text-gray-900 uppercase tracking-widest">{title}</h3>
@@ -1487,7 +1399,7 @@ function GrowthChart({
                             {/* Month label */}
                             <span className={clsx(
                                 "w-10 text-[11px] font-bold uppercase tracking-tight text-right flex-shrink-0",
-                                d.isCurrent ? "text-violet-600" : color?.label || "text-gray-400"
+                                d.isCurrent ? "text-[var(--vr-color-primary)]" : color?.label || "text-gray-400"
                             )}>
                                 {d.month.slice(0, 3)}
                             </span>
@@ -1498,7 +1410,7 @@ function GrowthChart({
                                     className={clsx(
                                         "h-full rounded-md transition-all duration-500 ease-out relative overflow-hidden",
                                         d.isCurrent
-                                            ? "bg-violet-600 shadow-sm"
+                                            ? "bg-[var(--vr-color-primary)] shadow-sm"
                                             : d.isSelected
                                                 ? color?.selected
                                                 : clsx(color?.bar, color?.hover)
@@ -1526,7 +1438,7 @@ function GrowthChart({
                                 ) : (
                                     <span className={clsx(
                                         "text-xs font-bold",
-                                        rate >= 20 ? "text-lime-600" : rate > 0 ? "text-green-600" : rate < 0 ? "text-red-500" : "text-gray-400"
+                                        rate >= 20 ? "text-[var(--vr-color-primary)]" : rate > 0 ? "text-[var(--vr-color-primary)]" : rate < 0 ? "text-[var(--vr-palette-coral)]" : "text-gray-400"
                                     )}>
                                         {rate > 0 ? "+" : ""}{rate.toFixed(0)}%
                                     </span>
@@ -1576,6 +1488,9 @@ export default function CreateUpdate() {
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
     const [videoUploadError, setVideoUploadError] = useState<string | null>(null);
+    const [monthConfirmed, setMonthConfirmed] = useState(false);
+    const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(null);
+    const [metricsConfirmed, setMetricsConfirmed] = useState(false);
     const [videoStoragePath, setVideoStoragePath] = useState<string>(defaultData?.videoStoragePath || "");
     const [videoContentType, setVideoContentType] = useState<string>(defaultData?.videoContentType || "");
     const [videoFileSizeBytes, setVideoFileSizeBytes] = useState<number | null>(defaultData?.videoFileSizeBytes || null);
@@ -1644,6 +1559,13 @@ export default function CreateUpdate() {
         });
         return initial;
     });
+    const selectedMetricOptions = Array.from(selectedMetrics)
+        .map((key) => METRIC_OPTION_MAP.get(key))
+        .filter((metric): metric is MetricOption => Boolean(metric));
+    const draftMetricOptions = selectedMetricOptions.length > 0
+        ? selectedMetricOptions
+        : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
+    const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
         ? selectedInputSourceLabels.join(", ")
@@ -1714,6 +1636,9 @@ export default function CreateUpdate() {
         });
         metricKeysFromSuggestions(data.metricSuggestions).forEach((key) => newMetrics.add(key));
         setSelectedMetrics(newMetrics);
+        setMonthConfirmed(true);
+        setSelectedDraftStage("reporting");
+        setMetricsConfirmed(true);
     };
 
     const revokeVideoPreviewObjectUrl = useCallback(() => {
@@ -1765,7 +1690,7 @@ export default function CreateUpdate() {
 
         if (file.size > MAX_SOURCE_VIDEO_BYTES) {
             setVideoUploadStatus("error");
-            setVideoUploadError("Video is too large to compress in the browser. Use a file under 750 MB.");
+            setVideoUploadError("File is too large. Use a file under 50 MB.");
             return;
         }
 
@@ -1788,13 +1713,13 @@ export default function CreateUpdate() {
                 } catch (compressionError) {
                     if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
                     if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
-                        throw new Error("Video exceeds the 250 MB upload limit after compression. Try a shorter clip.");
+                        throw new Error("File exceeds the 50 MB upload limit after compression. Try a shorter clip.");
                     }
                 }
             }
 
             if (uploadCandidate.size > MAX_VIDEO_UPLOAD_BYTES) {
-                throw new Error("Video exceeds the 250 MB upload limit.");
+                throw new Error("File exceeds the 50 MB upload limit.");
             }
 
             setVideoContentType(uploadCandidate.type || inferVideoContentType(null, uploadCandidate.name));
@@ -2078,9 +2003,17 @@ export default function CreateUpdate() {
         executeDraftRequest(request);
     }, [executeDraftRequest, existingUpdateForSelectedMonth]);
 
-    const handleGenerateDraftFromEmailClick = useCallback(() => {
+    const handleGenerateSelectedMonthUpdate = useCallback(() => {
+        if (isSelectedMonthInFuture) return;
+        setMonthConfirmed(true);
+        setSelectedDraftStage("reporting");
+        setMetricsConfirmed(true);
         requestDraftFromSelectedInputs();
-    }, [requestDraftFromSelectedInputs]);
+    }, [isSelectedMonthInFuture, requestDraftFromSelectedInputs]);
+
+    const handleGenerateDraftFromEmailClick = useCallback(() => {
+        handleGenerateSelectedMonthUpdate();
+    }, [handleGenerateSelectedMonthUpdate]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -2332,6 +2265,78 @@ export default function CreateUpdate() {
                             : videoUploadStatus === "ready"
                                 ? "Video ready"
                                 : null;
+    const shouldShowEmailDraftProgress = emailDraftActionBusy || emailDraftCardVisible;
+    const isAutoDrafting = shouldShowEmailDraftProgress || showEmailWizard;
+    const canContinueDraftManually =
+        monthConfirmed &&
+        selectedDraftStage === "reporting" &&
+        metricsConfirmed &&
+        !showEmailWizard &&
+        emailDraftCardStatus === "failed";
+    const hasDraftTemplate =
+        monthConfirmed &&
+        selectedDraftStage === "reporting" &&
+        metricsConfirmed &&
+        (!isAutoDrafting || canContinueDraftManually) &&
+        !showEmailWizard;
+    const draftStickyStatusIcon = (
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
+            {hasDraftTemplate ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
+        </div>
+    );
+    const draftStickyBar = (() => {
+        if (!monthConfirmed) {
+            return {
+                statusTitle: "Select month",
+                statusDetail: selectedMonthLabel,
+                primaryLabel: `${selectedMonthGenerationVerb} update`,
+                onPrimary: handleGenerateSelectedMonthUpdate,
+                primaryDisabled: isSelectedMonthInFuture || emailDraftActionBusy,
+                onBack: goToConnectDataStep,
+            };
+        }
+
+        if (isAutoDrafting && !canContinueDraftManually) {
+            return {
+                statusTitle: showEmailWizard
+                    ? "Connect Gmail to continue"
+                    : emailDraftCardStatus === "failed"
+                        ? "Draft generation needs attention"
+                        : `Generating ${selectedMonthLabel} update`,
+                statusDetail: showEmailWizard ? "Finish the connection in the popup, then we will generate the draft." : emailDraftCardDisplayStage,
+                primaryLabel: showEmailWizard ? "Waiting..." : emailDraftCardStatus === "failed" ? "Retry" : "Generating...",
+                onPrimary: emailDraftCardStatus === "failed"
+                    ? () => requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true })
+                    : undefined,
+                primaryDisabled: showEmailWizard || emailDraftCardStatus !== "failed",
+                onBack: () => setMonthConfirmed(false),
+            };
+        }
+
+        if (canContinueDraftManually) {
+            return {
+                statusTitle: "Continue manually",
+                statusDetail: "Backend drafting is unavailable right now. You can still edit this update and review it when ready.",
+                primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
+                primaryType: "submit" as const,
+                primaryForm: DRAFT_REVIEW_FORM_ID,
+                primaryDisabled: isSubmitting,
+                onBack: () => setMonthConfirmed(false),
+            };
+        }
+
+        return {
+            statusTitle: "AI draft ready",
+            statusDetail: selectedMetricOptions.length > 0
+                ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedMonthLabel}.`
+                : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
+            primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
+            primaryType: "submit" as const,
+            primaryForm: DRAFT_REVIEW_FORM_ID,
+            primaryDisabled: isSubmitting,
+            onBack: () => setMonthConfirmed(false),
+        };
+    })();
 
     const handleRetryEmailDraft = () => {
         requestDraftFromSelectedInputs({ forceRegenerate: true, clearPersistedRun: true });
@@ -2773,6 +2778,142 @@ export default function CreateUpdate() {
         accept: VIDEO_ACCEPT,
     });
 
+    const videoInputSection = (
+        <section>
+            <div className="flex items-end justify-between gap-4">
+                <div>
+                    <h2 className="text-xl font-black text-gray-950">Say it your way</h2>
+                    <p className="mt-3 text-sm text-slate-500">
+                        Record a video or upload a file to support this update.
+                    </p>
+                </div>
+            </div>
+            <div className="relative mt-6">
+                <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
+                    <div
+                        {...getRootProps()}
+                        className={clsx(
+                            "relative flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-all sm:p-12",
+                            isDragActive ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]" : "border-[var(--vr-color-border)] bg-white hover:bg-[var(--vr-color-neutral-50)]"
+                        )}
+                    >
+                        <input {...getInputProps()} />
+
+                        <div className="flex max-w-sm flex-col items-center">
+                            <div className="mb-4 h-12 w-12 text-gray-400">
+                                <CloudArrowUpIcon className="h-full w-full stroke-1" />
+                            </div>
+
+                            <p className="mb-1 text-lg font-bold text-gray-900">
+                                Drag a video here to upload
+                            </p>
+
+                            <p className="mb-1 text-sm font-medium text-gray-600">
+                                MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV
+                            </p>
+
+                            <p className="mb-6 text-sm text-gray-500">
+                                Larger videos are compressed first. Final upload limit: 50 MB.
+                            </p>
+
+                            <div className="flex w-full flex-col gap-3 sm:flex-row">
+                                <button
+                                    type="button"
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        if (isRecording) {
+                                            stopRecording();
+                                        } else {
+                                            void startRecording();
+                                        }
+                                    }}
+                                    disabled={isEmailDraftBusy}
+                                    className={clsx(
+                                        "flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-2.5 font-bold transition-all shadow-sm",
+                                        isRecording
+                                            ? "animate-pulse bg-[rgba(242,114,63,0.14)] text-[var(--vr-palette-coral)] ring-2 ring-[rgba(242,114,63,0.22)]"
+                                            : "bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.16)] active:scale-95"
+                                    )}
+                                >
+                                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--vr-palette-coral)]" />
+                                    {isRecording ? "Stop Recording" : "Record"}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    disabled={isEmailDraftBusy}
+                                    onClick={(event) => {
+                                        event.stopPropagation();
+                                        open();
+                                    }}
+                                    className="flex-1 rounded-xl bg-black px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-gray-900 active:scale-95 disabled:opacity-60"
+                                >
+                                    Select file
+                                </button>
+                            </div>
+                            {videoUploadStatusLabel && (
+                                <p
+                                    className={clsx(
+                                        "mt-4 text-sm font-semibold",
+                                        videoUploadStatus === "ready" ? "text-[var(--vr-color-primary)]" : "text-[var(--vr-palette-blue)]",
+                                    )}
+                                >
+                                    {videoUploadStatusLabel}
+                                </p>
+                            )}
+                            {videoUploadError && (
+                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{videoUploadError}</p>
+                            )}
+                            {isRecording && (
+                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">
+                                    {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
+                                </p>
+                            )}
+                            {recordingError && (
+                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{recordingError}</p>
+                            )}
+                            {videoPreviewUrl && (
+                                <div className="mt-5 w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left">
+                                    <div className="mb-2 flex items-center justify-between gap-3">
+                                        <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
+                                            {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
+                                        </p>
+                                        <button
+                                            type="button"
+                                            onClick={resetVideoUpload}
+                                            className="text-xs font-bold text-gray-400 hover:text-gray-700"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                    {previewMediaKind === "audio" ? (
+                                        <audio src={videoPreviewUrl} controls className="w-full" />
+                                    ) : (
+                                        <VideoAssetPreview
+                                            src={videoPreviewUrl}
+                                            contentType={videoContentType}
+                                            fileName={videoOriginalFilename || videoPreviewUrl}
+                                            fileSizeBytes={videoFileSizeBytes}
+                                            className="aspect-video w-full"
+                                        />
+                                    )}
+                                    {videoUploadStatus === "ready" && uploadedVideoUrl && (
+                                        <p className="mt-2 text-xs font-medium text-[var(--vr-color-primary)]">
+                                            Uploaded and ready to publish.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </fieldset>
+                {isEmailDraftBusy && (
+                    <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
+                )}
+            </div>
+        </section>
+    );
+
     // 1. Feedback View — preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
         const { feedback, data } = actionData;
@@ -2821,37 +2962,31 @@ export default function CreateUpdate() {
         };
 
         return (
-            <div className="max-w-5xl mx-auto pb-12">
+            <div className="mx-auto max-w-6xl space-y-10 pb-32">
                 <MonthlyUpdateStepper
                     activeStep={showConfirmPopup ? "publish" : "review"}
                     enabledSteps={["connect", "draft", "review", "publish"]}
                     onStepClick={handleReviewStepperClick}
-                    className="mt-6 mb-6"
+                    expandOnHover
+                    frameless
+                    className="mt-8"
                 />
 
-                {/* Header — back arrow top-left, title center-left, X on right */}
-                <div className="flex items-center gap-3 py-6 mb-4">
-                    <button
-                        onClick={() => setDismissedFeedback(true)}
-                        className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
-                        aria-label="Back to edit"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5m7-7-7 7 7 7" />
-                        </svg>
-                    </button>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold text-gray-900">Review Your Update</h1>
-                        <p className="text-sm text-gray-400 mt-0.5">Preview exactly what investors will see</p>
+                <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
+                    <div className="flex min-w-0 gap-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+                            <SparklesIcon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                Preview page shows exactly what investors will see before you publish this monthly update.
+                            </p>
+                        </div>
                     </div>
-                    <button onClick={() => window.history.back()} className="text-gray-400 hover:text-gray-600">
-                        <XMarkIcon className="w-6 h-6" />
-                    </button>
                 </div>
 
-                {/* Main layout: Preview + thin rating bar.
-                    Mobile: stacked (preview first, feedback below).
-                    Desktop: preview left, sticky sidebar right. */}
+                {/* Main layout: investor preview. AI grading/feedback is hidden for now. */}
                 <div className="flex flex-col lg:flex-row gap-4 lg:items-start">
 
                     {/* PREVIEW — dominant, takes most of the width */}
@@ -2870,7 +3005,7 @@ export default function CreateUpdate() {
                                 </div>
                             ) : (
                                 <div className="relative w-full h-32 overflow-hidden">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-400" />
+                                    <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
                                     <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
                                         <circle cx="120" cy="80" r="100" fill="white" />
                                         <circle cx="650" cy="140" r="70" fill="white" />
@@ -2935,14 +3070,14 @@ export default function CreateUpdate() {
                                                 className={clsx(
                                                     "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
                                                     val
-                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-40"
                                                 )}
 	                                            >
                                                 <MetricInfoBadge info={m.info} />
 	                                                <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    val ? "bg-violet-100" : "bg-white"
+                                                    val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
                                                 )}>
                                                     {m.icon}
                                                 </div>
@@ -2975,7 +3110,7 @@ export default function CreateUpdate() {
                                                 href={reviewSourceUrl}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="inline-flex items-center gap-2 text-xs font-bold text-violet-700 hover:text-violet-900"
+                                                className="inline-flex items-center gap-2 text-xs font-bold text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]"
                                             >
                                                 <LinkIcon className="h-3.5 w-3.5" />
                                                 Source materials
@@ -2987,7 +3122,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.highlights && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <SparklesIcon className="w-3.5 h-3.5 text-purple-500" />
+                                            <SparklesIcon className="h-3.5 w-3.5 text-[var(--vr-palette-purple)]" />
                                             Key Highlights
                                         </h4>
                                         <BulletList text={(data as any).highlights} />
@@ -2996,7 +3131,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.challenges && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <ExclamationCircleIcon className="w-3.5 h-3.5 text-orange-500" />
+                                            <ExclamationCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-orange)]" />
                                             Challenges
                                         </h4>
                                         <BulletList text={(data as any).challenges} />
@@ -3005,7 +3140,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.learnings && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <LightBulbIcon className="w-3.5 h-3.5 text-amber-500" />
+                                            <LightBulbIcon className="h-3.5 w-3.5 text-[var(--vr-palette-yellow)]" />
                                             Learnings
                                         </h4>
                                         <BulletList text={(data as any).learnings} />
@@ -3014,7 +3149,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.next30Days && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <ArrowRightIcon className="w-3.5 h-3.5 text-blue-500" />
+                                            <ArrowRightIcon className="h-3.5 w-3.5 text-[var(--vr-palette-blue)]" />
                                             Next 30 Days
                                         </h4>
                                         <BulletList text={(data as any).next30Days} />
@@ -3023,7 +3158,7 @@ export default function CreateUpdate() {
                                 {(data as any)?.asks && (
                                     <div>
                                         <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <QuestionMarkCircleIcon className="w-3.5 h-3.5 text-violet-500" />
+                                            <QuestionMarkCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-lavender)]" />
                                             Ask from Investors
                                         </h4>
                                         <BulletList text={(data as any).asks} />
@@ -3136,17 +3271,17 @@ export default function CreateUpdate() {
                             const count = 18 + (criteria.length * 14);
 
                             return (
-                                <div className="mt-6 bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-xl p-5 shadow-sm">
-                                    <h3 className="text-sm font-bold text-indigo-900 mb-2 flex items-center gap-2">
-                                        <UsersIcon className="w-4 h-4 text-indigo-500" />
+                                <div className="mt-6 rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--vr-color-text)]">
+                                        <UsersIcon className="h-4 w-4 text-[var(--vr-palette-blue)]" />
                                         Your Audience
                                     </h3>
-                                    <p className="text-sm text-indigo-800/80 mb-3">
-                                        We found <strong className="text-indigo-600 font-extrabold">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
+                                    <p className="mb-3 text-sm text-[var(--vr-color-text-mid)]">
+                                        We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
                                     </p>
                                     <div className="flex flex-wrap gap-2">
                                         {criteria.map(c => (
-                                            <span key={c} className="px-2.5 py-1 bg-white border border-indigo-200 text-indigo-700 text-xs font-semibold rounded-lg shadow-sm">
+                                            <span key={c} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)] shadow-sm">
                                                 {c}
                                             </span>
                                         ))}
@@ -3155,16 +3290,16 @@ export default function CreateUpdate() {
                             );
                         })()}
 
-                        {/* Action buttons — below preview */}
-                        <div className="flex items-center gap-3 mt-6">
+                        {/* Secondary action below preview */}
+                        <div className="mt-6">
                             <button
                                 type="button"
                                 onClick={handleSaveDraft}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 shadow-sm transition-colors"
+                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
                             >
                                 {draftSaved ? (
                                     <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--vr-color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                         </svg>
                                         Draft Saved!
@@ -3172,13 +3307,6 @@ export default function CreateUpdate() {
                                 ) : (
                                     <>Save as Draft</>
                                 )}
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowConfirmPopup(true)}
-                                className="flex-1 px-4 py-2.5 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 shadow-sm transition-colors"
-                            >
-                                Publish and Send
                             </button>
                         </div>
                     </div>
@@ -3207,7 +3335,8 @@ export default function CreateUpdate() {
                                         activeStep="publish"
                                         enabledSteps={["connect", "draft", "review", "publish"]}
                                         onStepClick={handleReviewStepperClick}
-                                        compact
+                                        expandOnHover
+                                        frameless
                                         className="mb-6 text-left"
                                     />
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
@@ -3238,7 +3367,7 @@ export default function CreateUpdate() {
                                         
                                         <button
                                             type="submit"
-                                            className="w-full px-5 py-3 text-sm font-bold text-white bg-green-600 rounded-xl hover:bg-green-700 shadow-md transition-all active:scale-95"
+                                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-[var(--vr-palette-black)] active:scale-95"
                                         >
                                             Yes, Publish and Send
                                         </button>
@@ -3256,105 +3385,335 @@ export default function CreateUpdate() {
                         );
                     })()}
 
-                    {/* RATING SIDEBAR — stacked below on mobile, sticky right on desktop */}
-                    <div className="w-full lg:w-56 lg:flex-shrink-0 lg:sticky lg:top-6 space-y-3">
-                        {/* Company identity (primary) with AI grade as supporting badge */}
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 flex flex-col items-center text-center">
-                            {user.domain ? (
-                                <img
-                                    src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                    alt={user.companyName}
-                                    className="w-12 h-12 rounded-xl mb-2 bg-gray-50"
-                                />
-                            ) : (
-                                <div className="w-12 h-12 rounded-xl mb-2 bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center">
-                                    <span className="text-lg font-bold text-purple-600">{user.companyName.charAt(0)}</span>
-                                </div>
-                            )}
-                            <p className="text-sm font-bold text-gray-900">{user.companyName}</p>
-                            {user.domain && (
-                                <p className="text-[11px] text-gray-400 mt-0.5">{user.domain}</p>
-                            )}
-                            <StartupRegionBadge location={user.location} className="mt-3" />
-                            {feedback?.grade && (
-                                <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 border border-green-200">
-                                    <span className="text-[10px] font-semibold uppercase tracking-wide text-green-700">AI Grade</span>
-                                    <span className="text-sm font-bold text-green-700 leading-none">{feedback.grade}</span>
-                                </div>
-                            )}
+                    {SHOW_AI_REVIEW_FEEDBACK && (
+                        <div className="w-full space-y-3 lg:sticky lg:top-6 lg:w-56 lg:flex-shrink-0">
+                            <div className="flex flex-col items-center rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm">
+                                {user.domain ? (
+                                    <img
+                                        src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                        alt={user.companyName}
+                                        className="mb-2 h-12 w-12 rounded-xl bg-gray-50"
+                                    />
+                                ) : (
+                                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--vr-palette-teal-soft),var(--vr-palette-mint))]">
+                                        <span className="text-lg font-bold text-[var(--vr-palette-black)]">{user.companyName.charAt(0)}</span>
+                                    </div>
+                                )}
+                                <p className="text-sm font-bold text-gray-900">{user.companyName}</p>
+                                {user.domain && (
+                                    <p className="mt-0.5 text-[11px] text-gray-400">{user.domain}</p>
+                                )}
+                                <StartupRegionBadge location={user.location} className="mt-3" />
+                                {feedback?.grade && (
+                                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(0,255,215,0.28)] bg-[rgba(0,255,215,0.12)] px-2.5 py-1">
+                                        <span className="text-[10px] font-semibold uppercase tracking-wide text-[var(--vr-color-primary)]">AI Grade</span>
+                                        <span className="text-sm font-bold leading-none text-[var(--vr-color-primary)]">{feedback.grade}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <CollapsibleFeedback
+                                icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
+                                headline={`${feedback?.strengths.length} strengths found`}
+                                color="green"
+                            >
+                                <ul className="space-y-1.5">
+                                    {feedback?.strengths.map((str: string, i: number) => (
+                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
+                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-color-primary)]" />
+                                            {str}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CollapsibleFeedback>
+
+                            <CollapsibleFeedback
+                                icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
+                                headline={`${feedback?.improvements.length} areas to improve`}
+                                color="orange"
+                            >
+                                <ul className="space-y-1.5">
+                                    {feedback?.improvements.map((imp: string, i: number) => (
+                                        <li key={i} className="flex items-start gap-1.5 text-xs leading-relaxed text-[var(--vr-color-text)]">
+                                            <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-[var(--vr-palette-orange)]" />
+                                            {imp}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </CollapsibleFeedback>
+
+                            <CollapsibleFeedback
+                                icon={<LightBulbIcon className="w-3.5 h-3.5" />}
+                                headline="Pro tip from AI"
+                                color="blue"
+                            >
+                                <p className="text-xs leading-relaxed text-[var(--vr-color-text)]">{feedback?.proTip}</p>
+                            </CollapsibleFeedback>
                         </div>
-
-                        {/* Strengths — collapsible */}
-                        <CollapsibleFeedback
-                            icon={<CheckCircleIcon className="w-3.5 h-3.5" />}
-                            headline={`${feedback?.strengths.length} strengths found`}
-                            color="green"
-                        >
-                            <ul className="space-y-1.5">
-                                {feedback?.strengths.map((str: string, i: number) => (
-                                    <li key={i} className="flex items-start gap-1.5 text-green-800 text-xs leading-relaxed">
-                                        <span className="mt-1.5 w-1 h-1 bg-green-400 rounded-full flex-shrink-0" />
-                                        {str}
-                                    </li>
-                                ))}
-                            </ul>
-                        </CollapsibleFeedback>
-
-                        {/* Improvements — collapsible */}
-                        <CollapsibleFeedback
-                            icon={<ExclamationTriangleIcon className="w-3.5 h-3.5" />}
-                            headline={`${feedback?.improvements.length} areas to improve`}
-                            color="orange"
-                        >
-                            <ul className="space-y-1.5">
-                                {feedback?.improvements.map((imp: string, i: number) => (
-                                    <li key={i} className="flex items-start gap-1.5 text-orange-800 text-xs leading-relaxed">
-                                        <span className="mt-1.5 w-1 h-1 bg-orange-400 rounded-full flex-shrink-0" />
-                                        {imp}
-                                    </li>
-                                ))}
-                            </ul>
-                        </CollapsibleFeedback>
-
-                        {/* Pro Tip — collapsible */}
-                        <CollapsibleFeedback
-                            icon={<LightBulbIcon className="w-3.5 h-3.5" />}
-                            headline="Pro tip from AI"
-                            color="blue"
-                        >
-                            <p className="text-xs text-violet-800 leading-relaxed">{feedback?.proTip}</p>
-                        </CollapsibleFeedback>
-                    </div>
+                    )}
                 </div>
+
+                <VibeRaisingStickyStepBar
+                    statusIcon={
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
+                            <CheckCircleIcon className="h-5 w-5" />
+                        </div>
+                    }
+                    statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
+                    statusDetail="Preview is ready. Publish when the story feels right."
+                    onBack={() => setDismissedFeedback(true)}
+                    primaryLabel="Publish and Send"
+                    onPrimary={() => setShowConfirmPopup(true)}
+                />
             </div>
         );
     }
 
     // 3. Create/Edit Form View
     return (
-        <div className="max-w-3xl mx-auto pb-12">
-            <MonthlyUpdateStepper
-                activeStep="draft"
-                enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
-                onStepClick={handleDraftStepperClick}
-                className="mt-6 mb-6"
-            />
+        <div className="mx-auto max-w-6xl space-y-10 pb-32">
+            <div className="space-y-4">
+                <MonthlyUpdateStepper
+                    activeStep="draft"
+                    enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                    onStepClick={handleDraftStepperClick}
+                    expandOnHover
+                    frameless
+                    className="mt-8"
+                />
 
-            {/* Header */}
-            <div className="sticky top-0 z-10 py-4 mb-6 flex items-center justify-between">
-                <h1 className="text-xl font-bold text-gray-900">
-                    {isEdit ? "Edit Monthly Update" : "Create Monthly Update"}
-                </h1>
-                <Link to="/founder-tools/updates" className="text-gray-400 hover:text-gray-600">
-                    <XMarkIcon className="w-6 h-6" />
-                </Link>
+                <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
+                    <div className="flex min-w-0 gap-4">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+                            <SparklesIcon className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                            <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
+                            <p className="mt-1 text-sm leading-6 text-slate-600">
+                                Bring in your raw materials first. We keep the selected month, inputs, and draft fields together through review and publish.
+                                <br />
+                                Early stage? No worries. Record a selfie video or short presentation to share your idea with investors.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
+            <section>
+                <div className="space-y-4">
+                    {monthConfirmed ? (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMonthConfirmed(false);
+                                setSelectedDraftStage(null);
+                                setMetricsConfirmed(false);
+                            }}
+                            className="group flex w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.24)] sm:px-6 sm:py-4"
+                            aria-label={`Change selected update month, currently ${selectedMonthLabel}`}
+                        >
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] transition group-hover:ring-[rgba(0,255,215,0.28)]" />
+                                <p className="truncate text-base font-black text-gray-950">
+                                    {selectedMonthLabel}
+                                </p>
+                            </div>
+                        </button>
+                    ) : (
+                        <div className="space-y-3">
+                            <p className="px-1 text-sm font-black text-gray-950">Select month</p>
+                            <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
+                                <div className="grid gap-4 lg:grid-cols-4 lg:items-stretch">
+                                    <div className="lg:col-span-3">
+                                        <div className="rounded-3xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4 shadow-sm sm:p-5">
+                                            <MonthYearTabs
+                                                month={selectedMonth}
+                                                year={selectedYear}
+                                                onMonthChange={setSelectedMonth}
+                                                onYearChange={setSelectedYear}
+                                                onPeriodChange={setActivePeriodKey}
+                                                isDateEditable={!isEmailDraftBusy}
+                                            />
+                                            {isSelectedMonthInFuture && (
+                                                <p className="mt-3 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+                                                    Future monthly updates can be generated once that month starts.
+                                                </p>
+                                            )}
+                                            {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
+                                                <p className="mt-3 rounded-xl border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.12)] px-4 py-3 text-sm font-medium text-[var(--vr-color-primary)]">
+                                                    An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={isSelectedMonthInFuture || emailDraftActionBusy}
+                                        onClick={() => {
+                                            void handleGenerateDraftFromEmailClick();
+                                        }}
+                                        className={clsx(
+                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
+                                            isSelectedMonthInFuture || emailDraftActionBusy
+                                                ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
+                                                : "cursor-pointer border-[var(--vr-palette-black)] bg-[var(--vr-palette-black)] text-white hover:-translate-y-0.5 hover:bg-[var(--vr-palette-purple)] focus:ring-[rgba(150,73,210,0.24)]",
+                                        )}
+                                    >
+                                        <div>
+                                            <p
+                                                className={clsx(
+                                                    "text-xs font-black uppercase tracking-[0.16em]",
+                                                    isSelectedMonthInFuture || emailDraftActionBusy ? "text-slate-400" : "text-white/65",
+                                                )}
+                                            >
+                                                AI drafting
+                                            </p>
+                                            <p className="mt-3 text-lg font-black leading-tight">
+                                                {selectedMonthGenerationVerb} update
+                                            </p>
+                                        </div>
+                                        <div className="mt-5 flex items-center justify-between gap-3 text-sm font-semibold">
+                                            <span>{selectedMonthLabel}</span>
+                                            {emailDraftActionBusy ? (
+                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                            ) : (
+                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                            )}
+                                        </div>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {selectedDraftStage === "reporting" ? (
+                        <>
+                            {shouldShowEmailDraftProgress ? (
+                                <EmailDraftInProgressCard
+                                    status={emailDraftCardStatus}
+                                    displayStage={emailDraftCardDisplayStage}
+                                    completedSteps={emailDraftCardCompletedSteps}
+                                    totalSteps={emailDraftCardTotalSteps}
+                                    sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
+                                    error={emailDraftCardError}
+                                    notice={emailDraftCardNotice}
+                                    pollingDegraded={emailDraftPollingDegraded}
+                                    onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
+                                    retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                    onCancel={isEmailDraftBusy ? () => {
+                                        void handleCancelEmailDraft();
+                                    } : undefined}
+                                    cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                    isCancelling={emailDraftCancelBusy}
+                                    manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
+                                />
+                            ) : null}
+                            {hasDraftTemplate ? (
+                                <div className="overflow-hidden rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-8 lg:p-10">
+                                <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
+                                    <input type="hidden" name="intent" value="review" />
+                                    <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
+                                    <input type="hidden" name="summary" value={summary} />
+                                    <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                                    <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
+                                    <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
+                                    <input type="hidden" name="videoContentType" value={videoContentType} />
+                                    <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
+                                    <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
+                                    <input type="hidden" name="month" value={selectedMonth} />
+                                    <input type="hidden" name="year" value={selectedYear} />
+
+                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                        {draftMetricOptions.map((metric) => (
+                                                <label key={metric.key} className="rounded-2xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4">
+                                                    <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-gray-500">
+                                                        {metric.icon}
+                                                        {metric.label}
+                                                    </span>
+                                                    <input
+                                                        type="text"
+                                                        name={metric.key}
+                                                        value={metricValues[metric.key] || ""}
+                                                        onChange={(event) => setMetricValues((previous) => ({ ...previous, [metric.key]: event.target.value }))}
+                                                        placeholder={metric.prefix ? `${metric.prefix}${metric.placeholder}` : metric.placeholder}
+                                                        className="mt-4 w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-1 text-lg font-black text-gray-950 outline-none transition focus:border-[var(--vr-color-primary)]"
+                                                    />
+                                                </label>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        <SectionWithExample
+                                            label="Key Highlights"
+                                            name="highlights"
+                                            value={highlights}
+                                            onChange={setHighlights}
+                                            placeholder="What went well this month? Major wins, product launches, partnerships..."
+                                            icon={SparklesIcon}
+                                        />
+                                        <SectionWithExample
+                                            label="Challenges"
+                                            name="challenges"
+                                            value={challenges}
+                                            onChange={setChallenges}
+                                            placeholder="What obstacles are you facing? Where do you need help?"
+                                            icon={ExclamationCircleIcon}
+                                        />
+                                        <SectionWithExample
+                                            label="Learnings"
+                                            name="learnings"
+                                            value={learnings}
+                                            onChange={setLearnings}
+                                            placeholder="What did you learn from customers, experiments, or execution this month?"
+                                            icon={LightBulbIcon}
+                                        />
+                                        <SectionWithExample
+                                            label="Next 30 Days"
+                                            name="next30Days"
+                                            value={next30Days}
+                                            onChange={setNext30Days}
+                                            placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
+                                            icon={ArrowRightIcon}
+                                        />
+                                        <SectionWithExample
+                                            label="Ask from Investors"
+                                            name="asks"
+                                            value={asks}
+                                            onChange={setAsks}
+                                            placeholder="How can your investors help? Introductions, advice, specific expertise..."
+                                            icon={QuestionMarkCircleIcon}
+                                        />
+                                    </div>
+
+                                </Form>
+                                </div>
+                            ) : null}
+                            {videoInputSection}
+                        </>
+                    ) : null}
+
+                </div>
+            </section>
+
+            <VibeRaisingStickyStepBar
+                statusIcon={draftStickyStatusIcon}
+                statusTitle={draftStickyBar.statusTitle}
+                statusDetail={draftStickyBar.statusDetail}
+                onBack={draftStickyBar.onBack}
+                primaryLabel={draftStickyBar.primaryLabel}
+                onPrimary={draftStickyBar.onPrimary}
+                primaryDisabled={draftStickyBar.primaryDisabled}
+                primaryType={draftStickyBar.primaryType}
+                primaryForm={draftStickyBar.primaryForm}
+            />
+
+            {showLegacyDraftFlow ? (
+            <>
             {/* Draft Resume Banner */}
             {hasDraft && (
-                <div className="mb-5 flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3.5 shadow-sm">
-                    <div className="flex-shrink-0 w-8 h-8 bg-amber-100 rounded-full flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <div className="mb-5 flex items-center gap-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-5 py-3.5 shadow-sm">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(255,200,1,0.24)]">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--vr-palette-orange)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                         </svg>
                     </div>
@@ -3366,7 +3725,7 @@ export default function CreateUpdate() {
                         type="button"
                         onClick={resumeDraft}
                         disabled={isEmailDraftBusy}
-                        className="px-4 py-1.5 text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors disabled:opacity-60"
+                        className="rounded-lg bg-[rgba(255,200,1,0.22)] px-4 py-1.5 text-sm font-bold text-[var(--vr-color-text)] transition-colors hover:bg-[rgba(255,200,1,0.30)] disabled:opacity-60"
                     >
                         Resume Draft
                     </button>
@@ -3384,14 +3743,14 @@ export default function CreateUpdate() {
 
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
-                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/5">
-                        <div className="border-b border-gray-100 px-6 py-5">
+                    <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
+                        <div className="border-b border-[var(--vr-color-border)] px-6 py-5">
                             <div className="flex items-start gap-4">
-                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 ring-1 ring-amber-100">
+                                <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(255,200,1,0.16)] text-[var(--vr-palette-orange)] ring-1 ring-[rgba(255,200,1,0.30)]">
                                     <ExclamationTriangleIcon className="h-6 w-6" />
                                 </div>
                                 <div>
-                                    <h2 className="text-lg font-black text-gray-950">Draft another update?</h2>
+                                    <h2 className="text-lg font-black text-[var(--vr-color-text)]">Draft another update?</h2>
                                     <p className="mt-2 text-sm leading-6 text-gray-600">
                                         You already have a monthly update for <strong className="font-bold text-gray-900">{selectedMonthLabel}</strong>. Creating a new draft from these inputs can take up to 20 minutes. Previous dot points will not be overwritten; matching points will be refreshed and new points will be added.
                                     </p>
@@ -3411,7 +3770,7 @@ export default function CreateUpdate() {
                                 type="button"
                                 onClick={handleConfirmRegenerateDraft}
                                 disabled={emailDraftActionBusy}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-600/20 transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-60"
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-60"
                             >
                                 {emailDraftActionBusy ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
                                 Regenerate {selectedMonthLabel}
@@ -3436,140 +3795,25 @@ export default function CreateUpdate() {
                 <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
                 <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
 
-                <div className="relative">
-                    <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                        {/* Upload Section */}
-                        <div
-                            {...getRootProps()}
-                            className={clsx(
-                                "relative border border-gray-100 rounded-2xl p-6 sm:p-12 transition-all flex flex-col items-center justify-center text-center",
-                                isDragActive ? "bg-violet-50/50 border-violet-200 scale-[1.01]" : "bg-white hover:bg-gray-50/50"
-                            )}
-                        >
-                            <input {...getInputProps()} />
+                <section>
+                    {videoInputSection}
+                </section>
 
-                            <div className="flex flex-col items-center max-w-sm">
-                                <div className="w-12 h-12 text-gray-400 mb-4">
-                                    <CloudArrowUpIcon className="w-full h-full stroke-1" />
-                                </div>
-
-                                <h3 className="text-lg font-bold text-gray-900 mb-1">
-                                    Drag a video here to upload
-                                </h3>
-
-                                <p className="text-sm text-gray-600 font-medium mb-1">
-                                    MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV
-                                </p>
-
-                                <p className="text-sm text-gray-500 mb-6">
-                                    Larger videos are compressed first. Final upload limit: 250 MB.
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row gap-3 w-full">
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            if (isRecording) {
-                                                stopRecording();
-                                            } else {
-                                                void startRecording();
-                                            }
-                                        }}
-                                        disabled={isEmailDraftBusy}
-                                        className={clsx(
-                                            "flex-1 flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl font-bold transition-all shadow-sm",
-                                            isRecording
-                                                ? "bg-red-50 text-red-600 ring-2 ring-red-500/20 animate-pulse"
-                                                : "bg-red-50 text-red-600 hover:bg-red-100 active:scale-95"
-                                        )}
-                                    >
-                                        <span className={clsx(
-                                            "w-2.5 h-2.5 rounded-full",
-                                            isRecording ? "bg-red-600" : "bg-red-500"
-                                        )} />
-                                        {isRecording ? "Stop Recording" : "Record"}
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        disabled={isEmailDraftBusy}
-                                        onClick={(event) => {
-                                            event.stopPropagation();
-                                            open();
-                                        }}
-                                        className="flex-1 px-6 py-2.5 bg-black text-white rounded-xl font-bold hover:bg-gray-900 active:scale-95 transition-all shadow-sm disabled:opacity-60"
-                                    >
-                                        Select file
-                                    </button>
-                                </div>
-                                {videoUploadStatusLabel && (
-                                    <p className={clsx(
-                                        "mt-4 text-sm font-semibold",
-                                        videoUploadStatus === "ready" ? "text-green-600" : "text-violet-600",
-                                    )}>
-                                        {videoUploadStatusLabel}
-                                    </p>
-                                )}
-                                {videoUploadError && (
-                                    <p className="mt-4 text-sm font-semibold text-red-600">{videoUploadError}</p>
-                                )}
-                                {isRecording && (
-                                    <p className="mt-4 text-sm font-semibold text-red-600">
-                                        {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
-                                    </p>
-                                )}
-                                {recordingError && (
-                                    <p className="mt-4 text-sm font-semibold text-red-600">{recordingError}</p>
-                                )}
-                                {videoPreviewUrl && (
-                                    <div className="mt-5 w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left">
-                                        <div className="mb-2 flex items-center justify-between gap-3">
-                                            <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                                                {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
-                                            </p>
-                                            <button
-                                                type="button"
-                                                onClick={resetVideoUpload}
-                                                className="text-xs font-bold text-gray-400 hover:text-gray-700"
-                                            >
-                                                Remove
-                                            </button>
-                                        </div>
-                                        {previewMediaKind === "audio" ? (
-                                            <audio src={videoPreviewUrl} controls className="w-full" />
-                                        ) : (
-                                            <VideoAssetPreview
-                                                src={videoPreviewUrl}
-                                                contentType={videoContentType}
-                                                fileName={videoOriginalFilename || videoPreviewUrl}
-                                                fileSizeBytes={videoFileSizeBytes}
-                                                className="aspect-video w-full"
-                                            />
-                                        )}
-                                        {videoUploadStatus === "ready" && uploadedVideoUrl && (
-                                            <p className="mt-2 text-xs font-medium text-green-600">
-                                                Uploaded and ready to publish.
-                                            </p>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </fieldset>
-                    {isEmailDraftBusy && (
-                        <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
-                    )}
-                </div>
-
-                <div className="rounded-2xl border border-violet-100 bg-white p-5 shadow-sm">
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <section>
+                    <div className="flex items-end justify-between gap-4">
                         <div>
-                            <p className="text-sm font-bold text-gray-900">Selected inputs</p>
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <h2 className="text-xl font-black text-gray-950">Selected inputs</h2>
+                            <p className="mt-3 text-sm text-slate-500">
+                                Sources and materials included in this draft.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="mt-6 rounded-2xl border border-[var(--vr-color-border)] bg-white p-5 shadow-sm">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex flex-wrap gap-2">
                                 {selectedInputSourceLabels.length > 0 ? (
                                     selectedInputSourceLabels.map((label) => (
-                                        <span key={label} className="rounded-full bg-violet-50 px-3 py-1 text-xs font-bold text-violet-700 ring-1 ring-violet-100">
+                                        <span key={label} className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
                                             {label}
                                         </span>
                                     ))
@@ -3579,100 +3823,93 @@ export default function CreateUpdate() {
                                     </span>
                                 )}
                             </div>
+                            {!isEdit && (
+                                <Link
+                                    to="/founder-tools/data-sources"
+                                    className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
+                                >
+                                    Change inputs
+                                </Link>
+                            )}
                         </div>
-                        {!isEdit && (
-                            <Link
-                                to="/founder-tools/data-sources"
-                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
-                            >
-                                Change inputs
-                            </Link>
-                        )}
                     </div>
-                </div>
-
-                <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div className="mb-4 flex flex-col gap-1">
-                        <p className="text-sm font-bold text-gray-900">Selected update month</p>
-                        <p className="text-xs font-medium text-gray-500">
-                            AI generation and edits below apply to {selectedMonthLabel}.
-                        </p>
-                    </div>
-                    <MonthYearTabs
-                        month={selectedMonth}
-                        year={selectedYear}
-                        onMonthChange={setSelectedMonth}
-                        onYearChange={setSelectedYear}
-                        onPeriodChange={setActivePeriodKey}
-                        isDateEditable={!isEmailDraftBusy}
-                        statusLabel="Selected month"
-                    />
-                    {isSelectedMonthInFuture && (
-                        <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-700">
-                            Future monthly updates can be generated once that month starts.
-                        </p>
-                    )}
-                    {existingUpdateForSelectedMonth && !isSelectedMonthInFuture && (
-                        <p className="mt-3 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm font-medium text-violet-700">
-                            An update already exists for {selectedMonthLabel}. Regenerating will refresh matching points and add new evidence-backed points.
-                        </p>
-                    )}
                 </section>
 
-                {emailDraftCardVisible ? (
-                    <EmailDraftInProgressCard
-                        status={emailDraftCardStatus}
-                        displayStage={emailDraftCardDisplayStage}
-                        completedSteps={emailDraftCardCompletedSteps}
-                        totalSteps={emailDraftCardTotalSteps}
-                        sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
-                        error={emailDraftCardError}
-                        notice={emailDraftCardNotice}
-                        pollingDegraded={emailDraftPollingDegraded}
-                        onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
-                        retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                        onCancel={isEmailDraftBusy ? () => {
-                            void handleCancelEmailDraft();
-                        } : undefined}
-                        cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
-                        isCancelling={emailDraftCancelBusy}
-                    />
-                ) : (
-                    <button
-                        type="button"
-                        disabled={emailDraftActionBusy || isSelectedMonthInFuture}
-                        onClick={() => {
-                            void handleGenerateDraftFromEmailClick();
-                        }}
-                        className={clsx(
-                            "group flex w-full items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 text-left shadow-sm transition hover:border-violet-200 hover:bg-violet-50/40 disabled:cursor-not-allowed disabled:opacity-60",
-                            canGenerateDraftFromEmail && !isSelectedMonthInFuture
-                                ? "cursor-pointer"
-                                : "cursor-not-allowed",
-                        )}
-                    >
-                        <div className="flex min-w-0 items-center gap-4">
-                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
-                                {emailDraftActionBusy ? (
-                                    <ArrowPathIcon className="h-5 w-5 animate-spin" />
-                                ) : (
-                                    <SparklesIcon className="h-5 w-5" />
-                                )}
-                            </div>
-                            <div className="min-w-0">
-                                <h2 className="text-base font-bold text-gray-950">
-                                    {emailDraftButtonTitle}
-                                </h2>
-                                <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
-                                    {emailDraftButtonDescription}
-                                </p>
-                            </div>
+                <section>
+                    <div className="flex items-end justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-black text-gray-950">AI drafting</h2>
+                            <p className="mt-3 text-sm text-slate-500">
+                                Use selected sources to generate a first draft.
+                            </p>
                         </div>
-                        <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
-                    </button>
-                )}
+                    </div>
+                    <div className="mt-6">
+                        {emailDraftCardVisible ? (
+                            <EmailDraftInProgressCard
+                                status={emailDraftCardStatus}
+                                displayStage={emailDraftCardDisplayStage}
+                                completedSteps={emailDraftCardCompletedSteps}
+                                totalSteps={emailDraftCardTotalSteps}
+                                sourceLabel={`${selectedInputSourceDescription} for ${selectedMonthLabel}`}
+                                error={emailDraftCardError}
+                                notice={emailDraftCardNotice}
+                                pollingDegraded={emailDraftPollingDegraded}
+                                onRetry={emailDraftCardStatus === "failed" ? handleRetryEmailDraft : undefined}
+                                retryDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                onCancel={isEmailDraftBusy ? () => {
+                                    void handleCancelEmailDraft();
+                                } : undefined}
+                                cancelDisabled={emailDraftActionBusy || emailDraftCancelBusy}
+                                isCancelling={emailDraftCancelBusy}
+                            />
+                        ) : (
+                            <button
+                                type="button"
+                                disabled={emailDraftActionBusy || isSelectedMonthInFuture}
+                                onClick={() => {
+                                    void handleGenerateDraftFromEmailClick();
+                                }}
+                                className={clsx(
+                                    "group flex w-full items-center justify-between gap-4 rounded-2xl border border-[var(--vr-color-border)] bg-white p-5 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60",
+                                    canGenerateDraftFromEmail && !isSelectedMonthInFuture
+                                        ? "cursor-pointer"
+                                        : "cursor-not-allowed",
+                                )}
+                            >
+                                <div className="flex min-w-0 items-center gap-4">
+                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
+                                        {emailDraftActionBusy ? (
+                                            <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                        ) : (
+                                            <SparklesIcon className="h-5 w-5" />
+                                        )}
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-base font-bold text-gray-950">
+                                            {emailDraftButtonTitle}
+                                        </p>
+                                        <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                            {emailDraftButtonDescription}
+                                        </p>
+                                    </div>
+                                </div>
+                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
+                            </button>
+                        )}
+                    </div>
+                </section>
 
-                <div className="relative">
+                <section>
+                    <div className="flex items-end justify-between gap-4">
+                        <div>
+                            <h2 className="text-xl font-black text-gray-950">Update draft</h2>
+                            <p className="mt-3 text-sm text-slate-500">
+                                Edit metrics and investor-facing dot points for {activeDisplayMonth} {activeDisplayYear}.
+                            </p>
+                        </div>
+                    </div>
+                    <div className="relative mt-6">
                     <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
 	                        {/* ─── Growth Charts ─── */}
                         {pastMonthCards.length > 0 && (hasRevenueChart || hasActiveUsersChart) && (
@@ -3764,14 +4001,14 @@ export default function CreateUpdate() {
                                                             className={clsx(
                                                                 "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
                                                                 active
-                                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
                                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                             )}
 	                                                        >
                                                             <MetricInfoBadge info={m.info} />
 	                                                            <div className={clsx(
                                                                 "w-5 h-5 rounded-full flex items-center justify-center mb-1",
-                                                                active ? "bg-violet-100" : "bg-white"
+                                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
                                                             )}>
                                                                 {m.icon}
                                                             </div>
@@ -3782,7 +4019,7 @@ export default function CreateUpdate() {
                                                                     onClick={(e) => e.stopPropagation()}
                                                                     onChange={(e) => updatePastMonthMetric(index, m.key, e.target.value)}
                                                                     placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                                    className="w-full text-xs font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-xs font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
                                                                 />
                                                             ) : (
                                                                 <p className="text-xs font-extrabold text-gray-300">—</p>
@@ -3841,15 +4078,6 @@ export default function CreateUpdate() {
 	                                activeMonthTheme.ringClass,
 	                            )}
 	                        >
-	                            <div className="flex flex-col gap-1">
-	                                <p className="text-xs font-bold uppercase tracking-wide text-gray-400">
-	                                    {isViewingCurrentUpdate ? "Generated update" : "Previous update"}
-	                                </p>
-	                                <h2 className="text-lg font-black text-gray-950">
-	                                    {activeDisplayMonth} {activeDisplayYear}
-	                                </h2>
-	                            </div>
-
 	                            {!isViewingCurrentUpdate && (
 	                                <>
 	                                    <input type="hidden" name="month" value={selectedMonth} />
@@ -3881,14 +4109,14 @@ export default function CreateUpdate() {
                                                 className={clsx(
                                                     "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                     active
-                                                        ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
                                                         : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                                 )}
 	                                            >
                                                 <MetricInfoBadge info={m.info} />
 	                                                <div className={clsx(
                                                     "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    active ? "bg-violet-100" : "bg-white"
+                                                    active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
                                                 )}>
                                                     {m.icon}
                                                 </div>
@@ -3900,7 +4128,7 @@ export default function CreateUpdate() {
 	                                                        onClick={(e) => e.stopPropagation()}
 	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
                                                         placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                        className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
                                                     />
                                                 ) : (
                                                     <p className="text-base font-extrabold text-gray-300">—</p>
@@ -3976,11 +4204,6 @@ export default function CreateUpdate() {
                             selectedMonthTheme.ringClass,
                         )}
                     >
-                        <div className="flex flex-col gap-1">
-                            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Update draft</p>
-                            <h2 className="text-lg font-black text-gray-950">{selectedMonthLabel}</h2>
-                        </div>
-
                         {/* Metrics — square boxes, click to activate */}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -3996,14 +4219,14 @@ export default function CreateUpdate() {
                                             className={clsx(
                                                 "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                 active
-                                                    ? "border-violet-400 bg-violet-50/60 ring-1 ring-violet-200 shadow-sm"
+                                                    ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
                                                     : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
                                             )}
 	                                        >
                                             <MetricInfoBadge info={m.info} />
 	                                            <div className={clsx(
                                                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                active ? "bg-violet-100" : "bg-white"
+                                                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
                                             )}>
                                                 {m.icon}
                                             </div>
@@ -4015,7 +4238,7 @@ export default function CreateUpdate() {
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
                                                     placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full text-base font-extrabold text-gray-900 bg-transparent border-b-2 border-violet-300 focus:border-violet-500 focus:outline-none text-center py-0.5"
+                                                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
                                                 />
                                             ) : (
                                                 <p className="text-base font-extrabold text-gray-300">—</p>
@@ -4089,7 +4312,7 @@ export default function CreateUpdate() {
 	                            <button
 	                                type="submit"
 	                                disabled={isSubmitting || isEmailDraftBusy || isVideoUploadBlocking}
-	                                className="flex-1 px-6 py-3 text-sm font-medium text-white bg-violet-600 rounded-lg hover:bg-violet-700 shadow-sm disabled:opacity-60"
+	                                className="flex-1 rounded-lg bg-[var(--vr-color-primary)] px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-[var(--vr-palette-black)] disabled:opacity-60"
 	                            >
 	                                {isSubmitting ? "Reviewing..." : isVideoUploadPending ? "Uploading video..." : "Review"}
 	                            </button>
@@ -4098,7 +4321,8 @@ export default function CreateUpdate() {
                     {isEmailDraftBusy && (
                         <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />
                     )}
-                </div>
+                    </div>
+                </section>
             </Form>
 
             {isClientMounted ? (
@@ -4109,6 +4333,8 @@ export default function CreateUpdate() {
                     backendBaseUrl={backendBaseUrl}
                     companyDomain={user.domain}
                 />
+            ) : null}
+            </>
             ) : null}
         </div>
     );

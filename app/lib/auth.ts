@@ -1,7 +1,10 @@
-import { axiosInstance, API_URL, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
+import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
 export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "founder-tools" | "vibe-raising";
+type GetCurrentUserOptions = {
+    allowDevBypass?: boolean;
+};
 
 function resolveAuthApp(body: {
     app?: AuthAppName;
@@ -105,8 +108,9 @@ export async function verifyMagicLinkWithCookies(
     return { data: response.data, setCookieHeaders };
 }
 
-// Local dev only: set VITE_STUB_BACKEND=true to preview as a fake
-// logged-in user when the live backend is unavailable. `null` means logged out.
+// Local dev only: set VITE_DEV_AUTH_BYPASS=true to preview as a fake
+// logged-in user while keeping backend calls enabled. VITE_STUB_BACKEND=true
+// also uses this user and stubs API responses.
 const DEV_AUTH_STUB: Record<string, unknown> | null = {
     full_name: "Dev User",
     email: "dev@mlai.au",
@@ -117,17 +121,32 @@ const DEV_AUTH_STUB: Record<string, unknown> | null = {
     avatar_url: null,
 };
 
-export async function getCurrentUser(env: Env, request?: Request) {
+async function getCurrentUserFromBackend(env: Env, request?: Request) {
+    const client = getAxios(env, request);
+    const response = await client.get("/api/v1/auth/me/");
+    return response.data;
+}
+
+export async function getCurrentUser(env: Env, request?: Request, options: GetCurrentUserOptions = {}) {
+    const allowDevBypass = options.allowDevBypass ?? true;
+
     if (shouldUseDevBackendStub()) {
         return DEV_AUTH_STUB;
     }
+
     try {
-        const client = getAxios(env, request);
-        const response = await client.get("/api/v1/auth/me/");
-        return response.data;
+        return await getCurrentUserFromBackend(env, request);
     } catch (error: any) {
         if (error.response && error.response.status === 401) {
+            if (allowDevBypass && shouldUseDevAuthBypass()) {
+                console.warn("No backend auth session in local dev; using Dev User auth bypass.");
+                return DEV_AUTH_STUB;
+            }
             return null;
+        }
+        if (allowDevBypass && shouldUseDevAuthBypass() && !error.response) {
+            console.warn("Backend auth lookup failed before returning a response in local dev; using Dev User auth bypass.");
+            return DEV_AUTH_STUB;
         }
         if (shouldUseDevBackendFallback(error)) {
             console.warn("Backend unavailable in local dev; using auth stub for preview.");

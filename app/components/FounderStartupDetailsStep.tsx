@@ -6,6 +6,7 @@ import {
   IdentificationIcon,
   LinkIcon,
   MapPinIcon,
+  SparklesIcon,
   TagIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
@@ -58,7 +59,7 @@ function listDefault(value?: string[] | null) {
 }
 
 function FieldIcon({ children }: { children: ReactNode }) {
-  return <div className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400">{children}</div>;
+  return <div className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-[var(--vr-color-text-sub)]">{children}</div>;
 }
 
 const STARTUP_STAGE_OPTIONS = [
@@ -441,13 +442,13 @@ export default function FounderStartupDetailsStep({
         }
       : { defaultValue: fallback };
   const hint = (field: StartupDetailsField) =>
-    autofilled.has(field) ? <span className="ml-2 text-xs font-semibold text-emerald-600">Autofilled from website</span> : null;
+    autofilled.has(field) ? <span className="ml-2 text-xs font-semibold text-[var(--vr-color-primary)]">Autofilled from website</span> : null;
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Company name{hint("companyName")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Company name{hint("companyName")}</span>
           <div className="relative">
             <FieldIcon><BuildingOffice2Icon /></FieldIcon>
             <input
@@ -456,13 +457,13 @@ export default function FounderStartupDetailsStep({
               {...inputProps("companyName", defaults.companyName ?? "")}
               autoComplete="organization"
               placeholder="Acme AI"
-              className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="w-full rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Website domain{hint("domain")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Website domain{hint("domain")}</span>
           <div className="relative">
             <FieldIcon><GlobeAltIcon /></FieldIcon>
             <input
@@ -471,13 +472,13 @@ export default function FounderStartupDetailsStep({
               {...inputProps("domain", defaults.domain ?? "")}
               autoComplete="url"
               placeholder="example.com"
-              className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="w-full rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
         </label>
 
         <label className="block lg:col-span-2">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Company LinkedIn URL{hint("companyLinkedInUrl")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Company LinkedIn URL{hint("companyLinkedInUrl")}</span>
           <div className="relative">
             <FieldIcon><LinkIcon /></FieldIcon>
             <input
@@ -485,13 +486,13 @@ export default function FounderStartupDetailsStep({
               {...inputProps("companyLinkedInUrl", defaults.companyLinkedInUrl ?? "")}
               autoComplete="url"
               placeholder="https://www.linkedin.com/company/acme"
-              className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="w-full rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Startup location{hint("location")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Startup location{hint("location")}</span>
           <LocationAutocompleteField
             value={isControlled ? textValue("location", defaults.location ?? "") : undefined}
             fallback={defaults.location ?? ""}
@@ -500,7 +501,7 @@ export default function FounderStartupDetailsStep({
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">ABN{hint("abn")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">ABN{hint("abn")}</span>
           <AbnAutocompleteField
             value={isControlled ? textValue("abn", defaults.abn ?? "") : undefined}
             fallback={defaults.abn ?? ""}
@@ -510,14 +511,29 @@ export default function FounderStartupDetailsStep({
       </div>
 
       <label className="block">
-        <span className="mb-2 block text-sm font-bold text-gray-700">Company context{hint("companyContext")}</span>
+        <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Brand name{hint("brandName")}</span>
+        <div className="relative">
+          <FieldIcon><SparklesIcon /></FieldIcon>
+          <input
+            name="brandName"
+            {...inputProps("brandName", defaults.brandName ?? defaults.companyName ?? "")}
+            placeholder="Public-facing brand"
+            className="w-full rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+          />
+        </div>
+      </label>
+
+      {afterBrandName}
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Company context{hint("companyContext")}</span>
         <textarea
           name="companyContext"
           required
           rows={compact ? 4 : 5}
           {...inputProps("companyContext", defaults.companyContext ?? defaults.notes ?? "")}
           placeholder="What you sell, who you help, why your product is different, and what buyers care about."
-          className="w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+          className="w-full resize-y rounded-xl border border-[var(--vr-color-border)] px-4 py-3 text-sm font-medium leading-6 text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
         />
       </label>
 
@@ -525,7 +541,7 @@ export default function FounderStartupDetailsStep({
 
       <div className="grid gap-4 lg:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Competitors{hint("competitors")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Competitors{hint("competitors")}</span>
           <div className="relative">
             <FieldIcon><UserGroupIcon /></FieldIcon>
             <textarea
@@ -533,13 +549,13 @@ export default function FounderStartupDetailsStep({
               rows={4}
               {...inputProps("competitors", listDefault(defaults.competitors))}
               placeholder="competitor.com&#10;another competitor"
-              className="w-full resize-y rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium leading-6 text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="w-full resize-y rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium leading-6 text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Seed keywords{hint("seedKeywords")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Seed keywords{hint("seedKeywords")}</span>
           <div className="relative">
             <FieldIcon><TagIcon /></FieldIcon>
             <textarea
@@ -547,7 +563,7 @@ export default function FounderStartupDetailsStep({
               rows={4}
               {...inputProps("seedKeywords", listDefault(defaults.seedKeywords))}
               placeholder="investor updates&#10;startup reporting"
-              className="w-full resize-y rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium leading-6 text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+              className="w-full resize-y rounded-xl border border-[var(--vr-color-border)] py-3 pl-11 pr-4 text-sm font-medium leading-6 text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
             />
           </div>
         </label>
@@ -555,17 +571,17 @@ export default function FounderStartupDetailsStep({
 
       <div className="grid gap-4 lg:grid-cols-[1fr_220px_220px]">
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Founder names{hint("founderNames")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Founder names{hint("founderNames")}</span>
           <input
             name="founderNames"
             {...inputProps("founderNames", (defaults.founderNames ?? []).join(", "))}
             placeholder="Sam Donegan, Alex Founder"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            className="w-full rounded-xl border border-[var(--vr-color-border)] px-4 py-3 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
           />
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Stage{hint("stage")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Stage{hint("stage")}</span>
           <select
             name="stage"
             {...(isControlled
@@ -574,7 +590,7 @@ export default function FounderStartupDetailsStep({
                   onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("stage", event.target.value),
                 }
               : { defaultValue: defaults.stage ?? "" })}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            className="w-full rounded-xl border border-[var(--vr-color-border)] px-4 py-3 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
           >
             {STARTUP_STAGE_OPTIONS.map((option) => (
               <option key={option || "blank"} value={option}>
@@ -585,7 +601,7 @@ export default function FounderStartupDetailsStep({
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Organization type{hint("organizationKind")}</span>
+          <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Organization type{hint("organizationKind")}</span>
           <select
             name="organizationKind"
             {...(isControlled
@@ -594,7 +610,7 @@ export default function FounderStartupDetailsStep({
                   onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("organizationKind", event.target.value),
                 }
               : { defaultValue: defaults.organizationKind ?? "" })}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            className="w-full rounded-xl border border-[var(--vr-color-border)] px-4 py-3 text-sm font-medium text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
           >
             {ORGANIZATION_KIND_OPTIONS.map((option) => (
               <option key={option || "blank"} value={option}>
@@ -604,6 +620,17 @@ export default function FounderStartupDetailsStep({
           </select>
         </label>
       </div>
+
+      <label className="block">
+        <span className="mb-2 block text-sm font-bold text-[var(--vr-color-text-mid)]">Internal notes{hint("notes")}</span>
+        <textarea
+          name="notes"
+          rows={3}
+          {...inputProps("notes", defaults.notes ?? "")}
+          placeholder="Anything the monthly update and marketing agents should remember."
+          className="w-full resize-y rounded-xl border border-[var(--vr-color-border)] px-4 py-3 text-sm font-medium leading-6 text-[var(--vr-color-text)] outline-none transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+        />
+      </label>
     </div>
   );
 }

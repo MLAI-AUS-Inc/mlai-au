@@ -82,6 +82,67 @@
 - [x] Rename the featured article slug/file to how-to-do-machine-learning
 - [x] Update article title/slug constants and registry metadata
 - [x] Adjust SEO config path for the new slug
+- [x] Add a local dev wrapper that keeps Wrangler state inside the repo
+- [x] Update local startup docs and add the missing `.dev.vars.example`
+- [x] Make `dev.bat` resilient when the terminal starts from a `\\?\` path
+- [x] Add a Gmail privacy notice popup to the draft-from-email flow
+- [x] Update email scraping copy to describe filtered-only scanning
+- [x] Attempt typecheck after the Gmail flow update (blocked by existing route type errors)
+- [x] Add a reusable startup region badge for Vibe Raising cards
+- [x] Show the region badge on review and founder dashboard update cards
+- [x] Persist company location from setup so region badges can reflect the startup location
+- [x] Add an update source URL field to the create-update flow
+- [x] Carry the source URL through review and publish
+- [x] Combine the source link input with the video section into one large card
+- [x] Simplify the combined materials card copy and restore the original heading
+- [x] Make the black materials button reveal one inline link-and-drop panel
+- [x] Make the record button request camera/mic access and record real video
+- [x] Make recorder fall back cleanly for mic-only or camera-only devices with accurate messaging
+- [x] Redesign create update input area into two clear branches for manual materials vs AI email scan
+- [x] Simplify the create update split layout to minimal headings and actions
+- [x] Stack the create update sections vertically and restore hover info panels
+- [x] Make the AI drafting card a full-width button and expand the how-it-works copy
+- [x] Turn the AI drafting card into a black full-bar CTA without a nested button
+- [x] Trim the AI drafting banner by removing the bottom cue and reducing its padding
+- [x] Remove the AI drafting banner info panel once the body copy explains the flow
+- [x] Replace the 'Say it your way' info panel with inline body copy
+- [x] Make startup region badges render real country flags and support non-AU locations
+- [x] Style the create-update Highlights, Challenges, and Asks headings as thin black bars
+- [x] Replace native metric title tooltips with smooth custom hover panels
+- [x] Add a landing-page credibility section for responsible investors and founder supporters
+- [x] Move the credibility section from the MLAI homepage to the Vibe Raising landing flow
+- [x] Move the credibility section from the login flow to the founder dashboard hero page
+- [x] Simplify the founder dashboard credibility section and remove the beige frame styling
+- [x] Add functioning Google sign-in to the Vibe Raising login page
+- [x] Add Google client ID env scaffolding for local and deployed Vibe Raising sign-in
+- [x] Run typecheck after the Google login work
+- [x] Keep the Google login option visible when the client ID is not configured
+- [x] Restore a dedicated Vibe Raising landing page before the app sign-up flow
+- [x] Move the authenticated Vibe Raising app under /vibe-raising/app
+- [x] Enforce founder flow: sign up > company details > monthly update > dashboard
+- [x] Replace the public Vibe Raising landing page with the hero-image version
+- [x] Restore the selfie intro video on the first public Sign Up click
+- [x] Make published founder updates use the reviewed content instead of the hardcoded dashboard draft
+- [x] Simplify the Vibe Raising hero CTA to a single centered Sign Up button
+- [x] Redesign create-update month and year selectors as top-right card tabs
+- [x] Replace the month native select with an aligned custom tab dropdown
+- [x] Widen the month tab and add a matching custom year dropdown
+- [x] Remove the triangle controls from the year tab
+- [x] Reuse the date tab style on review and dashboard as display-only labels
+- [x] Remove the duplicate left date from the create-update current card
+- [x] Prevent platform login from crashing when the current-user lookup returns a transient backend error
+- [x] Move previous two months into the create-update month bar and hide separate past-month cards
+- [x] Make create-update month chips switch displayed update content and color chart bars by month
+- [x] Redesign the month palette so adjacent months use distinct colors
+- [x] Make the create-update card and metric frames follow the active month color
+- [x] Align the create-update month/year tabs to the left edge for comparison
+- [x] Move the current/previous update indicator into the month bar
+- [x] Simplify the month-bar update indicator to thin text without a frame
+- [x] Extend the month bar and place the info control inside it
+- [x] Slim the month-bar info control to a lowercase i hover target
+- [x] Fix the month-bar info panel hover so it is not clipped
+- [x] Make the month-bar info panel read as normal paragraph text
+- [x] Only show the month-bar info control for AI drafting generated months
 - [x] Fix JSX string literal in data science salary article to unblock production build
 - [x] Update the data scientist salary article title and slug to match "How Much Do Data Scientists Make?'"
 - [x] Update pricing article FAQ import to use the app alias for build stability
@@ -158,3 +219,33 @@
 - [x] Re-run `bun run typecheck`
 - [x] Remove the at-a-glance midline connector lines
 - [x] Re-run `bun run typecheck`
+- [x] Route manage-company update actions to dashboard when the selected company already has an update
+- [x] Replace Vibe Raising draft step body with an Easy Pick chip-feed branch selector
+- [x] Hide the legacy step 2 draft form under a feature flag while the new branch flow is designed
+- [x] Lower the Vibe Raising draft upload limit copy and validation to 50MB
+- [x] Embed the update month selector into the draft step Easy Pick card
+- [x] Convert the draft step Easy Pick card into a progressive month-then-stage feed
+- [x] Add reporting-stage metric selection before showing the full draft template
+- [x] Add prototype-stage video/file input branch with a back control
+- [x] Collapse completed draft-step chip choices into slim summary bars
+- [x] Make folded draft-step summary bars clickable instead of using separate edit buttons
+- [x] Move active draft-step card headings outside cards as plain text labels
+- [x] Restore sticky bottom next-step bar across connect, draft, and review states
+- [x] Simplify draft step so selected month immediately generates an AI draft and removes metric chips
+- [x] Add local-only VITE_DEV_AUTH_BYPASS for Dev User preview without full backend stubbing
+- [x] Fold the step 1 manual materials card so it only expands when needed
+- [x] Turn step 1 manual materials into a source-style card with a 3-column expanding form
+- [x] Make dev auth bypass prefer a real backend session and keep the real login page reachable
+- [x] Fix local founder-tools login flow to check user existence before sending a magic link
+- [x] Let the create-update month dropdown escape its card without being clipped
+- [x] Resize the draft-step month picker so it takes three columns with a separate generate-update action column
+- [x] Let the draft step show the editing UI even when backend draft generation fails
+- [x] Replace the create-update month dropdown with a 12-segment horizontal month bar
+- [x] Remove horizontal scrolling from the create-update month bar and fit all 12 months inside the bar
+- [x] Bring the video input section into the active monthly-update draft flow under the month section
+- [x] Move the active video input section to the bottom of the draft flow and keep core metrics visible with the update draft
+- [x] Update the create-update "How it works" copy to explain the early-stage video option
+- [x] Keep the original create-update helper copy and add the early-stage video note on a second line
+- [x] Simplify step 3 review header and align its "How it works" section with the earlier steps
+- [x] Match the step 3 "How it works" bar position and spacing to the earlier steps
+- [x] Make the Vibe Marketing sidebar route fall back cleanly in local dev instead of throwing a raw 401 page

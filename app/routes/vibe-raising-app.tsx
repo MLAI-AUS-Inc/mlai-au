@@ -113,7 +113,7 @@ export default function VibeRaisingApp() {
 
   if (!appUser) {
     return (
-      <main className="min-h-screen bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+      <main className="min-h-screen bg-[var(--vr-color-app-bg)] px-4 py-12 sm:px-6 lg:px-8">
         <div className="mx-auto flex min-h-[calc(100vh-6rem)] max-w-6xl items-center justify-center">
           <VibeRaisingOnboardingCard
             email={user.email}

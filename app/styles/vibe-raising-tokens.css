@@ -16,45 +16,76 @@
 
 :root {
 
-  /* ── Brand Colors ────────────────────────────────────── */
-  --vr-color-brand-purple: #6B30D9;   /* Primary action — CTA, links, focus */
-  --vr-color-brand-blue:   #5057E4;   /* Secondary — info, data metrics */
-  --vr-color-brand-orange: #E84521;   /* MLAI brand accent — brand moments only */
-  --vr-color-brand-teal:   #00C8CC;   /* Featured state — current update gradient */
-  --vr-color-brand-teal-light: #00E0A0;
+  /* ── MLAI Brand Guide Palette ────────────────────────── */
+  --vr-palette-mint: #00ffd7;
+  --vr-palette-teal-soft: #9ccfcc;
+  --vr-palette-teal: #008080;
+  --vr-palette-black: #0b0b0b;
+  --vr-palette-orange: #ed5f00;
+  --vr-palette-coral: #f2723f;
+  --vr-palette-yellow: #ffc801;
+  --vr-palette-gold: #f7bf4e;
+  --vr-palette-blue: #4c6ef5;
+  --vr-palette-blue-soft: #8299f8;
+  --vr-palette-purple: #9649d2;
+  --vr-palette-lavender: #9b75c1;
+  --vr-palette-gray: #727171;
+  --vr-palette-gray-soft: #d7d5d3;
+  --vr-palette-paper: #f9f6f4;
+  --vr-palette-beige: #f2ece0;
+  --vr-palette-cream: #f3e5ca;
+  --vr-palette-warm-white: #f9f7f2;
 
-  /* ── Purple Scale ────────────────────────────────────── */
-  --vr-color-purple-50:  #F3EEFF;
-  --vr-color-purple-100: #E0CFFF;
-  --vr-color-purple-200: #B89EFF;
-  --vr-color-purple-500: #6B30D9;
-  --vr-color-purple-700: #4A1FA0;
-  --vr-color-purple-900: #2D1263;
+  /* ── Brand Colors ────────────────────────────────────── */
+  --vr-color-brand-purple: var(--vr-palette-purple);
+  --vr-color-brand-blue:   var(--vr-palette-blue);
+  --vr-color-brand-orange: var(--vr-palette-orange);
+  --vr-color-brand-teal:   var(--vr-palette-teal);
+  --vr-color-brand-teal-light: var(--vr-palette-mint);
+
+  /* ── Accent Scale ────────────────────────────────────── */
+  --vr-color-purple-50:  rgba(150, 73, 210, 0.10);
+  --vr-color-purple-100: rgba(150, 73, 210, 0.18);
+  --vr-color-purple-200: var(--vr-palette-lavender);
+  --vr-color-purple-500: var(--vr-palette-purple);
+  --vr-color-purple-700: var(--vr-palette-purple);
+  --vr-color-purple-900: var(--vr-palette-black);
 
   /* ── Neutral Scale ───────────────────────────────────── */
-  --vr-color-neutral-white: #FFFFFF;
-  --vr-color-neutral-50:    #F7F7F8;
-  --vr-color-neutral-100:   #EDEDF0;
-  --vr-color-neutral-300:   #C8C8D4;
-  --vr-color-neutral-500:   #9090A8;
-  --vr-color-neutral-700:   #5A5A72;
-  --vr-color-neutral-900:   #1A1A2E;
+  --vr-color-neutral-white: var(--vr-palette-warm-white);
+  --vr-color-neutral-50:    var(--vr-palette-paper);
+  --vr-color-neutral-100:   var(--vr-palette-beige);
+  --vr-color-neutral-200:   var(--vr-palette-cream);
+  --vr-color-neutral-300:   var(--vr-palette-gray-soft);
+  --vr-color-neutral-500:   var(--vr-palette-gray);
+  --vr-color-neutral-700:   var(--vr-palette-gray);
+  --vr-color-neutral-900:   var(--vr-palette-black);
 
   /* ── Semantic Color Roles ────────────────────────────── */
-  --vr-color-bg:        var(--vr-color-neutral-white);
-  --vr-color-surface:   var(--vr-color-neutral-50);
-  --vr-color-border:    #E8E8EC;
-  --vr-color-border-md: #D0D0D8;
+  --vr-color-bg:        var(--vr-palette-warm-white);
+  --vr-color-card:      var(--vr-palette-paper);
+  --vr-color-surface:   var(--vr-palette-paper);
+  --vr-color-border:    var(--vr-palette-gray-soft);
+  --vr-color-border-md: var(--vr-palette-teal-soft);
   --vr-color-text:      var(--vr-color-neutral-900);
   --vr-color-text-mid:  var(--vr-color-neutral-700);
   --vr-color-text-sub:  var(--vr-color-neutral-500);
-  --vr-color-primary:   var(--vr-color-brand-purple);
+  --vr-color-primary:   var(--vr-color-brand-teal);
+  --vr-color-primary-contrast: #FFFFFF;
+  --vr-color-primary-soft: rgba(0, 128, 128, 0.12);
   --vr-color-secondary: var(--vr-color-brand-blue);
   --vr-color-accent:    var(--vr-color-brand-orange);
-  --vr-color-featured:  var(--vr-color-brand-teal);
+  --vr-color-featured:  var(--vr-color-brand-teal-light);
   --vr-color-success:   var(--vr-color-brand-teal);
-  --vr-color-danger:    var(--vr-color-brand-orange);
-  --vr-color-warning:   #F5A623;
+  --vr-color-danger:    var(--vr-palette-coral);
+  --vr-color-warning:   var(--vr-palette-yellow);
+  --vr-color-app-bg:    var(--vr-palette-warm-white);
+  --vr-color-topbar:    var(--vr-palette-paper);
+  --vr-color-shell-sidebar: var(--vr-palette-black);
+  --vr-color-shell-active: var(--vr-palette-mint);
+  --vr-color-shell-active-text: var(--vr-palette-black);
+  --vr-color-shell-hover: rgba(0, 255, 215, 0.14);
+  --vr-color-shell-muted: var(--vr-palette-gray-soft);
 
   /* ── Typography ──────────────────────────────────────── */
   --vr-font-title: 'Oswald', sans-serif;           /* Headings & titles ONLY */
@@ -105,10 +136,10 @@
   --vr-border-default: 1.5px;
   --vr-border-accent:  3px;
 
-  /* ── Shadows (purple-tinted) ─────────────────────────── */
-  --vr-shadow-sm: 0 1px 4px  rgba(107, 48, 217, 0.06);
-  --vr-shadow-md: 0 4px 16px rgba(107, 48, 217, 0.10);
-  --vr-shadow-lg: 0 8px 32px rgba(107, 48, 217, 0.14);
+  /* ── Shadows ─────────────────────────────────────────── */
+  --vr-shadow-sm: 0 1px 4px  rgba(11, 11, 11, 0.06);
+  --vr-shadow-md: 0 4px 16px rgba(11, 11, 11, 0.10);
+  --vr-shadow-lg: 0 8px 32px rgba(11, 11, 11, 0.14);
 
 }
 

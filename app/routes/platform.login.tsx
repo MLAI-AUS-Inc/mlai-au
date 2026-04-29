@@ -1,6 +1,6 @@
 import type { Route } from "./+types/platform.login";
 import { Form, Link, redirect, useActionData, useSearchParams, useSubmit } from "react-router";
-import { createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
+import { checkUser, createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
@@ -28,15 +28,43 @@ function parseAuthApp(value: string | null): AuthAppName | null {
         : null;
 }
 
+function getAuthErrorMessage(error: unknown, fallback: string) {
+    const maybeError = error as {
+        message?: string;
+        response?: {
+            data?: unknown;
+        };
+    } | null | undefined;
+
+    const responseData = maybeError?.response?.data;
+    if (responseData && typeof responseData === "object") {
+        const record = responseData as Record<string, unknown>;
+        const detail =
+            record.detail ??
+            record.message ??
+            record.error;
+        if (typeof detail === "string" && detail.trim()) {
+            return detail.trim();
+        }
+    }
+
+    const message = maybeError?.message?.trim();
+    if (message) {
+        return `${fallback} (${message})`;
+    }
+
+    return fallback;
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
-    let user = null;
     const url = new URL(request.url);
     const app = parseAuthApp(url.searchParams.get("app"));
     const next = url.searchParams.get("next") || getDefaultNext(app);
+    let user = null;
 
     try {
-        user = await getCurrentUser(env, request);
+        user = await getCurrentUser(env, request, { allowDevBypass: false });
     } catch (error) {
         console.warn("Skipping logged-in redirect because current user lookup failed.", error);
     }
@@ -63,7 +91,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         const phone = formData.get("phone")?.toString();
 
         try {
-            await createUser(env, {
+            const result = await createUser(env, {
                 email,
                 firstName,
                 lastName,
@@ -72,24 +100,37 @@ export async function action({ request, context }: Route.ActionArgs) {
                 app,
                 next,
             });
-            return { sent: true, email };
+            return {
+                sent: true,
+                email,
+                message: result.message,
+                magicLink: result.magic_link,
+                magicLinkSent: result.magic_link_sent,
+            };
         } catch (error) {
             console.error("Failed to create account:", error);
-            return { error: "Failed to create account. Please try again." };
+            return { error: getAuthErrorMessage(error, "Failed to create account. Please try again.") };
         }
     }
 
     try {
-        const data = await sendMagicLink(env, { email, next, app });
+        const userCheck = await checkUser(env, { email, next, app });
 
-        if (data.user_exists) {
-            return { sent: true, email };
+        if (!userCheck.user_exists) {
+            return { userExists: false, email };
         }
 
-        return { userExists: false, email };
+        const result = await sendMagicLink(env, { email, next, app });
+        return {
+            sent: true,
+            email,
+            message: result.message,
+            magicLink: result.magic_link,
+            magicLinkSent: result.magic_link_sent,
+        };
     } catch (error) {
         console.error("Failed to send magic link:", error);
-        return { error: "Failed to send magic link. Please try again." };
+        return { error: getAuthErrorMessage(error, "Failed to send magic link. Please try again.") };
     }
 }
 
@@ -211,8 +252,30 @@ export default function PlatformLogin() {
 
     const renderSentState = () => (
         <div className="mt-8">
-            <div className="p-4 rounded-md bg-green-100 text-green-700">
-                <p>Please click the link sent to your email: {email}.</p>
+            <div
+                className={clsx(
+                    "rounded-md p-4",
+                    data?.magicLinkSent === false
+                        ? "bg-amber-100 text-amber-900"
+                        : "bg-green-100 text-green-700",
+                )}
+            >
+                <p>
+                    {data?.message || `Please click the link sent to your email: ${email}.`}
+                </p>
+                {data?.magicLink && (
+                    <div className="mt-3">
+                        <a
+                            href={data.magicLink}
+                            className="font-semibold underline underline-offset-2 hover:opacity-80"
+                        >
+                            Open your local magic link
+                        </a>
+                    </div>
+                )}
+                {!data?.magicLink && (
+                    <p className="mt-2">Please click the link sent to your email: {email}.</p>
+                )}
             </div>
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500">Didn&apos;t get the email?</p>

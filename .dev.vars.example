@@ -5,6 +5,10 @@ VALUE_FROM_CLOUDFLARE=Hello from Cloudflare
 BACKEND_BASE_URL=https://api.mlai.au
 VITE_SITE_URL=http://localhost:5173
 NEXT_PUBLIC_SITE_URL=http://localhost:5173
+VITE_GOOGLE_CLIENT_ID=
+# Local auth bypass: set to true to preview as Dev User without stubbing every backend API call.
+VITE_DEV_AUTH_BYPASS=false
+# Local full stub mode: set to true to skip auth and stub backend API responses on localhost.
 VITE_STUB_BACKEND=false
 PRIVATE_HUMANITIX_API_KEY=
 PUBLIC_HUMANITIX_API_KEY=

@@ -101,13 +101,13 @@ export default function CompanySetup() {
     return (
         <div className="flex items-center justify-center p-4 min-h-[70vh]">
             <div className="w-full max-w-3xl">
-                <div className="bg-white rounded-2xl shadow-lg p-8 sm:p-12 border border-gray-100">
+                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-color-card)] p-8 shadow-lg sm:p-12">
                     {/* Header */}
                     <div className="text-center mb-8">
-                        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-violet-50 mb-4">
-                            <BuildingOffice2Icon className="w-7 h-7 text-violet-600" />
+                        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-full bg-[rgba(0,255,215,0.14)]">
+                            <BuildingOffice2Icon className="h-7 w-7 text-[var(--vr-color-primary)]" />
                         </div>
-                        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        <h1 className="mb-2 text-2xl font-bold text-[var(--vr-color-text)]">
                             {isAddingNew ? "Add Another Company" : "Let's start with some basic details"}
                         </h1>
                     </div>
@@ -136,8 +136,8 @@ export default function CompanySetup() {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className={`w-full py-4 px-6 bg-violet-600 text-white font-bold rounded-xl transition-all duration-200 mt-2 shadow-lg shadow-violet-500/20 flex items-center justify-center gap-2
-                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-violet-700 hover:shadow-xl active:scale-[0.98]"}`}
+                            className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-6 py-4 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all duration-200
+                                ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-[var(--vr-palette-black)] hover:shadow-xl active:scale-[0.98]"}`}
                         >
                             {isSubmitting && <ArrowPathIcon className="w-5 h-5 animate-spin" aria-hidden="true" />}
                             {isSubmitting ? "Saving..." : isAddingNew ? "Add Company" : "Continue"}

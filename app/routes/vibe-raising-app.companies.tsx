@@ -3,6 +3,8 @@ import { Link, Form, redirect, useNavigation } from "react-router";
 import { getEnv } from "~/lib/env.server";
 import {
     getActiveVibeRaisingCompany,
+    getVibeRaisingMonthlyUpdates,
+    hasSubmittedVibeRaisingUpdate,
     requireVibeRaisingFounder,
     setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
@@ -23,7 +25,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const activeCompany = getActiveVibeRaisingCompany(user);
-    return { user, activeCompanyId: activeCompany?.id ?? null };
+    const activeCompanyHasUpdates =
+        Boolean(activeCompany?.id) &&
+        (
+            hasSubmittedVibeRaisingUpdate(request, activeCompany?.id) ||
+            (await getVibeRaisingMonthlyUpdates(env, request)).length > 0
+        );
+
+    return { user, activeCompanyId: activeCompany?.id ?? null, activeCompanyHasUpdates };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -39,14 +48,18 @@ export async function action({ request, context }: Route.ActionArgs) {
             await setVibeRaisingActiveCompany(env, request, companyId);
         }
 
-        return redirect("/founder-tools/updates");
+        const hasExistingUpdate =
+            hasSubmittedVibeRaisingUpdate(request, companyId) ||
+            (await getVibeRaisingMonthlyUpdates(env, request)).length > 0;
+
+        return redirect(hasExistingUpdate ? "/founder-tools/updates" : "/founder-tools/updates/create");
     }
     
     return null;
 }
 
 export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
-    const { user, activeCompanyId } = loaderData;
+    const { user, activeCompanyId, activeCompanyHasUpdates } = loaderData;
     const companies = user.companies || [];
     const navigation = useNavigation();
     const isSwitching = navigation.state === "submitting" && navigation.formData?.get("intent") === "switch-company";
@@ -142,9 +155,9 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                         <span
                                             className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full"
                                             style={{
-                                                background: "rgba(0, 200, 204, 0.1)",
-                                                color: "#007a7d",
-                                                border: "1px solid rgba(0, 200, 204, 0.2)",
+                                                background: "rgba(0, 255, 215, 0.12)",
+                                                color: "var(--vr-color-primary)",
+                                                border: "1px solid rgba(0, 255, 215, 0.26)",
                                             }}
                                         >
                                             <CheckBadgeIcon className="w-3.5 h-3.5" />
@@ -192,7 +205,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                             style={{ borderTop: "1px solid var(--vr-color-border)" }}
                         >
                             <Link
-                                to="/founder-tools/updates"
+                                to={activeCompanyHasUpdates ? "/founder-tools/updates" : "/founder-tools/updates/create"}
                                 className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all mt-5"
                                 style={{
                                     background: "var(--vr-color-primary)",

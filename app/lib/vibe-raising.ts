@@ -1,6 +1,6 @@
 import { redirect } from "react-router";
 import type { User } from "~/types/user";
-import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
+import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
 import type {
   VibeRaisingDraftResultsResponse,
@@ -889,14 +889,16 @@ async function requestBrowserJson<T>(
     headers.set("Content-Type", "application/json");
   }
 
+  const targetUrl = buildAbsoluteBackendUrl(backendBaseUrl, path);
   let response: Response;
   try {
-    response = await fetch(buildAbsoluteBackendUrl(backendBaseUrl, path), {
+    response = await fetch(targetUrl, {
       ...init,
       headers,
       credentials: "include",
     });
   } catch (error: any) {
+    error.message = `Could not reach backend at ${targetUrl}. Check that your local backend is running and that BACKEND_BASE_URL and VITE_API_URL point to the right port.`;
     error.requestId = requestId;
     error.requestPath = path;
     throw error;
@@ -1340,10 +1342,10 @@ const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
   companies: [
     {
       id: "dev-company",
-      name: "",
-      domain: null,
+      name: "Shan AI",
+      domain: "shan.ai",
       abn: null,
-      location: null,
+      location: "Melbourne, Australia",
       registered: true,
     },
   ],
@@ -1368,7 +1370,16 @@ export async function getVibeRaisingProfile(
     }
 
     if (status === 401) {
+      if (shouldUseDevAuthBypass()) {
+        console.warn("No backend Vibe Raising profile session in local dev; using profile stub.");
+        return DEV_VIBE_PROFILE_STUB;
+      }
       return null;
+    }
+
+    if (shouldUseDevAuthBypass() && !error.response) {
+      console.warn("Backend Vibe Raising profile lookup failed before returning a response in local dev; using profile stub.");
+      return DEV_VIBE_PROFILE_STUB;
     }
 
     if (shouldUseDevBackendFallback(error)) {
@@ -1604,6 +1615,16 @@ export async function getVibeRaisingMonthlyUpdates(
       return [];
     }
 
+    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
+      console.warn("No backend monthly update session in local dev; using update stubs.");
+      return DEV_MONTHLY_UPDATES_STUB;
+    }
+
+    if (shouldUseDevAuthBypass() && !error.response) {
+      console.warn("Backend monthly update lookup failed before returning a response in local dev; using update stubs.");
+      return DEV_MONTHLY_UPDATES_STUB;
+    }
+
     if (shouldUseDevBackendFallback(error)) {
       console.warn("Backend unavailable in local dev; using Vibe Raising monthly update stubs for preview.");
       return DEV_MONTHLY_UPDATES_STUB;
@@ -1635,11 +1656,39 @@ export async function saveVibeRaisingMonthlyUpdate(
     videoOriginalFilename?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
+  const buildDevSavedUpdate = () => {
+    const month = body.month || "Update";
+    const year = body.year || new Date().getFullYear();
+    return normalizeMonthlyUpdate({
+      ...body,
+      id: `dev-update-${year}-${month.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      month,
+      monthName: month,
+      year,
+      date: new Date(year, 0, 1).toISOString(),
+      status: "sent",
+    });
+  };
+
+  if (shouldUseDevBackendStub()) {
+    return buildDevSavedUpdate();
+  }
+
   const client = createApiClient(env, request);
   try {
     const response = await client.post(UPDATES_PATH, body);
     return normalizeMonthlyUpdate(response.data?.update ?? response.data);
   } catch (error: any) {
+    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
+      console.warn("No backend save session in local dev; returning a saved update stub.");
+      return buildDevSavedUpdate();
+    }
+
+    if (shouldUseDevAuthBypass() && !error.response) {
+      console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
+      return buildDevSavedUpdate();
+    }
+
     const status = error.response?.status;
     const hasOptionalFields = Boolean(
       body.summary ||
@@ -1650,20 +1699,40 @@ export async function saveVibeRaisingMonthlyUpdate(
         (body.metricSuggestions || []).length > 0,
     );
     if (!hasOptionalFields || (status !== 400 && status !== 422)) {
+      if (shouldUseDevBackendFallback(error)) {
+        console.warn("Backend unavailable in local dev; returning a saved update stub.");
+        return buildDevSavedUpdate();
+      }
       throw error;
     }
 
-    const response = await client.post(UPDATES_PATH, {
-      month: body.month,
-      year: body.year,
-      highlights: body.highlights,
-      challenges: body.challenges,
-      asks: body.asks,
-      learnings: body.learnings,
-      next30Days: body.next30Days,
-      metrics: body.metrics,
-    });
-    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+    try {
+      const response = await client.post(UPDATES_PATH, {
+        month: body.month,
+        year: body.year,
+        highlights: body.highlights,
+        challenges: body.challenges,
+        asks: body.asks,
+        learnings: body.learnings,
+        next30Days: body.next30Days,
+        metrics: body.metrics,
+      });
+      return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+    } catch (fallbackError: any) {
+      if (fallbackError.response?.status === 401 && shouldUseDevAuthBypass()) {
+        console.warn("No backend save session in local dev; returning a saved update stub.");
+        return buildDevSavedUpdate();
+      }
+      if (shouldUseDevAuthBypass() && !fallbackError.response) {
+        console.warn("Backend save failed before returning a response in local dev; returning a saved update stub.");
+        return buildDevSavedUpdate();
+      }
+      if (shouldUseDevBackendFallback(fallbackError)) {
+        console.warn("Backend unavailable in local dev; returning a saved update stub.");
+        return buildDevSavedUpdate();
+      }
+      throw fallbackError;
+    }
   }
 }
 

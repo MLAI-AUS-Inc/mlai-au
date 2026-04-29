@@ -38,6 +38,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const [isExpanded, setIsExpanded] = useState(false);
     const location = useLocation();
     const pathname = location.pathname;
+    const isFounderToolsApp = pathname === "/founder-tools" || pathname.startsWith("/founder-tools/");
+    const appHomeHref = isFounderToolsApp ? "/founder-tools/updates" : "/esafety/dashboard";
 
     const defaultNavigation: NavigationItem[] = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
@@ -119,10 +121,15 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                         </div>
                                     </Transition.Child>
 
-                                    <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2">
+                                    <div
+                                        className={classNames(
+                                            "flex grow flex-col gap-y-5 overflow-y-auto px-6 pb-2",
+                                            isFounderToolsApp ? "bg-[var(--vr-color-app-bg)]" : "bg-white"
+                                        )}
+                                    >
                                         <div className="flex h-16 shrink-0 items-center">
                                             <Link
-                                                to="/esafety/dashboard"
+                                                to={appHomeHref}
                                                 onClick={() => setSidebarOpen(false)}
                                             >
                                                 <ImageWithFallback
@@ -145,16 +152,24 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                     to={item.href}
                                                                     onClick={() => setSidebarOpen(false)}
                                                                     className={classNames(
-                                                                        item.current
-                                                                            ? 'bg-gray-50 text-indigo-600'
-                                                                            : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
+                                                                        isFounderToolsApp
+                                                                            ? item.current
+                                                                                ? 'bg-[var(--vr-color-shell-active)] text-[var(--vr-color-shell-active-text)]'
+                                                                                : 'text-[var(--vr-color-text-mid)] hover:bg-[rgba(0,255,215,0.16)] hover:text-[var(--vr-color-text)]'
+                                                                            : item.current
+                                                                                ? 'bg-gray-50 text-indigo-600'
+                                                                                : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
                                                                         'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6',
                                                                         'transition-all duration-200 ease-in-out'
                                                                     )}
                                                                 >
                                                                     <item.icon
                                                                         className={classNames(
-                                                                            item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600',
+                                                                            isFounderToolsApp
+                                                                                ? item.current
+                                                                                    ? 'text-[var(--vr-color-shell-active-text)]'
+                                                                                    : 'text-[var(--vr-color-text-sub)] group-hover:text-[var(--vr-color-text)]'
+                                                                                : item.current ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600',
                                                                             'h-6 w-6 shrink-0',
                                                                             'transition-colors duration-200'
                                                                         )}
@@ -170,10 +185,20 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                 <li className="mt-auto">
                                                     <a
                                                         href="/"
-                                                        className="group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-700 hover:bg-gray-50 hover:text-indigo-600 transition-all duration-200 ease-in-out"
+                                                        className={classNames(
+                                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200 ease-in-out",
+                                                            isFounderToolsApp
+                                                                ? "text-[var(--vr-color-text-mid)] hover:bg-[rgba(0,255,215,0.16)] hover:text-[var(--vr-color-text)]"
+                                                                : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
+                                                        )}
                                                     >
                                                         <ArrowLeftOnRectangleIcon
-                                                            className="h-6 w-6 shrink-0 text-gray-400 group-hover:text-indigo-600 transition-colors duration-200"
+                                                            className={classNames(
+                                                                "h-6 w-6 shrink-0 transition-colors duration-200",
+                                                                isFounderToolsApp
+                                                                    ? "text-[var(--vr-color-text-sub)] group-hover:text-[var(--vr-color-text)]"
+                                                                    : "text-gray-400 group-hover:text-indigo-600"
+                                                            )}
                                                             aria-hidden="true"
                                                         />
                                                         Back to MLAI
@@ -197,7 +222,12 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
                 >
-                    <div className="flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden bg-indigo-600 px-6">
+                    <div
+                        className={classNames(
+                            "flex grow flex-col gap-y-5 overflow-y-auto overflow-x-hidden px-6",
+                            isFounderToolsApp ? "bg-[var(--vr-color-shell-sidebar)]" : "bg-indigo-600"
+                        )}
+                    >
                         <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
                             <ImageWithFallback
                                 className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
@@ -220,16 +250,24 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                     title={isExpanded ? undefined : item.name}
                                                     aria-label={isExpanded ? undefined : item.name}
                                                     className={classNames(
-                                                        item.current
-                                                            ? 'bg-indigo-700 text-white'
-                                                            : 'text-white hover:bg-indigo-700 hover:text-white',
+                                                        isFounderToolsApp
+                                                            ? item.current
+                                                                ? 'bg-[var(--vr-color-shell-active)] text-[var(--vr-color-shell-active-text)]'
+                                                                : 'text-[var(--vr-color-shell-muted)] hover:bg-[var(--vr-color-shell-hover)] hover:text-white'
+                                                            : item.current
+                                                                ? 'bg-indigo-700 text-white'
+                                                                : 'text-white hover:bg-indigo-700 hover:text-white',
                                                         'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
                                                         isExpanded ? '' : 'justify-center'
                                                     )}
                                                 >
                                                     <item.icon
                                                         className={classNames(
-                                                            item.current ? 'text-white' : 'text-white group-hover:text-white',
+                                                            isFounderToolsApp
+                                                                ? item.current
+                                                                    ? 'text-[var(--vr-color-shell-active-text)]'
+                                                                    : 'text-[var(--vr-color-shell-muted)] group-hover:text-white'
+                                                                : item.current ? 'text-white' : 'text-white group-hover:text-white',
                                                             'h-6 w-6 shrink-0 transition-all duration-300',
                                                             isExpanded ? 'mr-0' : 'mr-0'
                                                         )}
@@ -252,13 +290,19 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                     <a
                                         href="/"
                                         className={classNames(
-                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-white hover:bg-indigo-700 hover:text-white transition-all duration-200",
+                                            "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200",
+                                            isFounderToolsApp
+                                                ? "text-[var(--vr-color-shell-muted)] hover:bg-[var(--vr-color-shell-hover)] hover:text-white"
+                                                : "text-white hover:bg-indigo-700 hover:text-white",
                                             isExpanded ? '' : 'justify-center'
                                         )}
                                     >
                                         <ArrowLeftOnRectangleIcon
                                             aria-hidden="true"
-                                            className="h-6 w-6 shrink-0 text-white group-hover:text-white"
+                                            className={classNames(
+                                                "h-6 w-6 shrink-0 group-hover:text-white",
+                                                isFounderToolsApp ? "text-[var(--vr-color-shell-muted)]" : "text-white"
+                                            )}
                                         />
                                         <span
                                             className={classNames(
@@ -277,13 +321,33 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
                 <div className={classNames("lg:pl-20 transition-all duration-300 ease-in-out", isExpanded ? "lg:pl-64" : "lg:pl-20")}>
                     {/* Header */}
-                    <div className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
-                        <button type="button" onClick={() => setSidebarOpen(true)} className="-m-2.5 p-2.5 text-gray-700 lg:hidden">
+                    <div
+                        className={classNames(
+                            "sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8",
+                            isFounderToolsApp
+                                ? "border-[var(--vr-color-border)] bg-[var(--vr-color-topbar)]"
+                                : "border-gray-200 bg-white"
+                        )}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setSidebarOpen(true)}
+                            className={classNames(
+                                "-m-2.5 p-2.5 lg:hidden",
+                                isFounderToolsApp ? "text-[var(--vr-color-text)]" : "text-gray-700"
+                            )}
+                        >
                             <span className="sr-only">Open sidebar</span>
                             <Bars3Icon aria-hidden="true" className="h-6 w-6" />
                         </button>
 
-                        <div aria-hidden="true" className="h-6 w-px bg-gray-900/10 lg:hidden" />
+                        <div
+                            aria-hidden="true"
+                            className={classNames(
+                                "h-6 w-px lg:hidden",
+                                isFounderToolsApp ? "bg-[var(--vr-color-border)]" : "bg-gray-900/10"
+                            )}
+                        />
 
                         <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
                             <form action="#" method="GET" className="relative flex flex-1">
@@ -292,23 +356,45 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                 </label>
                                 <MagnifyingGlassIcon
                                     aria-hidden="true"
-                                    className="pointer-events-none absolute inset-y-0 left-0 h-full w-5 text-gray-400"
+                                    className={classNames(
+                                        "pointer-events-none absolute inset-y-0 left-0 h-full w-5",
+                                        isFounderToolsApp ? "text-[var(--vr-color-text-sub)]" : "text-gray-400"
+                                    )}
                                 />
                                 <input
                                     id="search-field"
                                     name="search"
                                     type="search"
                                     placeholder="Search..."
-                                    className="block h-full w-full border-0 py-0 pl-8 pr-0 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm"
+                                    className={classNames(
+                                        "block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 focus:ring-0 sm:text-sm",
+                                        isFounderToolsApp
+                                            ? "text-[var(--vr-color-text)] placeholder:text-[var(--vr-color-text-sub)]"
+                                            : "text-gray-900 placeholder:text-gray-400"
+                                    )}
                                 />
                             </form>
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
-                                <button type="button" className="-m-2.5 p-2.5 text-gray-400 hover:text-gray-500">
+                                <button
+                                    type="button"
+                                    className={classNames(
+                                        "-m-2.5 p-2.5",
+                                        isFounderToolsApp
+                                            ? "text-[var(--vr-color-text-sub)] hover:text-[var(--vr-color-text)]"
+                                            : "text-gray-400 hover:text-gray-500"
+                                    )}
+                                >
                                     <span className="sr-only">View notifications</span>
                                     <BellIcon aria-hidden="true" className="h-6 w-6" />
                                 </button>
 
-                                <div aria-hidden="true" className="hidden lg:block lg:h-6 lg:w-px lg:bg-gray-900/10" />
+                                <div
+                                    aria-hidden="true"
+                                    className={classNames(
+                                        "hidden lg:block lg:h-6 lg:w-px",
+                                        isFounderToolsApp ? "lg:bg-[var(--vr-color-border)]" : "lg:bg-gray-900/10"
+                                    )}
+                                />
 
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
@@ -324,11 +410,20 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                         <span className="hidden lg:flex lg:items-center">
                                             <span
                                                 aria-hidden="true"
-                                                className="ml-4 text-sm font-semibold leading-6 text-gray-900"
+                                                className={classNames(
+                                                    "ml-4 text-sm font-semibold leading-6",
+                                                    isFounderToolsApp ? "text-[var(--vr-color-text)]" : "text-gray-900"
+                                                )}
                                             >
                                                 {fullName}
                                             </span>
-                                            <ChevronDownIcon aria-hidden="true" className="ml-2 h-5 w-5 text-gray-400" />
+                                            <ChevronDownIcon
+                                                aria-hidden="true"
+                                                className={classNames(
+                                                    "ml-2 h-5 w-5",
+                                                    isFounderToolsApp ? "text-[var(--vr-color-text-sub)]" : "text-gray-400"
+                                                )}
+                                            />
                                         </span>
                                     </Menu.Button>
                                     <Transition
@@ -340,15 +435,26 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                         leaveFrom="transform opacity-100 scale-100"
                                         leaveTo="transform opacity-0 scale-95"
                                     >
-                                        <Menu.Items className="absolute right-0 z-10 mt-2.5 w-56 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-gray-900/5 focus:outline-none">
+                                        <Menu.Items
+                                            className={classNames(
+                                                "absolute right-0 z-10 mt-2.5 w-56 origin-top-right rounded-md py-2 shadow-lg ring-1 focus:outline-none",
+                                                isFounderToolsApp
+                                                    ? "bg-[var(--vr-color-card)] ring-[rgba(11,11,11,0.08)]"
+                                                    : "bg-white ring-gray-900/5"
+                                            )}
+                                        >
                                             {userNavigation.map((item) => (
                                                 <Menu.Item key={item.name}>
                                                     {({ focus }) => (
                                                         <Link
                                                             to={item.href}
                                                             className={classNames(
-                                                                focus ? 'bg-gray-100' : '',
-                                                                'block px-3 py-1 text-sm leading-6 text-gray-900',
+                                                                isFounderToolsApp
+                                                                    ? focus ? 'bg-[rgba(0,255,215,0.14)]' : ''
+                                                                    : focus ? 'bg-gray-100' : '',
+                                                                isFounderToolsApp
+                                                                    ? 'block px-3 py-1 text-sm leading-6 text-[var(--vr-color-text)]'
+                                                                    : 'block px-3 py-1 text-sm leading-6 text-gray-900',
                                                             )}
                                                         >
                                                             {item.name}
@@ -362,8 +468,12 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                         <button
                                                             type="submit"
                                                             className={classNames(
-                                                                focus ? 'bg-gray-100' : '',
-                                                                'block w-full text-left px-3 py-1 text-sm leading-6 text-gray-900'
+                                                                isFounderToolsApp
+                                                                    ? focus ? 'bg-[rgba(0,255,215,0.14)]' : ''
+                                                                    : focus ? 'bg-gray-100' : '',
+                                                                isFounderToolsApp
+                                                                    ? 'block w-full text-left px-3 py-1 text-sm leading-6 text-[var(--vr-color-text)]'
+                                                                    : 'block w-full text-left px-3 py-1 text-sm leading-6 text-gray-900'
                                                             )}
                                                         >
                                                             Sign out
@@ -378,7 +488,12 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                         </div>
                     </div>
 
-                    <main className="bg-gray-50 py-4 sm:py-6 lg:py-6 px-4 sm:px-6 lg:px-4">
+                    <main
+                        className={classNames(
+                            "py-4 sm:py-6 lg:py-6 px-4 sm:px-6 lg:px-4",
+                            isFounderToolsApp ? "bg-[var(--vr-color-app-bg)]" : "bg-gray-50"
+                        )}
+                    >
                         {children}
                     </main>
                 </div>

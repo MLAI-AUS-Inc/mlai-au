@@ -1,4 +1,4 @@
-import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
+import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import type {
   VibeMarketingBootstrap,
   VibeMarketingComponentFeedback,
@@ -584,6 +584,49 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
 
 const DEV_RUN_SNAPSHOTS = new Map<string, Record<string, unknown>>();
 
+function shouldUseVibeMarketingDevPreview(error?: unknown) {
+  const maybeError = error as { response?: { status?: number } } | null | undefined;
+  const status = maybeError?.response?.status;
+  if (status === 401 && shouldUseDevAuthBypass()) {
+    return true;
+  }
+  if (!maybeError?.response && shouldUseDevAuthBypass()) {
+    return true;
+  }
+  return shouldUseDevBackendFallback(error);
+}
+
+function createDevMarketingRunTicket(path: string, body: Record<string, unknown>) {
+  const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
+  DEV_RUN_SNAPSHOTS.set(runId, { ...body });
+  return { runId, status: "queued" as const };
+}
+
+function getDevMarketingRunPreview(runId: string) {
+  if (runId.includes("autofill")) {
+    return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
+  }
+  return normalizeMarketingRun({
+    runId,
+    workflow: runId.includes("baseline") ? "website_baseline" : "article_generation",
+    domain: DEV_BOOTSTRAP.organization.domain,
+    status: "completed",
+    currentStep: "finalize",
+    stepOrder: runId.includes("baseline")
+      ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
+      : ["queued", "finalize"],
+    steps: runId.includes("baseline")
+      ? [
+          { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
+          { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
+          { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
+          { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
+        ]
+      : [],
+    result: runId.includes("baseline") ? { baseline: DEV_BOOTSTRAP.websiteBaseline } : {},
+  });
+}
+
 function primaryBodyString(body: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = asNullableString(body[key]);
@@ -753,7 +796,10 @@ export async function getVibeMarketingBootstrap(env: Env, request: Request, comp
     const response = await client.get(`${BASE_PATH}/bootstrap/${query}`);
     return normalizeBootstrap(response.data);
   } catch (error) {
-    if (shouldUseDevBackendFallback(error)) return DEV_BOOTSTRAP;
+    if (shouldUseVibeMarketingDevPreview(error)) {
+      console.warn("Vibe Marketing bootstrap unavailable in local dev; using preview bootstrap.");
+      return DEV_BOOTSTRAP;
+    }
     throw error;
   }
 }
@@ -872,14 +918,20 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
 
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
   if (shouldUseDevBackendStub()) {
-    const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
-    DEV_RUN_SNAPSHOTS.set(runId, { ...body });
-    return { runId, status: "queued" };
+    return createDevMarketingRunTicket(path, body);
   }
-  const client = createApiClient(env, request);
-  const response = await client.post(`${BASE_PATH}/${path}`, body);
-  const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
-  return { runId, status: asNullableString(response.data?.status) ?? "queued" };
+  try {
+    const client = createApiClient(env, request);
+    const response = await client.post(`${BASE_PATH}/${path}`, body);
+    const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
+    return { runId, status: asNullableString(response.data?.status) ?? "queued" };
+  } catch (error) {
+    if (shouldUseVibeMarketingDevPreview(error)) {
+      console.warn(`Vibe Marketing ${path} run unavailable in local dev; using preview run.`);
+      return createDevMarketingRunTicket(path, body);
+    }
+    throw error;
+  }
 }
 
 export function startVibeMarketingScan(env: Env, request: Request, body: Record<string, unknown>) {
@@ -988,33 +1040,20 @@ export function replayVibeMarketingDaily(env: Env, request: Request, body: Recor
 
 export async function getVibeMarketingRun(env: Env, request: Request, runId: string, companyId?: string | null) {
   if (shouldUseDevBackendStub()) {
-    if (runId.includes("autofill")) {
-      return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
-    }
-    return normalizeMarketingRun({
-      runId,
-      workflow: runId.includes("baseline") ? "website_baseline" : "article_generation",
-      domain: DEV_BOOTSTRAP.organization.domain,
-      status: "completed",
-      currentStep: "finalize",
-      stepOrder: runId.includes("baseline")
-        ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
-        : ["queued", "finalize"],
-      steps: runId.includes("baseline")
-        ? [
-            { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
-            { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
-            { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
-            { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
-          ]
-        : [],
-      result: runId.includes("baseline") ? { baseline: DEV_BOOTSTRAP.websiteBaseline } : {},
-    });
+    return getDevMarketingRunPreview(runId);
   }
-  const client = createApiClient(env, request);
-  const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
-  const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}${query}`);
-  return normalizeMarketingRun(response.data);
+  try {
+    const client = createApiClient(env, request);
+    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+    const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}${query}`);
+    return normalizeMarketingRun(response.data);
+  } catch (error) {
+    if (shouldUseVibeMarketingDevPreview(error)) {
+      console.warn("Vibe Marketing run unavailable in local dev; using preview run.");
+      return getDevMarketingRunPreview(runId);
+    }
+    throw error;
+  }
 }
 
 export async function controlVibeMarketingRun(
