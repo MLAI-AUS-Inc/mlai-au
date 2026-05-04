@@ -150,12 +150,16 @@ export type VibeRaisingInputSourceCapability =
 export interface VibeRaisingInputSourceSummary {
   key: VibeRaisingInputSourceKey;
   label: string;
+  connectionId?: number | string | null;
   accountLabel?: string | null;
   capabilities: VibeRaisingInputSourceCapability[];
   selected: boolean;
   status: VibeRaisingInputSourceStatus;
   lastSyncedAt?: string | null;
   warning?: string | null;
+  canDisconnect?: boolean;
+  canDeleteData?: boolean;
+  googlePermissionsUrl?: string | null;
   selectedChannelCount?: number;
   selectedProjectCount?: number;
   hasReportScope?: boolean;
@@ -244,6 +248,27 @@ export interface VibeRaisingGmailPreview {
   totalCachedMessages: number;
   warnings: string[];
   messages: VibeRaisingGmailMessagePreview[];
+}
+
+export interface VibeRaisingGmailDisconnectResponse {
+  status: "disconnected" | "not_connected" | string;
+  googleAccount?: string | null;
+  googleRevocation: {
+    requested: boolean;
+    succeeded: boolean;
+    warning?: string | null;
+  };
+  deleted: {
+    gmailMessages: number;
+    gmailThreads: number;
+    gmailAttachments: number;
+    gmailCursors: number;
+    startupEvents: number;
+    startupMetrics: number;
+    monthlyDrafts: number;
+  };
+  cancelledRuns: Array<Record<string, unknown>>;
+  googlePermissionsUrl: string;
 }
 
 export interface VibeRaisingSlackChannel {

@@ -13,6 +13,7 @@ import type {
   VibeRaisingEmailDraftMonth,
   VibeRaisingFinancialSyncResponse,
   VibeRaisingFinancialSyncRun,
+  VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
   VibeRaisingGmailPreview,
   VibeRaisingInputSourceKey,
@@ -67,6 +68,7 @@ const BANK_FEED_ACCOUNTS_PATH = "/api/v1/integrations/financial/bank-feed/accoun
 const BANK_FEED_TRANSACTIONS_PATH = "/api/v1/integrations/financial/bank-feed/transactions";
 const XERO_PREVIEW_PATH = "/api/v1/integrations/financial/xero/preview";
 const GMAIL_PREVIEW_PATH = "/api/v1/integrations/gmail/preview";
+const GMAIL_CONNECTION_PATH = "/api/v1/integrations/gmail/connection";
 const INPUT_SOURCES_SYNC_PATH = "/api/v1/integrations/sources/sync";
 const SLACK_CHANNELS_PATH = "/api/v1/integrations/slack/channels";
 const SLACK_CHANNEL_SELECTIONS_PATH = "/api/v1/integrations/slack/channel-selections";
@@ -1099,10 +1101,16 @@ function normalizeInputSourceSummaries(raw: unknown): Partial<Record<VibeRaising
       : [];
 
     summaries[provider] = createInputSourceSummary(provider, status, {
+      connectionId: (connection.connectionId ?? connection.connection_id) as number | string | null | undefined,
       accountLabel,
       lastSyncedAt,
       warning,
       selected,
+      canDisconnect: asBoolean(connection.canDisconnect ?? connection.can_disconnect),
+      canDeleteData: asBoolean(connection.canDeleteData ?? connection.can_delete_data),
+      googlePermissionsUrl:
+        asNullableString(connection.googlePermissionsUrl) ??
+        asNullableString(connection.google_permissions_url),
       selectedChannelCount,
       selectedProjectCount,
       hasReportScope: asBoolean(connection.hasReportScope ?? connection.has_report_scope),
@@ -2197,6 +2205,60 @@ export async function getVibeRaisingGmailPreview(
       .map(normalizeGmailMessagePreview)
       .filter((value): value is VibeRaisingGmailMessagePreview => value !== null),
   };
+}
+
+function normalizeGmailDisconnectResponse(raw: unknown): VibeRaisingGmailDisconnectResponse {
+  const payload = unwrapPayload(raw) as Record<string, unknown>;
+  const revocation = (payload.googleRevocation ?? payload.google_revocation ?? {}) as Record<string, unknown>;
+  const deleted = (payload.deleted ?? {}) as Record<string, unknown>;
+  const deletedCount = (camelKey: string, snakeKey: string) => Number(deleted[camelKey] ?? deleted[snakeKey] ?? 0) || 0;
+  return {
+    status: asNullableString(payload.status) || "disconnected",
+    googleAccount:
+      asNullableString(payload.googleAccount) ??
+      asNullableString(payload.google_account),
+    googleRevocation: {
+      requested: asBoolean(revocation.requested),
+      succeeded: asBoolean(revocation.succeeded),
+      warning: asNullableString(revocation.warning),
+    },
+    deleted: {
+      gmailMessages: deletedCount("gmailMessages", "gmail_messages"),
+      gmailThreads: deletedCount("gmailThreads", "gmail_threads"),
+      gmailAttachments: deletedCount("gmailAttachments", "gmail_attachments"),
+      gmailCursors: deletedCount("gmailCursors", "gmail_cursors"),
+      startupEvents: deletedCount("startupEvents", "startup_events"),
+      startupMetrics: deletedCount("startupMetrics", "startup_metrics"),
+      monthlyDrafts: deletedCount("monthlyDrafts", "monthly_drafts"),
+    },
+    cancelledRuns: Array.isArray(payload.cancelledRuns)
+      ? payload.cancelledRuns.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+      : Array.isArray(payload.cancelled_runs)
+        ? payload.cancelled_runs.filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
+        : [],
+    googlePermissionsUrl:
+      asNullableString(payload.googlePermissionsUrl) ??
+      asNullableString(payload.google_permissions_url) ??
+      "https://myaccount.google.com/permissions",
+  };
+}
+
+export async function disconnectVibeRaisingGmail(
+  backendBaseUrl: string,
+  options?: { deleteDerivedData?: boolean; reason?: string },
+): Promise<VibeRaisingGmailDisconnectResponse> {
+  const payload = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    GMAIL_CONNECTION_PATH,
+    {
+      method: "DELETE",
+      body: JSON.stringify({
+        deleteDerivedData: Boolean(options?.deleteDerivedData),
+        reason: options?.reason || "user_request",
+      }),
+    },
+  );
+  return normalizeGmailDisconnectResponse(payload);
 }
 
 function normalizeSlackChannel(raw: unknown): VibeRaisingSlackChannel | null {
