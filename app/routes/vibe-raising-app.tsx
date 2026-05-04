@@ -5,6 +5,7 @@ import {
   redirect,
   useActionData,
   useLoaderData,
+  useLocation,
   useNavigation,
 } from "react-router";
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
@@ -102,6 +103,7 @@ export default function VibeRaisingApp() {
   const { user, profile, appUser } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
+  const location = useLocation();
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -110,6 +112,19 @@ export default function VibeRaisingApp() {
     setOnCompleteCallback(() => callback);
     setShowAnnouncement(true);
   };
+
+  if (!appUser && location.pathname.startsWith("/founder-tools/marketing")) {
+    return (
+      <AuthenticatedLayout
+        user={user}
+        navigation={FOUNDER_NAVIGATION}
+        userNavigation={[]}
+        logoutAction="/founder-tools/logout"
+      >
+        <Outlet context={{ triggerAnnouncement }} />
+      </AuthenticatedLayout>
+    );
+  }
 
   if (!appUser) {
     return (

@@ -18,6 +18,7 @@ import type {
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingTopicCandidate,
+  VibeMarketingWrittenTopic,
   VibeMarketingWorkflowAction,
   VibeMarketingWorkflowProgress,
   VibeMarketingWorkflowStep,
@@ -213,6 +214,12 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     topicCandidates: Array.isArray(payload.topicCandidates)
       ? payload.topicCandidates.map(normalizeTopicCandidate)
       : [],
+    hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
+      ? payload.hiddenTopicCandidates.map(normalizeTopicCandidate)
+      : [],
+    writtenTopics: Array.isArray(payload.writtenTopics)
+      ? payload.writtenTopics.map(normalizeWrittenTopic).filter(Boolean) as VibeMarketingWrittenTopic[]
+      : [],
     publishEvidence: normalizePublishEvidence(payload.publishEvidence),
     guidedSteps: Array.isArray(payload.guidedSteps)
       ? payload.guidedSteps.map(normalizeGuidedStep)
@@ -225,6 +232,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
         ? (payload.recommendedNextAction as VibeMarketingBootstrap["recommendedNextAction"])
         : undefined,
     workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
+    hasCompletedArticleFlow: Boolean(payload.hasCompletedArticleFlow ?? payload.has_completed_article_flow),
+    startPageMode:
+      asNullableString(payload.startPageMode) ??
+      asNullableString(payload.start_page_mode) ??
+      (payload.hasCompletedArticleFlow || payload.has_completed_article_flow ? "topic_picker" : "first_article_setup"),
   };
 }
 
@@ -249,12 +261,44 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     keyword,
     title: asNullableString(payload.title) ?? asNullableString(payload.angle) ?? keyword,
     reason: asNullableString(payload.reason),
+    audience: asNullableString(payload.audience) ?? asNullableString(payload.target_audience) ?? asNullableString(payload.targetAudience),
+    confidence: asNullableString(payload.confidence),
+    trend: payload.trend ?? payload.search_trend,
+    interest: payload.interest ?? payload.interest_trend,
+    competition: payload.competition ?? payload.competition_level,
+    aiSearches: payload.aiSearches ?? payload.ai_searches ?? payload.ai_search_volume,
     source: asNullableString(payload.source),
     sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
+    status: asNullableString(payload.status),
+    alreadyWritten: Boolean(payload.alreadyWritten ?? payload.already_written),
+    writtenArticle: normalizeWrittenTopic(payload.writtenArticle ?? payload.written_article),
     intent: payload.intent,
     difficulty: payload.difficulty,
     opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
     volume: payload.volume,
+    tier: payload.tier,
+    velocity: payload.velocity ?? payload.latestVelocity ?? payload.latest_velocity,
+    aiSaturation:
+      payload.aiSaturation ??
+      payload.ai_saturation ??
+      payload.latestSaturation ??
+      payload.latest_saturation,
+  };
+}
+
+function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
+  const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const title = asNullableString(payload.title);
+  const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.primary_keyword);
+  if (!title && !keyword) return null;
+  return {
+    id: asNullableString(payload.id) ?? undefined,
+    title: title ?? keyword ?? "Written article",
+    slug: asNullableString(payload.slug),
+    keyword: keyword ?? title ?? "",
+    articleUrl: asNullableString(payload.articleUrl) ?? asNullableString(payload.article_url),
+    prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    writtenAt: asNullableString(payload.writtenAt) ?? asNullableString(payload.written_at),
   };
 }
 
@@ -560,10 +604,14 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   latestRuns: [],
   latestRunsByWorkflow: {},
   topicCandidates: [],
+  hiddenTopicCandidates: [],
+  writtenTopics: [],
   publishEvidence: {},
   guidedSteps: [],
   currentGuidedStep: "startupDetails",
   recommendedNextAction: { key: "startupDetails", label: "Add startup details" },
+  hasCompletedArticleFlow: false,
+  startPageMode: "first_article_setup",
   workflowProgress: {
     currentStepId: "profile",
     nextStepId: "baseline",

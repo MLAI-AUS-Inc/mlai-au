@@ -178,12 +178,34 @@ export interface VibeMarketingTopicCandidate {
   keyword: string;
   title: string;
   reason?: string | null;
+  audience?: string | null;
+  confidence?: string | null;
+  trend?: unknown;
+  interest?: unknown;
+  competition?: unknown;
+  aiSearches?: unknown;
   source?: string | null;
   sourceRunId?: string | null;
+  status?: string | null;
+  alreadyWritten?: boolean;
+  writtenArticle?: VibeMarketingWrittenTopic | null;
   intent?: unknown;
   difficulty?: unknown;
   opportunityScore?: unknown;
   volume?: unknown;
+  tier?: unknown;
+  velocity?: unknown;
+  aiSaturation?: unknown;
+}
+
+export interface VibeMarketingWrittenTopic {
+  id?: string;
+  title: string;
+  slug?: string | null;
+  keyword: string;
+  articleUrl?: string | null;
+  prUrl?: string | null;
+  writtenAt?: string | null;
 }
 
 export interface VibeMarketingContentPackage {
@@ -364,6 +386,8 @@ export interface VibeMarketingBootstrap {
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
+  hiddenTopicCandidates: VibeMarketingTopicCandidate[];
+  writtenTopics: VibeMarketingWrittenTopic[];
   publishEvidence: VibeMarketingPublishEvidence;
   guidedSteps: VibeMarketingGuidedStep[];
   currentGuidedStep?: string | null;
@@ -372,4 +396,6 @@ export interface VibeMarketingBootstrap {
     label: string;
   };
   workflowProgress?: VibeMarketingWorkflowProgress | null;
+  hasCompletedArticleFlow?: boolean;
+  startPageMode?: "first_article_setup" | "topic_picker" | string;
 }
