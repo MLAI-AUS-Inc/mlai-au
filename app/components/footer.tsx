@@ -63,6 +63,9 @@ const footerNavigation = {
   ],
 };
 
+const footerBrandImage =
+  "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI_Logo%20(1).png?alt=media&token=00b60b5c-0aae-4f08-b970-f3d773699a66";
+
 export default function Events() {
   return (
     <div className="bg-[var(--brutalist-beige)] lg:pl-[220px] p-2 lg:p-3">
@@ -71,76 +74,85 @@ export default function Events() {
           Footer
         </h2>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 pb-6 sm:pb-8 pt-8 sm:pt-12 lg:px-8 lg:pt-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 md:gap-6 justify-items-start md:justify-items-center px-2 sm:px-6 md:px-12 xl:px-24">
-            <div className="md:items-center md:justify-center md:mx-auto">
-              <h3 className="text-sm font-semibold leading-6 text-white">
-                Events
-              </h3>
-              <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                {footerNavigation.events.map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+          <div className="grid items-start gap-8 sm:gap-12 lg:grid-cols-[120px_1fr] lg:gap-10">
+            <div className="flex items-start justify-start">
+              <img
+                className="size-24 self-start object-contain object-top sm:size-28"
+                src={footerBrandImage}
+                width={112}
+                height={112}
+                alt="MLAI kangaroo logo"
+              />
             </div>
-            <div className="md:items-center md:justify-center md:mx-auto">
-              <h3 className="text-sm font-semibold leading-6 text-white">
-                About
-              </h3>
-              <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                {footerNavigation.About.map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="md:items-center md:justify-center md:mx-auto">
-              <h3 className="text-sm font-semibold leading-6 text-white">
-                Sponsoring
-              </h3>
-              <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                {footerNavigation.Sponsoring.map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="md:items-center md:justify-center md:mx-auto">
-              <h3 className="text-sm font-semibold leading-6 text-white">
-                Volunteering
-              </h3>
-              <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
-                {footerNavigation.volunteering.map((item) => (
-                  <li key={item.name}>
-                    <a
-                      href={item.href}
-                      className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
-                      target={item.target}
-                      rel={item.rel}
-                    >
-                      {item.name}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12 md:gap-6 justify-items-start md:justify-items-center">
+              <div className="md:items-center md:justify-center md:mx-auto">
+                <h3 className="text-sm font-semibold leading-6 text-white">
+                  Events
+                </h3>
+                <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+                  {footerNavigation.events.map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="md:items-center md:justify-center md:mx-auto">
+                <h3 className="text-sm font-semibold leading-6 text-white">
+                  About
+                </h3>
+                <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+                  {footerNavigation.About.map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="md:items-center md:justify-center md:mx-auto">
+                <h3 className="text-sm font-semibold leading-6 text-white">
+                  Sponsoring
+                </h3>
+                <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+                  {footerNavigation.Sponsoring.map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+                <h3 className="mt-8 text-sm font-semibold leading-6 text-white">
+                  Volunteering
+                </h3>
+                <ul role="list" className="mt-4 sm:mt-6 space-y-3 sm:space-y-4">
+                  {footerNavigation.volunteering.map((item) => (
+                    <li key={item.name}>
+                      <a
+                        href={item.href}
+                        className="text-sm leading-6 text-gray-300 hover:text-white min-h-[44px] inline-flex items-center"
+                        target={item.target}
+                        rel={item.rel}
+                      >
+                        {item.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
           <div className="mt-8 border-t border-gray-400 pt-6 sm:pt-8 sm:mt-10 lg:mt-12">
