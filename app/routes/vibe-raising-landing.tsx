@@ -152,8 +152,8 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
                 "Gmail connection is optional and initiated by the founder.",
                 "Gmail data is used only to generate requested investor update drafts and summaries.",
                 "Gmail data is not sold and is not used to train generalized AI or machine learning models.",
-                "Raw Gmail content is processed transiently and deleted after processing.",
-                "Generated drafts and OAuth tokens may be retained only as needed to provide the service.",
+                "Gmail data is minimized and retained only as needed for the requested update workflow.",
+                "Generated drafts, selected artifacts, and OAuth tokens may be retained only as needed to provide the service.",
               ].map((item) => (
                 <li key={item} className="flex gap-3">
                   <DocumentTextIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
