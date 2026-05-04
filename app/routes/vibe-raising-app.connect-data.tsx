@@ -16,12 +16,14 @@ import {
   MagnifyingGlassIcon,
   ShieldCheckIcon,
   SparklesIcon,
+  TrashIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { getEnv } from "~/lib/env.server";
 import {
   bootstrapVibeRaisingStartupUpdate,
   connectVibeRaisingInputSource,
+  disconnectVibeRaisingGmail,
   getVibeRaisingBankFeedPreview,
   getVibeRaisingGmailPreview,
   getVibeRaisingInputSourcesStatus,
@@ -1291,12 +1293,14 @@ function ConnectorCard({
   selected,
   busy,
   onConnect,
+  onManageGmail,
   onToggle,
 }: {
   source: VibeRaisingInputSourceSummary;
   selected: boolean;
   busy: boolean;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
+  onManageGmail: (source: VibeRaisingInputSourceSummary) => void;
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
 }) {
   const selectable = FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing");
@@ -1392,6 +1396,22 @@ function ConnectorCard({
               {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
             </button>
           )}
+
+          {source.key === "gmail" && isConnected ? (
+            <button
+              type="button"
+              onClick={() => onManageGmail(source)}
+              className={clsx(
+                "mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-extrabold transition",
+                isConnected
+                  ? "bg-white/[0.14] text-white ring-1 ring-white/[0.24] hover:bg-white/[0.20]"
+                  : "border border-gray-200 text-gray-700 hover:bg-gray-50",
+              )}
+            >
+              <ShieldCheckIcon className="h-4 w-4" />
+              Manage Gmail access
+            </button>
+          ) : null}
 
           {source.warning && source.status !== "coming_soon" ? (
             <p className={clsx("mt-2 line-clamp-2 text-[11px] font-medium leading-4", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
@@ -1502,6 +1522,128 @@ function ManualMaterialsCard({
   );
 }
 
+function deletionSummaryText(deleted: {
+  gmailMessages: number;
+  gmailThreads: number;
+  gmailAttachments: number;
+  gmailCursors: number;
+  startupEvents: number;
+  startupMetrics: number;
+  monthlyDrafts: number;
+}) {
+  const rawCount = deleted.gmailMessages + deleted.gmailThreads + deleted.gmailAttachments + deleted.gmailCursors;
+  const derivedCount = deleted.startupEvents + deleted.startupMetrics + deleted.monthlyDrafts;
+  const parts = [];
+  if (rawCount > 0) parts.push(`${rawCount} Gmail cache item${rawCount === 1 ? "" : "s"}`);
+  if (derivedCount > 0) parts.push(`${derivedCount} generated update item${derivedCount === 1 ? "" : "s"}`);
+  return parts.length > 0 ? parts.join(" and ") : "local Gmail access";
+}
+
+function GmailManagementModal({
+  source,
+  busyAction,
+  onClose,
+  onDisconnect,
+}: {
+  source: VibeRaisingInputSourceSummary;
+  busyAction: "disconnect" | "delete" | null;
+  onClose: () => void;
+  onDisconnect: (deleteDerivedData: boolean) => void;
+}) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const googlePermissionsUrl = source.googlePermissionsUrl || "https://myaccount.google.com/permissions";
+  const busy = busyAction !== null;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 px-4 py-8">
+      <div className="w-full max-w-xl rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-6 py-5">
+          <div className="flex min-w-0 items-center gap-4">
+            <SourceLogo sourceKey="gmail" />
+            <div className="min-w-0">
+              <h2 className="text-lg font-black text-gray-950">Manage Gmail access</h2>
+              <p className="mt-1 truncate text-sm font-medium text-slate-500">{source.accountLabel || "Connected Gmail account"}</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-gray-50 hover:text-slate-700 disabled:opacity-50"
+            aria-label="Close Gmail access management"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-5 px-6 py-6">
+          <div className="rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] p-4">
+            <div className="flex gap-3">
+              <ShieldCheckIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
+              <p className="text-sm leading-6 text-slate-600">
+                MLAI Vibe Raising uses Gmail only for the founder-requested monthly update workflow. Disconnecting removes MLAI's local Gmail token and cached Gmail source data.
+              </p>
+            </div>
+          </div>
+
+          <a
+            href={googlePermissionsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-2 text-sm font-extrabold text-[var(--vr-color-primary)] transition hover:text-[var(--vr-palette-black)]"
+          >
+            Revoke MLAI in Google Account permissions
+            <LinkIcon className="h-4 w-4" />
+          </a>
+
+          <div className="grid gap-3">
+            <button
+              type="button"
+              onClick={() => onDisconnect(false)}
+              disabled={busy}
+              className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 px-4 py-4 text-left transition hover:bg-gray-50 disabled:opacity-60"
+            >
+              <span>
+                <span className="block text-sm font-extrabold text-gray-950">Disconnect Gmail</span>
+                <span className="mt-1 block text-xs font-medium leading-5 text-slate-500">
+                  Remove Gmail access and cached Gmail source data. Generated update drafts stay in your workspace.
+                </span>
+              </span>
+              {busyAction === "disconnect" ? <ArrowPathIcon className="h-5 w-5 animate-spin text-slate-400" /> : <XMarkIcon className="h-5 w-5 text-slate-400" />}
+            </button>
+
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+              <label className="flex gap-3 text-sm font-semibold leading-6 text-red-900">
+                <input
+                  type="checkbox"
+                  checked={confirmDelete}
+                  onChange={(event) => setConfirmDelete(event.target.checked)}
+                  disabled={busy}
+                  className="mt-1 h-4 w-4 rounded border-red-300 text-red-600 focus:ring-red-500"
+                />
+                Also delete Gmail-derived monthly update drafts, events, and metrics.
+              </label>
+              <button
+                type="button"
+                onClick={() => onDisconnect(true)}
+                disabled={busy || !confirmDelete}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-3 text-sm font-extrabold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-red-200"
+              >
+                {busyAction === "delete" ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <TrashIcon className="h-4 w-4" />}
+                Disconnect and delete Gmail-derived data
+              </button>
+            </div>
+          </div>
+
+          <p className="text-xs font-medium leading-5 text-slate-500">
+            You can request deletion support at hi@mlai.au if you cannot access this app.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function ConnectData() {
   const { backendBaseUrl, next } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
@@ -1516,6 +1658,8 @@ export default function ConnectData() {
   const [pendingConnectSource, setPendingConnectSource] = useState<VibeRaisingInputSourceSummary | null>(null);
   const [showNoSourcesModal, setShowNoSourcesModal] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [gmailManagementSource, setGmailManagementSource] = useState<VibeRaisingInputSourceSummary | null>(null);
+  const [gmailDisconnectAction, setGmailDisconnectAction] = useState<"disconnect" | "delete" | null>(null);
   const [bankFeedPreview, setBankFeedPreview] = useState<VibeRaisingBankFeedPreview | null>(null);
   const [loadingBankFeedPreview, setLoadingBankFeedPreview] = useState(false);
   const [bankFeedPreviewError, setBankFeedPreviewError] = useState<string | null>(null);
@@ -1932,6 +2076,42 @@ export default function ConnectData() {
     });
   };
 
+  const handleOpenGmailManagement = (source: VibeRaisingInputSourceSummary) => {
+    if (source.key !== "gmail") return;
+    setStatusMessage(null);
+    setGmailManagementSource(source);
+  };
+
+  const handleDisconnectGmail = async (deleteDerivedData: boolean) => {
+    setGmailDisconnectAction(deleteDerivedData ? "delete" : "disconnect");
+    setStatusMessage(null);
+    try {
+      const response = await disconnectVibeRaisingGmail(backendBaseUrl, {
+        deleteDerivedData,
+        reason: "user_request",
+      });
+      setSelectedSources((previous) => {
+        const nextSelected = new Set(previous);
+        nextSelected.delete("gmail");
+        return nextSelected;
+      });
+      setGmailPreview(null);
+      setGmailPreviewError(null);
+      setGmailManagementSource(null);
+      await refreshStatuses();
+      const warning = response.googleRevocation.warning ? ` ${response.googleRevocation.warning}` : "";
+      if (response.status === "not_connected") {
+        setStatusMessage("Gmail was already disconnected.");
+      } else {
+        setStatusMessage(`Gmail disconnected. Deleted ${deletionSummaryText(response.deleted)}.${warning}`);
+      }
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "We couldn't disconnect Gmail.");
+    } finally {
+      setGmailDisconnectAction(null);
+    }
+  };
+
   const handleSyncFinance = async (providers?: Array<Extract<VibeRaisingInputSourceKey, "stripe" | "xero" | "bank_feed">>) => {
     setSyncingFinance(true);
     setStatusMessage(null);
@@ -2283,6 +2463,7 @@ export default function ConnectData() {
               selected={selectedSources.has(source.key)}
               busy={busyProvider === source.key}
               onConnect={requestConnectSource}
+              onManageGmail={handleOpenGmailManagement}
               onToggle={handleToggle}
             />
           ))}
@@ -2464,6 +2645,17 @@ export default function ConnectData() {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {gmailManagementSource ? (
+        <GmailManagementModal
+          source={gmailManagementSource}
+          busyAction={gmailDisconnectAction}
+          onClose={() => {
+            if (gmailDisconnectAction === null) setGmailManagementSource(null);
+          }}
+          onDisconnect={(deleteDerivedData) => void handleDisconnectGmail(deleteDerivedData)}
+        />
       ) : null}
 
       {pendingConnectSource ? (
