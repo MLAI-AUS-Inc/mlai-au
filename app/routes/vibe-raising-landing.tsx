@@ -3,7 +3,10 @@ import { useNavigate } from "react-router";
 import {
   ArrowRightIcon,
   ChartBarIcon,
+  DocumentTextIcon,
+  EnvelopeIcon,
   ExclamationTriangleIcon,
+  ShieldCheckIcon,
   SparklesIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
@@ -11,15 +14,18 @@ import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSectio
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import type { Route } from "./+types/vibe-raising-landing";
 
-const PAGE_TITLE = "Vibe Raising";
+const PAGE_TITLE = "MLAI Vibe Raising";
 const PAGE_DESCRIPTION =
-  "Build investor trust with consistent, transparent monthly founder updates.";
+  "MLAI Vibe Raising helps founders draft monthly investor updates, with an optional Gmail connection for relevant email context.";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "Vibe Raising | MLAI Community" },
+    { title: "MLAI Vibe Raising | Monthly Founder Updates" },
     { name: "description", content: PAGE_DESCRIPTION },
-    { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising-landing" },
+    { property: "og:title", content: "MLAI Vibe Raising" },
+    { property: "og:description", content: PAGE_DESCRIPTION },
+    { name: "application-name", content: "MLAI Vibe Raising" },
+    { tagName: "link", rel: "canonical", href: "https://mlai.au/vibe-raising" },
   ];
 }
 
@@ -56,14 +62,14 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
         <div className="relative z-10 mx-auto flex min-h-[86vh] max-w-6xl flex-col justify-center px-6 py-20 lg:px-8">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-black uppercase tracking-[0.28em] text-white/70">
-              Monthly founder updates
+              Monthly founder updates by MLAI
             </p>
             <h1 className="text-5xl font-black tracking-tight text-white sm:text-6xl lg:text-7xl">
               {PAGE_TITLE}
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-white/78 sm:text-xl">
-              Build investor trust before you need capital. Publish progress, metrics,
-              challenges, and asks in a format investors can scan and act on.
+              Draft clear investor updates from your progress, metrics, asks, and
+              optional Gmail context so investors can scan your momentum and act on it.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <button
@@ -75,10 +81,10 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
                 <ArrowRightIcon className="h-5 w-5" />
               </button>
               <a
-                href="mailto:hi@mlai.au?subject=Investor Interest in Vibe Raising"
+                href="#google-data"
                 className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-7 py-4 text-sm font-black text-white backdrop-blur-sm transition hover:bg-white/15"
               >
-                Investor access
+                How Gmail is used
               </a>
             </div>
           </div>
@@ -92,8 +98,8 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
           {[
             {
               icon: SparklesIcon,
-              title: "Founders share",
-              copy: "Regular updates turn wins, asks, and challenges into visible momentum.",
+              title: "Founders draft",
+              copy: "Regular updates turn wins, asks, challenges, and metrics into visible momentum.",
             },
             {
               icon: ChartBarIcon,
@@ -114,6 +120,62 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
               <p className="mt-3 text-sm leading-6 text-gray-600">{item.copy}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section id="google-data" className="px-6 pb-16">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1fr_1fr]">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 p-8 sm:p-10">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm">
+              <EnvelopeIcon className="h-6 w-6" />
+            </div>
+            <h2 className="text-3xl font-black tracking-tight text-gray-950">
+              How MLAI Vibe Raising uses Gmail
+            </h2>
+            <p className="mt-5 text-base leading-7 text-gray-600">
+              Founders can optionally connect Gmail when they want MLAI Vibe Raising
+              to draft a monthly investor update from relevant email context. The app
+              looks for useful update signals such as investor feedback, customer
+              conversations, milestones, risks, asks, and follow-ups.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-[rgba(0,255,215,0.24)] bg-white p-8 shadow-sm sm:p-10">
+            <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]">
+              <ShieldCheckIcon className="h-6 w-6" />
+            </div>
+            <h2 className="text-2xl font-black tracking-tight text-gray-950">
+              Google user data commitments
+            </h2>
+            <ul className="mt-6 space-y-4 text-sm font-semibold leading-6 text-gray-600">
+              {[
+                "Gmail connection is optional and initiated by the founder.",
+                "Gmail data is used only to generate requested investor update drafts and summaries.",
+                "Gmail data is not sold and is not used to train generalized AI or machine learning models.",
+                "Raw Gmail content is processed transiently and deleted after processing.",
+                "Generated drafts and OAuth tokens may be retained only as needed to provide the service.",
+              ].map((item) => (
+                <li key={item} className="flex gap-3">
+                  <DocumentTextIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a
+                href="/privacy"
+                className="inline-flex items-center justify-center rounded-xl bg-gray-950 px-5 py-3 text-sm font-black text-white transition hover:bg-black"
+              >
+                Privacy Policy
+              </a>
+              <a
+                href="/terms"
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-800 transition hover:bg-gray-50"
+              >
+                Terms of Service
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 

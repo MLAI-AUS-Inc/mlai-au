@@ -78,7 +78,9 @@ export default [
   route("/articles/*", "routes/articles.slug.tsx"),
 
   // Vibe Raising public landing
-  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx"),
+  route("/vibe-raising", "routes/vibe-raising-landing.tsx"),
+  route("/vibe-raising/", "routes/vibe-raising-landing.tsx", { id: "vibe-raising-landing-trailing" }),
+  route("/vibe-raising-landing", "routes/vibe-raising-landing.tsx", { id: "legacy-vibe-raising-landing" }),
 
   // Founder Tools App routes
   route("/founder-tools", "routes/vibe-raising-app.tsx", [
