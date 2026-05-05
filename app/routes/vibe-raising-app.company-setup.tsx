@@ -13,6 +13,7 @@ import {
 
 function sanitizeNext(value: string | null) {
     if (value?.startsWith("/founder-tools/marketing")) return value;
+    if (value?.startsWith("/founder-tools/companies")) return value;
     if (value?.startsWith("/founder-tools/data-sources")) return value;
     if (value?.startsWith("/founder-tools/updates")) return value;
     return "/founder-tools/data-sources";
@@ -30,11 +31,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const { appUser: user } = await requireVibeRaisingFounder(env, request);
     const url = new URL(request.url);
     const isAddingNew = url.searchParams.get("new") === "true";
+    const isEditing = url.searchParams.get("edit") === "true";
     const next = sanitizeNext(url.searchParams.get("next"));
     const activeCompany = getActiveVibeRaisingCompany(user);
 
-    // If not adding a new company and already registered, skip setup
-    if (!isAddingNew && user.companyRegistered) {
+    // If not adding or editing a company and already registered, skip setup
+    if (!isAddingNew && !isEditing && user.companyRegistered) {
         throw redirect(next);
     }
 
@@ -45,7 +47,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
         marketingBootstrap = null;
     }
 
-    return { user, activeCompany, isAddingNew, next, marketingBootstrap };
+    return { user, activeCompany, isAddingNew, isEditing, next, marketingBootstrap };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -94,7 +96,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 }
 
 export default function CompanySetup() {
-    const { user, activeCompany, isAddingNew, next, marketingBootstrap } = useLoaderData<typeof loader>();
+    const { user, activeCompany, isAddingNew, isEditing, next, marketingBootstrap } = useLoaderData<typeof loader>();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
 
@@ -108,7 +110,7 @@ export default function CompanySetup() {
                             <BuildingOffice2Icon className="h-7 w-7 text-[var(--vr-color-primary)]" />
                         </div>
                         <h1 className="mb-2 text-2xl font-bold text-[var(--vr-color-text)]">
-                            {isAddingNew ? "Add Another Company" : "Let's start with some basic details"}
+                            {isAddingNew ? "Add Another Company" : isEditing ? "Edit company details" : "Let's start with some basic details"}
                         </h1>
                     </div>
 
@@ -140,7 +142,7 @@ export default function CompanySetup() {
                                 ${isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:bg-[var(--vr-palette-black)] hover:shadow-xl active:scale-[0.98]"}`}
                         >
                             {isSubmitting && <ArrowPathIcon className="w-5 h-5 animate-spin" aria-hidden="true" />}
-                            {isSubmitting ? "Saving..." : isAddingNew ? "Add Company" : "Continue"}
+                            {isSubmitting ? "Saving..." : isAddingNew ? "Add Company" : isEditing ? "Save Details" : "Continue"}
                         </button>
                     </Form>
                 </div>

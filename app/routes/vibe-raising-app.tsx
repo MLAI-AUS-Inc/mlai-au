@@ -89,7 +89,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await setVibeRaisingActiveCompany(env, request, companyId);
     }
 
-    return redirect("/founder-tools/company-setup");
+    return redirect("/founder-tools/company-setup?next=/founder-tools/updates");
   } catch (error) {
     console.error("Failed to complete Vibe Raising onboarding:", error);
     return {

@@ -1,4 +1,3 @@
-import { CheckIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
 export type MonthlyUpdateStepKey = "connect" | "draft" | "review" | "publish";
@@ -195,12 +194,12 @@ export default function MonthlyUpdateStepper({
                       <div
                         className={clsx(
                           "z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-base font-black transition",
-                          isComplete && "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white",
+                          isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_4px_rgba(0,255,215,0.10)]",
                           isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(0,128,128,0.10)]",
                           !isActive && !isComplete && "border-[var(--vr-color-border)] text-[var(--vr-color-text-sub)]",
                         )}
                       >
-                        {isComplete ? <CheckIcon className="h-5 w-5" /> : index + 1}
+                        {index + 1}
                       </div>
                       <p
                         className={clsx(
@@ -326,12 +325,12 @@ export default function MonthlyUpdateStepper({
                   className={clsx(
                     "z-10 flex items-center justify-center rounded-full border-2 bg-white font-black transition",
                     frameless ? "h-14 w-14 text-base" : "h-10 w-10 text-sm",
-                    isComplete && "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white",
+                    isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_4px_rgba(0,255,215,0.10)]",
                     isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(0,128,128,0.10)]",
                     !isActive && !isComplete && "border-[var(--vr-color-border)] text-[var(--vr-color-text-sub)]",
                   )}
                 >
-                  {isComplete ? <CheckIcon className="h-5 w-5" /> : index + 1}
+                  {index + 1}
                 </div>
                 <p
                   className={clsx(

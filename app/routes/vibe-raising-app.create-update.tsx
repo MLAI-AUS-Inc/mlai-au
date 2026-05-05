@@ -1559,12 +1559,16 @@ export default function CreateUpdate() {
         });
         return initial;
     });
+    const hasSelectedInputSources = selectedInputSources.length > 0;
+    const isManualOnlyDraftFlow = !hasSelectedInputSources;
     const selectedMetricOptions = Array.from(selectedMetrics)
         .map((key) => METRIC_OPTION_MAP.get(key))
         .filter((metric): metric is MetricOption => Boolean(metric));
     const draftMetricOptions = selectedMetricOptions.length > 0
         ? selectedMetricOptions
-        : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
+        : isManualOnlyDraftFlow
+            ? METRIC_OPTIONS
+            : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
     const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
@@ -1589,11 +1593,51 @@ export default function CreateUpdate() {
     const videoPreviewObjectUrlRef = useRef<string | null>(null);
     const loadedExistingUpdateKeyRef = useRef<string | null>(null);
     const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
+    const shouldDimMetricsTemplate = isManualOnlyDraftFlow && draftMetricOptions.length >= 12;
+    const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
+
+    const wakeMetricCard = useCallback((metricKey: string) => {
+        if (shouldDimMetricsTemplate) {
+            setAwakeMetricCards((previous) => {
+                if (previous.has(metricKey)) return previous;
+                const next = new Set(previous);
+                next.add(metricKey);
+                return next;
+            });
+        }
+    }, [shouldDimMetricsTemplate]);
+
+    const dismissMetricCard = useCallback((metricKey: string) => {
+        setAwakeMetricCards((previous) => {
+            if (!previous.has(metricKey)) return previous;
+            const next = new Set(previous);
+            next.delete(metricKey);
+            return next;
+        });
+        setMetricValues((previous) => {
+            if (!(metricKey in previous)) return previous;
+            const next = { ...previous };
+            delete next[metricKey];
+            return next;
+        });
+        setSelectedMetrics((previous) => {
+            if (!previous.has(metricKey)) return previous;
+            const next = new Set(previous);
+            next.delete(metricKey);
+            return next;
+        });
+    }, []);
 
     const handleDraftComplete = (data: any) => {
+        const resolvedMonth = typeof data.month === "string" && data.month.trim() ? data.month.trim() : selectedMonth;
+        const resolvedYear = typeof data.year === "number" && Number.isFinite(data.year) ? data.year : selectedYear;
+        const resolvedEditorKey = getMonthlyUpdateKey(resolvedMonth, resolvedYear);
+
+        loadedExistingUpdateKeyRef.current = resolvedEditorKey;
+        editorMonthKeyRef.current = resolvedEditorKey;
         setActivePeriodKey("current");
-        if (data.month) setSelectedMonth(data.month);
-        if (data.year) setSelectedYear(data.year);
+        if (data.month) setSelectedMonth(resolvedMonth);
+        if (data.year) setSelectedYear(resolvedYear);
         setHighlights(data.highlights);
         setChallenges(data.challenges);
         setAsks(data.asks || "");
@@ -1615,6 +1659,11 @@ export default function CreateUpdate() {
         }
         const currentMetrics = data.metrics || {};
         setMetricValues(currentMetrics);
+        setAwakeMetricCards(
+            new Set(
+                Object.keys(currentMetrics).filter((key) => String(currentMetrics[key] || "").trim()),
+            ),
+        );
         setPastMonthCards((data.pastMonths || []).map((pm: any) => ({
             ...pm,
             month: pm.month || "Unknown",
@@ -1640,6 +1689,19 @@ export default function CreateUpdate() {
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
     };
+
+    useEffect(() => {
+        if (selectedDraftStage !== "reporting") {
+            setAwakeMetricCards(new Set());
+            return;
+        }
+
+        setAwakeMetricCards(
+            shouldDimMetricsTemplate
+                ? new Set(Object.keys(metricValues).filter((key) => String(metricValues[key] || "").trim()))
+                : new Set(),
+        );
+    }, [selectedDraftStage, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
 
     const revokeVideoPreviewObjectUrl = useCallback(() => {
         if (videoPreviewObjectUrlRef.current) {
@@ -2008,8 +2070,16 @@ export default function CreateUpdate() {
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
+        if (isManualOnlyDraftFlow) {
+            setShowEmailWizard(false);
+            setEmailDraftStatus(null);
+            setEmailDraftUiError(null);
+            setEmailDraftPollingDegraded(false);
+            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+            return;
+        }
         requestDraftFromSelectedInputs();
-    }, [isSelectedMonthInFuture, requestDraftFromSelectedInputs]);
+    }, [isManualOnlyDraftFlow, isSelectedMonthInFuture, requestDraftFromSelectedInputs]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
         handleGenerateSelectedMonthUpdate();
@@ -2166,6 +2236,7 @@ export default function CreateUpdate() {
                 setNext30Days("");
                 setMetricValues({});
                 setSelectedMetrics(new Set());
+                setAwakeMetricCards(new Set());
                 setPastMonthCards([]);
                 setExpandedCards(new Set());
                 setActivePeriodKey("current");
@@ -2195,8 +2266,13 @@ export default function CreateUpdate() {
         const nextMetrics = existingUpdateForSelectedMonth.metrics || {};
         setMetricValues(nextMetrics);
         setSelectedMetrics(new Set(Object.keys(nextMetrics).filter((key) => METRIC_OPTION_MAP.has(key))));
+        setAwakeMetricCards(
+            shouldDimMetricsTemplate
+                ? new Set(Object.keys(nextMetrics).filter((key) => String(nextMetrics[key] || "").trim()))
+                : new Set(),
+        );
         setActivePeriodKey("current");
-    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey]);
+    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
 
     const emailDraftCardVisible =
         isEmailDraftBusy ||
@@ -2326,10 +2402,12 @@ export default function CreateUpdate() {
         }
 
         return {
-            statusTitle: "AI draft ready",
+            statusTitle: isManualOnlyDraftFlow ? "Draft template ready" : "AI draft ready",
             statusDetail: selectedMetricOptions.length > 0
                 ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedMonthLabel}.`
-                : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
+                : isManualOnlyDraftFlow
+                    ? `Start with the full 16-metric template for ${selectedMonthLabel}, then trim or fill what matters.`
+                    : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
             primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
             primaryType: "submit" as const,
             primaryForm: DRAFT_REVIEW_FORM_ID,
@@ -3623,23 +3701,88 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="month" value={selectedMonth} />
                                     <input type="hidden" name="year" value={selectedYear} />
 
-                                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                                    <div className="space-y-3">
+                                        {shouldDimMetricsTemplate ? (
+                                            <p className="text-xs font-medium tracking-[0.02em] text-gray-500">
+                                                Click any metric card to start editing.
+                                            </p>
+                                        ) : null}
+                                        <div className="grid gap-3 transition duration-200 sm:grid-cols-2 lg:grid-cols-4">
                                         {draftMetricOptions.map((metric) => (
-                                                <label key={metric.key} className="rounded-2xl border border-gray-200 bg-[var(--vr-palette-paper)] p-4">
-                                                    <span className="flex items-center gap-2 text-xs font-black uppercase tracking-wide text-gray-500">
-                                                        {metric.icon}
-                                                        {metric.label}
-                                                    </span>
+                                                (() => {
+                                                    const hasMetricValue = String(metricValues[metric.key] || "").trim().length > 0;
+                                                    const isMetricCardAwake = !shouldDimMetricsTemplate || awakeMetricCards.has(metric.key) || hasMetricValue;
+                                                    return (
+                                                <label
+                                                    key={metric.key}
+                                                    className={clsx(
+                                                        "relative rounded-2xl border p-4 transition duration-200",
+                                                        isMetricCardAwake
+                                                            ? "border-gray-200 bg-[var(--vr-palette-paper)]"
+                                                            : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
+                                                    )}
+                                                    onClick={() => wakeMetricCard(metric.key)}
+                                                >
+                                                    {shouldDimMetricsTemplate && isMetricCardAwake ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={(event) => {
+                                                                event.preventDefault();
+                                                                event.stopPropagation();
+                                                                dismissMetricCard(metric.key);
+                                                            }}
+                                                            className="absolute right-2 top-2 rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-700"
+                                                            aria-label={`Dismiss ${metric.label}`}
+                                                        >
+                                                            <XMarkIcon className="h-3.5 w-3.5" />
+                                                        </button>
+                                                    ) : null}
+                                                    <div className="flex items-start gap-2">
+                                                        <span className={clsx(
+                                                            "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition duration-200",
+                                                            isMetricCardAwake ? "bg-[rgba(0,255,215,0.18)]" : "bg-white",
+                                                        )}>
+                                                            {metric.icon}
+                                                        </span>
+                                                        <div className="min-w-0">
+                                                            <div className="group/metric-heading relative inline-flex max-w-full items-center">
+                                                                <span className={clsx(
+                                                                    "cursor-help text-xs font-black uppercase tracking-wide transition duration-200",
+                                                                    isMetricCardAwake ? "text-gray-500" : "text-gray-400",
+                                                                )}>
+                                                                    {metric.label}
+                                                                </span>
+                                                                {metric.info ? (
+                                                                    <div className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-52 rounded-lg bg-gray-900 px-3 py-2 text-left text-[11px] font-medium normal-case leading-4 text-white opacity-0 shadow-[0_10px_30px_-8px_rgba(0,0,0,0.35)] transition-all duration-150 ease-out group-hover/metric-heading:translate-y-0 group-hover/metric-heading:opacity-100">
+                                                                        {metric.info}
+                                                                        <div className="absolute left-3 top-0 h-0 w-0 -translate-y-full border-b-[5px] border-l-[5px] border-r-[5px] border-b-gray-900 border-l-transparent border-r-transparent" />
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <input
                                                         type="text"
                                                         name={metric.key}
                                                         value={metricValues[metric.key] || ""}
-                                                        onChange={(event) => setMetricValues((previous) => ({ ...previous, [metric.key]: event.target.value }))}
+                                                        onFocus={() => wakeMetricCard(metric.key)}
+                                                        onChange={(event) => {
+                                                            wakeMetricCard(metric.key);
+                                                            setMetricValues((previous) => ({ ...previous, [metric.key]: event.target.value }));
+                                                        }}
                                                         placeholder={metric.prefix ? `${metric.prefix}${metric.placeholder}` : metric.placeholder}
-                                                        className="mt-4 w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-1 text-lg font-black text-gray-950 outline-none transition focus:border-[var(--vr-color-primary)]"
+                                                        className={clsx(
+                                                            "mt-4 w-full border-b-2 bg-transparent py-1 text-lg font-black outline-none transition",
+                                                            isMetricCardAwake
+                                                                ? "border-[rgba(0,128,128,0.26)] text-gray-950 focus:border-[var(--vr-color-primary)]"
+                                                                : "border-gray-300 text-gray-400 focus:border-[var(--vr-color-primary)]",
+                                                        )}
                                                     />
                                                 </label>
+                                                    );
+                                                })()
                                         ))}
+                                        </div>
                                     </div>
 
                                     <div className="space-y-5">

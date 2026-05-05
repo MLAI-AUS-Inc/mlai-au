@@ -38,6 +38,8 @@
 - [x] Wire Vibe Raising create-update Gmail button to real mlai-backend Google OAuth
 - [x] Add Vibe Raising startup-update bootstrap/run/status backend wrappers
 - [x] Replace mocked email drafting flow with OAuth return + draft polling
+- [x] Keep generated drafts visible when the selected month changes during create-update hydration
+- [x] Add a local email-draft fallback payload so generate-update can be tested without Valley
 - [x] Add backend tests for Vibe Raising startup-update endpoints and Gmail OAuth origin handling
 - [x] Run backend SQLite test pass for `vibe_raising.tests` and `integrations.tests_gmail_oauth`
 - [x] Run `bun run typecheck`
@@ -249,3 +251,7 @@
 - [x] Simplify step 3 review header and align its "How it works" section with the earlier steps
 - [x] Match the step 3 "How it works" bar position and spacing to the earlier steps
 - [x] Make the Vibe Marketing sidebar route fall back cleanly in local dev instead of throwing a raw 401 page
+- [x] Tighten the step 1 mobile source cards and switch the connect-sources grid to three columns on mobile
+- [x] Start moving step 1 source-card layout onto the shared Vibe Raising token/component CSS system
+- [x] Restore the step 2 manual-only draft template when no sources are selected
+- [x] Show the full 16-metric set for manual-only monthly update drafting
