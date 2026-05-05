@@ -172,6 +172,32 @@ function autofillSources(value: unknown) {
     .filter((source) => source.url);
 }
 
+function profileFieldText(payload: Record<string, unknown>, camelKey: string, snakeKey?: string) {
+  const value = payload[camelKey] ?? (snakeKey ? payload[snakeKey] : undefined);
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function autofillProfileFields(value: unknown) {
+  const payload = plainObject(value);
+  if (!payload) return undefined;
+  const confidence = plainObject(payload.fieldConfidence ?? payload.field_confidence);
+  return {
+    shortDescription: profileFieldText(payload, "shortDescription", "short_description"),
+    problemSolved: profileFieldText(payload, "problemSolved", "problem_solved"),
+    targetAudience: profileFieldText(payload, "targetAudience", "target_audience"),
+    location: profileFieldText(payload, "location"),
+    organizationKind: profileFieldText(payload, "organizationKind", "organization_kind"),
+    stage: profileFieldText(payload, "stage"),
+    founderNames: profileFieldText(payload, "founderNames", "founder_names"),
+    abn: profileFieldText(payload, "abn"),
+    companyContext: profileFieldText(payload, "companyContext", "company_context"),
+    fieldConfidence: confidence
+      ? Object.fromEntries(Object.entries(confidence).map(([key, item]) => [key, String(item ?? "")]).filter(([, item]) => item))
+      : undefined,
+    reviewNotes: listFromUnknown(payload.reviewNotes ?? payload.review_notes),
+  };
+}
+
 function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeMarketingAutofillResult | null {
   const raw = run?.result?.autofill;
   if (!raw || typeof raw !== "object") return null;
@@ -207,6 +233,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     ...listFromUnknown(payload.seed_keywords),
     ...groups.flatMap((group) => group.keywords),
   ];
+  const profileFields = autofillProfileFields(payload.profileFields ?? payload.profile_fields);
   return {
     partial: Boolean(payload.partial),
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
@@ -221,7 +248,8 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
         ? payload.companyContext
         : typeof payload.company_context === "string"
           ? payload.company_context
-          : null,
+          : profileFields?.companyContext ?? null,
+    profileFields,
     competitors: Array.from(new Set(competitorStrings.map((competitor) => competitor.trim()).filter(Boolean))),
     competitorSuggestions,
     directCompetitors,
@@ -967,15 +995,21 @@ export default function VibeMarketingStartupBaselineSetup({
     if (!autofillRunId || appliedAutofillRunId === autofillRunId) return;
     const autofill = extractAutofill(autofillRun);
     if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial)) return;
-    const splitContext = splitCompanyContext(autofill.companyContext, startupValues.targetAudience);
+    const profileFields = autofill.profileFields;
+    const splitContext = splitCompanyContext(profileFields?.companyContext || autofill.companyContext, startupValues.targetAudience);
     const competitors = competitorStringsFromAutofill(autofill);
 
     setStartupValues((current) => ({
       ...current,
       companyLinkedInUrl: autofill.companyLinkedInUrl || current.companyLinkedInUrl,
-      shortDescription: splitContext.shortDescription || current.shortDescription,
-      problemSolved: splitContext.problemSolved || current.problemSolved,
-      targetAudience: splitContext.targetAudience || current.targetAudience,
+      shortDescription: profileFields?.shortDescription || splitContext.shortDescription || current.shortDescription,
+      problemSolved: profileFields?.problemSolved || splitContext.problemSolved || current.problemSolved,
+      targetAudience: profileFields?.targetAudience || splitContext.targetAudience || current.targetAudience,
+      location: profileFields?.location || current.location,
+      abn: profileFields?.abn || current.abn,
+      founderNames: profileFields?.founderNames || current.founderNames,
+      stage: profileFields?.stage || current.stage,
+      organizationKind: profileFields?.organizationKind || current.organizationKind,
       competitors: competitors.length ? competitors.join("\n") : current.competitors,
       seedKeywords: autofill.seedKeywords?.length ? autofill.seedKeywords.join(", ") : current.seedKeywords,
     }));
