@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 
+import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
 import {
   getVibeMarketingBootstrap,
@@ -2240,7 +2241,7 @@ export default function FounderToolsMarketing() {
       {shouldShowTopicPicker ? (
         <ReturningTopicPickerPage bootstrap={bootstrap} error={error} />
       ) : (
-        <FirstArticleSetupPage bootstrap={bootstrap} error={error} />
+        <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}
     </div>
   );
