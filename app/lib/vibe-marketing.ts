@@ -1,4 +1,4 @@
-import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
+import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import type {
   VibeMarketingBootstrap,
   VibeMarketingComponentFeedback,
@@ -8,7 +8,6 @@ import type {
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
-  VibeMarketingDeliveryMode,
   VibeMarketingGuidedStep,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
@@ -30,14 +29,6 @@ function asNullableString(value: unknown): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
   return trimmed ? trimmed : null;
-}
-
-export function normalizeArticleDeliveryMode(
-  value: unknown,
-  fallback: VibeMarketingDeliveryMode = "publish_code",
-): VibeMarketingDeliveryMode {
-  const normalized = asNullableString(value);
-  return normalized === "publish_code" || normalized === "content_only" ? normalized : fallback;
 }
 
 function asStringList(value: unknown): string[] {
@@ -189,9 +180,10 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     settings: {
       brandName: asNullableString(settings.brandName) ?? asNullableString(settings.brand_name),
       companyContext: asNullableString(settings.companyContext) ?? asNullableString(settings.company_context),
-      articleDeliveryMode: normalizeArticleDeliveryMode(
-        settings.articleDeliveryMode ?? settings.article_delivery_mode,
-      ),
+      articleDeliveryMode:
+        asNullableString(settings.articleDeliveryMode) ??
+        asNullableString(settings.article_delivery_mode) ??
+        "publish_code",
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,
@@ -613,67 +605,134 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   hasCompletedArticleFlow: false,
   startPageMode: "first_article_setup",
   workflowProgress: {
-    currentStepId: "profile",
-    nextStepId: "baseline",
+    currentStepId: "choose_topic",
+    nextStepId: "generate",
     steps: [
       {
         id: "profile",
         label: "Startup profile",
         phase: "Setup",
-        status: "needs_action",
+        status: "complete",
         href: "/founder-tools/marketing/create?step=startupDetails",
         summary: "Company, audience, competitors, and seed keywords.",
-        primaryAction: { label: "Save startup profile", href: "/founder-tools/marketing/create?step=startupDetails" },
+        primaryAction: null,
         order: 1,
+      },
+      {
+        id: "baseline",
+        label: "Website baseline",
+        phase: "Setup",
+        status: "complete",
+        href: "/founder-tools/marketing/create?step=baseline",
+        summary: "Capture website health before article work starts.",
+        primaryAction: null,
+        order: 2,
+      },
+      {
+        id: "repo",
+        label: "Repository",
+        phase: "Setup",
+        status: "complete",
+        href: "/founder-tools/marketing/create?step=github",
+        summary: "Connect the repository used for exact article previews and publishing.",
+        primaryAction: null,
+        order: 3,
+      },
+      {
+        id: "article_system",
+        label: "Article system",
+        phase: "Setup",
+        status: "complete",
+        href: "/founder-tools/marketing/create?step=articleSystem",
+        summary: "Detect or prepare the article route, registry, and publish target.",
+        primaryAction: null,
+        order: 4,
+      },
+      {
+        id: "research",
+        label: "Research topics",
+        phase: "Plan",
+        status: "complete",
+        href: "/founder-tools/marketing/create?step=research",
+        summary: "Find article candidates from the company context.",
+        primaryAction: null,
+        order: 5,
+      },
+      {
+        id: "choose_topic",
+        label: "Choose topic",
+        phase: "Plan",
+        status: "needs_action",
+        href: "/founder-tools/marketing/create?step=chooseArticle",
+        summary: "Pick a discovered topic or enter a custom article brief.",
+        primaryAction: { label: "Choose article topic", href: "/founder-tools/marketing/create?step=chooseArticle" },
+        order: 6,
+      },
+      {
+        id: "generate",
+        label: "Generate article",
+        phase: "Create",
+        status: "locked",
+        href: "/founder-tools/marketing/create?step=writeCheck",
+        summary: "Generate the article and package its content artifacts.",
+        primaryAction: null,
+        order: 7,
+      },
+      {
+        id: "review",
+        label: "Review article",
+        phase: "Create",
+        status: "locked",
+        href: "/founder-tools/marketing/create?step=editArticle",
+        summary: "Review the exact live article preview and leave component comments.",
+        primaryAction: null,
+        order: 8,
+      },
+      {
+        id: "revise",
+        label: "Revise article",
+        phase: "Create",
+        status: "locked",
+        href: "/founder-tools/marketing/create?step=editArticle",
+        summary: "Send component comments for AI revision and accept the result.",
+        primaryAction: null,
+        order: 9,
+      },
+      {
+        id: "package",
+        label: "Package ready",
+        phase: "Publish",
+        status: "locked",
+        href: "/founder-tools/marketing/create?step=reviewPublish",
+        summary: "Content-only delivery artifacts are ready to inspect or promote.",
+        primaryAction: null,
+        order: 10,
+      },
+      {
+        id: "publish",
+        label: "Publish to site",
+        phase: "Publish",
+        status: "locked",
+        href: "/founder-tools/marketing/create?step=reviewPublish",
+        summary: "Promote the package into a PR, preview URL, or CMS publish flow.",
+        primaryAction: null,
+        order: 11,
+      },
+      {
+        id: "automation",
+        label: "Daily automation",
+        phase: "Automate",
+        status: "complete",
+        href: "/founder-tools/marketing/create?step=dailyAutomation",
+        summary: "Enable recurring topic discovery with human review.",
+        primaryAction: null,
+        order: 12,
       },
     ],
   },
 };
 
 const DEV_RUN_SNAPSHOTS = new Map<string, Record<string, unknown>>();
-
-function shouldUseVibeMarketingDevPreview(error?: unknown) {
-  const maybeError = error as { response?: { status?: number } } | null | undefined;
-  const status = maybeError?.response?.status;
-  if (status === 401 && shouldUseDevAuthBypass()) {
-    return true;
-  }
-  if (!maybeError?.response && shouldUseDevAuthBypass()) {
-    return true;
-  }
-  return shouldUseDevBackendFallback(error);
-}
-
-function createDevMarketingRunTicket(path: string, body: Record<string, unknown>) {
-  const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
-  DEV_RUN_SNAPSHOTS.set(runId, { ...body });
-  return { runId, status: "queued" as const };
-}
-
-function getDevMarketingRunPreview(runId: string) {
-  if (runId.includes("autofill")) {
-    return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
-  }
-  return normalizeMarketingRun({
-    runId,
-    workflow: runId.includes("baseline") ? "website_baseline" : "article_generation",
-    domain: DEV_BOOTSTRAP.organization.domain,
-    status: "completed",
-    currentStep: "finalize",
-    stepOrder: runId.includes("baseline")
-      ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
-      : ["queued", "finalize"],
-    steps: runId.includes("baseline")
-      ? [
-          { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
-          { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
-          { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
-          { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
-        ]
-      : [],
-    result: runId.includes("baseline") ? { baseline: DEV_BOOTSTRAP.websiteBaseline } : {},
-  });
-}
 
 function primaryBodyString(body: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
@@ -844,10 +903,7 @@ export async function getVibeMarketingBootstrap(env: Env, request: Request, comp
     const response = await client.get(`${BASE_PATH}/bootstrap/${query}`);
     return normalizeBootstrap(response.data);
   } catch (error) {
-    if (shouldUseVibeMarketingDevPreview(error)) {
-      console.warn("Vibe Marketing bootstrap unavailable in local dev; using preview bootstrap.");
-      return DEV_BOOTSTRAP;
-    }
+    if (shouldUseDevBackendFallback(error)) return DEV_BOOTSTRAP;
     throw error;
   }
 }
@@ -966,20 +1022,23 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
 
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
   if (shouldUseDevBackendStub()) {
-    return createDevMarketingRunTicket(path, body);
+    const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
+    DEV_RUN_SNAPSHOTS.set(runId, { ...body });
+    return { runId, status: "queued", error: null, errors: [] };
   }
-  try {
-    const client = createApiClient(env, request);
-    const response = await client.post(`${BASE_PATH}/${path}`, body);
-    const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
-    return { runId, status: asNullableString(response.data?.status) ?? "queued" };
-  } catch (error) {
-    if (shouldUseVibeMarketingDevPreview(error)) {
-      console.warn(`Vibe Marketing ${path} run unavailable in local dev; using preview run.`);
-      return createDevMarketingRunTicket(path, body);
-    }
-    throw error;
-  }
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/${path}`, body);
+  const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
+  const error =
+    asNullableString(response.data?.error) ??
+    asNullableString(response.data?.detail) ??
+    asNullableString(response.data?.message);
+  return {
+    runId,
+    status: asNullableString(response.data?.status) ?? "queued",
+    error,
+    errors: asStringList(response.data?.errors ?? (error ? [error] : [])),
+  };
 }
 
 export function startVibeMarketingScan(env: Env, request: Request, body: Record<string, unknown>) {
@@ -1088,20 +1147,33 @@ export function replayVibeMarketingDaily(env: Env, request: Request, body: Recor
 
 export async function getVibeMarketingRun(env: Env, request: Request, runId: string, companyId?: string | null) {
   if (shouldUseDevBackendStub()) {
-    return getDevMarketingRunPreview(runId);
-  }
-  try {
-    const client = createApiClient(env, request);
-    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
-    const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}${query}`);
-    return normalizeMarketingRun(response.data);
-  } catch (error) {
-    if (shouldUseVibeMarketingDevPreview(error)) {
-      console.warn("Vibe Marketing run unavailable in local dev; using preview run.");
-      return getDevMarketingRunPreview(runId);
+    if (runId.includes("autofill")) {
+      return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
     }
-    throw error;
+    return normalizeMarketingRun({
+      runId,
+      workflow: runId.includes("baseline") ? "website_baseline" : "article_generation",
+      domain: DEV_BOOTSTRAP.organization.domain,
+      status: "completed",
+      currentStep: "finalize",
+      stepOrder: runId.includes("baseline")
+        ? ["crawl_technical_health", "measure_lighthouse", "measure_search_visibility", "finalize"]
+        : ["queued", "finalize"],
+      steps: runId.includes("baseline")
+        ? [
+            { key: "crawl_technical_health", status: "completed", attempts: 1, artifacts: [] },
+            { key: "measure_lighthouse", status: "completed", attempts: 1, artifacts: [] },
+            { key: "measure_search_visibility", status: "completed", attempts: 1, artifacts: [] },
+            { key: "finalize", status: "completed", attempts: 1, artifacts: [] },
+          ]
+        : [],
+      result: runId.includes("baseline") ? { baseline: DEV_BOOTSTRAP.websiteBaseline } : {},
+    });
   }
+  const client = createApiClient(env, request);
+  const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+  const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}${query}`);
+  return normalizeMarketingRun(response.data);
 }
 
 export async function controlVibeMarketingRun(

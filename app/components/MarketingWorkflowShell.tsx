@@ -18,7 +18,9 @@ import type {
 
 interface MarketingWorkflowShellProps {
   progress?: VibeMarketingWorkflowProgress | null;
+  viewedStepId?: string | null;
   title?: string;
+  titleAs?: "h1" | "h2";
   subtitle?: string;
   isSubmitting?: boolean;
   primaryActionSlot?: ReactNode;
@@ -90,9 +92,18 @@ function stepKey(step: VibeMarketingWorkflowStep) {
   return `${step.id}-${step.order ?? step.label}`;
 }
 
+function viewingLabel(step: VibeMarketingWorkflowStep) {
+  if (step.id === "profile") return "Startup profile";
+  if (step.id === "repo") return "Repository setup";
+  if (step.id === "article_system") return "Article system setup";
+  return step.label;
+}
+
 export default function MarketingWorkflowShell({
   progress,
+  viewedStepId,
   title = "Article workflow",
+  titleAs = "h2",
   subtitle,
   isSubmitting = false,
   primaryActionSlot,
@@ -100,33 +111,61 @@ export default function MarketingWorkflowShell({
 }: MarketingWorkflowShellProps) {
   const steps = progress?.steps ?? [];
   if (!steps.length) return null;
-  const currentStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
-  const currentIndex = Math.max(0, steps.findIndex((step) => step.id === currentStep.id));
+  const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
+  const viewedStep = steps.find((step) => step.id === viewedStepId) ?? requiredStep;
+  const viewingRequiredStep = viewedStep.id === requiredStep.id;
+  const viewedIndex = Math.max(0, steps.findIndex((step) => step.id === viewedStep.id));
   const completeCount = steps.filter((step) => step.status === "complete").length;
   const percent = Math.max(4, Math.round((completeCount / steps.length) * 100));
   const phases = Array.from(new Set(steps.map((step) => step.phase)));
+  const headerLabel = viewingRequiredStep
+    ? `Next required step: ${requiredStep.label}`
+    : `Viewing: ${viewingLabel(viewedStep)} - ${statusLabel(viewedStep.status)}`;
+  const requiredStepUsesViewedSurface = Boolean(requiredStep.href && viewedStep.href && requiredStep.href === viewedStep.href);
+  const requiredNavigationAction =
+    requiredStep.primaryAction?.label
+      ? {
+          ...requiredStep.primaryAction,
+          href: requiredStep.primaryAction.href || requiredStep.href,
+          variant: requiredStep.primaryAction.variant ?? "secondary",
+        }
+      : { label: `Go to ${requiredStep.label}`, href: requiredStep.href, variant: "secondary" as const };
+  const HeadingTag = titleAs;
 
   return (
     <section className={clsx("rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-extrabold uppercase tracking-wide text-violet-600">
-            Step {currentIndex + 1} of {steps.length}
+            Step {viewedIndex + 1} of {steps.length}
           </p>
-          <h2 className="mt-1 text-xl font-black text-gray-950">{title}</h2>
+          <HeadingTag className={clsx("mt-1 font-black text-gray-950", titleAs === "h1" ? "text-2xl" : "text-xl")}>
+            {title}
+          </HeadingTag>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black", statusTone(currentStep.status))}>
-              <StepStatusIcon status={currentStep.status} />
-              {statusLabel(currentStep.status)}
+            <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black", statusTone(viewedStep.status))}>
+              <StepStatusIcon status={viewedStep.status} />
+              {statusLabel(viewedStep.status)}
             </span>
-            <span className="text-sm font-bold text-gray-700">{currentStep.label}</span>
+            <span className="text-sm font-bold text-gray-700">{headerLabel}</span>
+            {!viewingRequiredStep ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+                Next required step: {requiredStep.label}
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-500">
-            {subtitle ?? currentStep.summary}
+            {subtitle ?? viewedStep.summary}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {primaryActionSlot ?? <ActionButton action={currentStep.primaryAction} disabled={isSubmitting} />}
+          {viewingRequiredStep ? (
+            primaryActionSlot ?? <ActionButton action={requiredStep.primaryAction} disabled={isSubmitting} />
+          ) : requiredStepUsesViewedSurface && primaryActionSlot ? (
+            primaryActionSlot
+          ) : (
+            <ActionButton action={requiredNavigationAction} disabled={isSubmitting} />
+          )}
         </div>
       </div>
 
@@ -138,7 +177,7 @@ export default function MarketingWorkflowShell({
         {phases.map((phase) => {
           const phaseSteps = steps.filter((step) => step.phase === phase);
           const phaseComplete = phaseSteps.every((step) => step.status === "complete");
-          const phaseActive = phaseSteps.some((step) => step.id === currentStep.id);
+          const phaseActive = phaseSteps.some((step) => step.id === viewedStep.id);
           return (
             <span
               key={phase}
@@ -157,7 +196,8 @@ export default function MarketingWorkflowShell({
 
       <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
         {steps.map((step, index) => {
-          const active = step.id === currentStep.id;
+          const active = step.id === viewedStep.id;
+          const nextRequired = step.id === requiredStep.id;
           const locked = step.status === "locked";
           const content = (
             <>
@@ -166,13 +206,21 @@ export default function MarketingWorkflowShell({
               </span>
               <span className="min-w-0">
                 <span className={clsx("block truncate text-sm font-black", active ? "text-violet-800" : "text-gray-900")}>{step.label}</span>
-                <span className="mt-0.5 block truncate text-xs font-semibold text-gray-500">{statusLabel(step.status)}</span>
+                <span className="mt-0.5 flex flex-wrap items-center gap-1 text-xs font-semibold text-gray-500">
+                  <span className="truncate">{statusLabel(step.status)}</span>
+                  {nextRequired && !active ? (
+                    <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-black uppercase text-violet-700">
+                      Next required
+                    </span>
+                  ) : null}
+                </span>
               </span>
             </>
           );
           const itemClass = clsx(
             "flex min-h-[64px] items-center gap-3 rounded-xl border px-3 py-2 text-left transition",
             active ? "border-violet-200 bg-violet-50 shadow-sm" : "border-gray-100 bg-gray-50/70",
+            nextRequired && !active && "border-violet-100 bg-white",
             !locked && "hover:border-violet-200 hover:bg-white",
             locked && "opacity-70",
           );

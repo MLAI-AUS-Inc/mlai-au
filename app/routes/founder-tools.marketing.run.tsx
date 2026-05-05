@@ -13,9 +13,10 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
-import MarketingEvidencePanel from "~/components/MarketingEvidencePanel";
+import ArticleRunStageProgress, { articleRunTechnicalProgressLabel } from "~/components/ArticleRunStageProgress";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
 import {
   controlVibeMarketingRun,
@@ -24,7 +25,6 @@ import {
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
-  normalizeArticleDeliveryMode,
   submitVibeMarketingComponentComments,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
@@ -48,6 +48,12 @@ const POLLING_STATUSES = new Set([
   "awaiting_approval",
   "approval_required",
 ]);
+
+const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
+const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
+const ARTICLE_WORKFLOWS = new Set(["article_generation", "content_factory_article", "article_revision"]);
+const RESUMABLE_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed"]);
+const APPROVAL_GATE_STATUSES = new Set(["awaiting_approval", "approval_required"]);
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
@@ -102,7 +108,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       }
     } else if (intent === "delivery-mode") {
       await controlVibeMarketingRun(env, request, runId, "delivery-mode", {
-        deliveryMode: normalizeArticleDeliveryMode(formData.get("deliveryMode"), "content_only"),
+        deliveryMode: String(formData.get("deliveryMode") ?? ""),
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
@@ -126,10 +132,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: normalizeArticleDeliveryMode(
-          stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
-          "content_only",
-        ),
+        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
@@ -243,6 +246,12 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
         keyword: keyword || title,
         title: title || keyword,
         reason: asString(payload.reason) || asString(payload.selection_reason) || asString(payload.rationale),
+        audience: asString(payload.audience) || asString(payload.target_audience) || asString(payload.targetAudience),
+        confidence: asString(payload.confidence),
+        trend: payload.trend ?? payload.search_trend,
+        interest: payload.interest ?? payload.interest_trend,
+        competition: payload.competition ?? payload.competition_level,
+        aiSearches: payload.aiSearches ?? payload.ai_searches ?? payload.ai_search_volume,
         source: asString(payload.source) || "discovery",
         sourceRunId: asString(payload.source_run_id) || asString(payload.sourceRunId) || run.runId,
         intent: payload.intent,
@@ -266,6 +275,173 @@ function StepStatusDot({ status }: { status: string }) {
         !isComplete && !isFailed && "bg-violet-300",
       )}
     />
+  );
+}
+
+function RunStepTimeline({ run, framed = true }: { run: VibeMarketingRunSummary; framed?: boolean }) {
+  return (
+    <section className={framed ? "rounded-xl border border-gray-200 bg-white p-5 shadow-sm" : ""}>
+      <h2 className="text-lg font-black text-gray-950">Step timeline</h2>
+      {run.steps.length > 0 ? (
+        <ol className="mt-5 space-y-4">
+          {run.steps.map((step) => (
+            <li key={step.key} className="flex gap-3">
+              <StepStatusDot status={step.status} />
+              <div className="min-w-0 flex-1 border-b border-gray-100 pb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <p className="text-sm font-black text-gray-950">{step.name}</p>
+                  <span className="rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                    {step.status.replace(/_/g, " ")}
+                  </span>
+                </div>
+                {step.message ? <p className="mt-1 text-sm text-gray-600">{step.message}</p> : null}
+                {step.error ? <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{step.error}</p> : null}
+                {step.artifacts.length > 0 ? (
+                  <p className="mt-2 text-xs font-semibold text-gray-500">{step.artifacts.length} artifacts</p>
+                ) : null}
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-4 rounded-xl bg-gray-50 px-4 py-8 text-center text-sm font-semibold text-gray-500">
+          No step details have been reported yet.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function RunApprovalActions({
+  isSubmitting,
+  approveLabel = "Approve",
+  denyLabel = "Deny",
+}: {
+  isSubmitting: boolean;
+  approveLabel?: string;
+  denyLabel?: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Form method="POST">
+        <button
+          type="submit"
+          name="intent"
+          value="deny"
+          disabled={isSubmitting}
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+        >
+          <XCircleIcon className="h-4 w-4" />
+          {denyLabel}
+        </button>
+      </Form>
+      <Form method="POST">
+        <button
+          type="submit"
+          name="intent"
+          value="approve"
+          disabled={isSubmitting}
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+        >
+          <CheckCircleIcon className="h-4 w-4" />
+          {approveLabel}
+        </button>
+      </Form>
+    </div>
+  );
+}
+
+function RunDiagnosticsDetails({ run }: { run: VibeMarketingRunSummary }) {
+  return (
+    <details className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm">
+      <summary className="cursor-pointer text-sm font-black text-gray-700">Run diagnostics</summary>
+      <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <dt className="font-black uppercase tracking-wide text-gray-400">Run ID</dt>
+          <dd className="mt-1 break-all font-mono text-gray-600">{run.runId}</dd>
+        </div>
+        <div>
+          <dt className="font-black uppercase tracking-wide text-gray-400">Workflow</dt>
+          <dd className="mt-1 font-semibold text-gray-700">{run.workflow || "Not reported"}</dd>
+        </div>
+        <div>
+          <dt className="font-black uppercase tracking-wide text-gray-400">Status</dt>
+          <dd className="mt-1 font-semibold text-gray-700">{run.status || "Not reported"}</dd>
+        </div>
+        <div>
+          <dt className="font-black uppercase tracking-wide text-gray-400">Current step</dt>
+          <dd className="mt-1 font-semibold text-gray-700">{run.currentStep || "Not reported"}</dd>
+        </div>
+      </dl>
+    </details>
+  );
+}
+
+function PublishApprovalPanel({
+  run,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  isSubmitting: boolean;
+}) {
+  const previewUrl = run.previewUrl || stringResultValue(run, "preview_url", "previewUrl", "article_url", "articleUrl");
+  const prUrl = run.prUrl || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl");
+
+  return (
+    <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-900">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-emerald-950">Publish approval</h2>
+          <p className="mt-2 font-semibold">
+            Review the preview or PR evidence, then approve publication or deny this run.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {previewUrl ? (
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-black text-emerald-800 transition hover:bg-emerald-100"
+              >
+                Open preview
+              </a>
+            ) : null}
+            {prUrl ? (
+              <a
+                href={prUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-xl border border-emerald-200 bg-white px-3 py-2 text-xs font-black text-emerald-800 transition hover:bg-emerald-100"
+              >
+                Open PR
+              </a>
+            ) : null}
+          </div>
+        </div>
+        <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
+      </div>
+    </section>
+  );
+}
+
+function TechnicalRunDetails({ run, defaultOpen = false }: { run: VibeMarketingRunSummary; defaultOpen?: boolean }) {
+  return (
+    <details className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 text-left">
+        <span>
+          <span className="block text-lg font-black text-gray-950">Technical run details</span>
+          <span className="mt-1 block text-sm font-semibold text-gray-500">
+            Internal pipeline checks are available for debugging.
+          </span>
+        </span>
+        <span className="rounded-full bg-gray-50 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-gray-500">
+          {articleRunTechnicalProgressLabel(run)}
+        </span>
+      </summary>
+      <div className="mt-5 border-t border-gray-100 pt-5">
+        <RunStepTimeline run={run} framed={false} />
+      </div>
+    </details>
   );
 }
 
@@ -1124,6 +1300,8 @@ function ArticleWorkflowPrimaryAction({
   const publishUrl = run.previewUrl || run.prUrl || (typeof run.result?.["preview_url"] === "string" ? run.result["preview_url"] : "") || (typeof run.result?.["pr_url"] === "string" ? run.result["pr_url"] : "");
   const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
 
+  if (isPublishApprovalGate(run)) return null;
+
   if (canAcceptRevision) {
     return (
       <Form method="POST">
@@ -1183,6 +1361,64 @@ function ArticleWorkflowPrimaryAction({
   return null;
 }
 
+function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
+  for (const key of keys) {
+    const value = run.result?.[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    const nestedResult = run.result?.["result"];
+    if (nestedResult && typeof nestedResult === "object") {
+      const nestedValue = (nestedResult as Record<string, unknown>)[key];
+      if (typeof nestedValue === "string" && nestedValue.trim()) return nestedValue.trim();
+    }
+  }
+  return "";
+}
+
+function hasReviewTarget(run: VibeMarketingRunSummary) {
+  return Boolean(run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl"));
+}
+
+function isRunApprovalRequired(run: VibeMarketingRunSummary) {
+  return run.approvalState === "approval_required" || APPROVAL_GATE_STATUSES.has(run.status);
+}
+
+function isScaffoldApprovalGate(run: VibeMarketingRunSummary) {
+  const workflow = String(run.workflow ?? "");
+  if (!SCAN_WORKFLOWS.has(workflow)) return false;
+  const requestedAction = stringResultValue(run, "requested_action");
+  const scaffoldStatus = stringResultValue(run, "scaffold_status");
+  return (
+    isRunApprovalRequired(run) ||
+    (run.status === "awaiting_confirmation" &&
+      (requestedAction === "scaffold_publish_route" || scaffoldStatus === "approval_required"))
+  );
+}
+
+function isPublishApprovalGate(run: VibeMarketingRunSummary) {
+  const workflow = String(run.workflow ?? "");
+  return ARTICLE_WORKFLOWS.has(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
+}
+
+function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
+  const workflow = String(run.workflow ?? "");
+  if (DISCOVERY_WORKFLOWS.has(workflow)) {
+    return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
+  }
+  if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
+  if (workflow === "website_baseline") return "baseline";
+  if (workflow === "article_revision") return "revise";
+  if (ARTICLE_WORKFLOWS.has(workflow)) {
+    const publishUrl = run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl");
+    const isPublishRun = run.workflowProgress?.currentStepId === "publish" && (POLLING_STATUSES.has(run.status) || Boolean(publishUrl));
+    if (isPublishRun) return "publish";
+    if (POLLING_STATUSES.has(run.status)) return "generate";
+    if (run.contentPackage?.contentPackaged) return "package";
+    if (run.componentManifest) return "review";
+    return "generate";
+  }
+  return run.workflowProgress?.currentStepId ?? null;
+}
+
 export default function FounderToolsMarketingRun() {
   const { run, bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -1193,7 +1429,9 @@ export default function FounderToolsMarketingRun() {
   const shouldPoll = POLLING_STATUSES.has(run.status);
   const workflow = String(run.workflow ?? "");
   const isArticleWorkflow = ["article_generation", "content_factory_article", "article_revision"].includes(workflow);
+  const isArticleGenerationWorkflow = ["article_generation", "content_factory_article"].includes(workflow);
   const contentPackage = run.contentPackage;
+  const runNeedsAttention = ["blocked", "failed", "blocked_verification", "denied", "cancelled"].includes(run.status);
   const hasArticlePreview =
     ["article_generation", "content_factory_article", "article_revision"].includes(workflow) &&
     Boolean(contentPackage?.contentPackaged || run.componentManifest);
@@ -1202,13 +1440,31 @@ export default function FounderToolsMarketingRun() {
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation";
-  const isScaffoldApproval =
-    ["repo_scan", "content_factory_scan"].includes(workflow) &&
-    ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
-  const hasPublishApprovalTarget = Boolean(run.previewUrl || run.prUrl || run.result?.["preview_url"] || run.result?.["pr_url"]);
-  const canApprove = isScaffoldApproval || hasPublishApprovalTarget;
-  const canDeny = isScaffoldApproval || hasPublishApprovalTarget;
-  const discoveryCandidates = isDiscoveryConfirmation ? topicCandidatesFromRun(run) : [];
+  const isScaffoldApproval = isScaffoldApprovalGate(run);
+  const isPublishApproval = isPublishApprovalGate(run);
+  const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status);
+  const canResume = Boolean(run.resumeAvailable && RESUMABLE_ATTENTION_STATUSES.has(run.status));
+  const discoveryCandidates = useMemo(
+    () => (isDiscoveryConfirmation ? topicCandidatesFromRun(run) : []),
+    [isDiscoveryConfirmation, run],
+  );
+  const [selectedDiscoveryCandidateId, setSelectedDiscoveryCandidateId] = useState(discoveryCandidates[0]?.id ?? "");
+  const selectedDiscoveryCandidate = useMemo(
+    () => discoveryCandidates.find((candidate) => candidate.id === selectedDiscoveryCandidateId) ?? discoveryCandidates[0] ?? null,
+    [discoveryCandidates, selectedDiscoveryCandidateId],
+  );
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run);
+  const workflowProgress = run.workflowProgress ?? bootstrap.workflowProgress;
+
+  useEffect(() => {
+    if (!isDiscoveryConfirmation) return;
+    const firstCandidateId = discoveryCandidates[0]?.id ?? "";
+    const selectionStillValid = discoveryCandidates.some((candidate) => candidate.id === selectedDiscoveryCandidateId);
+    if (!selectionStillValid && selectedDiscoveryCandidateId !== firstCandidateId) {
+      setSelectedDiscoveryCandidateId(firstCandidateId);
+    }
+  }, [discoveryCandidates, isDiscoveryConfirmation, selectedDiscoveryCandidateId]);
+
   useEffect(() => {
     if (!shouldPoll) return;
     const timer = window.setInterval(() => {
@@ -1219,38 +1475,12 @@ export default function FounderToolsMarketingRun() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4 border-b border-gray-200 pb-5">
-        <div>
-          <Link to="/founder-tools/marketing" className="mb-3 inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-800">
-            <ArrowLeftIcon className="h-4 w-4" />
-            Back to marketing
-          </Link>
-          <h1 className="text-2xl font-black text-gray-950">Marketing run</h1>
-          <p className="mt-2 break-all font-mono text-xs text-gray-500">{run.runId}</p>
-        </div>
-        {!isArticleWorkflow ? (
-          <div className="flex flex-wrap gap-3">
-            <Form method="POST">
-              <button type="submit" name="intent" value="resume" disabled={isSubmitting || !run.resumeAvailable} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50">
-                <PlayIcon className="h-4 w-4" />
-                Resume
-              </button>
-            </Form>
-            <Form method="POST">
-              <button type="submit" name="intent" value="deny" disabled={isSubmitting || !canDeny} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50">
-                <XCircleIcon className="h-4 w-4" />
-                Deny
-              </button>
-            </Form>
-            <Form method="POST">
-              <button type="submit" name="intent" value="approve" disabled={isSubmitting || !canApprove} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50">
-                <CheckCircleIcon className="h-4 w-4" />
-                Approve
-              </button>
-            </Form>
-          </div>
-        ) : null}
-      </div>
+      <nav className="border-b border-gray-200 pb-4" aria-label="Breadcrumb">
+        <Link to="/founder-tools/marketing" className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-800">
+          <ArrowLeftIcon className="h-4 w-4" />
+          Back to marketing
+        </Link>
+      </nav>
 
       {actionData?.error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -1259,8 +1489,10 @@ export default function FounderToolsMarketingRun() {
       ) : null}
 
       <MarketingWorkflowShell
-        progress={run.workflowProgress ?? bootstrap.workflowProgress}
+        progress={workflowProgress}
+        viewedStepId={viewedWorkflowStepId}
         title="Create and publish article"
+        titleAs="h1"
         isSubmitting={isSubmitting}
         primaryActionSlot={isArticleWorkflow ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
       />
@@ -1274,54 +1506,68 @@ export default function FounderToolsMarketingRun() {
         />
       ) : null}
 
+      {isPublishApproval ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
+
       {!isCompletedArticleReviewPage ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <main className="space-y-6">
+        <main className="space-y-6">
+          {isArticleGenerationWorkflow ? (
+            <ArticleRunStageProgress run={run} pollingDegraded={revalidator.state === "loading"} />
+          ) : (
             <MarketingRunProgressCard run={run} pollingDegraded={revalidator.state === "loading"} />
+          )}
 
           {isDiscoveryConfirmation ? (
             <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">
               <h2 className="text-lg font-black text-gray-950">Discovery confirmation</h2>
-              <div className="mt-4 space-y-3">
-                {discoveryCandidates.length > 0 ? (
-                  discoveryCandidates.slice(0, 5).map((candidate, index) => (
-                    <div key={`${candidate.id}-${index}`} className="rounded-xl border border-gray-200 p-4">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-sm font-black text-gray-950">{candidate.title}</p>
-                          <p className="mt-1 text-xs font-semibold text-gray-500">{candidate.keyword}</p>
-                          {candidate.reason ? <p className="mt-2 text-sm text-gray-600">{candidate.reason}</p> : null}
-                        </div>
-                        <Form method="POST">
-                          <input type="hidden" name="intent" value="start-article" />
-                          <input type="hidden" name="topicCandidateId" value={candidate.id} />
-                          <input type="hidden" name="candidateTitle" value={candidate.title} />
-                          <input type="hidden" name="candidateKeyword" value={candidate.keyword} />
-                          <input type="hidden" name="sourceRunId" value={candidate.sourceRunId ?? run.runId} />
-                          <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "content_only"} />
-                          <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
-                            <CheckCircleIcon className="h-4 w-4" />
-                            Generate article from this topic
-                          </button>
-                        </Form>
+              {discoveryCandidates.length > 0 && selectedDiscoveryCandidate ? (
+                <Form method="POST" className="mt-4 space-y-4">
+                  <input type="hidden" name="intent" value="start-article" />
+                  <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
+                  <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
+                  <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
+                  <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "content_only"} />
+                  <div className="grid gap-3">
+                    {discoveryCandidates.slice(0, 5).map((candidate) => (
+                      <TopicDecisionCard
+                        key={candidate.id}
+                        candidate={candidate}
+                        checked={selectedDiscoveryCandidate.id === candidate.id}
+                        onChange={() => setSelectedDiscoveryCandidateId(candidate.id)}
+                      />
+                    ))}
+                  </div>
+                  <div className="sticky bottom-4 z-10 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
+                        <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedDiscoveryCandidate.title}</p>
                       </div>
+                      <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
+                        <CheckCircleIcon className="h-4 w-4" />
+                        Generate draft article
+                      </button>
                     </div>
-                  ))
-                ) : (
-                  <p className="rounded-xl bg-gray-50 px-4 py-5 text-sm font-semibold text-gray-500">
-                    No topic candidates were included in this discovery result.
-                  </p>
-                )}
-              </div>
+                  </div>
+                </Form>
+              ) : (
+                <p className="mt-4 rounded-xl bg-gray-50 px-4 py-5 text-sm font-semibold text-gray-500">
+                  No topic candidates were included in this discovery result.
+                </p>
+              )}
             </section>
           ) : null}
 
           {isScaffoldApproval ? (
             <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              <h2 className="text-lg font-black text-amber-950">Scaffold approval</h2>
-              <p className="mt-2 font-semibold">
-                Review the scan result and use Approve or Deny above to continue the article system setup.
-              </p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 className="text-lg font-black text-amber-950">Scaffold approval</h2>
+                  <p className="mt-2 font-semibold">
+                    Review the scan result, then approve setup or deny the scaffold request.
+                  </p>
+                </div>
+                <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve setup" denyLabel="Deny setup" />
+              </div>
               {run.result?.["route_path"] || run.result?.["path"] ? (
                 <p className="mt-3 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-amber-900">
                   {String(run.result?.["route_path"] ?? run.result?.["path"])}
@@ -1356,56 +1602,48 @@ export default function FounderToolsMarketingRun() {
             </section>
           ) : null}
 
-          {run.status === "blocked" || run.status === "failed" ? (
+          {showRunAttentionBanner ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
-              <div className="flex items-start gap-3">
-                <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
-                <div>
-                  <p className="font-black">This run needs attention</p>
-                  <p className="mt-1">{run.errors[0] ?? "Review the failed step and resume when ready."}</p>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <ExclamationTriangleIcon className="h-5 w-5 flex-shrink-0" />
+                  <div>
+                    <p className="font-black">This run needs attention</p>
+                    <p className="mt-1">{run.errors[0] ?? "Review the failed step and resume when ready."}</p>
+                  </div>
                 </div>
+                {canResume ? (
+                  <Form method="POST">
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="resume"
+                      disabled={isSubmitting}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50 sm:w-auto"
+                    >
+                      <PlayIcon className="h-4 w-4" />
+                      Resume run
+                    </button>
+                  </Form>
+                ) : null}
               </div>
             </div>
           ) : null}
 
-          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-gray-950">Step timeline</h2>
-            {run.steps.length > 0 ? (
-              <ol className="mt-5 space-y-4">
-                {run.steps.map((step) => (
-                  <li key={step.key} className="flex gap-3">
-                    <StepStatusDot status={step.status} />
-                    <div className="min-w-0 flex-1 border-b border-gray-100 pb-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-sm font-black text-gray-950">{step.name}</p>
-                        <span className="rounded-full bg-gray-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-500">
-                          {step.status.replace(/_/g, " ")}
-                        </span>
-                      </div>
-                      {step.message ? <p className="mt-1 text-sm text-gray-600">{step.message}</p> : null}
-                      {step.error ? <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{step.error}</p> : null}
-                      {step.artifacts.length > 0 ? (
-                        <p className="mt-2 text-xs font-semibold text-gray-500">{step.artifacts.length} artifacts</p>
-                      ) : null}
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-4 rounded-xl bg-gray-50 px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                No step details have been reported yet.
-              </p>
-            )}
-          </section>
+          {isArticleGenerationWorkflow ? (
+            <TechnicalRunDetails run={run} defaultOpen={runNeedsAttention} />
+          ) : (
+            <RunStepTimeline run={run} />
+          )}
+
+          <RunDiagnosticsDetails run={run} />
 
           {contentPackage?.contentPackaged || run.componentManifest ? (
             <ComponentCommentsPanel run={run} selectedComponent={selectedComponent} isSubmitting={isSubmitting} />
           ) : null}
-          </main>
-
-          <MarketingEvidencePanel run={run} />
-        </div>
+        </main>
       ) : null}
+      {isCompletedArticleReviewPage ? <RunDiagnosticsDetails run={run} /> : null}
     </div>
   );
 }
