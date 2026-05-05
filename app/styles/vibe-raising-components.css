@@ -87,9 +87,9 @@
 .vr-scope .vr-delta-neutral { color: var(--vr-color-text-sub); }
 
 .vr-scope .vr-badge-orange {
-  background: rgba(237, 95, 0, 0.1);
+  background: rgba(232, 69, 33, 0.1);
   color: var(--vr-color-brand-orange);
-  border: 1px solid rgba(237, 95, 0, 0.2);
+  border: 1px solid rgba(232, 69, 33, 0.2);
 }
 
 /* ── Alerts ───────────────────────────────────────────────── */
@@ -132,19 +132,19 @@
 }
 
 .vr-scope .vr-alert-success {
-  background: rgba(0, 255, 215, 0.12);
+  background: rgba(0, 200, 204, 0.12);
   border-color: var(--vr-color-featured);
-  color: var(--vr-color-primary);
+  color: #007a7d;
 }
 
 .vr-scope .vr-alert-warning {
-  background: rgba(255, 200, 1, 0.16);
+  background: rgba(245, 166, 35, 0.12);
   border-color: var(--vr-color-warning);
   color: var(--vr-color-neutral-900);
 }
 
 .vr-scope .vr-alert-danger {
-  background: rgba(242, 114, 63, 0.12);
+  background: rgba(232, 69, 33, 0.12);
   border-color: var(--vr-color-danger);
   color: var(--vr-color-neutral-900);
 }
@@ -502,9 +502,9 @@
 }
 
 .vr-scope .vr-badge-teal {
-  background: rgba(0, 255, 215, 0.12);
-  color: var(--vr-color-primary);
-  border: 1px solid rgba(0, 255, 215, 0.26);
+  background: rgba(0, 200, 204, 0.1);
+  color: #007a7d;
+  border: 1px solid rgba(0, 200, 204, 0.25);
 }
 
 .vr-scope .vr-badge-blue {
@@ -517,6 +517,39 @@
   background: var(--vr-color-surface);
   color: var(--vr-color-text-mid);
   border: 1px solid var(--vr-color-border-md);
+}
+
+/* Investor card grid */
+.vr-scope .vr-investor-card {
+  border: 1px solid var(--vr-color-border);
+  box-shadow: var(--vr-shadow-sm);
+  transition:
+    transform 0.28s ease-out,
+    box-shadow 0.28s ease-out,
+    border-color 0.28s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover {
+  transform: scale(1.008);
+  box-shadow: var(--vr-shadow-md);
+  border-color: rgba(107, 48, 217, 0.24);
+}
+
+.vr-scope .vr-investor-card-banner {
+  transition: transform 0.5s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+  transform: scale(1.015);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vr-scope .vr-investor-card:hover,
+  .vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+    transform: none;
+  }
 }
 
 /* ── Company showcase (active company hero on /vibe-raising/companies) ── */
@@ -624,7 +657,7 @@
 
 .vr-scope .vr-company-card-add:hover {
   border-color: var(--vr-color-primary);
-  background: rgba(0, 255, 215, 0.12);
+  background: var(--vr-color-primary-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -78,8 +78,8 @@ function ProviderStep({
           className={clsx(
             "relative flex flex-col items-center gap-4 rounded-xl border-2 p-6 transition-all duration-200",
             gmailBusy
-              ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
-              : "border-[var(--vr-color-border)] hover:border-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.08)] hover:shadow-md",
+              ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary-soft)]"
+              : "border-[var(--vr-color-border)] hover:border-[var(--vr-palette-coral)] hover:bg-[rgba(232,69,33,0.08)] hover:shadow-md",
             connectingProvider !== null && !gmailBusy && "cursor-not-allowed opacity-50",
           )}
         >
@@ -128,7 +128,7 @@ function ProviderStep({
         <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/95 p-3 backdrop-blur-sm sm:p-4">
           <div className="w-full max-w-sm rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-color-card)] p-5 shadow-xl">
             <div className="flex items-start gap-3">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(0,255,215,0.14)]">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[var(--vr-color-primary-soft)]">
                 <ShieldCheckIcon className="h-6 w-6 text-[var(--vr-color-primary)]" />
               </div>
               <div>
@@ -196,7 +196,7 @@ function ProviderStep({
       )}
 
       {errorMessage && (
-        <div className="mt-4 rounded-xl border border-[rgba(242,114,63,0.35)] bg-[rgba(242,114,63,0.10)] px-4 py-3 text-sm text-[var(--vr-color-text)]">
+        <div className="mt-4 rounded-xl border border-[rgba(232,69,33,0.35)] bg-[rgba(232,69,33,0.10)] px-4 py-3 text-sm text-[var(--vr-color-text)]">
           {errorMessage}
         </div>
       )}

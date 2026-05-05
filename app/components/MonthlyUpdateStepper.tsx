@@ -68,7 +68,7 @@ export default function MonthlyUpdateStepper({
             </p>
             <p className="mt-1 text-sm font-black text-[var(--vr-color-text)]">{active.title}</p>
           </div>
-          <span className="rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,128,128,0.14)]">
+          <span className="rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(107,48,217,0.14)]">
             {active.helper}
           </span>
         </div>
@@ -92,9 +92,9 @@ export default function MonthlyUpdateStepper({
                 onClick={() => onStepClick?.(step.key)}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 transition",
-                  canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
+                  canSelect ? "cursor-pointer hover:bg-[var(--vr-color-primary-soft)]" : "cursor-default",
                   isActive && "bg-[var(--vr-color-primary)] text-white ring-[var(--vr-color-primary)]",
-                  isComplete && !isActive && "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                  isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(107,48,217,0.24)]",
                   !isActive && !isComplete && "bg-[var(--vr-color-neutral-50)] text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",
                 )}
               >
@@ -115,7 +115,7 @@ export default function MonthlyUpdateStepper({
       >
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-4 rounded-2xl px-1 py-2 text-left outline-none transition hover:bg-[rgba(0,255,215,0.08)] focus-visible:bg-[rgba(0,255,215,0.08)] focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.18)]"
+          className="flex w-full items-center justify-between gap-4 rounded-2xl px-1 py-2 text-left outline-none transition hover:bg-[var(--vr-color-primary-soft)] focus-visible:bg-[var(--vr-color-primary-soft)] focus-visible:ring-2 focus-visible:ring-[rgba(107,48,217,0.18)]"
           aria-label="Show monthly update workflow"
         >
           <div className="min-w-0">
@@ -126,7 +126,7 @@ export default function MonthlyUpdateStepper({
               {active.title}
             </h2>
           </div>
-          <span className="hidden rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.24)] sm:inline-flex">
+          <span className="hidden rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(107,48,217,0.24)] sm:inline-flex">
             Hover for steps
           </span>
         </button>
@@ -154,9 +154,9 @@ export default function MonthlyUpdateStepper({
                     onClick={() => onStepClick?.(step.key)}
                     className={clsx(
                       "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 transition",
-                      canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
+                      canSelect ? "cursor-pointer hover:bg-[var(--vr-color-primary-soft)]" : "cursor-default",
                       isActive && "bg-[var(--vr-color-primary)] text-white ring-[var(--vr-color-primary)]",
-                      isComplete && !isActive && "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                      isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(107,48,217,0.24)]",
                       !isActive && !isComplete && "bg-[var(--vr-color-neutral-50)] text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",
                     )}
                   >
@@ -189,14 +189,14 @@ export default function MonthlyUpdateStepper({
                       onClick={() => onStepClick?.(step.key)}
                       className={clsx(
                         "relative flex w-full flex-col items-center rounded-xl px-2 pb-3 text-center transition",
-                        canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.12)]" : "cursor-default",
+                        canSelect ? "cursor-pointer hover:bg-[var(--vr-color-primary-soft)]" : "cursor-default",
                       )}
                     >
                       <div
                         className={clsx(
                           "z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-base font-black transition",
                           isComplete && "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white",
-                          isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(0,128,128,0.10)]",
+                          isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(107,48,217,0.10)]",
                           !isActive && !isComplete && "border-[var(--vr-color-border)] text-[var(--vr-color-text-sub)]",
                         )}
                       >
@@ -247,7 +247,7 @@ export default function MonthlyUpdateStepper({
             </p>
             <p className="mt-1 text-base font-black text-[var(--vr-color-text)]">{active.title}</p>
           </div>
-          <span className="rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,128,128,0.14)]">
+          <span className="rounded-full bg-[var(--vr-color-primary-soft)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(107,48,217,0.14)]">
             {active.helper}
           </span>
         </div>
@@ -271,9 +271,9 @@ export default function MonthlyUpdateStepper({
                 onClick={() => onStepClick?.(step.key)}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 transition",
-                  canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
+                  canSelect ? "cursor-pointer hover:bg-[var(--vr-color-primary-soft)]" : "cursor-default",
                   isActive && "bg-[var(--vr-color-primary)] text-white ring-[var(--vr-color-primary)]",
-                  isComplete && !isActive && "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                  isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(107,48,217,0.24)]",
                   !isActive && !isComplete && "bg-[var(--vr-color-neutral-50)] text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",
                 )}
               >
@@ -319,7 +319,7 @@ export default function MonthlyUpdateStepper({
                   className={clsx(
                     "relative flex w-full flex-col items-center rounded-xl px-2 text-center transition",
                     frameless ? "pb-3" : "pb-2",
-                    canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.12)]" : "cursor-default",
+                    canSelect ? "cursor-pointer hover:bg-[var(--vr-color-primary-soft)]" : "cursor-default",
                   )}
                 >
                 <div
@@ -327,7 +327,7 @@ export default function MonthlyUpdateStepper({
                     "z-10 flex items-center justify-center rounded-full border-2 bg-white font-black transition",
                     frameless ? "h-14 w-14 text-base" : "h-10 w-10 text-sm",
                     isComplete && "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white",
-                    isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(0,128,128,0.10)]",
+                    isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(107,48,217,0.10)]",
                     !isActive && !isComplete && "border-[var(--vr-color-border)] text-[var(--vr-color-text-sub)]",
                   )}
                 >

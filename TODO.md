@@ -1,9 +1,24 @@
+- [ ] Review PRs #395, #396, #397, and #400 against current Founder Tools code
+- [ ] Apply missing design-system changes locally without duplicating merged code
+- [ ] Resolve any conflicts from current `/founder-tools` route names
+- [ ] Run `bun run typecheck`
+- [ ] Preview `/founder-tools/updates` and related Founder Tools pages locally
+- [x] Switch Founder Tools preview to PR #387 `VITE_STUB_BACKEND` mode
+- [x] Restart localhost preview after switching stub mode
+- [x] Verify Founder Tools loads seeded monthly update data from the PR stub
+- [x] Enable local Founder Tools auth bypass for preview
+- [x] Restart localhost preview with the dev auth stub active
+- [x] Verify `/founder-tools` no longer redirects to login
 - [x] Add targeted 301 redirects for Google legacy 404 URLs
 - [x] Restore registry entries for the missing canonical article targets
 - [x] Regenerate `public/sitemap.xml`
 - [x] Run `bun run typecheck`
 - [x] Run `bun run build`
 - [x] Curl-check legacy redirects and canonical targets
+- [x] Fetch latest GitHub refs for `origin/main` and `origin/yichen/mobile-layout-fixes`
+- [x] Apply `origin/yichen/mobile-layout-fixes` changes onto the latest repo version
+- [x] Reconcile local uncommitted lockfile/settings changes after updating the branch
+- [x] Run `bun run typecheck`
 - [x] Add cleanup redirects for broken internal article CTA URLs
 - [x] Replace broken article CTA hrefs and copy with live destinations
 - [x] Add an internal article-link validator to `bun run typecheck`
@@ -249,3 +264,21 @@
 - [x] Simplify step 3 review header and align its "How it works" section with the earlier steps
 - [x] Match the step 3 "How it works" bar position and spacing to the earlier steps
 - [x] Make the Vibe Marketing sidebar route fall back cleanly in local dev instead of throwing a raw 401 page
+- [x] Rename local integration branch to `yichen/integrate-founder-tools-design-prs`
+- [x] Review PRs #395, #396, #397, and #400 against the current Founder Tools route structure
+- [x] Re-apply missing PR #397 sidebar behavior without replacing the newer Founder Tools shell styling
+- [x] Restore the PR #400 Discover Investors page under `/founder-tools/discover`
+- [x] Re-run typecheck and localhost preview for the integrated Founder Tools PR changes
+- [x] Bring Founder Tools semantic tokens back toward the Valley design-system palette for consistency after later PR drift
+- [x] Re-run typecheck and preview Founder Tools pages after the token consistency pass
+- [x] Restore mint as the Founder Tools sidebar active/click highlight token in the design system
+
+## Founder Tools design review notes
+
+- Current direction: move Founder Tools toward a refined investor operating-room feel: crisp, high-trust, editorial, and data-rich rather than a generic SaaS dashboard.
+- Keep: Oswald + DM Sans, purple as the primary action color, teal/mint as featured or navigation highlight, neutral canvas, white cards, and mint sidebar active state.
+- Improve: create one memorable hero moment on `/founder-tools/updates`, likely around the current update or investor signal, before the metrics row.
+- Improve: standardize buttons into shared `vr-button-primary`, `vr-button-secondary`, and `vr-button-ghost` classes instead of repeating inline Tailwind styles.
+- Improve: make Discover Investors feel less like placeholder cards and more like a premium matching surface with firm identity, stage fit, unlock criteria, and a "why matched" signal.
+- Improve: move repeated chips, alert panels, CTA styles, gradients, and status surfaces out of route files into `vibe-raising-components.css`.
+- Guardrail: keep sidebar mint active/click highlight as a deliberate design-system token, not a one-off component color.

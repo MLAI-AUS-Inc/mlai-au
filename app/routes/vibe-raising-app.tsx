@@ -23,10 +23,12 @@ import {
   CircleStackIcon,
   DocumentTextIcon,
   MegaphoneIcon,
+  UsersIcon,
 } from "@heroicons/react/24/outline";
 
 const FOUNDER_NAVIGATION = [
   { name: "Vibe Raising", href: "/founder-tools/updates", icon: DocumentTextIcon, exact: true },
+  { name: "Discover Investors", href: "/founder-tools/discover", icon: UsersIcon },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
   { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
   { name: "Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },

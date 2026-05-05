@@ -167,12 +167,12 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary-soft)] ring-1 ring-[rgba(107,48,217,0.14)] shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-40"
         )}>
             <div className={clsx(
                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
+                active ? "bg-[var(--vr-color-primary-soft)]" : "bg-white"
             )}>
                 <Icon className="w-4 h-4 text-gray-400" />
             </div>
@@ -195,12 +195,12 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
         <div className={clsx(
             "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary-soft)] ring-1 ring-[rgba(107,48,217,0.14)] shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
         )}>
             <div className={clsx(
                 "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
+                active ? "bg-[var(--vr-color-primary-soft)]" : "bg-white"
             )}>
                 <Icon className="w-4 h-4 text-gray-400" />
             </div>
@@ -210,7 +210,7 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
                     value={value}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                    className="w-full border-b-2 border-[rgba(107,48,217,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
                 />
             ) : (
                 <p className="text-base font-extrabold text-gray-300">—</p>
@@ -225,11 +225,11 @@ function EditableMetricCard({ label, value, icon: Icon, active = true, editing, 
 
 // Available metric categories for toggle pills
 const METRIC_OPTIONS = [
-    { key: "revenue", label: "Revenue", icon: CurrencyDollarIcon, colorClass: "bg-[rgba(0,255,215,0.12)] border-[rgba(0,255,215,0.28)]" },
+    { key: "revenue", label: "Revenue", icon: CurrencyDollarIcon, colorClass: "bg-[var(--vr-color-primary-soft)] border-[rgba(107,48,217,0.24)]" },
     { key: "users", label: "Users", icon: UserGroupIcon, colorClass: "bg-[rgba(76,110,245,0.10)] border-[rgba(76,110,245,0.24)]" },
-    { key: "mrr", label: "MRR", icon: CurrencyDollarIcon, colorClass: "bg-[rgba(0,128,128,0.10)] border-[rgba(0,128,128,0.24)]" },
-    { key: "burnRate", label: "Burn Rate", icon: FireIcon, colorClass: "bg-[rgba(242,114,63,0.10)] border-[rgba(242,114,63,0.24)]" },
-    { key: "runway", label: "Runway", icon: ChartBarIcon, colorClass: "bg-[rgba(255,200,1,0.14)] border-[rgba(255,200,1,0.34)]" },
+    { key: "mrr", label: "MRR", icon: CurrencyDollarIcon, colorClass: "bg-[rgba(0,200,204,0.10)] border-[rgba(0,200,204,0.24)]" },
+    { key: "burnRate", label: "Burn Rate", icon: FireIcon, colorClass: "bg-[rgba(232,69,33,0.10)] border-[rgba(232,69,33,0.24)]" },
+    { key: "runway", label: "Runway", icon: ChartBarIcon, colorClass: "bg-[rgba(245,166,35,0.14)] border-[rgba(245,166,35,0.34)]" },
     { key: "monthlyCosts", label: "Costs", icon: CurrencyDollarIcon, colorClass: "bg-[var(--vr-color-neutral-50)] border-[var(--vr-color-border)]" },
 ];
 
@@ -306,7 +306,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
     return (
         <div className={clsx(
             "bg-white rounded-xl border shadow-sm overflow-hidden transition-shadow",
-            isCurrent ? "border-[var(--vr-color-primary)] ring-1 ring-[rgba(0,128,128,0.16)]" : "border-gray-200",
+            isCurrent ? "border-[var(--vr-color-primary)] ring-1 ring-[rgba(107,48,217,0.14)]" : "border-gray-200",
             expanded && "hover:shadow-md"
         )}>
             {/* Collapsed header - plain white */}
@@ -320,7 +320,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                         {isCurrent && <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-color-primary)]" />}
                         {!isCurrent && <div className="w-2.5 h-2.5 rounded-full bg-gray-300 flex-shrink-0" />}
                         <h3 className="text-base font-bold text-gray-900 truncate">{update.month}</h3>
-                        {isCurrent && <span className="rounded-full border border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] px-2 py-0.5 text-[10px] font-bold text-[var(--vr-color-primary)]">Current</span>}
+                        {isCurrent && <span className="rounded-full border border-[rgba(0,200,204,0.25)] bg-[rgba(0,200,204,0.10)] px-2 py-0.5 text-[10px] font-bold text-[#007a7d]">Current</span>}
                         {update.score && (
                             <span className="rounded-full border border-[rgba(150,73,210,0.24)] bg-[rgba(150,73,210,0.10)] px-2 py-0.5 text-[10px] font-bold text-[var(--vr-palette-purple)]">
                                 {update.score}
@@ -435,7 +435,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                 <button
                                     type="button"
                                     onClick={() => setEditing(true)}
-                                    className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-[rgba(0,255,215,0.12)] hover:text-[var(--vr-color-primary)]"
+                                    className="flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-gray-500 transition-colors hover:bg-[var(--vr-color-primary-soft)] hover:text-[var(--vr-color-primary)]"
                                 >
                                     <PencilSquareIcon className="w-3.5 h-3.5" />
                                     Edit
@@ -475,7 +475,7 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                                         className={clsx(
                                             "px-3 py-1 rounded-full text-xs font-medium border transition-colors",
                                             selectedMetrics.has(m.key)
-                                                ? "border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]"
+                                                ? "border-[rgba(107,48,217,0.24)] bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)]"
                                                 : "bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100"
                                         )}
                                     >
@@ -917,9 +917,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
                 {/* Warning card - investor outreach timing */}
                 <div className="max-w-4xl mx-auto px-6 pb-14">
-                    <div className="relative rounded-2xl border border-[rgba(242,114,63,0.24)] bg-white p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div className="relative rounded-2xl border border-[rgba(232,69,33,0.24)] bg-white p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
                         <div className="flex items-start gap-5">
-                            <div className="mt-1 flex-shrink-0 rounded-lg bg-[rgba(242,114,63,0.12)] p-2">
+                            <div className="mt-1 flex-shrink-0 rounded-lg bg-[rgba(232,69,33,0.12)] p-2">
                                 <ExclamationTriangleIcon className="h-7 w-7 text-[var(--vr-palette-coral)]" />
                             </div>
                             <div className="space-y-4">
@@ -960,9 +960,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             borderColor: "var(--vr-color-border-md)",
                             background: "transparent",
                         }}
-                        onClick={() => navigate("/founder-tools/updates")}
+                        onClick={() => navigate("/founder-tools/discover")}
                     >
-                        Analytics
+                        Discover Investors
                     </button>
                     <Link
                         to="/founder-tools/data-sources"
@@ -1051,16 +1051,16 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
             </div>
 
             {isOverdue && (
-                <div className="relative overflow-hidden rounded-xl border border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] p-6 shadow-sm">
+                <div className="relative overflow-hidden rounded-xl border border-[rgba(107,48,217,0.24)] bg-[var(--vr-color-primary-soft)] p-6 shadow-sm">
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex items-start gap-4">
-                            <div className="rounded-full border border-[rgba(0,255,215,0.26)] bg-white p-3 text-[var(--vr-color-primary)] shadow-sm">
+                            <div className="rounded-full border border-[rgba(107,48,217,0.24)] bg-white p-3 text-[var(--vr-color-primary)] shadow-sm">
                                 <ClockIcon className="w-8 h-8" />
                             </div>
                             <div>
                                 <div className="flex items-center gap-3 mb-1">
                                     <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="rounded-full bg-[rgba(0,255,215,0.24)] px-2.5 py-0.5 text-xs font-bold text-[var(--vr-color-primary)]">
+                                    <span className="rounded-full bg-[var(--vr-color-primary-soft)] px-2.5 py-0.5 text-xs font-bold text-[var(--vr-color-primary)]">
                                         {daysOverdue} days overdue
                                     </span>
                                 </div>
