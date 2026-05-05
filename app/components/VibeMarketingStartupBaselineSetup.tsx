@@ -208,6 +208,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     ...groups.flatMap((group) => group.keywords),
   ];
   return {
+    partial: Boolean(payload.partial),
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
     companyLinkedInUrl:
       typeof payload.companyLinkedInUrl === "string"
@@ -533,10 +534,12 @@ function ProfileResearchSegments({
   completedSteps,
   totalSteps,
   failed,
+  failedTone = "rose",
 }: {
   completedSteps: number;
   totalSteps: number;
   failed: boolean;
+  failedTone?: "rose" | "amber";
 }) {
   const segmentCount = Math.max(totalSteps, 1);
   const safeCompleted = Math.min(Math.max(completedSteps, 0), segmentCount);
@@ -551,7 +554,7 @@ function ProfileResearchSegments({
             key={index}
             className={clsx(
               "h-2 rounded-full transition-all",
-              failed && "bg-rose-200",
+              failed && (failedTone === "amber" ? "bg-amber-200" : "bg-rose-200"),
               !failed && isComplete && "bg-purple-500",
               !failed && isActive && "animate-pulse bg-purple-300",
               !failed && !isComplete && !isActive && "bg-white/75",
@@ -586,6 +589,7 @@ function ProfileResearchProgressCard({
 }) {
   if (!runId && !pending) return null;
   const autofill = extractAutofill(run);
+  const partial = Boolean(autofill?.partial);
   const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
   const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
   const failed = isResearchFailedStatus(effectiveStatus) || unavailable;
@@ -597,15 +601,19 @@ function ProfileResearchProgressCard({
     : run?.status === "completed"
       ? "AI suggestions added"
       : failed
-        ? "AI fill needs attention"
+        ? partial
+          ? "AI filled what it could"
+          : "AI fill needs attention"
         : autofillStepLabel(run?.currentStep);
   const sourceCount = autofill?.sourceCount ?? autofill?.sources?.length ?? 0;
   const competitorCount = autofill?.competitorCount ?? autofill?.competitorSuggestions?.length ?? autofill?.competitors?.length ?? 0;
   const seedKeywordCount = autofill?.seedKeywordCount ?? autofill?.seedKeywords?.length ?? 0;
   const errorMessage =
-    startError ||
-    run?.errors?.[0] ||
-    (failed ? "AI fill is unavailable. Check the Content Factory backend and try again." : null);
+    partial
+      ? "AI filled what it could. Please review the company description before continuing."
+      : startError ||
+        run?.errors?.[0] ||
+        (failed ? "AI fill is unavailable. Check the Content Factory backend and try again." : null);
   const notice = unavailable
     ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
     : stalled
@@ -616,19 +624,23 @@ function ProfileResearchProgressCard({
     <div
       className={clsx(
         "relative overflow-hidden rounded-2xl border p-5 text-sm shadow-sm",
-        failed ? "border-rose-200 bg-rose-50 text-rose-900" : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
+        failed
+          ? partial
+            ? "border-amber-200 bg-amber-50 text-amber-950"
+            : "border-rose-200 bg-rose-50 text-rose-900"
+          : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
       )}
     >
       <div
         className={clsx(
           "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
-          failed ? "bg-rose-200/30" : "bg-purple-200/30",
+          failed ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : "bg-purple-200/30",
         )}
       />
       <div className="relative z-10 flex gap-4">
-        <div className={clsx("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", failed ? "bg-rose-100" : "bg-purple-100")}>
+        <div className={clsx("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", failed ? (partial ? "bg-amber-100" : "bg-rose-100") : "bg-purple-100")}>
           {failed ? (
-            <AlertTriangle className="h-6 w-6 text-rose-600" />
+            <AlertTriangle className={clsx("h-6 w-6", partial ? "text-amber-600" : "text-rose-600")} />
           ) : run?.status === "completed" ? (
             <CheckCircle2 className="h-6 w-6 text-emerald-600" />
           ) : (
@@ -639,16 +651,16 @@ function ProfileResearchProgressCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-base font-black text-gray-950">{label}</p>
-            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide", failed ? "bg-white/80 text-rose-700" : "bg-white/80 text-purple-700")}>
-              {failed ? "Retry available" : progressLabel}
+            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide", failed ? (partial ? "bg-white/80 text-amber-700" : "bg-white/80 text-rose-700") : "bg-white/80 text-purple-700")}>
+              {failed ? (partial ? "Review needed" : "Retry available") : progressLabel}
             </span>
           </div>
 
           <p className="mt-1 text-sm font-semibold text-gray-700">
-            {pending ? "Contacting the AI fill service" : run?.status === "completed" ? "AI suggestions have been applied to the form." : autofillStepLabel(run?.currentStep)}
+            {pending ? "Contacting the AI fill service" : run?.status === "completed" || partial ? "AI suggestions have been applied to the form." : autofillStepLabel(run?.currentStep)}
           </p>
           <p className="mt-1 text-sm font-medium text-gray-500">
-            {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? "The form is unlocked so you can retry or fill the fields manually." : "Review the populated fields before continuing."}
+            {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? (partial ? "The form is unlocked so you can review, edit, or retry." : "The form is unlocked so you can retry or fill the fields manually.") : "Review the populated fields before continuing."}
           </p>
 
           {!failed ? (
@@ -658,13 +670,16 @@ function ProfileResearchProgressCard({
             </div>
           ) : (
             <div className="mt-4 space-y-3">
-              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed />
-              <p className="rounded-xl border border-rose-200 bg-white/80 px-4 py-3 text-sm font-semibold text-rose-700">{errorMessage}</p>
+              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed failedTone={partial ? "amber" : "rose"} />
+              <p className={clsx("rounded-xl border bg-white/80 px-4 py-3 text-sm font-semibold", partial ? "border-amber-200 text-amber-700" : "border-rose-200 text-rose-700")}>{errorMessage}</p>
               <button
                 type="button"
                 onClick={onRetry}
                 disabled={retryDisabled}
-                className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+                className={clsx(
+                  "inline-flex items-center gap-2 rounded-lg border bg-white px-4 py-2 text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+                  partial ? "border-amber-200 text-amber-700 hover:bg-amber-50" : "border-rose-200 text-rose-700 hover:bg-rose-50",
+                )}
               >
                 <Sparkles className="h-4 w-4" />
                 Retry AI fill
@@ -778,6 +793,13 @@ export default function VibeMarketingStartupBaselineSetup({
   const canStartBaseline = Boolean((bootstrap.organization.domain || bootstrap.company.domain || startupValues.domain).trim()) && !baselinePending && !baselinePolling;
   const canRefreshGoogleBaseline = hasGoogleBaselineScopes && effectiveBaseline.status !== "missing" && !googleBaselinePending;
   const companyContext = companyContextFromSetup(startupValues);
+  const compactCompanyName = startupValues.companyName.replace(/[^a-z0-9]/gi, "");
+  const showLinkedInDisambiguationHint = Boolean(
+    compactCompanyName.length >= 2 &&
+      compactCompanyName.length <= 8 &&
+      compactCompanyName === compactCompanyName.toUpperCase() &&
+      !startupValues.companyLinkedInUrl.trim(),
+  );
   const searchConsole = plainObject(trafficMetric?.googleSearchConsole);
   const searchConsoleSummary = plainObject(searchConsole?.last28Days);
   const embedded = variant === "workflow";
@@ -942,9 +964,9 @@ export default function VibeMarketingStartupBaselineSetup({
   }, [baselineRunId, baselineRun?.status]);
 
   useEffect(() => {
-    if (!autofillRunId || appliedAutofillRunId === autofillRunId || autofillRun?.status !== "completed") return;
+    if (!autofillRunId || appliedAutofillRunId === autofillRunId) return;
     const autofill = extractAutofill(autofillRun);
-    if (!autofill) return;
+    if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial)) return;
     const splitContext = splitCompanyContext(autofill.companyContext, startupValues.targetAudience);
     const competitors = competitorStringsFromAutofill(autofill);
 
@@ -1034,6 +1056,26 @@ export default function VibeMarketingStartupBaselineSetup({
                 {autofillPending || autofillPolling ? "Generating..." : "Generate with AI"}
               </button>
             </div>
+            <div className="rounded-xl border border-violet-100 bg-white/70 p-4">
+              <FormField label="Company LinkedIn URL (optional)" help="Helps AI identify the right company and competitors.">
+                <div className="relative">
+                  <ControlIcon icon={Link2} />
+                  <input
+                    name="companyLinkedInUrl"
+                    value={startupValues.companyLinkedInUrl}
+                    onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
+                    disabled={researchLocked}
+                    placeholder="https://www.linkedin.com/company/acme"
+                    className={inputWithIconClass}
+                  />
+                </div>
+              </FormField>
+              {showLinkedInDisambiguationHint ? (
+                <p className="mt-2 text-xs font-bold text-amber-700">
+                  A LinkedIn company URL helps us disambiguate names like {startupValues.companyName.trim()}.
+                </p>
+              ) : null}
+            </div>
             {!canStartAutofill && !autofillPending && !autofillPolling ? (
               <p className="text-xs font-bold text-gray-500">Add a company name and website domain before generating with AI.</p>
             ) : null}
@@ -1097,22 +1139,9 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           </div>
 
-          <details className="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5" open={Boolean(startupValues.companyLinkedInUrl || startupValues.location || startupValues.abn || startupValues.founderNames || startupValues.stage || startupValues.organizationKind)}>
+          <details className="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5" open={Boolean(startupValues.location || startupValues.abn || startupValues.founderNames || startupValues.stage || startupValues.organizationKind)}>
             <summary className="cursor-pointer text-sm font-black text-gray-950">Advanced startup details</summary>
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              <FormField label="Company LinkedIn URL">
-                <div className="relative">
-                  <ControlIcon icon={Link2} />
-                  <input
-                    name="companyLinkedInUrl"
-                    value={startupValues.companyLinkedInUrl}
-                    onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="https://www.linkedin.com/company/acme"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
               <FormField label="Startup location">
                 <div className="relative">
                   <ControlIcon icon={MapPin} />
