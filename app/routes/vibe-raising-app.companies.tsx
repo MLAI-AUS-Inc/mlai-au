@@ -218,7 +218,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                 <ArrowRightIcon className="w-4 h-4" />
                             </Link>
                             <Link
-                                to="/founder-tools/company-setup"
+                                to="/founder-tools/company-setup?edit=true&next=/founder-tools/companies"
                                 className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors mt-5"
                                 style={{
                                     color: "var(--vr-color-text-mid)",

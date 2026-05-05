@@ -1210,10 +1210,10 @@ function LinearPreview({
 function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputSourceKey; large?: boolean }) {
   const badgeClassName = clsx(
     "flex shrink-0 items-center justify-center bg-white shadow-sm ring-1 ring-gray-200 transition-all duration-300",
-    large ? "h-16 w-16 rounded-2xl" : "h-10 w-10 rounded-xl",
+    large ? "h-12 w-12 rounded-xl sm:h-16 sm:w-16 sm:rounded-2xl" : "h-10 w-10 rounded-xl",
   );
-  const iconClassName = large ? "h-11 w-11" : "h-7 w-7";
-  const officialLogoClassName = clsx("object-contain", large ? "h-12 w-12" : "h-7 w-7");
+  const iconClassName = large ? "h-8 w-8 sm:h-11 sm:w-11" : "h-7 w-7";
+  const officialLogoClassName = clsx("object-contain", large ? "h-9 w-9 sm:h-12 sm:w-12" : "h-7 w-7");
 
   if (sourceKey === "gmail") {
     return (
@@ -1233,7 +1233,7 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
 
   if (sourceKey === "linear") {
     return (
-      <div className={clsx("flex shrink-0 items-center justify-center bg-gray-950 shadow-sm transition-all duration-300", large ? "h-16 w-16 rounded-2xl" : "h-10 w-10 rounded-xl")}>
+      <div className={clsx("flex shrink-0 items-center justify-center bg-gray-950 shadow-sm transition-all duration-300", large ? "h-12 w-12 rounded-xl sm:h-16 sm:w-16 sm:rounded-2xl" : "h-10 w-10 rounded-xl")}>
         <svg viewBox="0 0 36 36" className={iconClassName} aria-hidden>
           <path d="M8 25l17-17" stroke="white" strokeLinecap="round" strokeWidth="3" />
           <path d="M14 28l14-14" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.85" />
@@ -1246,7 +1246,7 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
 
   if (sourceKey === "stripe") {
     return (
-      <div className={clsx("flex shrink-0 items-center justify-center bg-[#635bff] font-black text-white shadow-sm transition-all duration-300", large ? "h-16 w-16 rounded-2xl text-3xl" : "h-10 w-10 rounded-xl text-lg")}>
+      <div className={clsx("flex shrink-0 items-center justify-center bg-[#635bff] font-black text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 rounded-xl text-2xl sm:h-16 sm:w-16 sm:rounded-2xl sm:text-3xl" : "h-10 w-10 rounded-xl text-lg")}>
         S
       </div>
     );
@@ -1282,7 +1282,7 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
   }
 
   return (
-    <div className={clsx("flex shrink-0 items-center justify-center rounded-full bg-[#13b5ea] font-black uppercase text-white shadow-sm transition-all duration-300", large ? "h-16 w-16 text-base" : "h-10 w-10 text-xs")}>
+    <div className={clsx("flex shrink-0 items-center justify-center rounded-full bg-[#13b5ea] font-black uppercase text-white shadow-sm transition-all duration-300", large ? "h-12 w-12 text-sm sm:h-16 sm:w-16 sm:text-base" : "h-10 w-10 text-xs")}>
       xero
     </div>
   );
@@ -1324,17 +1324,17 @@ function ConnectorCard({
 
   return (
     <div className={clsx(
-      "group/source-card relative flex min-h-[220px] flex-col overflow-hidden rounded-2xl border p-4 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)]",
+      "group/source-card relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
       isConnected
         ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
         : selected
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 transition-all duration-300 ease-out group-hover/source-card:left-4 group-hover/source-card:top-4 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-4 group-focus-within/source-card:top-4 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2">
+      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 transition-all duration-300 ease-out group-hover/source-card:left-3 group-hover/source-card:top-3 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-3 group-focus-within/source-card:top-3 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2 sm:gap-3 sm:group-hover/source-card:left-4 sm:group-hover/source-card:top-4 sm:group-focus-within/source-card:left-4 sm:group-focus-within/source-card:top-4">
         <SourceLogo sourceKey={source.key} large />
         <h3 className={clsx(
-          "text-center text-base font-black transition-all duration-300 group-hover/source-card:text-left group-hover/source-card:text-sm group-focus-within/source-card:text-left group-focus-within/source-card:text-sm",
+          "text-center text-sm font-black transition-all duration-300 group-hover/source-card:text-left group-hover/source-card:text-xs group-focus-within/source-card:text-left group-focus-within/source-card:text-xs sm:text-base sm:group-hover/source-card:text-sm sm:group-focus-within/source-card:text-sm",
           isConnected ? "text-white" : "text-gray-950",
         )}>
           {source.label}
@@ -1342,23 +1342,23 @@ function ConnectorCard({
       </div>
 
       <span className={clsx(
-        "absolute right-4 top-4 inline-flex max-w-[112px] items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold opacity-0 ring-1 transition-opacity duration-200 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100",
+        "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold opacity-0 ring-1 transition-opacity duration-200 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
         isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
       )}>
         {displayedStatusLabel}
       </span>
 
-      <div className="pointer-events-none flex flex-1 flex-col pt-24 opacity-0 transition-all duration-200 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100">
-        <p className={clsx("mt-2 line-clamp-2 min-h-10 text-xs leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
+      <div className="pointer-events-none flex flex-1 flex-col pt-16 opacity-0 transition-all duration-200 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100 sm:pt-24">
+        <p className={clsx("mt-1 line-clamp-2 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
           {SOURCE_COPY[source.key].description}
         </p>
 
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
           {source.capabilities.map((capability) => (
             <span
               key={capability}
               className={clsx(
-                "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                "rounded-full px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px]",
                 isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
               )}
             >
@@ -1367,13 +1367,13 @@ function ConnectorCard({
           ))}
         </div>
 
-        <div className="mt-auto pt-4">
+        <div className="mt-auto pt-3 sm:pt-4">
           {selectable ? (
             <button
               type="button"
               onClick={() => onToggle(source)}
               className={clsx(
-                "flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-extrabold transition",
+                "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[11px] font-extrabold transition sm:px-3 sm:text-xs",
                 isConnected && selected
                   ? "bg-white text-[var(--vr-color-primary)] hover:bg-white/90"
                 : isConnected
@@ -1414,7 +1414,7 @@ function ConnectorCard({
           ) : null}
 
           {source.warning && source.status !== "coming_soon" ? (
-            <p className={clsx("mt-2 line-clamp-2 text-[11px] font-medium leading-4", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
+            <p className={clsx("mt-2 line-clamp-2 text-[10px] font-medium leading-4 sm:text-[11px]", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
           ) : null}
         </div>
       </div>
@@ -1442,7 +1442,7 @@ function ManualMaterialsCard({
       aria-expanded={expanded}
       aria-controls="manual-materials-panel"
       className={clsx(
-        "group/source-card relative flex min-h-[220px] w-full flex-col overflow-hidden rounded-2xl border p-4 text-left shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)]",
+        "group/source-card relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
         expanded || hasManualMaterials
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
@@ -1450,21 +1450,21 @@ function ManualMaterialsCard({
     >
       <div
         className={clsx(
-          "pointer-events-none absolute z-10 flex flex-col items-center gap-3 transition-all duration-300 ease-out",
+          "pointer-events-none absolute z-10 flex flex-col items-center gap-2 transition-all duration-300 ease-out sm:gap-3",
           expanded
-            ? "left-4 top-4 translate-x-0 translate-y-0 items-start gap-2"
-            : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group-hover/source-card:left-4 group-hover/source-card:top-4 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-4 group-focus-within/source-card:top-4 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2",
+            ? "left-3 top-3 translate-x-0 translate-y-0 items-start gap-2 sm:left-4 sm:top-4"
+            : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group-hover/source-card:left-3 group-hover/source-card:top-3 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-3 group-focus-within/source-card:top-3 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2 sm:group-hover/source-card:left-4 sm:group-hover/source-card:top-4 sm:group-focus-within/source-card:left-4 sm:group-focus-within/source-card:top-4",
         )}
       >
-        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-          <LinkIcon className="h-8 w-8" />
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
+          <LinkIcon className="h-6 w-6 sm:h-8 sm:w-8" />
         </div>
         <h3
           className={clsx(
-            "text-center text-base font-black text-gray-950 transition-all duration-300",
+            "text-center text-sm font-black text-gray-950 transition-all duration-300 sm:text-base",
             expanded
-              ? "text-left text-sm"
-              : "group-hover/source-card:text-left group-hover/source-card:text-sm group-focus-within/source-card:text-left group-focus-within/source-card:text-sm",
+              ? "text-left text-xs sm:text-sm"
+              : "group-hover/source-card:text-left group-hover/source-card:text-xs group-focus-within/source-card:text-left group-focus-within/source-card:text-xs sm:group-hover/source-card:text-sm sm:group-focus-within/source-card:text-sm",
           )}
         >
           Manual input
@@ -1473,7 +1473,7 @@ function ManualMaterialsCard({
 
       <span
         className={clsx(
-          "absolute right-4 top-4 inline-flex max-w-[112px] items-center truncate rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 transition-opacity duration-200",
+          "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 transition-opacity duration-200 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
           hasManualMaterials
             ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
             : "bg-gray-100 text-slate-500 ring-gray-200",
@@ -1485,34 +1485,34 @@ function ManualMaterialsCard({
 
       <div
         className={clsx(
-          "pointer-events-none flex flex-1 flex-col pt-24 transition-all duration-200",
+          "pointer-events-none flex flex-1 flex-col pt-16 transition-all duration-200 sm:pt-24",
           expanded
             ? "pointer-events-auto opacity-100"
             : "opacity-0 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100",
         )}
       >
-        <p className="mt-2 text-xs leading-5 text-slate-500">
+        <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:text-xs sm:leading-5">
           {cardCaption}
         </p>
 
-        <div className="mt-3 flex flex-wrap gap-1">
+        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
           {["Link", "Summary"].map((item) => (
             <span
               key={item}
-              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[10px] font-bold text-slate-500"
+              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
             >
               {item}
             </span>
           ))}
         </div>
 
-        <div className="mt-auto pt-4">
-          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-3 py-2 text-xs font-extrabold text-[var(--vr-color-primary)]">
+        <div className="mt-auto pt-3 sm:pt-4">
+          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-2.5 py-2 text-[11px] font-extrabold text-[var(--vr-color-primary)] sm:px-3 sm:text-xs">
             <span>{expanded ? "Hide form" : "Open form"}</span>
           </div>
 
           {hasManualMaterials ? (
-            <p className="mt-2 text-[11px] font-medium leading-4 text-[var(--vr-color-text)]">
+            <p className="mt-2 text-[10px] font-medium leading-4 text-[var(--vr-color-text)] sm:text-[11px]">
               {summary}
             </p>
           ) : null}
@@ -2455,7 +2455,7 @@ export default function ConnectData() {
           ) : null}
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
           {orderedVisibleSources.map((source) => (
             <ConnectorCard
               key={source.key}
@@ -2481,7 +2481,7 @@ export default function ConnectData() {
           </button>
         </div>
         ) : null}
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
           <ManualMaterialsCard
             expanded={manualMaterialsExpanded}
             hasManualMaterials={hasManualMaterials}
@@ -2492,7 +2492,7 @@ export default function ConnectData() {
           {manualMaterialsExpanded ? (
             <div
               id="manual-materials-panel"
-              className="space-y-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:col-span-2 lg:col-span-3"
+              className="col-span-3 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:col-span-3 lg:p-5"
             >
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-bold text-slate-500">

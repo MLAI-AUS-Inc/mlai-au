@@ -92,6 +92,139 @@
   border: 1px solid rgba(237, 95, 0, 0.2);
 }
 
+/* ── Connector source cards ─────────────────────────────── */
+
+.vr-scope .vr-source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--vr-space-3);
+}
+
+@media (min-width: 1024px) {
+  .vr-scope .vr-source-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--vr-space-4);
+  }
+}
+
+.vr-scope .vr-source-card {
+  position: relative;
+  display: flex;
+  min-height: 152px;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--vr-color-border);
+  border-radius: var(--vr-radius-lg);
+  background: #fff;
+  padding: var(--vr-space-3);
+  box-shadow: var(--vr-shadow-sm);
+  outline: none;
+  transition:
+    transform 0.18s ease-out,
+    box-shadow 0.18s ease-out,
+    border-color 0.18s ease-out,
+    background-color 0.18s ease-out;
+}
+
+.vr-scope .vr-source-card:hover,
+.vr-scope .vr-source-card:focus-within {
+  transform: translateY(-2px);
+  box-shadow: var(--vr-shadow-md);
+}
+
+.vr-scope .vr-source-card:focus-visible {
+  box-shadow: 0 0 0 2px rgba(0, 128, 128, 0.2), var(--vr-shadow-md);
+}
+
+.vr-scope .vr-source-card.is-connected {
+  border-color: var(--vr-color-primary);
+  background: var(--vr-color-primary);
+  color: var(--vr-color-primary-contrast);
+  box-shadow: var(--vr-shadow-sm);
+}
+
+.vr-scope .vr-source-card.is-selected:not(.is-connected) {
+  border-color: rgba(0, 255, 215, 0.42);
+  box-shadow: 0 0 0 1px rgba(0, 128, 128, 0.12);
+}
+
+.vr-scope .vr-source-card-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--vr-radius-lg);
+}
+
+.vr-scope .vr-source-card-title {
+  font-family: var(--vr-font-body);
+  font-size: var(--vr-font-size-sm);
+  font-weight: var(--vr-font-weight-bold);
+  line-height: var(--vr-line-height-snug);
+}
+
+.vr-scope .vr-source-card-status {
+  max-width: 88px;
+  border-radius: var(--vr-radius-full);
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: var(--vr-font-weight-bold);
+}
+
+.vr-scope .vr-source-card-copy {
+  font-size: var(--vr-font-size-xs);
+  line-height: 1.4;
+}
+
+.vr-scope .vr-source-card-chip {
+  border-radius: var(--vr-radius-full);
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: var(--vr-font-weight-bold);
+}
+
+.vr-scope .vr-source-card-action {
+  border-radius: var(--vr-radius-md);
+  padding: 8px 10px;
+  font-size: var(--vr-font-size-xs);
+  font-weight: var(--vr-font-weight-bold);
+}
+
+@media (min-width: 640px) {
+  .vr-scope .vr-source-card {
+    min-height: 220px;
+    padding: var(--vr-space-4);
+  }
+
+  .vr-scope .vr-source-card-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+  }
+
+  .vr-scope .vr-source-card-title {
+    font-size: var(--vr-font-size-lg);
+  }
+
+  .vr-scope .vr-source-card-status {
+    max-width: 112px;
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  .vr-scope .vr-source-card-copy {
+    font-size: var(--vr-font-size-sm);
+    line-height: var(--vr-line-height-normal);
+  }
+
+  .vr-scope .vr-source-card-chip {
+    font-size: 10px;
+  }
+
+  .vr-scope .vr-source-card-action {
+    padding: 8px 12px;
+    font-size: var(--vr-font-size-sm);
+  }
+}
+
 /* ── Alerts ───────────────────────────────────────────────── */
 
 .vr-scope .vr-alert {

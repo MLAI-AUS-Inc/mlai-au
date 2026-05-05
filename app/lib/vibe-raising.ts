@@ -305,13 +305,46 @@ function normalizeMetricSuggestions(raw: unknown): VibeRaisingMetricSuggestion[]
       asNullableString(payload.metric_key);
     if (!metricKey || seen.has(metricKey)) continue;
     seen.add(metricKey);
+    const rawLabel = asNullableString(payload.label);
     suggestions.push({
       metricKey,
-      label: asNullableString(payload.label) ?? metricKey,
+      label: normalizeMetricSuggestionLabel(metricKey, rawLabel),
       reason: asNullableString(payload.reason) ?? undefined,
     });
   }
   return suggestions;
+}
+
+function normalizeMetricSuggestionLabel(metricKey: string, label?: string | null): string {
+  const trimmed = String(label || "").trim();
+  if (trimmed && !trimmed.includes("_")) {
+    return trimmed;
+  }
+
+  const normalizedKey = metricKey.replace(/[_-]+/g, " ");
+  const spaced = normalizedKey.replace(/([a-z0-9])([A-Z])/g, "$1 $2");
+  return spaced
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((segment) => {
+      const upper = segment.toUpperCase();
+      if (upper === "MRR") return upper;
+      return segment.charAt(0).toUpperCase() + segment.slice(1);
+    })
+    .join(" ");
+}
+
+function normalizeDraftSummary(raw: unknown): string | undefined {
+  const summary = asNullableString(raw);
+  if (!summary) return undefined;
+
+  const pythonListMatch = summary.match(/^\[\s*['"]([\s\S]*)['"]\s*\]$/);
+  if (!pythonListMatch) return summary;
+
+  return pythonListMatch[1]
+    .replace(/\\'/g, "'")
+    .replace(/\\"/g, "\"")
+    .trim();
 }
 
 function asNullableNumber(value: unknown): number | null {
@@ -366,10 +399,9 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
   return {
     month: asNullableString(payload.month) ?? undefined,
     year: yearValue,
-    summary:
-      asNullableString(payload.summary) ??
-      asNullableString(payload.topline) ??
-      asNullableString(structuredMemo.topline) ??
+    summary: normalizeDraftSummary(payload.summary) ??
+      normalizeDraftSummary(payload.topline) ??
+      normalizeDraftSummary(structuredMemo.topline) ??
       undefined,
     sourceUrl:
       asNullableString(payload.sourceUrl) ??
