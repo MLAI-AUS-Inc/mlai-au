@@ -19,14 +19,13 @@ import FounderStartupDetailsStep, {
   type StartupDetailsField,
   type StartupDetailsFormValues,
 } from "~/components/FounderStartupDetailsStep";
-import MarketingEvidencePanel from "~/components/MarketingEvidencePanel";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import { CustomTopicDecisionCard, TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
 import {
   connectVibeMarketingGithub,
   getVibeMarketingBootstrap,
-  normalizeArticleDeliveryMode,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
   saveVibeMarketingSettings,
@@ -66,6 +65,92 @@ const STEP_KEYS: VibeMarketingStepKey[] = [
   "dailyAutomation",
 ];
 
+const WORKFLOW_STEP_ID_BY_CREATE_STEP: Record<VibeMarketingStepKey, string> = {
+  startupDetails: "profile",
+  baseline: "baseline",
+  github: "repo",
+  scan: "article_system",
+  articleSystem: "article_system",
+  research: "research",
+  chooseArticle: "choose_topic",
+  writeCheck: "generate",
+  editArticle: "review",
+  reviewPublish: "package",
+  dailyAutomation: "automation",
+};
+
+const CREATE_STEP_BY_WORKFLOW_STEP_ID: Record<string, VibeMarketingStepKey> = {
+  profile: "startupDetails",
+  baseline: "baseline",
+  repo: "github",
+  article_system: "articleSystem",
+  research: "research",
+  choose_topic: "chooseArticle",
+  generate: "writeCheck",
+  review: "editArticle",
+  revise: "editArticle",
+  package: "reviewPublish",
+  publish: "reviewPublish",
+  automation: "dailyAutomation",
+};
+
+type StepExplainer = {
+  why: string;
+  next: string;
+  safety?: string;
+};
+
+const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
+  startupDetails: {
+    why: "Company details anchor the article tone, audience, proof points, and topic relevance.",
+    next: "Save the profile, then capture a baseline or continue through setup.",
+  },
+  baseline: {
+    why: "The baseline records current site health, search visibility, and traffic before content changes.",
+    next: "Run it or skip it for now, then connect the repository used for previews and publishing.",
+  },
+  github: {
+    why: "Repository access lets us find the article system and prepare reviewable preview branches or PRs.",
+    next: "Choose the repo, review the permissions on GitHub, then return here to scan the article setup.",
+    safety: "Generated changes stay reviewable before publishing.",
+  },
+  scan: {
+    why: "We inspect the repo so generated articles land in the right files and preview safely.",
+    next: "The scan records framework, routes, build commands, article components, and publish targets.",
+    safety: "The scan does not publish changes.",
+  },
+  articleSystem: {
+    why: "The article system contract tells Content Factory how this website renders articles.",
+    next: "Once the contract is ready, topic research and generation can use the correct route and components.",
+    safety: "Preparation stays in setup until you explicitly generate or publish.",
+  },
+  research: {
+    why: "Research turns company context, competitors, seed keywords, and topic history into article candidates.",
+    next: "Choose a pending topic or run new research if the current candidates have already been used.",
+  },
+  chooseArticle: {
+    why: "The selected topic becomes the article brief, including the title angle and target keyword.",
+    next: "Content Factory generates the article, images, and content package for review.",
+  },
+  writeCheck: {
+    why: "Generation creates the article and validates the files before you review the result.",
+    next: "When the run completes, open the exact live preview and inspect the article.",
+  },
+  editArticle: {
+    why: "Review shows the article as it will render in the target app, with component comments for changes.",
+    next: "Leave comments, send one AI revision batch, or continue once the draft is acceptable.",
+  },
+  reviewPublish: {
+    why: "The package is the handoff point between reviewed content and an explicit publish action.",
+    next: "Publish to the website when ready, or inspect PR and preview evidence first.",
+    safety: "Package completion does not publish automatically.",
+  },
+  dailyAutomation: {
+    why: "Automation keeps new topic candidates flowing without removing human review.",
+    next: "Daily candidates still need selection, review, revision, and publish approval.",
+  },
+};
+
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
     .split(/[,\n]/)
@@ -82,12 +167,31 @@ function normalizeStep(value: string | null | undefined, fallback: string | null
   return STEP_KEYS.includes(candidate as VibeMarketingStepKey) ? (candidate as VibeMarketingStepKey) : "startupDetails";
 }
 
+function createStepForWorkflowStep(stepId: string | null | undefined): VibeMarketingStepKey | null {
+  return stepId ? CREATE_STEP_BY_WORKFLOW_STEP_ID[stepId] ?? null : null;
+}
+
+function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
+  const requiredStep =
+    createStepForWorkflowStep(bootstrap.workflowProgress?.currentStepId) ??
+    normalizeStep(bootstrap.currentGuidedStep, "startupDetails");
+  const requested = normalizeStep(value, requiredStep);
+  const requestedWorkflowStepId = WORKFLOW_STEP_ID_BY_CREATE_STEP[requested];
+  const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
+
+  if (requestedWorkflowStep?.status === "locked") {
+    return requiredStep;
+  }
+
+  return requested;
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
   const bootstrap = await getVibeMarketingBootstrap(env, request);
   const url = new URL(request.url);
-  const activeStep = normalizeStep(url.searchParams.get("step"), bootstrap.currentGuidedStep);
+  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
   return { bootstrap, activeStep, shouldRefreshGoogleBaseline: url.searchParams.get("googleBaseline") === "refresh" };
 }
 
@@ -198,6 +302,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         topicCandidateId && topicCandidateId !== "__custom__"
           ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
+      if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
+        return {
+          intent,
+          error: "That topic is no longer available. Choose a pending topic or enter a custom article.",
+        };
+      }
+      if (selectedCandidate?.alreadyWritten) {
+        return {
+          intent,
+          error: "That topic has already been written. Choose a pending topic or enter a custom article.",
+        };
+      }
       const customKeyword = stringFromForm(formData, "targetKeyword");
       const customTitle = stringFromForm(formData, "customTitle") || stringFromForm(formData, "titleAngle");
       const topic = customTitle || selectedCandidate?.title || customKeyword || selectedCandidate?.keyword || "";
@@ -215,7 +331,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: normalizeArticleDeliveryMode(stringFromForm(formData, "deliveryMode")),
+        deliveryMode: stringFromForm(formData, "deliveryMode"),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
@@ -276,7 +392,7 @@ function actionDataError(data: unknown): string | null {
   return typeof error === "string" ? error : null;
 }
 
-function StatusBadge({ passed }: { passed: boolean }) {
+function StatusBadge({ passed, label }: { passed: boolean; label?: string }) {
   return (
     <span
       className={clsx(
@@ -284,19 +400,51 @@ function StatusBadge({ passed }: { passed: boolean }) {
         passed ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100" : "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
       )}
     >
-      {passed ? "Ready" : "Needs setup"}
+      {label ?? (passed ? "Ready" : "Needs setup")}
     </span>
   );
 }
 
-function PanelHeader({ title, description, passed }: { title: string; description: string; passed: boolean }) {
+function PanelHeader({
+  title,
+  description,
+  passed,
+  statusLabel,
+  explainer,
+}: {
+  title: string;
+  description: string;
+  passed: boolean;
+  statusLabel?: string;
+  explainer?: StepExplainer;
+}) {
   return (
-    <div className="mb-6 flex flex-col gap-3 border-b border-gray-100 pb-5 lg:flex-row lg:items-start lg:justify-between">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-gray-950">{title}</h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">{description}</p>
+    <div className="mb-6 border-b border-gray-100 pb-5">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-gray-950">{title}</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">{description}</p>
+        </div>
+        <StatusBadge passed={passed} label={statusLabel} />
       </div>
-      <StatusBadge passed={passed} />
+      {explainer ? (
+        <div className="mt-4 grid gap-3 border-l-4 border-violet-200 bg-violet-50/50 py-3 pl-4 pr-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Why we need this</p>
+            <p className="mt-1 text-sm font-semibold leading-5 text-gray-700">{explainer.why}</p>
+          </div>
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">What happens next</p>
+            <p className="mt-1 text-sm font-semibold leading-5 text-gray-700">{explainer.next}</p>
+          </div>
+          {explainer.safety ? (
+            <div className="sm:col-span-2 lg:col-span-1">
+              <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Safety</p>
+              <p className="mt-1 text-sm font-semibold leading-5 text-gray-700">{explainer.safety}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1217,6 +1365,36 @@ export default function FounderToolsMarketingCreate() {
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
   const latestContentPackage = latestArticle?.contentPackage ?? bootstrap.publishEvidence?.contentPackage ?? null;
   const contentPackageReady = Boolean(latestContentPackage?.contentPackaged);
+  const selectableTopicCandidates = useMemo(
+    () => bootstrap.topicCandidates.filter((candidate) => !candidate.alreadyWritten).slice(0, 5),
+    [bootstrap.topicCandidates],
+  );
+  const alreadyWrittenCandidates = useMemo(() => {
+    const candidates = [...bootstrap.hiddenTopicCandidates, ...bootstrap.topicCandidates].filter(
+      (candidate) => candidate.alreadyWritten,
+    );
+    const seen = new Set<string>();
+    return candidates.filter((candidate) => {
+      const key = `${candidate.keyword.toLowerCase()}::${candidate.title.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [bootstrap.hiddenTopicCandidates, bootstrap.topicCandidates]);
+  const chooseArticleStatusLabel = !bootstrap.checks.baseline?.passed
+    ? "Needs baseline"
+    : selectableTopicCandidates.length > 0
+      ? "Ready"
+      : alreadyWrittenCandidates.length > 0
+        ? "Topics written"
+        : "No pending topics";
+  const defaultTopicCandidateId = selectableTopicCandidates[0]?.id ?? "__custom__";
+  const [selectedTopicCandidateId, setSelectedTopicCandidateId] = useState(defaultTopicCandidateId);
+  const selectedTopicCandidate = useMemo(
+    () => selectableTopicCandidates.find((candidate) => candidate.id === selectedTopicCandidateId) ?? null,
+    [selectableTopicCandidates, selectedTopicCandidateId],
+  );
+  const selectedTopicLabel = selectedTopicCandidate?.title ?? "Custom article";
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
   const autofillStartData = autofillStartFetcher.data;
   const autofillRun = autofillRunFetcher.data as VibeMarketingRunSummary | undefined;
@@ -1297,6 +1475,15 @@ export default function FounderToolsMarketingCreate() {
     setAppliedAutofillRunId(null);
     googleAutoRefreshSubmittedRef.current = false;
   }, [activeCompanyKey, startupDefaults, startupDefaultsSignature]);
+
+  useEffect(() => {
+    const selectionStillValid =
+      selectedTopicCandidateId === "__custom__" ||
+      selectableTopicCandidates.some((candidate) => candidate.id === selectedTopicCandidateId);
+    if (!selectionStillValid) {
+      setSelectedTopicCandidateId(defaultTopicCandidateId);
+    }
+  }, [defaultTopicCandidateId, selectableTopicCandidates, selectedTopicCandidateId]);
 
   useEffect(() => {
     if (autofillStartData?.autofillRunId) {
@@ -1383,6 +1570,7 @@ export default function FounderToolsMarketingCreate() {
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <MarketingWorkflowShell
         progress={bootstrap.workflowProgress}
+        viewedStepId={WORKFLOW_STEP_ID_BY_CREATE_STEP[activeStep]}
         title="Create and publish article"
         isSubmitting={isSubmitting}
       />
@@ -1393,14 +1581,14 @@ export default function FounderToolsMarketingCreate() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-        <main className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          {activeStep === "startupDetails" ? (
-            <>
+      <main className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+        {activeStep === "startupDetails" ? (
+          <>
               <PanelHeader
                 title="Startup details"
                 description="This is the shared company profile used by Vibe Raising monthly updates and Vibe Marketing article generation."
                 passed={Boolean(bootstrap.checks.websiteProfile?.passed)}
+                explainer={STEP_EXPLAINERS.startupDetails}
               />
               <Form method="POST" className="space-y-6">
                 <FounderStartupDetailsStep
@@ -1463,6 +1651,7 @@ export default function FounderToolsMarketingCreate() {
                 title="Website baseline"
                 description="Capture the current website health, performance, search visibility, authority, AI visibility, and traffic data before article generation starts."
                 passed={Boolean(bootstrap.checks.baseline?.passed || effectiveBaseline.passed)}
+                explainer={STEP_EXPLAINERS.baseline}
               />
 
               <div className="space-y-5">
@@ -1603,6 +1792,7 @@ export default function FounderToolsMarketingCreate() {
                 title="Connect GitHub"
                 description="Vibe Marketing needs repository access to detect your article system and open previewable article PRs."
                 passed={Boolean(bootstrap.checks.github?.passed)}
+                explainer={STEP_EXPLAINERS.github}
               />
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="connect-github" />
@@ -1634,6 +1824,7 @@ export default function FounderToolsMarketingCreate() {
                 title={activeStep === "scan" ? "Scan repository" : "Prepare article system"}
                 description="The scan detects your framework, build commands, article directories, registries, components, and safe publish targets."
                 passed={activeStep === "scan" ? Boolean(bootstrap.checks.scan?.passed) : Boolean(bootstrap.checks.scaffold?.passed)}
+                explainer={STEP_EXPLAINERS[activeStep]}
               />
               {latestScan ? (
                 <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
@@ -1661,6 +1852,7 @@ export default function FounderToolsMarketingCreate() {
                 title="Research topics"
                 description="Discovery uses your company context, competitors, and seed keywords to find article candidates."
                 passed={Boolean(bootstrap.checks.research?.passed)}
+                explainer={STEP_EXPLAINERS.research}
               />
               <div className="mb-5 grid gap-3 lg:grid-cols-2">
                 <div className="rounded-xl bg-gray-50 p-4">
@@ -1688,7 +1880,9 @@ export default function FounderToolsMarketingCreate() {
               <PanelHeader
                 title="Choose article"
                 description="Pick a discovered topic or enter a known keyword and title angle."
-                passed={Boolean(latestArticle)}
+                passed={Boolean(latestArticle || selectableTopicCandidates.length > 0)}
+                statusLabel={chooseArticleStatusLabel}
+                explainer={STEP_EXPLAINERS.chooseArticle}
               />
               {!bootstrap.checks.baseline?.passed ? (
                 <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
@@ -1702,24 +1896,57 @@ export default function FounderToolsMarketingCreate() {
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
                 <div className="grid gap-3">
-                  {bootstrap.topicCandidates.slice(0, 5).map((candidate, index) => (
-                    <label key={candidate.id} className="flex cursor-pointer gap-3 rounded-xl border border-gray-200 p-4 transition hover:bg-violet-50/60">
-                      <input type="radio" name="topicCandidateId" value={candidate.id} defaultChecked={index === 0} className="mt-1 h-4 w-4 text-violet-600" />
-                      <span>
-                        <span className="block text-sm font-black text-gray-950">{candidate.title}</span>
-                        <span className="mt-1 block text-xs font-semibold text-gray-500">{candidate.keyword}</span>
-                        {candidate.reason ? <span className="mt-2 block text-sm text-gray-600">{candidate.reason}</span> : null}
-                      </span>
-                    </label>
+                  {selectableTopicCandidates.length === 0 ? (
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+                      {alreadyWrittenCandidates.length > 0
+                        ? "All discovered topics have already been written. Run new research or enter a custom article."
+                        : "No pending discovered topics are available yet. Run topic research or enter a custom article."}
+                    </div>
+                  ) : null}
+                  {selectableTopicCandidates.map((candidate) => (
+                    <TopicDecisionCard
+                      key={candidate.id}
+                      candidate={candidate}
+                      checked={selectedTopicCandidateId === candidate.id}
+                      onChange={() => setSelectedTopicCandidateId(candidate.id)}
+                    />
                   ))}
-                  <label className="flex cursor-pointer gap-3 rounded-xl border border-gray-200 p-4 transition hover:bg-violet-50/60">
-                    <input type="radio" name="topicCandidateId" value="__custom__" defaultChecked={bootstrap.topicCandidates.length === 0} className="mt-1 h-4 w-4 text-violet-600" />
-                    <span>
-                      <span className="block text-sm font-black text-gray-950">Custom article</span>
-                      <span className="mt-1 block text-xs font-semibold text-gray-500">Use the keyword and title fields below.</span>
-                    </span>
-                  </label>
+                  <CustomTopicDecisionCard
+                    checked={selectedTopicCandidateId === "__custom__"}
+                    onChange={() => setSelectedTopicCandidateId("__custom__")}
+                  />
                 </div>
+                {alreadyWrittenCandidates.length > 0 ? (
+                  <details className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <summary className="cursor-pointer text-sm font-black text-gray-800">Already written from this discovery</summary>
+                    <div className="mt-3 grid gap-2">
+                      {alreadyWrittenCandidates.slice(0, 8).map((candidate) => (
+                        <div key={`${candidate.id}:${candidate.keyword}`} className="rounded-lg bg-white px-3 py-2 text-sm">
+                          <div className="font-bold text-gray-900">{candidate.writtenArticle?.title || candidate.title}</div>
+                          <div className="mt-1 text-xs font-semibold text-gray-500">{candidate.keyword}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+                {bootstrap.writtenTopics.length > 0 ? (
+                  <div className="rounded-xl border border-gray-200 p-4">
+                    <div className="text-sm font-black text-gray-900">Recent written topics</div>
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                      {bootstrap.writtenTopics.slice(0, 6).map((topic) => (
+                        <div key={topic.id ?? `${topic.slug}:${topic.keyword}`} className="rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                          <div className="font-bold text-gray-900">{topic.title}</div>
+                          <div className="mt-1 text-xs font-semibold text-gray-500">{topic.keyword}</div>
+                          {topic.articleUrl || topic.prUrl ? (
+                            <a href={topic.articleUrl || topic.prUrl || "#"} className="mt-2 inline-flex text-xs font-black text-violet-700 underline">
+                              Open evidence
+                            </a>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
                 <div className="grid gap-4 lg:grid-cols-2">
                   <label className="block">
                     <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
@@ -1743,10 +1970,18 @@ export default function FounderToolsMarketingCreate() {
                   <span className="mb-2 block text-sm font-bold text-gray-700">Article context</span>
                   <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
                 </label>
-                <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                  Generate article
-                </button>
+                <div className="sticky bottom-4 z-10 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
+                      <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                    </div>
+                    <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
+                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
+                      Generate draft article
+                    </button>
+                  </div>
+                </div>
               </Form>
             </>
           ) : null}
@@ -1761,6 +1996,7 @@ export default function FounderToolsMarketingCreate() {
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
                     : Boolean(bootstrap.checks.write?.passed)
                 }
+                explainer={STEP_EXPLAINERS[activeStep]}
               />
               {latestArticle ? (
                 <div className="space-y-4">
@@ -1791,6 +2027,7 @@ export default function FounderToolsMarketingCreate() {
                 title="Daily automation"
                 description="Daily generation creates candidates and keeps human approval before final publish by default."
                 passed={Boolean(bootstrap.checks.dailyAutomation?.passed)}
+                explainer={STEP_EXPLAINERS.dailyAutomation}
               />
               <Form method="POST" className="space-y-5">
                 <label className="flex items-start gap-3 rounded-xl border border-gray-200 p-4">
@@ -1814,26 +2051,8 @@ export default function FounderToolsMarketingCreate() {
                 </div>
               </Form>
             </>
-          ) : null}
-        </main>
-
-        <div className="space-y-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Current company</p>
-            <p className="mt-2 text-lg font-black text-gray-950">{bootstrap.company.name}</p>
-            <p className="mt-1 text-sm font-semibold text-gray-500">{bootstrap.organization.domain || "No domain saved"}</p>
-            <div className="mt-4 space-y-2">
-              {Object.entries(bootstrap.checks).map(([key, check]) => (
-                <div key={key} className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-semibold text-gray-600">{key.replace(/[A-Z]/g, " $&")}</span>
-                  <span className={clsx("h-2.5 w-2.5 rounded-full", check.passed ? "bg-emerald-500" : "bg-gray-300")} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <MarketingEvidencePanel run={latestArticle ?? latestScan ?? null} evidence={bootstrap.publishEvidence} />
-        </div>
-      </div>
+        ) : null}
+      </main>
     </div>
   );
 }

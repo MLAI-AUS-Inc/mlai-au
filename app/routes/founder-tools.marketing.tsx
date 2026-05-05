@@ -1,14 +1,17 @@
 import type { Route } from "./+types/founder-tools.marketing";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  AlertTriangle,
   ArrowRight,
   BarChart3,
   CheckCircle2,
   ChevronDown,
+  ExternalLink,
   FileText,
   Flame,
+  Loader2,
   PenLine,
   Rocket,
   Save,
@@ -25,7 +28,11 @@ import { getEnv } from "~/lib/env.server";
 import {
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
+  refreshVibeMarketingBaselineGoogle,
+  skipVibeMarketingBaseline,
   startVibeMarketingArticle,
+  startVibeMarketingAutofill,
+  startVibeMarketingBaseline,
   startVibeMarketingDiscovery,
   startVibeMarketingScan,
 } from "~/lib/vibe-marketing";
@@ -38,8 +45,13 @@ import {
   setVibeRaisingActiveCompany,
 } from "~/lib/vibe-raising";
 import type {
+  VibeMarketingAutofillCompetitor,
+  VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
+  VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
+  VibeMarketingWebsiteBaseline,
+  VibeMarketingWebsiteBaselineMetric,
   VibeMarketingWrittenTopic,
 } from "~/types/vibe-marketing";
 import type { VibeRaisingProfile } from "~/types/vibe-raising";
@@ -197,7 +209,9 @@ export async function action({ request, context }: Route.ActionArgs) {
       const shortDescription = stringFromForm(formData, "shortDescription") || stringFromForm(formData, "companyContext");
       const problemSolved = stringFromForm(formData, "problemSolved");
       const targetAudience = stringFromForm(formData, "targetAudience");
-      const companyContext = combineCompanyContext({ shortDescription, problemSolved, targetAudience });
+      const companyContext =
+        stringFromForm(formData, "companyContext") ||
+        combineCompanyContext({ shortDescription, problemSolved, targetAudience });
 
       if (!name) {
         return { intent, error: "Add your startup or company name before continuing." };
@@ -219,6 +233,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         location: stringFromForm(formData, "location"),
         abn: stringFromForm(formData, "abn"),
         companyContext,
+        competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
         founderNames: listFromForm(formData.get("founderNames")),
         stage: stringFromForm(formData, "stage"),
@@ -238,8 +253,68 @@ export async function action({ request, context }: Route.ActionArgs) {
       return redirect("/founder-tools/marketing/create?step=baseline");
     }
 
+    if (intent === "start-autofill") {
+      if (!vibeContext.profile || !vibeContext.appUser) {
+        await saveVibeRaisingProfile(env, request, {
+          role: "founder",
+          organizationName: null,
+        });
+      }
+
+      const result = await startVibeMarketingAutofill(env, request, {
+        companyName: stringFromForm(formData, "companyName"),
+        company_name: stringFromForm(formData, "companyName"),
+        domain: stringFromForm(formData, "domain"),
+        companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
+        company_linkedin_url: stringFromForm(formData, "companyLinkedInUrl"),
+        location: stringFromForm(formData, "location"),
+        abn: stringFromForm(formData, "abn"),
+        organizationKind: stringFromForm(formData, "organizationKind"),
+        organization_kind: stringFromForm(formData, "organizationKind"),
+        existingFields: {
+          companyContext:
+            stringFromForm(formData, "companyContext") ||
+            combineCompanyContext({
+              shortDescription: stringFromForm(formData, "shortDescription"),
+              problemSolved: stringFromForm(formData, "problemSolved"),
+              targetAudience: stringFromForm(formData, "targetAudience"),
+            }),
+          competitors: listFromForm(formData.get("competitors")),
+          seedKeywords: listFromForm(formData.get("seedKeywords")),
+          companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
+        },
+        companyContext:
+          stringFromForm(formData, "companyContext") ||
+          combineCompanyContext({
+            shortDescription: stringFromForm(formData, "shortDescription"),
+            problemSolved: stringFromForm(formData, "problemSolved"),
+            targetAudience: stringFromForm(formData, "targetAudience"),
+          }),
+        competitors: listFromForm(formData.get("competitors")),
+        seedKeywords: listFromForm(formData.get("seedKeywords")),
+      });
+      return { intent, autofillRunId: result.runId, status: result.status, error: result.error, errors: result.errors };
+    }
+
     if (!vibeContext.appUser) {
       return { intent, error: "Save your startup details before starting article research." };
+    }
+
+    if (intent === "start-baseline") {
+      const result = await startVibeMarketingBaseline(env, request, {});
+      return { intent, baselineRunId: result.runId, status: result.status };
+    }
+
+    if (intent === "refresh-baseline-google") {
+      const websiteBaseline = await refreshVibeMarketingBaselineGoogle(env, request, {});
+      return { intent, websiteBaseline };
+    }
+
+    if (intent === "skip-baseline") {
+      await skipVibeMarketingBaseline(env, request, {
+        reason: stringFromForm(formData, "reason") || "Skipped during marketing setup",
+      });
+      return redirect("/founder-tools/marketing/create?step=github");
     }
 
     if (intent === "scan") {
@@ -439,6 +514,678 @@ function FormField({
   );
 }
 
+const STARTUP_STAGE_OPTIONS = [
+  "",
+  "Idea",
+  "Pre-seed",
+  "Seed",
+  "Series A",
+  "Series B",
+  "Series C+",
+  "Growth",
+  "Bootstrapped",
+  "Not fundraising",
+  "Other",
+];
+
+const ORGANIZATION_KIND_OPTIONS = ["", "For-profit", "Not-for-profit"];
+
+type StartupSetupField =
+  | "companyName"
+  | "domain"
+  | "companyLinkedInUrl"
+  | "location"
+  | "abn"
+  | "shortDescription"
+  | "problemSolved"
+  | "targetAudience"
+  | "competitors"
+  | "seedKeywords"
+  | "founderNames"
+  | "stage"
+  | "organizationKind";
+
+type StartupSetupValues = Record<StartupSetupField, string>;
+
+function splitCompanyContext(context: string | null | undefined, fallbackTargetAudience: string | null | undefined) {
+  const raw = String(context ?? "").trim();
+  if (!raw) {
+    return { shortDescription: "", problemSolved: "", targetAudience: String(fallbackTargetAudience ?? "").trim() };
+  }
+
+  const problemMatch = raw.match(/(?:^|\n+)Problem solved:\s*([\s\S]*?)(?=\n+Target audience:|$)/i);
+  const audienceMatch = raw.match(/(?:^|\n+)Target audience:\s*([\s\S]*?)$/i);
+  const shortDescription = raw
+    .replace(/(?:^|\n+)Problem solved:\s*[\s\S]*?(?=\n+Target audience:|$)/i, "")
+    .replace(/(?:^|\n+)Target audience:\s*[\s\S]*$/i, "")
+    .trim();
+
+  return {
+    shortDescription: shortDescription || raw,
+    problemSolved: problemMatch?.[1]?.trim() ?? "",
+    targetAudience: audienceMatch?.[1]?.trim() || String(fallbackTargetAudience ?? "").trim(),
+  };
+}
+
+function startupSetupDefaultsFromBootstrap(bootstrap: VibeMarketingBootstrap): StartupSetupValues {
+  const splitContext = splitCompanyContext(bootstrap.settings.companyContext, bootstrap.startupProfile.notes);
+  const companyName = bootstrap.company.name === "Company" ? "" : bootstrap.company.name ?? "";
+  return {
+    companyName,
+    domain: bootstrap.company.domain ?? bootstrap.organization.domain ?? "",
+    companyLinkedInUrl: bootstrap.organization.companyLinkedInUrl ?? bootstrap.company.companyLinkedInUrl ?? "",
+    location: bootstrap.company.location ?? "",
+    abn: bootstrap.company.abn ?? "",
+    shortDescription: splitContext.shortDescription,
+    problemSolved: splitContext.problemSolved,
+    targetAudience: splitContext.targetAudience,
+    competitors: (bootstrap.organization.competitors ?? []).join("\n"),
+    seedKeywords: (bootstrap.organization.seedKeywords ?? []).join(", "),
+    founderNames: (bootstrap.startupProfile.founderNames ?? []).join(", "),
+    stage: bootstrap.startupProfile.stage ?? "",
+    organizationKind: bootstrap.startupProfile.organizationKind ?? "",
+  };
+}
+
+function companyContextFromSetup(values: StartupSetupValues) {
+  return combineCompanyContext({
+    shortDescription: values.shortDescription,
+    problemSolved: values.problemSolved,
+    targetAudience: values.targetAudience,
+  });
+}
+
+function listFromUnknown(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+  if (typeof value === "string") return listFromForm(value);
+  return [];
+}
+
+function plainObject(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function objectArray(value: unknown): Record<string, unknown>[] | undefined {
+  return Array.isArray(value)
+    ? value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item)))
+    : undefined;
+}
+
+function competitorSuggestion(value: unknown): VibeMarketingAutofillCompetitor | null {
+  if (!value || typeof value !== "object") {
+    const text = String(value ?? "").trim();
+    return text ? { name: text, domain: text } : null;
+  }
+  const payload = value as Record<string, unknown>;
+  const name = String(payload.name ?? payload.company ?? payload.title ?? "").trim();
+  const domain = String(payload.domain ?? "").trim();
+  if (!name && !domain) return null;
+  const rawScore = numericValue(payload.score);
+  return {
+    name: name || domain,
+    domain,
+    linkedinUrl: payload.linkedinUrl ? String(payload.linkedinUrl) : payload.linkedin_url ? String(payload.linkedin_url) : undefined,
+    type: payload.type ? String(payload.type) : undefined,
+    score: rawScore,
+    reason: payload.reason ? String(payload.reason) : undefined,
+    source: payload.source ? String(payload.source) : undefined,
+    evidence: Array.isArray(payload.evidence) ? payload.evidence.map(String).filter(Boolean) : undefined,
+    confidence: payload.confidence ? String(payload.confidence) : undefined,
+  };
+}
+
+function competitorList(value: unknown): VibeMarketingAutofillCompetitor[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(competitorSuggestion).filter((competitor): competitor is VibeMarketingAutofillCompetitor => Boolean(competitor));
+}
+
+function keywordGroups(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((group): group is Record<string, unknown> => Boolean(group && typeof group === "object"))
+    .map((group) => ({
+      group: group.group ? String(group.group) : group.name ? String(group.name) : undefined,
+      intent: group.intent ? String(group.intent) : undefined,
+      keywords: listFromUnknown(group.keywords),
+    }))
+    .filter((group) => group.keywords.length);
+}
+
+function researchDepth(value: unknown): Record<string, number> | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const result: Record<string, number> = {};
+  for (const [key, rawValue] of Object.entries(value as Record<string, unknown>)) {
+    const numberValue = numericValue(rawValue);
+    if (numberValue !== null) result[key] = numberValue;
+  }
+  return Object.keys(result).length ? result : undefined;
+}
+
+function autofillSources(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((source): source is Record<string, unknown> => Boolean(source && typeof source === "object"))
+    .map((source) => ({
+      url: String(source.url ?? ""),
+      title: source.title ? String(source.title) : undefined,
+      type: source.type ? String(source.type) : undefined,
+      query: source.query ? String(source.query) : undefined,
+      description: source.description ? String(source.description) : undefined,
+      source: source.source ? String(source.source) : undefined,
+    }))
+    .filter((source) => source.url);
+}
+
+function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeMarketingAutofillResult | null {
+  const raw = run?.result?.autofill;
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const groupsPayload = plainObject(payload.competitorGroups) ?? {};
+  const directCompetitors = competitorList(payload.directCompetitors ?? payload.direct_competitors ?? groupsPayload.directCompetitors);
+  const seoCompetitors = competitorList(payload.seoCompetitors ?? payload.seo_competitors ?? groupsPayload.seoCompetitors);
+  const adjacentOrganizations = competitorList(
+    payload.adjacentOrganizations ?? payload.adjacent_organizations ?? groupsPayload.adjacentOrganizations,
+  );
+  const competitorCandidates = Array.isArray(payload.competitors)
+    ? payload.competitors
+    : Array.isArray(payload.competitorCandidates)
+      ? payload.competitorCandidates
+      : [];
+  const competitorSuggestions = [
+    ...directCompetitors,
+    ...seoCompetitors,
+    ...adjacentOrganizations,
+    ...competitorCandidates.map(competitorSuggestion).filter((item): item is VibeMarketingAutofillCompetitor => Boolean(item)),
+  ];
+  const competitorStrings = [
+    ...directCompetitors.map((competitor) => competitor.domain || competitor.name),
+    ...competitorCandidates
+      .map((competitor) => competitorSuggestion(competitor))
+      .map((competitor) => competitor?.domain || competitor?.name || ""),
+    ...listFromUnknown(payload.competitorDomains),
+    ...listFromUnknown(payload.competitorStrings),
+  ].filter(Boolean);
+  const groups = keywordGroups(payload.keywordGroups ?? payload.keyword_groups);
+  const seedKeywords = [
+    ...listFromUnknown(payload.seedKeywords),
+    ...listFromUnknown(payload.seed_keywords),
+    ...groups.flatMap((group) => group.keywords),
+  ];
+  return {
+    brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
+    companyLinkedInUrl:
+      typeof payload.companyLinkedInUrl === "string"
+        ? payload.companyLinkedInUrl
+        : typeof payload.company_linkedin_url === "string"
+          ? payload.company_linkedin_url
+          : null,
+    companyContext:
+      typeof payload.companyContext === "string"
+        ? payload.companyContext
+        : typeof payload.company_context === "string"
+          ? payload.company_context
+          : null,
+    competitors: Array.from(new Set(competitorStrings.map((competitor) => competitor.trim()).filter(Boolean))),
+    competitorSuggestions,
+    directCompetitors,
+    seoCompetitors,
+    adjacentOrganizations,
+    competitorGroups: { directCompetitors, seoCompetitors, adjacentOrganizations },
+    seedKeywords: Array.from(new Set(seedKeywords.map((keyword) => keyword.trim()).filter(Boolean))),
+    keywordGroups: groups,
+    sources: autofillSources(payload.sources),
+    linkedinProfile:
+      payload.linkedinProfile && typeof payload.linkedinProfile === "object"
+        ? {
+            url: String((payload.linkedinProfile as Record<string, unknown>).url ?? ""),
+            title: (payload.linkedinProfile as Record<string, unknown>).title
+              ? String((payload.linkedinProfile as Record<string, unknown>).title)
+              : undefined,
+            description: (payload.linkedinProfile as Record<string, unknown>).description
+              ? String((payload.linkedinProfile as Record<string, unknown>).description)
+              : undefined,
+            vanityName: (payload.linkedinProfile as Record<string, unknown>).vanityName
+              ? String((payload.linkedinProfile as Record<string, unknown>).vanityName)
+              : undefined,
+            blocked: Boolean((payload.linkedinProfile as Record<string, unknown>).blocked),
+          }
+        : undefined,
+    linkedinSimilarSignals: autofillSources(payload.linkedinSimilarSignals ?? payload.linkedin_similar_signals),
+    sourceCount: numericValue(payload.sourceCount ?? payload.source_count) ?? undefined,
+    competitorCount: numericValue(payload.competitorCount ?? payload.competitor_count) ?? undefined,
+    seedKeywordCount: numericValue(payload.seedKeywordCount ?? payload.seed_keyword_count) ?? undefined,
+    researchSummary:
+      typeof payload.researchSummary === "string"
+        ? payload.researchSummary
+        : typeof payload.research_summary === "string"
+          ? payload.research_summary
+          : null,
+    researchDepth: researchDepth(payload.researchDepth ?? payload.research_depth),
+    researchQuality: plainObject(payload.researchQuality ?? payload.research_quality),
+    modelTrace: objectArray(payload.modelTrace ?? payload.model_trace),
+    queryLog: objectArray(payload.queryLog ?? payload.query_log),
+    evidenceMap: plainObject(payload.evidenceMap ?? payload.evidence_map),
+    stepDurations: researchDepth(payload.stepDurations ?? payload.step_durations),
+    warnings: listFromUnknown(payload.warnings),
+  };
+}
+
+function competitorStringsFromAutofill(autofill: VibeMarketingAutofillResult) {
+  const candidates = autofill.competitors?.length
+    ? autofill.competitors
+    : [
+        ...(autofill.directCompetitors ?? []),
+        ...(autofill.seoCompetitors ?? []),
+        ...(autofill.adjacentOrganizations ?? []),
+        ...(autofill.competitorSuggestions ?? []),
+      ].map((competitor) => competitor.domain || competitor.name);
+  const seen = new Set<string>();
+  return candidates
+    .map((competitor) => String(competitor ?? "").trim())
+    .filter((competitor) => {
+      if (!competitor) return false;
+      const key = competitor.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+}
+
+const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
+const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
+const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
+
+const PROFILE_RESEARCH_STEPS = [
+  {
+    id: "identity",
+    label: "Resolving company identity",
+    keys: ["queued", "resolve_company_identity", "profile_resolution"],
+  },
+  {
+    id: "website",
+    label: "Crawling owned website",
+    keys: ["crawl_owned_web", "crawl_website", "scrape_website"],
+  },
+  {
+    id: "public_web",
+    label: "Researching public web",
+    keys: ["research_public_web"],
+  },
+  {
+    id: "linkedin",
+    label: "Checking public LinkedIn signals",
+    keys: ["research_linkedin_public"],
+  },
+  {
+    id: "competitors",
+    label: "Finding competitor candidates",
+    keys: ["discover_competitor_candidates", "identify_competitors", "rank_competitors"],
+  },
+  {
+    id: "keywords",
+    label: "Generating keywords",
+    keys: ["generate_keyword_landscape", "generate_seed_keywords"],
+  },
+  {
+    id: "profile",
+    label: "Writing company profile",
+    keys: ["synthesize_company_profile", "synthesize_company_context"],
+  },
+  {
+    id: "finalize",
+    label: "Applying research results",
+    keys: ["finalize"],
+  },
+] as const;
+
+function normalizeResearchStepKey(step?: string | null) {
+  return String(step ?? "").trim().toLowerCase();
+}
+
+function autofillStepLabel(step?: string | null) {
+  const stepKey = normalizeResearchStepKey(step);
+  const configuredStep = PROFILE_RESEARCH_STEPS.find((item) => item.keys.some((key) => key === stepKey));
+  if (configuredStep) return configuredStep.label;
+  return stepKey ? stepKey.replace(/_/g, " ") : "Researching company profile";
+}
+
+function researchStepIndex(step?: string | null) {
+  const stepKey = normalizeResearchStepKey(step);
+  return PROFILE_RESEARCH_STEPS.findIndex((item) => item.keys.some((key) => key === stepKey));
+}
+
+function isResearchFailedStatus(status?: string | null) {
+  return RESEARCH_FAILED_STATUSES.has(normalizeResearchStepKey(status));
+}
+
+function isResearchTerminalStatus(status?: string | null) {
+  return RESEARCH_DONE_STATUSES.has(normalizeResearchStepKey(status));
+}
+
+function isResearchRunningStatus(status?: string | null) {
+  return RESEARCH_RUNNING_STATUSES.has(normalizeResearchStepKey(status));
+}
+
+function completedResearchStepCount(run?: VibeMarketingRunSummary | null, pending = false) {
+  const totalSteps = PROFILE_RESEARCH_STEPS.length;
+  if (pending || !run) return 0;
+  if (run.status === "completed") return totalSteps;
+
+  const stepStates = Array.isArray(run.steps) ? run.steps : [];
+  if (stepStates.length) {
+    return Math.min(
+      totalSteps,
+      stepStates.filter((step) => ["completed", "skipped"].includes(normalizeResearchStepKey(step.status))).length,
+    );
+  }
+
+  const index = researchStepIndex(run.currentStep);
+  if (index >= 0) return Math.min(index, totalSteps);
+  return 0;
+}
+
+function researchProgressSignature(run?: VibeMarketingRunSummary | null) {
+  if (!run) return "no-run";
+  const steps = (run.steps ?? [])
+    .map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}:${step.error ?? ""}`)
+    .join("|");
+  return [run.status, run.currentStep ?? "", run.updatedAt ?? "", run.errors?.join("|") ?? "", steps].join("::");
+}
+
+function ProfileResearchSegments({
+  completedSteps,
+  totalSteps,
+  failed,
+}: {
+  completedSteps: number;
+  totalSteps: number;
+  failed: boolean;
+}) {
+  const segmentCount = Math.max(totalSteps, 1);
+  const safeCompleted = Math.min(Math.max(completedSteps, 0), segmentCount);
+
+  return (
+    <div className="grid grid-cols-8 gap-2">
+      {Array.from({ length: segmentCount }).map((_, index) => {
+        const isComplete = index < safeCompleted;
+        const isActive = !failed && index === safeCompleted && safeCompleted < segmentCount;
+        return (
+          <div
+            key={index}
+            className={clsx(
+              "h-2 rounded-full transition-all",
+              failed && "bg-rose-200",
+              !failed && isComplete && "bg-purple-500",
+              !failed && isActive && "animate-pulse bg-purple-300",
+              !failed && !isComplete && !isActive && "bg-white/75",
+            )}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function ProfileResearchProgressCard({
+  run,
+  runId,
+  pending,
+  startStatus,
+  startError,
+  stalled,
+  unavailable,
+  onRetry,
+  retryDisabled,
+}: {
+  run?: VibeMarketingRunSummary | null;
+  runId?: string | null;
+  pending: boolean;
+  startStatus?: string | null;
+  startError?: string | null;
+  stalled: boolean;
+  unavailable: boolean;
+  onRetry: () => void;
+  retryDisabled: boolean;
+}) {
+  if (!runId && !pending) return null;
+  const autofill = extractAutofill(run);
+  const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
+  const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
+  const failed = isResearchFailedStatus(effectiveStatus) || unavailable;
+  const completedSteps = completedResearchStepCount(run, pending);
+  const totalSteps = PROFILE_RESEARCH_STEPS.length;
+  const progressLabel = `${Math.min(completedSteps, totalSteps)} of ${totalSteps} research steps complete`;
+  const label = pending
+    ? "Starting AI fill"
+    : run?.status === "completed"
+      ? "AI suggestions added"
+      : failed
+        ? "AI fill needs attention"
+        : autofillStepLabel(run?.currentStep);
+  const sourceCount = autofill?.sourceCount ?? autofill?.sources?.length ?? 0;
+  const competitorCount = autofill?.competitorCount ?? autofill?.competitorSuggestions?.length ?? autofill?.competitors?.length ?? 0;
+  const seedKeywordCount = autofill?.seedKeywordCount ?? autofill?.seedKeywords?.length ?? 0;
+  const errorMessage =
+    startError ||
+    run?.errors?.[0] ||
+    (failed ? "AI fill is unavailable. Check the Content Factory backend and try again." : null);
+  const notice = unavailable
+    ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
+    : stalled
+      ? "This is taking longer than expected. We will keep checking for progress in the background."
+      : null;
+
+  return (
+    <div
+      className={clsx(
+        "relative overflow-hidden rounded-2xl border p-5 text-sm shadow-sm",
+        failed ? "border-rose-200 bg-rose-50 text-rose-900" : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
+      )}
+    >
+      <div
+        className={clsx(
+          "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
+          failed ? "bg-rose-200/30" : "bg-purple-200/30",
+        )}
+      />
+      <div className="relative z-10 flex gap-4">
+        <div className={clsx("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", failed ? "bg-rose-100" : "bg-purple-100")}>
+          {failed ? (
+            <AlertTriangle className="h-6 w-6 text-rose-600" />
+          ) : run?.status === "completed" ? (
+            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+          ) : (
+            <Sparkles className="h-6 w-6 text-purple-600" />
+          )}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-base font-black text-slate-950">{label}</p>
+            <span
+              className={clsx(
+                "rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
+                failed ? "bg-white/80 text-rose-700" : "bg-white/80 text-purple-700",
+              )}
+            >
+              {failed ? "Retry available" : progressLabel}
+            </span>
+          </div>
+
+          <p className="mt-1 text-sm font-semibold text-slate-700">
+            {pending ? "Contacting the AI fill service" : run?.status === "completed" ? "AI suggestions have been applied to the form." : autofillStepLabel(run?.currentStep)}
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-500">
+            {active
+              ? "Usually takes 1-3 minutes. Refreshing the page is safe."
+              : failed
+                ? "The form is unlocked so you can retry or fill the fields manually."
+                : "Review the populated fields before continuing."}
+          </p>
+
+          {!failed ? (
+            <div className="mt-4 space-y-2">
+              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
+              <p className="text-xs font-semibold text-slate-500">
+                We&apos;ll keep checking until the fields below are ready to review.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed />
+              <p className="rounded-xl border border-rose-200 bg-white/80 px-4 py-3 text-sm font-semibold text-rose-700">
+                {errorMessage}
+              </p>
+              <button
+                type="button"
+                onClick={onRetry}
+                disabled={retryDisabled}
+                className="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-white px-4 py-2 text-sm font-black text-rose-700 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Sparkles className="h-4 w-4" />
+                Retry research
+              </button>
+            </div>
+          )}
+
+          {notice && !failed ? (
+            <p className="mt-3 rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-700">
+              {notice}
+            </p>
+          ) : null}
+
+          {autofill ? (
+            <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-violet-800">
+              <span>{sourceCount} sources reviewed</span>
+              <span>{competitorCount} competitors found</span>
+              <span>{seedKeywordCount} seed keywords generated</span>
+            </div>
+          ) : null}
+          {autofill?.sources?.length ? (
+            <p className="mt-2 truncate text-xs font-semibold text-violet-700">
+              Sources: {autofill.sources.slice(0, 3).map((source) => source.title || source.url).join(", ")}
+            </p>
+          ) : null}
+          {autofill?.warnings?.length ? <p className="mt-2 text-xs font-semibold text-amber-700">{autofill.warnings[0]}</p> : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function baselineFromRun(run: VibeMarketingRunSummary | null | undefined): VibeMarketingWebsiteBaseline | null {
+  const raw = run?.result?.baseline;
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  return {
+    runId: run?.runId,
+    domain: typeof payload.domain === "string" ? payload.domain : run?.domain,
+    status: typeof payload.status === "string" ? payload.status : run?.status,
+    passed: run?.status === "completed",
+    collectedAt:
+      typeof payload.collectedAt === "string"
+        ? payload.collectedAt
+        : typeof payload.collected_at === "string"
+          ? payload.collected_at
+          : run?.updatedAt,
+    overallScore:
+      typeof payload.overallScore === "number"
+        ? payload.overallScore
+        : typeof payload.overall_score === "number"
+          ? payload.overall_score
+          : null,
+    summary:
+      typeof payload.summary === "string" || (payload.summary && typeof payload.summary === "object")
+        ? (payload.summary as VibeMarketingWebsiteBaseline["summary"])
+        : null,
+    metrics: payload.metrics && typeof payload.metrics === "object" ? (payload.metrics as VibeMarketingWebsiteBaseline["metrics"]) : {},
+    sourceStatus: payload.sourceStatus && typeof payload.sourceStatus === "object" ? (payload.sourceStatus as Record<string, string>) : {},
+    recommendations: Array.isArray(payload.recommendations) ? (payload.recommendations as Array<Record<string, unknown>>) : [],
+  };
+}
+
+function baselineSummaryText(summary: VibeMarketingWebsiteBaseline["summary"]) {
+  if (typeof summary === "string") return summary;
+  if (summary && typeof summary === "object" && typeof summary.text === "string") return summary.text;
+  return "Run a baseline to capture website health, search visibility, authority, AI visibility, and traffic before article generation starts.";
+}
+
+function metricStatus(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
+  const message = typeof metric?.message === "string" ? metric.message : "";
+  if (label === "Lighthouse" && /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message)) {
+    return "unavailable";
+  }
+  return metric?.status;
+}
+
+function metricScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, status?: string | null) {
+  return status === "measured" && typeof metric?.score === "number" ? Math.round(metric.score) : null;
+}
+
+function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
+  const message = typeof metric?.message === "string" ? metric.message : null;
+  if (label === "Lighthouse" && message && /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message)) {
+    return "PageSpeed Insights is temporarily rate limited. Try again later.";
+  }
+  return message;
+}
+
+function sourceStatusLabel(status?: string | null) {
+  if (status === "measured") return "Verified";
+  if (status === "needs_connection") return "Needs connection";
+  if (status === "error") return "Error";
+  return "Unavailable";
+}
+
+function SourceStatusBadge({ status }: { status?: string | null }) {
+  return (
+    <span
+      className={clsx(
+        "inline-flex rounded-full px-2 py-0.5 text-[11px] font-black",
+        status === "measured" && "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+        status === "needs_connection" && "bg-amber-50 text-amber-700 ring-1 ring-amber-100",
+        status === "error" && "bg-rose-50 text-rose-700 ring-1 ring-rose-100",
+        !["measured", "needs_connection", "error"].includes(String(status)) && "bg-slate-50 text-slate-600 ring-1 ring-slate-100",
+      )}
+    >
+      {sourceStatusLabel(status)}
+    </span>
+  );
+}
+
+function BaselineMetricCard({
+  label,
+  metric,
+}: {
+  label: string;
+  metric?: VibeMarketingWebsiteBaselineMetric;
+}) {
+  const status = metricStatus(label, metric);
+  const score = metricScore(metric, status);
+  const message = metricMessage(label, metric);
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-sm font-black text-slate-950">{label}</p>
+        <SourceStatusBadge status={status} />
+      </div>
+      <p className="mt-3 text-2xl font-black text-slate-950">{score === null ? "—" : score}</p>
+      {message ? <p className="mt-2 line-clamp-4 break-words text-xs font-semibold text-slate-500">{message}</p> : null}
+    </div>
+  );
+}
+
+function GoogleIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
+      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z" fill="#4285F4" />
+      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+      <path d="M5.84 14.09A6.6 6.6 0 0 1 5.49 12c0-.73.13-1.43.35-2.09V7.07H2.18A10.96 10.96 0 0 0 1 12c0 1.78.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+    </svg>
+  );
+}
+
 function FirstArticleSetupPage({
   bootstrap,
   error,
@@ -446,8 +1193,255 @@ function FirstArticleSetupPage({
   bootstrap: VibeMarketingBootstrap;
   error: string | null;
 }) {
-  const context = bootstrap.settings.companyContext ?? "";
-  const companyName = bootstrap.company.name === "Company" ? "" : bootstrap.company.name;
+  const navigation = useNavigation();
+  const autofillStartFetcher = useFetcher<{
+    intent?: string;
+    autofillRunId?: string | null;
+    status?: string;
+    error?: string;
+    errors?: string[];
+  }>();
+  const autofillRunFetcher = useFetcher<VibeMarketingRunSummary>();
+  const baselineStartFetcher = useFetcher<{ intent?: string; baselineRunId?: string | null; status?: string; error?: string }>();
+  const baselineRunFetcher = useFetcher<VibeMarketingRunSummary>();
+  const googleBaselineFetcher = useFetcher<{ intent?: string; websiteBaseline?: VibeMarketingWebsiteBaseline; error?: string }>();
+  const skipBaselineFetcher = useFetcher<{ intent?: string; error?: string }>();
+  const startupDefaults = useMemo(() => startupSetupDefaultsFromBootstrap(bootstrap), [bootstrap]);
+  const startupDefaultsSignature = useMemo(() => JSON.stringify(startupDefaults), [startupDefaults]);
+  const activeCompanyKey = String(
+    bootstrap.company.id ||
+      bootstrap.company.organizationId ||
+      bootstrap.organization.id ||
+      bootstrap.organization.domain ||
+      bootstrap.company.domain ||
+      "no-company",
+  );
+  const activeCompanyKeyRef = useRef(activeCompanyKey);
+  const autofillPollStateRef = useRef(autofillRunFetcher.state);
+  const baselinePollStateRef = useRef(baselineRunFetcher.state);
+  const [startupValues, setStartupValues] = useState<StartupSetupValues>(startupDefaults);
+  const [autofillRunId, setAutofillRunId] = useState<string | null>(null);
+  const [appliedAutofillRunId, setAppliedAutofillRunId] = useState<string | null>(null);
+  const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
+  const [googleBaseline, setGoogleBaseline] = useState<VibeMarketingWebsiteBaseline | null>(null);
+  const [autofillStartedAt, setAutofillStartedAt] = useState<number | null>(null);
+  const [autofillLastProgressAt, setAutofillLastProgressAt] = useState<number | null>(null);
+  const [autofillLastPollAt, setAutofillLastPollAt] = useState<number | null>(null);
+  const [autofillProgressSignature, setAutofillProgressSignature] = useState("");
+  const [autofillClock, setAutofillClock] = useState(() => Date.now());
+
+  const autofillStartData = autofillStartFetcher.data;
+  const autofillRun = autofillRunFetcher.data as VibeMarketingRunSummary | undefined;
+  const autofillStartStatus =
+    autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
+      ? autofillStartData.status
+      : null;
+  const autofillStartError =
+    autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
+      ? autofillStartData.error ?? autofillStartData.errors?.[0] ?? null
+      : null;
+  const baselineStartData = baselineStartFetcher.data;
+  const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
+  const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
+  const effectiveBaseline = googleBaseline ?? baselineFromRun(baselineRun) ?? baselineFromRun(latestBaselineRun) ?? bootstrap.websiteBaseline;
+  const baselineMetrics = effectiveBaseline.metrics ?? {};
+  const trafficMetric = baselineMetrics.traffic;
+  const trafficStatus = metricStatus("Traffic/users", trafficMetric);
+  const hasGoogleBaselineScopes = Boolean(bootstrap.googleBaselineConnection?.hasBaselineScopes);
+  const isSubmitting = navigation.state === "submitting";
+  const autofillPending = autofillStartFetcher.state !== "idle";
+  const baselinePending = baselineStartFetcher.state !== "idle";
+  const googleBaselinePending = googleBaselineFetcher.state !== "idle";
+  const skipBaselinePending = skipBaselineFetcher.state !== "idle";
+  const autofillPolling = Boolean(
+    autofillRunId &&
+      !isResearchTerminalStatus(autofillStartStatus) &&
+      (!autofillRun || isResearchRunningStatus(autofillRun.status)),
+  );
+  const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
+  const autofillStatusAgeMs = autofillStartedAt ? autofillClock - (autofillLastPollAt ?? autofillStartedAt) : 0;
+  const autofillProgressAgeMs = autofillStartedAt ? autofillClock - (autofillLastProgressAt ?? autofillStartedAt) : 0;
+  const autofillStalled = Boolean(autofillPolling && autofillProgressAgeMs > 60_000);
+  const autofillUnavailable = Boolean(autofillPolling && (autofillStatusAgeMs > 120_000 || autofillProgressAgeMs > 120_000));
+  const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
+  const canStartAutofill =
+    Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
+    !autofillPending &&
+    (!autofillPolling || autofillUnavailable);
+  const canRetryAutofill = Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) && !autofillPending;
+  const canStartBaseline = Boolean((bootstrap.organization.domain || bootstrap.company.domain || startupValues.domain).trim()) && !baselinePending && !baselinePolling;
+  const canRefreshGoogleBaseline = hasGoogleBaselineScopes && effectiveBaseline.status !== "missing" && !googleBaselinePending;
+  const companyContext = companyContextFromSetup(startupValues);
+  const searchConsole = plainObject(trafficMetric?.googleSearchConsole);
+  const searchConsoleSummary = plainObject(searchConsole?.last28Days);
+
+  const updateValue = (field: StartupSetupField, value: string) => {
+    setStartupValues((current) => ({ ...current, [field]: value }));
+  };
+
+  const startAutofill = () => {
+    const snapshot = { ...startupValues };
+    const now = Date.now();
+    setAutofillRunId(null);
+    setAppliedAutofillRunId(null);
+    setAutofillStartedAt(now);
+    setAutofillLastProgressAt(now);
+    setAutofillLastPollAt(null);
+    setAutofillProgressSignature("");
+    setAutofillClock(now);
+    const formData = new FormData();
+    formData.set("intent", "start-autofill");
+    formData.set("companyContext", companyContextFromSetup(snapshot));
+    for (const [field, value] of Object.entries(snapshot)) {
+      formData.set(field, value);
+    }
+    autofillStartFetcher.submit(formData, { method: "POST" });
+  };
+
+  const startBaseline = () => {
+    setGoogleBaseline(null);
+    const formData = new FormData();
+    formData.set("intent", "start-baseline");
+    baselineStartFetcher.submit(formData, { method: "POST" });
+  };
+
+  const refreshGoogleBaseline = () => {
+    const formData = new FormData();
+    formData.set("intent", "refresh-baseline-google");
+    googleBaselineFetcher.submit(formData, { method: "POST" });
+  };
+
+  const skipBaseline = () => {
+    const formData = new FormData();
+    formData.set("intent", "skip-baseline");
+    formData.set("reason", "Skipped during marketing setup");
+    skipBaselineFetcher.submit(formData, { method: "POST" });
+  };
+
+  useEffect(() => {
+    autofillPollStateRef.current = autofillRunFetcher.state;
+  }, [autofillRunFetcher.state]);
+
+  useEffect(() => {
+    baselinePollStateRef.current = baselineRunFetcher.state;
+  }, [baselineRunFetcher.state]);
+
+  useEffect(() => {
+    if (activeCompanyKeyRef.current === activeCompanyKey) return;
+    activeCompanyKeyRef.current = activeCompanyKey;
+    setStartupValues(startupDefaults);
+    setAutofillRunId(null);
+    setBaselineRunId(null);
+    setGoogleBaseline(null);
+    setAppliedAutofillRunId(null);
+    setAutofillStartedAt(null);
+    setAutofillLastProgressAt(null);
+    setAutofillLastPollAt(null);
+    setAutofillProgressSignature("");
+  }, [activeCompanyKey, startupDefaults, startupDefaultsSignature]);
+
+  useEffect(() => {
+    if (autofillStartData?.autofillRunId) {
+      const now = Date.now();
+      setAutofillRunId(autofillStartData.autofillRunId);
+      setAppliedAutofillRunId(null);
+      setAutofillStartedAt((current) => current ?? now);
+      setAutofillLastProgressAt((current) => current ?? now);
+      setAutofillClock(now);
+    }
+  }, [autofillStartData?.autofillRunId]);
+
+  useEffect(() => {
+    if (baselineStartData?.baselineRunId) {
+      setBaselineRunId(baselineStartData.baselineRunId);
+      setGoogleBaseline(null);
+    }
+  }, [baselineStartData?.baselineRunId]);
+
+  useEffect(() => {
+    if (googleBaselineFetcher.data?.websiteBaseline) {
+      setGoogleBaseline(googleBaselineFetcher.data.websiteBaseline);
+    }
+  }, [googleBaselineFetcher.data?.websiteBaseline]);
+
+  useEffect(() => {
+    if (!autofillPending && !autofillPolling) return;
+    setAutofillClock(Date.now());
+    const timer = window.setInterval(() => {
+      setAutofillClock(Date.now());
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [autofillPending, autofillPolling]);
+
+  useEffect(() => {
+    if (!autofillRunId || !autofillRun) return;
+    const now = Date.now();
+    const signature = researchProgressSignature(autofillRun);
+    setAutofillLastPollAt(now);
+    if (signature !== autofillProgressSignature) {
+      setAutofillProgressSignature(signature);
+      setAutofillLastProgressAt(now);
+    }
+  }, [autofillProgressSignature, autofillRun, autofillRunId]);
+
+  useEffect(() => {
+    if (!autofillRunId) return;
+    if (autofillRun && !isResearchRunningStatus(autofillRun.status)) return;
+    if (isResearchTerminalStatus(autofillStartStatus)) return;
+    const href = `/founder-tools/marketing/autofill-runs/${encodeURIComponent(autofillRunId)}`;
+    const loadIfIdle = () => {
+      if (autofillPollStateRef.current !== "idle") return;
+      autofillPollStateRef.current = "loading";
+      autofillRunFetcher.load(href);
+    };
+    loadIfIdle();
+    const timer = window.setInterval(() => {
+      loadIfIdle();
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [autofillRunId, autofillRun?.status, autofillStartStatus]);
+
+  useEffect(() => {
+    if (!baselineRunId) return;
+    if (baselineRun && !["queued", "running"].includes(baselineRun.status)) return;
+    const href = `/founder-tools/marketing/autofill-runs/${encodeURIComponent(baselineRunId)}`;
+    const loadIfIdle = () => {
+      if (baselinePollStateRef.current !== "idle") return;
+      baselinePollStateRef.current = "loading";
+      baselineRunFetcher.load(href);
+    };
+    loadIfIdle();
+    const timer = window.setInterval(() => {
+      loadIfIdle();
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [baselineRunId, baselineRun?.status]);
+
+  useEffect(() => {
+    if (!autofillRunId || appliedAutofillRunId === autofillRunId || autofillRun?.status !== "completed") return;
+    const autofill = extractAutofill(autofillRun);
+    if (!autofill) return;
+    const splitContext = splitCompanyContext(autofill.companyContext, startupValues.targetAudience);
+    const competitors = competitorStringsFromAutofill(autofill);
+
+    setStartupValues((current) => {
+      const updates: Partial<StartupSetupValues> = {
+        companyLinkedInUrl: autofill.companyLinkedInUrl || current.companyLinkedInUrl,
+        shortDescription: splitContext.shortDescription || current.shortDescription,
+        problemSolved: splitContext.problemSolved || current.problemSolved,
+        targetAudience: splitContext.targetAudience || current.targetAudience,
+        competitors: competitors.length ? competitors.join("\n") : current.competitors,
+        seedKeywords: autofill.seedKeywords?.length ? autofill.seedKeywords.join(", ") : current.seedKeywords,
+      };
+      return Object.keys(updates).length ? { ...current, ...updates } : current;
+    });
+    setAppliedAutofillRunId(autofillRunId);
+  }, [appliedAutofillRunId, autofillRun, autofillRunId, startupValues.targetAudience]);
+
+  const inputClass =
+    "h-12 w-full rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
+  const textareaClass =
+    "w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500";
 
   return (
     <div className="mx-auto max-w-[1580px] px-4 py-8 sm:px-6 lg:px-10">
@@ -475,6 +1469,7 @@ function FirstArticleSetupPage({
 
       <Form method="POST" className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <input type="hidden" name="intent" value="save-startup-details" />
+        <input type="hidden" name="companyContext" value={companyContext} />
         {error ? (
           <div className="border-b border-rose-100 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-700">
             {error}
@@ -489,67 +1484,191 @@ function FirstArticleSetupPage({
               This helps us understand your business, audience, and what makes you unique.
             </p>
 
-            <div className="mt-8 grid gap-8 lg:grid-cols-2">
-              <div className="space-y-7">
-                <FormField label="Startup or Company Name" help="This will be used as the author for your articles.">
-                  <input
-                    name="companyName"
-                    defaultValue={companyName}
-                    placeholder="e.g. Your Startup Inc."
-                    className="h-12 w-full rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
+            <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              <FormField label="Startup or Company Name" help="This will be used as the author for your articles.">
+                <input
+                  name="companyName"
+                  value={startupValues.companyName}
+                  onChange={(event) => updateValue("companyName", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="e.g. Your Startup Inc."
+                  className={inputClass}
+                />
+              </FormField>
 
-                <FormField label="Website domain" help="Connect this company to its website and article system.">
-                  <input
-                    name="domain"
-                    defaultValue={bootstrap.company.domain ?? bootstrap.organization.domain ?? ""}
-                    placeholder="e.g. yourstartup.com"
-                    className="h-12 w-full rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
-
-                <FormField label="Short description" help="In 1-2 sentences, what does your startup do?">
-                  <textarea
-                    name="shortDescription"
-                    defaultValue={context}
-                    placeholder="e.g. We help SaaS companies automate customer onboarding..."
-                    rows={5}
-                    maxLength={600}
-                    className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
-              </div>
-
-              <div className="space-y-7">
-                <FormField label="What problem do you solve?" help="What's the main problem you help your customers solve?">
-                  <textarea
-                    name="problemSolved"
-                    placeholder="e.g. SaaS teams waste time on manual processes..."
-                    rows={5}
-                    maxLength={400}
-                    className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
-
-                <FormField label="Who is your target audience?" help="Who do you serve?">
-                  <input
-                    name="targetAudience"
-                    placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
-                    className="h-12 w-full rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
-
-                <FormField label="Seed keywords" help="Optional starting keywords, separated by commas.">
-                  <input
-                    name="seedKeywords"
-                    defaultValue={bootstrap.organization.seedKeywords.join(", ")}
-                    placeholder="e.g. onboarding automation, product analytics"
-                    className="h-12 w-full rounded-lg border border-slate-200 px-4 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
-                  />
-                </FormField>
-              </div>
+              <FormField label="Website domain" help="Connect this company to its website and article system.">
+                <input
+                  name="domain"
+                  value={startupValues.domain}
+                  onChange={(event) => updateValue("domain", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="e.g. yourstartup.com"
+                  className={inputClass}
+                />
+              </FormField>
             </div>
+
+            <div className="mt-8 space-y-3 rounded-xl border border-violet-200 bg-violet-50/70 p-4 shadow-sm shadow-violet-100/70">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm font-black text-slate-950">Use AI to fill the details</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+                    Use the website and public company info to fill the fields below. You can edit everything before continuing.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={startAutofill}
+                  disabled={!canStartAutofill}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {autofillPending || autofillPolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {autofillPending || autofillPolling ? "Generating..." : "Generate with AI"}
+                </button>
+              </div>
+              {!canStartAutofill && !autofillPending && !autofillPolling ? (
+                <p className="text-xs font-bold text-slate-500">Add a company name and website domain before generating with AI.</p>
+              ) : null}
+              {autofillStartData?.error && !autofillStartData?.autofillRunId ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+                  {autofillStartData.error}
+                </div>
+              ) : null}
+              <ProfileResearchProgressCard
+                run={autofillRun}
+                runId={autofillRunId}
+                pending={autofillPending}
+                startStatus={autofillStartStatus}
+                startError={autofillStartError}
+                stalled={autofillStalled}
+                unavailable={autofillUnavailable}
+                onRetry={startAutofill}
+                retryDisabled={!canRetryAutofill}
+              />
+            </div>
+
+            <div
+              className={clsx(
+                "mt-8 rounded-xl border border-slate-200 bg-white p-4",
+                researchLocked && "bg-slate-50/80",
+              )}
+            >
+                  <div className="grid gap-7 lg:grid-cols-2">
+                    <FormField label="Short description" help="In 1-2 sentences, what does your startup do?">
+                      <textarea
+                        name="shortDescription"
+                        value={startupValues.shortDescription}
+                        onChange={(event) => updateValue("shortDescription", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. We help SaaS companies automate customer onboarding..."
+                        rows={5}
+                        maxLength={600}
+                        className={textareaClass}
+                      />
+                    </FormField>
+
+                    <FormField label="What problem do you solve?" help="What's the main problem you help your customers solve?">
+                      <textarea
+                        name="problemSolved"
+                        value={startupValues.problemSolved}
+                        onChange={(event) => updateValue("problemSolved", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. SaaS teams waste time on manual processes..."
+                        rows={5}
+                        maxLength={400}
+                        className={textareaClass}
+                      />
+                    </FormField>
+
+                    <FormField label="Who is your target audience?" help="Who do you serve?">
+                      <input
+                        name="targetAudience"
+                        value={startupValues.targetAudience}
+                        onChange={(event) => updateValue("targetAudience", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
+                        className={inputClass}
+                      />
+                    </FormField>
+
+                  </div>
+            </div>
+
+            <details className="mt-8 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+                  <summary className="cursor-pointer text-sm font-black text-slate-950">Advanced startup details</summary>
+                  <div className="mt-5 grid gap-6 lg:grid-cols-2">
+                    <FormField label="Company LinkedIn URL">
+                      <input
+                        name="companyLinkedInUrl"
+                        value={startupValues.companyLinkedInUrl}
+                        onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="https://www.linkedin.com/company/yourstartup"
+                        className={inputClass}
+                      />
+                    </FormField>
+                    <FormField label="Location">
+                      <input
+                        name="location"
+                        value={startupValues.location}
+                        onChange={(event) => updateValue("location", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Melbourne, Australia"
+                        className={inputClass}
+                      />
+                    </FormField>
+                    <FormField label="ABN">
+                      <input
+                        name="abn"
+                        value={startupValues.abn}
+                        onChange={(event) => updateValue("abn", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Search ABN or business name"
+                        className={inputClass}
+                      />
+                    </FormField>
+                    <FormField label="Founder names">
+                      <input
+                        name="founderNames"
+                        value={startupValues.founderNames}
+                        onChange={(event) => updateValue("founderNames", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Sam Donegan, Alex Founder"
+                        className={inputClass}
+                      />
+                    </FormField>
+                    <FormField label="Stage">
+                      <select
+                        name="stage"
+                        value={startupValues.stage}
+                        onChange={(event) => updateValue("stage", event.target.value)}
+                        disabled={researchLocked}
+                        className={inputClass}
+                      >
+                        {STARTUP_STAGE_OPTIONS.map((option) => (
+                          <option key={option || "blank"} value={option}>
+                            {option || "Select stage"}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <FormField label="Organization type">
+                      <select
+                        name="organizationKind"
+                        value={startupValues.organizationKind}
+                        onChange={(event) => updateValue("organizationKind", event.target.value)}
+                        disabled={researchLocked}
+                        className={inputClass}
+                      >
+                        {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                          <option key={option || "blank"} value={option}>
+                            {option || "Select type"}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </div>
+            </details>
           </div>
 
           <aside className="self-start rounded-xl border border-slate-200 bg-white p-6">
@@ -568,8 +1687,200 @@ function FirstArticleSetupPage({
                 </li>
               ))}
             </ul>
+            <div className="mt-7 space-y-6 border-t border-slate-100 pt-6">
+              <FormField label="Seed keywords" help="Optional starting keywords, separated by commas.">
+                <input
+                  name="seedKeywords"
+                  value={startupValues.seedKeywords}
+                  onChange={(event) => updateValue("seedKeywords", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="e.g. onboarding automation, product analytics"
+                  className={inputClass}
+                />
+              </FormField>
+
+              <FormField label="Competitors" help="One competitor domain or company per line.">
+                <textarea
+                  name="competitors"
+                  value={startupValues.competitors}
+                  onChange={(event) => updateValue("competitors", event.target.value)}
+                  disabled={researchLocked}
+                  rows={5}
+                  placeholder="competitor.com&#10;another competitor"
+                  className={textareaClass}
+                />
+              </FormField>
+            </div>
           </aside>
         </div>
+
+        <section className="border-t border-slate-100 bg-white px-6 py-8 lg:px-8">
+          <div>
+            <p className="text-sm font-black text-violet-700">Optional baseline</p>
+            <h2 className="mt-3 text-2xl font-black tracking-normal text-slate-950">Measure where the website starts</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-slate-600">
+              Connect Google Search Console first if you want search traffic included. Then generate a baseline snapshot for technical health, SEO,
+              authority, AI visibility, and traffic before the first article goes live.
+            </p>
+          </div>
+
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">
+                  1
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-slate-950">Connect Google Search Console</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+                    Optional. Connect it to include clicks, impressions, and search query data in the baseline.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {hasGoogleBaselineScopes ? (
+                  <>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Search Console connected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={refreshGoogleBaseline}
+                      disabled={!canRefreshGoogleBaseline}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {googleBaselinePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                      {trafficStatus === "measured" ? "Refresh Search Console" : "Load Search Console"}
+                    </button>
+                  </>
+                ) : bootstrap.googleBaselineConnection?.connectUrl ? (
+                  <a
+                    href={bootstrap.googleBaselineConnection.connectUrl}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-800 shadow-sm transition hover:bg-slate-50"
+                  >
+                    <GoogleIcon />
+                    Connect Google Search Console
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-slate-500 ring-1 ring-slate-200">
+                    Search Console can be skipped
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">
+                  2
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-slate-950">Generate baseline snapshot</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+                    This can run without Search Console. Use it to compare future article growth against today&apos;s website state.
+                  </p>
+                  <p className="mt-3 text-sm font-black text-slate-950">{effectiveBaseline.domain || startupValues.domain || "No domain saved yet"}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
+                  {effectiveBaseline.collectedAt ? (
+                    <p className="mt-1 text-xs font-semibold text-slate-500">
+                      Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
+                      {effectiveBaseline.stale ? " · stale" : ""}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={startBaseline}
+                  disabled={!canStartBaseline}
+                  className="inline-flex items-center gap-2 rounded-lg bg-violet-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
+                  {effectiveBaseline.overallScore === null || effectiveBaseline.status === "missing" ? "Generate baseline" : "Rerun baseline"}
+                </button>
+                <button
+                  type="button"
+                  onClick={skipBaseline}
+                  disabled={skipBaselinePending}
+                  className="inline-flex items-center gap-2 rounded-lg border border-transparent bg-transparent px-4 py-2.5 text-sm font-black text-slate-600 transition hover:bg-white disabled:opacity-50"
+                >
+                  Skip for now
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {(baselineStartData?.error || googleBaselineFetcher.data?.error || skipBaselineFetcher.data?.error) ? (
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              {baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error}
+            </div>
+          ) : null}
+
+          {baselineRunId ? (
+            <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+              <div className="flex items-center gap-2 font-black">
+                {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                <span>
+                  {baselineRun?.status === "completed"
+                    ? "Baseline ready"
+                    : baselineRun?.status === "failed" || baselineRun?.status === "blocked"
+                      ? "Baseline needs attention"
+                      : "Collecting baseline"}
+                </span>
+              </div>
+              {baselineRun?.errors?.length ? <p className="mt-2 font-semibold text-rose-700">{baselineRun.errors[0]}</p> : null}
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-black text-slate-950">Overall</p>
+                <SourceStatusBadge status={effectiveBaseline.status === "completed" ? "measured" : effectiveBaseline.status} />
+              </div>
+              <p className="mt-3 text-3xl font-black text-slate-950">
+                {typeof effectiveBaseline.overallScore === "number" ? effectiveBaseline.overallScore : "—"}
+              </p>
+            </div>
+            <BaselineMetricCard label="Technical health" metric={baselineMetrics.technicalHealth} />
+            <BaselineMetricCard label="Lighthouse" metric={baselineMetrics.lighthouse} />
+            <BaselineMetricCard label="Organic search" metric={baselineMetrics.organicSearch} />
+            <BaselineMetricCard label="AI visibility" metric={baselineMetrics.aiVisibility} />
+            <BaselineMetricCard label="Authority" metric={baselineMetrics.authority} />
+            <BaselineMetricCard label="Traffic/users" metric={trafficMetric} />
+            {searchConsole?.status === "measured" && searchConsoleSummary ? (
+              <div className="rounded-xl border border-slate-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-black text-slate-950">Search Console</p>
+                  <GoogleIcon />
+                </div>
+                <p className="mt-3 text-2xl font-black text-slate-950">
+                  {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.clicks) ?? 0))}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">
+                  clicks from {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.impressions) ?? 0))} impressions
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          {effectiveBaseline.recommendations?.length ? (
+            <div className="mt-5 rounded-xl border border-slate-100 bg-white p-4">
+              <p className="text-sm font-black text-slate-950">Recommended fixes</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {effectiveBaseline.recommendations.slice(0, 4).map((recommendation, index) => (
+                  <div key={`${recommendation.title ?? recommendation.source ?? index}`} className="rounded-xl bg-slate-50 px-4 py-3">
+                    <p className="text-sm font-black text-slate-950">{String(recommendation.title ?? "Review baseline recommendation")}</p>
+                    {recommendation.detail ? <p className="mt-1 text-xs font-semibold text-slate-600">{String(recommendation.detail)}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
 
         <div className="flex flex-col gap-4 border-t border-slate-100 bg-slate-50/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p className="flex items-center gap-3 text-sm font-bold text-slate-500">
@@ -581,7 +1892,8 @@ function FirstArticleSetupPage({
               type="submit"
               name="nextAction"
               value="save-exit"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+              disabled={isSubmitting || researchLocked}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               Save and exit
@@ -590,10 +1902,11 @@ function FirstArticleSetupPage({
               type="submit"
               name="nextAction"
               value="continue"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800"
+              disabled={isSubmitting || researchLocked}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
+              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
               Continue to website
-              <ArrowRight className="h-4 w-4" />
             </button>
           </div>
         </div>
