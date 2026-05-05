@@ -90,6 +90,7 @@ export interface VibeMarketingAutofillKeywordGroup {
 }
 
 export interface VibeMarketingAutofillResult {
+  partial?: boolean;
   brandName?: string | null;
   companyLinkedInUrl?: string | null;
   companyContext?: string | null;
