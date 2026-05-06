@@ -112,8 +112,8 @@ export async function verifyMagicLinkWithCookies(
 // logged-in user while keeping backend calls enabled. VITE_STUB_BACKEND=true
 // also uses this user and stubs API responses.
 const DEV_AUTH_STUB: Record<string, unknown> | null = {
-    full_name: "Dev User",
-    email: "dev@mlai.au",
+    full_name: "Dr Sam Donegan",
+    email: "sam@supportsorted.com.au",
     role: "participant",
     is_superuser: false,
     is_active: true,

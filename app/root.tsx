@@ -113,7 +113,16 @@ export default function Layout() {
           async
         ></script>
       </head>
-      <body>
+      <body
+        style={
+          isFounderToolsApp
+            ? {
+                backgroundColor: "var(--vr-color-app-bg)",
+                color: "var(--vr-color-text)",
+              }
+            : undefined
+        }
+      >
         <noscript>
           <img
             alt=""
@@ -126,7 +135,15 @@ export default function Layout() {
         {/* Only show platform-wide components if NOT in specific apps */}
         {!isAppRoute && <Sidebar />}
         {!isAppRoute && <SectionMarkers />}
-        <div className={isAppRoute ? "" : "lg:pl-[220px] bg-[var(--brutalist-beige)]"}>
+        <div
+          className={
+            isFounderToolsApp
+              ? "min-h-screen bg-[var(--vr-color-app-bg)]"
+              : isAppRoute
+                ? ""
+                : "lg:pl-[220px] bg-[var(--brutalist-beige)]"
+          }
+        >
           <Outlet />
         </div>
         {!isAppRoute && <Footer />}

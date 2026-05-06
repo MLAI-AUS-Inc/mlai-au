@@ -783,13 +783,13 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
 
             {/* Footer */}
             <div className="vr-ucf">
-                <div className="vr-ucf-left">
-                    <div className="vr-ucf-avatar">{initials}</div>
-                    <div>
-                        <div className="vr-ucf-name">{user.companyName}</div>
-                        <div className="vr-ucf-company">Sent to 14 investors · 78% open rate</div>
+                    <div className="vr-ucf-left">
+                        <div className="vr-ucf-avatar">{initials}</div>
+                        <div>
+                            <div className="vr-ucf-name">{user.companyName}</div>
+                        <div className="vr-ucf-company">Prepared for angel and pre-seed VC outreach</div>
+                        </div>
                     </div>
-                </div>
                 <div className="flex gap-2">
                     <button
                         type="button"
@@ -818,25 +818,127 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
     );
 }
 
-function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => void }) {
+function VRPastUpdateRow({
+    update,
+    user,
+    expanded,
+    onToggle,
+}: {
+    update: any;
+    user: any;
+    expanded: boolean;
+    onToggle: () => void;
+}) {
     const previewSource = update.highlights || update.challenges || "";
     const preview = previewSource.length > 0
         ? (previewSource.split(/(?<=\.)\s+/)[0] || previewSource).slice(0, 80) + (previewSource.length > 80 ? "…" : "")
         : "No content yet";
+    const highlights = splitItems(update.highlights || "");
+    const challenges = splitItems(update.challenges || "");
+    const asks = splitItems(update.asks || "");
+    const learnings = splitItems(update.learnings || "");
+    const next30Days = splitItems(update.next30Days || "");
     return (
-        <button type="button" className="vr-past-row" onClick={onClick}>
-            <div className="vr-past-left">
-                <span className="vr-past-dot" />
-                <div>
-                    <div className="vr-past-month">{update.month}</div>
-                    <div className="vr-past-preview">{preview}</div>
+        <div className={clsx("vr-past-card", expanded && "is-expanded")}>
+            <button type="button" className="vr-past-row" onClick={onToggle} aria-expanded={expanded}>
+                <div className="vr-past-left">
+                    <span className="vr-past-dot" />
+                    <div>
+                        <div className="vr-past-month">{update.month}</div>
+                        <div className="vr-past-preview">{preview}</div>
+                    </div>
                 </div>
-            </div>
-            <div className="vr-past-right">
-                <span className="vr-badge vr-badge-teal">Sent</span>
-                <span className="vr-past-arrow" aria-hidden="true">›</span>
-            </div>
-        </button>
+                <div className="vr-past-right">
+                    <span className="vr-badge vr-badge-teal">Sent</span>
+                    <span className={clsx("vr-past-arrow", expanded && "is-expanded")} aria-hidden="true">›</span>
+                </div>
+            </button>
+
+            {expanded ? (
+                <div className="vr-past-body">
+                    <div className="vr-past-meta">
+                        <span>{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                        <Link
+                            to={`/founder-tools/updates/create?edit=${update.id}`}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium"
+                            style={{ color: "var(--vr-color-text-mid)" }}
+                        >
+                            <PencilSquareIcon className="w-4 h-4" />
+                            Edit
+                        </Link>
+                    </div>
+
+                    <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
+                        {update.metrics?.revenue && (
+                            <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
+                        )}
+                        {update.metrics?.users && (
+                            <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
+                        )}
+                        {update.metrics?.runway && (
+                            <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
+                        )}
+                        {update.metrics?.mrr && (
+                            <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
+                        )}
+                        {update.metrics?.burnRate && (
+                            <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
+                        )}
+                        {update.metrics?.monthlyCosts && (
+                            <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
+                        )}
+                    </div>
+
+                    <VRUpdateSection
+                        icon={SparklesIcon}
+                        iconColorVar="--vr-color-warning"
+                        label="Key Highlights"
+                        items={highlights}
+                    />
+                    <VRUpdateSection
+                        icon={ExclamationCircleIcon}
+                        iconColorVar="--vr-color-brand-orange"
+                        label="Challenges"
+                        items={challenges}
+                    />
+                    <VRUpdateSection
+                        icon={LightBulbIcon}
+                        iconColorVar="--vr-color-warning"
+                        label="Learnings"
+                        items={learnings}
+                    />
+                    <VRUpdateSection
+                        icon={CalendarIcon}
+                        iconColorVar="--vr-color-primary"
+                        label="Next 30 Days"
+                        items={next30Days}
+                    />
+                    <VRUpdateSection
+                        icon={QuestionMarkCircleIcon}
+                        iconColorVar="--vr-color-primary"
+                        label="Ask from Investors"
+                        items={asks}
+                    />
+
+                    <div className="vr-past-footer">
+                        <div className="vr-ucf-left">
+                            <div className="vr-ucf-avatar">
+                                {(user.fullName || user.companyName || "U")
+                                    .split(" ")
+                                    .map((part: string) => part[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                            </div>
+                            <div>
+                                <div className="vr-ucf-name">{user.companyName}</div>
+                                <div className="vr-ucf-company">Past investor update</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </div>
     );
 }
 
@@ -853,10 +955,26 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const isOverdue = daysSinceLast > 21;
     const daysOverdue = daysSinceLast - 21;
 
-    // Current vs past update split for the tabs below
-    const currentUpdate = updates.find(u => u.isCurrent) || updates[0] || null;
-    const pastUpdates = updates.filter(u => u !== currentUpdate);
-    const [activeTab, setActiveTab] = useState<"current" | "past">("current");
+    // "Current" means an update for this calendar month. Older updates stay in Past Updates
+    // even if they are the latest saved record.
+    const now = new Date();
+    const currentUpdate = updates.find((update) => {
+        const updateDate = new Date(update.date);
+        return (
+            !Number.isNaN(updateDate.getTime()) &&
+            updateDate.getMonth() === now.getMonth() &&
+            updateDate.getFullYear() === now.getFullYear()
+        );
+    }) || null;
+    const pastUpdates = currentUpdate
+        ? updates.filter((update) => update !== currentUpdate)
+        : updates;
+    const [activeTab, setActiveTab] = useState<"current" | "past">(
+        currentUpdate ? "current" : "past"
+    );
+    const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
+        currentUpdate ? null : pastUpdates[0]?.id ?? null
+    );
 
     if (!hasUpdates) {
         return (
@@ -985,8 +1103,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
             {/* Info alert — investor engagement signal */}
             <VRAlertInfo
-                title="3 investors opened your last update"
-                body="AirTree, Blackbird, and Antler viewed your most recent update. Consider following up with personalised notes."
+                title="MAP acceptance and live pilots are your clearest validation signals"
+                body="SupportSorted is in the Melbourne Accelerator Program and already piloting with support coordinators and allied-health clinics. That is the strongest story to keep front-and-centre in investor conversations."
             />
 
             {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
@@ -997,13 +1115,13 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
                     />
                     <div className="vr-metric-eyebrow">
-                        MRR
-                        <span className="vr-badge vr-badge-purple">↗ vs last mo</span>
+                        Successful Matches
+                        <span className="vr-badge vr-badge-purple">Marketplace signal</span>
                     </div>
                     <div className="vr-metric-value">
-                        {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
+                        {latestUpdate?.metrics?.revenue || "—"}
                     </div>
-                    <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
+                    <div className="vr-metric-delta vr-delta-up">Demand converted into real referrals</div>
                 </div>
 
                 <div className="vr-metric-card">
@@ -1011,11 +1129,11 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
                     />
-                    <div className="vr-metric-eyebrow">Active Users</div>
+                    <div className="vr-metric-eyebrow">Professionals Engaged</div>
                     <div className="vr-metric-value">
-                        {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
+                        {latestUpdate?.metrics?.users || "—"}
                     </div>
-                    <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
+                    <div className="vr-metric-delta vr-delta-up">Strong top-of-funnel visibility</div>
                 </div>
 
                 <div className="vr-metric-card">
@@ -1024,13 +1142,13 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         style={{ background: "var(--vr-color-brand-orange)" }}
                     />
                     <div className="vr-metric-eyebrow">
-                        Runway
-                        <span className="vr-badge vr-badge-orange">⚠ Low</span>
+                        Paying Pilots
+                        <span className="vr-badge vr-badge-orange">Early revenue</span>
                     </div>
                     <div className="vr-metric-value">
-                        {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
+                        {latestUpdate?.metrics?.mrr || "—"}
                     </div>
-                    <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
+                    <div className="vr-metric-delta vr-delta-neutral">Monetised validation with active practitioners</div>
                 </div>
 
                 <div className="vr-metric-card">
@@ -1038,9 +1156,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
                     />
-                    <div className="vr-metric-eyebrow">Raise Committed</div>
-                    <div className="vr-metric-value">62%</div>
-                    <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
+                    <div className="vr-metric-eyebrow">Live Pilots</div>
+                    <div className="vr-metric-value">3 SCs + 10 clinics</div>
+                    <div className="vr-metric-delta vr-delta-neutral">Direct workflow feedback from the field</div>
                 </div>
 
                 <div className="vr-metric-card">
@@ -1048,9 +1166,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
                     />
-                    <div className="vr-metric-eyebrow">Burn Rate</div>
-                    <div className="vr-metric-value">$52K/mo</div>
-                    <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
+                    <div className="vr-metric-eyebrow">Fundraise Status</div>
+                    <div className="vr-metric-value">Paused</div>
+                    <div className="vr-metric-delta vr-delta-down">Focused on product velocity before re-opening</div>
                 </div>
             </div>
 
@@ -1119,7 +1237,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                     <VRPastUpdateRow
                                         key={`${user.activeCompanyId || "default"}-${u.id}`}
                                         update={u}
-                                        onClick={() => navigate(`/founder-tools/updates/create?edit=${u.id}`)}
+                                        user={user}
+                                        expanded={expandedPastUpdateId === u.id}
+                                        onToggle={() => setExpandedPastUpdateId((current) => current === u.id ? null : u.id)}
                                     />
                                 ))
                             ) : (

@@ -273,6 +273,9 @@
 - [x] Re-run typecheck and preview Founder Tools pages after the token consistency pass
 - [x] Restore mint as the Founder Tools sidebar active/click highlight token in the design system
 - [x] Keep Discover Investors hidden by default behind `VITE_ENABLE_FOUNDER_TOOLS_DISCOVER` until we deliberately enable it
+- [x] Re-apply the Founder Tools root background fix after confirming the sidebar only disappears below the desktop breakpoint
+- [x] Generate a SupportSorted (SuSo) Founder Tools MVP stub company and monthly update for localhost preview
+- [x] Add BACKEND_HANDOFF.md for wiring the SupportSorted Founder Tools frontend to the existing backend
 
 ## Founder Tools design review notes
 
@@ -283,3 +286,4 @@
 - Improve: make Discover Investors feel less like placeholder cards and more like a premium matching surface with firm identity, stage fit, unlock criteria, and a "why matched" signal.
 - Improve: move repeated chips, alert panels, CTA styles, gradients, and status surfaces out of route files into `vibe-raising-components.css`.
 - Guardrail: keep sidebar mint active/click highlight as a deliberate design-system token, not a one-off component color.
+- Guardrail: always verify Founder Tools on both sides of the desktop breakpoint before judging shell regressions; below `lg` the app intentionally swaps to the mobile drawer instead of the fixed sidebar.

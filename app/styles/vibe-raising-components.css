@@ -11,19 +11,19 @@
 
 .vr-scope .vr-metrics-row {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
 @media (max-width: 1023px) {
   .vr-scope .vr-metrics-row {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
 }
 
 @media (max-width: 640px) {
   .vr-scope .vr-metrics-row {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -63,23 +63,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 6px;
+  flex-wrap: wrap;
 }
 
 .vr-scope .vr-metric-value {
   font-family: var(--vr-font-title);
   font-weight: var(--vr-font-weight-bold);
-  font-size: 30px;
+  font-size: clamp(28px, 4vw, 30px);
   color: var(--vr-color-text);
-  line-height: 1;
+  line-height: 1.05;
   margin-bottom: 6px;
+  overflow-wrap: anywhere;
 }
 
 .vr-scope .vr-metric-delta {
   font-size: var(--vr-font-size-sm);
   font-weight: var(--vr-font-weight-medium);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .vr-scope .vr-metric-card {
+    padding: 16px;
+  }
 }
 
 .vr-scope .vr-delta-up    { color: var(--vr-color-success); }
@@ -422,10 +432,22 @@
 
 /* ── Past update row (collapsed) ──────────────────────────── */
 
-.vr-scope .vr-past-row {
+.vr-scope .vr-past-card {
   background: var(--vr-color-bg);
   border: 1px solid var(--vr-color-border);
   border-radius: var(--vr-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--vr-shadow-sm);
+}
+
+.vr-scope .vr-past-card.is-expanded {
+  box-shadow: var(--vr-shadow-md);
+}
+
+.vr-scope .vr-past-row {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -438,8 +460,7 @@
 }
 
 .vr-scope .vr-past-row:hover {
-  box-shadow: var(--vr-shadow-md);
-  transform: translateY(-1px);
+  background: rgba(107, 48, 217, 0.02);
 }
 
 .vr-scope .vr-past-left {
@@ -479,6 +500,33 @@
   color: var(--vr-color-text-sub);
   font-size: 18px;
   line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.vr-scope .vr-past-arrow.is-expanded {
+  transform: rotate(90deg);
+}
+
+.vr-scope .vr-past-body {
+  border-top: 1px solid var(--vr-color-border);
+  padding: 18px 20px 20px;
+}
+
+.vr-scope .vr-past-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--vr-color-text-sub);
+  font-size: var(--vr-font-size-sm);
+  flex-wrap: wrap;
+}
+
+.vr-scope .vr-past-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--vr-color-border);
 }
 
 /* ── Badges ───────────────────────────────────────────────── */
