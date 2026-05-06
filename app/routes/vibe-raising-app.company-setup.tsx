@@ -1,4 +1,4 @@
-import { Form, redirect, useLoaderData, useNavigation } from "react-router";
+import { Form, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
 import { ArrowPathIcon, BuildingOffice2Icon } from "@heroicons/react/24/outline";
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
@@ -24,6 +24,61 @@ function listFromForm(value: FormDataEntryValue | null) {
         .split(/[,\n]/)
         .map((item) => item.trim())
         .filter(Boolean);
+}
+
+function stringFromForm(formData: FormData, key: string) {
+    return String(formData.get(key) ?? "").trim();
+}
+
+function fieldLabel(field: string) {
+    const labels: Record<string, string> = {
+        companyLinkedInUrl: "Company LinkedIn URL",
+        company_linkedin_url: "Company LinkedIn URL",
+        organizationKind: "Organization type",
+        organization_kind: "Organization type",
+        companyId: "Company",
+        company_id: "Company",
+        name: "Company name",
+        domain: "Website domain",
+        abn: "ABN",
+        location: "Startup location",
+        non_field_errors: "Company details",
+    };
+    return labels[field] ?? field.replace(/_/g, " ");
+}
+
+function readableBackendError(error: any) {
+    const data = error?.data ?? error?.response?.data;
+
+    if (typeof data === "string" && data.trim()) {
+        return data.trim();
+    }
+
+    if (data && typeof data === "object") {
+        const payload = data as Record<string, unknown>;
+        for (const key of ["detail", "error", "message"]) {
+            const value = payload[key];
+            if (typeof value === "string" && value.trim()) {
+                return value.trim();
+            }
+        }
+
+        const fieldMessages = Object.entries(payload)
+            .flatMap(([field, value]) => {
+                const messages = Array.isArray(value) ? value : [value];
+                return messages
+                    .map((item) => String(item ?? "").trim())
+                    .filter(Boolean)
+                    .map((message) => `${fieldLabel(field)}: ${message}`);
+            })
+            .filter(Boolean);
+
+        if (fieldMessages.length > 0) {
+            return fieldMessages.join(" ");
+        }
+    }
+
+    return error?.message ?? "Company details could not be saved.";
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -59,37 +114,34 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const activeCompany = getActiveVibeRaisingCompany(user);
 
-    const companyName =
-        formData.get("companyName")?.toString() || activeCompany?.name || user.companyName;
-    const domain = formData.get("domain")?.toString() || "";
-    const abn = formData.get("abn")?.toString() || "";
-    const location = formData.get("location")?.toString().trim() || "";
-    const companyId = await saveVibeRaisingCompany(env, request, {
-        companyId: isAddingNew ? null : activeCompany?.id ?? null,
-        name: companyName,
-        domain,
-        companyLinkedInUrl: formData.get("companyLinkedInUrl")?.toString().trim() || "",
-        abn,
-        ...(location ? { location } : {}),
-        brandName: formData.get("brandName")?.toString().trim() || companyName,
-        companyContext: formData.get("companyContext")?.toString().trim() || "",
-        competitors: listFromForm(formData.get("competitors")),
-        seedKeywords: listFromForm(formData.get("seedKeywords")),
-        founderNames: listFromForm(formData.get("founderNames")),
-        stage: formData.get("stage")?.toString().trim() || "",
-        notes: formData.get("notes")?.toString().trim() || "",
-        registered: true,
-    });
+    const companyName = stringFromForm(formData, "companyName") || activeCompany?.name || user.companyName;
+    const location = stringFromForm(formData, "location");
 
-    if (isAddingNew) {
+    try {
+        const companyId = await saveVibeRaisingCompany(env, request, {
+            companyId: isAddingNew ? null : activeCompany?.id ?? null,
+            name: companyName,
+            domain: stringFromForm(formData, "domain"),
+            companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
+            abn: stringFromForm(formData, "abn"),
+            ...(location ? { location } : {}),
+            brandName: stringFromForm(formData, "brandName") || companyName,
+            companyContext: stringFromForm(formData, "companyContext"),
+            competitors: listFromForm(formData.get("competitors")),
+            seedKeywords: listFromForm(formData.get("seedKeywords")),
+            founderNames: listFromForm(formData.get("founderNames")),
+            stage: stringFromForm(formData, "stage"),
+            organizationKind: stringFromForm(formData, "organizationKind"),
+            notes: stringFromForm(formData, "notes"),
+            registered: true,
+        });
+
         if (companyId) {
             await setVibeRaisingActiveCompany(env, request, companyId);
         }
-        return redirect(next);
-    }
-
-    if (companyId) {
-        await setVibeRaisingActiveCompany(env, request, companyId);
+    } catch (error: any) {
+        if (error instanceof Response) throw error;
+        return { error: readableBackendError(error) };
     }
 
     return redirect(next);
@@ -97,6 +149,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 export default function CompanySetup() {
     const { user, activeCompany, isAddingNew, isEditing, next, marketingBootstrap } = useLoaderData<typeof loader>();
+    const actionData = useActionData<typeof action>();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
 
@@ -116,6 +169,11 @@ export default function CompanySetup() {
 
                     <Form method="POST" className="space-y-6">
                         <input type="hidden" name="next" value={next} />
+                        {actionData?.error ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                                {actionData.error}
+                            </div>
+                        ) : null}
                         <FounderStartupDetailsStep
                             defaults={{
                                 companyName: isAddingNew ? "" : activeCompany?.name || user.companyName,
