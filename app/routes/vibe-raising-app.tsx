@@ -11,6 +11,7 @@ import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import VibeRaisingOnboardingCard from "~/components/VibeRaisingOnboardingCard";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
+import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
@@ -26,7 +27,7 @@ import {
   UsersIcon,
 } from "@heroicons/react/24/outline";
 
-const FOUNDER_NAVIGATION = [
+const BASE_FOUNDER_NAVIGATION = [
   { name: "Vibe Raising", href: "/founder-tools/updates", icon: DocumentTextIcon, exact: true },
   { name: "Discover Investors", href: "/founder-tools/discover", icon: UsersIcon },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
@@ -104,6 +105,9 @@ export default function VibeRaisingApp() {
   const { user, profile, appUser } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
+  const founderNavigation = isFounderToolsDiscoverEnabled()
+    ? BASE_FOUNDER_NAVIGATION
+    : BASE_FOUNDER_NAVIGATION.filter((item) => item.href !== "/founder-tools/discover");
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -134,7 +138,7 @@ export default function VibeRaisingApp() {
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={FOUNDER_NAVIGATION}
+      navigation={founderNavigation}
       userNavigation={[]}
       logoutAction="/founder-tools/logout"
     >

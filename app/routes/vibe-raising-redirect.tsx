@@ -1,5 +1,6 @@
 import type { Route } from "./+types/vibe-raising-redirect";
 import { redirect } from "react-router";
+import { isFounderToolsDiscoverEnabledServer } from "~/lib/founder-tools-preview";
 
 const LEGACY_ROUTE_MAP: Record<string, string> = {
   "/vibe-raising": "/founder-tools/updates",
@@ -11,9 +12,12 @@ const LEGACY_ROUTE_MAP: Record<string, string> = {
   "/vibe-raising/discover": "/founder-tools/discover",
 };
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, context }: Route.LoaderArgs) => {
   const url = new URL(request.url);
-  const targetPath = LEGACY_ROUTE_MAP[url.pathname] ?? "/founder-tools/updates";
+  const targetPath =
+    url.pathname === "/vibe-raising/discover" && !isFounderToolsDiscoverEnabledServer(context)
+      ? "/founder-tools/updates"
+      : LEGACY_ROUTE_MAP[url.pathname] ?? "/founder-tools/updates";
   throw redirect(`${targetPath}${url.search}`);
 };
 

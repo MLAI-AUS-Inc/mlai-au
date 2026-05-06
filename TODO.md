@@ -272,6 +272,7 @@
 - [x] Bring Founder Tools semantic tokens back toward the Valley design-system palette for consistency after later PR drift
 - [x] Re-run typecheck and preview Founder Tools pages after the token consistency pass
 - [x] Restore mint as the Founder Tools sidebar active/click highlight token in the design system
+- [x] Keep Discover Investors hidden by default behind `VITE_ENABLE_FOUNDER_TOOLS_DISCOVER` until we deliberately enable it
 
 ## Founder Tools design review notes
 

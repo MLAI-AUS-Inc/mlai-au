@@ -1,6 +1,7 @@
-import { useLoaderData } from "react-router";
+import { redirect, useLoaderData } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.investors";
 import { getEnv } from "~/lib/env.server";
+import { isFounderToolsDiscoverEnabledServer } from "~/lib/founder-tools-preview";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import {
     AdjustmentsHorizontalIcon,
@@ -93,6 +94,10 @@ const investorProfiles = [
 ];
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+    if (!isFounderToolsDiscoverEnabledServer(context)) {
+        throw redirect("/founder-tools/updates");
+    }
+
     const env = getEnv(context);
     await requireVibeRaisingFounder(env, request);
 

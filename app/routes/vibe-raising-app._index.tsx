@@ -7,6 +7,7 @@ import {
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
+import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -843,6 +844,7 @@ function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => voi
 function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
     const navigate = useNavigate();
+    const showDiscover = isFounderToolsDiscoverEnabled();
     const firstName = user.fullName.split(' ')[0];
     const hasUpdates = updates.length > 0;
 
@@ -952,18 +954,20 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </p>
                 </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
-                        onClick={() => navigate("/founder-tools/discover")}
-                    >
-                        Discover Investors
-                    </button>
+                    {showDiscover ? (
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                            style={{
+                                color: "var(--vr-color-text-mid)",
+                                borderColor: "var(--vr-color-border-md)",
+                                background: "transparent",
+                            }}
+                            onClick={() => navigate("/founder-tools/discover")}
+                        >
+                            Discover Investors
+                        </button>
+                    ) : null}
                     <Link
                         to="/founder-tools/data-sources"
                         className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
