@@ -21,6 +21,30 @@ function getDefaultNext(app: AuthAppName | null | undefined): string {
     return "/hackathons";
 }
 
+const LEGACY_FOUNDER_NEXT_PATHS: Record<string, string> = {
+    "/vibe-raising": "/founder-tools",
+    "/vibe-raising/": "/founder-tools",
+    "/vibe-raising/create-update": "/founder-tools/updates/create",
+    "/vibe-raising/connect-data": "/founder-tools/data-sources",
+    "/vibe-raising/companies": "/founder-tools/companies",
+    "/vibe-raising/company-setup": "/founder-tools/company-setup",
+    "/vibe-raising/discover": "/founder-tools/updates",
+};
+
+function normalizeNextForApp(app: AuthAppName | null | undefined, nextValue: string | null | undefined): string {
+    const fallback = getDefaultNext(app);
+    const next = nextValue?.trim() || fallback;
+
+    if (!next.startsWith("/") || next.startsWith("//")) return fallback;
+    if (app !== "founder-tools" && app !== "vibe-raising") return next;
+
+    const target = new URL(next, "https://mlai.local");
+    const mappedPath = LEGACY_FOUNDER_NEXT_PATHS[target.pathname];
+    if (mappedPath) return `${mappedPath}${target.search}${target.hash}`;
+    if (target.pathname.startsWith("/vibe-raising/")) return `/founder-tools/updates${target.search}${target.hash}`;
+    return next;
+}
+
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
     return value === "esafety" || value === "hospital" || value === "innovate-connect-alliance" || value === "founder-tools"
@@ -60,7 +84,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
     const app = parseAuthApp(url.searchParams.get("app"));
-    const next = url.searchParams.get("next") || getDefaultNext(app);
+    const next = normalizeNextForApp(app, url.searchParams.get("next"));
     let user = null;
 
     try {
@@ -81,7 +105,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString() ?? "check";
     const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
-    const next = formData.get("next")?.toString() ?? getDefaultNext(app ?? null);
+    const next = normalizeNextForApp(app ?? null, formData.get("next")?.toString());
     const email = String(formData.get("email") || "").trim();
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
@@ -139,7 +163,7 @@ export default function PlatformLogin() {
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
     const isFounderTools = app === "founder-tools";
-    const next = searchParams.get("next") || getDefaultNext(app);
+    const next = normalizeNextForApp(app, searchParams.get("next"));
     const error = searchParams.get("error");
     const submit = useSubmit();
 

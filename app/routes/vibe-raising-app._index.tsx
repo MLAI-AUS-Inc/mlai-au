@@ -881,7 +881,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             consistent, transparent monthly updates.
                         </p>
                         <button
-                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
+                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
                             className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
                         >
                             Create Your First Update

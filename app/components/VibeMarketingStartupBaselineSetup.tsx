@@ -74,6 +74,16 @@ type VibeMarketingStartupBaselineSetupProps = {
   variant?: SetupVariant;
   focusSection?: "profile" | "baseline";
   autoRefreshGoogleBaseline?: boolean;
+  includeBaseline?: boolean;
+  setupEyebrow?: string;
+  setupTitle?: string;
+  setupDescription?: string;
+  guidanceTitle?: string;
+  guidanceBody?: string;
+  guidanceTips?: string[];
+  primaryActionLabel?: string;
+  showSecondaryAction?: boolean;
+  advancedOpenByDefault?: boolean;
 };
 
 function listFromText(value: unknown): string[] {
@@ -739,6 +749,16 @@ export default function VibeMarketingStartupBaselineSetup({
   variant = "landing",
   focusSection = "profile",
   autoRefreshGoogleBaseline = false,
+  includeBaseline = true,
+  setupEyebrow = "Step 1 of 5",
+  setupTitle = "Tell us about your startup",
+  setupDescription = "This helps us understand your business, audience, and what makes you unique.",
+  guidanceTitle = "Why we ask this",
+  guidanceBody = "The more details you provide, the better we can research and write high-performing articles that rank and convert.",
+  guidanceTips = ["Be specific about what you do", "Focus on the value you deliver", "Think about your ideal customer", "You can always update this later"],
+  primaryActionLabel,
+  showSecondaryAction,
+  advancedOpenByDefault = false,
 }: VibeMarketingStartupBaselineSetupProps) {
   const navigation = useNavigation();
   const autofillStartFetcher = useFetcher<{
@@ -831,6 +851,7 @@ export default function VibeMarketingStartupBaselineSetup({
   const searchConsole = plainObject(trafficMetric?.googleSearchConsole);
   const searchConsoleSummary = plainObject(searchConsole?.last28Days);
   const embedded = variant === "workflow";
+  const shouldShowSecondaryAction = showSecondaryAction ?? !embedded;
 
   const inputClass =
     "w-full rounded-xl border border-gray-200 py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
@@ -1032,10 +1053,10 @@ export default function VibeMarketingStartupBaselineSetup({
 
       <div className={clsx("grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] xl:gap-12", embedded ? "" : "p-6 lg:p-8")}>
         <div>
-          <p className="text-sm font-black text-violet-700">Step 1 of 5</p>
-          <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">Tell us about your startup</h2>
+          <p className="text-sm font-black text-violet-700">{setupEyebrow}</p>
+          <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
           <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
-            This helps us understand your business, audience, and what makes you unique.
+            {setupDescription}
           </p>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-2">
@@ -1173,7 +1194,7 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           </div>
 
-          <details className="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5" open={Boolean(startupValues.location || startupValues.abn || startupValues.founderNames || startupValues.stage || startupValues.organizationKind)}>
+          <details className="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5" open={advancedOpenByDefault || Boolean(startupValues.location || startupValues.abn || startupValues.founderNames || startupValues.stage || startupValues.organizationKind)}>
             <summary className="cursor-pointer text-sm font-black text-gray-950">Advanced startup details</summary>
             <div className="mt-5 grid gap-5 lg:grid-cols-2">
               <FormField label="Startup location">
@@ -1248,14 +1269,14 @@ export default function VibeMarketingStartupBaselineSetup({
 
         <aside className="self-start rounded-2xl border border-gray-200 bg-white p-6">
           <h3 className="flex items-center gap-2 text-sm font-black text-gray-950">
-            Why we ask this <CheckCircle2 className="h-4 w-4 text-gray-400" />
+            {guidanceTitle} <CheckCircle2 className="h-4 w-4 text-gray-400" />
           </h3>
           <p className="mt-5 text-sm font-semibold leading-7 text-gray-600">
-            The more details you provide, the better we can research and write high-performing articles that rank and convert.
+            {guidanceBody}
           </p>
           <p className="mt-7 text-sm font-black text-gray-950">Tips</p>
           <ul className="mt-4 space-y-4 text-sm font-semibold text-gray-600">
-            {["Be specific about what you do", "Focus on the value you deliver", "Think about your ideal customer", "You can always update this later"].map((tip) => (
+            {guidanceTips.map((tip) => (
               <li key={tip} className="flex gap-3">
                 <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
                 <span>{tip}</span>
@@ -1296,176 +1317,178 @@ export default function VibeMarketingStartupBaselineSetup({
         </aside>
       </div>
 
-      <section
-        ref={baselineRef}
-        className={clsx(
-          "border-t border-gray-100 bg-white py-8",
-          embedded ? "" : "px-6 lg:px-8",
-          focusSection === "baseline" && "scroll-mt-6",
-        )}
-      >
-        <div>
-          <p className="text-sm font-black text-violet-700">Optional baseline</p>
-          <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">Measure where the website starts</h2>
-          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-            Connect Google Search Console first if you want search traffic included. Then generate a baseline snapshot for technical health, SEO,
-            authority, AI visibility, and traffic before the first article goes live.
-          </p>
-        </div>
-
-        <div className="mt-7 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-            <div className="flex items-start gap-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">1</span>
-              <div className="min-w-0">
-                <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                  Optional. Connect it to include clicks, impressions, and search query data in the baseline.
-                </p>
-              </div>
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-2">
-              {hasGoogleBaselineScopes ? (
-                <>
-                  <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    Search Console connected
-                  </span>
-                  <button
-                    type="button"
-                    onClick={refreshGoogleBaseline}
-                    disabled={!canRefreshGoogleBaseline}
-                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {googleBaselinePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                    {trafficStatus === "measured" ? "Refresh Search Console" : "Load Search Console"}
-                  </button>
-                </>
-              ) : bootstrap.googleBaselineConnection?.connectUrl ? (
-                <a
-                  href={bootstrap.googleBaselineConnection.connectUrl}
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50"
-                >
-                  <GoogleIcon />
-                  Connect Google Search Console
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              ) : (
-                <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
-                  Search Console can be skipped
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-            <div className="flex items-start gap-3">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">2</span>
-              <div className="min-w-0">
-                <p className="text-sm font-black text-gray-950">Generate baseline snapshot</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                  This can run without Search Console. Use it to compare future article growth against today&apos;s website state.
-                </p>
-                <p className="mt-3 text-sm font-black text-gray-950">{effectiveBaseline.domain || startupValues.domain || "No domain saved yet"}</p>
-                <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
-                {effectiveBaseline.collectedAt ? (
-                  <p className="mt-1 text-xs font-semibold text-gray-500">
-                    Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
-                    {effectiveBaseline.stale ? " · stale" : ""}
-                  </p>
-                ) : null}
-              </div>
-            </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={startBaseline}
-                disabled={!canStartBaseline}
-                className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
-                {effectiveBaseline.overallScore === null || effectiveBaseline.status === "missing" ? "Generate baseline" : "Rerun baseline"}
-              </button>
-              <button
-                type="button"
-                onClick={skipBaseline}
-                disabled={skipBaselinePending}
-                className="inline-flex items-center gap-2 rounded-xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-black text-gray-600 transition hover:bg-white disabled:opacity-50"
-              >
-                Skip for now
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {baselineStartData?.error || googleBaselineFetcher.data?.error || skipBaselineFetcher.data?.error ? (
-          <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-            {baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error}
-          </div>
-        ) : null}
-
-        {baselineRunId ? (
-          <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
-            <div className="flex items-center gap-2 font-black">
-              {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              <span>
-                {baselineRun?.status === "completed"
-                  ? "Baseline ready"
-                  : baselineRun?.status === "failed" || baselineRun?.status === "blocked"
-                    ? "Baseline needs attention"
-                    : "Collecting baseline"}
-              </span>
-            </div>
-            {baselineRun?.errors?.length ? <p className="mt-2 font-semibold text-rose-700">{baselineRun.errors[0]}</p> : null}
-          </div>
-        ) : null}
-
-        <div className="mt-5 grid gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-4">
-            <div className="flex items-start justify-between gap-3">
-              <p className="text-sm font-black text-gray-950">Overall</p>
-              <SourceStatusBadge status={effectiveBaseline.status === "completed" ? "measured" : effectiveBaseline.status} />
-            </div>
-            <p className="mt-3 text-3xl font-black text-gray-950">
-              {typeof effectiveBaseline.overallScore === "number" ? effectiveBaseline.overallScore : "-"}
+      {includeBaseline ? (
+        <section
+          ref={baselineRef}
+          className={clsx(
+            "border-t border-gray-100 bg-white py-8",
+            embedded ? "" : "px-6 lg:px-8",
+            focusSection === "baseline" && "scroll-mt-6",
+          )}
+        >
+          <div>
+            <p className="text-sm font-black text-violet-700">Optional baseline</p>
+            <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">Measure where the website starts</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
+              Connect Google Search Console first if you want search traffic included. Then generate a baseline snapshot for technical health, SEO,
+              authority, AI visibility, and traffic before the first article goes live.
             </p>
           </div>
-          <BaselineMetricCard label="Technical health" metric={baselineMetrics.technicalHealth} />
-          <BaselineMetricCard label="Lighthouse" metric={baselineMetrics.lighthouse} />
-          <BaselineMetricCard label="Organic search" metric={baselineMetrics.organicSearch} />
-          <BaselineMetricCard label="AI visibility" metric={baselineMetrics.aiVisibility} />
-          <BaselineMetricCard label="Authority" metric={baselineMetrics.authority} />
-          <BaselineMetricCard label="Traffic/users" metric={trafficMetric} />
-          {searchConsole?.status === "measured" && searchConsoleSummary ? (
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-black text-gray-950">Search Console</p>
-                <GoogleIcon />
-              </div>
-              <p className="mt-3 text-2xl font-black text-gray-950">
-                {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.clicks) ?? 0))}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-gray-500">
-                clicks from {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.impressions) ?? 0))} impressions
-              </p>
-            </div>
-          ) : null}
-        </div>
 
-        {effectiveBaseline.recommendations?.length ? (
-          <div className="mt-5 rounded-xl border border-gray-100 bg-white p-4">
-            <p className="text-sm font-black text-gray-950">Recommended fixes</p>
-            <div className="mt-3 grid gap-3 md:grid-cols-2">
-              {effectiveBaseline.recommendations.slice(0, 4).map((recommendation, index) => (
-                <div key={`${recommendation.title ?? recommendation.source ?? index}`} className="rounded-xl bg-gray-50 px-4 py-3">
-                  <p className="text-sm font-black text-gray-950">{String(recommendation.title ?? "Review baseline recommendation")}</p>
-                  {recommendation.detail ? <p className="mt-1 text-xs font-semibold text-gray-600">{String(recommendation.detail)}</p> : null}
+          <div className="mt-7 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">1</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
+                    Optional. Connect it to include clicks, impressions, and search query data in the baseline.
+                  </p>
                 </div>
-              ))}
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {hasGoogleBaselineScopes ? (
+                  <>
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Search Console connected
+                    </span>
+                    <button
+                      type="button"
+                      onClick={refreshGoogleBaseline}
+                      disabled={!canRefreshGoogleBaseline}
+                      className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {googleBaselinePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                      {trafficStatus === "measured" ? "Refresh Search Console" : "Load Search Console"}
+                    </button>
+                  </>
+                ) : bootstrap.googleBaselineConnection?.connectUrl ? (
+                  <a
+                    href={bootstrap.googleBaselineConnection.connectUrl}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50"
+                  >
+                    <GoogleIcon />
+                    Connect Google Search Console
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                    Search Console can be skipped
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">2</span>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-gray-950">Generate baseline snapshot</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
+                    This can run without Search Console. Use it to compare future article growth against today&apos;s website state.
+                  </p>
+                  <p className="mt-3 text-sm font-black text-gray-950">{effectiveBaseline.domain || startupValues.domain || "No domain saved yet"}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
+                  {effectiveBaseline.collectedAt ? (
+                    <p className="mt-1 text-xs font-semibold text-gray-500">
+                      Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
+                      {effectiveBaseline.stale ? " · stale" : ""}
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={startBaseline}
+                  disabled={!canStartBaseline}
+                  className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
+                  {effectiveBaseline.overallScore === null || effectiveBaseline.status === "missing" ? "Generate baseline" : "Rerun baseline"}
+                </button>
+                <button
+                  type="button"
+                  onClick={skipBaseline}
+                  disabled={skipBaselinePending}
+                  className="inline-flex items-center gap-2 rounded-xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-black text-gray-600 transition hover:bg-white disabled:opacity-50"
+                >
+                  Skip for now
+                </button>
+              </div>
             </div>
           </div>
-        ) : null}
-      </section>
+
+          {baselineStartData?.error || googleBaselineFetcher.data?.error || skipBaselineFetcher.data?.error ? (
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              {baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error}
+            </div>
+          ) : null}
+
+          {baselineRunId ? (
+            <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-sm text-violet-900">
+              <div className="flex items-center gap-2 font-black">
+                {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                <span>
+                  {baselineRun?.status === "completed"
+                    ? "Baseline ready"
+                    : baselineRun?.status === "failed" || baselineRun?.status === "blocked"
+                      ? "Baseline needs attention"
+                      : "Collecting baseline"}
+                </span>
+              </div>
+              {baselineRun?.errors?.length ? <p className="mt-2 font-semibold text-rose-700">{baselineRun.errors[0]}</p> : null}
+            </div>
+          ) : null}
+
+          <div className="mt-5 grid gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="text-sm font-black text-gray-950">Overall</p>
+                <SourceStatusBadge status={effectiveBaseline.status === "completed" ? "measured" : effectiveBaseline.status} />
+              </div>
+              <p className="mt-3 text-3xl font-black text-gray-950">
+                {typeof effectiveBaseline.overallScore === "number" ? effectiveBaseline.overallScore : "-"}
+              </p>
+            </div>
+            <BaselineMetricCard label="Technical health" metric={baselineMetrics.technicalHealth} />
+            <BaselineMetricCard label="Lighthouse" metric={baselineMetrics.lighthouse} />
+            <BaselineMetricCard label="Organic search" metric={baselineMetrics.organicSearch} />
+            <BaselineMetricCard label="AI visibility" metric={baselineMetrics.aiVisibility} />
+            <BaselineMetricCard label="Authority" metric={baselineMetrics.authority} />
+            <BaselineMetricCard label="Traffic/users" metric={trafficMetric} />
+            {searchConsole?.status === "measured" && searchConsoleSummary ? (
+              <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-black text-gray-950">Search Console</p>
+                  <GoogleIcon />
+                </div>
+                <p className="mt-3 text-2xl font-black text-gray-950">
+                  {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.clicks) ?? 0))}
+                </p>
+                <p className="mt-1 text-xs font-semibold text-gray-500">
+                  clicks from {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.impressions) ?? 0))} impressions
+                </p>
+              </div>
+            ) : null}
+          </div>
+
+          {effectiveBaseline.recommendations?.length ? (
+            <div className="mt-5 rounded-xl border border-gray-100 bg-white p-4">
+              <p className="text-sm font-black text-gray-950">Recommended fixes</p>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                {effectiveBaseline.recommendations.slice(0, 4).map((recommendation, index) => (
+                  <div key={`${recommendation.title ?? recommendation.source ?? index}`} className="rounded-xl bg-gray-50 px-4 py-3">
+                    <p className="text-sm font-black text-gray-950">{String(recommendation.title ?? "Review baseline recommendation")}</p>
+                    {recommendation.detail ? <p className="mt-1 text-xs font-semibold text-gray-600">{String(recommendation.detail)}</p> : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
 
       <div className={clsx("flex flex-col gap-4 border-t border-gray-100 bg-gray-50/70 py-5 sm:flex-row sm:items-center sm:justify-between", embedded ? "" : "px-6 lg:px-8")}>
         <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
@@ -1473,7 +1496,7 @@ export default function VibeMarketingStartupBaselineSetup({
           Your data is secure and never shared.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          {embedded && focusSection === "baseline" ? (
+          {includeBaseline && embedded && focusSection === "baseline" ? (
             <Link
               to="/founder-tools/marketing/create?step=github"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
@@ -1482,7 +1505,7 @@ export default function VibeMarketingStartupBaselineSetup({
               <ArrowRight className="h-4 w-4" />
             </Link>
           ) : null}
-          {!embedded ? (
+          {shouldShowSecondaryAction ? (
             <button
               type="submit"
               name="nextAction"
@@ -1502,7 +1525,7 @@ export default function VibeMarketingStartupBaselineSetup({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {embedded ? (focusSection === "baseline" ? "Save startup profile" : "Save and continue") : "Continue to website"}
+            {primaryActionLabel ?? (embedded ? (focusSection === "baseline" ? "Save startup profile" : "Save and continue") : "Continue to website")}
           </button>
         </div>
       </div>
