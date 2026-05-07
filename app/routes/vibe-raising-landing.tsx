@@ -1,5 +1,4 @@
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router";
+import { Link } from "react-router";
 import {
   ArrowRightIcon,
   ChartBarIcon,
@@ -11,7 +10,6 @@ import {
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
-import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import type { Route } from "./+types/vibe-raising-landing";
 
 const PAGE_TITLE = "MLAI Vibe Raising";
@@ -34,23 +32,8 @@ export async function loader({}: Route.LoaderArgs) {
 }
 
 export default function VibeRaisingPage({}: Route.ComponentProps) {
-  const navigate = useNavigate();
-  const [showIntro, setShowIntro] = useState(false);
-
-  const enterApp = useCallback(() => {
-    navigate("/founder-tools/updates");
-  }, [navigate]);
-
   return (
     <main className="bg-white text-gray-950">
-      {showIntro ? (
-        <VibeRaisingIntroPopup
-          onDismiss={() => setShowIntro(false)}
-          onComplete={enterApp}
-          onSkip={enterApp}
-        />
-      ) : null}
-
       <section className="relative min-h-[86vh] overflow-hidden">
         <img
           src="/hero-bg.jpg"
@@ -72,14 +55,13 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
               optional Gmail context so investors can scan your momentum and act on it.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => setShowIntro(true)}
+              <Link
+                to="/platform/login?app=founder-tools&next=/founder-tools"
                 className="inline-flex items-center justify-center gap-3 rounded-xl bg-white px-7 py-4 text-sm font-black text-gray-950 shadow-xl shadow-black/20 transition hover:bg-gray-100 active:scale-[0.98]"
               >
                 Start your update
                 <ArrowRightIcon className="h-5 w-5" />
-              </button>
+              </Link>
               <a
                 href="#google-data"
                 className="inline-flex items-center justify-center rounded-xl border border-white/25 bg-white/10 px-7 py-4 text-sm font-black text-white backdrop-blur-sm transition hover:bg-white/15"

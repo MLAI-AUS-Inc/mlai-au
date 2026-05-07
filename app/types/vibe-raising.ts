@@ -57,6 +57,7 @@ export interface VibeRaisingDraftedContent {
   year?: number;
   summary?: string;
   sourceUrl?: string;
+  manualDocuments?: VibeRaisingManualDocument[];
   videoUrl?: string;
   videoStoragePath?: string;
   videoContentType?: string;
@@ -82,6 +83,7 @@ export interface VibeRaisingMonthlyUpdate {
   status?: string | null;
   summary?: string | null;
   sourceUrl?: string | null;
+  manualDocuments?: VibeRaisingManualDocument[];
   videoUrl?: string | null;
   videoStoragePath?: string | null;
   videoContentType?: string | null;
@@ -114,6 +116,39 @@ export interface VibeRaisingVideoUploadSessionResponse {
   requiredHeaders: Record<string, string>;
 }
 
+export interface VibeRaisingManualDocument {
+  id: string;
+  originalFilename: string;
+  contentType: string;
+  fileSizeBytes: number;
+  extractionStatus: "pending" | "hydrated" | "processed" | "unsupported" | "error" | string;
+  textSizeChars: number;
+  parseNotes?: string | null;
+  lastError?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+}
+
+export interface VibeRaisingManualDocumentUploadResponse {
+  document: VibeRaisingManualDocument;
+}
+
+export interface VibeRaisingManualDocumentUploadSessionResponse {
+  uploadUrl: string;
+  storagePath: string;
+  contentType: string;
+  fileSizeBytes?: number;
+  expiresAt: string;
+  maxUploadBytes: number;
+  requiredHeaders: Record<string, string>;
+}
+
+export interface VibeRaisingManualDocumentDownloadResponse {
+  downloadUrl: string;
+  expiresAt: string;
+  document: VibeRaisingManualDocument;
+}
+
 export interface VibeRaisingVideoCompressionMetadata {
   compressed?: boolean;
   originalFilename?: string;
@@ -131,7 +166,8 @@ export type VibeRaisingInputSourceKey =
   | "notion"
   | "google_drive"
   | "slack"
-  | "linear";
+  | "linear"
+  | "manual_documents";
 
 export type VibeRaisingInputSourceStatus =
   | "connected"
@@ -497,6 +533,7 @@ export interface VibeRaisingEmailDraftMonth {
   year?: number;
   summary?: string;
   sourceUrl?: string;
+  manualDocuments?: VibeRaisingManualDocument[];
   videoUrl?: string;
   videoStoragePath?: string;
   videoContentType?: string;

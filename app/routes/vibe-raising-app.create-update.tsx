@@ -1,5 +1,5 @@
 import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
-import React, { startTransition, useCallback, useEffect, useEffectEvent, useRef, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -45,6 +45,7 @@ import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
+    VibeRaisingManualDocument,
     VibeRaisingMetricSuggestion,
     VibeRaisingMonthlyUpdate,
     VibeRaisingStartupUpdateStatusResponse,
@@ -60,6 +61,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "google_drive",
     "slack",
     "linear",
+    "manual_documents",
 ]);
 
 const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
@@ -71,6 +73,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     google_drive: "Google Drive",
     slack: "Slack",
     linear: "Linear",
+    manual_documents: "Manual documents",
 };
 
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
@@ -78,18 +81,33 @@ const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 
-function readStoredManualMaterials(): { summary: string; sourceUrl: string } {
-    if (typeof window === "undefined") return { summary: "", sourceUrl: "" };
+function readStoredManualMaterials(): { summary: string; sourceUrl: string; manualDocumentIds: string[]; documents: VibeRaisingManualDocument[] } {
+    if (typeof window === "undefined") return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
     try {
         const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
-        if (!raw) return { summary: "", sourceUrl: "" };
-        const parsed = JSON.parse(raw) as { summary?: unknown; sourceUrl?: unknown };
+        if (!raw) return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
+        const parsed = JSON.parse(raw) as {
+            summary?: unknown;
+            sourceUrl?: unknown;
+            manualDocumentIds?: unknown;
+            documents?: unknown;
+        };
+        const documents = Array.isArray(parsed.documents)
+            ? parsed.documents.filter((item): item is VibeRaisingManualDocument =>
+                Boolean(item && typeof item === "object" && typeof (item as VibeRaisingManualDocument).id === "string"),
+            )
+            : [];
+        const manualDocumentIds = Array.isArray(parsed.manualDocumentIds)
+            ? parsed.manualDocumentIds.map((item) => String(item || "").trim()).filter(Boolean)
+            : documents.map((document) => document.id);
         return {
             summary: typeof parsed.summary === "string" ? parsed.summary : "",
             sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
+            manualDocumentIds,
+            documents,
         };
     } catch {
-        return { summary: "", sourceUrl: "" };
+        return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
     }
 }
 
@@ -230,12 +248,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
         const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
         const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
+        const manualDocumentIds = String(formData.get("manualDocumentIds") || "")
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean);
 
         await saveVibeRaisingMonthlyUpdate(env, request, {
             month: String(formData.get("month") || "").trim(),
             year: Number(formData.get("year") || 0),
             summary: String(formData.get("summary") || "").trim() || null,
             sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
+            manualDocumentIds,
+            manualSummary: String(formData.get("manualSummary") || "").trim() || null,
             videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
             videoStoragePath: String(formData.get("videoStoragePath") || "").trim() || null,
             videoContentType: String(formData.get("videoContentType") || "").trim() || null,
@@ -1518,8 +1542,19 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const [summary, setSummary] = useState<string>(() => defaultData?.summary || readStoredManualMaterials().summary || "");
-    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || readStoredManualMaterials().sourceUrl || "");
+    const storedManualMaterials = useMemo(() => readStoredManualMaterials(), []);
+    const [manualSummary, setManualSummary] = useState<string>(() => storedManualMaterials.summary || "");
+    const [manualDocumentIds, setManualDocumentIds] = useState<string[]>(() => {
+        const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
+        if (defaultDocuments.length > 0) return defaultDocuments.map((document: VibeRaisingManualDocument) => document.id);
+        return storedManualMaterials.manualDocumentIds;
+    });
+    const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => {
+        const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
+        return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
+    });
+    const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -1645,6 +1680,11 @@ export default function CreateUpdate() {
         setNext30Days(data.next30Days || "");
         setSummary(data.summary || "");
         setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (Array.isArray(data.manualDocuments || data.manual_documents)) {
+            const documents = (data.manualDocuments || data.manual_documents) as VibeRaisingManualDocument[];
+            setManualDocuments(documents);
+            setManualDocumentIds(documents.map((document) => document.id));
+        }
         if (data.videoUrl || data.video_url) {
             const nextVideoUrl = data.videoUrl || data.video_url;
             setUploadedVideoUrl(nextVideoUrl);
@@ -1983,6 +2023,8 @@ export default function CreateUpdate() {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: selectedInputSources,
                     targetMonth: targetMonthIso,
+                    manualDocumentIds,
+                    manualSummary,
                 },
             );
             emailDraftIgnoredRunIdRef.current = null;
@@ -2003,7 +2045,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources, targetMonthIso]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
         if (!canGenerateDraftFromEmail) {
@@ -2228,6 +2270,9 @@ export default function CreateUpdate() {
                 editorMonthKeyRef.current = selectedMonthUpdateKey;
                 setSummary("");
                 setSourceUrl("");
+                setManualDocumentIds([]);
+                setManualDocuments([]);
+                setManualSummary("");
                 resetVideoUpload();
                 setHighlights("");
                 setChallenges("");
@@ -2249,6 +2294,9 @@ export default function CreateUpdate() {
 
         setSummary(existingUpdateForSelectedMonth.summary || "");
         setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
+        setManualDocuments(existingUpdateForSelectedMonth.manualDocuments || []);
+        setManualDocumentIds((existingUpdateForSelectedMonth.manualDocuments || []).map((document) => document.id));
+        setManualSummary("");
         setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
         setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
         setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
@@ -2475,7 +2523,7 @@ export default function CreateUpdate() {
             return;
         }
         if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-            setRecordingError("Recording is not supported in this browser. Upload a file or add a source URL instead.");
+            setRecordingError("Recording is not supported in this browser. Upload a file or add manual materials instead.");
             return;
         }
 
@@ -2524,7 +2572,7 @@ export default function CreateUpdate() {
             recorder.start();
             setIsRecording(true);
         } catch {
-            setRecordingError("We couldn't access your camera or microphone. Upload a file or add a source URL instead.");
+            setRecordingError("We couldn't access your camera or microphone. Upload a file or add manual materials instead.");
             setIsRecording(false);
             setRecordingMode(null);
             stopMediaStream();
@@ -2564,6 +2612,14 @@ export default function CreateUpdate() {
             if (draft.year) setSelectedYear(Number(draft.year));
             setSummary(draft.summary || "");
             setSourceUrl(draft.sourceUrl || "");
+            if (Array.isArray(draft.manualDocuments || draft.manual_documents)) {
+                const documents = (draft.manualDocuments || draft.manual_documents) as VibeRaisingManualDocument[];
+                setManualDocuments(documents);
+                setManualDocumentIds(documents.map((document) => document.id));
+            }
+            if (draft.manualSummary || draft.manual_summary) {
+                setManualSummary(draft.manualSummary || draft.manual_summary);
+            }
             revokeVideoPreviewObjectUrl();
             setUploadedVideoUrl(draft.videoUrl || "");
             setVideoPreviewUrl(draft.videoUrl || null);
@@ -3000,6 +3056,11 @@ export default function CreateUpdate() {
         const reviewYear = Number(reviewData?.year || selectedYear);
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
+        const reviewManualDocuments = Array.isArray(reviewData?.manualDocuments || reviewData?.manual_documents)
+            ? (reviewData.manualDocuments || reviewData.manual_documents) as VibeRaisingManualDocument[]
+            : manualDocuments;
+        const reviewManualDocumentIds = reviewManualDocuments.map((document) => document.id);
+        const reviewManualSummary = String(reviewData?.manualSummary || reviewData?.manual_summary || manualSummary || "").trim();
         const reviewVideoUrl = String(reviewData?.videoUrl || (previewMediaKind === "video" ? videoPreviewUrl : "") || "").trim();
         const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
@@ -3432,13 +3493,15 @@ export default function CreateUpdate() {
                                         <input type="hidden" name="intent" value="publish" />
                                         <input type="hidden" name="summary" value={reviewSummary} />
                                         <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
+                                        <input type="hidden" name="manualDocumentIds" value={reviewManualDocumentIds.join(",")} />
+                                        <input type="hidden" name="manualSummary" value={reviewManualSummary} />
                                         <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
                                         <input type="hidden" name="videoStoragePath" value={reviewVideoStoragePath} />
                                         <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
                                         <input type="hidden" name="videoFileSizeBytes" value={reviewVideoFileSizeBytes ?? ""} />
                                         <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
                                         {Object.entries(data || {})
-                                            .filter(([key]) => !["summary", "sourceUrl", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename"].includes(key))
+                                            .filter(([key]) => !["summary", "sourceUrl", "manualDocumentIds", "manualSummary", "manualDocuments", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename"].includes(key))
                                             .map(([key, value]) => (
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
@@ -3932,6 +3995,8 @@ export default function CreateUpdate() {
                 />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
+                <input type="hidden" name="manualSummary" value={manualSummary} />
                 <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
                 <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
                 <input type="hidden" name="videoContentType" value={videoContentType} />
@@ -3966,6 +4031,17 @@ export default function CreateUpdate() {
                                     </span>
                                 )}
                             </div>
+                            {manualDocuments.length > 0 ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {manualDocuments.map((document) => (
+                                        <span key={document.id} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
+                                            {document.originalFilename}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                        <div className="flex shrink-0 justify-end">
                             {!isEdit && (
                                 <Link
                                     to="/founder-tools/data-sources"
