@@ -109,6 +109,7 @@ export interface VibeMarketingAutofillResult {
   companyLinkedInUrl?: string | null;
   companyContext?: string | null;
   profileFields?: VibeMarketingAutofillProfileFields;
+  offeringProfile?: Record<string, unknown>;
   competitors?: string[];
   competitorSuggestions?: VibeMarketingAutofillCompetitor[];
   directCompetitors?: VibeMarketingAutofillCompetitor[];
@@ -120,6 +121,7 @@ export interface VibeMarketingAutofillResult {
     adjacentOrganizations: VibeMarketingAutofillCompetitor[];
   };
   seedKeywords?: string[];
+  keywordCandidates?: Record<string, unknown>[];
   keywordGroups?: VibeMarketingAutofillKeywordGroup[];
   sources?: VibeMarketingAutofillSource[];
   linkedinProfile?: VibeMarketingAutofillLinkedInProfile;

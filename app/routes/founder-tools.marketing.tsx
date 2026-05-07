@@ -692,6 +692,14 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     : Array.isArray(payload.competitorCandidates)
       ? payload.competitorCandidates
       : [];
+  const legacyDirectCompetitors = directCompetitors.length
+    ? []
+    : competitorCandidates
+        .map((competitor) => competitorSuggestion(competitor))
+        .filter(
+          (competitor): competitor is VibeMarketingAutofillCompetitor =>
+            competitor !== null && (!competitor.type || competitor.type === "direct"),
+        );
   const competitorSuggestions = [
     ...directCompetitors,
     ...seoCompetitors,
@@ -700,18 +708,14 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
   ];
   const competitorStrings = [
     ...directCompetitors.map((competitor) => competitor.domain || competitor.name),
-    ...competitorCandidates
-      .map((competitor) => competitorSuggestion(competitor))
-      .map((competitor) => competitor?.domain || competitor?.name || ""),
-    ...listFromUnknown(payload.competitorDomains),
-    ...listFromUnknown(payload.competitorStrings),
+    ...legacyDirectCompetitors.map((competitor) => competitor.domain || competitor.name),
   ].filter(Boolean);
   const groups = keywordGroups(payload.keywordGroups ?? payload.keyword_groups);
-  const seedKeywords = [
+  const explicitSeedKeywords = [
     ...listFromUnknown(payload.seedKeywords),
     ...listFromUnknown(payload.seed_keywords),
-    ...groups.flatMap((group) => group.keywords),
   ];
+  const seedKeywords = explicitSeedKeywords.length ? explicitSeedKeywords : groups.flatMap((group) => group.keywords);
   return {
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
     companyLinkedInUrl:
@@ -726,6 +730,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
         : typeof payload.company_context === "string"
           ? payload.company_context
           : null,
+    offeringProfile: plainObject(payload.offeringProfile ?? payload.offering_profile),
     competitors: Array.from(new Set(competitorStrings.map((competitor) => competitor.trim()).filter(Boolean))),
     competitorSuggestions,
     directCompetitors,
@@ -733,6 +738,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     adjacentOrganizations,
     competitorGroups: { directCompetitors, seoCompetitors, adjacentOrganizations },
     seedKeywords: Array.from(new Set(seedKeywords.map((keyword) => keyword.trim()).filter(Boolean))),
+    keywordCandidates: objectArray(payload.keywordCandidates ?? payload.keyword_candidates),
     keywordGroups: groups,
     sources: autofillSources(payload.sources),
     linkedinProfile:
@@ -772,14 +778,8 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
 }
 
 function competitorStringsFromAutofill(autofill: VibeMarketingAutofillResult) {
-  const candidates = autofill.competitors?.length
-    ? autofill.competitors
-    : [
-        ...(autofill.directCompetitors ?? []),
-        ...(autofill.seoCompetitors ?? []),
-        ...(autofill.adjacentOrganizations ?? []),
-        ...(autofill.competitorSuggestions ?? []),
-      ].map((competitor) => competitor.domain || competitor.name);
+  const directCandidates = (autofill.directCompetitors ?? []).map((competitor) => competitor.domain || competitor.name);
+  const candidates = directCandidates.length ? directCandidates : (autofill.competitors ?? []);
   const seen = new Set<string>();
   return candidates
     .map((competitor) => String(competitor ?? "").trim())
