@@ -12,8 +12,6 @@ export type VibeMarketingRunStatus =
   | "denied"
   | string;
 
-export type VibeMarketingDeliveryMode = "publish_code" | "content_only";
-
 export interface VibeMarketingStepState {
   key: string;
   name: string;
@@ -91,10 +89,26 @@ export interface VibeMarketingAutofillKeywordGroup {
   keywords: string[];
 }
 
+export interface VibeMarketingAutofillProfileFields {
+  shortDescription?: string | null;
+  problemSolved?: string | null;
+  targetAudience?: string | null;
+  location?: string | null;
+  organizationKind?: string | null;
+  stage?: string | null;
+  founderNames?: string | null;
+  abn?: string | null;
+  companyContext?: string | null;
+  fieldConfidence?: Record<string, string>;
+  reviewNotes?: string[];
+}
+
 export interface VibeMarketingAutofillResult {
+  partial?: boolean;
   brandName?: string | null;
   companyLinkedInUrl?: string | null;
   companyContext?: string | null;
+  profileFields?: VibeMarketingAutofillProfileFields;
   competitors?: string[];
   competitorSuggestions?: VibeMarketingAutofillCompetitor[];
   directCompetitors?: VibeMarketingAutofillCompetitor[];
@@ -146,7 +160,7 @@ export interface VibeMarketingOrganization {
 export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
-  articleDeliveryMode?: VibeMarketingDeliveryMode | null;
+  articleDeliveryMode?: string | null;
   githubRepo?: string | null;
   dailyDiscoveryEnabled: boolean;
   dailyDiscoveryPriority?: number | null;

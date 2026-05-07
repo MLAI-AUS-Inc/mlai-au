@@ -3,10 +3,15 @@ import { Form, Link } from "react-router";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
+  CodeBracketIcon,
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
   LockClosedIcon,
+  MagnifyingGlassIcon,
+  PencilSquareIcon,
+  RocketLaunchIcon,
+  UserCircleIcon,
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
@@ -18,12 +23,89 @@ import type {
 
 interface MarketingWorkflowShellProps {
   progress?: VibeMarketingWorkflowProgress | null;
+  viewedStepId?: string | null;
   title?: string;
+  titleAs?: "h1" | "h2";
   subtitle?: string;
   isSubmitting?: boolean;
   primaryActionSlot?: ReactNode;
+  showPrimaryAction?: boolean;
   className?: string;
 }
+
+const ACTIONABLE_STATUSES = new Set(["blocked", "needs_action", "running", "ready"]);
+
+type WorkflowDisplayGroupId =
+  | "profile_baseline"
+  | "research_topic"
+  | "repo_article_system"
+  | "article_creation"
+  | "publish_automation";
+
+interface WorkflowDisplayGroupDefinition {
+  id: WorkflowDisplayGroupId;
+  label: string;
+  summary: string;
+  stepIds: string[];
+  completionStepId: string;
+  icon: typeof UserCircleIcon;
+}
+
+interface WorkflowDisplayGroup {
+  id: WorkflowDisplayGroupId;
+  label: string;
+  summary: string;
+  status: string;
+  href: string;
+  primaryAction?: VibeMarketingWorkflowAction | null;
+  sourceStep?: VibeMarketingWorkflowStep;
+  actionStep?: VibeMarketingWorkflowStep;
+  childSteps: VibeMarketingWorkflowStep[];
+  icon: typeof UserCircleIcon;
+}
+
+const WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = [
+  {
+    id: "profile_baseline",
+    label: "Startup profile & baseline",
+    summary: "Company details, competitors, seed keywords, and the starting website baseline.",
+    stepIds: ["profile", "baseline"],
+    completionStepId: "baseline",
+    icon: UserCircleIcon,
+  },
+  {
+    id: "research_topic",
+    label: "Research & choose topic",
+    summary: "Find topic opportunities and choose the article brief.",
+    stepIds: ["research", "choose_topic"],
+    completionStepId: "choose_topic",
+    icon: MagnifyingGlassIcon,
+  },
+  {
+    id: "repo_article_system",
+    label: "Connect repo & article system",
+    summary: "Connect GitHub, scan the repository, and prepare the article system.",
+    stepIds: ["repo", "article_system"],
+    completionStepId: "article_system",
+    icon: CodeBracketIcon,
+  },
+  {
+    id: "article_creation",
+    label: "Generate, review & revise",
+    summary: "Generate the article, review the live preview, and revise with comments.",
+    stepIds: ["generate", "review", "revise"],
+    completionStepId: "review",
+    icon: PencilSquareIcon,
+  },
+  {
+    id: "publish_automation",
+    label: "Publish & automate",
+    summary: "Review the package, publish to the site, and enable daily automation.",
+    stepIds: ["package", "publish", "automation"],
+    completionStepId: "automation",
+    icon: RocketLaunchIcon,
+  },
+];
 
 function statusLabel(status: string) {
   if (status === "needs_action") return "Needs action";
@@ -86,102 +168,168 @@ function ActionButton({
   return null;
 }
 
-function stepKey(step: VibeMarketingWorkflowStep) {
-  return `${step.id}-${step.order ?? step.label}`;
+function groupForStepId(stepId: string | null | undefined, groups: WorkflowDisplayGroup[]) {
+  return groups.find((group) => group.childSteps.some((step) => step.id === stepId));
+}
+
+function buildWorkflowDisplayGroups(steps: VibeMarketingWorkflowStep[]): WorkflowDisplayGroup[] {
+  const stepById = new Map(steps.map((step) => [step.id, step]));
+  return WORKFLOW_DISPLAY_GROUPS.map((definition) => {
+    const childSteps = definition.stepIds.map((stepId) => stepById.get(stepId)).filter((step): step is VibeMarketingWorkflowStep => Boolean(step));
+    const actionableStep = childSteps.find((step) => ACTIONABLE_STATUSES.has(step.status));
+    const completionStep = stepById.get(definition.completionStepId) ?? childSteps[childSteps.length - 1] ?? childSteps[0];
+    const fallbackStep = childSteps[0];
+    const sourceStep = actionableStep ?? (completionStep?.status === "complete" ? completionStep : fallbackStep);
+    const status = actionableStep?.status ?? (completionStep?.status === "complete" ? "complete" : "locked");
+    const hrefStep = actionableStep ?? completionStep ?? fallbackStep;
+
+    return {
+      id: definition.id,
+      label: definition.label,
+      summary: sourceStep?.summary ?? definition.summary,
+      status,
+      href: actionableStep?.primaryAction?.href || hrefStep?.href || fallbackStep?.href || "/founder-tools/marketing/create",
+      primaryAction: actionableStep?.primaryAction ?? null,
+      sourceStep,
+      actionStep: actionableStep,
+      childSteps,
+      icon: definition.icon,
+    };
+  });
 }
 
 export default function MarketingWorkflowShell({
   progress,
+  viewedStepId,
   title = "Article workflow",
+  titleAs = "h2",
   subtitle,
   isSubmitting = false,
   primaryActionSlot,
+  showPrimaryAction = true,
   className,
 }: MarketingWorkflowShellProps) {
   const steps = progress?.steps ?? [];
   if (!steps.length) return null;
-  const currentStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
-  const currentIndex = Math.max(0, steps.findIndex((step) => step.id === currentStep.id));
-  const completeCount = steps.filter((step) => step.status === "complete").length;
-  const percent = Math.max(4, Math.round((completeCount / steps.length) * 100));
-  const phases = Array.from(new Set(steps.map((step) => step.phase)));
+  const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
+  const viewedStep = steps.find((step) => step.id === viewedStepId) ?? requiredStep;
+  const displayGroups = buildWorkflowDisplayGroups(steps);
+  const requiredGroup = groupForStepId(requiredStep.id, displayGroups) ?? displayGroups[0];
+  const viewedGroup = groupForStepId(viewedStep.id, displayGroups) ?? requiredGroup;
+  const viewingRequiredGroup = viewedGroup.id === requiredGroup.id;
+  const viewedIndex = Math.max(0, displayGroups.findIndex((group) => group.id === viewedGroup.id));
+  const completeCount = displayGroups.filter((group) => group.status === "complete").length;
+  const percent = Math.max(4, Math.round((completeCount / displayGroups.length) * 100));
+  const headerLabel = viewingRequiredGroup
+    ? `Next required step: ${requiredGroup.label}`
+    : `Viewing: ${viewedGroup.label} - ${statusLabel(viewedGroup.status)}`;
+  const requiredNavigationAction =
+    requiredGroup.primaryAction?.label
+      ? {
+          ...requiredGroup.primaryAction,
+          href: requiredGroup.primaryAction.href || requiredGroup.href,
+          variant: requiredGroup.primaryAction.variant ?? "secondary",
+        }
+      : { label: `Go to ${requiredGroup.label}`, href: requiredGroup.href, variant: "secondary" as const };
+  const HeadingTag = titleAs;
 
   return (
     <section className={clsx("rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5", className)}>
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
           <p className="text-xs font-extrabold uppercase tracking-wide text-violet-600">
-            Step {currentIndex + 1} of {steps.length}
+            Step {viewedIndex + 1} of {displayGroups.length}
           </p>
-          <h2 className="mt-1 text-xl font-black text-gray-950">{title}</h2>
+          <HeadingTag className={clsx("mt-1 font-black text-gray-950", titleAs === "h1" ? "text-2xl" : "text-xl")}>
+            {title}
+          </HeadingTag>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black", statusTone(currentStep.status))}>
-              <StepStatusIcon status={currentStep.status} />
-              {statusLabel(currentStep.status)}
+            <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black", statusTone(viewedGroup.status))}>
+              <StepStatusIcon status={viewedGroup.status} />
+              {statusLabel(viewedGroup.status)}
             </span>
-            <span className="text-sm font-bold text-gray-700">{currentStep.label}</span>
+            <span className="text-sm font-bold text-gray-700">{headerLabel}</span>
+            {!viewingRequiredGroup ? (
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+                Next required step: {requiredGroup.label}
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-500">
-            {subtitle ?? currentStep.summary}
+            {subtitle ?? viewedGroup.summary}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {primaryActionSlot ?? <ActionButton action={currentStep.primaryAction} disabled={isSubmitting} />}
-        </div>
+        {showPrimaryAction ? (
+          <div className="flex flex-wrap gap-2">
+            {primaryActionSlot && viewedGroup.status !== "locked" ? (
+              primaryActionSlot
+            ) : viewingRequiredGroup ? (
+              <ActionButton action={viewedGroup.primaryAction} disabled={isSubmitting} />
+            ) : (
+              <ActionButton action={requiredNavigationAction} disabled={isSubmitting} />
+            )}
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-gray-100" aria-hidden>
         <div className="h-full rounded-full bg-violet-600 transition-all" style={{ width: `${percent}%` }} />
       </div>
 
-      <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-        {phases.map((phase) => {
-          const phaseSteps = steps.filter((step) => step.phase === phase);
-          const phaseComplete = phaseSteps.every((step) => step.status === "complete");
-          const phaseActive = phaseSteps.some((step) => step.id === currentStep.id);
-          return (
-            <span
-              key={phase}
-              className={clsx(
-                "min-w-fit rounded-full px-3 py-1.5 text-xs font-black ring-1",
-                phaseActive && "bg-violet-50 text-violet-700 ring-violet-100",
-                !phaseActive && phaseComplete && "bg-emerald-50 text-emerald-700 ring-emerald-100",
-                !phaseActive && !phaseComplete && "bg-gray-50 text-gray-500 ring-gray-100",
-              )}
-            >
-              {phase}
-            </span>
-          );
-        })}
-      </div>
-
-      <ol className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6">
-        {steps.map((step, index) => {
-          const active = step.id === currentStep.id;
-          const locked = step.status === "locked";
+      <ol className="mt-5 grid gap-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4 shadow-sm shadow-violet-100/60 sm:grid-cols-2 lg:grid-cols-5 lg:p-5">
+        {displayGroups.map((group, index) => {
+          const active = group.id === viewedGroup.id;
+          const nextRequired = group.id === requiredGroup.id;
+          const locked = group.status === "locked";
+          const Icon = group.icon;
           const content = (
-            <>
-              <span className={clsx("flex h-8 w-8 items-center justify-center rounded-full border text-xs font-black", statusTone(step.status))}>
-                {step.status === "complete" ? <CheckCircleIcon className="h-4 w-4" /> : index + 1}
+            <div className="relative flex h-full flex-col items-center gap-3 text-center">
+              <span
+                className={clsx(
+                  "flex h-14 w-14 items-center justify-center rounded-full border transition",
+                  active && "border-violet-200 bg-violet-200 text-violet-700 shadow-sm",
+                  !active && group.status === "complete" && "border-emerald-200 bg-white text-emerald-600",
+                  !active && group.status === "running" && "border-violet-100 bg-white text-violet-600",
+                  !active && (group.status === "needs_action" || group.status === "ready") && "border-amber-200 bg-white text-amber-600",
+                  !active && group.status === "blocked" && "border-red-200 bg-white text-red-600",
+                  !active && locked && "border-gray-100 bg-white/70 text-gray-400",
+                )}
+              >
+                {group.status === "complete" ? (
+                  <CheckCircleIcon className="h-6 w-6" />
+                ) : group.status === "running" ? (
+                  <ArrowPathIcon className="h-6 w-6 animate-spin" />
+                ) : (
+                  <Icon className="h-6 w-6" />
+                )}
               </span>
-              <span className="min-w-0">
-                <span className={clsx("block truncate text-sm font-black", active ? "text-violet-800" : "text-gray-900")}>{step.label}</span>
-                <span className="mt-0.5 block truncate text-xs font-semibold text-gray-500">{statusLabel(step.status)}</span>
+              <span className="max-w-[180px] text-sm font-black leading-5 text-gray-950">{group.label}</span>
+              <span className={clsx("text-xs font-bold", active ? "text-violet-700" : locked ? "text-gray-400" : "text-gray-500")}>
+                {statusLabel(group.status)}
               </span>
-            </>
-          );
-          const itemClass = clsx(
-            "flex min-h-[64px] items-center gap-3 rounded-xl border px-3 py-2 text-left transition",
-            active ? "border-violet-200 bg-violet-50 shadow-sm" : "border-gray-100 bg-gray-50/70",
-            !locked && "hover:border-violet-200 hover:bg-white",
-            locked && "opacity-70",
+              {nextRequired && !active ? (
+                <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase text-violet-700">
+                  Next required
+                </span>
+              ) : null}
+              {index < displayGroups.length - 1 ? (
+                <ArrowRightIcon className="absolute -right-5 top-5 hidden h-5 w-5 text-gray-400 lg:block" />
+              ) : null}
+            </div>
           );
           return (
-            <li key={stepKey(step)}>
+            <li key={group.id} className="min-h-[156px]">
               {locked ? (
-                <div className={itemClass}>{content}</div>
+                <div className="h-full rounded-xl px-3 py-4 opacity-70">{content}</div>
               ) : (
-                <Link to={step.href} className={itemClass}>
+                <Link
+                  to={group.href}
+                  aria-current={active ? "step" : undefined}
+                  className={clsx(
+                    "block h-full rounded-xl px-3 py-4 transition",
+                    active ? "bg-white shadow-sm ring-1 ring-violet-200" : "hover:bg-white/80",
+                  )}
+                >
                   {content}
                 </Link>
               )}
