@@ -136,8 +136,9 @@ function ProviderStep({
                   Before you connect Gmail
                 </h4>
                 <p className="mt-2 text-sm leading-6 text-[var(--vr-color-text-mid)]">
-                  MLAI only scans filtered email data needed to draft your investor update.
-                  The Gmail data used for this step is deleted after processing.
+                  MLAI only scans filtered Gmail data needed to draft your investor update.
+                  Selected Gmail artifacts and generated outputs are retained only as needed
+                  for this workflow and can be deleted when you disconnect Gmail.
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--vr-color-text-mid)]">
                   By continuing, you agree to our{" "}
