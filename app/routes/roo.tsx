@@ -5,6 +5,7 @@ import {
   Bot,
   ChevronDown,
   Clock3,
+  CreditCard,
   Gift,
   MessageCircle,
   ShieldCheck,
@@ -33,6 +34,7 @@ const SECTION_ITEMS = [
   { id: "first-points", label: "Get first points" },
   { id: "volunteer-work", label: "Volunteer work" },
   { id: "rewards", label: "Rewards" },
+  { id: "top-up", label: "Top up" },
   { id: "slack-commands", label: "Slack commands" },
   { id: "pilot-rules", label: "Pilot rules" },
   { id: "faq", label: "FAQ" },
@@ -169,10 +171,44 @@ const REWARD_GROUPS = [
   },
 ];
 
+const TOPUP_STEPS: Array<{
+  icon: LucideIcon;
+  title: string;
+  body: ReactNode;
+}> = [
+  {
+    icon: Users,
+    title: "Join MLAI Slack",
+    body: "Top-up requests start where Roo already lives: inside the MLAI Slack workspace.",
+  },
+  {
+    icon: MessageCircle,
+    title: "Ask Roo for a pack",
+    body: (
+      <>
+        Try <code>@Roo topup 5 points</code>, <code>@Roo topup 10 points</code>, or{" "}
+        <code>@Roo topup 25 points</code>.
+      </>
+    ),
+  },
+  {
+    icon: CreditCard,
+    title: "Complete checkout",
+    body: "Roo sends a checkout link. Accept the acknowledgement, complete payment, and the points are added after payment is confirmed.",
+  },
+];
+
+const TOPUP_PACKS = [
+  { id: "topup_5", label: "5 Top-up Roo Points", price: "A$19.99" },
+  { id: "topup_10", label: "10 Top-up Roo Points", price: "A$36.99" },
+  { id: "topup_25", label: "25 Top-up Roo Points", price: "A$63.99" },
+] as const;
+
 const SLACK_COMMANDS = [
   "@Roo points",
   "@Roo points earn",
   "@Roo points rewards",
+  "@Roo topup 10 points",
   "@Roo coworking book today",
   "@Roo coworking cancel",
 ];
@@ -200,8 +236,20 @@ const FAQ_ITEMS: Array<{ question: string; answer: ReactNode }> = [
     question: "Can I transfer or sell points?",
     answer: (
       <>
-        No. Roo Points are non-transferable and stay attached to the member who earned
-        them.
+        No. Roo Points are non-transferable and stay attached to the member account they
+        belong to.
+      </>
+    ),
+  },
+  {
+    question: "Can I top up Roo Points?",
+    answer: (
+      <>
+        Yes. In Slack, ask <code>@Roo topup 5 points</code>,{" "}
+        <code>@Roo topup 10 points</code>, or <code>@Roo topup 25 points</code>. Roo
+        creates a checkout link for a fixed pack, and points are added after payment is
+        confirmed. Top-up Roo Points can be spent on eligible rewards, but they do not
+        count toward earned contribution status.
       </>
     ),
   },
@@ -238,8 +286,9 @@ const FAQ_ITEMS: Array<{ question: string; answer: ReactNode }> = [
     question: "What's the difference between spendable balance and lifetime points?",
     answer: (
       <>
-        Spendable balance is what you can use right now. Lifetime points track your
-        total contribution history over time.
+        Spendable balance is what you can use right now. Lifetime earned points track
+        your contribution history over time. Top-up Roo Points are kept separate from
+        earned contribution status.
       </>
     ),
   },
@@ -651,12 +700,12 @@ export default function RooPage({}: Route.ComponentProps) {
                     <Clock3 className="mt-1 h-5 w-5 shrink-0 text-[var(--brutalist-yellow)]" />
                     <div className="max-w-3xl">
                       <p className="text-lg font-semibold sm:text-xl">
-                        About 1 Roo Point = 10 minutes of meaningful contribution
+                        For earned points, about 1 point reflects 10 minutes of
+                        meaningful contribution
                       </p>
                       <p className="mt-2 text-sm leading-6 text-white/70 sm:text-base">
-                        The AUD comparison is only a behind-the-scenes planning guide for
-                        MLAI. It is not a public exchange rate and should not be treated
-                        like one.
+                        This is only an internal contribution guide. It is not a wage,
+                        cash value, exchange rate, or price for Roo Points.
                       </p>
                     </div>
                   </div>
@@ -912,6 +961,111 @@ export default function RooPage({}: Route.ComponentProps) {
                   offer a waitlist or the next best option.
                 </p>
               </div>
+            </SectionCard>
+
+            <SectionCard
+              id="top-up"
+              title="Top up Roo Points in Slack"
+              description="Need a few extra points for an eligible MLAI reward? Join MLAI Slack and ask Roo for a fixed Top-up Roo Points pack. Roo will send you a checkout link, and points are added after payment is confirmed."
+              className="border-black/6 bg-[var(--brutalist-beige)] text-[var(--brutalist-black)]"
+              descriptionClassName="text-black/68"
+            >
+              <div className="grid gap-4 lg:grid-cols-3">
+                {TOPUP_STEPS.map((step, index) => {
+                  const Icon = step.icon;
+
+                  return (
+                    <article
+                      key={step.title}
+                      className={clsx(
+                        "rounded-[1.55rem] p-6 shadow-[0_18px_48px_rgba(17,17,17,0.1)]",
+                        index === 0
+                          ? "bg-[var(--brutalist-mint)] text-[var(--brutalist-black)]"
+                          : index === 1
+                            ? "bg-[var(--brutalist-black)] text-white"
+                            : "bg-[var(--brutalist-yellow)] text-[var(--brutalist-black)]",
+                      )}
+                    >
+                      <div
+                        className={clsx(
+                          "flex h-12 w-12 items-center justify-center rounded-[1rem]",
+                          index === 1 ? "bg-white/10" : "bg-black/10",
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <p
+                        className={clsx(
+                          "mt-5 text-xs font-semibold uppercase tracking-[0.32em]",
+                          index === 1 ? "text-white/58" : "text-black/58",
+                        )}
+                      >
+                        Step {index + 1}
+                      </p>
+                      <h3 className="mt-3 text-2xl font-semibold tracking-tight">
+                        {step.title}
+                      </h3>
+                      <p
+                        className={clsx(
+                          "mt-4 text-base leading-7",
+                          index === 1 ? "text-white/76" : "text-black/72",
+                        )}
+                      >
+                        {step.body}
+                      </p>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-[0.95fr_1.05fr]">
+                <div className="rounded-[1.55rem] border border-black/8 bg-white/70 p-6">
+                  <p className="text-xs font-semibold uppercase tracking-[0.35em] text-black/58">
+                    Fixed packs
+                  </p>
+                  <div className="mt-5 grid gap-3">
+                    {TOPUP_PACKS.map((pack) => (
+                      <div
+                        key={pack.id}
+                        className="flex flex-col gap-1 rounded-[1.1rem] border border-black/8 bg-[var(--brutalist-beige)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <span className="font-semibold">{pack.label}</span>
+                        <span className="text-sm font-semibold text-black/62">
+                          {pack.price}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.55rem] border border-black/8 bg-[var(--brutalist-black)] p-6 text-white">
+                  <div className="flex items-start gap-3">
+                    <ShieldCheck className="mt-1 h-5 w-5 shrink-0 text-[var(--brutalist-mint)]" />
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.35em] text-white/58">
+                        Important
+                      </p>
+                      <p className="mt-4 text-base leading-7 text-white/74">
+                        Top-up Roo Points are MLAI community reward points. They are not
+                        money, have no cash value, cannot be converted to cash, and cannot
+                        be sold or transferred. Top-up prices do not represent a monetary
+                        value or exchange rate for Roo Points. Top-up Roo Points do not
+                        count toward earned contribution status.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <a
+                href={SLACK_INVITE_URL}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+                className="mt-5 inline-flex min-h-14 items-center justify-center rounded-full bg-[var(--brutalist-orange)] px-6 py-3 text-center text-base font-semibold text-white transition-transform duration-200 hover:scale-[1.02] hover:opacity-90"
+              >
+                Join Slack and ask @Roo
+                <ArrowRight className="ml-3 h-5 w-5" />
+              </a>
             </SectionCard>
 
             <SectionCard
