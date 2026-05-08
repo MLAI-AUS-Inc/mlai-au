@@ -214,6 +214,23 @@ export interface VibeMarketingTopicCandidate {
   aiSaturation?: unknown;
 }
 
+export interface VibeMarketingTopicFeedback {
+  id: string;
+  domain?: string | null;
+  keyword: string;
+  keywordNormalized?: string | null;
+  feedbackType: string;
+  reasonCode: string;
+  reasonText?: string | null;
+  declineScope: string;
+  source?: string | null;
+  sessionId?: string | null;
+  active: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  restoredAt?: string | null;
+}
+
 export interface VibeMarketingWrittenTopic {
   id?: string;
   title: string;
@@ -403,6 +420,7 @@ export interface VibeMarketingBootstrap {
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
+  declinedTopicFeedback: VibeMarketingTopicFeedback[];
   writtenTopics: VibeMarketingWrittenTopic[];
   publishEvidence: VibeMarketingPublishEvidence;
   guidedSteps: VibeMarketingGuidedStep[];

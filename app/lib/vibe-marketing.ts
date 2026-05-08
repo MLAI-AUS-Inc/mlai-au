@@ -17,6 +17,7 @@ import type {
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingTopicCandidate,
+  VibeMarketingTopicFeedback,
   VibeMarketingWrittenTopic,
   VibeMarketingWorkflowAction,
   VibeMarketingWorkflowProgress,
@@ -154,6 +155,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
   for (const [key, value] of Object.entries(rawLatestRunsByWorkflow)) {
     latestRunsByWorkflow[key] = normalizeMarketingRun(value);
   }
+  const rawDeclinedTopicFeedback = payload.declinedTopicFeedback ?? payload.declined_topic_feedback;
 
   return {
     company: {
@@ -208,6 +210,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       : [],
     hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
       ? payload.hiddenTopicCandidates.map(normalizeTopicCandidate)
+      : [],
+    declinedTopicFeedback: Array.isArray(rawDeclinedTopicFeedback)
+      ? rawDeclinedTopicFeedback
+          .map(normalizeTopicFeedback)
+          .filter((item): item is VibeMarketingTopicFeedback => Boolean(item))
       : [],
     writtenTopics: Array.isArray(payload.writtenTopics)
       ? payload.writtenTopics.map(normalizeWrittenTopic).filter(Boolean) as VibeMarketingWrittenTopic[]
@@ -275,6 +282,51 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
       payload.ai_saturation ??
       payload.latestSaturation ??
       payload.latest_saturation,
+  };
+}
+
+function normalizeTopicFeedback(raw: unknown): VibeMarketingTopicFeedback | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  const keyword = asNullableString(payload.keyword);
+  if (!id || !keyword) return null;
+  return {
+    id,
+    domain: asNullableString(payload.domain),
+    keyword,
+    keywordNormalized:
+      asNullableString(payload.keywordNormalized) ??
+      asNullableString(payload.keyword_normalized),
+    feedbackType:
+      asNullableString(payload.feedbackType) ??
+      asNullableString(payload.feedback_type) ??
+      "declined",
+    reasonCode:
+      asNullableString(payload.reasonCode) ??
+      asNullableString(payload.reason_code) ??
+      "not_appropriate",
+    reasonText:
+      asNullableString(payload.reasonText) ??
+      asNullableString(payload.reason_text),
+    declineScope:
+      asNullableString(payload.declineScope) ??
+      asNullableString(payload.decline_scope) ??
+      "similar",
+    source: asNullableString(payload.source),
+    sessionId:
+      asNullableString(payload.sessionId) ??
+      asNullableString(payload.session_id),
+    active: payload.active === undefined ? !payload.restoredAt && !payload.restored_at : Boolean(payload.active),
+    createdAt:
+      asNullableString(payload.createdAt) ??
+      asNullableString(payload.created_at),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
+    restoredAt:
+      asNullableString(payload.restoredAt) ??
+      asNullableString(payload.restored_at),
   };
 }
 
@@ -597,6 +649,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   latestRunsByWorkflow: {},
   topicCandidates: [],
   hiddenTopicCandidates: [],
+  declinedTopicFeedback: [],
   writtenTopics: [],
   publishEvidence: {},
   guidedSteps: [],
@@ -1051,6 +1104,22 @@ export function startVibeMarketingDiscovery(env: Env, request: Request, body: Re
 
 export function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "article", body);
+}
+
+export async function recordVibeMarketingTopicFeedback(
+  env: Env,
+  request: Request,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/topic-feedback`, body);
+  return normalizeTopicFeedback(response.data);
+}
+
+export async function restoreVibeMarketingTopicFeedback(env: Env, request: Request, feedbackId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`, {});
+  return normalizeTopicFeedback(response.data);
 }
 
 export function startVibeMarketingAutofill(env: Env, request: Request, body: Record<string, unknown>) {
