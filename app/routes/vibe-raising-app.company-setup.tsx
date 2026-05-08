@@ -145,6 +145,7 @@ function emptyBootstrap(profile: VibeRaisingProfile | null, company: VibeRaising
     latestRunsByWorkflow: {},
     topicCandidates: [],
     hiddenTopicCandidates: [],
+    declinedTopicFeedback: [],
     writtenTopics: [],
     publishEvidence: {},
     guidedSteps: [],

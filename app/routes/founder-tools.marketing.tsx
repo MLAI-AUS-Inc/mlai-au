@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
-import type { ReactNode } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -19,7 +19,9 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  ThumbsDown,
   TrendingUp,
+  Undo2,
   UserRound,
 } from "lucide-react";
 import { clsx } from "clsx";
@@ -30,6 +32,8 @@ import {
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
+  recordVibeMarketingTopicFeedback,
+  restoreVibeMarketingTopicFeedback,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
   startVibeMarketingAutofill,
@@ -51,6 +55,7 @@ import type {
   VibeMarketingBootstrap,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
+  VibeMarketingTopicFeedback,
   VibeMarketingWebsiteBaseline,
   VibeMarketingWebsiteBaselineMetric,
   VibeMarketingWrittenTopic,
@@ -157,6 +162,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     latestRunsByWorkflow: {},
     topicCandidates: [],
     hiddenTopicCandidates: [],
+    declinedTopicFeedback: [],
     writtenTopics: [],
     publishEvidence: {},
     guidedSteps: [],
@@ -369,6 +375,38 @@ export async function action({ request, context }: Route.ActionArgs) {
       return redirect("/founder-tools/marketing/create?step=writeCheck");
     }
 
+    if (intent === "decline-topic") {
+      const keyword = stringFromForm(formData, "keyword");
+      if (!keyword) {
+        return { intent, error: "Choose a topic to ignore." };
+      }
+
+      const feedback = await recordVibeMarketingTopicFeedback(env, request, {
+        keyword,
+        sessionId: stringFromForm(formData, "sourceDiscoveryRunId"),
+        feedbackType: "declined",
+        reasonCode: "not_appropriate",
+        reasonText: null,
+        declineScope: "similar",
+        source: "homepage_topic_card",
+      });
+      return {
+        intent,
+        topicCandidateId: stringFromForm(formData, "topicCandidateId"),
+        topicFeedback: feedback,
+      };
+    }
+
+    if (intent === "restore-topic-feedback") {
+      const feedbackId = stringFromForm(formData, "feedbackId");
+      if (!feedbackId) {
+        return { intent, error: "Choose a declined topic to restore." };
+      }
+
+      const feedback = await restoreVibeMarketingTopicFeedback(env, request, feedbackId);
+      return { intent, topicFeedback: feedback };
+    }
+
     if (intent === "daily-replay") {
       const run = await replayVibeMarketingDaily(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
@@ -423,6 +461,23 @@ function difficultyLabel(value: unknown) {
 function opportunityLabel(value: unknown) {
   const score = numericValue(value);
   return score === null ? null : Math.round(score).toString();
+}
+
+function topicMemoryKey(value: unknown) {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function declineReasonLabel(reasonCode: string | null | undefined) {
+  const labels: Record<string, string> = {
+    not_appropriate: "Not appropriate",
+    off_topic: "Off-topic",
+    wrong_audience: "Wrong audience",
+    already_covered: "Already covered",
+    too_broad: "Too broad",
+    low_intent: "Low intent",
+    other: "Other",
+  };
+  return labels[String(reasonCode ?? "").trim()] ?? "Not appropriate";
 }
 
 function companyInitials(name: string) {
@@ -1920,37 +1975,76 @@ function TopicRow({
   topic,
   selected,
   onSelect,
+  onDecline,
+  declineDisabled,
 }: {
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
   onSelect: () => void;
+  onDecline: () => void;
+  declineDisabled?: boolean;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
+  const title = topic.title || topic.keyword;
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect();
+    }
+  }
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onSelect}
+      onKeyDown={handleKeyDown}
       className={clsx(
-        "grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition",
+        "grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
         selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
+      aria-label={`Select topic: ${title}`}
+      aria-pressed={selected}
     >
       <Flame className="h-5 w-5 text-violet-600" />
       <span className="min-w-0">
-        <span className="block truncate text-sm font-black text-slate-950">{topic.title || topic.keyword}</span>
+        <span className="block truncate text-sm font-black text-slate-950">{title}</span>
         <span className="mt-1 block text-sm font-semibold text-slate-500">
           {volumeLabel(topic.volume)} · {difficultyLabel(topic.difficulty)}
           {score ? ` · Opportunity ${score}` : ""}
         </span>
       </span>
-      <span className="flex items-center gap-3">
-        <span className={clsx("rounded-lg px-3 py-2 text-xs font-black", selected ? "bg-white text-violet-700" : "bg-violet-50 text-violet-700")}>
-          {selected ? "Selected" : "Select"}
-        </span>
-        <ArrowRight className="h-4 w-4 text-violet-500" />
+      <span className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDecline();
+          }}
+          disabled={declineDisabled}
+          title={`Ignore suggestion: ${topic.keyword}`}
+          aria-label={`Ignore suggestion: ${topic.keyword}`}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <ThumbsDown className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onSelect();
+          }}
+          className={clsx(
+            "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition",
+            selected ? "bg-white text-violet-700" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+          )}
+        >
+          {selected ? "Continue" : "Select"}
+          <ArrowRight className="h-4 w-4 text-violet-500" />
+        </button>
       </span>
-    </button>
+    </div>
   );
 }
 
@@ -1967,6 +2061,25 @@ function RecentArticleRow({ article }: { article: VibeMarketingWrittenTopic }) {
   );
 }
 
+type TopicFeedbackActionData = {
+  intent?: string;
+  error?: string;
+  topicCandidateId?: string;
+  topicFeedback?: VibeMarketingTopicFeedback | null;
+};
+
+type TopicToast =
+  | {
+      kind: "declined";
+      topicId: string;
+      keyword: string;
+      feedbackId?: string | null;
+    }
+  | {
+      kind: "error";
+      message: string;
+    };
+
 function ReturningTopicPickerPage({
   bootstrap,
   error,
@@ -1975,9 +2088,29 @@ function ReturningTopicPickerPage({
   error: string | null;
 }) {
   const navigation = useNavigation();
-  const topics = useMemo(
+  const declineFetcher = useFetcher<TopicFeedbackActionData>();
+  const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
+  );
+  const [pendingDeclines, setPendingDeclines] = useState<Record<string, VibeMarketingTopicCandidate>>({});
+  const [declinedFeedback, setDeclinedFeedback] = useState<VibeMarketingTopicFeedback[]>(bootstrap.declinedTopicFeedback ?? []);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [toast, setToast] = useState<TopicToast | null>(null);
+  const undoRequestedTopicIds = useRef<Set<string>>(new Set());
+  const declinedTopicKeys = useMemo(
+    () => new Set(declinedFeedback.filter((item) => item.active).map((item) => topicMemoryKey(item.keyword))),
+    [declinedFeedback],
+  );
+  const topics = useMemo(
+    () =>
+      baseTopics.filter(
+        (topic) =>
+          !pendingDeclines[topic.id] &&
+          !declinedTopicKeys.has(topicMemoryKey(topic.keyword)),
+      ),
+    [baseTopics, declinedTopicKeys, pendingDeclines],
   );
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
@@ -1986,6 +2119,105 @@ function ReturningTopicPickerPage({
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
   const isSubmitting = navigation.state === "submitting";
+  const declineBusy = declineFetcher.state !== "idle";
+  const restoreBusy = restoreFetcher.state !== "idle";
+  const visibleTopics = topics.slice(0, visibleCount);
+
+  function submitRestoreFeedback(feedbackId: string) {
+    const formData = new FormData();
+    formData.set("intent", "restore-topic-feedback");
+    formData.set("feedbackId", feedbackId);
+    restoreFetcher.submit(formData, { method: "POST" });
+  }
+
+  function handleDeclineTopic(topic: VibeMarketingTopicCandidate) {
+    setPendingDeclines((current) => ({ ...current, [topic.id]: topic }));
+    setSelectedTopicId((current) => {
+      if (current !== topic.id) return current;
+      return topics.find((candidate) => candidate.id !== topic.id)?.id ?? "";
+    });
+    setToast({ kind: "declined", topicId: topic.id, keyword: topic.keyword, feedbackId: null });
+
+    const formData = new FormData();
+    formData.set("intent", "decline-topic");
+    formData.set("topicCandidateId", topic.id);
+    formData.set("keyword", topic.keyword);
+    formData.set("sourceDiscoveryRunId", topic.sourceRunId ?? "");
+    declineFetcher.submit(formData, { method: "POST" });
+  }
+
+  function handleUndoDecline() {
+    if (!toast || toast.kind !== "declined") return;
+    setPendingDeclines((current) => {
+      const next = { ...current };
+      delete next[toast.topicId];
+      return next;
+    });
+    if (toast.feedbackId) {
+      submitRestoreFeedback(toast.feedbackId);
+    } else {
+      undoRequestedTopicIds.current.add(toast.topicId);
+    }
+    setToast(null);
+  }
+
+  function handleRestoreFeedback(feedback: VibeMarketingTopicFeedback) {
+    submitRestoreFeedback(feedback.id);
+  }
+
+  useEffect(() => {
+    if (!topics.length) {
+      setSelectedTopicId("");
+      return;
+    }
+    if (!selectedTopicId || !topics.some((topic) => topic.id === selectedTopicId)) {
+      setSelectedTopicId(topics[0].id);
+    }
+  }, [selectedTopicId, topics]);
+
+  useEffect(() => {
+    const data = declineFetcher.data;
+    if (!data || data.intent !== "decline-topic") return;
+    const topicId = data.topicCandidateId ?? "";
+    const feedback = data.topicFeedback ?? null;
+
+    if (data.error || !feedback) {
+      setPendingDeclines((current) => {
+        const next = { ...current };
+        if (topicId) delete next[topicId];
+        return next;
+      });
+      if (topicId) undoRequestedTopicIds.current.delete(topicId);
+      setToast({ kind: "error", message: data.error ?? "Could not ignore that suggestion." });
+      return;
+    }
+
+    if (topicId && undoRequestedTopicIds.current.has(topicId)) {
+      undoRequestedTopicIds.current.delete(topicId);
+      submitRestoreFeedback(feedback.id);
+      return;
+    }
+
+    setDeclinedFeedback((current) => {
+      const existing = current.filter((item) => item.id !== feedback.id);
+      return [feedback, ...existing];
+    });
+    setToast((current) =>
+      current?.kind === "declined" && current.topicId === topicId
+        ? { ...current, feedbackId: feedback.id }
+        : current,
+    );
+  }, [declineFetcher.data]);
+
+  useEffect(() => {
+    const data = restoreFetcher.data;
+    if (!data || data.intent !== "restore-topic-feedback") return;
+    if (data.error || !data.topicFeedback) {
+      setToast({ kind: "error", message: data.error ?? "Could not restore that suggestion." });
+      return;
+    }
+    setDeclinedFeedback((current) => current.filter((item) => item.id !== data.topicFeedback?.id));
+  }, [restoreFetcher.data]);
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
@@ -2054,12 +2286,14 @@ function ReturningTopicPickerPage({
                 </p>
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
-                    topics.slice(0, 5).map((topic) => (
+                    visibleTopics.map((topic) => (
                       <TopicRow
                         key={topic.id}
                         topic={topic}
                         selected={topic.id === selectedTopicId}
                         onSelect={() => setSelectedTopicId(topic.id)}
+                        onDecline={() => handleDeclineTopic(topic)}
+                        declineDisabled={declineBusy}
                       />
                     ))
                   ) : (
@@ -2072,14 +2306,72 @@ function ReturningTopicPickerPage({
                     </div>
                   )}
                 </div>
-                {topics.length > 5 ? (
+                {toast ? (
+                  <div
+                    className={clsx(
+                      "mt-4 flex flex-col gap-3 rounded-xl px-4 py-3 text-sm font-bold sm:flex-row sm:items-center sm:justify-between",
+                      toast.kind === "error"
+                        ? "border border-rose-100 bg-rose-50 text-rose-700"
+                        : "border border-violet-100 bg-violet-50 text-slate-700",
+                    )}
+                  >
+                    <span>
+                      {toast.kind === "error"
+                        ? toast.message
+                        : `Ignored "${toast.keyword}". Future research will avoid this topic and close variants.`}
+                    </span>
+                    {toast.kind === "declined" ? (
+                      <button
+                        type="button"
+                        onClick={handleUndoDecline}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-black text-violet-700 shadow-sm hover:bg-violet-50"
+                      >
+                        <Undo2 className="h-4 w-4" />
+                        Undo
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                {topics.length > visibleCount ? (
                   <button
                     type="button"
+                    onClick={() => setVisibleCount((count) => Math.min(topics.length, count + 5))}
                     className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-600 hover:bg-slate-100"
                   >
                     Show more topic ideas
                     <ChevronDown className="h-4 w-4" />
                   </button>
+                ) : null}
+                {declinedFeedback.length ? (
+                  <details className="mt-5 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+                    <summary className="cursor-pointer text-sm font-black text-slate-700">
+                      Declined suggestions ({declinedFeedback.length})
+                    </summary>
+                    <div className="mt-3 divide-y divide-slate-200">
+                      {declinedFeedback.map((feedback) => (
+                        <div
+                          key={feedback.id}
+                          className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-slate-950">{feedback.keyword}</p>
+                            <p className="mt-1 text-xs font-bold text-slate-500">
+                              {declineReasonLabel(feedback.reasonCode)} · {formatArticleDate(feedback.createdAt)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={restoreBusy}
+                            onClick={() => handleRestoreFeedback(feedback)}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                            Restore
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
                 ) : null}
               </>
             ) : (
