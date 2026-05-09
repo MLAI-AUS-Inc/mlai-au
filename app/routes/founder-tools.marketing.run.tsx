@@ -81,10 +81,8 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
-  const [run, bootstrap] = await Promise.all([
-    getVibeMarketingRun(env, request, runId),
-    getVibeMarketingBootstrap(env, request),
-  ]);
+  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const run = await getVibeMarketingRun(env, request, runId);
   return { run, bootstrap };
 }
 
