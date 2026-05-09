@@ -27,6 +27,7 @@ import {
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
   submitVibeMarketingComponentComments,
+  startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
 } from "~/lib/vibe-marketing";
@@ -97,6 +98,18 @@ function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
   );
 }
 
+function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow) || !run.componentManifest || hasReadyArticlePreview(run)) {
+    return false;
+  }
+  const preview = run.livePreview;
+  const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
+  if (preview?.error || previewStatus === "failed" || previewStatus === "blocked") {
+    return false;
+  }
+  return run.status === "completed" || previewStatus === "running" || previewStatus === "starting";
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
@@ -137,6 +150,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         batchId: stringFromForm(formData, "batchId"),
         sourceRunId: stringFromForm(formData, "sourceRunId"),
       });
+    } else if (intent === "start-live-preview") {
+      const result = await startVibeMarketingLivePreview(env, request, runId, { force: true });
+      if (result.runId && result.runId !== runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
     } else if (intent === "cancel-article") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
@@ -790,6 +808,109 @@ function LiveArticlePreviewPanel({
   );
 }
 
+function ArticlePreviewEmptyState({
+  run,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  isSubmitting: boolean;
+}) {
+  const preview = run.livePreview;
+  const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
+  const hasManifest = Boolean(run.componentManifest);
+  const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
+  const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
+
+  if (failed) {
+    return (
+      <section className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0" />
+            <div>
+              <h2 className="text-base font-black text-red-950">Preview failed</h2>
+              <p className="mt-1 font-semibold">
+                {preview?.error || "The article preview could not be prepared. Retry the preview when the generator is available."}
+              </p>
+            </div>
+          </div>
+          <Form method="POST">
+            <button
+              type="submit"
+              name="intent"
+              value="start-live-preview"
+              disabled={isSubmitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+            >
+              {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+              Retry preview
+            </button>
+          </Form>
+        </div>
+      </section>
+    );
+  }
+
+  if (hasManifest) {
+    return (
+      <section className="rounded-xl border border-violet-100 bg-violet-50/70 p-5">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white text-violet-700 shadow-sm">
+            <ArrowPathIcon className="h-5 w-5 animate-spin" />
+          </span>
+          <div>
+            <h2 className="text-base font-black text-gray-950">Preparing article preview</h2>
+            <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
+              The article is ready for review. We are preparing the exact website preview and comment layer.
+            </p>
+            <p className="mt-2 text-xs font-black uppercase tracking-wide text-violet-700">
+              Preview status: {statusLabel}
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-xl border border-dashed border-gray-200 bg-gray-50 p-5">
+      <h2 className="text-base font-black text-gray-950">Article preview</h2>
+      <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-gray-500">
+        Article preview will appear here when the article reaches Ready for review.
+      </p>
+    </section>
+  );
+}
+
+function ArticleGenerationReviewDetail({
+  run,
+  selectedComponent,
+  onSelectComponent,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  selectedComponent: VibeMarketingComponentManifestItem | null;
+  onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
+  isSubmitting: boolean;
+}) {
+  const hasArticlePreview = hasReadyArticlePreview(run);
+  return (
+    <div className="space-y-5">
+      <ArticleRunStageProgress run={run} variant="embedded" />
+      {hasArticlePreview ? (
+        <LiveArticlePreviewPanel
+          run={run}
+          selectedComponent={selectedComponent}
+          onSelectComponent={onSelectComponent}
+          isSubmitting={isSubmitting}
+        />
+      ) : (
+        <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} />
+      )}
+    </div>
+  );
+}
+
 function ArticleCommentCanvas({
   comments,
   components,
@@ -1233,8 +1354,8 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
     const isPublishRun = run.workflowProgress?.currentStepId === "publish" && (POLLING_STATUSES.has(run.status) || Boolean(publishUrl));
     if (isPublishRun) return "publish";
     if (POLLING_STATUSES.has(run.status)) return "generate";
-    if (run.contentPackage?.contentPackaged) return "package";
     if (run.componentManifest) return "review";
+    if (run.contentPackage?.contentPackaged) return "package";
     return "generate";
   }
   return run.workflowProgress?.currentStepId ?? null;
@@ -1273,7 +1394,7 @@ export default function FounderToolsMarketingRun() {
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const isSubmitting = navigation.state === "submitting";
-  const shouldPoll = POLLING_STATUSES.has(run.status);
+  const shouldPoll = POLLING_STATUSES.has(run.status) || hasPendingArticlePreview(run);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
@@ -1361,18 +1482,18 @@ export default function FounderToolsMarketingRun() {
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
         primaryActionSlot={isArticleWorkflowRun && directPublishMode ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
-        activeDetailSlot={isArticleGenerationRun ? <ArticleRunStageProgress run={run} variant="embedded" /> : undefined}
+        activeDetailSlot={
+          isArticleGenerationRun ? (
+            <ArticleGenerationReviewDetail
+              run={run}
+              selectedComponent={selectedComponent}
+              onSelectComponent={setSelectedComponent}
+              isSubmitting={isSubmitting}
+            />
+          ) : undefined
+        }
         activeDetailLabel="Generating article progress"
       />
-
-      {hasArticlePreview ? (
-        <LiveArticlePreviewPanel
-          run={run}
-          selectedComponent={selectedComponent}
-          onSelectComponent={setSelectedComponent}
-          isSubmitting={isSubmitting}
-        />
-      ) : null}
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
 
