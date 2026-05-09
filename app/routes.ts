@@ -95,6 +95,7 @@ export default [
     route("marketing/create", "routes/founder-tools.marketing.create.tsx"),
     route("marketing/autofill-runs/:runId", "routes/founder-tools.marketing.autofill-run.tsx"),
     route("marketing/settings", "routes/founder-tools.marketing.settings.tsx"),
+    route("marketing/runs/:runId/status", "routes/founder-tools.marketing.run-status.tsx"),
     route("marketing/runs/:runId", "routes/founder-tools.marketing.run.tsx"),
   ]),
   route("/founder-tools/logout", "routes/vibe-raising-app.logout.tsx", { id: "founder-tools-logout" }),

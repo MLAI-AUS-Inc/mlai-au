@@ -1,10 +1,11 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation, useRevalidator } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
   CheckCircleIcon,
+  EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
   PaperAirplaneIcon,
   PlayIcon,
@@ -38,6 +39,7 @@ import type {
   VibeMarketingComponentFeedbackComment,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
+  VibeMarketingWorkflowProgress,
 } from "~/types/vibe-marketing";
 
 const POLLING_STATUSES = new Set([
@@ -51,9 +53,29 @@ const POLLING_STATUSES = new Set([
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
-const ARTICLE_WORKFLOWS = new Set(["article_generation", "content_factory_article", "article_revision"]);
+const ARTICLE_WORKFLOWS = new Set([
+  "article_generation",
+  "content_factory_article",
+  "direct_generate",
+  "confirmed_topic",
+  "article_revision",
+]);
+const ARTICLE_GENERATION_WORKFLOWS = new Set([
+  "article_generation",
+  "content_factory_article",
+  "direct_generate",
+  "confirmed_topic",
+]);
 const RESUMABLE_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed"]);
 const APPROVAL_GATE_STATUSES = new Set(["awaiting_approval", "approval_required"]);
+
+function isArticleWorkflow(workflow: string | null | undefined) {
+  return ARTICLE_WORKFLOWS.has(String(workflow ?? ""));
+}
+
+function isArticleGenerationWorkflow(workflow: string | null | undefined) {
+  return ARTICLE_GENERATION_WORKFLOWS.has(String(workflow ?? ""));
+}
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
@@ -101,6 +123,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       });
     } else if (intent === "stop-live-preview") {
       await stopVibeMarketingLivePreview(env, request, runId);
+    } else if (intent === "cancel-article") {
+      await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
+      throw redirect("/founder-tools/marketing/create?step=chooseArticle");
     } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr"].includes(intent)) {
       const result = await controlVibeMarketingRun(env, request, runId, intent);
       if (result.runId && result.runId !== runId) {
@@ -429,7 +454,7 @@ function TechnicalRunDetails({ run, defaultOpen = false }: { run: VibeMarketingR
     <details className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm" open={defaultOpen}>
       <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 text-left">
         <span>
-          <span className="block text-lg font-black text-gray-950">Technical run details</span>
+          <span className="block text-lg font-black text-gray-950">Technical details</span>
           <span className="mt-1 block text-sm font-semibold text-gray-500">
             Internal pipeline checks are available for debugging.
           </span>
@@ -1263,6 +1288,101 @@ function ComponentCommentsPanel({
   );
 }
 
+function canCancelArticleRun(run: VibeMarketingRunSummary) {
+  if (!isArticleWorkflow(run.workflow)) return false;
+  if (["completed", "cancelled"].includes(run.status)) return false;
+  return !hasExternalPublishEvidence(run);
+}
+
+function hasExternalPublishEvidence(run: VibeMarketingRunSummary) {
+  return Boolean(
+    run.prUrl ||
+      stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl"),
+  );
+}
+
+function ArticleRunActionsMenu({
+  run,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  isSubmitting: boolean;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const canCancel = canCancelArticleRun(run);
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((open) => !open)}
+        className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 shadow-sm transition hover:bg-gray-50"
+      >
+        <EllipsisHorizontalIcon className="h-5 w-5" />
+        <span className="sr-only">Article actions</span>
+      </button>
+
+      {menuOpen ? (
+        <div
+          role="menu"
+          className="absolute right-0 z-30 mt-2 w-56 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 text-sm shadow-xl"
+        >
+          <button
+            type="button"
+            role="menuitem"
+            disabled={!canCancel || isSubmitting}
+            onClick={() => {
+              if (!canCancel) return;
+              setMenuOpen(false);
+              setConfirmOpen(true);
+            }}
+            className="flex w-full items-center gap-2 px-3 py-2.5 text-left font-bold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:text-gray-400 disabled:hover:bg-white"
+          >
+            <TrashIcon className="h-4 w-4" />
+            Cancel article
+          </button>
+        </div>
+      ) : null}
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-950/40 px-4">
+          <div className="w-full max-w-md rounded-xl border border-red-100 bg-white p-5 shadow-2xl">
+            <h2 className="text-lg font-black text-gray-950">Cancel article?</h2>
+            <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+              This stops the current article run, removes generated content for this run, and returns you to a clean article creation flow.
+            </p>
+            <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => setConfirmOpen(false)}
+                className="inline-flex justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+              >
+                Keep article
+              </button>
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="cancel-article"
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50 sm:w-auto"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <TrashIcon className="h-4 w-4" />}
+                  Cancel article
+                </button>
+              </Form>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function ArticleWorkflowPrimaryAction({
   run,
   isSubmitting,
@@ -1396,7 +1516,7 @@ function isScaffoldApprovalGate(run: VibeMarketingRunSummary) {
 
 function isPublishApprovalGate(run: VibeMarketingRunSummary) {
   const workflow = String(run.workflow ?? "");
-  return ARTICLE_WORKFLOWS.has(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
+  return isArticleWorkflow(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
 }
 
 function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
@@ -1407,7 +1527,7 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
   if (workflow === "website_baseline") return "baseline";
   if (workflow === "article_revision") return "revise";
-  if (ARTICLE_WORKFLOWS.has(workflow)) {
+  if (isArticleWorkflow(workflow)) {
     const publishUrl = run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl");
     const isPublishRun = run.workflowProgress?.currentStepId === "publish" && (POLLING_STATUSES.has(run.status) || Boolean(publishUrl));
     if (isPublishRun) return "publish";
@@ -1419,21 +1539,48 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   return run.workflowProgress?.currentStepId ?? null;
 }
 
+function workflowProgressForRunPage(
+  run: VibeMarketingRunSummary,
+  fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
+): VibeMarketingWorkflowProgress | null {
+  const progress = run.workflowProgress ?? fallbackProgress ?? null;
+  if (!progress || !isArticleGenerationWorkflow(run.workflow) || !POLLING_STATUSES.has(run.status)) {
+    return progress;
+  }
+
+  return {
+    ...progress,
+    currentStepId: "generate",
+    nextStepId: progress.nextStepId === "generate" ? null : progress.nextStepId,
+    steps: progress.steps.map((step) =>
+      step.id === "generate"
+        ? {
+            ...step,
+            status: "running",
+          }
+        : step,
+    ),
+  };
+}
+
 export default function FounderToolsMarketingRun() {
-  const { run, bootstrap } = useLoaderData<typeof loader>();
+  const { run: loaderRun, bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
-  const revalidator = useRevalidator();
+  const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
+  const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const isSubmitting = navigation.state === "submitting";
   const shouldPoll = POLLING_STATUSES.has(run.status);
+  const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
-  const isArticleWorkflow = ["article_generation", "content_factory_article", "article_revision"].includes(workflow);
-  const isArticleGenerationWorkflow = ["article_generation", "content_factory_article"].includes(workflow);
+  const isArticleWorkflowRun = isArticleWorkflow(workflow);
+  const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const contentPackage = run.contentPackage;
   const runNeedsAttention = ["blocked", "failed", "blocked_verification", "denied", "cancelled"].includes(run.status);
   const hasArticlePreview =
-    ["article_generation", "content_factory_article", "article_revision"].includes(workflow) &&
+    isArticleWorkflowRun &&
     Boolean(contentPackage?.contentPackaged || run.componentManifest);
   const isCompletedArticleReviewPage =
     hasArticlePreview && run.status === "completed";
@@ -1454,7 +1601,22 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run);
-  const workflowProgress = run.workflowProgress ?? bootstrap.workflowProgress;
+  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
+
+  useEffect(() => {
+    setPolledRun(null);
+  }, [loaderRun.runId]);
+
+  useEffect(() => {
+    if (
+      runStatusFetcher.state !== "idle" ||
+      !runStatusFetcher.data?.runId ||
+      runStatusFetcher.data.runId !== loaderRun.runId
+    ) {
+      return;
+    }
+    setPolledRun(runStatusFetcher.data);
+  }, [loaderRun.runId, runStatusFetcher.data, runStatusFetcher.state]);
 
   useEffect(() => {
     if (!isDiscoveryConfirmation) return;
@@ -1466,12 +1628,16 @@ export default function FounderToolsMarketingRun() {
   }, [discoveryCandidates, isDiscoveryConfirmation, selectedDiscoveryCandidateId]);
 
   useEffect(() => {
-    if (!shouldPoll) return;
-    const timer = window.setInterval(() => {
-      void revalidator.revalidate();
-    }, 5000);
-    return () => window.clearInterval(timer);
-  }, [revalidator, shouldPoll]);
+    if (!shouldPoll || !loaderRun.runId || runStatusFetcher.state !== "idle") return;
+    const hasLoadedCurrentRun = runStatusFetcher.data?.runId === loaderRun.runId;
+    const timer = window.setTimeout(
+      () => {
+        void runStatusFetcher.load(statusUrl);
+      },
+      hasLoadedCurrentRun ? 5000 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [loaderRun.runId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -1494,7 +1660,8 @@ export default function FounderToolsMarketingRun() {
         title="Create and publish article"
         titleAs="h1"
         isSubmitting={isSubmitting}
-        primaryActionSlot={isArticleWorkflow ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
+        primaryActionSlot={isArticleWorkflowRun ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
       />
 
       {hasArticlePreview ? (
@@ -1510,10 +1677,10 @@ export default function FounderToolsMarketingRun() {
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
-          {isArticleGenerationWorkflow ? (
-            <ArticleRunStageProgress run={run} pollingDegraded={revalidator.state === "loading"} />
+          {isArticleGenerationRun ? (
+            <ArticleRunStageProgress run={run} />
           ) : (
-            <MarketingRunProgressCard run={run} pollingDegraded={revalidator.state === "loading"} />
+            <MarketingRunProgressCard run={run} />
           )}
 
           {isDiscoveryConfirmation ? (
@@ -1630,7 +1797,7 @@ export default function FounderToolsMarketingRun() {
             </div>
           ) : null}
 
-          {isArticleGenerationWorkflow ? (
+          {isArticleGenerationRun ? (
             <TechnicalRunDetails run={run} defaultOpen={runNeedsAttention} />
           ) : (
             <RunStepTimeline run={run} />

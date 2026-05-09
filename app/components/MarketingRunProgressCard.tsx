@@ -4,17 +4,13 @@ import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 interface MarketingRunProgressCardProps {
   run: VibeMarketingRunSummary;
-  pollingDegraded?: boolean;
 }
 
 function labelForStatus(status: string) {
   return status.replace(/_/g, " ");
 }
 
-export default function MarketingRunProgressCard({
-  run,
-  pollingDegraded = false,
-}: MarketingRunProgressCardProps) {
+export default function MarketingRunProgressCard({ run }: MarketingRunProgressCardProps) {
   const isFailed = ["failed", "blocked", "blocked_verification", "denied"].includes(run.status);
   const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const totalSteps = Math.max(run.steps.length, run.stepOrder.length, 1);
@@ -61,9 +57,6 @@ export default function MarketingRunProgressCard({
           <p className="mt-2 text-xs font-medium text-gray-500">
             {completedSteps} of {totalSteps} run steps complete. Refreshing this page is safe.
           </p>
-          {pollingDegraded ? (
-            <p className="mt-2 text-xs font-semibold text-amber-700">Polling is retrying after a temporary connection problem.</p>
-          ) : null}
           {run.errors.length > 0 ? (
             <div className="mt-3 rounded-xl border border-red-200 bg-white/80 px-4 py-3 text-sm text-red-700">
               {run.errors[0]}
