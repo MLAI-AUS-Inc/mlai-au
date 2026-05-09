@@ -55,6 +55,20 @@ const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
 const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 
+const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+function formatStableDate(value: string | null | undefined, fallback = "recently") {
+  if (!value) return fallback;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return fallback;
+  return stableDateFormatter.format(date);
+}
+
 const PROFILE_RESEARCH_STEPS = [
   { id: "identity", label: "Resolving company identity", keys: ["queued", "resolve_company_identity", "profile_resolution"] },
   { id: "website", label: "Crawling owned website", keys: ["crawl_owned_web", "crawl_website", "scrape_website"] },
@@ -1392,7 +1406,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
                   {effectiveBaseline.collectedAt ? (
                     <p className="mt-1 text-xs font-semibold text-gray-500">
-                      Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
+                      Collected {formatStableDate(effectiveBaseline.collectedAt)}
                       {effectiveBaseline.stale ? " · stale" : ""}
                     </p>
                   ) : null}

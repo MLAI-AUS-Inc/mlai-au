@@ -371,8 +371,17 @@ export async function action({ request, context }: Route.ActionArgs) {
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
-      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return redirect("/founder-tools/marketing/create?step=writeCheck");
+      if (result.runId) {
+        return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
+
+      return {
+        intent,
+        error:
+          result.error ||
+          result.errors?.[0] ||
+          "Article generation was accepted, but the backend did not return a run id. Refresh and try again.",
+      };
     }
 
     if (intent === "decline-topic") {
@@ -486,11 +495,22 @@ function companyInitials(name: string) {
   return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
 }
 
-function formatArticleDate(value: string | null | undefined) {
-  if (!value) return "Recently";
+const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+function formatStableDate(value: string | null | undefined, fallback = "Recently") {
+  if (!value) return fallback;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recently";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (Number.isNaN(date.getTime())) return fallback;
+  return stableDateFormatter.format(date);
+}
+
+function formatArticleDate(value: string | null | undefined) {
+  return formatStableDate(value, "Recently");
 }
 
 function startupTags(bootstrap: VibeMarketingBootstrap) {
@@ -1841,7 +1861,7 @@ function FirstArticleSetupPage({
                   <p className="mt-1 text-sm font-semibold text-slate-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
                   {effectiveBaseline.collectedAt ? (
                     <p className="mt-1 text-xs font-semibold text-slate-500">
-                      Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
+                      Collected {formatStableDate(effectiveBaseline.collectedAt, "recently")}
                       {effectiveBaseline.stale ? " · stale" : ""}
                     </p>
                   ) : null}
@@ -1978,7 +1998,6 @@ function TopicRow({
   onSelect,
   onContinue,
   onDecline,
-  declineDisabled,
 }: {
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
@@ -1986,7 +2005,6 @@ function TopicRow({
   onSelect: () => void;
   onContinue: () => void;
   onDecline: () => void;
-  declineDisabled?: boolean;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
   const title = topic.title || topic.keyword;
@@ -2033,10 +2051,9 @@ function TopicRow({
             event.stopPropagation();
             onDecline();
           }}
-          disabled={declineDisabled}
           title={`Ignore suggestion: ${topic.keyword}`}
           aria-label={`Ignore suggestion: ${topic.keyword}`}
-          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100"
         >
           <ThumbsDown className="h-4 w-4" />
         </button>
@@ -2096,6 +2113,41 @@ type TopicToast =
       message: string;
     };
 
+function TopicDeclineRequest({
+  topic,
+  onResult,
+}: {
+  topic: VibeMarketingTopicCandidate;
+  onResult: (data: TopicFeedbackActionData) => void;
+}) {
+  const fetcher = useFetcher<TopicFeedbackActionData>({ key: `decline-topic-${topic.id}` });
+  const submittedRef = useRef(false);
+  const handledRef = useRef(false);
+
+  useEffect(() => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+
+    const formData = new FormData();
+    formData.set("intent", "decline-topic");
+    formData.set("topicCandidateId", topic.id);
+    formData.set("keyword", topic.keyword);
+    formData.set("sourceDiscoveryRunId", topic.sourceRunId ?? "");
+    fetcher.submit(formData, { method: "POST" });
+  }, [fetcher, topic.id, topic.keyword, topic.sourceRunId]);
+
+  useEffect(() => {
+    if (handledRef.current || fetcher.state !== "idle" || !fetcher.data) return;
+    handledRef.current = true;
+    onResult({
+      ...fetcher.data,
+      topicCandidateId: fetcher.data.topicCandidateId ?? topic.id,
+    });
+  }, [fetcher.data, fetcher.state, onResult, topic.id]);
+
+  return null;
+}
+
 function ReturningTopicPickerPage({
   bootstrap,
   error,
@@ -2104,7 +2156,6 @@ function ReturningTopicPickerPage({
   error: string | null;
 }) {
   const navigation = useNavigation();
-  const declineFetcher = useFetcher<TopicFeedbackActionData>();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
@@ -2135,37 +2186,38 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const [articleStartPending, setArticleStartPending] = useState(false);
   const isSubmitting = navigation.state === "submitting";
-  const declineBusy = declineFetcher.state !== "idle";
+  const isArticleStartNavigation = navigation.formData?.get("intent") === "start-article";
+  const articleSubmitting = articleStartPending || (navigation.state !== "idle" && isArticleStartNavigation);
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
+  const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
 
   const submitSelectedTopic = useCallback(() => {
-    if (isSubmitting || !selectedTopic) return;
+    if (articleSubmitting || !selectedTopic) return;
     articleFormRef.current?.requestSubmit();
-  }, [isSubmitting, selectedTopic]);
+  }, [articleSubmitting, selectedTopic]);
 
-  function submitRestoreFeedback(feedbackId: string) {
+  const handleArticleSubmit = useCallback(() => {
+    setArticleStartPending(true);
+  }, []);
+
+  const submitRestoreFeedback = useCallback((feedbackId: string) => {
     const formData = new FormData();
     formData.set("intent", "restore-topic-feedback");
     formData.set("feedbackId", feedbackId);
     restoreFetcher.submit(formData, { method: "POST" });
-  }
+  }, [restoreFetcher]);
 
   function handleDeclineTopic(topic: VibeMarketingTopicCandidate) {
     setPendingDeclines((current) => ({ ...current, [topic.id]: topic }));
+    setDeclineRequests((current) => ({ ...current, [topic.id]: topic }));
     setSelectedTopicId((current) => {
       if (current !== topic.id) return current;
       return topics.find((candidate) => candidate.id !== topic.id)?.id ?? "";
     });
     setToast({ kind: "declined", topicId: topic.id, keyword: topic.keyword, feedbackId: null });
-
-    const formData = new FormData();
-    formData.set("intent", "decline-topic");
-    formData.set("topicCandidateId", topic.id);
-    formData.set("keyword", topic.keyword);
-    formData.set("sourceDiscoveryRunId", topic.sourceRunId ?? "");
-    declineFetcher.submit(formData, { method: "POST" });
   }
 
   function handleUndoDecline() {
@@ -2198,10 +2250,28 @@ function ReturningTopicPickerPage({
   }, [selectedTopicId, topics]);
 
   useEffect(() => {
-    const data = declineFetcher.data;
+    if (navigation.state !== "idle" && isArticleStartNavigation) {
+      setArticleStartPending(true);
+    }
+  }, [isArticleStartNavigation, navigation.state]);
+
+  useEffect(() => {
+    if (navigation.state === "idle") {
+      setArticleStartPending(false);
+    }
+  }, [navigation.state]);
+
+  const handleDeclineResult = useCallback((data: TopicFeedbackActionData) => {
     if (!data || data.intent !== "decline-topic") return;
     const topicId = data.topicCandidateId ?? "";
     const feedback = data.topicFeedback ?? null;
+    if (topicId) {
+      setDeclineRequests((current) => {
+        const next = { ...current };
+        delete next[topicId];
+        return next;
+      });
+    }
 
     if (data.error || !feedback) {
       setPendingDeclines((current) => {
@@ -2212,6 +2282,14 @@ function ReturningTopicPickerPage({
       if (topicId) undoRequestedTopicIds.current.delete(topicId);
       setToast({ kind: "error", message: data.error ?? "Could not ignore that suggestion." });
       return;
+    }
+
+    if (topicId) {
+      setPendingDeclines((current) => {
+        const next = { ...current };
+        delete next[topicId];
+        return next;
+      });
     }
 
     if (topicId && undoRequestedTopicIds.current.has(topicId)) {
@@ -2229,7 +2307,7 @@ function ReturningTopicPickerPage({
         ? { ...current, feedbackId: feedback.id }
         : current,
     );
-  }, [declineFetcher.data]);
+  }, [submitRestoreFeedback]);
 
   useEffect(() => {
     const data = restoreFetcher.data;
@@ -2244,7 +2322,7 @@ function ReturningTopicPickerPage({
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form ref={articleFormRef} method="POST" className="space-y-5">
+        <Form ref={articleFormRef} method="POST" onSubmit={handleArticleSubmit} className="space-y-5">
           <input type="hidden" name="intent" value="start-article" />
           <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
           <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "publish_code"} />
@@ -2313,11 +2391,10 @@ function ReturningTopicPickerPage({
                         key={topic.id}
                         topic={topic}
                         selected={topic.id === selectedTopicId}
-                        submitting={isSubmitting}
+                        submitting={articleSubmitting}
                         onSelect={() => setSelectedTopicId(topic.id)}
                         onContinue={submitSelectedTopic}
                         onDecline={() => handleDeclineTopic(topic)}
-                        declineDisabled={declineBusy}
                       />
                     ))
                   ) : (
@@ -2397,6 +2474,9 @@ function ReturningTopicPickerPage({
                     </div>
                   </details>
                 ) : null}
+                {Object.values(declineRequests).map((topic) => (
+                  <TopicDeclineRequest key={topic.id} topic={topic} onResult={handleDeclineResult} />
+                ))}
               </>
             ) : (
               <>
@@ -2444,11 +2524,20 @@ function ReturningTopicPickerPage({
             </div>
             <button
               type="submit"
-              disabled={isSubmitting || (activeTab === "choose" && !selectedTopic)}
+              disabled={articleSubmitting || (activeTab === "choose" && !selectedTopic)}
               className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create article from topic
-              <ArrowRight className="h-4 w-4" />
+              {articleSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating article...
+                </>
+              ) : (
+                <>
+                  Create article from topic
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
             </button>
           </div>
         </Form>
