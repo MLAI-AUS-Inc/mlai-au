@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
 import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -1974,23 +1974,34 @@ function FirstArticleSetupPage({
 function TopicRow({
   topic,
   selected,
+  submitting,
   onSelect,
+  onContinue,
   onDecline,
   declineDisabled,
 }: {
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
+  submitting?: boolean;
   onSelect: () => void;
+  onContinue: () => void;
   onDecline: () => void;
   declineDisabled?: boolean;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
   const title = topic.title || topic.keyword;
+  const selectOrContinue = () => {
+    if (selected) {
+      onContinue();
+      return;
+    }
+    onSelect();
+  };
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      onSelect();
+      selectOrContinue();
     }
   }
 
@@ -1998,13 +2009,13 @@ function TopicRow({
     <div
       role="button"
       tabIndex={0}
-      onClick={onSelect}
+      onClick={selectOrContinue}
       onKeyDown={handleKeyDown}
       className={clsx(
         "grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
         selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
-      aria-label={`Select topic: ${title}`}
+      aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
       aria-pressed={selected}
     >
       <Flame className="h-5 w-5 text-violet-600" />
@@ -2033,15 +2044,20 @@ function TopicRow({
           type="button"
           onClick={(event) => {
             event.stopPropagation();
-            onSelect();
+            selectOrContinue();
           }}
+          disabled={selected && submitting}
           className={clsx(
-            "inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition",
-            selected ? "bg-white text-violet-700" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+            "inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+            selected ? "bg-white text-violet-700 hover:bg-violet-50" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
           {selected ? "Continue" : "Select"}
-          <ArrowRight className="h-4 w-4 text-violet-500" />
+          {selected && submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+          ) : (
+            <ArrowRight className="h-4 w-4 text-violet-500" />
+          )}
         </button>
       </span>
     </div>
@@ -2099,6 +2115,7 @@ function ReturningTopicPickerPage({
   const [visibleCount, setVisibleCount] = useState(5);
   const [toast, setToast] = useState<TopicToast | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
+  const articleFormRef = useRef<HTMLFormElement>(null);
   const declinedTopicKeys = useMemo(
     () => new Set(declinedFeedback.filter((item) => item.active).map((item) => topicMemoryKey(item.keyword))),
     [declinedFeedback],
@@ -2122,6 +2139,11 @@ function ReturningTopicPickerPage({
   const declineBusy = declineFetcher.state !== "idle";
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
+
+  const submitSelectedTopic = useCallback(() => {
+    if (isSubmitting || !selectedTopic) return;
+    articleFormRef.current?.requestSubmit();
+  }, [isSubmitting, selectedTopic]);
 
   function submitRestoreFeedback(feedbackId: string) {
     const formData = new FormData();
@@ -2222,7 +2244,7 @@ function ReturningTopicPickerPage({
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form method="POST" className="space-y-5">
+        <Form ref={articleFormRef} method="POST" className="space-y-5">
           <input type="hidden" name="intent" value="start-article" />
           <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
           <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "publish_code"} />
@@ -2291,7 +2313,9 @@ function ReturningTopicPickerPage({
                         key={topic.id}
                         topic={topic}
                         selected={topic.id === selectedTopicId}
+                        submitting={isSubmitting}
                         onSelect={() => setSelectedTopicId(topic.id)}
+                        onContinue={submitSelectedTopic}
                         onDecline={() => handleDeclineTopic(topic)}
                         declineDisabled={declineBusy}
                       />
