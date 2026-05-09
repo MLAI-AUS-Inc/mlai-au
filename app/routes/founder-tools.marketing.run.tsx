@@ -27,9 +27,7 @@ import {
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
   submitVibeMarketingComponentComments,
-  startVibeMarketingLivePreview,
   startVibeMarketingArticle,
-  stopVibeMarketingLivePreview,
   updateVibeMarketingComponentComment,
 } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
@@ -65,6 +63,7 @@ const ARTICLE_GENERATION_WORKFLOWS = new Set([
   "content_factory_article",
   "direct_generate",
   "confirmed_topic",
+  "article_revision",
 ]);
 const RESUMABLE_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed"]);
 const APPROVAL_GATE_STATUSES = new Set(["awaiting_approval", "approval_required"]);
@@ -75,6 +74,15 @@ function isArticleWorkflow(workflow: string | null | undefined) {
 
 function isArticleGenerationWorkflow(workflow: string | null | undefined) {
   return ARTICLE_GENERATION_WORKFLOWS.has(String(workflow ?? ""));
+}
+
+function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
+  return Boolean(
+    isArticleWorkflow(run.workflow) &&
+      run.componentManifest &&
+      run.livePreview?.available &&
+      run.livePreview.previewUrl,
+  );
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -117,12 +125,6 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         batchId: stringFromForm(formData, "batchId"),
         sourceRunId: stringFromForm(formData, "sourceRunId"),
       });
-    } else if (intent === "start-live-preview") {
-      await startVibeMarketingLivePreview(env, request, runId, {
-        force: String(formData.get("force") ?? "") === "1",
-      });
-    } else if (intent === "stop-live-preview") {
-      await stopVibeMarketingLivePreview(env, request, runId);
     } else if (intent === "cancel-article") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
@@ -667,7 +669,7 @@ function LiveArticlePreviewPanel({
           return;
         }
         if (!protocolVersion || protocolVersion < 2) {
-          setLegacyInspectorWarning("This preview is using an older inspector bridge. Force restart the live preview to enable in-place comments.");
+          setLegacyInspectorWarning("The preview inspector is out of date. Reload the page to reconnect in-place comments.");
         }
       }
     }
@@ -686,59 +688,10 @@ function LiveArticlePreviewPanel({
         <div>
           <h2 className="text-lg font-black text-gray-950">Live article preview</h2>
           <p className="mt-1 text-sm font-semibold text-gray-500">
-            {preview?.exactRender
-              ? "Rendering in the target article route."
-              : "Start an exact local target-app preview before inspecting components."}
+            Review the generated article and pin comments directly on sections that need changes.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Form method="POST">
-            <input type="hidden" name="intent" value="start-live-preview" />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-            >
-              {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-              {canRenderPreview ? "Restart" : "Start"}
-            </button>
-          </Form>
-          <Form method="POST">
-            <input type="hidden" name="intent" value="start-live-preview" />
-            <input type="hidden" name="force" value="1" />
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              Force restart
-            </button>
-          </Form>
-          <Form method="POST">
-            <button
-              type="submit"
-              name="intent"
-              value="stop-live-preview"
-              disabled={isSubmitting || !preview?.available}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
-            >
-              Stop
-            </button>
-          </Form>
-        </div>
       </div>
-
-      {preview?.error ? (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          {preview.error}
-        </div>
-      ) : null}
-
-      {!preview?.exactRender && preview?.status && preview.status !== "not_started" && !preview.error ? (
-        <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-          Exact target-app rendering is not ready yet. Package HTML fallback is not used for this inspector.
-        </div>
-      ) : null}
 
       <div className="mt-5 space-y-4">
         <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
@@ -818,11 +771,7 @@ function LiveArticlePreviewPanel({
                 onSelectComponent={onSelectComponent}
               />
             </>
-          ) : (
-            <div className="flex h-72 items-center justify-center px-6 text-center text-sm font-semibold text-gray-500">
-              Start the live preview to render the generated article inside the target app.
-            </div>
-          )}
+          ) : null}
         </div>
       </div>
     </section>
@@ -1083,164 +1032,6 @@ function statusTone(status: string) {
   return "bg-violet-50 text-violet-700";
 }
 
-function ComponentCommentsPanel({
-  run,
-  selectedComponent,
-  isSubmitting,
-}: {
-  run: VibeMarketingRunSummary;
-  selectedComponent: VibeMarketingComponentManifestItem | null;
-  isSubmitting: boolean;
-}) {
-  const feedback = run.componentFeedback;
-  const comments = feedback?.comments ?? [];
-  const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
-  const selectedComments = selectedComponent
-    ? comments.filter((comment) => comment.componentId === selectedComponent.id)
-    : [];
-  const latestBatch = feedback?.latestBatch ?? null;
-  const sourceRunId =
-    latestBatch?.sourceRunId ||
-    (typeof run.result?.["source_run_id"] === "string" ? run.result["source_run_id"] : "") ||
-    "";
-  const batchId =
-    latestBatch?.id ||
-    (typeof run.result?.["feedback_batch_id"] === "string" ? run.result["feedback_batch_id"] : "") ||
-    "";
-  const canAcceptRevision =
-    run.workflow === "article_revision" &&
-    run.status === "completed" &&
-    latestBatch?.status !== "accepted" &&
-    Boolean(batchId);
-
-  return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-black text-gray-950">Component comment summary</h2>
-          <p className="mt-1 text-sm text-gray-600">
-            Click article blocks in the live preview to place comments, then send all draft pins as one AI revision batch.
-          </p>
-        </div>
-        {latestBatch ? (
-          <span className={clsx("inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide", statusTone(latestBatch.status))}>
-            {latestBatch.status.replace(/_/g, " ")}
-          </span>
-        ) : null}
-      </div>
-
-      {latestBatch?.revisionRunId && latestBatch.revisionRunId !== run.runId ? (
-        <Link
-          to={`/founder-tools/marketing/runs/${encodeURIComponent(latestBatch.revisionRunId)}`}
-          className="mt-4 inline-flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-4 py-2.5 text-sm font-bold text-violet-800 transition hover:bg-violet-100"
-        >
-          Open revised article
-        </Link>
-      ) : null}
-
-      {run.workflow === "article_revision" && sourceRunId ? (
-        <p className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500">
-          Revision of <span className="font-mono">{sourceRunId}</span>
-        </p>
-      ) : null}
-
-      <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-4">
-          {selectedComponent ? (
-            <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-              <p className="text-sm font-black text-violet-950">{selectedComponent.label ?? selectedComponent.id}</p>
-              <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-bold text-violet-700">
-                <span className="rounded-full bg-white px-2 py-1">{selectedComponent.type}</span>
-                <span className="rounded-full bg-white px-2 py-1 font-mono">{selectedComponent.id}</span>
-                {selectedComponent.sourceSectionId ? (
-                  <span className="rounded-full bg-white px-2 py-1 font-mono">{selectedComponent.sourceSectionId}</span>
-                ) : null}
-              </div>
-              <p className="mt-4 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-violet-800">
-                {selectedComments.length
-                  ? `${selectedComments.length} comment${selectedComments.length === 1 ? "" : "s"} pinned to this component.`
-                  : "No comments pinned to this component yet."}
-              </p>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm font-semibold text-gray-500">
-              Select a component in the preview or component list to inspect its pinned feedback.
-            </div>
-          )}
-
-          <div className="space-y-3">
-            {(selectedComponent ? selectedComments : comments).map((comment) => (
-              <div key={comment.id} className="rounded-xl border border-gray-200 bg-white p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-black text-gray-900">{comment.componentLabel || comment.componentId}</p>
-                    <p className="mt-0.5 font-mono text-[11px] text-gray-500">{comment.componentId}</p>
-                  </div>
-                  <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide", statusTone(comment.status))}>
-                    {comment.status}
-                  </span>
-                </div>
-                <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-gray-700">{comment.body}</p>
-                {comment.anchor ? (
-                  <p className="mt-2 text-[11px] font-semibold text-gray-400">
-                    Pinned at {Math.round(comment.anchor.x * 100)}%, {Math.round(comment.anchor.y * 100)}% of component.
-                  </p>
-                ) : null}
-              </div>
-            ))}
-            {!comments.length ? (
-              <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-8 text-center text-sm font-semibold text-gray-500">
-                No comments yet.
-              </div>
-            ) : null}
-          </div>
-        </div>
-
-        <aside className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <p className="text-sm font-black text-gray-950">Batch revision</p>
-          <p className="mt-1 text-sm font-semibold text-gray-500">
-            {draftComments.length} draft comment{draftComments.length === 1 ? "" : "s"} ready.
-          </p>
-          {canAcceptRevision ? (
-            <Form method="POST" className="mt-3">
-              <input type="hidden" name="intent" value="accept-component-revision" />
-              <input type="hidden" name="batchId" value={batchId} />
-              <input type="hidden" name="sourceRunId" value={sourceRunId} />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-              >
-                <CheckCircleIcon className="h-4 w-4" />
-                Accept revised article
-              </button>
-            </Form>
-          ) : null}
-          <div className="mt-4 max-h-80 space-y-2 overflow-auto">
-            {comments.length ? (
-              comments.map((comment) => (
-                <div key={comment.id} className="rounded-lg bg-white px-3 py-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-xs font-black text-gray-800">{comment.componentLabel || comment.componentId}</p>
-                    <span className={clsx("rounded-full px-2 py-0.5 text-[10px] font-black uppercase", statusTone(comment.status))}>
-                      {comment.status}
-                    </span>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs text-gray-500">{comment.body}</p>
-                </div>
-              ))
-            ) : (
-              <p className="rounded-lg bg-white px-3 py-5 text-center text-sm font-semibold text-gray-500">
-                No comments yet.
-              </p>
-            )}
-          </div>
-        </aside>
-      </div>
-    </section>
-  );
-}
-
 function canCancelArticleRun(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow)) return false;
   if (["completed", "cancelled"].includes(run.status)) return false;
@@ -1343,62 +1134,11 @@ function ArticleWorkflowPrimaryAction({
   run: VibeMarketingRunSummary;
   isSubmitting: boolean;
 }) {
-  const comments = run.componentFeedback?.comments ?? [];
-  const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
-  const latestBatch = run.componentFeedback?.latestBatch ?? null;
-  const canRetryFailedRevisionBatch = Boolean(
-    latestBatch?.id && run.workflow === "article_revision" && run.status === "failed" && draftComments.length === 0,
-  );
-  const canRetrySubmittedBatch = Boolean(
-    latestBatch?.id &&
-      (!latestBatch.revisionRunId || canRetryFailedRevisionBatch) &&
-      draftComments.length === 0 &&
-      (canRetryFailedRevisionBatch || ["submitted", "failed"].includes(String(latestBatch.status || ""))),
-  );
-  const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
-  const sourceRunId =
-    latestBatch?.sourceRunId ||
-    (typeof run.result?.["source_run_id"] === "string" ? run.result["source_run_id"] : "") ||
-    "";
-  const batchId =
-    latestBatch?.id ||
-    (typeof run.result?.["feedback_batch_id"] === "string" ? run.result["feedback_batch_id"] : "") ||
-    "";
-  const canAcceptRevision =
-    run.workflow === "article_revision" &&
-    run.status === "completed" &&
-    latestBatch?.status !== "accepted" &&
-    Boolean(batchId);
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const publishUrl = run.previewUrl || run.prUrl || (typeof run.result?.["preview_url"] === "string" ? run.result["preview_url"] : "") || (typeof run.result?.["pr_url"] === "string" ? run.result["pr_url"] : "");
   const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
 
   if (isPublishApprovalGate(run)) return null;
-
-  if (canAcceptRevision) {
-    return (
-      <Form method="POST">
-        <input type="hidden" name="intent" value="accept-component-revision" />
-        <input type="hidden" name="batchId" value={batchId} />
-        <input type="hidden" name="sourceRunId" value={sourceRunId} />
-        <button type="submit" disabled={isSubmitting} className={`${buttonClass} bg-emerald-600 text-white hover:bg-emerald-700`}>
-          <CheckCircleIcon className="h-4 w-4" />
-          Accept revised article
-        </button>
-      </Form>
-    );
-  }
-
-  if (canSendRevisionRequest) {
-    return (
-      <Form method="POST">
-        <button type="submit" name="intent" value="submit-component-comments" disabled={isSubmitting} className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
-          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-          {canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
-        </button>
-      </Form>
-    );
-  }
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
     return (
@@ -1416,18 +1156,6 @@ function ArticleWorkflowPrimaryAction({
       <a href={publishUrl} target="_blank" rel="noreferrer" className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
         Open publish evidence
       </a>
-    );
-  }
-
-  if (!run.livePreview?.previewUrl) {
-    return (
-      <Form method="POST">
-        <input type="hidden" name="intent" value="start-live-preview" />
-        <button type="submit" disabled={isSubmitting} className={`${buttonClass} bg-violet-600 text-white hover:bg-violet-700`}>
-          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-          Start preview
-        </button>
-      </Form>
     );
   }
 
@@ -1530,10 +1258,7 @@ export default function FounderToolsMarketingRun() {
   const workflow = String(run.workflow ?? "");
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
-  const contentPackage = run.contentPackage;
-  const hasArticlePreview =
-    isArticleWorkflowRun &&
-    Boolean(contentPackage?.contentPackaged || run.componentManifest);
+  const hasArticlePreview = hasReadyArticlePreview(run);
   const isCompletedArticleReviewPage =
     hasArticlePreview && run.status === "completed";
   const isDiscoveryConfirmation =
@@ -1614,6 +1339,8 @@ export default function FounderToolsMarketingRun() {
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
         primaryActionSlot={isArticleWorkflowRun ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        activeDetailSlot={isArticleGenerationRun ? <ArticleRunStageProgress run={run} variant="embedded" /> : undefined}
+        activeDetailLabel="Generating article progress"
       />
 
       {hasArticlePreview ? (
@@ -1629,11 +1356,7 @@ export default function FounderToolsMarketingRun() {
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
-          {isArticleGenerationRun ? (
-            <ArticleRunStageProgress run={run} />
-          ) : (
-            <MarketingRunProgressCard run={run} />
-          )}
+          {!isArticleGenerationRun ? <MarketingRunProgressCard run={run} /> : null}
 
           {isDiscoveryConfirmation ? (
             <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">
@@ -1725,9 +1448,6 @@ export default function FounderToolsMarketingRun() {
 
           {!isArticleGenerationRun ? <RunStepTimeline run={run} /> : null}
 
-          {contentPackage?.contentPackaged || run.componentManifest ? (
-            <ComponentCommentsPanel run={run} selectedComponent={selectedComponent} isSubmitting={isSubmitting} />
-          ) : null}
         </main>
       ) : null}
     </div>

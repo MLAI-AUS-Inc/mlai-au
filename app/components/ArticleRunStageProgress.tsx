@@ -36,6 +36,7 @@ interface StageView extends StageDefinition {
 
 interface ArticleRunStageProgressProps {
   run: VibeMarketingRunSummary;
+  variant?: "standalone" | "embedded";
 }
 
 const ARTICLE_PROGRESS_STAGES: StageDefinition[] = [
@@ -316,8 +317,9 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
   return `${completed} of ${total} checks complete`;
 }
 
-export default function ArticleRunStageProgress({ run }: ArticleRunStageProgressProps) {
+export default function ArticleRunStageProgress({ run, variant = "standalone" }: ArticleRunStageProgressProps) {
   const stages = deriveArticleProgressStages(run);
+  const embedded = variant === "embedded";
   const activeStage =
     stages.find((stage) => stage.status === "attention") ??
     stages.find((stage) => stage.status === "running") ??
@@ -332,11 +334,11 @@ export default function ArticleRunStageProgress({ run }: ArticleRunStageProgress
         : activeStage?.label ?? "Generating article";
 
   return (
-    <section className="rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm">
+    <section className={clsx(embedded ? "space-y-4" : "rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm")}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-wide text-violet-600">Generating article</p>
-          <h2 className="mt-1 text-xl font-black text-gray-950">{headline}</h2>
+          <h2 className={clsx("mt-1 font-black text-gray-950", embedded ? "text-lg" : "text-xl")}>{headline}</h2>
           <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
             {activeStage?.detail ?? "We are preparing the generated article package."}
           </p>
@@ -351,7 +353,7 @@ export default function ArticleRunStageProgress({ run }: ArticleRunStageProgress
         </div>
       </div>
 
-      <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+      <div className={clsx("grid gap-2 sm:grid-cols-2 lg:grid-cols-5", !embedded && "mt-5")}>
         {stages.map((stage) => (
           <div
             key={stage.id}
@@ -375,7 +377,7 @@ export default function ArticleRunStageProgress({ run }: ArticleRunStageProgress
       </div>
 
       {run.errors.length > 0 ? (
-        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <div className={clsx("rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700", !embedded && "mt-3")}>
           {run.errors[0]}
         </div>
       ) : null}
