@@ -37,13 +37,43 @@ function titleCase(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-function competitionPhrase(candidate: VibeMarketingTopicCandidate) {
-  const explicit = stringValue(candidate.competition);
-  if (explicit) return explicit.toLowerCase().includes("competition") ? explicit : `${explicit} competition`;
+const VERIFIED_DIFFICULTY_SOURCES = new Set(["dataforseo_labs", "dataforseo_bulk"]);
+
+function verifiedDifficulty(candidate: VibeMarketingTopicCandidate) {
+  const source = stringValue(candidate.difficultySource);
+  if (!source || !VERIFIED_DIFFICULTY_SOURCES.has(source)) return undefined;
   const difficulty = numericValue(candidate.difficulty);
-  if (difficulty === undefined) return null;
-  const tier = difficulty <= 35 ? "low" : difficulty <= 65 ? "moderate" : "high";
-  return `${tier} competition at ${formatNumber(difficulty)}/100`;
+  if (difficulty === undefined) return undefined;
+  return Math.max(0, Math.min(100, difficulty));
+}
+
+function difficultyGuidance(score: number) {
+  if (score <= 20) return "very approachable; strong content could start getting traction in a few months";
+  if (score <= 40) return "achievable with strong content and a realistic 4-6 month ranking window";
+  if (score <= 60) return "moderate; likely needs a strong article, internal links, and time, often 6-9+ months";
+  if (score <= 80) return "hard; usually needs authority, supporting content, and backlinks";
+  return "very hard; treat this as a long-term authority play";
+}
+
+function difficultyPhrase(candidate: VibeMarketingTopicCandidate) {
+  const difficulty = verifiedDifficulty(candidate);
+  if (difficulty === undefined) return "Difficulty pending";
+  return `Difficulty ${formatNumber(difficulty)}/100: ${difficultyGuidance(difficulty)}`;
+}
+
+function cleanReason(candidate: VibeMarketingTopicCandidate) {
+  const reason = stringValue(candidate.reason);
+  if (!reason) return null;
+  const cleaned = reason
+    .replace(/\bwith\s+(?:low|moderate|medium|high)\s+competition\.?/gi, "")
+    .replace(/\b(?:low|moderate|medium|high)\s+competition(?:\s+at\s+\d+(?:\.\d+)?\/100)?\.?/gi, "")
+    .replace(/\bdifficulty\s+\d+(?:\.\d+)?\/100\.?/gi, "")
+    .replace(/\bdifficulty pending\.?/gi, "")
+    .replace(/\bopportunity score\s+\d+(?:\.\d+)?\.?/gi, "")
+    .replace(/\b\d[\d,]*\s+monthly searches\.?/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned || null;
 }
 
 function audienceFromCandidate(candidate: VibeMarketingTopicCandidate) {
@@ -75,16 +105,15 @@ function whyTopic(candidate: VibeMarketingTopicCandidate) {
   const parts: string[] = [];
   const volume = numericValue(candidate.volume);
   if (volume !== undefined) parts.push(`${formatNumber(volume)} monthly searches`);
-  const competition = competitionPhrase(candidate);
-  if (competition) parts.push(competition);
+  parts.push(difficultyPhrase(candidate));
   const trend = stringValue(candidate.trend) || stringValue(candidate.interest);
   if (trend) parts.push(`${trend.toLowerCase().includes("interest") ? trend : `${trend} interest`}`);
   const aiSearches = numericValue(candidate.aiSearches);
   if (aiSearches !== undefined) parts.push(`${formatNumber(aiSearches)} AI searches/mo`);
 
-  const metrics = parts.length ? parts.join(", ") : null;
-  const reason = stringValue(candidate.reason);
-  if (metrics && reason) return `${metrics}. ${reason}`;
+  const metrics = parts.length ? `${parts.join(". ")}.` : null;
+  const reason = cleanReason(candidate);
+  if (metrics && reason) return `${metrics} ${reason}`;
   return metrics || reason || "Recommended from the latest topic discovery.";
 }
 

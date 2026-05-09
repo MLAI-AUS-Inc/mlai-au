@@ -198,7 +198,6 @@ export interface VibeMarketingTopicCandidate {
   confidence?: string | null;
   trend?: unknown;
   interest?: unknown;
-  competition?: unknown;
   aiSearches?: unknown;
   source?: string | null;
   sourceRunId?: string | null;
@@ -207,6 +206,7 @@ export interface VibeMarketingTopicCandidate {
   writtenArticle?: VibeMarketingWrittenTopic | null;
   intent?: unknown;
   difficulty?: unknown;
+  difficultySource?: unknown;
   opportunityScore?: unknown;
   volume?: unknown;
   tier?: unknown;
