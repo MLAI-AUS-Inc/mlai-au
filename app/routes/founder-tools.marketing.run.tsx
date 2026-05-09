@@ -289,12 +289,12 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
         confidence: asString(payload.confidence),
         trend: payload.trend ?? payload.search_trend,
         interest: payload.interest ?? payload.interest_trend,
-        competition: payload.competition ?? payload.competition_level,
         aiSearches: payload.aiSearches ?? payload.ai_searches ?? payload.ai_search_volume,
         source: asString(payload.source) || "discovery",
         sourceRunId: asString(payload.source_run_id) || asString(payload.sourceRunId) || run.runId,
         intent: payload.intent,
         difficulty: payload.difficulty,
+        difficultySource: payload.difficultySource ?? payload.difficulty_source,
         opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
         volume: payload.volume,
       };
