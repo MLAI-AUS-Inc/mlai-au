@@ -1,5 +1,5 @@
 import type { Route } from "./+types/founder-tools.index";
-import { Link, redirect, useLoaderData, useNavigate, useOutletContext } from "react-router";
+import { Link, useLoaderData, useNavigate, useOutletContext, useRouteLoaderData } from "react-router";
 import {
   ArrowRightIcon,
   BuildingOffice2Icon,
@@ -18,10 +18,9 @@ import { getEnv } from "~/lib/env.server";
 import {
   getActiveVibeRaisingCompany,
   getVibeRaisingMonthlyUpdates,
-  getOptionalVibeRaisingContext,
-  getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
 import type { VibeRaisingCompany } from "~/types/vibe-raising";
+import type { loader as founderToolsRootLoader } from "./vibe-raising-app";
 
 function detailValue(value: string | null | undefined) {
   return String(value ?? "").trim() || "-";
@@ -35,29 +34,27 @@ function companyInitials(company: VibeRaisingCompany | null) {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const vibeContext = await getOptionalVibeRaisingContext(env, request);
-
-  if (!vibeContext.authUser) {
-    throw redirect(getVibeRaisingLoginHref(request));
+  let hasMonthlyUpdates = false;
+  try {
+    const monthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request);
+    hasMonthlyUpdates = monthlyUpdates.length > 0;
+  } catch (error: any) {
+    if (error?.response?.status !== 401) throw error;
   }
-
-  if (!vibeContext.appUser || !vibeContext.appUser.companyRegistered) {
-    throw redirect("/founder-tools/company-setup");
-  }
-
-  const monthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request);
 
   return {
-    user: vibeContext.appUser,
-    activeCompany: getActiveVibeRaisingCompany(vibeContext.appUser),
-    hasMonthlyUpdates: monthlyUpdates.length > 0,
+    hasMonthlyUpdates,
   };
 }
 
 export default function FounderToolsIndex() {
-  const { user, activeCompany, hasMonthlyUpdates } = useLoaderData<typeof loader>();
+  const { hasMonthlyUpdates } = useLoaderData<typeof loader>();
+  const rootData = useRouteLoaderData<typeof founderToolsRootLoader>("founder-tools-root");
+  const user = rootData?.appUser;
   const navigate = useNavigate();
   const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
+  if (!user) return null;
+  const activeCompany = getActiveVibeRaisingCompany(user);
   const details = [
     { label: "Website", value: detailValue(activeCompany?.domain), icon: GlobeAltIcon },
     { label: "Location", value: detailValue(activeCompany?.location), icon: MapPinIcon },
