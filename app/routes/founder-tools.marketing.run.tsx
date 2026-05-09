@@ -38,6 +38,7 @@ import type {
   VibeMarketingComponentFeedbackComment,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
+  VibeMarketingWorkflowProgress,
 } from "~/types/vibe-marketing";
 
 const POLLING_STATUSES = new Set([
@@ -51,9 +52,29 @@ const POLLING_STATUSES = new Set([
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
-const ARTICLE_WORKFLOWS = new Set(["article_generation", "content_factory_article", "article_revision"]);
+const ARTICLE_WORKFLOWS = new Set([
+  "article_generation",
+  "content_factory_article",
+  "direct_generate",
+  "confirmed_topic",
+  "article_revision",
+]);
+const ARTICLE_GENERATION_WORKFLOWS = new Set([
+  "article_generation",
+  "content_factory_article",
+  "direct_generate",
+  "confirmed_topic",
+]);
 const RESUMABLE_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed"]);
 const APPROVAL_GATE_STATUSES = new Set(["awaiting_approval", "approval_required"]);
+
+function isArticleWorkflow(workflow: string | null | undefined) {
+  return ARTICLE_WORKFLOWS.has(String(workflow ?? ""));
+}
+
+function isArticleGenerationWorkflow(workflow: string | null | undefined) {
+  return ARTICLE_GENERATION_WORKFLOWS.has(String(workflow ?? ""));
+}
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
@@ -1396,7 +1417,7 @@ function isScaffoldApprovalGate(run: VibeMarketingRunSummary) {
 
 function isPublishApprovalGate(run: VibeMarketingRunSummary) {
   const workflow = String(run.workflow ?? "");
-  return ARTICLE_WORKFLOWS.has(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
+  return isArticleWorkflow(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
 }
 
 function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
@@ -1407,7 +1428,7 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
   if (workflow === "website_baseline") return "baseline";
   if (workflow === "article_revision") return "revise";
-  if (ARTICLE_WORKFLOWS.has(workflow)) {
+  if (isArticleWorkflow(workflow)) {
     const publishUrl = run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl");
     const isPublishRun = run.workflowProgress?.currentStepId === "publish" && (POLLING_STATUSES.has(run.status) || Boolean(publishUrl));
     if (isPublishRun) return "publish";
@@ -1419,6 +1440,30 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   return run.workflowProgress?.currentStepId ?? null;
 }
 
+function workflowProgressForRunPage(
+  run: VibeMarketingRunSummary,
+  fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
+): VibeMarketingWorkflowProgress | null {
+  const progress = run.workflowProgress ?? fallbackProgress ?? null;
+  if (!progress || !isArticleGenerationWorkflow(run.workflow) || !POLLING_STATUSES.has(run.status)) {
+    return progress;
+  }
+
+  return {
+    ...progress,
+    currentStepId: "generate",
+    nextStepId: progress.nextStepId === "generate" ? null : progress.nextStepId,
+    steps: progress.steps.map((step) =>
+      step.id === "generate"
+        ? {
+            ...step,
+            status: "running",
+          }
+        : step,
+    ),
+  };
+}
+
 export default function FounderToolsMarketingRun() {
   const { run, bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
@@ -1428,12 +1473,12 @@ export default function FounderToolsMarketingRun() {
   const isSubmitting = navigation.state === "submitting";
   const shouldPoll = POLLING_STATUSES.has(run.status);
   const workflow = String(run.workflow ?? "");
-  const isArticleWorkflow = ["article_generation", "content_factory_article", "article_revision"].includes(workflow);
-  const isArticleGenerationWorkflow = ["article_generation", "content_factory_article"].includes(workflow);
+  const isArticleWorkflowRun = isArticleWorkflow(workflow);
+  const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const contentPackage = run.contentPackage;
   const runNeedsAttention = ["blocked", "failed", "blocked_verification", "denied", "cancelled"].includes(run.status);
   const hasArticlePreview =
-    ["article_generation", "content_factory_article", "article_revision"].includes(workflow) &&
+    isArticleWorkflowRun &&
     Boolean(contentPackage?.contentPackaged || run.componentManifest);
   const isCompletedArticleReviewPage =
     hasArticlePreview && run.status === "completed";
@@ -1454,7 +1499,7 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run);
-  const workflowProgress = run.workflowProgress ?? bootstrap.workflowProgress;
+  const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
 
   useEffect(() => {
     if (!isDiscoveryConfirmation) return;
@@ -1494,7 +1539,7 @@ export default function FounderToolsMarketingRun() {
         title="Create and publish article"
         titleAs="h1"
         isSubmitting={isSubmitting}
-        primaryActionSlot={isArticleWorkflow ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        primaryActionSlot={isArticleWorkflowRun ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
       />
 
       {hasArticlePreview ? (
@@ -1510,7 +1555,7 @@ export default function FounderToolsMarketingRun() {
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
-          {isArticleGenerationWorkflow ? (
+          {isArticleGenerationRun ? (
             <ArticleRunStageProgress run={run} pollingDegraded={revalidator.state === "loading"} />
           ) : (
             <MarketingRunProgressCard run={run} pollingDegraded={revalidator.state === "loading"} />
@@ -1630,7 +1675,7 @@ export default function FounderToolsMarketingRun() {
             </div>
           ) : null}
 
-          {isArticleGenerationWorkflow ? (
+          {isArticleGenerationRun ? (
             <TechnicalRunDetails run={run} defaultOpen={runNeedsAttention} />
           ) : (
             <RunStepTimeline run={run} />
