@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Form, Link } from "react-router";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   CodeBracketIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -30,6 +32,9 @@ interface MarketingWorkflowShellProps {
   isSubmitting?: boolean;
   primaryActionSlot?: ReactNode;
   topRightActionSlot?: ReactNode;
+  activeDetailSlot?: ReactNode;
+  activeDetailLabel?: string;
+  activeDetailDefaultExpanded?: boolean;
   showPrimaryAction?: boolean;
   className?: string;
 }
@@ -208,9 +213,14 @@ export default function MarketingWorkflowShell({
   isSubmitting = false,
   primaryActionSlot,
   topRightActionSlot,
+  activeDetailSlot,
+  activeDetailLabel = "Progress details",
+  activeDetailDefaultExpanded = true,
   showPrimaryAction = true,
   className,
 }: MarketingWorkflowShellProps) {
+  const activeDetailId = useId();
+  const [activeDetailExpanded, setActiveDetailExpanded] = useState(activeDetailDefaultExpanded);
   const steps = progress?.steps ?? [];
   if (!steps.length) return null;
   const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
@@ -239,6 +249,8 @@ export default function MarketingWorkflowShell({
         }
       : { label: `Go to ${requiredGroup.label}`, href: requiredGroup.href, variant: "secondary" as const };
   const HeadingTag = titleAs;
+  const hasActiveDetail = activeDetailSlot !== undefined && activeDetailSlot !== null;
+  const activeDetailAnchorPercent = ((viewedIndex + 0.5) / Math.max(displayGroups.length, 1)) * 100;
 
   return (
     <section className={clsx("rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5", className)}>
@@ -346,6 +358,46 @@ export default function MarketingWorkflowShell({
           );
         })}
       </ol>
+
+      {hasActiveDetail ? (
+        <div className="relative mt-4">
+          <span
+            className="pointer-events-none absolute -top-2 hidden h-4 w-4 -translate-x-1/2 rotate-45 rounded-[3px] border-l border-t border-violet-100 bg-white lg:block"
+            style={{ left: `${activeDetailAnchorPercent}%` }}
+            aria-hidden
+          />
+          <div className="rounded-2xl border border-violet-100 bg-white p-3 shadow-sm shadow-violet-100/50">
+            <button
+              type="button"
+              aria-expanded={activeDetailExpanded}
+              aria-controls={activeDetailId}
+              onClick={() => setActiveDetailExpanded((expanded) => !expanded)}
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              <span className="min-w-0">
+                <span className="block text-sm font-black text-gray-950">{activeDetailLabel}</span>
+                <span className="mt-0.5 block text-xs font-bold text-gray-500">
+                  {viewedGroup.label} - {statusLabel(viewedGroup.status)}
+                </span>
+              </span>
+              <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-white text-violet-700 shadow-sm">
+                {activeDetailExpanded ? (
+                  <ChevronUpIcon className="h-5 w-5" />
+                ) : (
+                  <ChevronDownIcon className="h-5 w-5" />
+                )}
+              </span>
+            </button>
+            <div id={activeDetailId} hidden={!activeDetailExpanded}>
+              {activeDetailExpanded ? (
+                <div className="mt-3 border-t border-violet-100 px-1 pt-4">
+                  {activeDetailSlot}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
