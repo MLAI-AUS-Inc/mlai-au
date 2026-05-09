@@ -15,7 +15,12 @@ import {
 import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
-import { CustomTopicDecisionCard, TopicDecisionCard } from "~/components/TopicDecisionCard";
+import {
+  CustomTopicDecisionCard,
+  TopicDecisionCard,
+  TopicMetricExplainerStrip,
+  topicOpportunityBadge,
+} from "~/components/TopicDecisionCard";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
@@ -518,6 +523,7 @@ export default function FounderToolsMarketingCreate() {
         : "No pending topics";
   const defaultTopicCandidateId = selectableTopicCandidates[0]?.id ?? "__custom__";
   const [selectedTopicCandidateId, setSelectedTopicCandidateId] = useState(defaultTopicCandidateId);
+  const [expandedTopicCandidateId, setExpandedTopicCandidateId] = useState<string | null>(null);
   const selectedTopicCandidate = useMemo(
     () => selectableTopicCandidates.find((candidate) => candidate.id === selectedTopicCandidateId) ?? null,
     [selectableTopicCandidates, selectedTopicCandidateId],
@@ -696,15 +702,14 @@ export default function FounderToolsMarketingCreate() {
           {activeStep === "chooseArticle" ? (
             <>
               <PanelHeader
-                title="Choose article"
+                title="Discover SEO article opportunities"
                 description={
                   directPublishMode
-                    ? "Pick a discovered topic and we will prepare it for your website repository."
-                    : "Pick a discovered topic and we will generate article copy and images for manual publishing."
+                    ? "We found topics your audience is already searching for. Pick one and we will prepare it for your website repository."
+                    : "We found topics your audience is already searching for. Pick one and we will generate article copy and images for manual publishing."
                 }
                 passed={Boolean(latestArticle || selectableTopicCandidates.length > 0)}
                 statusLabel={chooseArticleStatusLabel}
-                explainer={STEP_EXPLAINERS.chooseArticle}
               />
               {!bootstrap.checks.baseline?.passed ? (
                 <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
@@ -718,6 +723,7 @@ export default function FounderToolsMarketingCreate() {
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
+                <TopicMetricExplainerStrip />
                 <div className="grid gap-3">
                   {selectableTopicCandidates.length === 0 ? (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
@@ -726,12 +732,17 @@ export default function FounderToolsMarketingCreate() {
                         : "No pending discovered topics are available yet. Run topic research or enter a custom article."}
                     </div>
                   ) : null}
-                  {selectableTopicCandidates.map((candidate) => (
+                  {selectableTopicCandidates.map((candidate, index) => (
                     <TopicDecisionCard
                       key={candidate.id}
                       candidate={candidate}
+                      rank={index + 1}
+                      expanded={expandedTopicCandidateId === candidate.id}
                       checked={selectedTopicCandidateId === candidate.id}
                       onChange={() => setSelectedTopicCandidateId(candidate.id)}
+                      onToggleDetails={() =>
+                        setExpandedTopicCandidateId((current) => (current === candidate.id ? null : candidate.id))
+                      }
                     />
                   ))}
                   <CustomTopicDecisionCard
@@ -783,7 +794,12 @@ export default function FounderToolsMarketingCreate() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
-                      <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <p className="max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+                          {isCustomArticleSelected ? "Custom topic" : topicOpportunityBadge(selectedTopicCandidate)}
+                        </span>
+                      </div>
                       <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
