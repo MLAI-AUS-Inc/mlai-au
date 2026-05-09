@@ -1391,10 +1391,11 @@ export default function FounderToolsMarketingRun() {
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
                   <input type="hidden" name="deliveryMode" value={effectiveArticleDeliveryMode(bootstrap)} />
                   <div className="grid gap-3">
-                    {discoveryCandidates.slice(0, 5).map((candidate) => (
+                    {discoveryCandidates.slice(0, 5).map((candidate, index) => (
                       <TopicDecisionCard
                         key={candidate.id}
                         candidate={candidate}
+                        rank={index + 1}
                         checked={selectedDiscoveryCandidate.id === candidate.id}
                         onChange={() => setSelectedDiscoveryCandidateId(candidate.id)}
                       />

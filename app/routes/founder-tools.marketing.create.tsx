@@ -8,6 +8,8 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   CodeBracketIcon,
+  InformationCircleIcon,
+  LightBulbIcon,
   MagnifyingGlassIcon,
   PlayIcon,
   RocketLaunchIcon,
@@ -514,13 +516,6 @@ export default function FounderToolsMarketingCreate() {
       return true;
     });
   }, [bootstrap.hiddenTopicCandidates, bootstrap.topicCandidates]);
-  const chooseArticleStatusLabel = !bootstrap.checks.baseline?.passed
-    ? "Needs baseline"
-    : selectableTopicCandidates.length > 0
-      ? "Ready"
-      : alreadyWrittenCandidates.length > 0
-        ? "Topics written"
-        : "No pending topics";
   const defaultTopicCandidateId = selectableTopicCandidates[0]?.id ?? "__custom__";
   const [selectedTopicCandidateId, setSelectedTopicCandidateId] = useState(defaultTopicCandidateId);
   const [expandedTopicCandidateId, setExpandedTopicCandidateId] = useState<string | null>(null);
@@ -701,16 +696,26 @@ export default function FounderToolsMarketingCreate() {
 
           {activeStep === "chooseArticle" ? (
             <>
-              <PanelHeader
-                title="Discover SEO article opportunities"
-                description={
-                  directPublishMode
-                    ? "We found topics your audience is already searching for. Pick one and we will prepare it for your website repository."
-                    : "We found topics your audience is already searching for. Pick one and we will generate article copy and images for manual publishing."
-                }
-                passed={Boolean(latestArticle || selectableTopicCandidates.length > 0)}
-                statusLabel={chooseArticleStatusLabel}
-              />
+              <div className="mb-6 border-b border-gray-100 pb-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <h1 className="inline-flex items-center gap-2 text-2xl font-black tracking-tight text-gray-950">
+                      Discover SEO article opportunities
+                      <InformationCircleIcon className="h-4 w-4 text-gray-400" />
+                    </h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+                      We found topics your audience is already searching for. Pick one and we will{" "}
+                      {directPublishMode
+                        ? "prepare it for your website repository."
+                        : "generate article copy and images for manual publishing."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold leading-5 text-violet-700 ring-1 ring-violet-100 lg:max-w-sm">
+                    <LightBulbIcon className="mr-1 inline h-4 w-4 align-[-2px]" />
+                    Tip: Focus on topics with high Opportunity Score, growing trend, and lower difficulty.
+                  </div>
+                </div>
+              </div>
               {!bootstrap.checks.baseline?.passed ? (
                 <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                   Run or skip the website baseline before generating an article.
@@ -790,7 +795,7 @@ export default function FounderToolsMarketingCreate() {
                     </label>
                   </>
                 ) : null}
-                <div className="sticky bottom-4 z-10 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                <div className="sticky bottom-4 z-10 rounded-xl border border-violet-100 bg-violet-50/95 p-3 shadow-lg backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>

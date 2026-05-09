@@ -212,7 +212,11 @@ export interface VibeMarketingTopicCandidate {
   volumeDisplay?: string | null;
   tier?: unknown;
   velocity?: unknown;
+  monthlySearches?: unknown;
   aiSaturation?: unknown;
+  trendStatus?: unknown;
+  trendPercent?: unknown;
+  trendDescription?: string | null;
   trendLabel?: string | null;
   statsMeaning?: string | null;
   whyRecommended?: string | null;
