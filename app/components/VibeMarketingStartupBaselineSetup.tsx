@@ -1,5 +1,5 @@
 import { Form, Link, useFetcher, useNavigation } from "react-router";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -465,10 +465,35 @@ function metricScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, sta
 
 function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
   const message = typeof metric?.message === "string" ? metric.message : null;
-  if (label === "Lighthouse" && message && /429|too many requests|googleapis|pagespeedonline|runpagespeed/i.test(message)) {
-    return "PageSpeed Insights is temporarily rate limited. Try again later.";
+  if (label === "Lighthouse" && metric?.reasonCode === "rate_limited") {
+    return message || "PageSpeed Insights is temporarily rate limited. Try again later or configure PAGESPEED_API_KEY for higher quota.";
   }
   return message;
+}
+
+function metricHelpText(label: string) {
+  switch (label) {
+    case "Baseline scorecard":
+      return "A single summary score from the baseline metrics we could measure before your articles go live.";
+    case "Technical health":
+      return "Checks whether search engines can crawl, index, and understand the main pages on your site.";
+    case "AI visibility":
+      return "Shows whether your brand or domain appears in AI-style search results and AI overview queries.";
+    case "Organic search":
+      return "Measures your current non-paid search visibility from keyword ranking signals.";
+    case "Authority":
+      return "Estimates trust from backlink and referring-domain signals.";
+    case "Traffic/users":
+      return "Verified Search Console and analytics traffic, including clicks, impressions, CTR, position, and users when connected.";
+    case "Lighthouse":
+      return "PageSpeed Insights lab checks for performance, accessibility, best practices, and SEO.";
+    case "Core Web Vitals":
+      return "Loading, interaction, and layout stability signals derived from PageSpeed data when available.";
+    case "Top recommended fixes":
+      return "The highest-value next actions from the baseline sources that need attention.";
+    default:
+      return "This explains what this baseline metric means.";
+  }
 }
 
 function sourceStatusLabel(status?: string | null) {
@@ -585,21 +610,105 @@ function sparklinePoints(values: number[], width = 240, height = 74) {
     .join(" ");
 }
 
-function aiSourceRows(metric: VibeMarketingWebsiteBaselineMetric | undefined) {
-  const candidateGroups = [
-    objectArray(metric?.sources),
-    objectArray(metric?.providers),
-    objectArray(metric?.platforms),
-    objectArray(metric?.mentions),
-    objectArray(metric?.references),
-  ];
-  const rows = candidateGroups.find((group) => group && group.length) ?? [];
-  return rows.slice(0, 4).map((row, index) => {
-    const name = String(row.name ?? row.source ?? row.provider ?? row.platform ?? row.label ?? `Source ${index + 1}`).trim();
-    const count = numericValue(row.count) ?? numericValue(row.mentions) ?? numericValue(row.times) ?? numericValue(row.value) ?? numericValue(row.score);
-    const suffix = typeof row.unit === "string" ? row.unit : count === 1 ? "time" : "times";
-    return { name, count, suffix };
+function aiVisibilityRows(metric: VibeMarketingWebsiteBaselineMetric | undefined) {
+  const displayRows = objectArray(metric?.displayRows);
+  if (displayRows?.length) {
+    return displayRows.slice(0, 4).map((row, index) => ({
+      name: String(row.label ?? row.name ?? `AI signal ${index + 1}`).trim(),
+      value: numericValue(row.value),
+      unit: typeof row.unit === "string" ? row.unit : "",
+      detail: typeof row.detail === "string" ? row.detail : undefined,
+    }));
+  }
+
+  const queryRows = objectArray(metric?.topQueries) ?? objectArray(metric?.queries) ?? [];
+  return queryRows.slice(0, 4).map((row, index) => {
+    const query = String(row.query ?? row.keyword ?? `Query ${index + 1}`).trim();
+    const signals = [
+      row.mentioned ? "mentioned" : "",
+      row.cited ? "cited" : "",
+      row.aiOverviewPresent ? "AI overview" : "",
+    ].filter(Boolean);
+    return {
+      name: query,
+      value: null,
+      unit: signals.length ? signals.join(", ") : "measured",
+      detail: "Measured query from the AI visibility baseline.",
+    };
   });
+}
+
+function averageFromStrategies(strategies: Record<string, unknown> | undefined, key: string) {
+  const values = Object.values(strategies ?? {})
+    .map((strategy) => (strategy && typeof strategy === "object" && !Array.isArray(strategy) ? numericValue((strategy as Record<string, unknown>)[key]) : null))
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value));
+  if (!values.length) return null;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function vitalDisplayScore(metric: "lcp" | "cls" | "tbt", value: number | null) {
+  if (value === null) return null;
+  if (metric === "lcp") return value <= 2500 ? 100 : value <= 4000 ? 65 : 30;
+  if (metric === "cls") return value <= 0.1 ? 100 : value <= 0.25 ? 65 : 30;
+  return value <= 200 ? 100 : value <= 600 ? 65 : 30;
+}
+
+function deriveCoreWebVitalsMetric(metrics: Record<string, VibeMarketingWebsiteBaselineMetric> | undefined) {
+  const direct = metrics?.coreWebVitals ?? metrics?.coreWebVitalsMetric ?? metrics?.webVitals;
+  if (direct) return direct;
+  const lighthouse = metrics?.lighthouse;
+  const strategies = plainObject(lighthouse?.strategies);
+  if (!strategies) {
+    return undefined;
+  }
+  const lcp = averageFromStrategies(strategies, "largestContentfulPaintMs");
+  const cls = averageFromStrategies(strategies, "cumulativeLayoutShift");
+  const tbt = averageFromStrategies(strategies, "totalBlockingTimeMs");
+  const scores = [vitalDisplayScore("lcp", lcp), vitalDisplayScore("cls", cls), vitalDisplayScore("tbt", tbt)].filter(
+    (value): value is number => typeof value === "number",
+  );
+  if (!scores.length) return undefined;
+  return {
+    status: "measured",
+    score: Math.round(scores.reduce((sum, value) => sum + value, 0) / scores.length),
+    largestContentfulPaintMs: lcp === null ? null : Math.round(lcp),
+    cumulativeLayoutShift: cls === null ? null : Number(cls.toFixed(3)),
+    totalBlockingTimeMs: tbt === null ? null : Math.round(tbt),
+    message: "Core Web Vitals are estimated from PageSpeed lab metrics.",
+  };
+}
+
+function MetricInfoTooltip({ label, body }: { label: string; body: string }) {
+  const [open, setOpen] = useState(false);
+  const id = useId();
+  return (
+    <span className="relative inline-flex shrink-0">
+      <button
+        type="button"
+        aria-label={`${label} explanation`}
+        aria-describedby={open ? id : undefined}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        onBlur={() => setOpen(false)}
+        onFocus={() => setOpen(true)}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-gray-400 outline-none transition hover:text-violet-700 focus:text-violet-700 focus:ring-2 focus:ring-violet-500/30"
+      >
+        <BadgeInfo className="h-4 w-4" />
+      </button>
+      <span
+        id={id}
+        role="tooltip"
+        className={clsx(
+          "absolute left-1/2 top-full z-30 mt-2 w-64 -translate-x-1/2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-left text-xs font-semibold leading-5 text-gray-600 shadow-lg transition",
+          open ? "opacity-100" : "pointer-events-none opacity-0",
+        )}
+      >
+        {body}
+      </span>
+    </span>
+  );
 }
 
 function FirstArticleProgressPanel() {
@@ -773,11 +882,11 @@ function MetricVisual({
   trendShape?: BaselineTrendShape;
 }) {
   if (visual === "ai-sources") {
-    const rows = aiSourceRows(metric);
+    const rows = aiVisibilityRows(metric);
     if (!rows.length) {
       return (
         <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
-          {status === "measured" ? "Provider detail will appear after more AI visibility data is collected." : "AI visibility detail is unavailable right now."}
+          {status === "measured" ? "Query detail will appear after more AI visibility data is collected." : "AI visibility detail is unavailable right now."}
         </div>
       );
     }
@@ -785,8 +894,13 @@ function MetricVisual({
       <div className="mt-5 divide-y divide-gray-100 rounded-xl bg-slate-50/70 px-3">
         {rows.map((row) => (
           <div key={row.name} className="flex items-center justify-between gap-3 py-2 text-xs font-bold">
-            <span className="truncate text-slate-700">{row.name}</span>
-            {row.count === null ? <span className="text-slate-500">Measured</span> : <span className="shrink-0 text-slate-950">{row.count} {row.suffix}</span>}
+            <span className="min-w-0">
+              <span className="block truncate text-slate-700">{row.name}</span>
+              {row.detail ? <span className="mt-0.5 block line-clamp-2 text-[11px] font-semibold text-slate-500">{row.detail}</span> : null}
+            </span>
+            <span className="shrink-0 text-right text-slate-950">
+              {row.value === null ? row.unit || "Measured" : `${row.value} ${row.unit}`.trim()}
+            </span>
           </div>
         ))}
       </div>
@@ -822,14 +936,14 @@ function BaselineMetricCard({
   const message = metricMessage(label, metric);
   const classes = baselineToneClasses[tone];
   return (
-    <div className={clsx("min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm", compact ? "min-h-[160px]" : "min-h-[238px]")}>
+    <div className={clsx("min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm", compact ? "min-h-[190px]" : "min-h-[238px]")}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", classes.icon, classes.iconText)}>
             <Icon className="h-5 w-5" />
           </span>
           <p className="min-w-0 text-sm font-black text-gray-950">{label}</p>
-          <BadgeInfo className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+          <MetricInfoTooltip label={label} body={metricHelpText(label)} />
         </div>
         <SourceStatusBadge status={status} />
       </div>
@@ -837,7 +951,7 @@ function BaselineMetricCard({
         <span className="text-3xl font-black text-gray-950">{score === null ? "-" : score}</span>
         {score !== null ? <span className="pb-1 text-sm font-black text-gray-500">/100</span> : null}
       </div>
-      <p className="mt-2 line-clamp-3 text-sm font-semibold leading-6 text-gray-600">{message ?? description}</p>
+      <p className={clsx("mt-2 text-sm font-semibold leading-6 text-gray-600", !compact && "line-clamp-3")}>{message ?? description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
       {!compact ? <MetricVisual metric={metric} score={score} status={status} tone={tone} visual={visual} trendShape={trendShape} /> : null}
     </div>
@@ -1131,6 +1245,10 @@ export default function VibeMarketingStartupBaselineSetup({
   const trafficMetric = baselineMetrics.traffic;
   const trafficStatus = metricStatus("Traffic/users", trafficMetric);
   const hasGoogleBaselineScopes = Boolean(bootstrap.googleBaselineConnection?.hasBaselineScopes);
+  const baselineHasSnapshot = Boolean(
+    effectiveBaseline.status !== "missing" &&
+      (effectiveBaseline.passed || effectiveBaseline.status === "completed" || typeof effectiveBaseline.overallScore === "number"),
+  );
   const isSubmitting = navigation.state === "submitting";
   const autofillPending = autofillStartFetcher.state !== "idle";
   const baselinePending = baselineStartFetcher.state !== "idle";
@@ -1153,7 +1271,7 @@ export default function VibeMarketingStartupBaselineSetup({
     (!autofillPolling || autofillUnavailable);
   const canRetryAutofill = Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) && !autofillPending;
   const canStartBaseline = Boolean((bootstrap.organization.domain || bootstrap.company.domain || startupValues.domain).trim()) && !baselinePending && !baselinePolling;
-  const canRefreshGoogleBaseline = hasGoogleBaselineScopes && effectiveBaseline.status !== "missing" && !googleBaselinePending;
+  const canRefreshGoogleBaseline = hasGoogleBaselineScopes && baselineHasSnapshot && !googleBaselinePending;
   const companyContext = companyContextFromSetup(startupValues);
   const compactCompanyName = startupValues.companyName.replace(/[^a-z0-9]/gi, "");
   const showLinkedInDisambiguationHint = Boolean(
@@ -1164,6 +1282,21 @@ export default function VibeMarketingStartupBaselineSetup({
   );
   const searchConsole = plainObject(trafficMetric?.googleSearchConsole);
   const searchConsoleSummary = plainObject(searchConsole?.last28Days);
+  const trafficMetricMessage = metricMessage("Traffic/users", trafficMetric);
+  const googleTrafficMessage = googleBaselinePending
+    ? "Loading verified Search Console traffic..."
+    : trafficStatus === "measured"
+      ? "Verified Search Console traffic is loaded."
+      : hasGoogleBaselineScopes
+        ? baselineHasSnapshot
+          ? trafficMetricMessage ?? "Search Console is connected. Traffic data will load automatically."
+          : "Search Console is connected. Run a baseline snapshot first, then traffic can load."
+        : trafficMetricMessage ?? "Connect Search Console to include verified traffic data.";
+  const trafficDisplayMetric: VibeMarketingWebsiteBaselineMetric = {
+    ...(trafficMetric ?? {}),
+    status: trafficStatus ?? trafficMetric?.status,
+    message: googleTrafficMessage,
+  };
   const embedded = variant === "workflow";
   const shouldShowSecondaryAction = showSecondaryAction ?? !embedded;
   const baselineActive = baselinePending || baselinePolling;
@@ -1171,7 +1304,7 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselineScore = clampScore(effectiveBaseline.overallScore);
   const baselineBand = baselineScoreBand(baselineScore);
   const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
-  const coreWebVitalsMetric = baselineMetrics.coreWebVitals ?? baselineMetrics.coreWebVitalsMetric ?? baselineMetrics.webVitals;
+  const coreWebVitalsMetric = deriveCoreWebVitalsMetric(baselineMetrics);
 
   const inputClass =
     "w-full rounded-xl border border-gray-200 py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
@@ -1206,12 +1339,14 @@ export default function VibeMarketingStartupBaselineSetup({
 
   const startBaseline = () => {
     setGoogleBaseline(null);
+    googleAutoRefreshSubmittedRef.current = false;
     const formData = new FormData();
     formData.set("intent", "start-baseline");
     baselineStartFetcher.submit(formData, { method: "POST" });
   };
 
   const refreshGoogleBaseline = () => {
+    googleAutoRefreshSubmittedRef.current = true;
     const formData = new FormData();
     formData.set("intent", "refresh-baseline-google");
     googleBaselineFetcher.submit(formData, { method: "POST" });
@@ -1253,11 +1388,21 @@ export default function VibeMarketingStartupBaselineSetup({
   }, [focusSection]);
 
   useEffect(() => {
-    if (!autoRefreshGoogleBaseline || googleAutoRefreshSubmittedRef.current) return;
-    if (focusSection !== "baseline" || !hasGoogleBaselineScopes || googleBaselinePending) return;
-    googleAutoRefreshSubmittedRef.current = true;
+    if (googleAutoRefreshSubmittedRef.current) return;
+    if (!hasGoogleBaselineScopes || googleBaselinePending || baselineActive) return;
+    const redirectedFromGoogleConnect = autoRefreshGoogleBaseline && focusSection === "baseline" && baselineHasSnapshot;
+    const connectedSnapshotNeedsTraffic = baselineHasSnapshot && trafficStatus !== "measured";
+    if (!redirectedFromGoogleConnect && !connectedSnapshotNeedsTraffic) return;
     refreshGoogleBaseline();
-  }, [autoRefreshGoogleBaseline, focusSection, googleBaselinePending, hasGoogleBaselineScopes]);
+  }, [
+    autoRefreshGoogleBaseline,
+    baselineActive,
+    baselineHasSnapshot,
+    focusSection,
+    googleBaselinePending,
+    hasGoogleBaselineScopes,
+    trafficStatus,
+  ]);
 
   useEffect(() => {
     if (autofillStartData?.autofillRunId) {
@@ -1274,6 +1419,7 @@ export default function VibeMarketingStartupBaselineSetup({
     if (baselineStartData?.baselineRunId) {
       setBaselineRunId(baselineStartData.baselineRunId);
       setGoogleBaseline(null);
+      googleAutoRefreshSubmittedRef.current = false;
     }
   }, [baselineStartData?.baselineRunId]);
 
@@ -1726,6 +1872,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   </span>
                 )}
               </div>
+              <p className="mt-3 text-xs font-bold leading-5 text-gray-500">{googleTrafficMessage}</p>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -1796,7 +1943,7 @@ export default function VibeMarketingStartupBaselineSetup({
           <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm" id="baseline-scorecard">
             <div className="flex items-center gap-2">
               <p className="text-sm font-black text-gray-950">Baseline scorecard</p>
-              <BadgeInfo className="h-4 w-4 text-gray-400" />
+              <MetricInfoTooltip label="Baseline scorecard" body={metricHelpText("Baseline scorecard")} />
             </div>
             <div className="mt-4 grid gap-6 lg:grid-cols-[1.1fr_1fr_1.5fr] lg:items-center">
               <div className="flex items-center gap-5">
@@ -1871,7 +2018,7 @@ export default function VibeMarketingStartupBaselineSetup({
           <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <BaselineMetricCard
               label="Traffic/users"
-              metric={trafficMetric}
+              metric={trafficDisplayMetric}
               icon={Users}
               tone="violet"
               description="Connect Search Console to see clicks, impressions, and user metrics."
@@ -1951,7 +2098,7 @@ export default function VibeMarketingStartupBaselineSetup({
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-black text-gray-950">Top recommended fixes</p>
-                  <BadgeInfo className="h-4 w-4 text-gray-400" />
+                  <MetricInfoTooltip label="Top recommended fixes" body={metricHelpText("Top recommended fixes")} />
                 </div>
                 <p className="inline-flex items-center gap-2 text-sm font-black text-violet-700">
                   View all recommendations <ArrowRight className="h-4 w-4" />
