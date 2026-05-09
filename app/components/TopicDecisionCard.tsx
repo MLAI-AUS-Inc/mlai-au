@@ -1,4 +1,16 @@
 import { clsx } from "clsx";
+import type { ComponentType } from "react";
+import {
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Gauge,
+  MoveRight,
+  Search,
+  Star,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 
 import type { VibeMarketingTopicCandidate } from "~/types/vibe-marketing";
 
@@ -127,16 +139,49 @@ function trendRecord(candidate: VibeMarketingTopicCandidate) {
   return recordValue(candidate.velocity);
 }
 
-function dailyVolumes(candidate: VibeMarketingTopicCandidate) {
+function numberSeries(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "number" || typeof item === "string") return numericValue(item);
+      const record = recordValue(item);
+      return numericValue(
+        record?.value ??
+          record?.volume ??
+          record?.search_volume ??
+          record?.searchVolume ??
+          record?.monthly_searches ??
+          record?.monthlySearches,
+      );
+    })
+    .filter((item): item is number => item !== undefined);
+}
+
+function searchHistory(candidate: VibeMarketingTopicCandidate) {
+  const explicit = numberSeries(candidate.monthlySearches);
+  if (explicit.length >= 2) return explicit;
   const record = trendRecord(candidate);
-  const raw = record?.dailyVolumes ?? record?.daily_volumes;
-  if (!Array.isArray(raw)) return [];
-  return raw.map(numericValue).filter((value): value is number => value !== undefined);
+  const velocityHistory = numberSeries(record?.dailyVolumes ?? record?.daily_volumes);
+  if (velocityHistory.length >= 2) return velocityHistory;
+  return [];
+}
+
+function placeholderHistory(candidate: VibeMarketingTopicCandidate) {
+  const volume = numericValue(candidate.volume);
+  const base = volume && volume > 0 ? volume : 100;
+  const multipliers = [0.52, 0.68, 0.61, 0.76, 0.72, 0.84, 0.91, 0.8];
+  return multipliers.map((multiplier) => Math.max(1, Math.round(base * multiplier)));
+}
+
+function chartValues(candidate: VibeMarketingTopicCandidate) {
+  const history = searchHistory(candidate);
+  return history.length >= 2 ? history : placeholderHistory(candidate);
 }
 
 function trendStatus(candidate: VibeMarketingTopicCandidate) {
   const record = trendRecord(candidate);
   return (
+    stringValue(candidate.trendStatus) ||
     stringValue(record?.trendStatus) ||
     stringValue(record?.trend_status) ||
     stringValue(candidate.trend) ||
@@ -166,10 +211,12 @@ function trendLabel(candidate: VibeMarketingTopicCandidate) {
 }
 
 function trendSummary(candidate: VibeMarketingTopicCandidate) {
-  const explicit = stringValue(candidate.statsMeaning);
+  const explicit = stringValue(candidate.trendDescription) || stringValue(candidate.statsMeaning);
   if (explicit) return explicit;
+  const trendPercent = numericValue(candidate.trendPercent);
   const score = numericValue(recordValue(candidate.velocity)?.velocityScore ?? recordValue(candidate.velocity)?.velocity_score);
-  const percent = score !== undefined ? `${score > 0 ? "+" : ""}${Math.round(score * 100)}%` : null;
+  const percentValue = trendPercent !== undefined ? trendPercent : score !== undefined ? Math.round(score * 100) : undefined;
+  const percent = percentValue !== undefined ? `${percentValue > 0 ? "+" : ""}${Math.round(percentValue)}%` : null;
   const status = normalizedTrendStatus(candidate);
   if (status === "breakout") return `${percent ?? "Strong"} recent growth in search interest.`;
   if (status === "rising") return `${percent ?? "Growing"} recent search interest.`;
@@ -186,14 +233,9 @@ export function topicOpportunityBadge(candidate: VibeMarketingTopicCandidate | n
   if (!candidate) return "Custom topic";
   const score = opportunityScore(candidate);
   if (score !== undefined) {
-    if (score > 100) {
-      if (score >= 900) return "High opportunity";
-      if (score >= 500) return "Good opportunity";
-      return "Exploratory";
-    }
-    if (score >= 80) return "High opportunity";
-    if (score >= 40) return "Good opportunity";
-    return "Exploratory";
+    if (score >= 800) return "High";
+    if (score >= 400) return "Good";
+    return "Emerging";
   }
   if (trendStatus(candidate)) return trendLabel(candidate);
   return "Trend unavailable";
@@ -250,12 +292,53 @@ function Sparkline({ values }: { values: number[] }) {
   );
 }
 
-function MetricCard({ label, value, helper }: { label: string; value: string; helper?: string | null }) {
+function trendIcon(candidate: VibeMarketingTopicCandidate) {
+  const status = normalizedTrendStatus(candidate);
+  if (status === "declining") return TrendingDown;
+  if (status === "stable") return MoveRight;
+  return TrendingUp;
+}
+
+function trendTone(candidate: VibeMarketingTopicCandidate) {
+  const status = normalizedTrendStatus(candidate);
+  if (status === "declining") return "text-red-600";
+  if (status === "stable") return "text-amber-500";
+  return "text-emerald-600";
+}
+
+function trendPercentLabel(candidate: VibeMarketingTopicCandidate) {
+  const trendPercent = numericValue(candidate.trendPercent);
+  const score = numericValue(recordValue(candidate.velocity)?.velocityScore ?? recordValue(candidate.velocity)?.velocity_score);
+  const value = trendPercent !== undefined ? trendPercent : score !== undefined ? score * 100 : undefined;
+  if (value === undefined) return null;
+  return `${value > 0 ? "+" : ""}${Math.round(value)}% past 6 months`;
+}
+
+function TrendPanel({ candidate }: { candidate: VibeMarketingTopicCandidate }) {
+  const Icon = trendIcon(candidate);
   return (
-    <div className="rounded-lg border border-gray-200 bg-white px-3 py-2">
-      <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">{label}</p>
-      <p className="mt-1 text-sm font-black text-gray-950">{value}</p>
-      {helper ? <p className="mt-0.5 text-xs font-semibold text-gray-500">{helper}</p> : null}
+    <div className="min-h-[132px] border-gray-100 px-0 py-1 xl:border-l xl:px-5">
+      <div className="flex items-center gap-2">
+        <p className="text-sm font-black text-gray-950">Trend</p>
+        <Icon className={clsx("h-4 w-4", trendTone(candidate))} />
+      </div>
+      <p className={clsx("mt-3 text-base font-black", trendTone(candidate))}>{trendLabel(candidate)}</p>
+      {trendPercentLabel(candidate) ? <p className="mt-2 text-xs font-bold text-gray-500">{trendPercentLabel(candidate)}</p> : null}
+      <p className="mt-3 text-sm font-semibold leading-5 text-gray-600">{trendSummary(candidate)}</p>
+    </div>
+  );
+}
+
+function MetricCard({ label, value, helper, icon }: { label: string; value: string; helper?: string | null; icon?: ComponentType<{ className?: string }> }) {
+  const Icon = icon;
+  return (
+    <div className="flex min-h-[58px] items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2">
+      {Icon ? <Icon className="h-4 w-4 flex-none text-violet-600" /> : null}
+      <div className="min-w-0">
+        <p className="text-xs font-semibold text-gray-500">{label}</p>
+        <p className="mt-0.5 text-sm font-black text-gray-950">{value}</p>
+        {helper ? <p className="mt-0.5 text-xs font-semibold text-gray-500">{helper}</p> : null}
+      </div>
     </div>
   );
 }
@@ -315,17 +398,22 @@ function TopicDetails({ candidate }: { candidate: VibeMarketingTopicCandidate })
 
 export function TopicMetricExplainerStrip() {
   const items = [
-    ["Search volume", "How many people search each month."],
-    ["Trend", "Whether interest is growing, stable, or declining."],
-    ["Keyword difficulty", "How hard it may be to rank on Google."],
-    ["Opportunity score", "Our overall score for this topic."],
+    { title: "Search Volume", body: "How many people search for this topic each month.", Icon: Search, tone: "text-violet-600 bg-violet-50" },
+    { title: "Trend", body: "Whether interest is growing, stable, or declining.", Icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
+    { title: "Keyword Difficulty", body: "How hard it is to rank on Google (difficulty out of 100).", Icon: Gauge, tone: "text-orange-500 bg-orange-50" },
+    { title: "Opportunity Score", body: "Our overall score of how good this topic is to target.", Icon: Star, tone: "text-violet-600 bg-violet-50" },
   ];
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {items.map(([title, body]) => (
-        <div key={title} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-          <p className="text-sm font-black text-gray-950">{title}</p>
+      {items.map(({ title, body, Icon, tone }) => (
+        <div key={title} className="flex min-h-[92px] gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3">
+          <span className={clsx("flex h-10 w-10 flex-none items-center justify-center rounded-lg", tone)}>
+            <Icon className="h-5 w-5" />
+          </span>
+          <div>
+            <p className="text-sm font-black text-gray-950">{title}</p>
           <p className="mt-1 text-sm font-semibold leading-5 text-gray-600">{body}</p>
+          </div>
         </div>
       ))}
     </div>
@@ -351,14 +439,27 @@ export function TopicDecisionCard({
 }) {
   const volume = numericValue(candidate.volume);
   const score = opportunityScore(candidate);
-  const trendValues = dailyVolumes(candidate);
-  const hasTrend = trendValues.length >= 2 || Boolean(trendStatus(candidate));
-  const opportunity = score === undefined ? "Unavailable" : formatNumber(score);
+  const history = searchHistory(candidate);
+  const trendValues = chartValues(candidate);
+  const hasTrend = history.length >= 2 || Boolean(trendStatus(candidate));
+  const opportunity = score === undefined ? "Unavailable" : `${formatNumber(score)} / 2,000`;
+  const relatedKeywords = candidate.relatedKeywords ?? [];
+  const handleSelect = () => onChange();
   return (
     <div
+      role="radio"
+      aria-checked={checked}
+      tabIndex={0}
+      onClick={handleSelect}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          handleSelect();
+        }
+      }}
       className={clsx(
-        "rounded-xl border bg-white p-4 transition",
-        checked ? "border-violet-400 shadow-sm ring-2 ring-violet-100" : "border-gray-200 hover:border-violet-200",
+        "cursor-pointer rounded-xl border bg-white p-4 transition",
+        checked ? "border-violet-400 bg-violet-50/20 shadow-sm ring-2 ring-violet-100" : "border-gray-200 hover:border-violet-200",
       )}
     >
       <input
@@ -369,7 +470,7 @@ export function TopicDecisionCard({
         onChange={onChange}
         className="sr-only"
       />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(260px,1fr)_minmax(220px,0.75fr)_160px] xl:items-center">
+      <div className="grid gap-5 xl:grid-cols-[minmax(220px,0.95fr)_minmax(280px,1fr)_minmax(150px,0.5fr)_minmax(210px,0.62fr)_150px] xl:items-center">
         <div className="flex min-w-0 gap-3">
           <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-violet-600 text-sm font-black text-white">
             {rank}
@@ -381,42 +482,66 @@ export function TopicDecisionCard({
               {intentLabel(candidate)}
             </span>
             <p className="mt-3 text-sm font-semibold leading-5 text-gray-600">{audienceFromCandidate(candidate)}</p>
+            {relatedKeywords.length > 0 && onToggleDetails ? (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onToggleDetails?.();
+                }}
+                className="mt-4 inline-flex items-center gap-1.5 text-sm font-black text-violet-700 hover:text-violet-800"
+              >
+                {expanded ? "Hide related keywords" : "Show related keywords"}
+                {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+            ) : null}
           </div>
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-white px-4 py-3">
           <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-black text-gray-950">Search trend</p>
+            <p className="text-xs font-black text-gray-950">Search Volume Over Time</p>
             <p className="text-xs font-bold text-gray-500">
               {volume !== undefined ? `${formatNumber(volume)} searches/mo` : candidate.volumeDisplay ?? "Volume unavailable"}
             </p>
           </div>
           <Sparkline values={trendValues} />
+          {!hasTrend ? <p className="mt-1 text-[11px] font-bold text-gray-400">Estimated shape until trend history is available.</p> : null}
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
-          <MetricCard label="Search volume" value={volume !== undefined ? formatNumber(volume) : "Unavailable"} helper="per month" />
-          <MetricCard label="Difficulty" value={difficultyLabel(candidate)} helper={difficultyMetricHelper(candidate)} />
-          <MetricCard label="Opportunity" value={opportunity} helper={topicOpportunityBadge(candidate)} />
-          <MetricCard label="Trend" value={trendLabel(candidate)} helper={hasTrend ? trendSummary(candidate) : "Trend unavailable"} />
+        <TrendPanel candidate={candidate} />
+
+        <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1">
+          <MetricCard label="Search Volume" value={volume !== undefined ? formatNumber(volume) : "Unavailable"} helper="per month" icon={Search} />
+          <MetricCard label="Keyword Difficulty" value={difficultyLabel(candidate)} helper={difficultyMetricHelper(candidate)} icon={Gauge} />
+          <MetricCard label="Opportunity Score" value={opportunity} helper={topicOpportunityBadge(candidate)} icon={Star} />
         </div>
 
         <div className="flex flex-col gap-2">
+          {onToggleDetails ? (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onToggleDetails();
+              }}
+              className="inline-flex h-10 items-center justify-center rounded-lg border border-violet-200 px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+            >
+              {expanded ? "Hide details" : "View details"}
+            </button>
+          ) : null}
           <button
             type="button"
-            onClick={onToggleDetails}
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-violet-200 px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
-          >
-            {expanded ? "Hide details" : "View details"}
-          </button>
-          <button
-            type="button"
-            onClick={onChange}
+            onClick={(event) => {
+              event.stopPropagation();
+              handleSelect();
+            }}
             className={clsx(
-              "inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-black transition",
+              "inline-flex h-10 items-center justify-center gap-2 rounded-lg px-4 text-sm font-black transition",
               checked ? "bg-violet-600 text-white shadow-sm" : "bg-gray-950 text-white hover:bg-black",
             )}
           >
+            {checked ? <Check className="h-4 w-4" /> : null}
             {checked ? "Selected" : "Select topic"}
           </button>
         </div>
