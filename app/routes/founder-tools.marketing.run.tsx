@@ -151,7 +151,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         sourceRunId: stringFromForm(formData, "sourceRunId"),
       });
     } else if (intent === "start-live-preview") {
-      const result = await startVibeMarketingLivePreview(env, request, runId, { force: true });
+      const result = await startVibeMarketingLivePreview(env, request, runId, { force: stringFromForm(formData, "force") === "true" });
       if (result.runId && result.runId !== runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
@@ -835,6 +835,7 @@ function ArticlePreviewEmptyState({
             </div>
           </div>
           <Form method="POST">
+            <input type="hidden" name="force" value="true" />
             <button
               type="submit"
               name="intent"
@@ -1390,6 +1391,8 @@ export default function FounderToolsMarketingRun() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const previewStartFetcher = useFetcher<typeof action>();
+  const previewStartRunRef = useRef("");
   const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
@@ -1422,6 +1425,18 @@ export default function FounderToolsMarketingRun() {
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
+  const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
+  const previewFailed = Boolean(run.livePreview?.error || previewStatus === "failed" || previewStatus === "blocked");
+  const shouldAutoStartPreview = Boolean(
+    isArticleGenerationRun &&
+      run.status === "completed" &&
+      run.componentManifest &&
+      !hasArticlePreview &&
+      !previewFailed &&
+      previewStatus !== "running" &&
+      previewStatus !== "starting" &&
+      previewStartFetcher.state === "idle",
+  );
 
   useEffect(() => {
     setPolledRun(null);
@@ -1446,6 +1461,14 @@ export default function FounderToolsMarketingRun() {
       setSelectedDiscoveryCandidateId(firstCandidateId);
     }
   }, [discoveryCandidates, isDiscoveryConfirmation, selectedDiscoveryCandidateId]);
+
+  useEffect(() => {
+    if (!shouldAutoStartPreview || !run.runId || previewStartRunRef.current === run.runId) return;
+    previewStartRunRef.current = run.runId;
+    const formData = new FormData();
+    formData.set("intent", "start-live-preview");
+    void previewStartFetcher.submit(formData, { method: "POST" });
+  }, [previewStartFetcher, run.runId, shouldAutoStartPreview]);
 
   useEffect(() => {
     if (!shouldPoll || !loaderRun.runId || runStatusFetcher.state !== "idle") return;
