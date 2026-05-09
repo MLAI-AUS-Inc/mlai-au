@@ -14,7 +14,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
-import ArticleRunStageProgress, { articleRunTechnicalProgressLabel } from "~/components/ArticleRunStageProgress";
+import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
@@ -376,32 +376,6 @@ function RunApprovalActions({
   );
 }
 
-function RunDiagnosticsDetails({ run }: { run: VibeMarketingRunSummary }) {
-  return (
-    <details className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm shadow-sm">
-      <summary className="cursor-pointer text-sm font-black text-gray-700">Run diagnostics</summary>
-      <dl className="mt-4 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-4">
-        <div>
-          <dt className="font-black uppercase tracking-wide text-gray-400">Run ID</dt>
-          <dd className="mt-1 break-all font-mono text-gray-600">{run.runId}</dd>
-        </div>
-        <div>
-          <dt className="font-black uppercase tracking-wide text-gray-400">Workflow</dt>
-          <dd className="mt-1 font-semibold text-gray-700">{run.workflow || "Not reported"}</dd>
-        </div>
-        <div>
-          <dt className="font-black uppercase tracking-wide text-gray-400">Status</dt>
-          <dd className="mt-1 font-semibold text-gray-700">{run.status || "Not reported"}</dd>
-        </div>
-        <div>
-          <dt className="font-black uppercase tracking-wide text-gray-400">Current step</dt>
-          <dd className="mt-1 font-semibold text-gray-700">{run.currentStep || "Not reported"}</dd>
-        </div>
-      </dl>
-    </details>
-  );
-}
-
 function PublishApprovalPanel({
   run,
   isSubmitting,
@@ -446,27 +420,6 @@ function PublishApprovalPanel({
         <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
       </div>
     </section>
-  );
-}
-
-function TechnicalRunDetails({ run, defaultOpen = false }: { run: VibeMarketingRunSummary; defaultOpen?: boolean }) {
-  return (
-    <details className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm" open={defaultOpen}>
-      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 text-left">
-        <span>
-          <span className="block text-lg font-black text-gray-950">Technical details</span>
-          <span className="mt-1 block text-sm font-semibold text-gray-500">
-            Internal pipeline checks are available for debugging.
-          </span>
-        </span>
-        <span className="rounded-full bg-gray-50 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-gray-500">
-          {articleRunTechnicalProgressLabel(run)}
-        </span>
-      </summary>
-      <div className="mt-5 border-t border-gray-100 pt-5">
-        <RunStepTimeline run={run} framed={false} />
-      </div>
-    </details>
   );
 }
 
@@ -1578,7 +1531,6 @@ export default function FounderToolsMarketingRun() {
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const contentPackage = run.contentPackage;
-  const runNeedsAttention = ["blocked", "failed", "blocked_verification", "denied", "cancelled"].includes(run.status);
   const hasArticlePreview =
     isArticleWorkflowRun &&
     Boolean(contentPackage?.contentPackaged || run.componentManifest);
@@ -1743,32 +1695,6 @@ export default function FounderToolsMarketingRun() {
             </section>
           ) : null}
 
-          {contentPackage?.contentPackaged ? (
-            <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm">
-              <h2 className="text-lg font-black text-gray-950">Content package</h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl bg-emerald-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">Title</p>
-                  <p className="mt-2 text-sm font-black text-emerald-950">{contentPackage.title ?? contentPackage.slug ?? "Generated article"}</p>
-                </div>
-                <div className="rounded-xl bg-gray-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Target keyword</p>
-                  <p className="mt-2 text-sm font-black text-gray-900">{contentPackage.targetKeyword ?? "Not reported"}</p>
-                </div>
-              </div>
-              {contentPackage.artifactPaths && Object.keys(contentPackage.artifactPaths).length > 0 ? (
-                <div className="mt-4 grid gap-2">
-                  {Object.entries(contentPackage.artifactPaths).slice(0, 8).map(([name, path]) => (
-                    <div key={name} className="rounded-lg bg-gray-50 px-3 py-2">
-                      <p className="text-xs font-black text-gray-700">{name}</p>
-                      <p className="mt-1 break-all font-mono text-xs text-gray-500">{path}</p>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
-            </section>
-          ) : null}
-
           {showRunAttentionBanner ? (
             <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-800">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -1797,20 +1723,13 @@ export default function FounderToolsMarketingRun() {
             </div>
           ) : null}
 
-          {isArticleGenerationRun ? (
-            <TechnicalRunDetails run={run} defaultOpen={runNeedsAttention} />
-          ) : (
-            <RunStepTimeline run={run} />
-          )}
-
-          <RunDiagnosticsDetails run={run} />
+          {!isArticleGenerationRun ? <RunStepTimeline run={run} /> : null}
 
           {contentPackage?.contentPackaged || run.componentManifest ? (
             <ComponentCommentsPanel run={run} selectedComponent={selectedComponent} isSubmitting={isSubmitting} />
           ) : null}
         </main>
       ) : null}
-      {isCompletedArticleReviewPage ? <RunDiagnosticsDetails run={run} /> : null}
     </div>
   );
 }
