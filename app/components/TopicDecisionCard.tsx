@@ -43,6 +43,45 @@ function intentLabel(candidate: VibeMarketingTopicCandidate) {
   return "Informational";
 }
 
+const VERIFIED_DIFFICULTY_SOURCES = new Set(["dataforseo_labs", "dataforseo_bulk"]);
+
+function verifiedDifficulty(candidate: VibeMarketingTopicCandidate) {
+  const source = stringValue(candidate.difficultySource);
+  if (!source || !VERIFIED_DIFFICULTY_SOURCES.has(source)) return undefined;
+  const difficulty = numericValue(candidate.difficulty);
+  if (difficulty === undefined) return undefined;
+  return Math.max(0, Math.min(100, difficulty));
+}
+
+function difficultyGuidance(score: number) {
+  if (score <= 20) return "very approachable; strong content could start getting traction in a few months";
+  if (score <= 40) return "achievable with strong content and a realistic 4-6 month ranking window";
+  if (score <= 60) return "moderate; likely needs a strong article, internal links, and time, often 6-9+ months";
+  if (score <= 80) return "hard; usually needs authority, supporting content, and backlinks";
+  return "very hard; treat this as a long-term authority play";
+}
+
+function difficultyPhrase(candidate: VibeMarketingTopicCandidate) {
+  const difficulty = verifiedDifficulty(candidate);
+  if (difficulty === undefined) return "Difficulty pending";
+  return `Difficulty ${formatNumber(difficulty)}/100: ${difficultyGuidance(difficulty)}`;
+}
+
+function cleanReason(candidate: VibeMarketingTopicCandidate) {
+  const reason = stringValue(candidate.reason);
+  if (!reason) return null;
+  const cleaned = reason
+    .replace(/\bwith\s+(?:low|moderate|medium|high)\s+competition\.?/gi, "")
+    .replace(/\b(?:low|moderate|medium|high)\s+competition(?:\s+at\s+\d+(?:\.\d+)?\/100)?\.?/gi, "")
+    .replace(/\bdifficulty\s+\d+(?:\.\d+)?\/100\.?/gi, "")
+    .replace(/\bdifficulty pending\.?/gi, "")
+    .replace(/\bopportunity score\s+\d+(?:\.\d+)?\.?/gi, "")
+    .replace(/\b\d[\d,]*\s+monthly searches\.?/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned || null;
+}
+
 function audienceFromCandidate(candidate: VibeMarketingTopicCandidate) {
   const explicit = stringValue(candidate.audience);
   if (explicit) return explicit;
@@ -68,12 +107,20 @@ function audienceFromCandidate(candidate: VibeMarketingTopicCandidate) {
   return `Readers searching for practical guidance on ${candidate.keyword}.`;
 }
 
-function difficultyLabel(value: unknown) {
-  const difficulty = numericValue(value);
-  if (difficulty === undefined) return "Unavailable";
-  if (difficulty <= 35) return "Low";
-  if (difficulty <= 65) return "Moderate";
-  return "High";
+function difficultyLabel(candidate: VibeMarketingTopicCandidate) {
+  const difficulty = verifiedDifficulty(candidate);
+  if (difficulty === undefined) return "Pending";
+  if (difficulty <= 20) return "Very approachable";
+  if (difficulty <= 40) return "Achievable";
+  if (difficulty <= 60) return "Moderate";
+  if (difficulty <= 80) return "Hard";
+  return "Very hard";
+}
+
+function difficultyMetricHelper(candidate: VibeMarketingTopicCandidate) {
+  const difficulty = verifiedDifficulty(candidate);
+  if (difficulty === undefined) return "Difficulty pending";
+  return `${formatNumber(difficulty)} / 100`;
 }
 
 function trendRecord(candidate: VibeMarketingTopicCandidate) {
@@ -153,12 +200,22 @@ export function topicOpportunityBadge(candidate: VibeMarketingTopicCandidate | n
 }
 
 function whyTopic(candidate: VibeMarketingTopicCandidate) {
-  return (
+  const parts: string[] = [];
+  const volume = numericValue(candidate.volume);
+  if (volume !== undefined) parts.push(`${formatNumber(volume)} monthly searches`);
+  parts.push(difficultyPhrase(candidate));
+  const trend = stringValue(candidate.trend) || stringValue(candidate.interest);
+  if (trend) parts.push(`${trend.toLowerCase().includes("interest") ? trend : `${trend} interest`}`);
+  const aiSearches = numericValue(candidate.aiSearches);
+  if (aiSearches !== undefined) parts.push(`${formatNumber(aiSearches)} AI searches/mo`);
+
+  const metrics = parts.length ? `${parts.join(". ")}.` : null;
+  const reason =
     stringValue(candidate.whyRecommended) ||
     stringValue(candidate.recommendationReason) ||
-    stringValue(candidate.reason) ||
-    "Recommended from the latest topic research."
-  );
+    cleanReason(candidate);
+  if (metrics && reason) return `${metrics} ${reason}`;
+  return metrics || reason || "Recommended from the latest topic discovery.";
 }
 
 function Sparkline({ values }: { values: number[] }) {
@@ -339,7 +396,7 @@ export function TopicDecisionCard({
 
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
           <MetricCard label="Search volume" value={volume !== undefined ? formatNumber(volume) : "Unavailable"} helper="per month" />
-          <MetricCard label="Difficulty" value={difficultyLabel(candidate.difficulty)} helper={numericValue(candidate.difficulty) !== undefined ? `${formatNumber(numericValue(candidate.difficulty)!)} / 100` : null} />
+          <MetricCard label="Difficulty" value={difficultyLabel(candidate)} helper={difficultyMetricHelper(candidate)} />
           <MetricCard label="Opportunity" value={opportunity} helper={topicOpportunityBadge(candidate)} />
           <MetricCard label="Trend" value={trendLabel(candidate)} helper={hasTrend ? trendSummary(candidate) : "Trend unavailable"} />
         </div>

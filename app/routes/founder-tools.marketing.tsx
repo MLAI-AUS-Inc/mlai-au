@@ -469,12 +469,14 @@ function volumeLabel(value: unknown) {
   return "Niche volume";
 }
 
-function difficultyLabel(value: unknown) {
-  const difficulty = numericValue(value);
-  if (difficulty === null) return "Competition pending";
-  if (difficulty <= 30) return "Low competition";
-  if (difficulty <= 60) return "Medium competition";
-  return "High competition";
+const VERIFIED_DIFFICULTY_SOURCES = new Set(["dataforseo_labs", "dataforseo_bulk"]);
+
+function difficultyLabel(topic: VibeMarketingTopicCandidate) {
+  const difficultySource = typeof topic.difficultySource === "string" ? topic.difficultySource : "";
+  if (!VERIFIED_DIFFICULTY_SOURCES.has(difficultySource)) return "Difficulty pending";
+  const difficulty = numericValue(topic.difficulty);
+  if (difficulty === null) return "Difficulty pending";
+  return `Difficulty ${Math.round(difficulty)}/100`;
 }
 
 function opportunityLabel(value: unknown) {
@@ -2050,7 +2052,7 @@ function TopicRow({
       <span className="min-w-0">
         <span className="block truncate text-sm font-black text-slate-950">{title}</span>
         <span className="mt-1 block text-sm font-semibold text-slate-500">
-          {volumeLabel(topic.volume)} · {difficultyLabel(topic.difficulty)}
+          {volumeLabel(topic.volume)} · {difficultyLabel(topic)}
           {score ? ` · Opportunity ${score}` : ""}
         </span>
       </span>

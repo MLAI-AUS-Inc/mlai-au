@@ -277,7 +277,6 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     confidence: asNullableString(payload.confidence),
     trend: payload.trend ?? payload.search_trend,
     interest: payload.interest ?? payload.interest_trend,
-    competition: payload.competition ?? payload.competition_level,
     aiSearches: payload.aiSearches ?? payload.ai_searches ?? payload.ai_search_volume,
     source: asNullableString(payload.source),
     sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
