@@ -478,6 +478,130 @@ function sourceStatusLabel(status?: string | null) {
   return "Unavailable";
 }
 
+type BaselineTone = "violet" | "emerald" | "amber" | "rose" | "sky" | "slate";
+type BaselineTrendShape = "rise" | "steady" | "flat";
+
+const baselineToneClasses: Record<
+  BaselineTone,
+  {
+    accent: string;
+    icon: string;
+    iconText: string;
+    line: string;
+  }
+> = {
+  violet: { accent: "#6d28d9", icon: "bg-violet-100", iconText: "text-violet-700", line: "stroke-violet-600" },
+  emerald: { accent: "#16a34a", icon: "bg-emerald-100", iconText: "text-emerald-700", line: "stroke-emerald-600" },
+  amber: { accent: "#f97316", icon: "bg-orange-100", iconText: "text-orange-600", line: "stroke-orange-500" },
+  rose: { accent: "#e11d48", icon: "bg-rose-100", iconText: "text-rose-700", line: "stroke-rose-600" },
+  sky: { accent: "#0284c7", icon: "bg-sky-100", iconText: "text-sky-700", line: "stroke-sky-600" },
+  slate: { accent: "#64748b", icon: "bg-slate-100", iconText: "text-slate-600", line: "stroke-slate-500" },
+};
+
+function clampScore(value: number | null | undefined) {
+  return typeof value === "number" && Number.isFinite(value) ? Math.min(100, Math.max(0, Math.round(value))) : null;
+}
+
+function baselineScoreBand(score: number | null) {
+  if (score === null) {
+    return { label: "Not collected", tone: "slate" as BaselineTone, description: "Run a baseline to see the starting score." };
+  }
+  if (score >= 80) return { label: "Strong", tone: "emerald" as BaselineTone, description: "You're well positioned to rank." };
+  if (score >= 50) return { label: "Fair", tone: "amber" as BaselineTone, description: "You're on the right track with room to grow." };
+  return { label: "Needs work", tone: "rose" as BaselineTone, description: "Important areas need attention." };
+}
+
+function baselineStatusLabel(baseline: VibeMarketingWebsiteBaseline, active: boolean) {
+  if (active) return "Collecting baseline";
+  if (baseline.skipped) return "Skipped";
+  if (baseline.stale) return "Baseline stale";
+  if (baseline.passed || baseline.status === "completed" || typeof baseline.overallScore === "number") return "Baseline ready";
+  return "Baseline needed";
+}
+
+function baselineStatusTone(baseline: VibeMarketingWebsiteBaseline, active: boolean): BaselineTone {
+  if (active) return "violet";
+  if (baseline.skipped || baseline.stale) return "amber";
+  if (baseline.passed || baseline.status === "completed" || typeof baseline.overallScore === "number") return "emerald";
+  return "slate";
+}
+
+function numberListFromUnknown(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "number") return item;
+      if (typeof item === "string") return Number(item);
+      if (item && typeof item === "object" && !Array.isArray(item)) {
+        const payload = item as Record<string, unknown>;
+        return (
+          numericValue(payload.score) ??
+          numericValue(payload.value) ??
+          numericValue(payload.count) ??
+          numericValue(payload.clicks) ??
+          numericValue(payload.impressions)
+        );
+      }
+      return null;
+    })
+    .filter((item): item is number => typeof item === "number" && Number.isFinite(item));
+}
+
+function fallbackTrendValues(score: number | null, shape: BaselineTrendShape) {
+  if (score === null) return [];
+  if (shape === "flat") return Array.from({ length: 9 }, () => score);
+  const start = shape === "rise" ? Math.max(0, score - 15) : Math.max(0, score - 5);
+  const end = shape === "rise" ? score : Math.min(100, score + 3);
+  return Array.from({ length: 9 }, (_, index) => {
+    const progress = index / 8;
+    const wave = shape === "rise" ? Math.sin(index * 1.15) * 3 : Math.sin(index * 1.7) * 2;
+    return Math.min(100, Math.max(0, start + (end - start) * progress + wave));
+  });
+}
+
+function trendValuesFromMetric(metric: VibeMarketingWebsiteBaselineMetric | undefined, fallbackScore: number | null, shape: BaselineTrendShape) {
+  const directKeys = ["trend", "series", "history", "values", "daily", "dailyScores", "data", "points"];
+  for (const key of directKeys) {
+    const values = numberListFromUnknown(metric?.[key]);
+    if (values.length >= 2) return values;
+  }
+  const searchConsole = plainObject(metric?.googleSearchConsole);
+  const searchConsoleDaily = numberListFromUnknown(searchConsole?.daily);
+  if (searchConsoleDaily.length >= 2) return searchConsoleDaily;
+  return fallbackTrendValues(fallbackScore, shape);
+}
+
+function sparklinePoints(values: number[], width = 240, height = 74) {
+  if (values.length < 2) return "";
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const range = Math.max(1, max - min);
+  return values
+    .map((value, index) => {
+      const x = (index / (values.length - 1)) * width;
+      const y = height - ((value - min) / range) * (height - 12) - 6;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+}
+
+function aiSourceRows(metric: VibeMarketingWebsiteBaselineMetric | undefined) {
+  const candidateGroups = [
+    objectArray(metric?.sources),
+    objectArray(metric?.providers),
+    objectArray(metric?.platforms),
+    objectArray(metric?.mentions),
+    objectArray(metric?.references),
+  ];
+  const rows = candidateGroups.find((group) => group && group.length) ?? [];
+  return rows.slice(0, 4).map((row, index) => {
+    const name = String(row.name ?? row.source ?? row.provider ?? row.platform ?? row.label ?? `Source ${index + 1}`).trim();
+    const count = numericValue(row.count) ?? numericValue(row.mentions) ?? numericValue(row.times) ?? numericValue(row.value) ?? numericValue(row.score);
+    const suffix = typeof row.unit === "string" ? row.unit : count === 1 ? "time" : "times";
+    return { name, count, suffix };
+  });
+}
+
 function FirstArticleProgressPanel() {
   return (
     <div className="min-w-0 rounded-2xl border border-violet-100 bg-violet-50/70 px-5 py-6 shadow-sm shadow-violet-100/60 lg:px-8">
@@ -549,24 +673,200 @@ function SourceStatusBadge({ status }: { status?: string | null }) {
   );
 }
 
+function BaselineStatusPill({
+  baseline,
+  active,
+}: {
+  baseline: VibeMarketingWebsiteBaseline;
+  active: boolean;
+}) {
+  const tone = baselineStatusTone(baseline, active);
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-black",
+        tone === "emerald" && "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100",
+        tone === "amber" && "bg-orange-50 text-orange-700 ring-1 ring-orange-100",
+        tone === "violet" && "bg-violet-50 text-violet-700 ring-1 ring-violet-100",
+        tone === "slate" && "bg-slate-50 text-slate-600 ring-1 ring-slate-100",
+      )}
+    >
+      {active ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+      {baselineStatusLabel(baseline, active)}
+    </span>
+  );
+}
+
+function BaselineScoreRing({ score, tone }: { score: number | null; tone: BaselineTone }) {
+  const safeScore = score ?? 0;
+  return (
+    <div
+      className="relative flex h-24 w-24 shrink-0 items-center justify-center rounded-full"
+      style={{ background: `conic-gradient(${baselineToneClasses[tone].accent} ${safeScore * 3.6}deg, #ede9fe 0deg)` }}
+      aria-hidden="true"
+    >
+      <div className="h-[72px] w-[72px] rounded-full bg-white" />
+    </div>
+  );
+}
+
+function MiniSparkline({ values, tone }: { values: number[]; tone: BaselineTone }) {
+  const points = sparklinePoints(values);
+  if (!points) return <div className="mt-5 h-[74px] rounded-xl bg-slate-50" aria-hidden="true" />;
+  const pointList = points.split(" ");
+  return (
+    <svg viewBox="0 0 240 74" className="mt-5 h-[74px] w-full overflow-visible" role="img" aria-label="Metric trend">
+      <polyline points={points} fill="none" className={clsx("stroke-[3]", baselineToneClasses[tone].line)} strokeLinecap="round" strokeLinejoin="round" />
+      {pointList
+        .filter((_, index) => index % 2 === 0 || index === pointList.length - 1)
+        .map((point) => {
+          const [cx, cy] = point.split(",");
+          return <circle key={point} cx={cx} cy={cy} r="2.4" className={clsx("fill-white stroke-2", baselineToneClasses[tone].line)} />;
+        })}
+    </svg>
+  );
+}
+
+function BaselineComparisonChart() {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-3 shadow-sm">
+      <div className="flex gap-1.5 border-b border-gray-100 pb-2">
+        <span className="h-2 w-2 rounded-full bg-violet-200" />
+        <span className="h-2 w-2 rounded-full bg-violet-200" />
+        <span className="h-2 w-2 rounded-full bg-violet-200" />
+      </div>
+      <svg viewBox="0 0 260 108" className="mt-2 h-28 w-full" role="img" aria-label="Baseline comparison illustration">
+        <line x1="125" y1="0" x2="125" y2="108" stroke="#c4b5fd" strokeDasharray="5 5" strokeWidth="2" />
+        <polyline
+          points="12,66 48,56 84,66 122,58 154,46 184,50 218,38 248,18"
+          fill="none"
+          stroke="#5b21b6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="4"
+        />
+        <circle cx="48" cy="56" r="4" fill="#6d28d9" />
+        <circle cx="122" cy="58" r="4" fill="#6d28d9" />
+        <circle cx="248" cy="18" r="4" fill="#6d28d9" />
+        <text x="12" y="90" fill="#111827" fontSize="12" fontWeight="800">Before</text>
+        <text x="12" y="104" fill="#64748b" fontSize="11" fontWeight="700">(Baseline)</text>
+        <text x="172" y="90" fill="#111827" fontSize="12" fontWeight="800">After</text>
+        <text x="172" y="104" fill="#64748b" fontSize="11" fontWeight="700">(Growth)</text>
+      </svg>
+    </div>
+  );
+}
+
+function MetricVisual({
+  metric,
+  score,
+  status,
+  tone,
+  visual,
+  trendShape = "rise",
+}: {
+  metric?: VibeMarketingWebsiteBaselineMetric;
+  score: number | null;
+  status?: string | null;
+  tone: BaselineTone;
+  visual: "sparkline" | "ai-sources" | "none";
+  trendShape?: BaselineTrendShape;
+}) {
+  if (visual === "ai-sources") {
+    const rows = aiSourceRows(metric);
+    if (!rows.length) {
+      return (
+        <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
+          {status === "measured" ? "Provider detail will appear after more AI visibility data is collected." : "AI visibility detail is unavailable right now."}
+        </div>
+      );
+    }
+    return (
+      <div className="mt-5 divide-y divide-gray-100 rounded-xl bg-slate-50/70 px-3">
+        {rows.map((row) => (
+          <div key={row.name} className="flex items-center justify-between gap-3 py-2 text-xs font-bold">
+            <span className="truncate text-slate-700">{row.name}</span>
+            {row.count === null ? <span className="text-slate-500">Measured</span> : <span className="shrink-0 text-slate-950">{row.count} {row.suffix}</span>}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (visual === "none") return null;
+  return <MiniSparkline values={trendValuesFromMetric(metric, score, trendShape)} tone={tone} />;
+}
+
 function BaselineMetricCard({
   label,
   metric,
+  icon: Icon,
+  tone,
+  description,
+  visual = "sparkline",
+  trendShape,
+  action,
+  compact = false,
 }: {
   label: string;
   metric?: VibeMarketingWebsiteBaselineMetric;
+  icon: LucideIcon;
+  tone: BaselineTone;
+  description: string;
+  visual?: "sparkline" | "ai-sources" | "none";
+  trendShape?: BaselineTrendShape;
+  action?: ReactNode;
+  compact?: boolean;
 }) {
   const status = metricStatus(label, metric);
   const score = metricScore(metric, status);
   const message = metricMessage(label, metric);
+  const classes = baselineToneClasses[tone];
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
+    <div className={clsx("min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm", compact ? "min-h-[160px]" : "min-h-[238px]")}>
       <div className="flex items-start justify-between gap-3">
-        <p className="text-sm font-black text-gray-950">{label}</p>
+        <div className="flex min-w-0 items-center gap-3">
+          <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", classes.icon, classes.iconText)}>
+            <Icon className="h-5 w-5" />
+          </span>
+          <p className="min-w-0 text-sm font-black text-gray-950">{label}</p>
+          <BadgeInfo className="h-3.5 w-3.5 shrink-0 text-gray-400" />
+        </div>
         <SourceStatusBadge status={status} />
       </div>
-      <p className="mt-3 text-2xl font-black text-gray-950">{score === null ? "-" : score}</p>
-      {message ? <p className="mt-2 line-clamp-4 break-words text-xs font-semibold text-gray-500">{message}</p> : null}
+      <div className="mt-4 flex items-end gap-1">
+        <span className="text-3xl font-black text-gray-950">{score === null ? "-" : score}</span>
+        {score !== null ? <span className="pb-1 text-sm font-black text-gray-500">/100</span> : null}
+      </div>
+      <p className="mt-2 line-clamp-3 text-sm font-semibold leading-6 text-gray-600">{message ?? description}</p>
+      {action ? <div className="mt-4">{action}</div> : null}
+      {!compact ? <MetricVisual metric={metric} score={score} status={status} tone={tone} visual={visual} trendShape={trendShape} /> : null}
+    </div>
+  );
+}
+
+function RecommendationCard({
+  recommendation,
+  index,
+}: {
+  recommendation: Record<string, unknown>;
+  index: number;
+}) {
+  const title = String(recommendation.title ?? "Review baseline recommendation");
+  const detail = recommendation.detail ? String(recommendation.detail) : "Review this improvement before publishing more content.";
+  const tones: BaselineTone[] = ["violet", "amber", "emerald", "sky"];
+  const tone = tones[index % tones.length];
+  const Icon = index % 3 === 0 ? Sparkles : index % 3 === 1 ? Link2 : TrendingUp;
+  const classes = baselineToneClasses[tone];
+  return (
+    <div className="flex min-w-0 items-center gap-4 rounded-xl bg-gray-50 px-4 py-3">
+      <span className={clsx("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", classes.icon, classes.iconText)}>
+        <Icon className="h-5 w-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-black text-gray-950">{title}</p>
+        <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-gray-600">{detail}</p>
+      </div>
+      <ArrowRight className="h-4 w-4 shrink-0 text-gray-500" />
     </div>
   );
 }
@@ -866,6 +1166,12 @@ export default function VibeMarketingStartupBaselineSetup({
   const searchConsoleSummary = plainObject(searchConsole?.last28Days);
   const embedded = variant === "workflow";
   const shouldShowSecondaryAction = showSecondaryAction ?? !embedded;
+  const baselineActive = baselinePending || baselinePolling;
+  const baselineDomain = effectiveBaseline.domain || startupValues.domain || bootstrap.organization.domain || bootstrap.company.domain || "No domain saved yet";
+  const baselineScore = clampScore(effectiveBaseline.overallScore);
+  const baselineBand = baselineScoreBand(baselineScore);
+  const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
+  const coreWebVitalsMetric = baselineMetrics.coreWebVitals ?? baselineMetrics.coreWebVitalsMetric ?? baselineMetrics.webVitals;
 
   const inputClass =
     "w-full rounded-xl border border-gray-200 py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
@@ -1337,46 +1643,74 @@ export default function VibeMarketingStartupBaselineSetup({
           className={clsx(
             "border-t border-gray-100 bg-white py-8",
             embedded ? "" : "px-6 lg:px-8",
-            focusSection === "baseline" && "scroll-mt-6",
+            focusSection === "baseline" && "scroll-mt-28",
           )}
         >
-          <div>
-            <p className="text-sm font-black text-violet-700">Optional baseline</p>
-            <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">Measure where the website starts</h2>
-            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Connect Google Search Console first if you want search traffic included. Then generate a baseline snapshot for technical health, SEO,
-              authority, AI visibility, and traffic before the first article goes live.
-            </p>
-          </div>
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_344px] lg:items-start">
+            <div>
+              <h2 className="text-2xl font-black tracking-normal text-gray-950 sm:text-3xl">Your website baseline</h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
+                This snapshot shows your site&apos;s current SEO and visibility before we publish your first article.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold text-gray-600">
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <Globe2 className="h-4 w-4 shrink-0 text-violet-600" />
+                  <span className="truncate text-gray-950">{baselineDomain}</span>
+                </span>
+                <span className="hidden h-4 w-px bg-gray-200 sm:block" />
+                <span>{baselineCollectedLabel === "Not collected yet" ? baselineCollectedLabel : `Collected ${baselineCollectedLabel}`}</span>
+                <BaselineStatusPill baseline={effectiveBaseline} active={baselineActive} />
+              </div>
+            </div>
 
-          <div className="mt-7 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-              <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">1</span>
+            <div className="rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm">
+              <div className="flex gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 shadow-sm">
+                  <BarChart3 className="h-6 w-6" />
+                </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                    Optional. Connect it to include clicks, impressions, and search query data in the baseline.
+                  <p className="text-sm font-black text-gray-950">Why a baseline?</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                    A baseline lets us show real growth after your articles go live. You can always re-run it later.
+                  </p>
+                  <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                    Learn more <ArrowRight className="h-4 w-4" />
                   </p>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-[1.08fr_1.08fr_.92fr]">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-700 text-sm font-black text-white shadow-sm">1</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                      Get the most accurate baseline by connecting your Search Console account.
+                    </p>
+                  </div>
+                </div>
                 {hasGoogleBaselineScopes ? (
-                  <>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-black text-emerald-700">
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      Search Console connected
-                    </span>
-                    <button
-                      type="button"
-                      onClick={refreshGoogleBaseline}
-                      disabled={!canRefreshGoogleBaseline}
-                      className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {googleBaselinePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
-                      {trafficStatus === "measured" ? "Refresh Search Console" : "Load Search Console"}
-                    </button>
-                  </>
+                  <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Connected
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                {hasGoogleBaselineScopes ? (
+                  <button
+                    type="button"
+                    onClick={refreshGoogleBaseline}
+                    disabled={!canRefreshGoogleBaseline}
+                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {googleBaselinePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                    {trafficStatus === "measured" ? "Refresh Search Console" : "Load Search Console"}
+                  </button>
                 ) : bootstrap.googleBaselineConnection?.connectUrl ? (
                   <a
                     href={bootstrap.googleBaselineConnection.connectUrl}
@@ -1394,25 +1728,23 @@ export default function VibeMarketingStartupBaselineSetup({
               </div>
             </div>
 
-            <div className="rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
-              <div className="flex items-start gap-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-black text-violet-700 shadow-sm ring-1 ring-violet-100">2</span>
-                <div className="min-w-0">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-black text-violet-700 shadow-sm">2</span>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-black text-gray-950">Generate baseline snapshot</p>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                    This can run without Search Console. Use it to compare future article growth against today&apos;s website state.
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                    We&apos;ll collect the latest data and calculate your starting metrics across SEO, visibility, and traffic.
                   </p>
-                  <p className="mt-3 text-sm font-black text-gray-950">{effectiveBaseline.domain || startupValues.domain || "No domain saved yet"}</p>
+                  <p className="mt-4 text-sm font-black text-gray-950">{baselineDomain}</p>
                   <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
-                  {effectiveBaseline.collectedAt ? (
-                    <p className="mt-1 text-xs font-semibold text-gray-500">
-                      Collected {formatStableDate(effectiveBaseline.collectedAt)}
-                      {effectiveBaseline.stale ? " · stale" : ""}
-                    </p>
-                  ) : null}
+                  <p className="mt-2 text-xs font-semibold text-gray-500">
+                    Last updated: {baselineCollectedLabel}
+                    {effectiveBaseline.stale ? " · stale" : ""}
+                  </p>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={startBaseline}
@@ -1431,6 +1763,11 @@ export default function VibeMarketingStartupBaselineSetup({
                   Skip for now
                 </button>
               </div>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <BaselineComparisonChart />
+              <p className="mt-3 text-sm font-semibold leading-6 text-gray-600">We compare future results to this baseline.</p>
             </div>
           </div>
 
@@ -1456,47 +1793,173 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           ) : null}
 
-          <div className="mt-5 grid gap-3 rounded-2xl border border-gray-100 bg-gray-50/50 p-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="rounded-xl border border-gray-200 bg-white p-4">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-black text-gray-950">Overall</p>
-                <SourceStatusBadge status={effectiveBaseline.status === "completed" ? "measured" : effectiveBaseline.status} />
-              </div>
-              <p className="mt-3 text-3xl font-black text-gray-950">
-                {typeof effectiveBaseline.overallScore === "number" ? effectiveBaseline.overallScore : "-"}
-              </p>
+          <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm" id="baseline-scorecard">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-black text-gray-950">Baseline scorecard</p>
+              <BadgeInfo className="h-4 w-4 text-gray-400" />
             </div>
-            <BaselineMetricCard label="Technical health" metric={baselineMetrics.technicalHealth} />
-            <BaselineMetricCard label="Lighthouse" metric={baselineMetrics.lighthouse} />
-            <BaselineMetricCard label="Organic search" metric={baselineMetrics.organicSearch} />
-            <BaselineMetricCard label="AI visibility" metric={baselineMetrics.aiVisibility} />
-            <BaselineMetricCard label="Authority" metric={baselineMetrics.authority} />
-            <BaselineMetricCard label="Traffic/users" metric={trafficMetric} />
-            {searchConsole?.status === "measured" && searchConsoleSummary ? (
-              <div className="rounded-xl border border-gray-200 bg-white p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <p className="text-sm font-black text-gray-950">Search Console</p>
-                  <GoogleIcon />
+            <div className="mt-4 grid gap-6 lg:grid-cols-[1.1fr_1fr_1.5fr] lg:items-center">
+              <div className="flex items-center gap-5">
+                <div>
+                  <p className="text-sm font-semibold text-gray-600">Overall baseline score</p>
+                  <div className="mt-2 flex items-end gap-2">
+                    <span className="text-5xl font-black text-gray-950">{baselineScore === null ? "-" : baselineScore}</span>
+                    <span className="pb-2 text-sm font-black text-gray-500">out of 100</span>
+                  </div>
                 </div>
-                <p className="mt-3 text-2xl font-black text-gray-950">
-                  {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.clicks) ?? 0))}
-                </p>
-                <p className="mt-1 text-xs font-semibold text-gray-500">
-                  clicks from {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.impressions) ?? 0))} impressions
+                <BaselineScoreRing score={baselineScore} tone={baselineBand.tone} />
+              </div>
+
+              <div className="border-gray-100 lg:border-l lg:pl-6">
+                <p className={clsx("text-2xl font-black", baselineBand.tone === "amber" ? "text-orange-600" : baselineBand.tone === "emerald" ? "text-emerald-600" : baselineBand.tone === "rose" ? "text-rose-600" : "text-slate-600")}>{baselineBand.label}</p>
+                <p className="mt-3 text-sm font-semibold leading-6 text-gray-600">{baselineBand.description}</p>
+                <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                  How scores are calculated <ArrowRight className="h-4 w-4" />
                 </p>
               </div>
-            ) : null}
+
+              <div className="space-y-4 border-gray-100 lg:border-l lg:pl-6">
+                {[
+                  { color: "bg-emerald-500", range: "80-100", label: "Strong", detail: "You're well positioned to rank." },
+                  { color: "bg-orange-500", range: "50-79", label: "Fair", detail: "You're on the right track with room to grow." },
+                  { color: "bg-rose-500", range: "0-49", label: "Needs work", detail: "Important areas need attention." },
+                ].map((item) => (
+                  <div key={item.range} className="grid grid-cols-[18px_70px_88px_minmax(0,1fr)] items-center gap-3 text-sm">
+                    <span className={clsx("h-3 w-3 rounded-full", item.color)} />
+                    <span className="font-semibold text-gray-700">{item.range}</span>
+                    <span className="font-black text-gray-950">{item.label}</span>
+                    <span className="min-w-0 text-xs font-semibold text-gray-500">{item.detail}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <BaselineMetricCard
+              label="Technical health"
+              metric={baselineMetrics.technicalHealth}
+              icon={Search}
+              tone="violet"
+              description="How healthy and easy your site is for search engines to crawl."
+            />
+            <BaselineMetricCard
+              label="AI visibility"
+              metric={baselineMetrics.aiVisibility}
+              icon={Sparkles}
+              tone="sky"
+              description="How often AI platforms reference your website as a source."
+              visual="ai-sources"
+            />
+            <BaselineMetricCard
+              label="Organic search"
+              metric={baselineMetrics.organicSearch}
+              icon={TrendingUp}
+              tone="emerald"
+              description="How your site performs in organic search results."
+            />
+            <BaselineMetricCard
+              label="Authority"
+              metric={baselineMetrics.authority}
+              icon={Link2}
+              tone="amber"
+              description="How trusted your site is based on backlinks and brand signals."
+              trendShape="flat"
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <BaselineMetricCard
+              label="Traffic/users"
+              metric={trafficMetric}
+              icon={Users}
+              tone="violet"
+              description="Connect Search Console to see clicks, impressions, and user metrics."
+              visual="none"
+              compact
+              action={
+                trafficStatus !== "measured" && !hasGoogleBaselineScopes && bootstrap.googleBaselineConnection?.connectUrl ? (
+                  <a
+                    href={bootstrap.googleBaselineConnection.connectUrl}
+                    className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-black text-gray-800 shadow-sm transition hover:bg-gray-50"
+                  >
+                    <GoogleIcon />
+                    Connect Search Console
+                  </a>
+                ) : undefined
+              }
+            />
+            <BaselineMetricCard
+              label="Lighthouse"
+              metric={baselineMetrics.lighthouse}
+              icon={BarChart3}
+              tone="sky"
+              description="PageSpeed Insights performance data for the site."
+              visual="none"
+              compact
+            />
+            <BaselineMetricCard
+              label="Core Web Vitals"
+              metric={coreWebVitalsMetric}
+              icon={TrendingUp}
+              tone="violet"
+              description="Core Web Vitals data is unavailable right now."
+              visual="none"
+              compact
+            />
+            <div className="rounded-xl border border-violet-100 bg-violet-50/60 p-5 shadow-sm">
+              <div className="flex items-start gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-orange-600">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-sm font-black text-gray-950">What&apos;s next?</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">We&apos;ll track these metrics over time and show the impact of each article you publish.</p>
+                </div>
+              </div>
+              <ul className="mt-4 space-y-2 text-xs font-bold text-gray-600">
+                {["Publish your first article", "We'll track changes automatically", "See your growth over time"].map((item) => (
+                  <li key={item} className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-700" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {searchConsole?.status === "measured" && searchConsoleSummary ? (
+            <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <GoogleIcon className="h-5 w-5" />
+                  <p className="text-sm font-black text-gray-950">Search Console traffic snapshot</p>
+                </div>
+                <SourceStatusBadge status="measured" />
+              </div>
+              <p className="mt-3 text-3xl font-black text-gray-950">
+                {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.clicks) ?? 0))}
+              </p>
+              <p className="mt-1 text-sm font-semibold text-gray-500">
+                clicks from {new Intl.NumberFormat("en-AU").format(Math.round(numericValue(searchConsoleSummary.impressions) ?? 0))} impressions
+              </p>
+            </div>
+          ) : null}
+
           {effectiveBaseline.recommendations?.length ? (
-            <div className="mt-5 rounded-xl border border-gray-100 bg-white p-4">
-              <p className="text-sm font-black text-gray-950">Recommended fixes</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div id="baseline-recommendations" className="mt-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-black text-gray-950">Top recommended fixes</p>
+                  <BadgeInfo className="h-4 w-4 text-gray-400" />
+                </div>
+                <p className="inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                  View all recommendations <ArrowRight className="h-4 w-4" />
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-3">
                 {effectiveBaseline.recommendations.slice(0, 4).map((recommendation, index) => (
-                  <div key={`${recommendation.title ?? recommendation.source ?? index}`} className="rounded-xl bg-gray-50 px-4 py-3">
-                    <p className="text-sm font-black text-gray-950">{String(recommendation.title ?? "Review baseline recommendation")}</p>
-                    {recommendation.detail ? <p className="mt-1 text-xs font-semibold text-gray-600">{String(recommendation.detail)}</p> : null}
-                  </div>
+                  <RecommendationCard key={`${recommendation.title ?? recommendation.source ?? index}`} recommendation={recommendation} index={index} />
                 ))}
               </div>
             </div>
