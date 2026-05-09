@@ -29,6 +29,7 @@ interface MarketingWorkflowShellProps {
   subtitle?: string;
   isSubmitting?: boolean;
   primaryActionSlot?: ReactNode;
+  topRightActionSlot?: ReactNode;
   showPrimaryAction?: boolean;
   className?: string;
 }
@@ -206,6 +207,7 @@ export default function MarketingWorkflowShell({
   subtitle,
   isSubmitting = false,
   primaryActionSlot,
+  topRightActionSlot,
   showPrimaryAction = true,
   className,
 }: MarketingWorkflowShellProps) {
@@ -219,10 +221,15 @@ export default function MarketingWorkflowShell({
   const viewingRequiredGroup = viewedGroup.id === requiredGroup.id;
   const viewedIndex = Math.max(0, displayGroups.findIndex((group) => group.id === viewedGroup.id));
   const completeCount = displayGroups.filter((group) => group.status === "complete").length;
-  const percent = Math.max(4, Math.round((completeCount / displayGroups.length) * 100));
+  const activeProgressCount = viewedGroup.status === "running" ? viewedIndex + 1 : completeCount;
+  const percent = Math.max(4, Math.round((Math.max(completeCount, activeProgressCount) / displayGroups.length) * 100));
   const headerLabel = viewingRequiredGroup
-    ? `Next required step: ${requiredGroup.label}`
-    : `Viewing: ${viewedGroup.label} - ${statusLabel(viewedGroup.status)}`;
+    ? viewedGroup.status === "running"
+      ? `Current step: ${viewedGroup.label}`
+      : `Next required step: ${requiredGroup.label}`
+    : viewedGroup.status === "running"
+      ? `Current step: ${viewedGroup.label}`
+      : `Viewing: ${viewedGroup.label} - ${statusLabel(viewedGroup.status)}`;
   const requiredNavigationAction =
     requiredGroup.primaryAction?.label
       ? {
@@ -261,7 +268,9 @@ export default function MarketingWorkflowShell({
         </div>
         {showPrimaryAction ? (
           <div className="flex flex-wrap gap-2">
-            {primaryActionSlot && viewedGroup.status !== "locked" ? (
+            {topRightActionSlot ? (
+              topRightActionSlot
+            ) : primaryActionSlot && viewedGroup.status !== "locked" ? (
               primaryActionSlot
             ) : viewingRequiredGroup ? (
               <ActionButton action={viewedGroup.primaryAction} disabled={isSubmitting} />
