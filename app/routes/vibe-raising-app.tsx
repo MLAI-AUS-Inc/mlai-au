@@ -1,4 +1,5 @@
 import type { Route } from "./+types/vibe-raising-app";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { useState } from "react";
 import {
   Outlet,
@@ -12,6 +13,7 @@ import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
+import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
   BuildingOffice2Icon,
   CircleStackIcon,
@@ -39,6 +41,13 @@ function canAccessDuringCompanySetup(pathname: string) {
 export const meta: Route.MetaFunction = () => [
   { name: "robots", content: "noindex, nofollow" },
 ];
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (shouldSkipVibeMarketingCreateRevalidation(args)) {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
+}
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);

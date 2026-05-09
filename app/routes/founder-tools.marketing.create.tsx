@@ -1,5 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
+import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -18,6 +19,7 @@ import { CustomTopicDecisionCard, TopicDecisionCard } from "~/components/TopicDe
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
+import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
   connectVibeMarketingGithub,
@@ -177,12 +179,15 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
   const bootstrap = await getVibeMarketingBootstrap(env, request);
-  const url = new URL(request.url);
-  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
-  const requestedStep = normalizeStep(url.searchParams.get("step"), activeStep);
-  return { bootstrap, activeStep, requestedStep, shouldRefreshGoogleBaseline: url.searchParams.get("googleBaseline") === "refresh" };
+  return { bootstrap };
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (shouldSkipVibeMarketingCreateRevalidation(args)) {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -455,7 +460,11 @@ function PanelHeader({
 }
 
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, activeStep, requestedStep, shouldRefreshGoogleBaseline } = useLoaderData<typeof loader>();
+  const { bootstrap } = useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
+  const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
+  const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
+  const shouldRefreshGoogleBaseline = searchParams.get("googleBaseline") === "refresh";
   const actionData = useActionData<typeof action>();
   const latestActionIntent = actionDataIntent(actionData);
   const latestActionError = actionDataError(actionData);
