@@ -207,11 +207,25 @@ export interface VibeMarketingTopicCandidate {
   writtenArticle?: VibeMarketingWrittenTopic | null;
   intent?: unknown;
   difficulty?: unknown;
+  difficultySource?: unknown;
   opportunityScore?: unknown;
   volume?: unknown;
+  volumeDisplay?: string | null;
   tier?: unknown;
   velocity?: unknown;
   aiSaturation?: unknown;
+  trendLabel?: string | null;
+  statsMeaning?: string | null;
+  whyRecommended?: string | null;
+  recommendationReason?: string | null;
+  aiVolumeDisplay?: string | null;
+  relatedKeywords?: string[];
+  paaQuestions?: Array<{
+    question: string;
+    answerSnippet?: string | null;
+    depth?: unknown;
+    hasAiOverview?: boolean;
+  }>;
 }
 
 export interface VibeMarketingTopicFeedback {

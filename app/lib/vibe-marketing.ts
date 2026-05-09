@@ -255,6 +255,19 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
 function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.target_keyword) ?? "Topic";
+  const normalizePaaQuestions = (value: unknown): VibeMarketingTopicCandidate["paaQuestions"] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : null))
+      .filter((item): item is Record<string, unknown> => Boolean(item))
+      .map((item) => ({
+        question: asNullableString(item.question) ?? "",
+        answerSnippet: asNullableString(item.answerSnippet) ?? asNullableString(item.answer_snippet),
+        depth: item.depth,
+        hasAiOverview: Boolean(item.hasAiOverview ?? item.has_ai_overview),
+      }))
+      .filter((item) => item.question);
+  };
   return {
     id: String(payload.id ?? keyword),
     keyword,
@@ -273,8 +286,10 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     writtenArticle: normalizeWrittenTopic(payload.writtenArticle ?? payload.written_article),
     intent: payload.intent,
     difficulty: payload.difficulty,
+    difficultySource: payload.difficultySource ?? payload.difficulty_source,
     opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
     volume: payload.volume,
+    volumeDisplay: asNullableString(payload.volumeDisplay) ?? asNullableString(payload.volume_display),
     tier: payload.tier,
     velocity: payload.velocity ?? payload.latestVelocity ?? payload.latest_velocity,
     aiSaturation:
@@ -282,6 +297,13 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
       payload.ai_saturation ??
       payload.latestSaturation ??
       payload.latest_saturation,
+    trendLabel: asNullableString(payload.trendLabel) ?? asNullableString(payload.trending_label),
+    statsMeaning: asNullableString(payload.statsMeaning) ?? asNullableString(payload.stats_meaning),
+    whyRecommended: asNullableString(payload.whyRecommended) ?? asNullableString(payload.why_recommended),
+    recommendationReason: asNullableString(payload.recommendationReason) ?? asNullableString(payload.recommendation_reason),
+    aiVolumeDisplay: asNullableString(payload.aiVolumeDisplay) ?? asNullableString(payload.ai_volume_display),
+    relatedKeywords: asStringList(payload.relatedKeywords ?? payload.related_keywords),
+    paaQuestions: normalizePaaQuestions(payload.paaQuestions ?? payload.paa_questions),
   };
 }
 
