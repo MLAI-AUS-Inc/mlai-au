@@ -35,6 +35,7 @@ import type {
   VibeMarketingComponentManifestItem,
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentFeedbackComment,
+  VibeMarketingBootstrap,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingWorkflowProgress,
@@ -74,6 +75,17 @@ function isArticleWorkflow(workflow: string | null | undefined) {
 
 function isArticleGenerationWorkflow(workflow: string | null | undefined) {
   return ARTICLE_GENERATION_WORKFLOWS.has(String(workflow ?? ""));
+}
+
+function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
+  if (bootstrap.settings.articleDeliveryMode === "content_only") {
+    return "content_only";
+  }
+  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
 }
 
 function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
@@ -159,7 +171,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode,
+        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
@@ -1175,6 +1187,14 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
   return "";
 }
 
+function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketingBootstrap) {
+  const runMode = stringResultValue(run, "resolved_delivery_mode", "delivery_mode", "deliveryMode");
+  if (runMode === "publish_code" || runMode === "content_only") {
+    return runMode;
+  }
+  return effectiveArticleDeliveryMode(bootstrap);
+}
+
 function hasReviewTarget(run: VibeMarketingRunSummary) {
   return Boolean(run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl"));
 }
@@ -1279,6 +1299,8 @@ export default function FounderToolsMarketingRun() {
   );
   const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run);
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
+  const deliveryMode = deliveryModeForRun(run, bootstrap);
+  const directPublishMode = deliveryMode === "publish_code";
 
   useEffect(() => {
     setPolledRun(null);
@@ -1334,11 +1356,11 @@ export default function FounderToolsMarketingRun() {
       <MarketingWorkflowShell
         progress={workflowProgress}
         viewedStepId={viewedWorkflowStepId}
-        title="Create and publish article"
+        title={directPublishMode ? "Create and publish article" : "Create article"}
         titleAs="h1"
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
-        primaryActionSlot={isArticleWorkflowRun ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        primaryActionSlot={isArticleWorkflowRun && directPublishMode ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
         activeDetailSlot={isArticleGenerationRun ? <ArticleRunStageProgress run={run} variant="embedded" /> : undefined}
         activeDetailLabel="Generating article progress"
       />
@@ -1352,7 +1374,7 @@ export default function FounderToolsMarketingRun() {
         />
       ) : null}
 
-      {isPublishApproval ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
+      {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
@@ -1367,7 +1389,7 @@ export default function FounderToolsMarketingRun() {
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
-                  <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "content_only"} />
+                  <input type="hidden" name="deliveryMode" value={effectiveArticleDeliveryMode(bootstrap)} />
                   <div className="grid gap-3">
                     {discoveryCandidates.slice(0, 5).map((candidate) => (
                       <TopicDecisionCard

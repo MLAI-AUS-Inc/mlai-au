@@ -20,7 +20,6 @@ import {
   ShieldCheck,
   Sparkles,
   ThumbsDown,
-  TrendingUp,
   Undo2,
   UserRound,
 } from "lucide-react";
@@ -79,6 +78,17 @@ function listFromForm(value: FormDataEntryValue | null) {
 
 function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
+  if (bootstrap.settings.articleDeliveryMode === "content_only") {
+    return "content_only";
+  }
+  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
 }
 
 function combineCompanyContext({
@@ -366,7 +376,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode || "publish_code",
+        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
@@ -2183,6 +2193,12 @@ function ReturningTopicPickerPage({
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? null;
+  const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
+  const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
+  const directPublishMode = effectiveDeliveryMode === "publish_code";
+  const deliveryModeNote = directPublishMode
+    ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
+    : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
@@ -2325,7 +2341,7 @@ function ReturningTopicPickerPage({
         <Form ref={articleFormRef} method="POST" onSubmit={handleArticleSubmit} className="space-y-5">
           <input type="hidden" name="intent" value="start-article" />
           <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-          <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "publish_code"} />
+          <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
           <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
           {activeTab === "choose" ? (
             <>
@@ -2340,8 +2356,11 @@ function ReturningTopicPickerPage({
               What should we write about next?
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-              Choose a topic and we&apos;ll research, write, and publish a high-performing SEO article for you.
+              {directPublishMode
+                ? "Choose a topic and we'll research, write, and prepare a high-performing SEO article for your site."
+                : "Choose a topic and we'll research, write, and package a high-performing SEO article for manual publishing."}
             </p>
+            <p className="mt-3 max-w-2xl text-sm font-bold text-slate-500">{deliveryModeNote}</p>
           </div>
 
           {error ? (
@@ -2512,34 +2531,6 @@ function ReturningTopicPickerPage({
             )}
           </section>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-violet-100 bg-violet-50/80 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <TrendingUp className="mt-1 h-8 w-8 shrink-0 text-violet-700" />
-              <div>
-                <p className="text-base font-black text-slate-950">Consistent content. Compounding results.</p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Start from researched keywords and avoid repeating topics you&apos;ve already published.
-                </p>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={articleSubmitting || (activeTab === "choose" && !selectedTopic)}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {articleSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Creating article...
-                </>
-              ) : (
-                <>
-                  Create article from topic
-                  <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </button>
-          </div>
         </Form>
 
         <aside className="space-y-5">

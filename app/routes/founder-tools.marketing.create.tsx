@@ -98,21 +98,21 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   },
   baseline: {
     why: "The baseline records current site health, search visibility, and traffic before content changes.",
-    next: "Run it or skip it for now, then connect the repository used for previews and publishing.",
+    next: "Run it or skip it for now, then connect GitHub only if you want direct website publishing.",
   },
   github: {
-    why: "Repository access lets us find the article system and prepare reviewable preview branches or PRs.",
-    next: "Choose the repo, review the permissions on GitHub, then return here to scan the article setup.",
-    safety: "Generated changes stay reviewable before publishing.",
+    why: "GitHub is optional. It lets us publish generated articles through your website repository.",
+    next: "Connect a repo for direct publishing, or continue with content-only article copy and assets.",
+    safety: "Generated changes stay reviewable before publishing when GitHub is connected.",
   },
   scan: {
-    why: "We inspect the repo so generated articles land in the right files and preview safely.",
+    why: "Repository scanning is only needed for direct website publishing.",
     next: "The scan records framework, routes, build commands, article components, and publish targets.",
     safety: "The scan does not publish changes.",
   },
   articleSystem: {
-    why: "The article system contract tells Content Factory how this website renders articles.",
-    next: "Once the contract is ready, topic research and generation can use the correct route and components.",
+    why: "The article system contract tells Content Factory how this website renders articles for direct publishing.",
+    next: "Content-only generation can continue without this setup; direct publishing uses it to write the correct files.",
     safety: "Preparation stays in setup until you explicitly generate or publish.",
   },
   research: {
@@ -133,7 +133,7 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   },
   reviewPublish: {
     why: "The package is the handoff point between reviewed content and an explicit publish action.",
-    next: "Publish to the website when ready, or inspect PR and preview evidence first.",
+    next: "If GitHub is connected, publish through the repo. Otherwise, copy or download the generated content package.",
     safety: "Package completion does not publish automatically.",
   },
   dailyAutomation: {
@@ -162,6 +162,17 @@ function createStepForWorkflowStep(stepId: string | null | undefined): VibeMarke
   return stepId ? CREATE_STEP_BY_WORKFLOW_STEP_ID[stepId] ?? null : null;
 }
 
+function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
+  if (bootstrap.settings.articleDeliveryMode === "content_only") {
+    return "content_only";
+  }
+  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
+}
+
 function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
   const requiredStep =
     createStepForWorkflowStep(bootstrap.workflowProgress?.currentStepId) ??
@@ -169,8 +180,9 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
   const requested = normalizeStep(value, requiredStep);
   const requestedWorkflowStepId = WORKFLOW_STEP_ID_BY_CREATE_STEP[requested];
   const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
+  const contentOnlyAllowedStep = ["research", "chooseArticle"].includes(requested);
 
-  if (requestedWorkflowStep?.status === "locked") {
+  if (requestedWorkflowStep?.status === "locked" && !(contentOnlyAllowedStep && bootstrap.checks.baseline?.passed && !isGithubPublishingReady(bootstrap))) {
     return requiredStep;
   }
 
@@ -341,7 +353,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode"),
+        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
@@ -510,7 +522,18 @@ export default function FounderToolsMarketingCreate() {
     () => selectableTopicCandidates.find((candidate) => candidate.id === selectedTopicCandidateId) ?? null,
     [selectableTopicCandidates, selectedTopicCandidateId],
   );
+  const isCustomArticleSelected = selectedTopicCandidateId === "__custom__";
   const selectedTopicLabel = selectedTopicCandidate?.title ?? "Custom article";
+  const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
+  const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
+  const directPublishMode = effectiveDeliveryMode === "publish_code";
+  const deliveryModeNote = directPublishMode
+    ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
+    : "This will generate article copy and images for manual publishing.";
+  const reviewDescription =
+    directPublishMode
+      ? "The run workspace shows generation status, revision controls, preview links, PR links, and publish approval."
+      : "The run workspace shows generated article copy, image assets, and revision controls for manual publishing.";
 
   useEffect(() => {
     const selectionStillValid =
@@ -559,8 +582,8 @@ export default function FounderToolsMarketingCreate() {
             <>
               <PanelHeader
                 title="Connect GitHub"
-                description="Vibe Marketing needs repository access to detect your article system and open previewable article PRs."
-                passed={Boolean(bootstrap.checks.github?.passed)}
+                description="Optional: connect GitHub to publish generated articles directly through your website repository. Without it, we will create article copy and assets for manual publishing."
+                passed={githubReadyForPublishing}
                 explainer={STEP_EXPLAINERS.github}
               />
               <Form method="POST" className="space-y-5">
@@ -584,6 +607,17 @@ export default function FounderToolsMarketingCreate() {
                   </div>
                 ) : null}
               </Form>
+              {!githubReadyForPublishing ? (
+                <div className="mt-5 rounded-xl border border-violet-100 bg-violet-50/60 p-4">
+                  <p className="text-sm font-semibold leading-6 text-gray-700">
+                    You can skip GitHub and generate a content-only article package now. GitHub is only needed when you want us to publish through your site repository.
+                  </p>
+                  <Link to="/founder-tools/marketing/create?step=chooseArticle" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-black text-violet-700 shadow-sm ring-1 ring-violet-100 transition hover:bg-violet-50">
+                    Continue with content-only article
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : null}
             </>
           ) : null}
 
@@ -591,7 +625,11 @@ export default function FounderToolsMarketingCreate() {
             <>
               <PanelHeader
                 title={activeStep === "scan" ? "Scan repository" : "Prepare article system"}
-                description="The scan detects your framework, build commands, article directories, registries, components, and safe publish targets."
+                description={
+                  githubReadyForPublishing
+                    ? "The scan detects your framework, build commands, article directories, registries, components, and safe publish targets."
+                    : "This setup is only needed for direct GitHub publishing. Content-only article generation can continue without it."
+                }
                 passed={activeStep === "scan" ? Boolean(bootstrap.checks.scan?.passed) : Boolean(bootstrap.checks.scaffold?.passed)}
                 explainer={STEP_EXPLAINERS[activeStep]}
               />
@@ -612,6 +650,17 @@ export default function FounderToolsMarketingCreate() {
                   Run repository scan
                 </button>
               </Form>
+              {!githubReadyForPublishing ? (
+                <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold leading-6 text-gray-700">
+                    Skip repository setup for now and generate article copy and images for manual publishing.
+                  </p>
+                  <Link to="/founder-tools/marketing/create?step=chooseArticle" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
+                    Continue content-only
+                    <ArrowRightIcon className="h-4 w-4" />
+                  </Link>
+                </div>
+              ) : null}
             </>
           ) : null}
 
@@ -648,7 +697,11 @@ export default function FounderToolsMarketingCreate() {
             <>
               <PanelHeader
                 title="Choose article"
-                description="Pick a discovered topic or enter a known keyword and title angle."
+                description={
+                  directPublishMode
+                    ? "Pick a discovered topic and we will prepare it for your website repository."
+                    : "Pick a discovered topic and we will generate article copy and images for manual publishing."
+                }
                 passed={Boolean(latestArticle || selectableTopicCandidates.length > 0)}
                 statusLabel={chooseArticleStatusLabel}
                 explainer={STEP_EXPLAINERS.chooseArticle}
@@ -664,6 +717,7 @@ export default function FounderToolsMarketingCreate() {
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
+                {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
                 <div className="grid gap-3">
                   {selectableTopicCandidates.length === 0 ? (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
@@ -698,52 +752,39 @@ export default function FounderToolsMarketingCreate() {
                     </div>
                   </details>
                 ) : null}
-                {bootstrap.writtenTopics.length > 0 ? (
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <div className="text-sm font-black text-gray-900">Recent written topics</div>
-                    <div className="mt-3 grid gap-2 md:grid-cols-2">
-                      {bootstrap.writtenTopics.slice(0, 6).map((topic) => (
-                        <div key={topic.id ?? `${topic.slug}:${topic.keyword}`} className="rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                          <div className="font-bold text-gray-900">{topic.title}</div>
-                          <div className="mt-1 text-xs font-semibold text-gray-500">{topic.keyword}</div>
-                          {topic.articleUrl || topic.prUrl ? (
-                            <a href={topic.articleUrl || topic.prUrl || "#"} className="mt-2 inline-flex text-xs font-black text-violet-700 underline">
-                              Open evidence
-                            </a>
-                          ) : null}
-                        </div>
-                      ))}
+                {isCustomArticleSelected ? (
+                  <>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
+                        <input name="targetKeyword" placeholder="Optional keyword override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Custom title</span>
+                        <input name="customTitle" placeholder="Optional article title override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                      </label>
                     </div>
-                  </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
+                        <select name="deliveryMode" defaultValue={effectiveDeliveryMode} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+                          <option value="publish_code">Publish code</option>
+                          <option value="content_only">Content only</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-bold text-gray-700">Article context</span>
+                      <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                    </label>
+                  </>
                 ) : null}
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
-                    <input name="targetKeyword" placeholder="Optional keyword override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Custom title</span>
-                    <input name="customTitle" placeholder="Optional article title override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                  </label>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
-                    <select name="deliveryMode" defaultValue={bootstrap.settings.articleDeliveryMode ?? "publish_code"} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
-                      <option value="publish_code">Publish code</option>
-                      <option value="content_only">Content only</option>
-                    </select>
-                  </label>
-                </div>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-gray-700">Article context</span>
-                  <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                </label>
                 <div className="sticky bottom-4 z-10 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
                       <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                      <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
@@ -758,8 +799,16 @@ export default function FounderToolsMarketingCreate() {
           {["writeCheck", "editArticle", "reviewPublish"].includes(activeStep) ? (
             <>
               <PanelHeader
-                title={activeStep === "editArticle" ? "Edit article" : activeStep === "reviewPublish" ? "Review publish" : "Write and check"}
-                description="The run workspace shows generation status, content package evidence, revision controls, preview links, PR links, and publish approval."
+                title={
+                  activeStep === "editArticle"
+                    ? "Edit article"
+                    : activeStep === "reviewPublish"
+                      ? effectiveDeliveryMode === "publish_code"
+                        ? "Review publish"
+                        : "Review content package"
+                      : "Write and check"
+                }
+                description={reviewDescription}
                 passed={
                   activeStep === "reviewPublish"
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
