@@ -303,6 +303,10 @@ export interface VibeMarketingLivePreview {
   failedPhase?: string | null;
   failedCommand?: string | null;
   logExcerpt?: string | null;
+  proofWarnings?: string[];
+  browserWarnings?: string[];
+  assetWarnings?: string[];
+  proofAttempts?: Record<string, unknown>[];
   verificationSkippedForPreview?: boolean;
   renderMode?: string | null;
   renderConfidence?: string | null;

@@ -445,6 +445,12 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     failedPhase: asNullableString(payload.failedPhase) ?? asNullableString(payload.failed_phase),
     failedCommand: asNullableString(payload.failedCommand) ?? asNullableString(payload.failed_command),
     logExcerpt: asNullableString(payload.logExcerpt) ?? asNullableString(payload.log_excerpt),
+    proofWarnings: asStringList(payload.proofWarnings ?? payload.proof_warnings),
+    browserWarnings: asStringList(payload.browserWarnings ?? payload.browser_warnings),
+    assetWarnings: asStringList(payload.assetWarnings ?? payload.asset_warnings),
+    proofAttempts: Array.isArray(payload.proofAttempts ?? payload.proof_attempts)
+      ? ((payload.proofAttempts ?? payload.proof_attempts) as Record<string, unknown>[])
+      : [],
     verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),

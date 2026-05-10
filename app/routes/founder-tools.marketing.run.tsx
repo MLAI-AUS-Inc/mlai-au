@@ -633,7 +633,18 @@ function LiveArticlePreviewPanel({
       (canRetryFailedRevisionBatch || ["submitted", "failed"].includes(String(latestBatch.status || ""))),
   );
   const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
-  const commentModeActive = Boolean(preview?.exactRender && inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
+  const commentModeActive = Boolean(inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
+  const previewWarnings = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...(preview?.proofWarnings ?? []),
+          ...(preview?.browserWarnings ?? []),
+          ...(preview?.assetWarnings ?? []),
+        ]),
+      ).slice(0, 5),
+    [preview?.assetWarnings, preview?.browserWarnings, preview?.proofWarnings],
+  );
   const sourceRunId =
     latestBatch?.sourceRunId ||
     (typeof run.result?.["source_run_id"] === "string" ? run.result["source_run_id"] : "") ||
@@ -752,6 +763,18 @@ function LiveArticlePreviewPanel({
             <p className={clsx("mt-1 text-xs font-black", commentModeActive ? "text-emerald-700" : "text-amber-700")}>
               {commentModeActive ? "Comment mode active" : "Waiting for comment bridge"}
             </p>
+            {previewWarnings.length ? (
+              <details className="mt-2 text-xs font-semibold text-amber-800">
+                <summary className="cursor-pointer font-black">Preview warnings</summary>
+                <ul className="mt-1 list-disc space-y-1 pl-4">
+                  {previewWarnings.map((warning) => (
+                    <li key={warning} className="break-words font-mono">
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
             {canAcceptRevision ? (
@@ -835,7 +858,12 @@ function ArticlePreviewEmptyState({
   const previewErrorCode = String(preview?.errorCode ?? "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
   const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
-  const retryablePreviewCodes = new Set(["clone_auth_failed", "preview_start_timeout", "preview_verification_failed"]);
+  const retryablePreviewCodes = new Set([
+    "clone_auth_failed",
+    "dev_server_startup_failed",
+    "preview_start_timeout",
+    "preview_verification_failed",
+  ]);
   const retryable = preview?.retryable !== false || retryablePreviewCodes.has(previewErrorCode);
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
   const diagnosticRows = [
