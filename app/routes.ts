@@ -52,14 +52,6 @@ export default [
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
-  route("/innovate-connect-alliance", "routes/innovate-connect-alliance.tsx", [
-    index("routes/innovate-connect-alliance.dashboard.tsx"),
-    route("team", "routes/innovate-connect-alliance.team.tsx"),
-    route("submissions", "routes/innovate-connect-alliance.submissions.tsx"),
-    route("docs", "routes/innovate-connect-alliance.docs.tsx"),
-    route("profile", "routes/innovate-connect-alliance.profile.tsx"),
-  ]),
-
   // Hackathon pages
   route("/hackathon", "routes/article-link-cleanups.tsx", { id: "cleanup-hackathon-singular" }),
   route("/hackathons", "routes/hackathons.tsx"),

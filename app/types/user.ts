@@ -27,7 +27,6 @@ export interface User {
     team?: Team | null;
     hospital_team?: Team | null;
     esafety_team?: Team | null;
-    innovate_connect_alliance_team?: Team | null;
 }
 
 export interface AuthState {
