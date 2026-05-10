@@ -85,9 +85,16 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const effective = bootstrap.settings.articleDeliveryModeEffective;
+  if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
+    return effective;
+  }
   const configured = bootstrap.settings.articleDeliveryMode;
-  if (configured === "review_draft" || configured === "content_only") {
+  if (configured === "review_draft" || configured === "publish_code") {
     return configured;
+  }
+  if (configured === "content_only" && !isGithubPublishingReady(bootstrap)) {
+    return "content_only";
   }
   return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
@@ -197,6 +204,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
         deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
+        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
@@ -826,6 +834,7 @@ function ArticlePreviewEmptyState({
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
   const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
+  const retryable = preview?.retryable !== false;
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
 
   if (failed) {
@@ -842,19 +851,28 @@ function ArticlePreviewEmptyState({
               {preview?.errorCode ? <p className="mt-2 text-xs font-black uppercase text-red-700">Preview status: {preview.errorCode}</p> : null}
             </div>
           </div>
-          <Form method="POST">
-            <input type="hidden" name="force" value="true" />
-            <button
-              type="submit"
-              name="intent"
-              value="start-live-preview"
-              disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+          {retryable ? (
+            <Form method="POST">
+              <input type="hidden" name="force" value="true" />
+              <button
+                type="submit"
+                name="intent"
+                value="start-live-preview"
+                disabled={isSubmitting}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+              >
+                {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                Retry preview
+              </button>
+            </Form>
+          ) : (
+            <Link
+              to="/founder-tools/marketing/create?step=chooseArticle"
+              className="inline-flex w-full items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 sm:w-auto"
             >
-              {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-              Retry preview
-            </button>
-          </Form>
+              Regenerate review draft
+            </Link>
+          )}
         </div>
       </section>
     );
@@ -1550,6 +1568,7 @@ export default function FounderToolsMarketingRun() {
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
                   <input type="hidden" name="deliveryMode" value={effectiveArticleDeliveryMode(bootstrap)} />
+                  <input type="hidden" name="deliveryModeExplicit" value="false" />
                   <div className="grid gap-3">
                     {discoveryCandidates.slice(0, 5).map((candidate, index) => (
                       <TopicDecisionCard

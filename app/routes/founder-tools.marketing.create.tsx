@@ -176,9 +176,16 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const effective = bootstrap.settings.articleDeliveryModeEffective;
+  if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
+    return effective;
+  }
   const configured = bootstrap.settings.articleDeliveryMode;
-  if (configured === "review_draft" || configured === "content_only") {
+  if (configured === "review_draft" || configured === "publish_code") {
     return configured;
+  }
+  if (configured === "content_only" && !isGithubPublishingReady(bootstrap)) {
+    return "content_only";
   }
   return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
@@ -364,6 +371,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
         deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
+        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
@@ -736,6 +744,7 @@ export default function FounderToolsMarketingCreate() {
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
+                {!isCustomArticleSelected ? <input type="hidden" name="deliveryModeExplicit" value="false" /> : null}
                 <TopicMetricExplainerStrip />
                 <div className="grid gap-3">
                   {selectableTopicCandidates.length === 0 ? (
@@ -778,6 +787,7 @@ export default function FounderToolsMarketingCreate() {
                 ) : null}
                 {isCustomArticleSelected ? (
                   <>
+                    <input type="hidden" name="deliveryModeExplicit" value="true" />
                     <div className="grid gap-4 lg:grid-cols-2">
                       <label className="block">
                         <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
