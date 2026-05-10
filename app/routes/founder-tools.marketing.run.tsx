@@ -151,7 +151,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         sourceRunId: stringFromForm(formData, "sourceRunId"),
       });
     } else if (intent === "start-live-preview") {
-      const result = await startVibeMarketingLivePreview(env, request, runId, { force: stringFromForm(formData, "force") === "true" });
+      const result = await startVibeMarketingLivePreview(env, request, runId, {
+        force: stringFromForm(formData, "force") === "true",
+        localRepoPath: stringFromForm(formData, "localRepoPath"),
+      });
       if (result.runId && result.runId !== runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
