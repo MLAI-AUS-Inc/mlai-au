@@ -130,23 +130,6 @@ function statusTone(status: string) {
   return "border-gray-200 bg-gray-50 text-gray-500";
 }
 
-function statusTextTone(status: string, active: boolean) {
-  if (active) return "text-violet-700";
-  if (status === "complete") return "text-emerald-700";
-  if (status === "running") return "text-violet-700";
-  if (status === "needs_action" || status === "ready") return "text-amber-700";
-  if (status === "blocked") return "text-red-700";
-  return "text-gray-400";
-}
-
-function numberBadgeTone(status: string, active: boolean) {
-  if (active || status === "running") return "bg-violet-600 text-white shadow-lg shadow-violet-200";
-  if (status === "complete") return "bg-emerald-500 text-white shadow-lg shadow-emerald-100";
-  if (status === "needs_action" || status === "ready") return "bg-orange-500 text-white shadow-lg shadow-orange-100";
-  if (status === "blocked") return "bg-red-500 text-white shadow-lg shadow-red-100";
-  return "bg-gray-200 text-gray-500";
-}
-
 function iconCircleTone(status: string, active: boolean) {
   if (active || status === "running") return "border-violet-200 bg-violet-100 text-violet-700 shadow-inner";
   if (status === "complete") return "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-inner";
@@ -155,11 +138,12 @@ function iconCircleTone(status: string, active: boolean) {
   return "border-gray-100 bg-gray-50 text-gray-400";
 }
 
-function connectorTone(group: WorkflowDisplayGroup, nextGroup: WorkflowDisplayGroup | undefined, active: boolean, nextRequired: boolean) {
-  if (group.status === "complete" && nextGroup?.status === "complete") return "border-emerald-300 text-emerald-500";
-  if (active || nextRequired || nextGroup?.status === "running") return "border-violet-300 text-violet-500";
-  if (group.status === "complete") return "border-emerald-300 text-emerald-500";
-  return "border-gray-300 text-gray-300";
+function connectorNodeTone(group: WorkflowDisplayGroup, nextGroup: WorkflowDisplayGroup | undefined, active: boolean, nextRequired: boolean) {
+  if (active || nextRequired || nextGroup?.status === "running") return "bg-violet-600";
+  if (group.status === "complete") return "bg-emerald-500";
+  if (group.status === "needs_action" || group.status === "ready") return "bg-orange-500";
+  if (group.status === "blocked") return "bg-red-500";
+  return "bg-gray-300";
 }
 
 function StepStatusIcon({ status }: { status: string }) {
@@ -336,15 +320,12 @@ export default function MarketingWorkflowShell({
           const locked = group.status === "locked";
           const Icon = group.icon;
           const nextGroup = displayGroups[index + 1];
-          const connectorClass = connectorTone(group, nextGroup, active, nextRequired);
+          const connectorNodeClass = connectorNodeTone(group, nextGroup, active, nextRequired);
           const content = (
-            <div className="relative flex h-full flex-col items-center text-center">
-              <span className={clsx("flex h-8 w-8 items-center justify-center rounded-full text-sm font-black", numberBadgeTone(group.status, active))}>
-                {index + 1}
-              </span>
+            <div className="relative flex h-full flex-col items-center justify-center text-center">
               <span
                 className={clsx(
-                  "mt-7 flex h-20 w-20 items-center justify-center rounded-full border transition",
+                  "flex h-20 w-20 items-center justify-center rounded-full border transition",
                   iconCircleTone(group.status, active),
                 )}
               >
@@ -357,24 +338,20 @@ export default function MarketingWorkflowShell({
                 )}
               </span>
               <span className="mt-7 max-w-[190px] text-lg font-black leading-6 text-gray-950">{group.label}</span>
-              <span className={clsx("mt-4 text-sm font-black", statusTextTone(group.status, active))}>
-                {statusLabel(group.status)}
-              </span>
-              {nextRequired ? (
-                <span className="mt-2 rounded-full bg-violet-100 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-violet-700">
-                  Next required
-                </span>
-              ) : null}
+              <span className="sr-only">Status: {statusLabel(group.status)}</span>
             </div>
           );
           return (
-            <li key={group.id} className="relative min-h-[268px]">
+            <li key={group.id} className="relative min-h-[220px]">
               {locked ? (
-                <div className="h-full rounded-2xl border border-gray-100 bg-white/65 px-4 py-6 opacity-80 shadow-sm">{content}</div>
+                <div className="h-full rounded-2xl border border-gray-100 bg-white/65 px-4 py-6 opacity-80 shadow-sm" aria-label={`${group.label}, ${statusLabel(group.status)}`}>
+                  {content}
+                </div>
               ) : (
                 <Link
                   to={group.href}
                   aria-current={active ? "step" : undefined}
+                  aria-label={`${group.label}, ${statusLabel(group.status)}`}
                   className={clsx(
                     "block h-full rounded-2xl border bg-white px-4 py-6 transition",
                     active
@@ -386,12 +363,12 @@ export default function MarketingWorkflowShell({
                 </Link>
               )}
               {index < displayGroups.length - 1 ? (
-                <div className={clsx("pointer-events-none absolute left-[calc(100%+0.25rem)] top-[43%] hidden w-7 items-center xl:flex", connectorClass)}>
-                  <span className="h-0 flex-1 border-t-2 border-dotted" />
-                  <span className="mx-1 flex h-6 w-6 items-center justify-center rounded-full border bg-white">
-                    <span className="h-3 w-3 rounded-full bg-current" />
+                <div className="pointer-events-none absolute left-[calc(100%+0.25rem)] top-1/2 hidden w-7 -translate-y-1/2 items-center text-gray-300 xl:flex">
+                  <span className="h-0 flex-1 border-t-2 border-dotted border-gray-300" />
+                  <span className="mx-1 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white">
+                    <span className={clsx("h-3 w-3 rounded-full", connectorNodeClass)} />
                   </span>
-                  <span className="h-0 flex-1 border-t-2 border-dotted" />
+                  <span className="h-0 flex-1 border-t-2 border-dotted border-gray-300" />
                 </div>
               ) : null}
             </li>
