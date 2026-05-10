@@ -31,11 +31,11 @@ for (const envFile of envFiles) {
   }
 }
 
-const inspectorPort =
-  process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
 const livePreviewDisableHmr = ["1", "true", "yes", "on"].includes(
   String(process.env.CF_LIVE_PREVIEW_DISABLE_HMR || "").trim().toLowerCase(),
 );
+const inspectorPort =
+  livePreviewDisableHmr || process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
 
 export default defineConfig({
   plugins: [
