@@ -442,6 +442,12 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     retryable: Boolean(payload.retryable ?? true),
     workspacePath: asNullableString(payload.workspacePath) ?? asNullableString(payload.workspace_path),
     logPath: asNullableString(payload.logPath) ?? asNullableString(payload.log_path),
+    failedPhase: asNullableString(payload.failedPhase) ?? asNullableString(payload.failed_phase),
+    failedCommand: asNullableString(payload.failedCommand) ?? asNullableString(payload.failed_command),
+    logExcerpt: asNullableString(payload.logExcerpt) ?? asNullableString(payload.log_excerpt),
+    verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
+    renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
+    renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
   };
 }
 

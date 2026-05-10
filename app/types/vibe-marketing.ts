@@ -300,6 +300,12 @@ export interface VibeMarketingLivePreview {
   retryable?: boolean;
   workspacePath?: string | null;
   logPath?: string | null;
+  failedPhase?: string | null;
+  failedCommand?: string | null;
+  logExcerpt?: string | null;
+  verificationSkippedForPreview?: boolean;
+  renderMode?: string | null;
+  renderConfidence?: string | null;
 }
 
 export type VibeMarketingComponentCommentStatus = "draft" | "submitted" | "applied" | "superseded" | string;
