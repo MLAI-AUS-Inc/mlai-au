@@ -82,11 +82,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
-function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
-  if (bootstrap.settings.articleDeliveryMode === "content_only") {
-    return "content_only";
+type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const configured = bootstrap.settings.articleDeliveryMode;
+  if (configured === "review_draft" || configured === "content_only") {
+    return configured;
   }
-  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
+  return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
 function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
@@ -151,10 +154,14 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         sourceRunId: stringFromForm(formData, "sourceRunId"),
       });
     } else if (intent === "start-live-preview") {
-      const result = await startVibeMarketingLivePreview(env, request, runId, { force: stringFromForm(formData, "force") === "true" });
-      if (result.runId && result.runId !== runId) {
-        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      const run = await startVibeMarketingLivePreview(env, request, runId, {
+        force: stringFromForm(formData, "force") === "true",
+        localRepoPath: stringFromForm(formData, "localRepoPath"),
+      });
+      if (run.runId && run.runId !== runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
       }
+      return { ok: true, run };
     } else if (intent === "cancel-article") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
@@ -832,6 +839,7 @@ function ArticlePreviewEmptyState({
               <p className="mt-1 font-semibold">
                 {preview?.error || "The article preview could not be prepared. Retry the preview when the generator is available."}
               </p>
+              {preview?.errorCode ? <p className="mt-2 text-xs font-black uppercase text-red-700">Preview status: {preview.errorCode}</p> : null}
             </div>
           </div>
           <Form method="POST">
@@ -1311,7 +1319,7 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
 
 function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketingBootstrap) {
   const runMode = stringResultValue(run, "resolved_delivery_mode", "delivery_mode", "deliveryMode");
-  if (runMode === "publish_code" || runMode === "content_only") {
+  if (runMode === "review_draft" || runMode === "publish_code" || runMode === "content_only") {
     return runMode;
   }
   return effectiveArticleDeliveryMode(bootstrap);
@@ -1454,6 +1462,14 @@ export default function FounderToolsMarketingRun() {
   }, [loaderRun.runId, runStatusFetcher.data, runStatusFetcher.state]);
 
   useEffect(() => {
+    const data = previewStartFetcher.data;
+    const nextRun = data && typeof data === "object" && "run" in data ? (data.run as VibeMarketingRunSummary) : null;
+    if (nextRun?.runId === loaderRun.runId) {
+      setPolledRun(nextRun);
+    }
+  }, [loaderRun.runId, previewStartFetcher.data]);
+
+  useEffect(() => {
     if (!isDiscoveryConfirmation) return;
     const firstCandidateId = discoveryCandidates[0]?.id ?? "";
     const selectionStillValid = discoveryCandidates.some((candidate) => candidate.id === selectedDiscoveryCandidateId);
@@ -1511,7 +1527,7 @@ export default function FounderToolsMarketingRun() {
               run={run}
               selectedComponent={selectedComponent}
               onSelectComponent={setSelectedComponent}
-              isSubmitting={isSubmitting}
+              isSubmitting={isSubmitting || previewStartFetcher.state !== "idle"}
             />
           ) : undefined
         }

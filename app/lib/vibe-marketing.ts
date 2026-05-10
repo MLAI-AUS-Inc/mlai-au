@@ -185,7 +185,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       articleDeliveryMode:
         asNullableString(settings.articleDeliveryMode) ??
         asNullableString(settings.article_delivery_mode) ??
-        "publish_code",
+        "review_draft",
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,
@@ -434,6 +434,8 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
     inspectorMode: asNullableString(payload.inspectorMode) ?? asNullableString(payload.inspector_mode),
     error: asNullableString(payload.error),
+    errorCode: asNullableString(payload.errorCode) ?? asNullableString(payload.error_code),
+    retryable: Boolean(payload.retryable ?? true),
     workspacePath: asNullableString(payload.workspacePath) ?? asNullableString(payload.workspace_path),
     logPath: asNullableString(payload.logPath) ?? asNullableString(payload.log_path),
   };
@@ -637,7 +639,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   settings: {
     brandName: null,
     companyContext: null,
-    articleDeliveryMode: "publish_code",
+    articleDeliveryMode: "review_draft",
     githubRepo: null,
     dailyDiscoveryEnabled: false,
     githubConnectionState: null,
