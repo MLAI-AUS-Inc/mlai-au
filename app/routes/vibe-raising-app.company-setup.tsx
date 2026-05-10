@@ -105,7 +105,7 @@ function emptyBootstrap(profile: VibeRaisingProfile | null, company: VibeRaising
     settings: {
       brandName: companyName || null,
       companyContext: null,
-      articleDeliveryMode: "publish_code",
+      articleDeliveryMode: "review_draft",
       githubRepo: null,
       dailyDiscoveryEnabled: false,
       dailyDiscoveryPriority: 0,

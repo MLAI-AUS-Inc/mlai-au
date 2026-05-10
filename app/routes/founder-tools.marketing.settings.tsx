@@ -129,7 +129,8 @@ export default function FounderToolsMarketingSettings() {
           </label>
           <label className="block">
             <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
-            <select name="articleDeliveryMode" defaultValue={bootstrap.settings.articleDeliveryMode ?? "publish_code"} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+            <select name="articleDeliveryMode" defaultValue={bootstrap.settings.articleDeliveryMode ?? "review_draft"} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+              <option value="review_draft">Review draft first</option>
               <option value="publish_code">Publish code</option>
               <option value="content_only">Content only</option>
             </select>

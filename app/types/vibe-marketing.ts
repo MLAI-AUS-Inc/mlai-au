@@ -295,6 +295,8 @@ export interface VibeMarketingLivePreview {
   inspectorProtocolVersion?: number | null;
   inspectorMode?: string | null;
   error?: string | null;
+  errorCode?: string | null;
+  retryable?: boolean;
   workspacePath?: string | null;
   logPath?: string | null;
 }

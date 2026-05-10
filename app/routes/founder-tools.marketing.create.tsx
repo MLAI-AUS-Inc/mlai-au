@@ -173,11 +173,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
-function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
-  if (bootstrap.settings.articleDeliveryMode === "content_only") {
-    return "content_only";
+type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const configured = bootstrap.settings.articleDeliveryMode;
+  if (configured === "review_draft" || configured === "content_only") {
+    return configured;
   }
-  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
+  return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
 function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
@@ -528,13 +531,18 @@ export default function FounderToolsMarketingCreate() {
   const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
   const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
   const directPublishMode = effectiveDeliveryMode === "publish_code";
+  const reviewDraftMode = effectiveDeliveryMode === "review_draft";
   const deliveryModeNote = directPublishMode
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
-    : "This will generate article copy and images for manual publishing.";
+    : reviewDraftMode
+      ? "This will generate an article preview for comments before publishing."
+      : "This will generate article copy and images for manual publishing.";
   const reviewDescription =
     directPublishMode
       ? "The run workspace shows generation status, revision controls, preview links, PR links, and publish approval."
-      : "The run workspace shows generated article copy, image assets, and revision controls for manual publishing.";
+      : reviewDraftMode
+        ? "The run workspace shows the generated article preview, component comments, and AI revision controls before publishing."
+        : "The run workspace shows generated article copy, image assets, and revision controls for manual publishing.";
 
   useEffect(() => {
     const selectionStillValid =
@@ -784,6 +792,7 @@ export default function FounderToolsMarketingCreate() {
                       <label className="block">
                         <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
                         <select name="deliveryMode" defaultValue={effectiveDeliveryMode} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+                          <option value="review_draft">Review draft first</option>
                           <option value="publish_code">Publish code</option>
                           <option value="content_only">Content only</option>
                         </select>
@@ -826,6 +835,8 @@ export default function FounderToolsMarketingCreate() {
                     : activeStep === "reviewPublish"
                       ? effectiveDeliveryMode === "publish_code"
                         ? "Review publish"
+                        : effectiveDeliveryMode === "review_draft"
+                          ? "Review draft"
                         : "Review content package"
                       : "Write and check"
                 }

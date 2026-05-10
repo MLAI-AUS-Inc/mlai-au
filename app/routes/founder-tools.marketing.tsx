@@ -84,11 +84,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
-function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap) {
-  if (bootstrap.settings.articleDeliveryMode === "content_only") {
-    return "content_only";
+type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const configured = bootstrap.settings.articleDeliveryMode;
+  if (configured === "review_draft" || configured === "content_only") {
+    return configured;
   }
-  return isGithubPublishingReady(bootstrap) ? "publish_code" : "content_only";
+  return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
 function combineCompanyContext({
@@ -135,7 +138,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     settings: {
       brandName: companyName || null,
       companyContext: null,
-      articleDeliveryMode: "publish_code",
+      articleDeliveryMode: "review_draft",
       githubRepo: null,
       dailyDiscoveryEnabled: false,
       githubConnectionState: null,
@@ -2200,7 +2203,9 @@ function ReturningTopicPickerPage({
   const directPublishMode = effectiveDeliveryMode === "publish_code";
   const deliveryModeNote = directPublishMode
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
-    : "This will generate article copy and images for manual publishing.";
+    : effectiveDeliveryMode === "review_draft"
+      ? "This will generate an article preview for comments before publishing."
+      : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
