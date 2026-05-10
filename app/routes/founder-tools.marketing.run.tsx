@@ -835,9 +835,14 @@ function ArticlePreviewEmptyState({
   const previewErrorCode = String(preview?.errorCode ?? "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
   const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
-  const retryablePreviewCodes = new Set(["clone_auth_failed", "preview_start_timeout"]);
+  const retryablePreviewCodes = new Set(["clone_auth_failed", "preview_start_timeout", "preview_verification_failed"]);
   const retryable = preview?.retryable !== false || retryablePreviewCodes.has(previewErrorCode);
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
+  const diagnosticRows = [
+    preview?.failedPhase ? ["Phase", preview.failedPhase] : null,
+    preview?.failedCommand ? ["Command", preview.failedCommand] : null,
+  ].filter((row): row is [string, string] => Boolean(row));
+  const logExcerpt = String(preview?.logExcerpt ?? "").trim();
 
   if (failed) {
     return (
@@ -851,6 +856,21 @@ function ArticlePreviewEmptyState({
                 {preview?.error || "The article preview could not be prepared. Retry the preview when the generator is available."}
               </p>
               {preview?.errorCode ? <p className="mt-2 text-xs font-black uppercase text-red-700">Preview status: {preview.errorCode}</p> : null}
+              {diagnosticRows.length ? (
+                <dl className="mt-3 grid gap-1 text-xs font-semibold text-red-900">
+                  {diagnosticRows.map(([label, value]) => (
+                    <div key={label} className="grid gap-1 sm:grid-cols-[5rem_1fr]">
+                      <dt className="font-black uppercase text-red-700">{label}</dt>
+                      <dd className="break-words font-mono">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              ) : null}
+              {logExcerpt ? (
+                <pre className="mt-3 max-h-44 overflow-auto whitespace-pre-wrap rounded-lg border border-red-200 bg-white/75 p-3 font-mono text-[11px] leading-relaxed text-red-950">
+                  {logExcerpt}
+                </pre>
+              ) : null}
             </div>
           </div>
           {retryable ? (
