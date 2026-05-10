@@ -163,6 +163,7 @@ export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
   articleDeliveryMode?: string | null;
+  articleDeliveryModeEffective?: string | null;
   githubRepo?: string | null;
   dailyDiscoveryEnabled: boolean;
   dailyDiscoveryPriority?: number | null;

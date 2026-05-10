@@ -186,6 +186,10 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
         asNullableString(settings.articleDeliveryMode) ??
         asNullableString(settings.article_delivery_mode) ??
         "review_draft",
+      articleDeliveryModeEffective:
+        asNullableString(settings.articleDeliveryModeEffective) ??
+        asNullableString(settings.article_delivery_mode_effective) ??
+        null,
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,
@@ -640,6 +644,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
     brandName: null,
     companyContext: null,
     articleDeliveryMode: "review_draft",
+    articleDeliveryModeEffective: "review_draft",
     githubRepo: null,
     dailyDiscoveryEnabled: false,
     githubConnectionState: null,
