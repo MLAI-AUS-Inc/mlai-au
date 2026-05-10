@@ -291,6 +291,8 @@ export interface VibeMarketingLivePreview {
   available: boolean;
   status: string;
   previewUrl?: string | null;
+  internalPreviewUrl?: string | null;
+  proxyPath?: string | null;
   routePath?: string | null;
   exactRender?: boolean;
   inspectorProtocolVersion?: number | null;
