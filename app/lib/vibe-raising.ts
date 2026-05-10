@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
@@ -1402,7 +1403,7 @@ export function getVibeRaisingLoginHref(
   nextOverride?: string,
 ): string {
   const url = new URL(request.url);
-  const next = nextOverride ?? `${url.pathname}${url.search}`;
+  const next = normalizeAuthNextForApp("founder-tools", nextOverride ?? `${url.pathname}${url.search}`);
   const params = new URLSearchParams({
     app: "founder-tools",
     next,
