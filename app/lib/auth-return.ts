@@ -1,7 +1,6 @@
 export type AuthReturnAppName =
   | "esafety"
   | "hospital"
-  | "innovate-connect-alliance"
   | "founder-tools"
   | "vibe-raising";
 
@@ -26,7 +25,6 @@ function pathWithSearchAndHash(url: URL) {
 export function getDefaultAuthNext(app: AuthReturnAppName | string | null | undefined, fallback = "/hackathons"): string {
   if (app === "hospital") return "/hospital/app";
   if (app === "esafety") return "/esafety/dashboard";
-  if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
   if (isFounderToolsApp(app)) return "/founder-tools";
   return fallback;
 }

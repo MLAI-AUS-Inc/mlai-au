@@ -29,11 +29,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
                 description: "Develop AI solutions for online safety."
             },
             {
-                name: "Innovate Connect Alliance",
-                slug: "innovate-connect-alliance",
-                description: "Collaborate, build, and submit a team video."
-            },
-            {
                 name: "AI Hospital Hackathon",
                 slug: "ai-hospital",
                 description: "AI in healthcare."
@@ -86,14 +81,6 @@ export default function PlatformDashboard() {
                                 {h.slug === "esafety" && (
                                     <a
                                         href="/esafety/dashboard"
-                                        className="relative inline-flex items-center rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 z-10"
-                                    >
-                                        Open App
-                                    </a>
-                                )}
-                                {h.slug === "innovate-connect-alliance" && (
-                                    <a
-                                        href="/innovate-connect-alliance"
                                         className="relative inline-flex items-center rounded-full bg-teal-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-teal-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal-500 z-10"
                                     >
                                         Open App
