@@ -832,9 +832,11 @@ function ArticlePreviewEmptyState({
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
+  const previewErrorCode = String(preview?.errorCode ?? "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
   const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
-  const retryable = preview?.retryable !== false;
+  const retryablePreviewCodes = new Set(["clone_auth_failed", "preview_start_timeout"]);
+  const retryable = preview?.retryable !== false || retryablePreviewCodes.has(previewErrorCode);
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
 
   if (failed) {
