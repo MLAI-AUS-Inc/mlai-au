@@ -433,6 +433,8 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     available: Boolean(payload.available),
     status,
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    internalPreviewUrl: asNullableString(payload.internalPreviewUrl) ?? asNullableString(payload.internal_preview_url),
+    proxyPath: asNullableString(payload.proxyPath) ?? asNullableString(payload.proxy_path),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
     exactRender: Boolean(payload.exactRender ?? payload.exact_render),
     inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
