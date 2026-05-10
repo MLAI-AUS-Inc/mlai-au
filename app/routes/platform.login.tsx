@@ -6,44 +6,13 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
+import { normalizeAuthNextForApp } from "~/lib/auth-return";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
     { name: "description", content: "Sign in to your MLAI account to access the community platform, event dashboards, and tools for Australia's AI and Machine Learning community." },
     { name: "robots", content: "noindex, nofollow" },
 ];
-
-function getDefaultNext(app: AuthAppName | null | undefined): string {
-    if (app === "hospital") return "/hospital/app";
-    if (app === "esafety") return "/esafety/dashboard";
-    if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
-    if (app === "founder-tools" || app === "vibe-raising") return "/founder-tools";
-    return "/hackathons";
-}
-
-const LEGACY_FOUNDER_NEXT_PATHS: Record<string, string> = {
-    "/vibe-raising": "/founder-tools",
-    "/vibe-raising/": "/founder-tools",
-    "/vibe-raising/create-update": "/founder-tools/updates/create",
-    "/vibe-raising/connect-data": "/founder-tools/data-sources",
-    "/vibe-raising/companies": "/founder-tools/companies",
-    "/vibe-raising/company-setup": "/founder-tools/company-setup",
-    "/vibe-raising/discover": "/founder-tools/updates",
-};
-
-function normalizeNextForApp(app: AuthAppName | null | undefined, nextValue: string | null | undefined): string {
-    const fallback = getDefaultNext(app);
-    const next = nextValue?.trim() || fallback;
-
-    if (!next.startsWith("/") || next.startsWith("//")) return fallback;
-    if (app !== "founder-tools" && app !== "vibe-raising") return next;
-
-    const target = new URL(next, "https://mlai.local");
-    const mappedPath = LEGACY_FOUNDER_NEXT_PATHS[target.pathname];
-    if (mappedPath) return `${mappedPath}${target.search}${target.hash}`;
-    if (target.pathname.startsWith("/vibe-raising/")) return `/founder-tools/updates${target.search}${target.hash}`;
-    return next;
-}
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
@@ -84,7 +53,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
     const app = parseAuthApp(url.searchParams.get("app"));
-    const next = normalizeNextForApp(app, url.searchParams.get("next"));
+    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback: "/hackathons" });
     let user = null;
 
     try {
@@ -105,7 +74,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString() ?? "check";
     const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
-    const next = normalizeNextForApp(app ?? null, formData.get("next")?.toString());
+    const next = normalizeAuthNextForApp(app ?? null, formData.get("next")?.toString(), { fallback: "/hackathons" });
     const email = String(formData.get("email") || "").trim();
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
@@ -163,7 +132,7 @@ export default function PlatformLogin() {
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
     const isFounderTools = app === "founder-tools";
-    const next = normalizeNextForApp(app, searchParams.get("next"));
+    const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: "/hackathons" });
     const error = searchParams.get("error");
     const submit = useSubmit();
 
