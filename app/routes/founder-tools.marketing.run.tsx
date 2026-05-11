@@ -1117,6 +1117,15 @@ function ArticlePreviewEmptyState({
     failedCommand ? ["Command", failedCommand] : null,
   ].filter((row): row is [string, string] => Boolean(row));
   const logExcerpt = String(preview?.logExcerpt || nativePreviewFailure.logExcerpt || nativePreviewFailure.log_excerpt || "").trim();
+  const buildLogsUrl = String(
+    preview?.builderRunUrl ||
+      nativePreviewFailure.builderRunUrl ||
+      nativePreviewFailure.builder_run_url ||
+      preview?.logsUrl ||
+      nativePreviewFailure.logsUrl ||
+      nativePreviewFailure.logs_url ||
+      "",
+  ).trim();
 
   if (failed) {
     return (
@@ -1137,6 +1146,16 @@ function ArticlePreviewEmptyState({
                     </div>
                   ))}
                 </dl>
+              ) : null}
+              {buildLogsUrl ? (
+                <a
+                  href={buildLogsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-3 inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-black text-red-800 shadow-sm transition hover:bg-red-100"
+                >
+                  Open preview build logs
+                </a>
               ) : null}
               {logExcerpt ? (
                 <pre className="mt-3 max-h-44 overflow-auto whitespace-pre-wrap rounded-lg border border-red-200 bg-white/75 p-3 font-mono text-[11px] leading-relaxed text-red-950">
