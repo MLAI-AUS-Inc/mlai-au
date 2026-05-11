@@ -314,6 +314,14 @@ export interface VibeMarketingLivePreview {
   previewMode?: string | null;
   renderMode?: string | null;
   renderConfidence?: string | null;
+  fallbackReason?: string | null;
+  nativePreviewFailure?: Record<string, unknown>;
+  visualFallback?: {
+    cssSources?: string[];
+    cssWarnings?: string[];
+    assetProxyEnabled?: boolean;
+    mockedRoutes?: string[];
+  } | Record<string, unknown> | null;
 }
 
 export type VibeMarketingComponentCommentStatus = "draft" | "submitted" | "applied" | "superseded" | string;

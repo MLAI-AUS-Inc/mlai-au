@@ -62,6 +62,10 @@ function asStringRecord(value: unknown): Record<string, string> {
   return Object.fromEntries(entries);
 }
 
+function asObjectRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
 function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCommentAnchor | null {
   const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -458,6 +462,9 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
+    fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
+    nativePreviewFailure: asObjectRecord(payload.nativePreviewFailure ?? payload.native_preview_failure),
+    visualFallback: asObjectRecord(payload.visualFallback ?? payload.visual_fallback),
   };
 }
 
