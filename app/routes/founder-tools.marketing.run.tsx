@@ -109,16 +109,36 @@ function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
   );
 }
 
+function isFailedArticlePreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
+  const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
+  return Boolean(
+    preview?.error ||
+      previewStatus === "failed" ||
+      previewStatus === "blocked" ||
+      platformStatus === "failed" ||
+      platformStatus === "blocked",
+  );
+}
+
 function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow) || !run.componentManifest || hasReadyArticlePreview(run)) {
     return false;
   }
   const preview = run.livePreview;
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
-  if (preview?.error || previewStatus === "failed" || previewStatus === "blocked") {
+  const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
+  if (isFailedArticlePreview(preview)) {
     return false;
   }
-  return run.status === "completed" || previewStatus === "running" || previewStatus === "starting";
+  return (
+    run.status === "completed" ||
+    previewStatus === "running" ||
+    previewStatus === "starting" ||
+    platformStatus === "queued" ||
+    platformStatus === "building" ||
+    platformStatus === "running"
+  );
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -1054,10 +1074,22 @@ function ArticlePreviewEmptyState({
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
-  const previewErrorCode = String(preview?.errorCode ?? "").trim().toLowerCase();
+  const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
+  const nativePreviewFailure =
+    preview?.nativePreviewFailure && typeof preview.nativePreviewFailure === "object"
+      ? (preview.nativePreviewFailure as Record<string, unknown>)
+      : {};
+  const nativeError = typeof nativePreviewFailure.error === "string" ? nativePreviewFailure.error.trim() : "";
+  const nativeErrorCode =
+    typeof nativePreviewFailure.errorCode === "string"
+      ? nativePreviewFailure.errorCode.trim()
+      : typeof nativePreviewFailure.error_code === "string"
+        ? nativePreviewFailure.error_code.trim()
+        : "";
+  const previewErrorCode = String(preview?.errorCode || nativeErrorCode || "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
   const hostedPreview = preview?.previewMode === "platform_deployment";
-  const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
+  const failed = isFailedArticlePreview(preview);
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
@@ -1069,13 +1101,20 @@ function ArticlePreviewEmptyState({
     "preview_verification_failed",
     "unsupported_runtime_for_v1",
   ]);
-  const retryable = preview?.retryable !== false || retryablePreviewCodes.has(previewErrorCode);
+  const nativeRetryable = typeof nativePreviewFailure.retryable === "boolean" ? nativePreviewFailure.retryable : undefined;
+  const retryable = preview?.retryable !== false && nativeRetryable !== false ? true : retryablePreviewCodes.has(previewErrorCode);
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
+  const failedPhase = String(preview?.failedPhase || nativePreviewFailure.failedPhase || nativePreviewFailure.failed_phase || "").trim();
+  const failedCommand = String(
+    preview?.failedCommand || nativePreviewFailure.failedCommand || nativePreviewFailure.failed_command || "",
+  ).trim();
+  const displayError =
+    String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
   const diagnosticRows = [
-    preview?.failedPhase ? ["Phase", preview.failedPhase] : null,
-    preview?.failedCommand ? ["Command", preview.failedCommand] : null,
+    failedPhase ? ["Phase", failedPhase] : null,
+    failedCommand ? ["Command", failedCommand] : null,
   ].filter((row): row is [string, string] => Boolean(row));
-  const logExcerpt = String(preview?.logExcerpt ?? "").trim();
+  const logExcerpt = String(preview?.logExcerpt || nativePreviewFailure.logExcerpt || nativePreviewFailure.log_excerpt || "").trim();
 
   if (failed) {
     return (
@@ -1085,10 +1124,8 @@ function ArticlePreviewEmptyState({
             <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 flex-shrink-0" />
             <div>
               <h2 className="text-base font-black text-red-950">Preview failed</h2>
-              <p className="mt-1 font-semibold">
-                {preview?.error || "The article preview could not be prepared. Retry the preview when the generator is available."}
-              </p>
-              {preview?.errorCode ? <p className="mt-2 text-xs font-black uppercase text-red-700">Preview status: {preview.errorCode}</p> : null}
+              <p className="mt-1 font-semibold">{displayError}</p>
+              {previewErrorCode ? <p className="mt-2 text-xs font-black uppercase text-red-700">Preview status: {previewErrorCode}</p> : null}
               {diagnosticRows.length ? (
                 <dl className="mt-3 grid gap-1 text-xs font-semibold text-red-900">
                   {diagnosticRows.map(([label, value]) => (
@@ -1148,7 +1185,7 @@ function ArticlePreviewEmptyState({
                 : "The article is ready for review. We are preparing the exact website preview and comment layer."}
             </p>
             <p className="mt-2 text-xs font-black uppercase tracking-wide text-violet-700">
-              Preview status: {preview?.platformStatus || statusLabel}
+              Preview status: {platformStatus || statusLabel}
             </p>
           </div>
         </div>
@@ -1760,7 +1797,7 @@ export default function FounderToolsMarketingRun() {
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
-  const previewFailed = Boolean(run.livePreview?.error || previewStatus === "failed" || previewStatus === "blocked");
+  const previewFailed = isFailedArticlePreview(run.livePreview);
   const shouldAutoStartPreview = Boolean(
     isArticleGenerationRun &&
       run.status === "completed" &&
