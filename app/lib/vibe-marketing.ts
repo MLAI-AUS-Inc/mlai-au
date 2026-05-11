@@ -453,7 +453,9 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     proofAttempts: Array.isArray(payload.proofAttempts ?? payload.proof_attempts)
       ? ((payload.proofAttempts ?? payload.proof_attempts) as Record<string, unknown>[])
       : [],
+    proofAcceptedWithWarnings: Boolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
     verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
+    previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
   };

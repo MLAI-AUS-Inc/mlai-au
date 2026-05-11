@@ -309,7 +309,9 @@ export interface VibeMarketingLivePreview {
   browserWarnings?: string[];
   assetWarnings?: string[];
   proofAttempts?: Record<string, unknown>[];
+  proofAcceptedWithWarnings?: boolean;
   verificationSkippedForPreview?: boolean;
+  previewMode?: string | null;
   renderMode?: string | null;
   renderConfidence?: string | null;
 }
