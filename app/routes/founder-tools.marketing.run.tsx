@@ -635,15 +635,35 @@ function LiveArticlePreviewPanel({
   const canSendRevisionRequest = draftComments.length > 0 || canRetrySubmittedBatch;
   const commentModeActive = Boolean(inspectorProtocolVersion && inspectorProtocolVersion >= 2 && inspectorMode === "comment");
   const previewWarnings = useMemo(
-    () =>
-      Array.from(
+    () => {
+      const visualFallback =
+        preview?.visualFallback && typeof preview.visualFallback === "object"
+          ? (preview.visualFallback as Record<string, unknown>)
+          : {};
+      const nativePreviewFailure =
+        preview?.nativePreviewFailure && typeof preview.nativePreviewFailure === "object"
+          ? (preview.nativePreviewFailure as Record<string, unknown>)
+          : {};
+      const cssWarnings = Array.isArray(visualFallback.cssWarnings)
+        ? visualFallback.cssWarnings.map((warning) => String(warning ?? "").trim()).filter(Boolean)
+        : [];
+      const nativeFailure = typeof nativePreviewFailure.error === "string" ? nativePreviewFailure.error.trim() : "";
+      return Array.from(
         new Set([
+          ...(preview?.previewMode === "visual_static_fallback"
+            ? [
+                "Visual fallback preview: layout and content are reviewable, but production runtime behavior was not fully reproduced.",
+              ]
+            : []),
           ...(preview?.proofWarnings ?? []),
           ...(preview?.browserWarnings ?? []),
           ...(preview?.assetWarnings ?? []),
+          ...cssWarnings,
+          ...(nativeFailure ? [`Native preview failed: ${nativeFailure}`] : []),
         ]),
-      ).slice(0, 5),
-    [preview?.assetWarnings, preview?.browserWarnings, preview?.proofWarnings],
+      ).slice(0, 8);
+    },
+    [preview],
   );
   const sourceRunId =
     latestBatch?.sourceRunId ||
