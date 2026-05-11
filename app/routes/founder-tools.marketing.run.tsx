@@ -177,10 +177,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
     } else if (intent === "accept-component-revision") {
-      await acceptVibeMarketingComponentRevision(env, request, runId, {
+      const sourceRunId = stringFromForm(formData, "sourceRunId");
+      const result = await acceptVibeMarketingComponentRevision(env, request, runId, {
         batchId: stringFromForm(formData, "batchId"),
-        sourceRunId: stringFromForm(formData, "sourceRunId"),
+        sourceRunId,
       });
+      const nextRunId = sourceRunId || result.runId;
+      if (nextRunId && nextRunId !== runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
+      }
     } else if (intent === "start-live-preview") {
       const run = await startVibeMarketingLivePreview(env, request, runId, {
         force: stringFromForm(formData, "force") === "true",
@@ -824,6 +829,12 @@ function LiveArticlePreviewPanel({
   const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
   const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
   const latestBatch = run.componentFeedback?.latestBatch ?? null;
+  const latestBatchStatus = String(latestBatch?.status ?? "");
+  const hasPendingRevisionBatch = Boolean(
+    latestBatch?.id &&
+      ["submitted", "running", "failed"].includes(latestBatchStatus) &&
+      !latestBatch.revisionRunId,
+  );
   const canRetryFailedRevisionBatch = Boolean(
     latestBatch?.id && run.workflow === "article_revision" && run.status === "failed" && draftComments.length === 0,
   );
@@ -879,6 +890,18 @@ function LiveArticlePreviewPanel({
     run.status === "completed" &&
     latestBatch?.status !== "accepted" &&
     Boolean(batchId);
+  const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
+  const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
+  const canAcceptArticleForPublish = Boolean(
+    run.status === "completed" &&
+      run.contentPackage?.contentPackaged &&
+      canRenderPreview &&
+      draftComments.length === 0 &&
+      !canAcceptRevision &&
+      !hasPendingRevisionBatch &&
+      publishStep?.status === "ready" &&
+      acceptArticleIntent,
+  );
   const previewMessageOrigin = useMemo(() => previewOriginFromUrl(preview?.previewUrl), [preview?.previewUrl]);
 
   const sendInspectorCommand = useCallback((message: Record<string, unknown>) => {
@@ -1011,6 +1034,20 @@ function LiveArticlePreviewPanel({
             ) : null}
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
+            {canAcceptArticleForPublish ? (
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value={acceptArticleIntent}
+                  disabled={isSubmitting}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  Accept article and continue
+                </button>
+              </Form>
+            ) : null}
             {canAcceptRevision ? (
               <Form method="POST">
                 <input type="hidden" name="intent" value="accept-component-revision" />
