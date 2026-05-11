@@ -496,6 +496,16 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
     nativePreviewFailure: asObjectRecord(payload.nativePreviewFailure ?? payload.native_preview_failure),
     visualFallback: asObjectRecord(payload.visualFallback ?? payload.visual_fallback),
+    platformProvider: asNullableString(payload.platformProvider) ?? asNullableString(payload.platform_provider),
+    platformStatus: asNullableString(payload.platformStatus) ?? asNullableString(payload.platform_status),
+    deploymentId: asNullableString(payload.deploymentId) ?? asNullableString(payload.deployment_id),
+    deploymentUrl: asNullableString(payload.deploymentUrl) ?? asNullableString(payload.deployment_url),
+    routeUrl: asNullableString(payload.routeUrl) ?? asNullableString(payload.route_url),
+    logsUrl: asNullableString(payload.logsUrl) ?? asNullableString(payload.logs_url),
+    commitSha: asNullableString(payload.commitSha) ?? asNullableString(payload.commit_sha),
+    branchName: asNullableString(payload.branchName) ?? asNullableString(payload.branch_name),
+    builderWorkflow: asNullableString(payload.builderWorkflow) ?? asNullableString(payload.builder_workflow),
+    builderRunUrl: asNullableString(payload.builderRunUrl) ?? asNullableString(payload.builder_run_url),
   };
 }
 

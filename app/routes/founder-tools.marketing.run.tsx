@@ -1056,14 +1056,18 @@ function ArticlePreviewEmptyState({
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
   const previewErrorCode = String(preview?.errorCode ?? "").trim().toLowerCase();
   const hasManifest = Boolean(run.componentManifest);
+  const hostedPreview = preview?.previewMode === "platform_deployment";
   const failed = Boolean(preview?.error || previewStatus === "failed" || previewStatus === "blocked");
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
+    "platform_preview_dispatch_failed",
+    "platform_preview_failed",
     "preview_proof_failed",
     "preview_runtime_failed",
     "preview_start_timeout",
     "preview_verification_failed",
+    "unsupported_runtime_for_v1",
   ]);
   const retryable = preview?.retryable !== false || retryablePreviewCodes.has(previewErrorCode);
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
@@ -1137,12 +1141,14 @@ function ArticlePreviewEmptyState({
             <ArrowPathIcon className="h-5 w-5 animate-spin" />
           </span>
           <div>
-            <h2 className="text-base font-black text-gray-950">Preparing article preview</h2>
+            <h2 className="text-base font-black text-gray-950">{hostedPreview ? "Building hosted preview" : "Preparing article preview"}</h2>
             <p className="mt-1 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
-              The article is ready for review. We are preparing the exact website preview and comment layer.
+              {hostedPreview
+                ? "The article is ready for review. We are building and deploying an isolated preview URL for the exact website route."
+                : "The article is ready for review. We are preparing the exact website preview and comment layer."}
             </p>
             <p className="mt-2 text-xs font-black uppercase tracking-wide text-violet-700">
-              Preview status: {statusLabel}
+              Preview status: {preview?.platformStatus || statusLabel}
             </p>
           </div>
         </div>

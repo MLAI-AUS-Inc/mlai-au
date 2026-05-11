@@ -322,6 +322,16 @@ export interface VibeMarketingLivePreview {
     assetProxyEnabled?: boolean;
     mockedRoutes?: string[];
   } | Record<string, unknown> | null;
+  platformProvider?: string | null;
+  platformStatus?: string | null;
+  deploymentId?: string | null;
+  deploymentUrl?: string | null;
+  routeUrl?: string | null;
+  logsUrl?: string | null;
+  commitSha?: string | null;
+  branchName?: string | null;
+  builderWorkflow?: string | null;
+  builderRunUrl?: string | null;
 }
 
 export type VibeMarketingComponentCommentStatus = "draft" | "submitted" | "applied" | "superseded" | string;
