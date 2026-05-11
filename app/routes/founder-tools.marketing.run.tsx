@@ -937,7 +937,7 @@ function LiveArticlePreviewPanel({
   }, [selectedComponent, sendInspectorCommand]);
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <section className="space-y-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-lg font-black text-gray-950">Live article preview</h2>
@@ -947,7 +947,7 @@ function LiveArticlePreviewPanel({
         </div>
       </div>
 
-      <div className="mt-5 space-y-4">
+      <div className="space-y-4">
         <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-black text-gray-950">Review comments</p>
