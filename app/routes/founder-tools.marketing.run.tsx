@@ -570,6 +570,15 @@ function nullableStringFromPayload(value: unknown) {
   return trimmed ? trimmed : null;
 }
 
+function previewOriginFromUrl(previewUrl: string | null | undefined) {
+  if (!previewUrl || typeof window === "undefined") return null;
+  try {
+    return new URL(previewUrl, window.location.href).origin;
+  } catch {
+    return null;
+  }
+}
+
 function numberMapFromPayload(value: unknown, keys: string[]) {
   const payload = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -695,8 +704,8 @@ function mergeServerCommentsWithLocal(
 ) {
   const next = [...serverComments];
   for (const localComment of localComments) {
-    if (!localComment.id.startsWith("optimistic-")) continue;
-    if (!next.some((serverComment) => commentsLikelyMatch(localComment, serverComment))) {
+    if (localComment.status !== "draft") continue;
+    if (!next.some((serverComment) => serverComment.id === localComment.id || commentsLikelyMatch(localComment, serverComment))) {
       next.push(localComment);
     }
   }
@@ -870,10 +879,13 @@ function LiveArticlePreviewPanel({
     run.status === "completed" &&
     latestBatch?.status !== "accepted" &&
     Boolean(batchId);
+  const previewMessageOrigin = useMemo(() => previewOriginFromUrl(preview?.previewUrl), [preview?.previewUrl]);
 
   const sendInspectorCommand = useCallback((message: Record<string, unknown>) => {
-    iframeRef.current?.contentWindow?.postMessage({ source: "founder-tools-inspector", ...message }, "*");
-  }, []);
+    const targetWindow = iframeRef.current?.contentWindow;
+    if (!targetWindow || !previewMessageOrigin) return;
+    targetWindow.postMessage({ source: "founder-tools-inspector", ...message }, previewMessageOrigin);
+  }, [previewMessageOrigin]);
 
   const mergeMeasurement = useCallback((measurement: InspectorComponentMeasurement) => {
     setComponentMeasurements((current) => ({ ...current, [measurement.id]: measurement }));
@@ -889,10 +901,14 @@ function LiveArticlePreviewPanel({
     setLegacyInspectorWarning(null);
     setPendingPin(null);
     setOpenCommentId(null);
+    setComponentMeasurements({});
   }, [preview?.previewUrl, preview?.inspectorMode, preview?.inspectorProtocolVersion]);
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
+      const iframeWindow = iframeRef.current?.contentWindow;
+      if (iframeWindow && event.source !== iframeWindow) return;
+      if (previewMessageOrigin && event.origin !== previewMessageOrigin) return;
       const data = event.data;
       if (!data || typeof data !== "object" || data.source !== "content-factory-inspector") return;
       const payload = data as Record<string, unknown>;
@@ -949,7 +965,7 @@ function LiveArticlePreviewPanel({
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [components, mergeMeasurement, onSelectComponent, preview?.previewMode, sendInspectorCommand]);
+  }, [components, mergeMeasurement, onSelectComponent, preview?.previewMode, previewMessageOrigin, sendInspectorCommand]);
 
   useEffect(() => {
     if (!selectedComponent) return;
