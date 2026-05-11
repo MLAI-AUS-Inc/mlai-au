@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-a-technology-business-incubator-and-how-does-it-work': {
+        title: "What Is a Technology Business Incubator?",
+        date: "2026-05-11",
+        description: "What is a technology business incubator? Founder guide",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-a-technology-business-incubator-and-how-does-it-work",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ddf91694-e386-4a4f-b828-ffe98c52c265.jpg?alt=media&token=3ac55649-67ac-4ce4-8205-4f0b95f27481",
+        imageAlt: "Founder and mentor review startup plans at a technology business incubator workspace",
+        hasContent: true,
+    },
     'featured/what-is-an-intelligent-agent-in-artificial-intelligence': {
         title: "What Is an Intelligent Agent in Artificial Intelligence?",
         date: "2026-05-09",
