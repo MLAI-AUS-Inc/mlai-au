@@ -35,6 +35,7 @@ import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type {
   VibeMarketingComponentManifestItem,
   VibeMarketingComponentCommentAnchor,
+  VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingBootstrap,
   VibeMarketingRunSummary,
@@ -230,6 +231,7 @@ function stringFromForm(formData: FormData, key: string) {
 
 function componentCommentPayloadFromForm(formData: FormData) {
   const anchor = componentCommentAnchorFromForm(formData);
+  const context = componentCommentContextFromForm(formData);
   return {
     componentId: stringFromForm(formData, "componentId"),
     componentType: stringFromForm(formData, "componentType"),
@@ -237,6 +239,7 @@ function componentCommentPayloadFromForm(formData: FormData) {
     sourceSectionId: stringFromForm(formData, "sourceSectionId"),
     selector: stringFromForm(formData, "selector"),
     ...(anchor ? { anchor } : {}),
+    ...(context ? { context } : {}),
     body: stringFromForm(formData, "body"),
   };
 }
@@ -254,6 +257,18 @@ function componentCommentAnchorFromForm(formData: FormData): VibeMarketingCompon
       y: Math.max(0, Math.min(1, y)),
       createdFrom: typeof payload.createdFrom === "string" ? payload.createdFrom : "live_preview_click",
     };
+  } catch {
+    return null;
+  }
+}
+
+function componentCommentContextFromForm(formData: FormData): VibeMarketingComponentCommentContext | null {
+  const raw = stringFromForm(formData, "context");
+  if (!raw) return null;
+  try {
+    const payload = JSON.parse(raw) as unknown;
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+    return commentContextFromPayload(payload as Record<string, unknown>, null);
   } catch {
     return null;
   }
@@ -486,6 +501,7 @@ interface InspectorComponentMeasurement extends VibeMarketingComponentManifestIt
 interface PendingCommentPin {
   component: VibeMarketingComponentManifestItem;
   anchor: VibeMarketingComponentCommentAnchor;
+  context?: VibeMarketingComponentCommentContext | null;
 }
 
 function numberFromPayload(value: unknown) {
@@ -526,6 +542,40 @@ function anchorFromPayload(value: unknown): VibeMarketingComponentCommentAnchor 
     y: Math.max(0, Math.min(1, y)),
     createdFrom: typeof payload.createdFrom === "string" ? payload.createdFrom : "live_preview_click",
   };
+}
+
+function nullableStringFromPayload(value: unknown) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+function numberMapFromPayload(value: unknown, keys: string[]) {
+  const payload = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const result: Record<string, number> = {};
+  for (const key of keys) {
+    const number = numberFromPayload(payload[key]);
+    if (number !== null) result[key] = number;
+  }
+  return Object.keys(result).length ? result : null;
+}
+
+function commentContextFromPayload(
+  data: Record<string, unknown>,
+  fallbackPreviewMode?: string | null,
+): VibeMarketingComponentCommentContext | null {
+  const context: VibeMarketingComponentCommentContext = {
+    domPath: nullableStringFromPayload(data.domPath),
+    textHash: nullableStringFromPayload(data.textHash),
+    textExcerpt: nullableStringFromPayload(data.textExcerpt),
+    rect: numberMapFromPayload(data.rect, ["left", "top", "right", "bottom", "width", "height"]),
+    click: numberMapFromPayload(data.click, ["x", "y", "pageX", "pageY"]),
+    viewport: numberMapFromPayload(data.viewport, ["width", "height", "scrollX", "scrollY", "devicePixelRatio"]),
+    pageUrl: nullableStringFromPayload(data.pageUrl),
+    previewMode: nullableStringFromPayload(data.previewMode) ?? fallbackPreviewMode ?? null,
+  };
+  return Object.values(context).some((value) => value !== null && value !== undefined) ? context : null;
 }
 
 function componentFromInspectorPayload(
@@ -588,6 +638,7 @@ function appendCommentFormFields(
   component: VibeMarketingComponentManifestItem,
   body: string,
   anchor?: VibeMarketingComponentCommentAnchor | null,
+  context?: VibeMarketingComponentCommentContext | null,
 ) {
   formData.set("componentId", component.id);
   formData.set("componentType", component.type);
@@ -595,7 +646,127 @@ function appendCommentFormFields(
   formData.set("sourceSectionId", component.sourceSectionId ?? "");
   formData.set("selector", component.selector ?? `[data-cf-component-id="${component.id}"]`);
   if (anchor) formData.set("anchor", JSON.stringify(anchor));
+  if (context) formData.set("context", JSON.stringify(context));
   formData.set("body", body);
+}
+
+function sameAnchor(
+  left?: VibeMarketingComponentCommentAnchor | null,
+  right?: VibeMarketingComponentCommentAnchor | null,
+) {
+  if (!left || !right) return !left && !right;
+  return Math.abs(left.x - right.x) < 0.001 && Math.abs(left.y - right.y) < 0.001;
+}
+
+function commentsLikelyMatch(
+  left: VibeMarketingComponentFeedbackComment,
+  right: VibeMarketingComponentFeedbackComment,
+) {
+  return (
+    left.componentId === right.componentId &&
+    left.body.trim() === right.body.trim() &&
+    sameAnchor(left.anchor, right.anchor)
+  );
+}
+
+function mergeServerCommentsWithLocal(
+  serverComments: VibeMarketingComponentFeedbackComment[],
+  localComments: VibeMarketingComponentFeedbackComment[],
+) {
+  const next = [...serverComments];
+  for (const localComment of localComments) {
+    if (!localComment.id.startsWith("optimistic-")) continue;
+    if (!next.some((serverComment) => commentsLikelyMatch(localComment, serverComment))) {
+      next.push(localComment);
+    }
+  }
+  return next;
+}
+
+function feedbackCommentFromPayload(value: unknown): VibeMarketingComponentFeedbackComment | null {
+  const payload = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = typeof payload.id === "string" ? payload.id : "";
+  const componentId =
+    typeof payload.componentId === "string"
+      ? payload.componentId
+      : typeof payload.component_id === "string"
+        ? payload.component_id
+        : "";
+  if (!id || !componentId) return null;
+  const contextPayload = payload.context && typeof payload.context === "object" && !Array.isArray(payload.context)
+    ? (payload.context as Record<string, unknown>)
+    : null;
+  return {
+    id,
+    componentId,
+    componentType:
+      typeof payload.componentType === "string"
+        ? payload.componentType
+        : typeof payload.component_type === "string"
+          ? payload.component_type
+          : "component",
+    componentLabel:
+      typeof payload.componentLabel === "string"
+        ? payload.componentLabel
+        : typeof payload.component_label === "string"
+          ? payload.component_label
+          : null,
+    sourceSectionId:
+      typeof payload.sourceSectionId === "string"
+        ? payload.sourceSectionId
+        : typeof payload.source_section_id === "string"
+          ? payload.source_section_id
+          : null,
+    selector: typeof payload.selector === "string" ? payload.selector : null,
+    anchor: anchorFromPayload(payload.anchor),
+    context: contextPayload ? commentContextFromPayload(contextPayload, null) : null,
+    body: typeof payload.body === "string" ? payload.body : "",
+    status: typeof payload.status === "string" ? payload.status : "draft",
+    batchId:
+      typeof payload.batchId === "string"
+        ? payload.batchId
+        : typeof payload.batch_id === "string"
+          ? payload.batch_id
+          : null,
+    createdAt:
+      typeof payload.createdAt === "string"
+        ? payload.createdAt
+        : typeof payload.created_at === "string"
+          ? payload.created_at
+          : null,
+    updatedAt:
+      typeof payload.updatedAt === "string"
+        ? payload.updatedAt
+        : typeof payload.updated_at === "string"
+          ? payload.updated_at
+          : null,
+  };
+}
+
+function savedCommentFromFetcherData(data: unknown) {
+  const payload = data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
+  if (!payload) return null;
+  return feedbackCommentFromPayload(payload.comment) ?? feedbackCommentFromPayload(payload);
+}
+
+function reconcileSavedComment(
+  current: VibeMarketingComponentFeedbackComment[],
+  savedComment: VibeMarketingComponentFeedbackComment,
+) {
+  let replaced = false;
+  const next = current.map((comment) => {
+    if (comment.id === savedComment.id) {
+      replaced = true;
+      return savedComment;
+    }
+    if (!replaced && comment.id.startsWith("optimistic-") && commentsLikelyMatch(comment, savedComment)) {
+      replaced = true;
+      return savedComment;
+    }
+    return comment;
+  });
+  return replaced ? next : [...next, savedComment];
 }
 
 function LiveArticlePreviewPanel({
@@ -620,7 +791,8 @@ function LiveArticlePreviewPanel({
   const [inspectorMode, setInspectorMode] = useState<string | null>(preview?.inspectorMode ?? null);
   const [legacyInspectorWarning, setLegacyInspectorWarning] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const comments = run.componentFeedback?.comments ?? [];
+  const serverComments = useMemo(() => run.componentFeedback?.comments ?? [], [run.componentFeedback?.comments]);
+  const [comments, setComments] = useState<VibeMarketingComponentFeedbackComment[]>(serverComments);
   const draftComments = comments.filter((comment) => comment.status === "draft" && comment.body.trim());
   const latestBatch = run.componentFeedback?.latestBatch ?? null;
   const canRetryFailedRevisionBatch = Boolean(
@@ -688,6 +860,10 @@ function LiveArticlePreviewPanel({
   }, []);
 
   useEffect(() => {
+    setComments((current) => mergeServerCommentsWithLocal(serverComments, current));
+  }, [serverComments]);
+
+  useEffect(() => {
     setInspectorProtocolVersion(preview?.inspectorProtocolVersion ?? null);
     setInspectorMode(preview?.inspectorMode ?? null);
     setLegacyInspectorWarning(null);
@@ -729,19 +905,21 @@ function LiveArticlePreviewPanel({
 
       if (payload.type === "comment:create") {
         const anchor = anchorFromPayload(payload.anchor);
+        const context = commentContextFromPayload(payload, preview?.previewMode ?? null);
         onSelectComponent(component);
         setOpenCommentId(null);
-        if (anchor && component.editable !== false) {
-          setPendingPin({ component, anchor });
+        if (anchor) {
+          setPendingPin({ component, anchor, context });
         }
         return;
       }
       if (payload.type === "select") {
         const anchor = anchorFromPayload(payload.anchor);
+        const context = commentContextFromPayload(payload, preview?.previewMode ?? null);
         onSelectComponent(component);
         setOpenCommentId(null);
-        if (anchor && component.editable !== false) {
-          setPendingPin({ component, anchor });
+        if (anchor) {
+          setPendingPin({ component, anchor, context });
           return;
         }
         if (!protocolVersion || protocolVersion < 2) {
@@ -751,7 +929,7 @@ function LiveArticlePreviewPanel({
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [components, mergeMeasurement, onSelectComponent, sendInspectorCommand]);
+  }, [components, mergeMeasurement, onSelectComponent, preview?.previewMode, sendInspectorCommand]);
 
   useEffect(() => {
     if (!selectedComponent) return;
@@ -856,6 +1034,7 @@ function LiveArticlePreviewPanel({
                 openCommentId={openCommentId}
                 onOpenComment={setOpenCommentId}
                 onClearPending={() => setPendingPin(null)}
+                onCommentsChange={setComments}
                 onSelectComponent={onSelectComponent}
               />
             </>
@@ -1018,6 +1197,7 @@ function ArticleCommentCanvas({
   openCommentId,
   onOpenComment,
   onClearPending,
+  onCommentsChange,
   onSelectComponent,
 }: {
   comments: VibeMarketingComponentFeedbackComment[];
@@ -1027,22 +1207,69 @@ function ArticleCommentCanvas({
   openCommentId: string | null;
   onOpenComment: (id: string | null) => void;
   onClearPending: () => void;
+  onCommentsChange: (updater: (comments: VibeMarketingComponentFeedbackComment[]) => VibeMarketingComponentFeedbackComment[]) => void;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
 }) {
   const fetcher = useFetcher();
   const isSaving = fetcher.state !== "idle";
   const legacyFallbackStackByComponent = new Map<string, number>();
 
+  useEffect(() => {
+    const savedComment = savedCommentFromFetcherData(fetcher.data);
+    if (savedComment) {
+      onCommentsChange((current) => reconcileSavedComment(current, savedComment));
+    }
+  }, [fetcher.data, onCommentsChange]);
+
   function submitComment(intent: "add-component-comment" | "update-component-comment", options: {
     commentId?: string;
     component: VibeMarketingComponentManifestItem;
     body: string;
     anchor?: VibeMarketingComponentCommentAnchor | null;
+    context?: VibeMarketingComponentCommentContext | null;
   }) {
     const formData = new FormData();
     formData.set("intent", intent);
     if (options.commentId) formData.set("commentId", options.commentId);
-    appendCommentFormFields(formData, options.component, options.body, options.anchor);
+    appendCommentFormFields(formData, options.component, options.body, options.anchor, options.context);
+    if (intent === "add-component-comment") {
+      const now = new Date().toISOString();
+      const optimisticComment: VibeMarketingComponentFeedbackComment = {
+        id: `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        componentId: options.component.id,
+        componentType: options.component.type || "component",
+        componentLabel: options.component.label ?? options.component.id,
+        sourceSectionId: options.component.sourceSectionId ?? null,
+        selector: options.component.selector ?? `[data-cf-component-id="${options.component.id}"]`,
+        anchor: options.anchor ?? null,
+        context: options.context ?? null,
+        body: options.body,
+        status: "draft",
+        batchId: null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      onCommentsChange((current) => [...current, optimisticComment]);
+    } else if (options.commentId) {
+      onCommentsChange((current) =>
+        current.map((comment) =>
+          comment.id === options.commentId
+            ? {
+                ...comment,
+                componentId: options.component.id,
+                componentType: options.component.type || comment.componentType,
+                componentLabel: options.component.label ?? comment.componentLabel,
+                sourceSectionId: options.component.sourceSectionId ?? comment.sourceSectionId,
+                selector: options.component.selector ?? comment.selector,
+                anchor: options.anchor ?? comment.anchor,
+                context: options.context ?? comment.context,
+                body: options.body,
+                updatedAt: new Date().toISOString(),
+              }
+            : comment,
+        ),
+      );
+    }
     fetcher.submit(formData, { method: "POST" });
   }
 
@@ -1050,6 +1277,7 @@ function ArticleCommentCanvas({
     const formData = new FormData();
     formData.set("intent", "delete-component-comment");
     formData.set("commentId", commentId);
+    onCommentsChange((current) => current.filter((comment) => comment.id !== commentId));
     fetcher.submit(formData, { method: "POST" });
   }
 
@@ -1099,6 +1327,7 @@ function ArticleCommentCanvas({
                     component,
                     body,
                     anchor: comment.anchor,
+                    context: comment.context,
                   });
                   onOpenComment(null);
                 }}
@@ -1135,6 +1364,7 @@ function ArticleCommentCanvas({
                 component: pendingPin.component,
                 body,
                 anchor: pendingPin.anchor,
+                context: pendingPin.context,
               });
               onClearPending();
             }}

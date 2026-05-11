@@ -332,6 +332,41 @@ export interface VibeMarketingComponentCommentAnchor {
   createdFrom?: string | null;
 }
 
+export interface VibeMarketingComponentCommentRect {
+  left?: number | null;
+  top?: number | null;
+  right?: number | null;
+  bottom?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+export interface VibeMarketingComponentCommentClick {
+  x?: number | null;
+  y?: number | null;
+  pageX?: number | null;
+  pageY?: number | null;
+}
+
+export interface VibeMarketingComponentCommentViewport {
+  width?: number | null;
+  height?: number | null;
+  scrollX?: number | null;
+  scrollY?: number | null;
+  devicePixelRatio?: number | null;
+}
+
+export interface VibeMarketingComponentCommentContext {
+  domPath?: string | null;
+  textHash?: string | null;
+  textExcerpt?: string | null;
+  rect?: VibeMarketingComponentCommentRect | null;
+  click?: VibeMarketingComponentCommentClick | null;
+  viewport?: VibeMarketingComponentCommentViewport | null;
+  pageUrl?: string | null;
+  previewMode?: string | null;
+}
+
 export interface VibeMarketingComponentFeedbackComment {
   id: string;
   componentId: string;
@@ -340,6 +375,7 @@ export interface VibeMarketingComponentFeedbackComment {
   sourceSectionId?: string | null;
   selector?: string | null;
   anchor?: VibeMarketingComponentCommentAnchor | null;
+  context?: VibeMarketingComponentCommentContext | null;
   body: string;
   status: VibeMarketingComponentCommentStatus;
   batchId?: string | null;
