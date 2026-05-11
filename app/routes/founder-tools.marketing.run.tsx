@@ -1093,7 +1093,9 @@ function ArticlePreviewEmptyState({
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
+    "platform_preview_builder_not_accessible",
     "platform_preview_dispatch_failed",
+    "platform_preview_dispatch_invalid",
     "platform_preview_failed",
     "preview_proof_failed",
     "preview_runtime_failed",
