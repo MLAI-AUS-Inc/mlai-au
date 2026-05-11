@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-to-choose-an-accelerator-program-in-melbourne': {
+        title: "How to choose an accelerator program in Melbourne",
+        date: "2026-05-11",
+        description: "accelerator program melbourne guide for AI founders",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-to-choose-an-accelerator-program-in-melbourne",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-68c8552d-1225-4cf4-8330-3456ec5d8866.jpg?alt=media&token=6b48edb0-ce94-4df0-b8ba-c4d79bfc080d",
+        imageAlt: "AI founders discussing a Melbourne accelerator program over laptops in a candid close-up workspace scene",
+        hasContent: true,
+    },
     'featured/what-is-an-intelligent-agent-in-artificial-intelligence': {
         title: "What Is an Intelligent Agent in Artificial Intelligence?",
         date: "2026-05-09",
