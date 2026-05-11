@@ -3,6 +3,7 @@ import type {
   VibeMarketingBootstrap,
   VibeMarketingComponentFeedback,
   VibeMarketingComponentCommentAnchor,
+  VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackBatch,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingComponentManifest,
@@ -77,6 +78,36 @@ function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCo
     y: Math.max(0, Math.min(1, y)),
     createdFrom: asNullableString(payload.createdFrom) ?? asNullableString(payload.created_from),
   };
+}
+
+function normalizeNumberMap<T extends Record<string, number | null | undefined>>(
+  raw: unknown,
+  keys: Array<keyof T>,
+): T | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const result: Partial<T> = {};
+  for (const key of keys) {
+    const number = asNumber(payload[String(key)]);
+    if (number !== null) result[key] = number as T[keyof T];
+  }
+  return Object.keys(result).length ? (result as T) : null;
+}
+
+function normalizeComponentCommentContext(raw: unknown): VibeMarketingComponentCommentContext | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const context: VibeMarketingComponentCommentContext = {
+    domPath: asNullableString(payload.domPath) ?? asNullableString(payload.dom_path),
+    textHash: asNullableString(payload.textHash) ?? asNullableString(payload.text_hash),
+    textExcerpt: asNullableString(payload.textExcerpt) ?? asNullableString(payload.text_excerpt),
+    rect: normalizeNumberMap(payload.rect, ["left", "top", "right", "bottom", "width", "height"]),
+    click: normalizeNumberMap(payload.click, ["x", "y", "pageX", "pageY"]),
+    viewport: normalizeNumberMap(payload.viewport, ["width", "height", "scrollX", "scrollY", "devicePixelRatio"]),
+    pageUrl: asNullableString(payload.pageUrl) ?? asNullableString(payload.page_url),
+    previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
+  };
+  return Object.values(context).some((value) => value !== null && value !== undefined) ? context : null;
 }
 
 function normalizeStep(raw: unknown): VibeMarketingStepState {
@@ -483,6 +514,7 @@ function normalizeComponentFeedbackComment(raw: unknown): VibeMarketingComponent
     sourceSectionId: asNullableString(payload.sourceSectionId) ?? asNullableString(payload.source_section_id),
     selector: asNullableString(payload.selector),
     anchor: normalizeComponentCommentAnchor(payload.anchor),
+    context: normalizeComponentCommentContext(payload.context),
     body: asNullableString(payload.body) ?? "",
     status: asNullableString(payload.status) ?? "draft",
     batchId: asNullableString(payload.batchId) ?? asNullableString(payload.batch_id),
