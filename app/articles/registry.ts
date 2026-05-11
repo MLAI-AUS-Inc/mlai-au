@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-an-epoch-in-machine-learning': {
+        title: "What Is an Epoch in Machine Learning?",
+        date: "2026-05-10",
+        description: "What is an epoch in machine learning? Learn how epochs, batches and iterations affect model training, overfitting and compute cost.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-an-epoch-in-machine-learning",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-be4d5a0e-2788-4411-8bcb-da86c9bbb31b.jpg?alt=media&token=1c1b0470-0840-4bac-b522-123c2abf83fb",
+        imageAlt: "Data scientists reviewing machine learning epochs and training batches on a laptop close up",
+        hasContent: true,
+    },
     'featured/what-is-an-intelligent-agent-in-artificial-intelligence': {
         title: "What Is an Intelligent Agent in Artificial Intelligence?",
         date: "2026-05-09",
