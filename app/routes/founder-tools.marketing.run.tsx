@@ -16,6 +16,7 @@ import {
 import { clsx } from "clsx";
 
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
@@ -28,6 +29,7 @@ import {
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
   replayVibeMarketingDaily,
+  submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
@@ -149,7 +151,16 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request);
   const run = await getVibeMarketingRun(env, request, runId);
-  return { run, bootstrap };
+  const setupRunId = setupRunIdForRun(run);
+  let setupRun: VibeMarketingRunSummary | null = null;
+  if (setupRunId && setupRunId !== run.runId) {
+    try {
+      setupRun = await getVibeMarketingRun(env, request, setupRunId);
+    } catch {
+      setupRun = null;
+    }
+  }
+  return { run, bootstrap, setupRun };
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -176,6 +187,15 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "submit-component-comments") {
       const result = await submitVibeMarketingComponentComments(env, request, runId);
       if (result.runId && result.runId !== runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
+    } else if (intent === "submit-article-system-comments") {
+      const setupRunId = stringFromForm(formData, "setupRunId") || runId;
+      const result = await submitVibeMarketingArticleSystemComments(env, request, setupRunId, {
+        body: stringFromForm(formData, "reviewComment"),
+        feedbackBatchId: stringFromForm(formData, "feedbackBatchId"),
+      });
+      if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
     } else if (intent === "accept-component-revision") {
@@ -517,6 +537,139 @@ function PublishApprovalPanel({
         </div>
         <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
       </div>
+    </section>
+  );
+}
+
+function arrayResultValue(run: VibeMarketingRunSummary, key: string) {
+  const value = run.result?.[key];
+  if (Array.isArray(value)) return value;
+  const nestedResult = run.result?.["result"];
+  if (nestedResult && typeof nestedResult === "object") {
+    const nestedValue = (nestedResult as Record<string, unknown>)[key];
+    if (Array.isArray(nestedValue)) return nestedValue;
+  }
+  return [];
+}
+
+function articleSystemSetupPayload(run: VibeMarketingRunSummary) {
+  const direct = run.result?.["article_system_setup"];
+  if (direct && typeof direct === "object" && !Array.isArray(direct)) return direct as Record<string, unknown>;
+  const nestedResult = run.result?.["result"];
+  if (nestedResult && typeof nestedResult === "object") {
+    const nested = (nestedResult as Record<string, unknown>)["article_system_setup"];
+    if (nested && typeof nested === "object" && !Array.isArray(nested)) return nested as Record<string, unknown>;
+  }
+  return {};
+}
+
+function ArticleSystemSetupPreviewPanel({
+  run,
+  sourceRun,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  sourceRun?: VibeMarketingRunSummary | null;
+  isSubmitting: boolean;
+}) {
+  const setup = articleSystemSetupPayload(run);
+  const source = sourceRun ?? run;
+  const repo = run.githubRepo || source.githubRepo || stringResultValue(run, "github_repo", "githubRepo") || stringResultValue(source, "github_repo", "githubRepo");
+  const route =
+    run.routePath ||
+    source.routePath ||
+    stringResultValue(run, "route_path", "routePath") ||
+    stringResultValue(source, "route_path", "routePath") ||
+    (() => {
+      const hint = source.result?.["article_surface_hint"];
+      return hint && typeof hint === "object" ? String((hint as Record<string, unknown>).route_path ?? "") : "";
+    })();
+  const prUrl = run.prUrl || stringResultValue(run, "pr_url", "prUrl") || stringResultValue(source, "pr_url", "prUrl");
+  const previewUrl =
+    run.livePreview?.previewUrl ||
+    run.previewUrl ||
+    stringResultValue(run, "preview_url", "previewUrl") ||
+    stringResultValue(source, "preview_url", "previewUrl");
+  const setupRunId = setupRunIdForRun(run) || setupRunIdForRun(source) || run.runId;
+  const changedFiles = [
+    ...arrayResultValue(run, "changed_files_preview"),
+    ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
+  ]
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 8);
+  const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
+  const feedbackBatchId = `article-system-${setupRunId}-${Date.now().toString(36)}`;
+
+  return (
+    <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Article system preview</h2>
+          <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
+            Review the drafted articles page setup before it is merged into the website repo.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
+            {repo ? <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{repo}</span> : null}
+            {route ? <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-700">{route}</span> : null}
+            {prUrl ? (
+              <a href={prUrl} target="_blank" rel="noreferrer" className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 hover:text-emerald-900">
+                Open PR
+              </a>
+            ) : null}
+          </div>
+        </div>
+        {canApprove ? <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve article system" denyLabel="Deny setup" /> : null}
+      </div>
+
+      <ArticleSystemSurfaceSummary run={source} />
+
+      {changedFiles.length ? (
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+          <p className="text-sm font-black text-gray-950">Planned setup files</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {changedFiles.map((file) => (
+              <span key={file} className="rounded-lg bg-white px-3 py-2 font-mono text-xs font-semibold text-gray-600 shadow-sm">
+                {file}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {previewUrl ? (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
+          <iframe
+            title="Article system setup preview"
+            src={previewUrl}
+            className="h-[760px] w-full bg-white"
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          />
+        </div>
+      ) : (
+        <div className="rounded-xl border border-violet-100 bg-violet-50 px-4 py-5 text-sm font-semibold text-violet-800">
+          The hosted preview is being built. Refreshing this page is safe.
+        </div>
+      )}
+
+      <Form method="POST" className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+        <input type="hidden" name="intent" value="submit-article-system-comments" />
+        <input type="hidden" name="setupRunId" value={setupRunId} />
+        <input type="hidden" name="feedbackBatchId" value={feedbackBatchId} />
+        <label className="block">
+          <span className="mb-2 block text-sm font-black text-gray-950">Review comments</span>
+          <textarea
+            name="reviewComment"
+            rows={3}
+            placeholder="Describe what should change in the articles page setup."
+            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+          />
+        </label>
+        <button type="submit" disabled={isSubmitting} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-50">
+          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+          Send setup comments
+        </button>
+      </Form>
     </section>
   );
 }
@@ -2002,6 +2155,14 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
   return "";
 }
 
+function setupRunIdForRun(run: VibeMarketingRunSummary) {
+  const direct = stringResultValue(run, "setup_run_id", "setupRunId", "scaffold_job_id", "scaffoldJobId");
+  if (direct) return direct;
+  const setup = articleSystemSetupPayload(run);
+  const setupRunId = setup.setup_run_id ?? setup.setupRunId;
+  return typeof setupRunId === "string" && setupRunId.trim() ? setupRunId.trim() : "";
+}
+
 function publishPrUrlForRun(run: VibeMarketingRunSummary) {
   return run.prUrl?.trim() || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl");
 }
@@ -2040,18 +2201,6 @@ function hasReviewTarget(run: VibeMarketingRunSummary) {
 
 function isRunApprovalRequired(run: VibeMarketingRunSummary) {
   return run.approvalState === "approval_required" || APPROVAL_GATE_STATUSES.has(run.status);
-}
-
-function isScaffoldApprovalGate(run: VibeMarketingRunSummary) {
-  const workflow = String(run.workflow ?? "");
-  if (!SCAN_WORKFLOWS.has(workflow)) return false;
-  const requestedAction = stringResultValue(run, "requested_action");
-  const scaffoldStatus = stringResultValue(run, "scaffold_status");
-  return (
-    isRunApprovalRequired(run) ||
-    (run.status === "awaiting_confirmation" &&
-      (requestedAction === "scaffold_publish_route" || scaffoldStatus === "approval_required"))
-  );
 }
 
 function isPublishApprovalGate(run: VibeMarketingRunSummary) {
@@ -2105,7 +2254,7 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap } = useLoaderData<typeof loader>();
+  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
@@ -2118,14 +2267,17 @@ export default function FounderToolsMarketingRun() {
   const shouldPoll = POLLING_STATUSES.has(run.status) || hasPendingArticlePreview(run) || hasPublishHandoffEvidence(run);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
+  const isScanRun = SCAN_WORKFLOWS.has(workflow);
+  const isArticleSystemSetupRun = workflow === "article_system_setup";
+  const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation";
-  const isScaffoldApproval = isScaffoldApprovalGate(run);
   const isPublishApproval = isPublishApprovalGate(run);
+  const effectiveSetupPreviewRun = setupRun?.livePreview?.previewUrl || setupRun?.previewUrl ? setupRun : isScanRun && setupRunIdForRun(run) ? run : setupRun;
   const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status);
   const canResume = Boolean(run.resumeAvailable && RESUMABLE_ATTENTION_STATUSES.has(run.status));
   const discoveryCandidates = useMemo(
@@ -2295,23 +2447,14 @@ export default function FounderToolsMarketingRun() {
             </section>
           ) : null}
 
-          {isScaffoldApproval ? (
-            <section className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h2 className="text-lg font-black text-amber-950">Scaffold approval</h2>
-                  <p className="mt-2 font-semibold">
-                    Review the scan result, then approve setup or deny the scaffold request.
-                  </p>
-                </div>
-                <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve setup" denyLabel="Deny setup" />
-              </div>
-              {run.result?.["route_path"] || run.result?.["path"] ? (
-                <p className="mt-3 break-all rounded-lg bg-white px-3 py-2 font-mono text-xs text-amber-900">
-                  {String(run.result?.["route_path"] ?? run.result?.["path"])}
-                </p>
-              ) : null}
-            </section>
+          {effectiveSetupPreviewRun ? (
+            <ArticleSystemSetupPreviewPanel
+              run={effectiveSetupPreviewRun}
+              sourceRun={isScanRun ? run : null}
+              isSubmitting={isSubmitting}
+            />
+          ) : isScanRun ? (
+            <ArticleSystemSurfaceSummary run={run} />
           ) : null}
 
           {showRunAttentionBanner ? (
@@ -2342,7 +2485,7 @@ export default function FounderToolsMarketingRun() {
             </div>
           ) : null}
 
-          {!isArticleGenerationRun ? <RunStepTimeline run={run} /> : null}
+          {!isArticleGenerationRun && !isScanRun && !isArticleSystemSetupRun ? <RunStepTimeline run={run} /> : null}
 
         </main>
       ) : null}

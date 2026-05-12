@@ -515,6 +515,33 @@ export interface VibeMarketingGoogleBaselineConnection {
   connectUrl?: string | null;
 }
 
+export interface VibeMarketingGithubRepo {
+  fullName: string;
+  full_name?: string;
+  owner?: string;
+  name?: string;
+  private?: boolean;
+  defaultBranch?: string | null;
+  default_branch?: string | null;
+  installationId?: string | null;
+  installation_id?: string | null;
+}
+
+export interface VibeMarketingGithubReposResponse {
+  status: string;
+  connectionState?: string | null;
+  connection_state?: string | null;
+  credentialSource?: string | null;
+  credential_source?: string | null;
+  githubRepo?: string | null;
+  github_repo?: string | null;
+  selectedRepo?: string | null;
+  selected_repo?: string | null;
+  repos: VibeMarketingGithubRepo[];
+  repositories?: VibeMarketingGithubRepo[];
+  error?: string | null;
+}
+
 export interface VibeMarketingBootstrap {
   company: VibeMarketingCompany;
   organization: VibeMarketingOrganization;

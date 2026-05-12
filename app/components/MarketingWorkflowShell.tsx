@@ -317,7 +317,7 @@ export default function MarketingWorkflowShell({
         {displayGroups.map((group, index) => {
           const active = group.id === viewedGroup.id;
           const nextRequired = group.id === requiredGroup.id;
-          const locked = group.status === "locked";
+          const locked = group.status === "locked" && group.id !== "repo_article_system";
           const Icon = group.icon;
           const nextGroup = displayGroups[index + 1];
           const connectorNodeClass = connectorNodeTone(group, nextGroup, active, nextRequired);
