@@ -429,6 +429,9 @@ export interface VibeMarketingPublishEvidence {
   approvalState?: string | null;
   previewUrl?: string | null;
   prUrl?: string | null;
+  prNumber?: number | string | null;
+  mergeStatus?: string | null;
+  checksStatus?: string | null;
   routePath?: string | null;
   screenshots?: unknown[];
   changedFiles?: unknown[];

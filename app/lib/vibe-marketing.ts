@@ -56,6 +56,10 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
+function asNumberOrString(value: unknown): number | string | null {
+  return asNumber(value) ?? asNullableString(value);
+}
+
 function asStringRecord(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const entries = Object.entries(value as Record<string, unknown>)
@@ -608,6 +612,15 @@ function normalizePublishEvidence(raw: unknown): VibeMarketingPublishEvidence {
     approvalState: asNullableString(payload.approvalState) ?? asNullableString(payload.approval_state),
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    prNumber:
+      asNumberOrString(payload.prNumber) ??
+      asNumberOrString(payload.pr_number) ??
+      asNumberOrString(payload.pullRequestNumber) ??
+      asNumberOrString(payload.pull_request_number) ??
+      asNumberOrString(payload.draftPrNumber) ??
+      asNumberOrString(payload.draft_pr_number),
+    mergeStatus: asNullableString(payload.mergeStatus) ?? asNullableString(payload.merge_status),
+    checksStatus: asNullableString(payload.checksStatus) ?? asNullableString(payload.checks_status),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
     screenshots: Array.isArray(payload.screenshots) ? payload.screenshots : [],
     changedFiles: Array.isArray(payload.changedFiles) ? payload.changedFiles : [],
