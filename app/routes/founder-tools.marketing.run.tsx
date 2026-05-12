@@ -27,10 +27,12 @@ import {
   addVibeMarketingComponentComment,
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
+  getVibeMarketingGithubRepos,
   getVibeMarketingRun,
   replayVibeMarketingDaily,
   submitVibeMarketingArticleSystemComments,
   submitVibeMarketingComponentComments,
+  startVibeMarketingScan,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
@@ -42,6 +44,7 @@ import type {
   VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingBootstrap,
+  VibeMarketingGithubReposResponse,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingWorkflowProgress,
@@ -151,6 +154,12 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   const runId = params.runId ?? "";
   const bootstrap = await getVibeMarketingBootstrap(env, request);
   const run = await getVibeMarketingRun(env, request, runId);
+  let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
+  try {
+    githubRepos = await getVibeMarketingGithubRepos(env, request);
+  } catch {
+    githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
+  }
   const setupRunId = setupRunIdForRun(run);
   let setupRun: VibeMarketingRunSummary | null = null;
   if (setupRunId && setupRunId !== run.runId) {
@@ -160,7 +169,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       setupRun = null;
     }
   }
-  return { run, bootstrap, setupRun };
+  return { run, bootstrap, setupRun, githubRepos };
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -220,6 +229,26 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "cancel-article") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
+    } else if (intent === "cancel-scan") {
+      await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true, workflow: "repo_scan" });
+      throw redirect("/founder-tools/marketing/create?step=scan");
+    } else if (intent === "start-scan") {
+      const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
+      const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
+      if (!githubRepo) return { error: "Choose a GitHub repository before scanning." };
+      if (!articleSurfaceUrl) return { error: "Enter the articles or blog URL before scanning." };
+      const result = await startVibeMarketingScan(env, request, {
+        githubRepo,
+        github_repo: githubRepo,
+        articleSurfaceMode: "existing",
+        article_surface_mode: "existing",
+        articleSurfaceUrl,
+        article_surface_url: articleSurfaceUrl,
+        autoSetupPreview: true,
+        auto_setup_preview: true,
+      });
+      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      return { error: result.error || result.errors?.[0] || "Repository scan could not be started." };
     } else if (intent === "enable-daily-automation") {
       await controlVibeMarketingRun(env, request, runId, intent, {
         defaultTimezone: stringFromForm(formData, "defaultTimezone"),
@@ -563,6 +592,107 @@ function articleSystemSetupPayload(run: VibeMarketingRunSummary) {
     if (nested && typeof nested === "object" && !Array.isArray(nested)) return nested as Record<string, unknown>;
   }
   return {};
+}
+
+function articleSurfaceRouteFromRun(run: VibeMarketingRunSummary) {
+  const direct = run.routePath?.trim() || stringResultValue(run, "route_path", "routePath");
+  if (direct) return direct;
+  const hint = run.result?.["article_surface_hint"];
+  if (hint && typeof hint === "object" && !Array.isArray(hint)) {
+    const route = (hint as Record<string, unknown>).route_path ?? (hint as Record<string, unknown>).routePath;
+    if (typeof route === "string" && route.trim()) return route.trim();
+  }
+  return "";
+}
+
+function ArticleSystemScanFormPanel({
+  run,
+  bootstrap,
+  githubRepos,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  bootstrap: VibeMarketingBootstrap;
+  githubRepos: VibeMarketingGithubReposResponse;
+  isSubmitting: boolean;
+}) {
+  const repos = (githubRepos.repos?.length ? githubRepos.repos : githubRepos.repositories ?? [])
+    .map((repo) => repo.fullName || repo.full_name || [repo.owner, repo.name].filter(Boolean).join("/"))
+    .filter(Boolean);
+  const selectedRepo =
+    run.githubRepo ||
+    stringResultValue(run, "github_repo", "githubRepo") ||
+    githubRepos.selectedRepo ||
+    githubRepos.selected_repo ||
+    githubRepos.githubRepo ||
+    githubRepos.github_repo ||
+    bootstrap.settings.githubRepo ||
+    repos.find((repo) => repo.toLowerCase() === "mlai-aus-inc/mlai-au") ||
+    repos[0] ||
+    "";
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Connect repo & article system</h2>
+          <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-gray-600">Choose the repo and public articles/blog route, then draft a hosted setup preview.</p>
+        </div>
+        <span className="inline-flex w-fit rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700">GitHub {(githubRepos.connectionState || githubRepos.connection_state || githubRepos.status || "unknown").replace(/_/g, " ")}</span>
+      </div>
+      <Form method="POST" className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
+        <input type="hidden" name="intent" value="start-scan" />
+        <label className="block">
+          <span className="mb-2 block text-sm font-black text-gray-950">Repository</span>
+          {repos.length ? (
+            <select name="githubRepo" defaultValue={selectedRepo} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+              {repos.map((repo) => <option key={repo} value={repo}>{repo}</option>)}
+            </select>
+          ) : (
+            <input name="githubRepo" defaultValue={selectedRepo} placeholder="owner/repo" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+          )}
+        </label>
+        <label className="block">
+          <span className="mb-2 block text-sm font-black text-gray-950">Where should articles or blog posts live on this website?</span>
+          <input name="articleSurfaceUrl" defaultValue={articleSurfaceRouteFromRun(run) || "/articles"} placeholder="/articles" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+        </label>
+        <button type="submit" disabled={isSubmitting} className="inline-flex justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
+          {isSubmitting ? <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
+          Scan and draft preview
+        </button>
+      </Form>
+      <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs font-semibold text-gray-500">Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later.</p>
+        <Form method="POST">
+          <button type="submit" name="intent" value="cancel-scan" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50">
+            <XCircleIcon className="h-4 w-4" />
+            Cancel scan
+          </button>
+        </Form>
+      </div>
+    </section>
+  );
+}
+
+function ScanCompletionPanel({ bootstrap }: { bootstrap: VibeMarketingBootstrap }) {
+  const nextLabel = bootstrap.recommendedNextAction?.label || "Continue";
+  const nextHref = bootstrap.workflowProgress?.currentStepId === "publish" || bootstrap.recommendedNextAction?.key === "publish"
+    ? "/founder-tools/marketing/create?step=publish"
+    : "/founder-tools/marketing/create?step=chooseArticle";
+  return (
+    <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-700" />
+          <div>
+            <h2 className="text-base font-black text-emerald-950">Repository scan complete</h2>
+            <p className="mt-1 text-sm font-semibold text-emerald-800">The article system is ready. Continue to the next article workflow step.</p>
+          </div>
+        </div>
+        <Link to={nextHref} className="inline-flex items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-800">{nextLabel}</Link>
+      </div>
+    </section>
+  );
 }
 
 function ArticleSystemSetupPreviewPanel({
@@ -2348,7 +2478,7 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun } = useLoaderData<typeof loader>();
+  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
@@ -2361,8 +2491,10 @@ export default function FounderToolsMarketingRun() {
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
+  const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
+  const isScanCompleted = isScanRun && run.status === "completed";
   const shouldPoll =
-    POLLING_STATUSES.has(run.status) ||
+    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted) ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
   const isArticleSystemSetupRun = workflow === "article_system_setup";
@@ -2500,6 +2632,7 @@ export default function FounderToolsMarketingRun() {
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
           {!isArticleGenerationRun ? <MarketingRunProgressCard run={run} /> : null}
+          {isScanCompleted ? <ScanCompletionPanel bootstrap={bootstrap} /> : null}
 
           {isDiscoveryConfirmation ? (
             <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">
@@ -2551,7 +2684,12 @@ export default function FounderToolsMarketingRun() {
               isSubmitting={isSubmitting}
             />
           ) : isScanRun ? (
-            <ArticleSystemSurfaceSummary run={run} />
+            <div className="space-y-4">
+              <ArticleSystemSurfaceSummary run={run} />
+              {!isScanCompleted ? (
+                <ArticleSystemScanFormPanel run={run} bootstrap={bootstrap} githubRepos={githubRepos} isSubmitting={isSubmitting} />
+              ) : null}
+            </div>
           ) : null}
 
           {showRunAttentionBanner ? (
