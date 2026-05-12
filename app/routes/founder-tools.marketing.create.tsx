@@ -17,6 +17,7 @@ import {
 import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -30,6 +31,7 @@ import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
   connectVibeMarketingGithub,
+  controlVibeMarketingRun,
   getVibeMarketingGithubRepos,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
@@ -119,9 +121,9 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
     safety: "The scan does not publish changes.",
   },
   articleSystem: {
-    why: "The article system contract tells Content Factory how this website renders articles for direct publishing.",
-    next: "Content-only generation can continue without this setup; direct publishing uses it to write the correct files.",
-    safety: "Preparation stays in setup until you explicitly generate or publish.",
+    why: "GitHub access lets Content Factory inspect the website repo and find the exact article route before editing anything.",
+    next: "Choose the repo and articles URL, scan the structure, then approve a setup preview only if changes are needed.",
+    safety: "The agent creates review branches and previews; nothing is merged or published until you explicitly approve.",
   },
   research: {
     why: "Research turns company context, competitors, seed keywords, and topic history into article candidates.",
@@ -172,6 +174,63 @@ function createStepForWorkflowStep(stepId: string | null | undefined): VibeMarke
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function githubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
+  return String(
+    githubRepos.connectionState ??
+      githubRepos.connection_state ??
+      bootstrap.settings.githubConnectionState ??
+      githubRepos.status ??
+      "",
+  ).trim();
+}
+
+function isGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
+  const state = githubConnectionState(githubRepos, bootstrap).toLowerCase();
+  return isGithubPublishingReady(bootstrap) || state === "connected" || state === "already_connected" || Boolean(githubRepos.repos?.length || githubRepos.repositories?.length);
+}
+
+function resultObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
+  for (const key of keys) {
+    const value = run.result?.[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+    const nestedResult = resultObject(run.result?.result);
+    const nestedValue = nestedResult[key];
+    if (typeof nestedValue === "string" && nestedValue.trim()) return nestedValue.trim();
+    const latestControl = resultObject(run.result?.latest_control_response);
+    const latestValue = latestControl[key];
+    if (typeof latestValue === "string" && latestValue.trim()) return latestValue.trim();
+  }
+  return "";
+}
+
+function articleSystemSetupPayload(run: VibeMarketingRunSummary) {
+  const direct = resultObject(run.result?.article_system_setup);
+  if (Object.keys(direct).length) return direct;
+  const nested = resultObject(resultObject(run.result?.result).article_system_setup);
+  if (Object.keys(nested).length) return nested;
+  const latest = resultObject(resultObject(run.result?.latest_control_response).article_system_setup);
+  return latest;
+}
+
+function setupRunIdForRun(run: VibeMarketingRunSummary) {
+  const direct = stringResultValue(run, "setup_run_id", "setupRunId", "scaffold_job_id", "scaffoldJobId");
+  if (direct) return direct;
+  const setup = articleSystemSetupPayload(run);
+  const value = setup.setup_run_id ?? setup.setupRunId;
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function isScanAwaitingSetupApproval(run: VibeMarketingRunSummary | undefined) {
+  if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
+  if (["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status)) return true;
+  const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
+  return requestedAction === "article_system_setup" || requestedAction === "scaffold_publish_route";
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -328,7 +387,11 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "connect-github") {
       const githubRepo = stringFromForm(formData, "githubRepo");
-      const response = await connectVibeMarketingGithub(env, request, { githubRepo, github_repo: githubRepo });
+      const response = await connectVibeMarketingGithub(
+        env,
+        request,
+        githubRepo ? { githubRepo, github_repo: githubRepo } : {},
+      );
       const authUrl = response.auth_url ?? response.authUrl;
       if (authUrl) throw redirect(authUrl);
       const connectionState = response.connection_state ?? response.connectionState;
@@ -349,11 +412,22 @@ export async function action({ request, context }: Route.ActionArgs) {
         article_surface_mode: "existing",
         articleSurfaceUrl: stringFromForm(formData, "articleSurfaceUrl"),
         article_surface_url: stringFromForm(formData, "articleSurfaceUrl"),
-        autoSetupPreview: true,
-        auto_setup_preview: true,
+        autoSetupPreview: false,
+        auto_setup_preview: false,
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=scan");
+    }
+
+    if (intent === "build-article-system-preview") {
+      const scanRunId = stringFromForm(formData, "scanRunId");
+      if (!scanRunId) {
+        return { intent, error: "Open the scan result before building the article system preview." };
+      }
+      const result = await controlVibeMarketingRun(env, request, scanRunId, "approve", { workflow: "repo_scan" });
+      const setupRunId = setupRunIdForRun(result);
+      if (setupRunId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+      return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(scanRunId)}`);
     }
 
     if (intent === "start-discovery") {
@@ -438,6 +512,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (!intent) return null;
   if (intent === "connect-github") return "github";
+  if (intent === "build-article-system-preview") return "articleSystem";
   if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
   if (intent === "start-scan") return "scan";
   if (intent === "save-article-system") return "articleSystem";
@@ -577,6 +652,11 @@ export default function FounderToolsMarketingCreate() {
     githubRepoOptions[0]?.fullName ??
     "";
   const [repoSelection, setRepoSelection] = useState(selectedGithubRepo);
+  const githubConnected = isGithubConnected(githubRepos, bootstrap);
+  const githubStateLabel = githubConnectionState(githubRepos, bootstrap).replace(/_/g, " ") || (githubConnected ? "connected" : "not connected");
+  const latestScanNeedsSetupApproval = isScanAwaitingSetupApproval(latestScan);
+  const latestScanSetupRunId = latestScan ? setupRunIdForRun(latestScan) : "";
+  const latestScanIsConfirmed = latestScan?.status === "completed" || Boolean(bootstrap.checks.scaffold?.passed);
   const deliveryModeNote = directPublishMode
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
     : reviewDraftMode
@@ -645,91 +725,159 @@ export default function FounderToolsMarketingCreate() {
                 explainer={STEP_EXPLAINERS.articleSystem}
               />
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-sm font-black text-gray-950">GitHub connection</p>
-                  <p className="mt-1 text-sm font-semibold text-gray-600">
-                    {githubReadyForPublishing ? `Connected to ${bootstrap.settings.githubRepo}.` : "Connect GitHub so Content Factory can scan and publish through the website repo."}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <span className={clsx("rounded-full px-3 py-1 text-xs font-black uppercase", githubReadyForPublishing ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-                      {githubReadyForPublishing ? "Connected" : "Connection needed"}
-                    </span>
-                    {githubRepos.error ? <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">Repo list unavailable</span> : null}
+              {!githubConnected ? (
+                <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-5">
+                  <div className="grid gap-4 lg:grid-cols-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Why connect GitHub</p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
+                        Content Factory needs read access to understand how this website stores articles before it can publish safely.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">What the agent will do</p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
+                        It scans routes and support files, then drafts setup changes on a review branch only after you approve.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Your control</p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
+                        Nothing is merged or published until you inspect the hosted preview and approve the final step.
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <Form method="POST" className="rounded-xl border border-gray-200 bg-white p-4">
-                  <input type="hidden" name="intent" value="connect-github" />
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Repository</span>
-                    {githubRepoOptions.length ? (
-                      <select
-                        name="githubRepo"
-                        value={repoSelection}
-                        onChange={(event) => setRepoSelection(event.target.value)}
-                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                      >
-                        {githubRepoOptions.map((repo) => (
-                          <option key={repo.fullName} value={repo.fullName}>
-                            {repo.fullName}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      <input
-                        name="githubRepo"
-                        value={repoSelection}
-                        onChange={(event) => setRepoSelection(event.target.value)}
-                        placeholder="owner/repo"
-                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                      />
-                    )}
-                  </label>
-                  <button type="submit" disabled={isSubmitting || !repoSelection} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
-                    {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
-                    {githubReadyForPublishing ? "Reconnect GitHub" : "Connect GitHub"}
-                  </button>
+                  <Form method="POST" className="mt-5">
+                    <input type="hidden" name="intent" value="connect-github" />
+                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
+                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
+                      Connect GitHub
+                    </button>
+                  </Form>
                   {githubConnectError ? (
                     <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
                       {githubConnectError}
                     </div>
                   ) : null}
-                </Form>
-              </div>
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                      <p className="text-sm font-black text-gray-950">GitHub connection</p>
+                      <p className="mt-1 text-sm font-semibold text-gray-600">
+                        {bootstrap.settings.githubRepo ? `Connected to ${bootstrap.settings.githubRepo}.` : "GitHub is connected. Choose the website repository before scanning."}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700">
+                          {githubStateLabel}
+                        </span>
+                        {githubRepos.error ? <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">Repo list unavailable</span> : null}
+                      </div>
+                    </div>
+
+                    <Form method="POST" className="rounded-xl border border-gray-200 bg-white p-4">
+                      <input type="hidden" name="intent" value="connect-github" />
+                      {repoSelection ? <input type="hidden" name="githubRepo" value={repoSelection} /> : null}
+                      <p className="text-sm font-black text-gray-950">GitHub access</p>
+                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
+                        Reconnect if the repo list is missing, stale, or the GitHub App needs access to another repository.
+                      </p>
+                      <button type="submit" disabled={isSubmitting} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
+                        {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
+                        Reconnect GitHub
+                      </button>
+                    </Form>
+                  </div>
+
+                  <Form method="POST" className="mt-5 space-y-5 rounded-xl border border-violet-100 bg-violet-50/30 p-4">
+                    <input type="hidden" name="intent" value="start-scan" />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Repository</span>
+                        {githubRepoOptions.length ? (
+                          <select
+                            name="githubRepo"
+                            value={repoSelection}
+                            onChange={(event) => setRepoSelection(event.target.value)}
+                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                          >
+                            {githubRepoOptions.map((repo) => (
+                              <option key={repo.fullName} value={repo.fullName}>
+                                {repo.fullName}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <input
+                            name="githubRepo"
+                            value={repoSelection}
+                            onChange={(event) => setRepoSelection(event.target.value)}
+                            placeholder="owner/repo"
+                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                          />
+                        )}
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Where should articles or blog posts live on this website?</span>
+                        <input
+                          name="articleSurfaceUrl"
+                          required
+                          placeholder="https://www.mlai.au/articles or /articles"
+                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                        />
+                        <span className="mt-2 block text-xs font-semibold text-gray-500">
+                          We verify this route against the repo before drafting any setup preview.
+                        </span>
+                      </label>
+                    </div>
+                    <button type="submit" disabled={isSubmitting || !repoSelection} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
+                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                      Scan repository
+                    </button>
+                  </Form>
+                </>
+              )}
 
               {latestScan ? (
-                <div className="mt-5">
-                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                <div className="mt-5 space-y-4">
+                  <div className={clsx("rounded-xl border p-4", latestScanNeedsSetupApproval ? "border-amber-200 bg-amber-50" : latestScanIsConfirmed ? "border-emerald-200 bg-emerald-50" : "border-gray-100 bg-gray-50")}>
                     <p className="text-sm font-black text-gray-950">Latest scan: {latestScan.status.replace(/_/g, " ")}</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-500">{latestScan.currentStep ?? latestScan.runId}</p>
-                    <Link to={`/founder-tools/marketing/runs/${latestScan.runId}`} className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">
-                      View scan run
-                    </Link>
+                    <p className="mt-1 text-xs font-semibold text-gray-600">
+                      {latestScanNeedsSetupApproval
+                        ? "Scan complete. Review the detected article route and approve the setup preview build."
+                        : latestScanIsConfirmed
+                          ? "Article system confirmed. You can continue to article generation."
+                          : (latestScan.currentStep ?? latestScan.runId)}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <Link to={`/founder-tools/marketing/runs/${latestScan.runId}`} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-violet-700 hover:text-violet-900">
+                        View scan run
+                      </Link>
+                      {latestScanNeedsSetupApproval ? (
+                        <Form method="POST">
+                          <input type="hidden" name="scanRunId" value={latestScan.runId} />
+                          <button type="submit" name="intent" value="build-article-system-preview" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50">
+                            {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                            Build article system preview
+                          </button>
+                        </Form>
+                      ) : latestScanSetupRunId ? (
+                        <Link to={`/founder-tools/marketing/runs/${latestScanSetupRunId}`} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-700">
+                          Open setup preview
+                        </Link>
+                      ) : null}
+                      {latestScanIsConfirmed && !latestScanNeedsSetupApproval ? (
+                        <Link to="/founder-tools/marketing/create?step=chooseArticle" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-800">
+                          Continue
+                          <ArrowRightIcon className="h-4 w-4" />
+                        </Link>
+                      ) : null}
+                    </div>
                   </div>
+                  {latestScanNeedsSetupApproval ? <ArticleSystemSurfaceSummary run={latestScan} /> : null}
                 </div>
               ) : null}
-
-              <Form method="POST" className="mt-5 space-y-5 rounded-xl border border-violet-100 bg-violet-50/30 p-4">
-                <input type="hidden" name="intent" value="start-scan" />
-                <input type="hidden" name="githubRepo" value={repoSelection} />
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-gray-700">Where should articles or blog posts live on this website?</span>
-                  <input
-                    name="articleSurfaceUrl"
-                    required
-                    placeholder="https://www.mlai.au/articles or /articles"
-                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                  />
-                  <span className="mt-2 block text-xs font-semibold text-gray-500">
-                    We verify this route against the repo before drafting the setup preview.
-                  </span>
-                </label>
-                <button type="submit" disabled={isSubmitting || !repoSelection} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                  Scan and draft preview
-                </button>
-              </Form>
               {!githubReadyForPublishing ? (
                 <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <p className="text-sm font-semibold leading-6 text-gray-700">
