@@ -259,6 +259,22 @@ export interface VibeMarketingWrittenTopic {
   writtenAt?: string | null;
 }
 
+export interface VibeMarketingDraftArticle {
+  runId: string;
+  sourceRunId?: string | null;
+  workflow: string;
+  status: VibeMarketingRunStatus;
+  title: string;
+  targetKeyword?: string | null;
+  stageLabel: string;
+  actionKind: "continue" | "resume" | "restart" | "review" | string;
+  actionLabel: string;
+  resumeAvailable: boolean;
+  restartAvailable: boolean;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+
 export interface VibeMarketingContentPackage {
   title?: string | null;
   slug?: string | null;
@@ -509,6 +525,7 @@ export interface VibeMarketingBootstrap {
   topicCandidates: VibeMarketingTopicCandidate[];
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
   declinedTopicFeedback: VibeMarketingTopicFeedback[];
+  draftArticles: VibeMarketingDraftArticle[];
   writtenTopics: VibeMarketingWrittenTopic[];
   publishEvidence: VibeMarketingPublishEvidence;
   guidedSteps: VibeMarketingGuidedStep[];

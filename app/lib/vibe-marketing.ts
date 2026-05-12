@@ -9,6 +9,7 @@ import type {
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
+  VibeMarketingDraftArticle,
   VibeMarketingGuidedStep,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
@@ -191,6 +192,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     latestRunsByWorkflow[key] = normalizeMarketingRun(value);
   }
   const rawDeclinedTopicFeedback = payload.declinedTopicFeedback ?? payload.declined_topic_feedback;
+  const rawDraftArticles = payload.draftArticles ?? payload.draft_articles;
 
   return {
     company: {
@@ -254,6 +256,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       ? rawDeclinedTopicFeedback
           .map(normalizeTopicFeedback)
           .filter((item): item is VibeMarketingTopicFeedback => Boolean(item))
+      : [],
+    draftArticles: Array.isArray(rawDraftArticles)
+      ? rawDraftArticles
+          .map(normalizeDraftArticle)
+          .filter((item): item is VibeMarketingDraftArticle => Boolean(item))
       : [],
     writtenTopics: Array.isArray(payload.writtenTopics)
       ? payload.writtenTopics.map(normalizeWrittenTopic).filter(Boolean) as VibeMarketingWrittenTopic[]
@@ -403,6 +410,38 @@ function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
     articleUrl: asNullableString(payload.articleUrl) ?? asNullableString(payload.article_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
     writtenAt: asNullableString(payload.writtenAt) ?? asNullableString(payload.written_at),
+  };
+}
+
+function normalizeDraftArticle(raw: unknown): VibeMarketingDraftArticle | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const runId = asNullableString(payload.runId) ?? asNullableString(payload.run_id);
+  if (!runId) return null;
+  const title = asNullableString(payload.title) ?? asNullableString(payload.targetKeyword) ?? "Untitled article draft";
+  return {
+    runId,
+    sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
+    workflow: asNullableString(payload.workflow) ?? "article_generation",
+    status: asNullableString(payload.status) ?? "queued",
+    title,
+    targetKeyword: asNullableString(payload.targetKeyword) ?? asNullableString(payload.target_keyword),
+    stageLabel:
+      asNullableString(payload.stageLabel) ??
+      asNullableString(payload.stage_label) ??
+      "Draft",
+    actionKind:
+      asNullableString(payload.actionKind) ??
+      asNullableString(payload.action_kind) ??
+      "continue",
+    actionLabel:
+      asNullableString(payload.actionLabel) ??
+      asNullableString(payload.action_label) ??
+      "Continue",
+    resumeAvailable: Boolean(payload.resumeAvailable ?? payload.resume_available),
+    restartAvailable: Boolean(payload.restartAvailable ?? payload.restart_available),
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    createdAt: asNullableString(payload.createdAt) ?? asNullableString(payload.created_at),
   };
 }
 
@@ -743,6 +782,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   topicCandidates: [],
   hiddenTopicCandidates: [],
   declinedTopicFeedback: [],
+  draftArticles: [],
   writtenTopics: [],
   publishEvidence: {},
   guidedSteps: [],
