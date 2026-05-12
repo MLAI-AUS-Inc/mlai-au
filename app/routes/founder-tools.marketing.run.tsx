@@ -232,6 +232,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "cancel-scan") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true, workflow: "repo_scan" });
       throw redirect("/founder-tools/marketing/create?step=scan");
+    } else if (intent === "retry-scan") {
+      const result = await controlVibeMarketingRun(env, request, runId, "resume", { workflow: "repo_scan" });
+      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      return { error: result.errors?.[0] || "Repository scan could not be retried." };
     } else if (intent === "start-scan") {
       const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
@@ -662,8 +666,16 @@ function ArticleSystemScanFormPanel({
         </button>
       </Form>
       <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-gray-500">Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later.</p>
-        <Form method="POST">
+        <p className="text-xs font-semibold text-gray-500">
+          {run.stale ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details." : "Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later."}
+        </p>
+        <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
+          {run.retryAvailable || run.stale ? (
+            <button type="submit" name="intent" value="retry-scan" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50">
+              <ArrowPathIcon className="h-4 w-4" />
+              Retry scan
+            </button>
+          ) : null}
           <button type="submit" name="intent" value="cancel-scan" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50">
             <XCircleIcon className="h-4 w-4" />
             Cancel scan
@@ -2491,10 +2503,11 @@ export default function FounderToolsMarketingRun() {
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
+  const isStaleScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const shouldPoll =
-    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted) ||
+    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan) ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
   const isArticleSystemSetupRun = workflow === "article_system_setup";
