@@ -11,6 +11,8 @@ import type {
   VibeMarketingContentPackage,
   VibeMarketingDraftArticle,
   VibeMarketingGuidedStep,
+  VibeMarketingGithubRepo,
+  VibeMarketingGithubReposResponse,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
@@ -70,6 +72,49 @@ function asStringRecord(value: unknown): Record<string, string> {
 
 function asObjectRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeGithubRepo(value: unknown): VibeMarketingGithubRepo | null {
+  const payload = asObjectRecord(value);
+  const fullName = asNullableString(payload.fullName) ?? asNullableString(payload.full_name);
+  if (!fullName) return null;
+  const defaultBranch = asNullableString(payload.defaultBranch) ?? asNullableString(payload.default_branch);
+  const installationId = asNullableString(payload.installationId) ?? asNullableString(payload.installation_id);
+  return {
+    fullName,
+    full_name: fullName,
+    owner: asNullableString(payload.owner) ?? undefined,
+    name: asNullableString(payload.name) ?? undefined,
+    private: Boolean(payload.private),
+    defaultBranch,
+    default_branch: defaultBranch,
+    installationId,
+    installation_id: installationId,
+  };
+}
+
+function normalizeGithubReposResponse(value: unknown): VibeMarketingGithubReposResponse {
+  const payload = asObjectRecord(value);
+  const rawRepos = Array.isArray(payload.repos) ? payload.repos : Array.isArray(payload.repositories) ? payload.repositories : [];
+  const repos = rawRepos.map(normalizeGithubRepo).filter((repo): repo is VibeMarketingGithubRepo => Boolean(repo));
+  const connectionState = asNullableString(payload.connectionState) ?? asNullableString(payload.connection_state);
+  const credentialSource = asNullableString(payload.credentialSource) ?? asNullableString(payload.credential_source);
+  const githubRepo = asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo);
+  const selectedRepo = asNullableString(payload.selectedRepo) ?? asNullableString(payload.selected_repo);
+  return {
+    status: asNullableString(payload.status) ?? "unavailable",
+    connectionState,
+    connection_state: connectionState,
+    credentialSource,
+    credential_source: credentialSource,
+    githubRepo,
+    github_repo: githubRepo,
+    selectedRepo,
+    selected_repo: selectedRepo,
+    repos,
+    repositories: repos,
+    error: asNullableString(payload.error),
+  };
 }
 
 function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCommentAnchor | null {
@@ -1219,6 +1264,29 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
   };
 }
 
+export async function getVibeMarketingGithubRepos(env: Env, request: Request): Promise<VibeMarketingGithubReposResponse> {
+  if (shouldUseDevBackendStub()) {
+    return normalizeGithubReposResponse({
+      status: "connected",
+      connectionState: "connected",
+      githubRepo: "MLAI-AUS-Inc/mlai-au",
+      selectedRepo: "MLAI-AUS-Inc/mlai-au",
+      repos: [
+        {
+          fullName: "MLAI-AUS-Inc/mlai-au",
+          owner: "MLAI-AUS-Inc",
+          name: "mlai-au",
+          private: true,
+          defaultBranch: "main",
+        },
+      ],
+    });
+  }
+  const client = createApiClient(env, request);
+  const response = await client.get(`${BASE_PATH}/github/repos`);
+  return normalizeGithubReposResponse(response.data);
+}
+
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
   if (shouldUseDevBackendStub()) {
     const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
@@ -1471,6 +1539,17 @@ export async function deleteVibeMarketingComponentComment(
 export async function submitVibeMarketingComponentComments(env: Env, request: Request, runId: string) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/submit`, {});
+  return normalizeMarketingRun(response.data);
+}
+
+export async function submitVibeMarketingArticleSystemComments(
+  env: Env,
+  request: Request,
+  runId: string,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/article-system-revisions`, body);
   return normalizeMarketingRun(response.data);
 }
 
