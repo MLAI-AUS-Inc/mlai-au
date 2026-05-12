@@ -12,7 +12,15 @@ function labelForStatus(status: string) {
 
 export default function MarketingRunProgressCard({ run }: MarketingRunProgressCardProps) {
   const isFailed = ["failed", "blocked", "blocked_verification", "denied"].includes(run.status);
-  const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
+  const isScanRun = ["repo_scan", "content_factory_scan"].includes(run.workflow);
+  const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
+  const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status) && !isScanActionNeeded;
+  const statusLabel = isScanActionNeeded ? "scan complete, action needed" : labelForStatus(run.status);
+  const currentStepLabel = isScanActionNeeded
+    ? "The repository scan finished. Choose the article route, start a new setup preview, or cancel this scan."
+    : run.currentStep
+      ? run.currentStep.replace(/_/g, " ")
+      : "Waiting for next update";
   const totalSteps = Math.max(run.steps.length, run.stepOrder.length, 1);
   const completedSteps = run.steps.filter((step) => step.status === "completed" || step.status === "skipped").length;
 
@@ -31,11 +39,11 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-black text-gray-950">{run.workflow.replace(/_/g, " ")}</h2>
             <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", isFailed ? "bg-red-100 text-red-700" : "bg-white text-violet-700")}>
-              {labelForStatus(run.status)}
+              {statusLabel}
             </span>
           </div>
           <p className="mt-1 text-sm font-medium text-gray-700">
-            {run.currentStep ? run.currentStep.replace(/_/g, " ") : "Waiting for next update"}
+            {currentStepLabel}
           </p>
           <div className="mt-4 grid grid-cols-8 gap-2">
             {Array.from({ length: Math.min(Math.max(totalSteps, 1), 16) }).map((_, index) => {
