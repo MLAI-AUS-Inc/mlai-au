@@ -335,10 +335,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
 }
 
 function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketingStartupProfile {
+  const rawFounderProfiles = payload.founderProfiles ?? payload.founder_profiles;
   return {
     founderNames: asStringList(payload.founderNames ?? payload.founder_names),
-    founderProfiles: Array.isArray(payload.founderProfiles ?? payload.founder_profiles)
-      ? (payload.founderProfiles ?? payload.founder_profiles as Array<Record<string, unknown>>).map((entry) => ({
+    founderProfiles: Array.isArray(rawFounderProfiles)
+      ? rawFounderProfiles.map((entry: Record<string, unknown>) => ({
           name: asNullableString(entry?.name) ?? "",
           linkedinUrl: asNullableString(entry?.linkedinUrl) ?? asNullableString(entry?.linkedin_url),
         })).filter((entry) => entry.name)

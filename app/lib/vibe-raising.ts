@@ -183,24 +183,23 @@ function normalizeRole(value: unknown): VibeRaisingRole {
 function normalizeFounderProfiles(raw: unknown): VibeRaisingFounderProfile[] {
   if (!Array.isArray(raw)) return [];
 
-  return raw
-    .map((entry) => {
-      if (!entry || typeof entry !== "object") return null;
+  return raw.reduce<VibeRaisingFounderProfile[]>((profiles, entry) => {
+      if (!entry || typeof entry !== "object") return profiles;
       const payload = entry as Record<string, unknown>;
       const name =
         asNullableString(payload.name) ??
         asNullableString(payload.fullName) ??
         asNullableString(payload.full_name);
-      if (!name) return null;
+      if (!name) return profiles;
 
-      return {
+      profiles.push({
         name,
         linkedinUrl:
           asNullableString(payload.linkedinUrl) ??
           asNullableString(payload.linkedin_url),
-      };
-    })
-    .filter((entry): entry is VibeRaisingFounderProfile => Boolean(entry));
+      });
+      return profiles;
+    }, []);
 }
 
 function normalizeCompany(raw: unknown): VibeRaisingCompany {
@@ -238,17 +237,25 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.companyLocation) ??
     asNullableString(payload.company_location) ??
     asNullableString(payload.region);
+  const startupProfile =
+    payload.startupProfile && typeof payload.startupProfile === "object"
+      ? (payload.startupProfile as Record<string, unknown>)
+      : null;
+  const startupProfileSnake =
+    payload.startup_profile && typeof payload.startup_profile === "object"
+      ? (payload.startup_profile as Record<string, unknown>)
+      : null;
   const founderProfiles = normalizeFounderProfiles(
     payload.founderProfiles ??
       payload.founder_profiles ??
-      payload.startupProfile?.founderProfiles ??
-      payload.startup_profile?.founder_profiles,
+      startupProfile?.founderProfiles ??
+      startupProfileSnake?.founder_profiles,
   );
   const founderNamesSource =
     payload.founderNames ??
     payload.founder_names ??
-    payload.startupProfile?.founderNames ??
-    payload.startup_profile?.founder_names;
+    startupProfile?.founderNames ??
+    startupProfileSnake?.founder_names;
   const founderNames = Array.isArray(founderNamesSource)
     ? founderNamesSource
         .map((item) => asNullableString(item))
@@ -258,8 +265,8 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.stage) ??
     asNullableString(payload.startupStage) ??
     asNullableString(payload.startup_stage) ??
-    asNullableString(payload.startupProfile?.stage) ??
-    asNullableString(payload.startup_profile?.stage);
+    asNullableString(startupProfile?.stage) ??
+    asNullableString(startupProfileSnake?.stage);
   const registered = Boolean(
     payload.registered ??
       payload.isRegistered ??
