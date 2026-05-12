@@ -13,6 +13,7 @@ import type {
   VibeRaisingEmailDraftMonth,
   VibeRaisingFinancialSyncResponse,
   VibeRaisingFinancialSyncRun,
+  VibeRaisingFounderProfile,
   VibeRaisingGmailDisconnectResponse,
   VibeRaisingGmailMessagePreview,
   VibeRaisingGmailPreview,
@@ -43,6 +44,8 @@ import type {
   VibeRaisingStartupUpdateState,
   VibeRaisingStartupUpdateStatusResponse,
   VibeRaisingVideoCompressionMetadata,
+  VibeRaisingPitchDeckUploadResponse,
+  VibeRaisingPitchDeckUploadSessionResponse,
   VibeRaisingVideoUploadResponse,
   VibeRaisingVideoUploadSessionResponse,
   VibeRaisingXeroPreview,
@@ -52,7 +55,10 @@ import type {
 const PROFILE_PATH = "/api/v1/founder-tools/profile/";
 const COMPANIES_PATH = "/api/v1/founder-tools/companies/";
 const ACTIVE_COMPANY_PATH = "/api/v1/founder-tools/active-company/";
+const DRAFTS_PATH = "/api/v1/vibe-raising/drafts/";
 const UPDATES_PATH = "/api/v1/vibe-raising/updates/";
+const PITCH_DECK_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/pitch-deck/session/";
+const PITCH_DECK_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/pitch-deck/complete/";
 const VIDEO_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/video/session/";
 const VIDEO_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/video/complete/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
@@ -126,6 +132,8 @@ type OptionalContext = {
   appUser: VibeRaisingAppUser | null;
 };
 
+type VibeRaisingSaveMode = "draft" | "ready";
+
 export function isVibeRaisingProfileComplete(profile: VibeRaisingProfile): boolean {
   return profile.companies.length > 0;
 }
@@ -157,6 +165,29 @@ function asBoolean(value: unknown): boolean {
 
 function normalizeRole(value: unknown): VibeRaisingRole {
   return value === "investor" ? "investor" : "founder";
+}
+
+function normalizeFounderProfiles(raw: unknown): VibeRaisingFounderProfile[] {
+  if (!Array.isArray(raw)) return [];
+
+  return raw
+    .map((entry) => {
+      if (!entry || typeof entry !== "object") return null;
+      const payload = entry as Record<string, unknown>;
+      const name =
+        asNullableString(payload.name) ??
+        asNullableString(payload.fullName) ??
+        asNullableString(payload.full_name);
+      if (!name) return null;
+
+      return {
+        name,
+        linkedinUrl:
+          asNullableString(payload.linkedinUrl) ??
+          asNullableString(payload.linkedin_url),
+      };
+    })
+    .filter((entry): entry is VibeRaisingFounderProfile => Boolean(entry));
 }
 
 function normalizeCompany(raw: unknown): VibeRaisingCompany {
@@ -194,6 +225,28 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     asNullableString(payload.companyLocation) ??
     asNullableString(payload.company_location) ??
     asNullableString(payload.region);
+  const founderProfiles = normalizeFounderProfiles(
+    payload.founderProfiles ??
+      payload.founder_profiles ??
+      payload.startupProfile?.founderProfiles ??
+      payload.startup_profile?.founder_profiles,
+  );
+  const founderNamesSource =
+    payload.founderNames ??
+    payload.founder_names ??
+    payload.startupProfile?.founderNames ??
+    payload.startup_profile?.founder_names;
+  const founderNames = Array.isArray(founderNamesSource)
+    ? founderNamesSource
+        .map((item) => asNullableString(item))
+        .filter((item): item is string => Boolean(item))
+    : founderProfiles.map((profile) => profile.name);
+  const stage =
+    asNullableString(payload.stage) ??
+    asNullableString(payload.startupStage) ??
+    asNullableString(payload.startup_stage) ??
+    asNullableString(payload.startupProfile?.stage) ??
+    asNullableString(payload.startup_profile?.stage);
   const registered = Boolean(
     payload.registered ??
       payload.isRegistered ??
@@ -209,6 +262,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     companyLinkedInUrl,
     abn,
     location,
+    founderProfiles,
+    founderNames,
+    stage,
     registered,
   };
 }
@@ -242,8 +298,12 @@ function normalizeProfile(raw: unknown): VibeRaisingProfile {
           topLevelCompanyName,
         name: topLevelCompanyName,
         domain: payload.domain ?? payload.company_domain,
+        companyLinkedInUrl: payload.companyLinkedInUrl ?? payload.company_linkedin_url,
         abn: payload.abn ?? payload.company_abn,
         location: payload.location ?? payload.company_location,
+        founderProfiles: payload.founderProfiles ?? payload.founder_profiles,
+        founderNames: payload.founderNames ?? payload.founder_names,
+        stage: payload.stage ?? payload.startupStage ?? payload.startup_stage,
         registered:
           payload.companyRegistered ??
           payload.company_registered ??
@@ -407,6 +467,30 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
       asNullableString(payload.sourceUrl) ??
       asNullableString(payload.source_url) ??
       undefined,
+    pitchDeckUrl:
+      asNullableString(payload.pitchDeckUrl) ??
+      asNullableString(payload.pitch_deck_url) ??
+      undefined,
+    pitchDeckStoragePath:
+      asNullableString(payload.pitchDeckStoragePath) ??
+      asNullableString(payload.pitch_deck_storage_path) ??
+      undefined,
+    pitchDeckContentType:
+      asNullableString(payload.pitchDeckContentType) ??
+      asNullableString(payload.pitch_deck_content_type) ??
+      undefined,
+    pitchDeckFileSizeBytes:
+      asNullableNumber(
+        payload.pitchDeckFileSizeBytes ?? payload.pitch_deck_file_size_bytes,
+      ),
+    pitchDeckOriginalFilename:
+      asNullableString(payload.pitchDeckOriginalFilename) ??
+      asNullableString(payload.pitch_deck_original_filename) ??
+      undefined,
+    pitchDeckSummary:
+      asNullableString(payload.pitchDeckSummary) ??
+      asNullableString(payload.pitch_deck_summary) ??
+      undefined,
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
@@ -511,6 +595,30 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       asNullableString(payload.sourceUrl) ??
       asNullableString(payload.source_url) ??
       undefined,
+    pitchDeckUrl:
+      asNullableString(payload.pitchDeckUrl) ??
+      asNullableString(payload.pitch_deck_url) ??
+      undefined,
+    pitchDeckStoragePath:
+      asNullableString(payload.pitchDeckStoragePath) ??
+      asNullableString(payload.pitch_deck_storage_path) ??
+      undefined,
+    pitchDeckContentType:
+      asNullableString(payload.pitchDeckContentType) ??
+      asNullableString(payload.pitch_deck_content_type) ??
+      undefined,
+    pitchDeckFileSizeBytes:
+      asNullableNumber(
+        payload.pitchDeckFileSizeBytes ?? payload.pitch_deck_file_size_bytes,
+      ),
+    pitchDeckOriginalFilename:
+      asNullableString(payload.pitchDeckOriginalFilename) ??
+      asNullableString(payload.pitch_deck_original_filename) ??
+      undefined,
+    pitchDeckSummary:
+      asNullableString(payload.pitchDeckSummary) ??
+      asNullableString(payload.pitch_deck_summary) ??
+      undefined,
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
@@ -586,10 +694,36 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
       asNullableString(payload.updated_at) ??
       new Date().toISOString(),
     status: asNullableString(payload.status),
+    visibility:
+      asNullableString(payload.visibility) ??
+      asNullableString(payload.publishVisibility) ??
+      asNullableString(payload.publish_visibility),
+    publishedAt:
+      asNullableString(payload.publishedAt) ??
+      asNullableString(payload.published_at),
     summary: asNullableString(payload.summary),
     sourceUrl:
       asNullableString(payload.sourceUrl) ??
       asNullableString(payload.source_url),
+    pitchDeckUrl:
+      asNullableString(payload.pitchDeckUrl) ??
+      asNullableString(payload.pitch_deck_url),
+    pitchDeckStoragePath:
+      asNullableString(payload.pitchDeckStoragePath) ??
+      asNullableString(payload.pitch_deck_storage_path),
+    pitchDeckContentType:
+      asNullableString(payload.pitchDeckContentType) ??
+      asNullableString(payload.pitch_deck_content_type),
+    pitchDeckFileSizeBytes:
+      asNullableNumber(
+        payload.pitchDeckFileSizeBytes ?? payload.pitch_deck_file_size_bytes,
+      ),
+    pitchDeckOriginalFilename:
+      asNullableString(payload.pitchDeckOriginalFilename) ??
+      asNullableString(payload.pitch_deck_original_filename),
+    pitchDeckSummary:
+      asNullableString(payload.pitchDeckSummary) ??
+      asNullableString(payload.pitch_deck_summary),
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url),
@@ -1334,6 +1468,12 @@ export function buildVibeRaisingAppUser(
     domain: activeCompany?.domain ?? null,
     abn: activeCompany?.abn ?? null,
     location: activeCompany?.location ?? null,
+    founderProfiles: activeCompany?.founderProfiles ?? [],
+    founderNames:
+      activeCompany?.founderNames ??
+      activeCompany?.founderProfiles?.map((entry) => entry.name) ??
+      [],
+    stage: activeCompany?.stage ?? null,
     companyRegistered: activeCompany?.registered ?? false,
   };
 }
@@ -1386,6 +1526,11 @@ const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
       domain: "shan.ai",
       abn: null,
       location: "Melbourne, Australia",
+      founderProfiles: [
+        { name: "Shan Yang", linkedinUrl: "https://www.linkedin.com/in/shan-yang" },
+      ],
+      founderNames: ["Shan Yang"],
+      stage: "Pre-seed",
       registered: true,
     },
   ],
@@ -1529,6 +1674,7 @@ export async function saveVibeRaisingCompany(
     competitors?: string[];
     seedKeywords?: string[];
     founderNames?: string[];
+    founderProfiles?: VibeRaisingFounderProfile[];
     stage?: string | null;
     organizationKind?: string | null;
     notes?: string | null;
@@ -1562,7 +1708,9 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     monthName: "April",
     year: 2026,
     date: "2026-04-01T00:00:00.000Z",
-    status: "draft",
+    status: "ready",
+    visibility: "published",
+    publishedAt: "2026-04-01T00:00:00.000Z",
     summary: "AI workflow automation for mid-market teams, with enterprise pilots converting into paid deployments.",
     sourceUrl: "https://example.com/dev-update-april",
     metrics: {
@@ -1590,6 +1738,8 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     year: 2026,
     date: "2026-03-01T00:00:00.000Z",
     status: "sent",
+    visibility: "published",
+    publishedAt: "2026-03-01T00:00:00.000Z",
     summary: "Analytics v2 increased engagement while the team tested pricing and retention improvements.",
     metrics: {
       revenue: "$52,900 MRR",
@@ -1616,6 +1766,8 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
     year: 2026,
     date: "2026-02-01T00:00:00.000Z",
     status: "sent",
+    visibility: "published",
+    publishedAt: "2026-02-01T00:00:00.000Z",
     summary: "Healthcare design partnership and engineering hires moved the product toward a vertical AI wedge.",
     metrics: {
       revenue: "$47,200 MRR",
@@ -1632,6 +1784,32 @@ const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
       "Healthcare design partners want workflow ownership more than generic model accuracy claims.",
     next30Days:
       "Complete the healthcare workflow prototype and benchmark GPU spot savings.",
+  },
+];
+
+const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
+  {
+    id: "draft-2026-05",
+    isoMonth: "2026-05",
+    month: "May 2026",
+    monthName: "May",
+    year: 2026,
+    date: "2026-05-02T00:00:00.000Z",
+    status: "draft",
+    visibility: "private",
+    publishedAt: null,
+    summary: "Saved privately while the founder refines metrics and investor asks.",
+    sourceUrl: "https://example.com/private-may-update",
+    metrics: {
+      revenue: "$68,100 MRR",
+      activeUsers: "2,480",
+      runway: "10 months",
+    },
+    highlights: "Drafted the topline momentum and captured product usage gains for May.",
+    challenges: "Still refining the enterprise sales narrative before publishing.",
+    asks: "Need two customer intro targets before sending.",
+    learnings: "The onboarding narrative lands better when product usage is shown beside retention.",
+    next30Days: "Finalize the revenue story, tighten asks, and publish once the board pack is ready.",
   },
 ];
 
@@ -1674,6 +1852,69 @@ export async function getVibeRaisingMonthlyUpdates(
   }
 }
 
+export async function getVibeRaisingDrafts(
+  env: Env,
+  request: Request,
+): Promise<VibeRaisingMonthlyUpdate[]> {
+  if (shouldUseDevBackendStub()) {
+    return DEV_MONTHLY_DRAFTS_STUB;
+  }
+
+  const client = createApiClient(env, request);
+  try {
+    const response = await client.get(DRAFTS_PATH);
+    const drafts: unknown[] = Array.isArray(response.data?.drafts) ? response.data.drafts : [];
+    return drafts
+      .map(normalizeMonthlyUpdate)
+      .filter((value): value is VibeRaisingMonthlyUpdate => value !== null);
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+
+    if (error.response?.status === 401 && shouldUseDevAuthBypass()) {
+      console.warn("No backend drafts session in local dev; using draft stubs.");
+      return DEV_MONTHLY_DRAFTS_STUB;
+    }
+
+    if (shouldUseDevAuthBypass() && !error.response) {
+      console.warn("Backend draft lookup failed before returning a response in local dev; using draft stubs.");
+      return DEV_MONTHLY_DRAFTS_STUB;
+    }
+
+    if (shouldUseDevBackendFallback(error)) {
+      console.warn("Backend unavailable in local dev; using Vibe Raising draft stubs for preview.");
+      return DEV_MONTHLY_DRAFTS_STUB;
+    }
+
+    throw error;
+  }
+}
+
+export async function getVibeRaisingMonthlyUpdateById(
+  env: Env,
+  request: Request,
+  updateId: string,
+): Promise<VibeRaisingMonthlyUpdate | null> {
+  const [draftsResult, updatesResult] = await Promise.allSettled([
+    getVibeRaisingDrafts(env, request),
+    getVibeRaisingMonthlyUpdates(env, request),
+  ]);
+  const drafts = draftsResult.status === "fulfilled" ? draftsResult.value : [];
+  const updates = updatesResult.status === "fulfilled" ? updatesResult.value : [];
+
+  if (draftsResult.status === "rejected") {
+    console.warn("Unable to load Vibe Raising drafts while resolving update by id.", draftsResult.reason);
+  }
+  if (updatesResult.status === "rejected") {
+    console.warn("Unable to load Vibe Raising monthly updates while resolving update by id.", updatesResult.reason);
+  }
+
+  return drafts.find((update) => update.id === updateId)
+    ?? updates.find((update) => update.id === updateId)
+    ?? null;
+}
+
 export async function saveVibeRaisingMonthlyUpdate(
   env: Env,
   request: Request,
@@ -1689,11 +1930,18 @@ export async function saveVibeRaisingMonthlyUpdate(
     metricSuggestions?: VibeRaisingMetricSuggestion[];
     summary?: string | null;
     sourceUrl?: string | null;
+    pitchDeckUrl?: string | null;
+    pitchDeckStoragePath?: string | null;
+    pitchDeckContentType?: string | null;
+    pitchDeckFileSizeBytes?: number | null;
+    pitchDeckOriginalFilename?: string | null;
+    pitchDeckSummary?: string | null;
     videoUrl?: string | null;
     videoStoragePath?: string | null;
     videoContentType?: string | null;
     videoFileSizeBytes?: number | null;
     videoOriginalFilename?: string | null;
+    saveMode?: VibeRaisingSaveMode;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const buildDevSavedUpdate = () => {
@@ -1706,7 +1954,9 @@ export async function saveVibeRaisingMonthlyUpdate(
       monthName: month,
       year,
       date: new Date(year, 0, 1).toISOString(),
-      status: "sent",
+      status: body.saveMode === "draft" ? "draft" : "ready",
+      visibility: "private",
+      publishedAt: null,
     });
   };
 
@@ -1733,6 +1983,8 @@ export async function saveVibeRaisingMonthlyUpdate(
     const hasOptionalFields = Boolean(
       body.summary ||
         body.sourceUrl ||
+        body.pitchDeckUrl ||
+        body.pitchDeckSummary ||
         body.videoUrl ||
         body.learnings ||
         body.next30Days ||
@@ -1756,6 +2008,7 @@ export async function saveVibeRaisingMonthlyUpdate(
         learnings: body.learnings,
         next30Days: body.next30Days,
         metrics: body.metrics,
+        saveMode: body.saveMode,
       });
       return normalizeMonthlyUpdate(response.data?.update ?? response.data);
     } catch (fallbackError: any) {
@@ -1773,6 +2026,53 @@ export async function saveVibeRaisingMonthlyUpdate(
       }
       throw fallbackError;
     }
+  }
+}
+
+export async function publishVibeRaisingMonthlyUpdate(
+  env: Env,
+  request: Request,
+  updateId: string,
+): Promise<VibeRaisingMonthlyUpdate | null> {
+  if (shouldUseDevBackendStub()) {
+    const published = DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId);
+    return normalizeMonthlyUpdate({
+      ...(published || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
+      id: updateId,
+      status: "ready",
+      visibility: "published",
+      publishedAt: new Date().toISOString(),
+    });
+  }
+
+  const client = createApiClient(env, request);
+  try {
+    const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`);
+    return normalizeMonthlyUpdate(response.data?.update ?? response.data);
+  } catch (error: any) {
+    if (shouldUseDevAuthBypass() && (error.response?.status === 401 || !error.response)) {
+      console.warn("No backend publish session in local dev; returning a published update stub.");
+      return normalizeMonthlyUpdate({
+        ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
+        id: updateId,
+        status: "ready",
+        visibility: "published",
+        publishedAt: new Date().toISOString(),
+      });
+    }
+
+    if (shouldUseDevBackendFallback(error)) {
+      console.warn("Backend unavailable in local dev; returning a published update stub.");
+      return normalizeMonthlyUpdate({
+        ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
+        id: updateId,
+        status: "ready",
+        visibility: "published",
+        publishedAt: new Date().toISOString(),
+      });
+    }
+
+    throw error;
   }
 }
 
@@ -1847,6 +2147,83 @@ export async function uploadVibeRaisingUpdateVideo(
       signal,
     },
   );
+}
+
+export async function uploadVibeRaisingPitchDeck(
+  backendBaseUrl: string,
+  file: File,
+  signal?: AbortSignal,
+): Promise<VibeRaisingPitchDeckUploadResponse> {
+  const session = await requestBrowserJson<VibeRaisingPitchDeckUploadSessionResponse>(
+    backendBaseUrl,
+    PITCH_DECK_UPLOAD_SESSION_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        originalFilename: file.name,
+        contentType: file.type,
+        fileSizeBytes: file.size,
+      }),
+      signal,
+    },
+  );
+
+  const uploadHeaders = new Headers(session.requiredHeaders || {});
+  if (!uploadHeaders.has("Content-Type")) {
+    uploadHeaders.set("Content-Type", session.contentType || file.type || "application/octet-stream");
+  }
+
+  let uploadResponse: Response;
+  try {
+    uploadResponse = await fetch(session.uploadUrl, {
+      method: "PUT",
+      headers: uploadHeaders,
+      body: file,
+      signal,
+    });
+  } catch (error: any) {
+    error.requestPath = "signed-storage-upload";
+    error.message = "Pitch deck upload failed before the file reached storage.";
+    throw error;
+  }
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text().catch(() => "");
+    const error: any = new Error(
+      uploadResponse.status === 403
+        ? "The pitch deck upload session expired. Please select the file again."
+        : errorText || `Pitch deck upload failed with status ${uploadResponse.status}`,
+    );
+    error.status = uploadResponse.status;
+    error.data = errorText;
+    error.requestPath = "signed-storage-upload";
+    throw error;
+  }
+
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    PITCH_DECK_UPLOAD_COMPLETE_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        storagePath: session.storagePath,
+        originalFilename: file.name,
+        contentType: session.contentType || file.type,
+        fileSizeBytes: file.size,
+      }),
+      signal,
+    },
+  );
+
+  return {
+    pitchDeckUrl:
+      String(response.pitchDeckUrl || response.pitch_deck_url || response.url || ""),
+    storagePath: String(response.storagePath || response.storage_path || ""),
+    contentType: String(response.contentType || response.content_type || file.type || ""),
+    fileSizeBytes: Number(response.fileSizeBytes || response.file_size_bytes || file.size || 0),
+    originalFilename:
+      String(response.originalFilename || response.original_filename || file.name || ""),
+  };
 }
 
 export async function bootstrapVibeRaisingStartupUpdate(

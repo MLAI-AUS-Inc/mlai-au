@@ -12,7 +12,7 @@ interface MonthlyUpdateStepperProps {
   onStepClick?: (step: MonthlyUpdateStepKey) => void;
 }
 
-const STEPS: Array<{
+export const MONTHLY_UPDATE_STEPS: Array<{
   key: MonthlyUpdateStepKey;
   title: string;
   helper: string;
@@ -48,10 +48,10 @@ export default function MonthlyUpdateStepper({
   frameless = false,
   onStepClick,
 }: MonthlyUpdateStepperProps) {
-  const activeIndex = Math.max(0, STEPS.findIndex((step) => step.key === activeStep));
-  const active = STEPS[activeIndex] ?? STEPS[0];
-  const progressPercent = ((activeIndex + 1) / STEPS.length) * 100;
-  const enabledStepSet = new Set(enabledSteps ?? STEPS.map((step) => step.key));
+  const activeIndex = Math.max(0, MONTHLY_UPDATE_STEPS.findIndex((step) => step.key === activeStep));
+  const active = MONTHLY_UPDATE_STEPS[activeIndex] ?? MONTHLY_UPDATE_STEPS[0];
+  const progressPercent = ((activeIndex + 1) / MONTHLY_UPDATE_STEPS.length) * 100;
+  const enabledStepSet = new Set(enabledSteps ?? MONTHLY_UPDATE_STEPS.map((step) => step.key));
   const canSelectStep = (step: MonthlyUpdateStepKey) => Boolean(onStepClick) && enabledStepSet.has(step);
 
   if (compact) {
@@ -63,7 +63,7 @@ export default function MonthlyUpdateStepper({
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
-              Step {activeIndex + 1} of {STEPS.length}
+              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
             </p>
             <p className="mt-1 text-sm font-black text-[var(--vr-color-text)]">{active.title}</p>
           </div>
@@ -78,7 +78,7 @@ export default function MonthlyUpdateStepper({
           />
         </div>
         <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {STEPS.map((step, index) => {
+          {MONTHLY_UPDATE_STEPS.map((step, index) => {
             const isActive = index === activeIndex;
             const isComplete = index < activeIndex;
             const canSelect = canSelectStep(step.key);
@@ -119,7 +119,7 @@ export default function MonthlyUpdateStepper({
         >
           <div className="min-w-0">
             <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
-              Step {activeIndex + 1} of {STEPS.length}
+              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
             </p>
             <h2 className="mt-1 truncate text-2xl font-black tracking-tight text-[var(--vr-color-text)]">
               {active.title}
@@ -140,7 +140,7 @@ export default function MonthlyUpdateStepper({
         <div className="max-h-0 overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/stepper:max-h-64 group-hover/stepper:opacity-100 group-focus-within/stepper:max-h-64 group-focus-within/stepper:opacity-100">
           <div className="pt-6">
             <div className="flex gap-2 overflow-x-auto pb-1 sm:hidden">
-              {STEPS.map((step, index) => {
+              {MONTHLY_UPDATE_STEPS.map((step, index) => {
                 const isActive = index === activeIndex;
                 const isComplete = index < activeIndex;
                 const canSelect = canSelectStep(step.key);
@@ -166,7 +166,7 @@ export default function MonthlyUpdateStepper({
             </div>
 
             <div className="hidden sm:grid sm:grid-cols-4 sm:gap-5">
-              {STEPS.map((step, index) => {
+              {MONTHLY_UPDATE_STEPS.map((step, index) => {
                 const isActive = index === activeIndex;
                 const isComplete = index < activeIndex;
                 const canSelect = canSelectStep(step.key);
@@ -242,7 +242,7 @@ export default function MonthlyUpdateStepper({
         <div className="flex items-center justify-between gap-4">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
-              Step {activeIndex + 1} of {STEPS.length}
+              Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
             </p>
             <p className="mt-1 text-base font-black text-[var(--vr-color-text)]">{active.title}</p>
           </div>
@@ -257,7 +257,7 @@ export default function MonthlyUpdateStepper({
           />
         </div>
         <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
-          {STEPS.map((step, index) => {
+          {MONTHLY_UPDATE_STEPS.map((step, index) => {
             const isActive = index === activeIndex;
             const isComplete = index < activeIndex;
             const canSelect = canSelectStep(step.key);
@@ -286,7 +286,7 @@ export default function MonthlyUpdateStepper({
       <div className={clsx("hidden items-center justify-between gap-4 sm:flex", frameless ? "mb-8" : "mb-5")}>
         <div>
           <p className="text-xs font-extrabold uppercase tracking-wide text-[var(--vr-color-primary)]">
-            Step {activeIndex + 1} of {STEPS.length}
+            Step {activeIndex + 1} of {MONTHLY_UPDATE_STEPS.length}
           </p>
           <p className="mt-1 text-sm font-bold text-[var(--vr-color-text-sub)]">Monthly update workflow</p>
         </div>
@@ -294,7 +294,7 @@ export default function MonthlyUpdateStepper({
       </div>
 
       <div className={clsx("hidden sm:grid sm:grid-cols-4", frameless ? "gap-5" : "gap-3")}>
-        {STEPS.map((step, index) => {
+        {MONTHLY_UPDATE_STEPS.map((step, index) => {
           const isActive = index === activeIndex;
           const isComplete = index < activeIndex;
           const canSelect = canSelectStep(step.key);

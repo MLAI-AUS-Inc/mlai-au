@@ -3,6 +3,7 @@ import type { Route } from "./+types/vibe-raising-app.company-setup";
 import { ArrowPathIcon, BuildingOffice2Icon } from "@heroicons/react/24/outline";
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
 import { getEnv } from "~/lib/env.server";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { getVibeMarketingBootstrap } from "~/lib/vibe-marketing";
 import {
     getActiveVibeRaisingCompany,
@@ -24,6 +25,18 @@ function listFromForm(value: FormDataEntryValue | null) {
         .split(/[,\n]/)
         .map((item) => item.trim())
         .filter(Boolean);
+}
+
+function founderNamesFromForm(formData: FormData) {
+    const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+    const founderNames = founderProfiles
+        .map((profile) => profile.name)
+        .filter(Boolean);
+
+    return {
+        founderProfiles,
+        founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
+    };
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -58,6 +71,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const next = sanitizeNext(url.searchParams.get("next"));
     const formData = await request.formData();
     const activeCompany = getActiveVibeRaisingCompany(user);
+    const { founderProfiles, founderNames } = founderNamesFromForm(formData);
 
     const companyName =
         formData.get("companyName")?.toString() || activeCompany?.name || user.companyName;
@@ -75,7 +89,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyContext: formData.get("companyContext")?.toString().trim() || "",
         competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
-        founderNames: listFromForm(formData.get("founderNames")),
+        founderNames,
+        founderProfiles,
         stage: formData.get("stage")?.toString().trim() || "",
         notes: formData.get("notes")?.toString().trim() || "",
         registered: true,
@@ -128,6 +143,7 @@ export default function CompanySetup() {
                                 competitors: marketingBootstrap?.organization.competitors ?? [],
                                 seedKeywords: marketingBootstrap?.organization.seedKeywords ?? [],
                                 founderNames: marketingBootstrap?.startupProfile.founderNames ?? [],
+                                founderProfiles: marketingBootstrap?.startupProfile.founderProfiles ?? activeCompany?.founderProfiles ?? [],
                                 stage: marketingBootstrap?.startupProfile.stage ?? "",
                                 notes: marketingBootstrap?.startupProfile.notes ?? "",
                             }}

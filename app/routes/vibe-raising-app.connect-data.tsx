@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.connect-data";
-import { redirect, useLoaderData, useLocation, useNavigate } from "react-router";
+import { Link, redirect, useLoaderData, useLocation, useNavigate } from "react-router";
 import { clsx } from "clsx";
 import { Combobox } from "@headlessui/react";
 import {
@@ -60,19 +60,15 @@ const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
-const POPULAR_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
-  "gmail",
-  "slack",
-  "linear",
-  "stripe",
-  "bank_feed",
-  "notion",
-  "google_drive",
-  "xero",
-];
-const EXTRA_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [];
+const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["stripe", "notion", "google_drive"];
+const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["gmail", "slack", "linear", "bank_feed", "xero"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
+const DATA_PRIVACY_POINTS = [
+  "Only you can see connected source data in your workspace",
+  "Private drafts stay hidden until you publish",
+  "You can disconnect sources and remove cached data anytime",
+] as const;
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
@@ -1324,17 +1320,17 @@ function ConnectorCard({
 
   return (
     <div className={clsx(
-      "group/source-card relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+      "relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
       isConnected
         ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
         : selected
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-2 transition-all duration-300 ease-out group-hover/source-card:left-3 group-hover/source-card:top-3 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-3 group-focus-within/source-card:top-3 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2 sm:gap-3 sm:group-hover/source-card:left-4 sm:group-hover/source-card:top-4 sm:group-focus-within/source-card:left-4 sm:group-focus-within/source-card:top-4">
+      <div className="pointer-events-none flex items-start gap-3 pr-20">
         <SourceLogo sourceKey={source.key} large />
         <h3 className={clsx(
-          "text-center text-sm font-black transition-all duration-300 group-hover/source-card:text-left group-hover/source-card:text-xs group-focus-within/source-card:text-left group-focus-within/source-card:text-xs sm:text-base sm:group-hover/source-card:text-sm sm:group-focus-within/source-card:text-sm",
+          "pt-2 text-left text-sm font-black sm:text-base",
           isConnected ? "text-white" : "text-gray-950",
         )}>
           {source.label}
@@ -1342,14 +1338,14 @@ function ConnectorCard({
       </div>
 
       <span className={clsx(
-        "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold opacity-0 ring-1 transition-opacity duration-200 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
+        "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
         isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
       )}>
         {displayedStatusLabel}
       </span>
 
-      <div className="pointer-events-none flex flex-1 flex-col pt-16 opacity-0 transition-all duration-200 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100 sm:pt-24">
-        <p className={clsx("mt-1 line-clamp-2 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
+      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
+        <p className={clsx("mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
           {SOURCE_COPY[source.key].description}
         </p>
 
@@ -1422,6 +1418,59 @@ function ConnectorCard({
   );
 }
 
+function GoogleAnalyticsPlaceholderCard() {
+  return (
+    <div
+      className="relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
+      aria-label="Google Analytics source coming soon"
+    >
+      <div className="pointer-events-none flex items-start gap-3 pr-20">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
+          <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
+            <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
+            <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
+            <circle cx="27" cy="12" r="4" fill="#fb923c" />
+          </svg>
+        </div>
+        <h3 className="pt-2 text-left text-sm font-black text-gray-950 sm:text-base">
+          Google Analytics
+        </h3>
+      </div>
+
+      <span className="absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 ring-1 ring-gray-200 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]">
+        Coming soon
+      </span>
+
+      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
+        <p className="mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5">
+          Pull website traffic, acquisition, and top-page performance into your monthly update workflow.
+        </p>
+
+        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
+          {["Traffic", "Attribution"].map((capability) => (
+            <span
+              key={capability}
+              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
+            >
+              {capability}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-auto pt-3 sm:pt-4">
+          <button
+            type="button"
+            disabled
+            className="block w-full cursor-not-allowed rounded-lg bg-gray-100 px-3 py-2 text-center text-xs font-extrabold text-gray-400"
+          >
+            Coming soon
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ManualMaterialsCard({
   expanded,
   hasManualMaterials,
@@ -1442,29 +1491,21 @@ function ManualMaterialsCard({
       aria-expanded={expanded}
       aria-controls="manual-materials-panel"
       className={clsx(
-        "group/source-card relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none transition hover:-translate-y-0.5 hover:shadow-md focus-within:-translate-y-0.5 focus-within:shadow-md focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+        "relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
         expanded || hasManualMaterials
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
       )}
     >
       <div
-        className={clsx(
-          "pointer-events-none absolute z-10 flex flex-col items-center gap-2 transition-all duration-300 ease-out sm:gap-3",
-          expanded
-            ? "left-3 top-3 translate-x-0 translate-y-0 items-start gap-2 sm:left-4 sm:top-4"
-            : "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 group-hover/source-card:left-3 group-hover/source-card:top-3 group-hover/source-card:translate-x-0 group-hover/source-card:translate-y-0 group-hover/source-card:items-start group-hover/source-card:gap-2 group-focus-within/source-card:left-3 group-focus-within/source-card:top-3 group-focus-within/source-card:translate-x-0 group-focus-within/source-card:translate-y-0 group-focus-within/source-card:items-start group-focus-within/source-card:gap-2 sm:group-hover/source-card:left-4 sm:group-hover/source-card:top-4 sm:group-focus-within/source-card:left-4 sm:group-focus-within/source-card:top-4",
-        )}
+        className="pointer-events-none flex items-start gap-3 pr-20"
       >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
           <LinkIcon className="h-6 w-6 sm:h-8 sm:w-8" />
         </div>
         <h3
           className={clsx(
-            "text-center text-sm font-black text-gray-950 transition-all duration-300 sm:text-base",
-            expanded
-              ? "text-left text-xs sm:text-sm"
-              : "group-hover/source-card:text-left group-hover/source-card:text-xs group-focus-within/source-card:text-left group-focus-within/source-card:text-xs sm:group-hover/source-card:text-sm sm:group-focus-within/source-card:text-sm",
+            "pt-2 text-left text-sm font-black text-gray-950 sm:text-base",
           )}
         >
           Manual input
@@ -1473,24 +1514,16 @@ function ManualMaterialsCard({
 
       <span
         className={clsx(
-          "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 transition-opacity duration-200 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
+          "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
           hasManualMaterials
             ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
             : "bg-gray-100 text-slate-500 ring-gray-200",
-          expanded ? "opacity-100" : "opacity-0 group-hover/source-card:opacity-100 group-focus-within/source-card:opacity-100",
         )}
       >
         {hasManualMaterials ? "Added" : "Optional"}
       </span>
 
-      <div
-        className={clsx(
-          "pointer-events-none flex flex-1 flex-col pt-16 transition-all duration-200 sm:pt-24",
-          expanded
-            ? "pointer-events-auto opacity-100"
-            : "opacity-0 group-hover/source-card:pointer-events-auto group-hover/source-card:opacity-100 group-focus-within/source-card:pointer-events-auto group-focus-within/source-card:opacity-100",
-        )}
-      >
+      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
         <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:text-xs sm:leading-5">
           {cardCaption}
         </p>
@@ -1695,10 +1728,16 @@ export default function ConnectData() {
   const linearSelectionTouchedRef = useRef(false);
 
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
-  const orderedVisibleSources = useMemo(() => {
-    const keys = showAllSources ? [...POPULAR_SOURCE_KEYS, ...EXTRA_SOURCE_KEYS] : POPULAR_SOURCE_KEYS;
-    return keys.map((key) => sourceByKey.get(key)).filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
-  }, [showAllSources, sourceByKey]);
+  const prioritySources = useMemo(() => {
+    return PRIORITY_SOURCE_KEYS
+      .map((key) => sourceByKey.get(key))
+      .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
+  }, [sourceByKey]);
+  const moreOptionSources = useMemo(() => {
+    return MORE_SOURCE_KEYS
+      .map((key) => sourceByKey.get(key))
+      .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
+  }, [sourceByKey]);
   const selectedSourceList = useMemo(
     () => sources.filter((source) => selectedSources.has(source.key)),
     [selectedSources, sources],
@@ -2420,16 +2459,48 @@ export default function ConnectData() {
           className="mt-8"
         />
 
-        <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
-          <div className="flex min-w-0 gap-4">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
-              <SparklesIcon className="h-5 w-5" />
+        <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
+                <ShieldCheckIcon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-lg font-black text-gray-950">Your data stays private</h2>
+              </div>
             </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
-              <p className="mt-1 text-sm leading-6 text-slate-600">
-                Connect your tools below. Our AI securely pulls in the most relevant data and turns it into your monthly update.
-              </p>
+            <div className="lg:flex lg:justify-end">
+              <Link
+                to="/privacy"
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-2 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
+              >
+                Privacy Policy
+              </Link>
+            </div>
+          </div>
+
+          <ul className="mt-5 space-y-3">
+            {DATA_PRIVACY_POINTS.map((item) => (
+              <li key={item} className="flex items-start gap-3">
+                <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
+                <p className="text-sm font-semibold leading-6 text-slate-600">{item}</p>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
+                <SparklesIcon className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg font-black text-gray-950">How it works</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Connect your tools below. We only use the authorized data needed to help draft your monthly update.
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -2456,7 +2527,8 @@ export default function ConnectData() {
         </div>
 
         <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
-          {orderedVisibleSources.map((source) => (
+          <GoogleAnalyticsPlaceholderCard />
+          {prioritySources.map((source) => (
             <ConnectorCard
               key={source.key}
               source={source}
@@ -2469,18 +2541,37 @@ export default function ConnectData() {
           ))}
         </div>
 
-        {EXTRA_SOURCE_KEYS.length > 0 ? (
-        <div className="mt-8 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setShowAllSources((value) => !value)}
-            className="inline-flex min-w-56 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-900 shadow-sm transition hover:bg-gray-50"
-          >
-            {showAllSources ? "Show fewer sources" : "View all sources"}
-            <ChevronDownIcon className={clsx("h-4 w-4 text-slate-400 transition", showAllSources && "rotate-180")} />
-          </button>
-        </div>
+        {moreOptionSources.length > 0 ? (
+          <div className="mt-8 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setShowAllSources((value) => !value)}
+              aria-expanded={showAllSources}
+              aria-controls="more-source-options-panel"
+              className="inline-flex min-w-56 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-extrabold text-gray-900 shadow-sm transition hover:bg-gray-50"
+            >
+              {showAllSources ? "Hide more options" : "More options"}
+              <ChevronDownIcon className={clsx("h-4 w-4 text-slate-400 transition", showAllSources && "rotate-180")} />
+            </button>
+          </div>
         ) : null}
+
+        {showAllSources && moreOptionSources.length > 0 ? (
+          <div id="more-source-options-panel" className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
+            {moreOptionSources.map((source) => (
+              <ConnectorCard
+                key={source.key}
+                source={source}
+                selected={selectedSources.has(source.key)}
+                busy={busyProvider === source.key}
+                onConnect={requestConnectSource}
+                onManageGmail={handleOpenGmailManagement}
+                onToggle={handleToggle}
+              />
+            ))}
+          </div>
+        ) : null}
+
         <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
           <ManualMaterialsCard
             expanded={manualMaterialsExpanded}
@@ -2595,6 +2686,20 @@ export default function ConnectData() {
         />
       ) : null}
 
+      <div className="rounded-2xl border border-[rgba(0,255,215,0.20)] bg-[rgba(0,255,215,0.08)] px-5 py-4 shadow-sm">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+            <LockClosedIcon className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-black text-gray-950">Your connected data stays private while you draft.</p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Your connected data and private drafts are visible only to you until you publish.
+            </p>
+          </div>
+        </div>
+      </div>
+
       <VibeRaisingStickyStepBar
         statusIcon={stickyStatusIcon}
         statusTitle={stickyStatusTitle}
@@ -2624,6 +2729,9 @@ export default function ConnectData() {
               <h2 className="mt-5 text-2xl font-black text-gray-950">No source connected</h2>
               <p className="mt-3 text-sm leading-6 text-slate-600">
                 You have not connected an external source yet. If you continue, you will draft this update from manual input only.
+              </p>
+              <p className="mt-3 text-sm font-semibold leading-6 text-[var(--vr-color-primary)]">
+                Only you can see your connected data and private drafts in this workspace until you publish.
               </p>
             </div>
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4 sm:flex-row sm:justify-end">
@@ -2672,7 +2780,7 @@ export default function ConnectData() {
                     Connect {pendingConnectSource.label}?
                   </h2>
                   <p className="mt-2 text-sm leading-6 text-slate-500">
-                    We will only use authorized data to help draft your monthly investor update.
+                    We only use the authorized data needed for your investor update workflow. Only you can see this connected data in your workspace until you publish an update.
                   </p>
                 </div>
                 <button
@@ -2712,7 +2820,7 @@ export default function ConnectData() {
                   <h3 className="text-base font-black text-gray-950">Privacy and security</h3>
                 </div>
                 <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
-                  {["Read-only access where supported", "You control what is connected", "We only scan the filtered data needed for your draft"].map((item) => (
+                  {["Only you can see connected source data and private drafts", "Read-only access where supported", "You control what stays connected", "Disconnecting can remove cached source data"].map((item) => (
                     <li key={item} className="flex items-center gap-3">
                       <CheckCircleIcon className="h-5 w-5 text-[var(--vr-color-primary)]" />
                       {item}

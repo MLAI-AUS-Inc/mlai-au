@@ -68,8 +68,7 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
               {PAGE_TITLE}
             </h1>
             <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-white/78 sm:text-xl">
-              Draft clear investor updates from your progress, metrics, asks, and
-              optional Gmail context so investors can scan your momentum and act on it.
+              Use monthly updates to build investor relationships before you raise.
             </p>
             <div className="mt-9 flex flex-col gap-3 sm:flex-row">
               <button
@@ -88,10 +87,32 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
               </a>
             </div>
           </div>
+
+          <a
+            href="#responsible-investors"
+            aria-label="Scroll down to explore more of Vibe Raising"
+            className="group absolute bottom-8 left-1/2 inline-flex -translate-x-1/2 flex-col items-center gap-2 text-center text-white transition-opacity hover:opacity-80"
+          >
+            <span className="text-sm font-medium text-white/84 sm:text-base">
+              Don&apos;t Wait Until You Need Money
+            </span>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="hero-scroll-cue__arrow h-6 w-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+            </svg>
+          </a>
         </div>
       </section>
 
-      <ResponsibleInvestorsSection />
+      <section id="responsible-investors">
+        <ResponsibleInvestorsSection />
+      </section>
 
       <section className="px-6 py-16">
         <div className="mx-auto grid max-w-6xl gap-5 md:grid-cols-3">
@@ -187,7 +208,7 @@ export default function VibeRaisingPage({}: Route.ComponentProps) {
             </div>
             <div className="space-y-4">
               <h2 className="text-2xl font-bold text-gray-900">
-                Don't Wait Until You Need Money
+                Build Investor Relationships 6 Months in Advance
               </h2>
               <p className="text-lg leading-relaxed text-gray-600">
                 The best founders build investor trust before the round starts.

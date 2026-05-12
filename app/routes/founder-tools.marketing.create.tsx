@@ -18,6 +18,7 @@ import { CustomTopicDecisionCard, TopicDecisionCard } from "~/components/TopicDe
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
   connectVibeMarketingGithub,
@@ -151,6 +152,18 @@ function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function founderNamesFromForm(formData: FormData) {
+  const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+  const founderNames = founderProfiles
+    .map((profile) => profile.name)
+    .filter(Boolean);
+
+  return {
+    founderProfiles,
+    founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
+  };
+}
+
 function normalizeStep(value: string | null | undefined, fallback: string | null | undefined): VibeMarketingStepKey {
   const candidate = value && STEP_KEYS.includes(value as VibeMarketingStepKey) ? value : fallback;
   return STEP_KEYS.includes(candidate as VibeMarketingStepKey) ? (candidate as VibeMarketingStepKey) : "startupDetails";
@@ -194,6 +207,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   try {
     if (intent === "save-startup-details") {
+      const { founderProfiles, founderNames } = founderNamesFromForm(formData);
       const companyContext =
         stringFromForm(formData, "companyContext") ||
         combineStartupCompanyContext({
@@ -211,7 +225,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyContext,
         competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
-        founderNames: listFromForm(formData.get("founderNames")),
+        founderNames,
+        founderProfiles,
         stage: stringFromForm(formData, "stage"),
         organizationKind: stringFromForm(formData, "organizationKind"),
         notes: stringFromForm(formData, "targetAudience"),

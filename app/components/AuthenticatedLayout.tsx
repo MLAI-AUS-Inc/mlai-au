@@ -5,7 +5,6 @@ import {
     BellIcon,
     ChevronDownIcon,
     HomeIcon,
-    MagnifyingGlassIcon,
     UserCircleIcon,
     XMarkIcon,
     UsersIcon,
@@ -349,31 +348,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                            <form action="#" method="GET" className="relative flex flex-1">
-                                <label htmlFor="search-field" className="sr-only">
-                                    Search
-                                </label>
-                                <MagnifyingGlassIcon
-                                    aria-hidden="true"
-                                    className={classNames(
-                                        "pointer-events-none absolute inset-y-0 left-0 h-full w-5",
-                                        isFounderToolsApp ? "text-[var(--vr-color-text-sub)]" : "text-gray-400"
-                                    )}
-                                />
-                                <input
-                                    id="search-field"
-                                    name="search"
-                                    type="search"
-                                    placeholder="Search..."
-                                    className={classNames(
-                                        "block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 focus:ring-0 sm:text-sm",
-                                        isFounderToolsApp
-                                            ? "text-[var(--vr-color-text)] placeholder:text-[var(--vr-color-text-sub)]"
-                                            : "text-gray-900 placeholder:text-gray-400"
-                                    )}
-                                />
-                            </form>
+                        <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 <button
                                     type="button"

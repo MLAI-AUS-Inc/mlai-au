@@ -23,11 +23,15 @@ import {
   BuildingOffice2Icon,
   CircleStackIcon,
   DocumentTextIcon,
+  DocumentDuplicateIcon,
+  HomeIcon,
   MegaphoneIcon,
 } from "@heroicons/react/24/outline";
 
 const FOUNDER_NAVIGATION = [
+  { name: "Overview", href: "/founder-tools/overview", icon: HomeIcon, exact: true },
   { name: "Vibe Raising", href: "/founder-tools/updates", icon: DocumentTextIcon, exact: true },
+  { name: "My Drafts", href: "/founder-tools/drafts", icon: DocumentDuplicateIcon },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
   { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
   { name: "Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },

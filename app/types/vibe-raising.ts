@@ -2,6 +2,11 @@ import type { User } from "~/types/user";
 
 export type VibeRaisingRole = "founder" | "investor";
 
+export interface VibeRaisingFounderProfile {
+  name: string;
+  linkedinUrl?: string | null;
+}
+
 export interface VibeRaisingCompany {
   id: string;
   name: string;
@@ -9,6 +14,9 @@ export interface VibeRaisingCompany {
   companyLinkedInUrl?: string | null;
   abn?: string | null;
   location?: string | null;
+  founderProfiles?: VibeRaisingFounderProfile[];
+  founderNames?: string[];
+  stage?: string | null;
   registered: boolean;
 }
 
@@ -32,6 +40,9 @@ export interface VibeRaisingAppUser {
   domain?: string | null;
   abn?: string | null;
   location?: string | null;
+  founderProfiles?: VibeRaisingFounderProfile[];
+  founderNames?: string[];
+  stage?: string | null;
   companyRegistered: boolean;
 }
 
@@ -57,6 +68,12 @@ export interface VibeRaisingDraftedContent {
   year?: number;
   summary?: string;
   sourceUrl?: string;
+  pitchDeckUrl?: string;
+  pitchDeckStoragePath?: string;
+  pitchDeckContentType?: string;
+  pitchDeckFileSizeBytes?: number | null;
+  pitchDeckOriginalFilename?: string;
+  pitchDeckSummary?: string;
   videoUrl?: string;
   videoStoragePath?: string;
   videoContentType?: string;
@@ -80,8 +97,16 @@ export interface VibeRaisingMonthlyUpdate {
   year?: number;
   date: string;
   status?: string | null;
+  visibility?: "private" | "published" | string | null;
+  publishedAt?: string | null;
   summary?: string | null;
   sourceUrl?: string | null;
+  pitchDeckUrl?: string | null;
+  pitchDeckStoragePath?: string | null;
+  pitchDeckContentType?: string | null;
+  pitchDeckFileSizeBytes?: number | null;
+  pitchDeckOriginalFilename?: string | null;
+  pitchDeckSummary?: string | null;
   videoUrl?: string | null;
   videoStoragePath?: string | null;
   videoContentType?: string | null;
@@ -104,7 +129,25 @@ export interface VibeRaisingVideoUploadResponse {
   originalFilename: string;
 }
 
+export interface VibeRaisingPitchDeckUploadResponse {
+  pitchDeckUrl: string;
+  storagePath: string;
+  contentType: string;
+  fileSizeBytes: number;
+  originalFilename: string;
+}
+
 export interface VibeRaisingVideoUploadSessionResponse {
+  uploadUrl: string;
+  storagePath: string;
+  contentType: string;
+  fileSizeBytes?: number;
+  expiresAt: string;
+  maxUploadBytes: number;
+  requiredHeaders: Record<string, string>;
+}
+
+export interface VibeRaisingPitchDeckUploadSessionResponse {
   uploadUrl: string;
   storagePath: string;
   contentType: string;
@@ -497,6 +540,12 @@ export interface VibeRaisingEmailDraftMonth {
   year?: number;
   summary?: string;
   sourceUrl?: string;
+  pitchDeckUrl?: string;
+  pitchDeckStoragePath?: string;
+  pitchDeckContentType?: string;
+  pitchDeckFileSizeBytes?: number | null;
+  pitchDeckOriginalFilename?: string;
+  pitchDeckSummary?: string;
   videoUrl?: string;
   videoStoragePath?: string;
   videoContentType?: string;
