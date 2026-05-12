@@ -28,6 +28,7 @@ import { clsx } from "clsx";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
 import {
+  controlVibeMarketingRun,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
@@ -52,6 +53,7 @@ import type {
   VibeMarketingAutofillCompetitor,
   VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
+  VibeMarketingDraftArticle,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
@@ -183,6 +185,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     topicCandidates: [],
     hiddenTopicCandidates: [],
     declinedTopicFeedback: [],
+    draftArticles: [],
     writtenTopics: [],
     publishEvidence: {},
     guidedSteps: [],
@@ -352,6 +355,21 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-discovery" || intent === "discovery") {
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
+    }
+
+    if (intent === "resume-draft" || intent === "restart-draft") {
+      const runId = stringFromForm(formData, "runId");
+      if (!runId) {
+        return { intent, error: "Choose a draft article to continue." };
+      }
+      const run = await controlVibeMarketingRun(
+        env,
+        request,
+        runId,
+        intent === "resume-draft" ? "resume" : "restart",
+      );
+      const nextRunId = run.runId || runId;
+      throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
     }
 
     if (intent === "start-article") {
@@ -2117,6 +2135,122 @@ function RecentArticleRow({ article }: { article: VibeMarketingWrittenTopic }) {
   );
 }
 
+function draftStatusTone(draft: VibeMarketingDraftArticle) {
+  if (["failed", "blocked", "denied"].includes(draft.status)) {
+    return {
+      label: "Needs attention",
+      pill: "bg-red-50 text-red-700",
+      dot: "bg-red-500",
+    };
+  }
+  if (draft.status === "completed" || String(draft.status).startsWith("awaiting_") || draft.status === "approval_required") {
+    return {
+      label: "Ready for review",
+      pill: "bg-emerald-50 text-emerald-700",
+      dot: "bg-emerald-500",
+    };
+  }
+  return {
+    label: "In progress",
+    pill: "bg-violet-50 text-violet-700",
+    dot: "bg-violet-500",
+  };
+}
+
+function draftActionVariant(actionKind: string) {
+  if (actionKind === "restart") return "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100";
+  if (actionKind === "resume") return "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100";
+  if (actionKind === "review") return "border-red-200 bg-red-50 text-red-700 hover:bg-red-100";
+  return "border-slate-200 bg-white text-violet-700 hover:bg-violet-50";
+}
+
+function DraftArticleRow({
+  draft,
+  submitting,
+}: {
+  draft: VibeMarketingDraftArticle;
+  submitting: boolean;
+}) {
+  const tone = draftStatusTone(draft);
+  const href = `/founder-tools/marketing/runs/${encodeURIComponent(draft.runId)}`;
+  const canPostAction = draft.actionKind === "resume" || draft.actionKind === "restart";
+  const actionIntent = draft.actionKind === "resume" ? "resume-draft" : "restart-draft";
+  const actionLabel = draft.actionLabel || (draft.actionKind === "restart" ? "Restart" : "Resume");
+
+  return (
+    <div className="grid gap-3 border-t border-slate-100 py-4 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <Link to={href} className="min-w-0 rounded-lg transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-violet-100">
+        <span className="inline-flex items-center gap-2">
+          <span className={clsx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black", tone.pill)}>
+            <span className={clsx("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            {tone.label}
+          </span>
+          <span className="text-xs font-black uppercase tracking-normal text-slate-400">{draft.stageLabel}</span>
+        </span>
+        <p className="mt-2 truncate text-sm font-black text-slate-950">{draft.title || draft.targetKeyword || "Untitled article draft"}</p>
+        <p className="mt-1 truncate text-xs font-bold text-slate-500">
+          {draft.targetKeyword ? `${draft.targetKeyword} · ` : ""}
+          Updated {formatArticleDate(draft.updatedAt ?? draft.createdAt)}
+        </p>
+      </Link>
+      {canPostAction ? (
+        <Form method="POST">
+          <input type="hidden" name="intent" value={actionIntent} />
+          <input type="hidden" name="runId" value={draft.runId} />
+          <button
+            type="submit"
+            disabled={submitting}
+            className={clsx(
+              "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+              draftActionVariant(draft.actionKind),
+            )}
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            {actionLabel}
+          </button>
+        </Form>
+      ) : (
+        <Link
+          to={href}
+          className={clsx(
+            "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:w-auto",
+            draftActionVariant(draft.actionKind),
+          )}
+        >
+          <ArrowRight className="h-4 w-4" />
+          {draft.actionLabel || "Continue"}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function DraftArticlesCard({
+  drafts,
+  submitting,
+}: {
+  drafts: VibeMarketingDraftArticle[];
+  submitting: boolean;
+}) {
+  if (!drafts.length) return null;
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">Draft articles</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Continue interrupted or review-ready article runs.</p>
+        </div>
+        <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-violet-500" />
+      </div>
+      <div className="mt-5">
+        {drafts.slice(0, 5).map((draft) => (
+          <DraftArticleRow key={draft.runId} draft={draft} submitting={submitting} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 type TopicFeedbackActionData = {
   intent?: string;
   error?: string;
@@ -2582,6 +2716,8 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
           </section>
+
+          <DraftArticlesCard drafts={bootstrap.draftArticles ?? []} submitting={isSubmitting} />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
