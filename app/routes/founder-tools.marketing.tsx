@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import type { KeyboardEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -19,7 +19,8 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  TrendingUp,
+  ThumbsDown,
+  Undo2,
   UserRound,
 } from "lucide-react";
 import { clsx } from "clsx";
@@ -28,9 +29,12 @@ import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartup
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
+  controlVibeMarketingRun,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
+  recordVibeMarketingTopicFeedback,
+  restoreVibeMarketingTopicFeedback,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
   startVibeMarketingAutofill,
@@ -50,8 +54,10 @@ import type {
   VibeMarketingAutofillCompetitor,
   VibeMarketingAutofillResult,
   VibeMarketingBootstrap,
+  VibeMarketingDraftArticle,
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
+  VibeMarketingTopicFeedback,
   VibeMarketingWebsiteBaseline,
   VibeMarketingWebsiteBaselineMetric,
   VibeMarketingWrittenTopic,
@@ -87,6 +93,27 @@ function founderNamesFromForm(formData: FormData) {
     founderProfiles,
     founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
   };
+}
+
+function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const effective = bootstrap.settings.articleDeliveryModeEffective;
+  if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
+    return effective;
+  }
+  const configured = bootstrap.settings.articleDeliveryMode;
+  if (configured === "review_draft" || configured === "publish_code") {
+    return configured;
+  }
+  if (configured === "content_only" && !isGithubPublishingReady(bootstrap)) {
+    return "content_only";
+  }
+  return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
 function combineCompanyContext({
@@ -133,7 +160,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     settings: {
       brandName: companyName || null,
       companyContext: null,
-      articleDeliveryMode: "publish_code",
+      articleDeliveryMode: "review_draft",
       githubRepo: null,
       dailyDiscoveryEnabled: false,
       githubConnectionState: null,
@@ -170,6 +197,8 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     latestRunsByWorkflow: {},
     topicCandidates: [],
     hiddenTopicCandidates: [],
+    declinedTopicFeedback: [],
+    draftArticles: [],
     writtenTopics: [],
     publishEvidence: {},
     guidedSteps: [],
@@ -343,6 +372,21 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
 
+    if (intent === "resume-draft" || intent === "restart-draft") {
+      const runId = stringFromForm(formData, "runId");
+      if (!runId) {
+        return { intent, error: "Choose a draft article to continue." };
+      }
+      const run = await controlVibeMarketingRun(
+        env,
+        request,
+        runId,
+        intent === "resume-draft" ? "resume" : "restart",
+      );
+      const nextRunId = run.runId || runId;
+      throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
+    }
+
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
@@ -375,13 +419,55 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || bootstrap.settings.articleDeliveryMode || "publish_code",
+        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
+        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
-      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return redirect("/founder-tools/marketing/create?step=writeCheck");
+      if (result.runId) {
+        return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
+
+      return {
+        intent,
+        error:
+          result.error ||
+          result.errors?.[0] ||
+          "Article generation was accepted, but the backend did not return a run id. Refresh and try again.",
+      };
+    }
+
+    if (intent === "decline-topic") {
+      const keyword = stringFromForm(formData, "keyword");
+      if (!keyword) {
+        return { intent, error: "Choose a topic to ignore." };
+      }
+
+      const feedback = await recordVibeMarketingTopicFeedback(env, request, {
+        keyword,
+        sessionId: stringFromForm(formData, "sourceDiscoveryRunId"),
+        feedbackType: "declined",
+        reasonCode: "not_appropriate",
+        reasonText: null,
+        declineScope: "similar",
+        source: "homepage_topic_card",
+      });
+      return {
+        intent,
+        topicCandidateId: stringFromForm(formData, "topicCandidateId"),
+        topicFeedback: feedback,
+      };
+    }
+
+    if (intent === "restore-topic-feedback") {
+      const feedbackId = stringFromForm(formData, "feedbackId");
+      if (!feedbackId) {
+        return { intent, error: "Choose a declined topic to restore." };
+      }
+
+      const feedback = await restoreVibeMarketingTopicFeedback(env, request, feedbackId);
+      return { intent, topicFeedback: feedback };
     }
 
     if (intent === "daily-replay") {
@@ -427,17 +513,36 @@ function volumeLabel(value: unknown) {
   return "Niche volume";
 }
 
-function difficultyLabel(value: unknown) {
-  const difficulty = numericValue(value);
-  if (difficulty === null) return "Competition pending";
-  if (difficulty <= 30) return "Low competition";
-  if (difficulty <= 60) return "Medium competition";
-  return "High competition";
+const VERIFIED_DIFFICULTY_SOURCES = new Set(["dataforseo_labs", "dataforseo_bulk"]);
+
+function difficultyLabel(topic: VibeMarketingTopicCandidate) {
+  const difficultySource = typeof topic.difficultySource === "string" ? topic.difficultySource : "";
+  if (!VERIFIED_DIFFICULTY_SOURCES.has(difficultySource)) return "Difficulty pending";
+  const difficulty = numericValue(topic.difficulty);
+  if (difficulty === null) return "Difficulty pending";
+  return `Difficulty ${Math.round(difficulty)}/100`;
 }
 
 function opportunityLabel(value: unknown) {
   const score = numericValue(value);
   return score === null ? null : Math.round(score).toString();
+}
+
+function topicMemoryKey(value: unknown) {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function declineReasonLabel(reasonCode: string | null | undefined) {
+  const labels: Record<string, string> = {
+    not_appropriate: "Not appropriate",
+    off_topic: "Off-topic",
+    wrong_audience: "Wrong audience",
+    already_covered: "Already covered",
+    too_broad: "Too broad",
+    low_intent: "Low intent",
+    other: "Other",
+  };
+  return labels[String(reasonCode ?? "").trim()] ?? "Not appropriate";
 }
 
 function companyInitials(name: string) {
@@ -446,11 +551,22 @@ function companyInitials(name: string) {
   return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
 }
 
-function formatArticleDate(value: string | null | undefined) {
-  if (!value) return "Recently";
+const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+function formatStableDate(value: string | null | undefined, fallback = "Recently") {
+  if (!value) return fallback;
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recently";
-  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  if (Number.isNaN(date.getTime())) return fallback;
+  return stableDateFormatter.format(date);
+}
+
+function formatArticleDate(value: string | null | undefined) {
+  return formatStableDate(value, "Recently");
 }
 
 function startupTags(bootstrap: VibeMarketingBootstrap) {
@@ -707,6 +823,14 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     : Array.isArray(payload.competitorCandidates)
       ? payload.competitorCandidates
       : [];
+  const legacyDirectCompetitors = directCompetitors.length
+    ? []
+    : competitorCandidates
+        .map((competitor) => competitorSuggestion(competitor))
+        .filter(
+          (competitor): competitor is VibeMarketingAutofillCompetitor =>
+            competitor !== null && (!competitor.type || competitor.type === "direct"),
+        );
   const competitorSuggestions = [
     ...directCompetitors,
     ...seoCompetitors,
@@ -715,18 +839,14 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
   ];
   const competitorStrings = [
     ...directCompetitors.map((competitor) => competitor.domain || competitor.name),
-    ...competitorCandidates
-      .map((competitor) => competitorSuggestion(competitor))
-      .map((competitor) => competitor?.domain || competitor?.name || ""),
-    ...listFromUnknown(payload.competitorDomains),
-    ...listFromUnknown(payload.competitorStrings),
+    ...legacyDirectCompetitors.map((competitor) => competitor.domain || competitor.name),
   ].filter(Boolean);
   const groups = keywordGroups(payload.keywordGroups ?? payload.keyword_groups);
-  const seedKeywords = [
+  const explicitSeedKeywords = [
     ...listFromUnknown(payload.seedKeywords),
     ...listFromUnknown(payload.seed_keywords),
-    ...groups.flatMap((group) => group.keywords),
   ];
+  const seedKeywords = explicitSeedKeywords.length ? explicitSeedKeywords : groups.flatMap((group) => group.keywords);
   return {
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
     companyLinkedInUrl:
@@ -741,6 +861,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
         : typeof payload.company_context === "string"
           ? payload.company_context
           : null,
+    offeringProfile: plainObject(payload.offeringProfile ?? payload.offering_profile),
     competitors: Array.from(new Set(competitorStrings.map((competitor) => competitor.trim()).filter(Boolean))),
     competitorSuggestions,
     directCompetitors,
@@ -748,6 +869,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     adjacentOrganizations,
     competitorGroups: { directCompetitors, seoCompetitors, adjacentOrganizations },
     seedKeywords: Array.from(new Set(seedKeywords.map((keyword) => keyword.trim()).filter(Boolean))),
+    keywordCandidates: objectArray(payload.keywordCandidates ?? payload.keyword_candidates),
     keywordGroups: groups,
     sources: autofillSources(payload.sources),
     linkedinProfile:
@@ -787,14 +909,8 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
 }
 
 function competitorStringsFromAutofill(autofill: VibeMarketingAutofillResult) {
-  const candidates = autofill.competitors?.length
-    ? autofill.competitors
-    : [
-        ...(autofill.directCompetitors ?? []),
-        ...(autofill.seoCompetitors ?? []),
-        ...(autofill.adjacentOrganizations ?? []),
-        ...(autofill.competitorSuggestions ?? []),
-      ].map((competitor) => competitor.domain || competitor.name);
+  const directCandidates = (autofill.directCompetitors ?? []).map((competitor) => competitor.domain || competitor.name);
+  const candidates = directCandidates.length ? directCandidates : (autofill.competitors ?? []);
   const seen = new Set<string>();
   return candidates
     .map((competitor) => String(competitor ?? "").trim())
@@ -1801,7 +1917,7 @@ function FirstArticleSetupPage({
                   <p className="mt-1 text-sm font-semibold text-slate-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
                   {effectiveBaseline.collectedAt ? (
                     <p className="mt-1 text-xs font-semibold text-slate-500">
-                      Collected {new Date(effectiveBaseline.collectedAt).toLocaleDateString()}
+                      Collected {formatStableDate(effectiveBaseline.collectedAt, "recently")}
                       {effectiveBaseline.stale ? " · stale" : ""}
                     </p>
                   ) : null}
@@ -1934,38 +2050,90 @@ function FirstArticleSetupPage({
 function TopicRow({
   topic,
   selected,
+  submitting,
   onSelect,
+  onContinue,
+  onDecline,
 }: {
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
+  submitting?: boolean;
   onSelect: () => void;
+  onContinue: () => void;
+  onDecline: () => void;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
+  const title = topic.title || topic.keyword;
+  const selectOrContinue = () => {
+    if (selected) {
+      onContinue();
+      return;
+    }
+    onSelect();
+  };
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      selectOrContinue();
+    }
+  }
 
   return (
-    <button
-      type="button"
-      onClick={onSelect}
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={selectOrContinue}
+      onKeyDown={handleKeyDown}
       className={clsx(
-        "grid w-full grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition",
+        "grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
         selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
+      aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
+      aria-pressed={selected}
     >
       <Flame className="h-5 w-5 text-violet-600" />
       <span className="min-w-0">
-        <span className="block truncate text-sm font-black text-slate-950">{topic.title || topic.keyword}</span>
+        <span className="block truncate text-sm font-black text-slate-950">{title}</span>
         <span className="mt-1 block text-sm font-semibold text-slate-500">
-          {volumeLabel(topic.volume)} · {difficultyLabel(topic.difficulty)}
+          {volumeLabel(topic.volume)} · {difficultyLabel(topic)}
           {score ? ` · Opportunity ${score}` : ""}
         </span>
       </span>
-      <span className="flex items-center gap-3">
-        <span className={clsx("rounded-lg px-3 py-2 text-xs font-black", selected ? "bg-white text-violet-700" : "bg-violet-50 text-violet-700")}>
-          {selected ? "Selected" : "Select"}
-        </span>
-        <ArrowRight className="h-4 w-4 text-violet-500" />
+      <span className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onDecline();
+          }}
+          title={`Ignore suggestion: ${topic.keyword}`}
+          aria-label={`Ignore suggestion: ${topic.keyword}`}
+          className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100"
+        >
+          <ThumbsDown className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            selectOrContinue();
+          }}
+          disabled={selected && submitting}
+          className={clsx(
+            "inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+            selected ? "bg-white text-violet-700 hover:bg-violet-50" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+          )}
+        >
+          {selected ? "Continue" : "Select"}
+          {selected && submitting ? (
+            <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+          ) : (
+            <ArrowRight className="h-4 w-4 text-violet-500" />
+          )}
+        </button>
       </span>
-    </button>
+    </div>
   );
 }
 
@@ -1982,6 +2150,176 @@ function RecentArticleRow({ article }: { article: VibeMarketingWrittenTopic }) {
   );
 }
 
+function draftStatusTone(draft: VibeMarketingDraftArticle) {
+  if (["failed", "blocked", "denied"].includes(draft.status)) {
+    return {
+      label: "Needs attention",
+      pill: "bg-red-50 text-red-700",
+      dot: "bg-red-500",
+    };
+  }
+  if (draft.status === "completed" || String(draft.status).startsWith("awaiting_") || draft.status === "approval_required") {
+    return {
+      label: "Ready for review",
+      pill: "bg-emerald-50 text-emerald-700",
+      dot: "bg-emerald-500",
+    };
+  }
+  return {
+    label: "In progress",
+    pill: "bg-violet-50 text-violet-700",
+    dot: "bg-violet-500",
+  };
+}
+
+function draftActionVariant(actionKind: string) {
+  if (actionKind === "restart") return "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100";
+  if (actionKind === "resume") return "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100";
+  if (actionKind === "review") return "border-red-200 bg-red-50 text-red-700 hover:bg-red-100";
+  return "border-slate-200 bg-white text-violet-700 hover:bg-violet-50";
+}
+
+function DraftArticleRow({
+  draft,
+  submitting,
+}: {
+  draft: VibeMarketingDraftArticle;
+  submitting: boolean;
+}) {
+  const tone = draftStatusTone(draft);
+  const href = `/founder-tools/marketing/runs/${encodeURIComponent(draft.runId)}`;
+  const canPostAction = draft.actionKind === "resume" || draft.actionKind === "restart";
+  const actionIntent = draft.actionKind === "resume" ? "resume-draft" : "restart-draft";
+  const actionLabel = draft.actionLabel || (draft.actionKind === "restart" ? "Restart" : "Resume");
+
+  return (
+    <div className="grid gap-3 border-t border-slate-100 py-4 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+      <Link to={href} className="min-w-0 rounded-lg transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-violet-100">
+        <span className="inline-flex items-center gap-2">
+          <span className={clsx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-black", tone.pill)}>
+            <span className={clsx("h-1.5 w-1.5 rounded-full", tone.dot)} />
+            {tone.label}
+          </span>
+          <span className="text-xs font-black uppercase tracking-normal text-slate-400">{draft.stageLabel}</span>
+        </span>
+        <p className="mt-2 truncate text-sm font-black text-slate-950">{draft.title || draft.targetKeyword || "Untitled article draft"}</p>
+        <p className="mt-1 truncate text-xs font-bold text-slate-500">
+          {draft.targetKeyword ? `${draft.targetKeyword} · ` : ""}
+          Updated {formatArticleDate(draft.updatedAt ?? draft.createdAt)}
+        </p>
+      </Link>
+      {canPostAction ? (
+        <Form method="POST">
+          <input type="hidden" name="intent" value={actionIntent} />
+          <input type="hidden" name="runId" value={draft.runId} />
+          <button
+            type="submit"
+            disabled={submitting}
+            className={clsx(
+              "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+              draftActionVariant(draft.actionKind),
+            )}
+          >
+            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            {actionLabel}
+          </button>
+        </Form>
+      ) : (
+        <Link
+          to={href}
+          className={clsx(
+            "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:w-auto",
+            draftActionVariant(draft.actionKind),
+          )}
+        >
+          <ArrowRight className="h-4 w-4" />
+          {draft.actionLabel || "Continue"}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function DraftArticlesCard({
+  drafts,
+  submitting,
+}: {
+  drafts: VibeMarketingDraftArticle[];
+  submitting: boolean;
+}) {
+  if (!drafts.length) return null;
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-black text-slate-950">Draft articles</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">Continue interrupted or review-ready article runs.</p>
+        </div>
+        <AlertTriangle className="mt-1 h-5 w-5 shrink-0 text-violet-500" />
+      </div>
+      <div className="mt-5">
+        {drafts.slice(0, 5).map((draft) => (
+          <DraftArticleRow key={draft.runId} draft={draft} submitting={submitting} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+type TopicFeedbackActionData = {
+  intent?: string;
+  error?: string;
+  topicCandidateId?: string;
+  topicFeedback?: VibeMarketingTopicFeedback | null;
+};
+
+type TopicToast =
+  | {
+      kind: "declined";
+      topicId: string;
+      keyword: string;
+      feedbackId?: string | null;
+    }
+  | {
+      kind: "error";
+      message: string;
+    };
+
+function TopicDeclineRequest({
+  topic,
+  onResult,
+}: {
+  topic: VibeMarketingTopicCandidate;
+  onResult: (data: TopicFeedbackActionData) => void;
+}) {
+  const fetcher = useFetcher<TopicFeedbackActionData>({ key: `decline-topic-${topic.id}` });
+  const submittedRef = useRef(false);
+  const handledRef = useRef(false);
+
+  useEffect(() => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+
+    const formData = new FormData();
+    formData.set("intent", "decline-topic");
+    formData.set("topicCandidateId", topic.id);
+    formData.set("keyword", topic.keyword);
+    formData.set("sourceDiscoveryRunId", topic.sourceRunId ?? "");
+    fetcher.submit(formData, { method: "POST" });
+  }, [fetcher, topic.id, topic.keyword, topic.sourceRunId]);
+
+  useEffect(() => {
+    if (handledRef.current || fetcher.state !== "idle" || !fetcher.data) return;
+    handledRef.current = true;
+    onResult({
+      ...fetcher.data,
+      topicCandidateId: fetcher.data.topicCandidateId ?? topic.id,
+    });
+  }, [fetcher.data, fetcher.state, onResult, topic.id]);
+
+  return null;
+}
+
 function ReturningTopicPickerPage({
   bootstrap,
   error,
@@ -1990,25 +2328,185 @@ function ReturningTopicPickerPage({
   error: string | null;
 }) {
   const navigation = useNavigation();
-  const topics = useMemo(
+  const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
+  );
+  const [pendingDeclines, setPendingDeclines] = useState<Record<string, VibeMarketingTopicCandidate>>({});
+  const [declinedFeedback, setDeclinedFeedback] = useState<VibeMarketingTopicFeedback[]>(bootstrap.declinedTopicFeedback ?? []);
+  const [visibleCount, setVisibleCount] = useState(5);
+  const [toast, setToast] = useState<TopicToast | null>(null);
+  const undoRequestedTopicIds = useRef<Set<string>>(new Set());
+  const articleFormRef = useRef<HTMLFormElement>(null);
+  const declinedTopicKeys = useMemo(
+    () => new Set(declinedFeedback.filter((item) => item.active).map((item) => topicMemoryKey(item.keyword))),
+    [declinedFeedback],
+  );
+  const topics = useMemo(
+    () =>
+      baseTopics.filter(
+        (topic) =>
+          !pendingDeclines[topic.id] &&
+          !declinedTopicKeys.has(topicMemoryKey(topic.keyword)),
+      ),
+    [baseTopics, declinedTopicKeys, pendingDeclines],
   );
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
   const selectedTopic = topics.find((topic) => topic.id === selectedTopicId) ?? null;
+  const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
+  const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
+  const directPublishMode = effectiveDeliveryMode === "publish_code";
+  const deliveryModeNote = directPublishMode
+    ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
+    : effectiveDeliveryMode === "review_draft"
+      ? "This will generate an article preview for comments before publishing."
+      : "This will generate article copy and images for manual publishing.";
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const [articleStartPending, setArticleStartPending] = useState(false);
   const isSubmitting = navigation.state === "submitting";
+  const isArticleStartNavigation = navigation.formData?.get("intent") === "start-article";
+  const articleSubmitting = articleStartPending || (navigation.state !== "idle" && isArticleStartNavigation);
+  const restoreBusy = restoreFetcher.state !== "idle";
+  const visibleTopics = topics.slice(0, visibleCount);
+  const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
+
+  const submitSelectedTopic = useCallback(() => {
+    if (articleSubmitting || !selectedTopic) return;
+    articleFormRef.current?.requestSubmit();
+  }, [articleSubmitting, selectedTopic]);
+
+  const handleArticleSubmit = useCallback(() => {
+    setArticleStartPending(true);
+  }, []);
+
+  const submitRestoreFeedback = useCallback((feedbackId: string) => {
+    const formData = new FormData();
+    formData.set("intent", "restore-topic-feedback");
+    formData.set("feedbackId", feedbackId);
+    restoreFetcher.submit(formData, { method: "POST" });
+  }, [restoreFetcher]);
+
+  function handleDeclineTopic(topic: VibeMarketingTopicCandidate) {
+    setPendingDeclines((current) => ({ ...current, [topic.id]: topic }));
+    setDeclineRequests((current) => ({ ...current, [topic.id]: topic }));
+    setSelectedTopicId((current) => {
+      if (current !== topic.id) return current;
+      return topics.find((candidate) => candidate.id !== topic.id)?.id ?? "";
+    });
+    setToast({ kind: "declined", topicId: topic.id, keyword: topic.keyword, feedbackId: null });
+  }
+
+  function handleUndoDecline() {
+    if (!toast || toast.kind !== "declined") return;
+    setPendingDeclines((current) => {
+      const next = { ...current };
+      delete next[toast.topicId];
+      return next;
+    });
+    if (toast.feedbackId) {
+      submitRestoreFeedback(toast.feedbackId);
+    } else {
+      undoRequestedTopicIds.current.add(toast.topicId);
+    }
+    setToast(null);
+  }
+
+  function handleRestoreFeedback(feedback: VibeMarketingTopicFeedback) {
+    submitRestoreFeedback(feedback.id);
+  }
+
+  useEffect(() => {
+    if (!topics.length) {
+      setSelectedTopicId("");
+      return;
+    }
+    if (!selectedTopicId || !topics.some((topic) => topic.id === selectedTopicId)) {
+      setSelectedTopicId(topics[0].id);
+    }
+  }, [selectedTopicId, topics]);
+
+  useEffect(() => {
+    if (navigation.state !== "idle" && isArticleStartNavigation) {
+      setArticleStartPending(true);
+    }
+  }, [isArticleStartNavigation, navigation.state]);
+
+  useEffect(() => {
+    if (navigation.state === "idle") {
+      setArticleStartPending(false);
+    }
+  }, [navigation.state]);
+
+  const handleDeclineResult = useCallback((data: TopicFeedbackActionData) => {
+    if (!data || data.intent !== "decline-topic") return;
+    const topicId = data.topicCandidateId ?? "";
+    const feedback = data.topicFeedback ?? null;
+    if (topicId) {
+      setDeclineRequests((current) => {
+        const next = { ...current };
+        delete next[topicId];
+        return next;
+      });
+    }
+
+    if (data.error || !feedback) {
+      setPendingDeclines((current) => {
+        const next = { ...current };
+        if (topicId) delete next[topicId];
+        return next;
+      });
+      if (topicId) undoRequestedTopicIds.current.delete(topicId);
+      setToast({ kind: "error", message: data.error ?? "Could not ignore that suggestion." });
+      return;
+    }
+
+    if (topicId) {
+      setPendingDeclines((current) => {
+        const next = { ...current };
+        delete next[topicId];
+        return next;
+      });
+    }
+
+    if (topicId && undoRequestedTopicIds.current.has(topicId)) {
+      undoRequestedTopicIds.current.delete(topicId);
+      submitRestoreFeedback(feedback.id);
+      return;
+    }
+
+    setDeclinedFeedback((current) => {
+      const existing = current.filter((item) => item.id !== feedback.id);
+      return [feedback, ...existing];
+    });
+    setToast((current) =>
+      current?.kind === "declined" && current.topicId === topicId
+        ? { ...current, feedbackId: feedback.id }
+        : current,
+    );
+  }, [submitRestoreFeedback]);
+
+  useEffect(() => {
+    const data = restoreFetcher.data;
+    if (!data || data.intent !== "restore-topic-feedback") return;
+    if (data.error || !data.topicFeedback) {
+      setToast({ kind: "error", message: data.error ?? "Could not restore that suggestion." });
+      return;
+    }
+    setDeclinedFeedback((current) => current.filter((item) => item.id !== data.topicFeedback?.id));
+  }, [restoreFetcher.data]);
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form method="POST" className="space-y-5">
+        <Form ref={articleFormRef} method="POST" onSubmit={handleArticleSubmit} className="space-y-5">
           <input type="hidden" name="intent" value="start-article" />
           <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-          <input type="hidden" name="deliveryMode" value={bootstrap.settings.articleDeliveryMode ?? "publish_code"} />
+          <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
+          <input type="hidden" name="deliveryModeExplicit" value="false" />
           <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
           {activeTab === "choose" ? (
             <>
@@ -2023,8 +2521,11 @@ function ReturningTopicPickerPage({
               What should we write about next?
             </h1>
             <p className="mt-4 max-w-2xl text-lg font-semibold leading-8 text-slate-600">
-              Choose a topic and we&apos;ll research, write, and publish a high-performing SEO article for you.
+              {directPublishMode
+                ? "Choose a topic and we'll research, write, and prepare a high-performing SEO article for your site."
+                : "Choose a topic and we'll research, write, and package a high-performing SEO article for manual publishing."}
             </p>
+            <p className="mt-3 max-w-2xl text-sm font-bold text-slate-500">{deliveryModeNote}</p>
           </div>
 
           {error ? (
@@ -2069,12 +2570,15 @@ function ReturningTopicPickerPage({
                 </p>
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
-                    topics.slice(0, 5).map((topic) => (
+                    visibleTopics.map((topic) => (
                       <TopicRow
                         key={topic.id}
                         topic={topic}
                         selected={topic.id === selectedTopicId}
+                        submitting={articleSubmitting}
                         onSelect={() => setSelectedTopicId(topic.id)}
+                        onContinue={submitSelectedTopic}
+                        onDecline={() => handleDeclineTopic(topic)}
                       />
                     ))
                   ) : (
@@ -2087,15 +2591,76 @@ function ReturningTopicPickerPage({
                     </div>
                   )}
                 </div>
-                {topics.length > 5 ? (
+                {toast ? (
+                  <div
+                    className={clsx(
+                      "mt-4 flex flex-col gap-3 rounded-xl px-4 py-3 text-sm font-bold sm:flex-row sm:items-center sm:justify-between",
+                      toast.kind === "error"
+                        ? "border border-rose-100 bg-rose-50 text-rose-700"
+                        : "border border-violet-100 bg-violet-50 text-slate-700",
+                    )}
+                  >
+                    <span>
+                      {toast.kind === "error"
+                        ? toast.message
+                        : `Ignored "${toast.keyword}". Future research will avoid this topic and close variants.`}
+                    </span>
+                    {toast.kind === "declined" ? (
+                      <button
+                        type="button"
+                        onClick={handleUndoDecline}
+                        className="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-black text-violet-700 shadow-sm hover:bg-violet-50"
+                      >
+                        <Undo2 className="h-4 w-4" />
+                        Undo
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
+                {topics.length > visibleCount ? (
                   <button
                     type="button"
+                    onClick={() => setVisibleCount((count) => Math.min(topics.length, count + 5))}
                     className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-50 px-4 py-3 text-sm font-black text-slate-600 hover:bg-slate-100"
                   >
                     Show more topic ideas
                     <ChevronDown className="h-4 w-4" />
                   </button>
                 ) : null}
+                {declinedFeedback.length ? (
+                  <details className="mt-5 rounded-xl border border-slate-100 bg-slate-50/70 px-4 py-3">
+                    <summary className="cursor-pointer text-sm font-black text-slate-700">
+                      Declined suggestions ({declinedFeedback.length})
+                    </summary>
+                    <div className="mt-3 divide-y divide-slate-200">
+                      {declinedFeedback.map((feedback) => (
+                        <div
+                          key={feedback.id}
+                          className="grid gap-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-slate-950">{feedback.keyword}</p>
+                            <p className="mt-1 text-xs font-bold text-slate-500">
+                              {declineReasonLabel(feedback.reasonCode)} · {formatArticleDate(feedback.createdAt)}
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={restoreBusy}
+                            onClick={() => handleRestoreFeedback(feedback)}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <Undo2 className="h-4 w-4" />
+                            Restore
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                ) : null}
+                {Object.values(declineRequests).map((topic) => (
+                  <TopicDeclineRequest key={topic.id} topic={topic} onResult={handleDeclineResult} />
+                ))}
               </>
             ) : (
               <>
@@ -2131,25 +2696,6 @@ function ReturningTopicPickerPage({
             )}
           </section>
 
-          <div className="flex flex-col gap-4 rounded-2xl border border-violet-100 bg-violet-50/80 p-5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex gap-4">
-              <TrendingUp className="mt-1 h-8 w-8 shrink-0 text-violet-700" />
-              <div>
-                <p className="text-base font-black text-slate-950">Consistent content. Compounding results.</p>
-                <p className="mt-1 text-sm font-semibold text-slate-600">
-                  Start from researched keywords and avoid repeating topics you&apos;ve already published.
-                </p>
-              </div>
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting || (activeTab === "choose" && !selectedTopic)}
-              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Create article from topic
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
         </Form>
 
         <aside className="space-y-5">
@@ -2185,6 +2731,8 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
           </section>
+
+          <DraftArticlesCard drafts={bootstrap.draftArticles ?? []} submitting={isSubmitting} />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">

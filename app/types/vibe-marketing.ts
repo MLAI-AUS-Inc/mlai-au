@@ -109,6 +109,7 @@ export interface VibeMarketingAutofillResult {
   companyLinkedInUrl?: string | null;
   companyContext?: string | null;
   profileFields?: VibeMarketingAutofillProfileFields;
+  offeringProfile?: Record<string, unknown>;
   competitors?: string[];
   competitorSuggestions?: VibeMarketingAutofillCompetitor[];
   directCompetitors?: VibeMarketingAutofillCompetitor[];
@@ -120,6 +121,7 @@ export interface VibeMarketingAutofillResult {
     adjacentOrganizations: VibeMarketingAutofillCompetitor[];
   };
   seedKeywords?: string[];
+  keywordCandidates?: Record<string, unknown>[];
   keywordGroups?: VibeMarketingAutofillKeywordGroup[];
   sources?: VibeMarketingAutofillSource[];
   linkedinProfile?: VibeMarketingAutofillLinkedInProfile;
@@ -161,6 +163,7 @@ export interface VibeMarketingSettings {
   brandName?: string | null;
   companyContext?: string | null;
   articleDeliveryMode?: string | null;
+  articleDeliveryModeEffective?: string | null;
   githubRepo?: string | null;
   dailyDiscoveryEnabled: boolean;
   dailyDiscoveryPriority?: number | null;
@@ -197,7 +200,6 @@ export interface VibeMarketingTopicCandidate {
   confidence?: string | null;
   trend?: unknown;
   interest?: unknown;
-  competition?: unknown;
   aiSearches?: unknown;
   source?: string | null;
   sourceRunId?: string | null;
@@ -206,11 +208,46 @@ export interface VibeMarketingTopicCandidate {
   writtenArticle?: VibeMarketingWrittenTopic | null;
   intent?: unknown;
   difficulty?: unknown;
+  difficultySource?: unknown;
   opportunityScore?: unknown;
   volume?: unknown;
+  volumeDisplay?: string | null;
   tier?: unknown;
   velocity?: unknown;
+  monthlySearches?: unknown;
   aiSaturation?: unknown;
+  trendStatus?: unknown;
+  trendPercent?: unknown;
+  trendDescription?: string | null;
+  trendLabel?: string | null;
+  statsMeaning?: string | null;
+  whyRecommended?: string | null;
+  recommendationReason?: string | null;
+  aiVolumeDisplay?: string | null;
+  relatedKeywords?: string[];
+  paaQuestions?: Array<{
+    question: string;
+    answerSnippet?: string | null;
+    depth?: unknown;
+    hasAiOverview?: boolean;
+  }>;
+}
+
+export interface VibeMarketingTopicFeedback {
+  id: string;
+  domain?: string | null;
+  keyword: string;
+  keywordNormalized?: string | null;
+  feedbackType: string;
+  reasonCode: string;
+  reasonText?: string | null;
+  declineScope: string;
+  source?: string | null;
+  sessionId?: string | null;
+  active: boolean;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  restoredAt?: string | null;
 }
 
 export interface VibeMarketingWrittenTopic {
@@ -221,6 +258,22 @@ export interface VibeMarketingWrittenTopic {
   articleUrl?: string | null;
   prUrl?: string | null;
   writtenAt?: string | null;
+}
+
+export interface VibeMarketingDraftArticle {
+  runId: string;
+  sourceRunId?: string | null;
+  workflow: string;
+  status: VibeMarketingRunStatus;
+  title: string;
+  targetKeyword?: string | null;
+  stageLabel: string;
+  actionKind: "continue" | "resume" | "restart" | "review" | string;
+  actionLabel: string;
+  resumeAvailable: boolean;
+  restartAvailable: boolean;
+  updatedAt?: string | null;
+  createdAt?: string | null;
 }
 
 export interface VibeMarketingContentPackage {
@@ -255,13 +308,47 @@ export interface VibeMarketingLivePreview {
   available: boolean;
   status: string;
   previewUrl?: string | null;
+  internalPreviewUrl?: string | null;
+  proxyPath?: string | null;
   routePath?: string | null;
   exactRender?: boolean;
   inspectorProtocolVersion?: number | null;
   inspectorMode?: string | null;
   error?: string | null;
+  errorCode?: string | null;
+  retryable?: boolean;
   workspacePath?: string | null;
   logPath?: string | null;
+  failedPhase?: string | null;
+  failedCommand?: string | null;
+  logExcerpt?: string | null;
+  proofWarnings?: string[];
+  browserWarnings?: string[];
+  assetWarnings?: string[];
+  proofAttempts?: Record<string, unknown>[];
+  proofAcceptedWithWarnings?: boolean;
+  verificationSkippedForPreview?: boolean;
+  previewMode?: string | null;
+  renderMode?: string | null;
+  renderConfidence?: string | null;
+  fallbackReason?: string | null;
+  nativePreviewFailure?: Record<string, unknown>;
+  visualFallback?: {
+    cssSources?: string[];
+    cssWarnings?: string[];
+    assetProxyEnabled?: boolean;
+    mockedRoutes?: string[];
+  } | Record<string, unknown> | null;
+  platformProvider?: string | null;
+  platformStatus?: string | null;
+  deploymentId?: string | null;
+  deploymentUrl?: string | null;
+  routeUrl?: string | null;
+  logsUrl?: string | null;
+  commitSha?: string | null;
+  branchName?: string | null;
+  builderWorkflow?: string | null;
+  builderRunUrl?: string | null;
 }
 
 export type VibeMarketingComponentCommentStatus = "draft" | "submitted" | "applied" | "superseded" | string;
@@ -272,6 +359,41 @@ export interface VibeMarketingComponentCommentAnchor {
   createdFrom?: string | null;
 }
 
+export interface VibeMarketingComponentCommentRect {
+  left?: number | null;
+  top?: number | null;
+  right?: number | null;
+  bottom?: number | null;
+  width?: number | null;
+  height?: number | null;
+}
+
+export interface VibeMarketingComponentCommentClick {
+  x?: number | null;
+  y?: number | null;
+  pageX?: number | null;
+  pageY?: number | null;
+}
+
+export interface VibeMarketingComponentCommentViewport {
+  width?: number | null;
+  height?: number | null;
+  scrollX?: number | null;
+  scrollY?: number | null;
+  devicePixelRatio?: number | null;
+}
+
+export interface VibeMarketingComponentCommentContext {
+  domPath?: string | null;
+  textHash?: string | null;
+  textExcerpt?: string | null;
+  rect?: VibeMarketingComponentCommentRect | null;
+  click?: VibeMarketingComponentCommentClick | null;
+  viewport?: VibeMarketingComponentCommentViewport | null;
+  pageUrl?: string | null;
+  previewMode?: string | null;
+}
+
 export interface VibeMarketingComponentFeedbackComment {
   id: string;
   componentId: string;
@@ -280,6 +402,7 @@ export interface VibeMarketingComponentFeedbackComment {
   sourceSectionId?: string | null;
   selector?: string | null;
   anchor?: VibeMarketingComponentCommentAnchor | null;
+  context?: VibeMarketingComponentCommentContext | null;
   body: string;
   status: VibeMarketingComponentCommentStatus;
   batchId?: string | null;
@@ -307,6 +430,9 @@ export interface VibeMarketingPublishEvidence {
   approvalState?: string | null;
   previewUrl?: string | null;
   prUrl?: string | null;
+  prNumber?: number | string | null;
+  mergeStatus?: string | null;
+  checksStatus?: string | null;
   routePath?: string | null;
   screenshots?: unknown[];
   changedFiles?: unknown[];
@@ -390,6 +516,33 @@ export interface VibeMarketingGoogleBaselineConnection {
   connectUrl?: string | null;
 }
 
+export interface VibeMarketingGithubRepo {
+  fullName: string;
+  full_name?: string;
+  owner?: string;
+  name?: string;
+  private?: boolean;
+  defaultBranch?: string | null;
+  default_branch?: string | null;
+  installationId?: string | null;
+  installation_id?: string | null;
+}
+
+export interface VibeMarketingGithubReposResponse {
+  status: string;
+  connectionState?: string | null;
+  connection_state?: string | null;
+  credentialSource?: string | null;
+  credential_source?: string | null;
+  githubRepo?: string | null;
+  github_repo?: string | null;
+  selectedRepo?: string | null;
+  selected_repo?: string | null;
+  repos: VibeMarketingGithubRepo[];
+  repositories?: VibeMarketingGithubRepo[];
+  error?: string | null;
+}
+
 export interface VibeMarketingBootstrap {
   company: VibeMarketingCompany;
   organization: VibeMarketingOrganization;
@@ -402,6 +555,8 @@ export interface VibeMarketingBootstrap {
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
+  declinedTopicFeedback: VibeMarketingTopicFeedback[];
+  draftArticles: VibeMarketingDraftArticle[];
   writtenTopics: VibeMarketingWrittenTopic[];
   publishEvidence: VibeMarketingPublishEvidence;
   guidedSteps: VibeMarketingGuidedStep[];

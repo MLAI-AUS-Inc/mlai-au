@@ -3,12 +3,16 @@ import type {
   VibeMarketingBootstrap,
   VibeMarketingComponentFeedback,
   VibeMarketingComponentCommentAnchor,
+  VibeMarketingComponentCommentContext,
   VibeMarketingComponentFeedbackBatch,
   VibeMarketingComponentFeedbackComment,
   VibeMarketingComponentManifest,
   VibeMarketingComponentManifestItem,
   VibeMarketingContentPackage,
+  VibeMarketingDraftArticle,
   VibeMarketingGuidedStep,
+  VibeMarketingGithubRepo,
+  VibeMarketingGithubReposResponse,
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
@@ -17,6 +21,7 @@ import type {
   VibeMarketingWebsiteBaseline,
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingTopicCandidate,
+  VibeMarketingTopicFeedback,
   VibeMarketingWrittenTopic,
   VibeMarketingWorkflowAction,
   VibeMarketingWorkflowProgress,
@@ -53,12 +58,63 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
+function asNumberOrString(value: unknown): number | string | null {
+  return asNumber(value) ?? asNullableString(value);
+}
+
 function asStringRecord(value: unknown): Record<string, string> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   const entries = Object.entries(value as Record<string, unknown>)
     .map(([key, item]) => [key, asNullableString(item)] as const)
     .filter((entry): entry is readonly [string, string] => Boolean(entry[1]));
   return Object.fromEntries(entries);
+}
+
+function asObjectRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function normalizeGithubRepo(value: unknown): VibeMarketingGithubRepo | null {
+  const payload = asObjectRecord(value);
+  const fullName = asNullableString(payload.fullName) ?? asNullableString(payload.full_name);
+  if (!fullName) return null;
+  const defaultBranch = asNullableString(payload.defaultBranch) ?? asNullableString(payload.default_branch);
+  const installationId = asNullableString(payload.installationId) ?? asNullableString(payload.installation_id);
+  return {
+    fullName,
+    full_name: fullName,
+    owner: asNullableString(payload.owner) ?? undefined,
+    name: asNullableString(payload.name) ?? undefined,
+    private: Boolean(payload.private),
+    defaultBranch,
+    default_branch: defaultBranch,
+    installationId,
+    installation_id: installationId,
+  };
+}
+
+function normalizeGithubReposResponse(value: unknown): VibeMarketingGithubReposResponse {
+  const payload = asObjectRecord(value);
+  const rawRepos = Array.isArray(payload.repos) ? payload.repos : Array.isArray(payload.repositories) ? payload.repositories : [];
+  const repos = rawRepos.map(normalizeGithubRepo).filter((repo): repo is VibeMarketingGithubRepo => Boolean(repo));
+  const connectionState = asNullableString(payload.connectionState) ?? asNullableString(payload.connection_state);
+  const credentialSource = asNullableString(payload.credentialSource) ?? asNullableString(payload.credential_source);
+  const githubRepo = asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo);
+  const selectedRepo = asNullableString(payload.selectedRepo) ?? asNullableString(payload.selected_repo);
+  return {
+    status: asNullableString(payload.status) ?? "unavailable",
+    connectionState,
+    connection_state: connectionState,
+    credentialSource,
+    credential_source: credentialSource,
+    githubRepo,
+    github_repo: githubRepo,
+    selectedRepo,
+    selected_repo: selectedRepo,
+    repos,
+    repositories: repos,
+    error: asNullableString(payload.error),
+  };
 }
 
 function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCommentAnchor | null {
@@ -72,6 +128,36 @@ function normalizeComponentCommentAnchor(raw: unknown): VibeMarketingComponentCo
     y: Math.max(0, Math.min(1, y)),
     createdFrom: asNullableString(payload.createdFrom) ?? asNullableString(payload.created_from),
   };
+}
+
+function normalizeNumberMap<T extends Record<string, number | null | undefined>>(
+  raw: unknown,
+  keys: Array<keyof T>,
+): T | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const result: Partial<T> = {};
+  for (const key of keys) {
+    const number = asNumber(payload[String(key)]);
+    if (number !== null) result[key] = number as T[keyof T];
+  }
+  return Object.keys(result).length ? (result as T) : null;
+}
+
+function normalizeComponentCommentContext(raw: unknown): VibeMarketingComponentCommentContext | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const context: VibeMarketingComponentCommentContext = {
+    domPath: asNullableString(payload.domPath) ?? asNullableString(payload.dom_path),
+    textHash: asNullableString(payload.textHash) ?? asNullableString(payload.text_hash),
+    textExcerpt: asNullableString(payload.textExcerpt) ?? asNullableString(payload.text_excerpt),
+    rect: normalizeNumberMap(payload.rect, ["left", "top", "right", "bottom", "width", "height"]),
+    click: normalizeNumberMap(payload.click, ["x", "y", "pageX", "pageY"]),
+    viewport: normalizeNumberMap(payload.viewport, ["width", "height", "scrollX", "scrollY", "devicePixelRatio"]),
+    pageUrl: asNullableString(payload.pageUrl) ?? asNullableString(payload.page_url),
+    previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
+  };
+  return Object.values(context).some((value) => value !== null && value !== undefined) ? context : null;
 }
 
 function normalizeStep(raw: unknown): VibeMarketingStepState {
@@ -154,6 +240,8 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
   for (const [key, value] of Object.entries(rawLatestRunsByWorkflow)) {
     latestRunsByWorkflow[key] = normalizeMarketingRun(value);
   }
+  const rawDeclinedTopicFeedback = payload.declinedTopicFeedback ?? payload.declined_topic_feedback;
+  const rawDraftArticles = payload.draftArticles ?? payload.draft_articles;
 
   return {
     company: {
@@ -183,7 +271,11 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       articleDeliveryMode:
         asNullableString(settings.articleDeliveryMode) ??
         asNullableString(settings.article_delivery_mode) ??
-        "publish_code",
+        "review_draft",
+      articleDeliveryModeEffective:
+        asNullableString(settings.articleDeliveryModeEffective) ??
+        asNullableString(settings.article_delivery_mode_effective) ??
+        null,
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,
@@ -208,6 +300,16 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       : [],
     hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
       ? payload.hiddenTopicCandidates.map(normalizeTopicCandidate)
+      : [],
+    declinedTopicFeedback: Array.isArray(rawDeclinedTopicFeedback)
+      ? rawDeclinedTopicFeedback
+          .map(normalizeTopicFeedback)
+          .filter((item): item is VibeMarketingTopicFeedback => Boolean(item))
+      : [],
+    draftArticles: Array.isArray(rawDraftArticles)
+      ? rawDraftArticles
+          .map(normalizeDraftArticle)
+          .filter((item): item is VibeMarketingDraftArticle => Boolean(item))
       : [],
     writtenTopics: Array.isArray(payload.writtenTopics)
       ? payload.writtenTopics.map(normalizeWrittenTopic).filter(Boolean) as VibeMarketingWrittenTopic[]
@@ -254,6 +356,19 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
 function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.target_keyword) ?? "Topic";
+  const normalizePaaQuestions = (value: unknown): VibeMarketingTopicCandidate["paaQuestions"] => {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : null))
+      .filter((item): item is Record<string, unknown> => Boolean(item))
+      .map((item) => ({
+        question: asNullableString(item.question) ?? "",
+        answerSnippet: asNullableString(item.answerSnippet) ?? asNullableString(item.answer_snippet),
+        depth: item.depth,
+        hasAiOverview: Boolean(item.hasAiOverview ?? item.has_ai_overview),
+      }))
+      .filter((item) => item.question);
+  };
   return {
     id: String(payload.id ?? keyword),
     keyword,
@@ -263,7 +378,6 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     confidence: asNullableString(payload.confidence),
     trend: payload.trend ?? payload.search_trend,
     interest: payload.interest ?? payload.interest_trend,
-    competition: payload.competition ?? payload.competition_level,
     aiSearches: payload.aiSearches ?? payload.ai_searches ?? payload.ai_search_volume,
     source: asNullableString(payload.source),
     sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
@@ -272,8 +386,10 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     writtenArticle: normalizeWrittenTopic(payload.writtenArticle ?? payload.written_article),
     intent: payload.intent,
     difficulty: payload.difficulty,
+    difficultySource: payload.difficultySource ?? payload.difficulty_source,
     opportunityScore: payload.opportunityScore ?? payload.opportunity_score,
     volume: payload.volume,
+    volumeDisplay: asNullableString(payload.volumeDisplay) ?? asNullableString(payload.volume_display),
     tier: payload.tier,
     velocity: payload.velocity ?? payload.latestVelocity ?? payload.latest_velocity,
     aiSaturation:
@@ -281,6 +397,58 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
       payload.ai_saturation ??
       payload.latestSaturation ??
       payload.latest_saturation,
+    trendLabel: asNullableString(payload.trendLabel) ?? asNullableString(payload.trending_label),
+    statsMeaning: asNullableString(payload.statsMeaning) ?? asNullableString(payload.stats_meaning),
+    whyRecommended: asNullableString(payload.whyRecommended) ?? asNullableString(payload.why_recommended),
+    recommendationReason: asNullableString(payload.recommendationReason) ?? asNullableString(payload.recommendation_reason),
+    aiVolumeDisplay: asNullableString(payload.aiVolumeDisplay) ?? asNullableString(payload.ai_volume_display),
+    relatedKeywords: asStringList(payload.relatedKeywords ?? payload.related_keywords),
+    paaQuestions: normalizePaaQuestions(payload.paaQuestions ?? payload.paa_questions),
+  };
+}
+
+function normalizeTopicFeedback(raw: unknown): VibeMarketingTopicFeedback | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const id = asNullableString(payload.id);
+  const keyword = asNullableString(payload.keyword);
+  if (!id || !keyword) return null;
+  return {
+    id,
+    domain: asNullableString(payload.domain),
+    keyword,
+    keywordNormalized:
+      asNullableString(payload.keywordNormalized) ??
+      asNullableString(payload.keyword_normalized),
+    feedbackType:
+      asNullableString(payload.feedbackType) ??
+      asNullableString(payload.feedback_type) ??
+      "declined",
+    reasonCode:
+      asNullableString(payload.reasonCode) ??
+      asNullableString(payload.reason_code) ??
+      "not_appropriate",
+    reasonText:
+      asNullableString(payload.reasonText) ??
+      asNullableString(payload.reason_text),
+    declineScope:
+      asNullableString(payload.declineScope) ??
+      asNullableString(payload.decline_scope) ??
+      "similar",
+    source: asNullableString(payload.source),
+    sessionId:
+      asNullableString(payload.sessionId) ??
+      asNullableString(payload.session_id),
+    active: payload.active === undefined ? !payload.restoredAt && !payload.restored_at : Boolean(payload.active),
+    createdAt:
+      asNullableString(payload.createdAt) ??
+      asNullableString(payload.created_at),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
+    restoredAt:
+      asNullableString(payload.restoredAt) ??
+      asNullableString(payload.restored_at),
   };
 }
 
@@ -297,6 +465,38 @@ function normalizeWrittenTopic(raw: unknown): VibeMarketingWrittenTopic | null {
     articleUrl: asNullableString(payload.articleUrl) ?? asNullableString(payload.article_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
     writtenAt: asNullableString(payload.writtenAt) ?? asNullableString(payload.written_at),
+  };
+}
+
+function normalizeDraftArticle(raw: unknown): VibeMarketingDraftArticle | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const runId = asNullableString(payload.runId) ?? asNullableString(payload.run_id);
+  if (!runId) return null;
+  const title = asNullableString(payload.title) ?? asNullableString(payload.targetKeyword) ?? "Untitled article draft";
+  return {
+    runId,
+    sourceRunId: asNullableString(payload.sourceRunId) ?? asNullableString(payload.source_run_id),
+    workflow: asNullableString(payload.workflow) ?? "article_generation",
+    status: asNullableString(payload.status) ?? "queued",
+    title,
+    targetKeyword: asNullableString(payload.targetKeyword) ?? asNullableString(payload.target_keyword),
+    stageLabel:
+      asNullableString(payload.stageLabel) ??
+      asNullableString(payload.stage_label) ??
+      "Draft",
+    actionKind:
+      asNullableString(payload.actionKind) ??
+      asNullableString(payload.action_kind) ??
+      "continue",
+    actionLabel:
+      asNullableString(payload.actionLabel) ??
+      asNullableString(payload.action_label) ??
+      "Continue",
+    resumeAvailable: Boolean(payload.resumeAvailable ?? payload.resume_available),
+    restartAvailable: Boolean(payload.restartAvailable ?? payload.restart_available),
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    createdAt: asNullableString(payload.createdAt) ?? asNullableString(payload.created_at),
   };
 }
 
@@ -362,13 +562,44 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     available: Boolean(payload.available),
     status,
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    internalPreviewUrl: asNullableString(payload.internalPreviewUrl) ?? asNullableString(payload.internal_preview_url),
+    proxyPath: asNullableString(payload.proxyPath) ?? asNullableString(payload.proxy_path),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
     exactRender: Boolean(payload.exactRender ?? payload.exact_render),
     inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
     inspectorMode: asNullableString(payload.inspectorMode) ?? asNullableString(payload.inspector_mode),
     error: asNullableString(payload.error),
+    errorCode: asNullableString(payload.errorCode) ?? asNullableString(payload.error_code),
+    retryable: Boolean(payload.retryable ?? true),
     workspacePath: asNullableString(payload.workspacePath) ?? asNullableString(payload.workspace_path),
     logPath: asNullableString(payload.logPath) ?? asNullableString(payload.log_path),
+    failedPhase: asNullableString(payload.failedPhase) ?? asNullableString(payload.failed_phase),
+    failedCommand: asNullableString(payload.failedCommand) ?? asNullableString(payload.failed_command),
+    logExcerpt: asNullableString(payload.logExcerpt) ?? asNullableString(payload.log_excerpt),
+    proofWarnings: asStringList(payload.proofWarnings ?? payload.proof_warnings),
+    browserWarnings: asStringList(payload.browserWarnings ?? payload.browser_warnings),
+    assetWarnings: asStringList(payload.assetWarnings ?? payload.asset_warnings),
+    proofAttempts: Array.isArray(payload.proofAttempts ?? payload.proof_attempts)
+      ? ((payload.proofAttempts ?? payload.proof_attempts) as Record<string, unknown>[])
+      : [],
+    proofAcceptedWithWarnings: Boolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
+    verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
+    previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
+    renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
+    renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
+    fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
+    nativePreviewFailure: asObjectRecord(payload.nativePreviewFailure ?? payload.native_preview_failure),
+    visualFallback: asObjectRecord(payload.visualFallback ?? payload.visual_fallback),
+    platformProvider: asNullableString(payload.platformProvider) ?? asNullableString(payload.platform_provider),
+    platformStatus: asNullableString(payload.platformStatus) ?? asNullableString(payload.platform_status),
+    deploymentId: asNullableString(payload.deploymentId) ?? asNullableString(payload.deployment_id),
+    deploymentUrl: asNullableString(payload.deploymentUrl) ?? asNullableString(payload.deployment_url),
+    routeUrl: asNullableString(payload.routeUrl) ?? asNullableString(payload.route_url),
+    logsUrl: asNullableString(payload.logsUrl) ?? asNullableString(payload.logs_url),
+    commitSha: asNullableString(payload.commitSha) ?? asNullableString(payload.commit_sha),
+    branchName: asNullableString(payload.branchName) ?? asNullableString(payload.branch_name),
+    builderWorkflow: asNullableString(payload.builderWorkflow) ?? asNullableString(payload.builder_workflow),
+    builderRunUrl: asNullableString(payload.builderRunUrl) ?? asNullableString(payload.builder_run_url),
   };
 }
 
@@ -387,6 +618,7 @@ function normalizeComponentFeedbackComment(raw: unknown): VibeMarketingComponent
     sourceSectionId: asNullableString(payload.sourceSectionId) ?? asNullableString(payload.source_section_id),
     selector: asNullableString(payload.selector),
     anchor: normalizeComponentCommentAnchor(payload.anchor),
+    context: normalizeComponentCommentContext(payload.context),
     body: asNullableString(payload.body) ?? "",
     status: asNullableString(payload.status) ?? "draft",
     batchId: asNullableString(payload.batchId) ?? asNullableString(payload.batch_id),
@@ -431,6 +663,15 @@ function normalizePublishEvidence(raw: unknown): VibeMarketingPublishEvidence {
     approvalState: asNullableString(payload.approvalState) ?? asNullableString(payload.approval_state),
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    prNumber:
+      asNumberOrString(payload.prNumber) ??
+      asNumberOrString(payload.pr_number) ??
+      asNumberOrString(payload.pullRequestNumber) ??
+      asNumberOrString(payload.pull_request_number) ??
+      asNumberOrString(payload.draftPrNumber) ??
+      asNumberOrString(payload.draft_pr_number),
+    mergeStatus: asNullableString(payload.mergeStatus) ?? asNullableString(payload.merge_status),
+    checksStatus: asNullableString(payload.checksStatus) ?? asNullableString(payload.checks_status),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
     screenshots: Array.isArray(payload.screenshots) ? payload.screenshots : [],
     changedFiles: Array.isArray(payload.changedFiles) ? payload.changedFiles : [],
@@ -570,7 +811,8 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   settings: {
     brandName: null,
     companyContext: null,
-    articleDeliveryMode: "publish_code",
+    articleDeliveryMode: "review_draft",
+    articleDeliveryModeEffective: "review_draft",
     githubRepo: null,
     dailyDiscoveryEnabled: false,
     githubConnectionState: null,
@@ -604,6 +846,8 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   latestRunsByWorkflow: {},
   topicCandidates: [],
   hiddenTopicCandidates: [],
+  declinedTopicFeedback: [],
+  draftArticles: [],
   writtenTopics: [],
   publishEvidence: {},
   guidedSteps: [],
@@ -1027,6 +1271,29 @@ export async function connectVibeMarketingGithub(env: Env, request: Request, bod
   };
 }
 
+export async function getVibeMarketingGithubRepos(env: Env, request: Request): Promise<VibeMarketingGithubReposResponse> {
+  if (shouldUseDevBackendStub()) {
+    return normalizeGithubReposResponse({
+      status: "connected",
+      connectionState: "connected",
+      githubRepo: "MLAI-AUS-Inc/mlai-au",
+      selectedRepo: "MLAI-AUS-Inc/mlai-au",
+      repos: [
+        {
+          fullName: "MLAI-AUS-Inc/mlai-au",
+          owner: "MLAI-AUS-Inc",
+          name: "mlai-au",
+          private: true,
+          defaultBranch: "main",
+        },
+      ],
+    });
+  }
+  const client = createApiClient(env, request);
+  const response = await client.get(`${BASE_PATH}/github/repos`);
+  return normalizeGithubReposResponse(response.data);
+}
+
 async function startMarketingRun(env: Env, request: Request, path: string, body: Record<string, unknown>) {
   if (shouldUseDevBackendStub()) {
     const runId = `dev-${path.replace(/[^a-z0-9]+/gi, "-")}-${Date.now().toString(36)}`;
@@ -1058,6 +1325,22 @@ export function startVibeMarketingDiscovery(env: Env, request: Request, body: Re
 
 export function startVibeMarketingArticle(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "article", body);
+}
+
+export async function recordVibeMarketingTopicFeedback(
+  env: Env,
+  request: Request,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/topic-feedback`, body);
+  return normalizeTopicFeedback(response.data);
+}
+
+export async function restoreVibeMarketingTopicFeedback(env: Env, request: Request, feedbackId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/topic-feedback/${encodeURIComponent(feedbackId)}/restore`, {});
+  return normalizeTopicFeedback(response.data);
 }
 
 export function startVibeMarketingAutofill(env: Env, request: Request, body: Record<string, unknown>) {
@@ -1263,6 +1546,17 @@ export async function deleteVibeMarketingComponentComment(
 export async function submitVibeMarketingComponentComments(env: Env, request: Request, runId: string) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/comments/submit`, {});
+  return normalizeMarketingRun(response.data);
+}
+
+export async function submitVibeMarketingArticleSystemComments(
+  env: Env,
+  request: Request,
+  runId: string,
+  body: Record<string, unknown>,
+) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/article-system-revisions`, body);
   return normalizeMarketingRun(response.data);
 }
 

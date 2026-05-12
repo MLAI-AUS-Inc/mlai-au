@@ -1,4 +1,5 @@
 import { redirect } from "react-router";
+import { normalizeAuthNextForApp } from "~/lib/auth-return";
 import type { User } from "~/types/user";
 import { createApiClient, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { getCurrentUser } from "~/lib/auth";
@@ -27,6 +28,10 @@ import type {
   VibeRaisingLinearProjectPreview,
   VibeRaisingLinearProjectsResponse,
   VibeRaisingLinearProjectUpdatePreview,
+  VibeRaisingManualDocument,
+  VibeRaisingManualDocumentDownloadResponse,
+  VibeRaisingManualDocumentUploadResponse,
+  VibeRaisingManualDocumentUploadSessionResponse,
   VibeRaisingMetricSuggestion,
   VibeRaisingMonthlyUpdate,
   VibeRaisingProfile,
@@ -61,6 +66,9 @@ const PITCH_DECK_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/pitch-deck/
 const PITCH_DECK_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/pitch-deck/complete/";
 const VIDEO_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/video/session/";
 const VIDEO_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/video/complete/";
+const MANUAL_DOCUMENTS_PATH = "/api/v1/vibe-raising/uploads/manual-documents/";
+const MANUAL_DOCUMENT_UPLOAD_SESSION_PATH = "/api/v1/vibe-raising/uploads/manual-documents/session/";
+const MANUAL_DOCUMENT_UPLOAD_COMPLETE_PATH = "/api/v1/vibe-raising/uploads/manual-documents/complete/";
 const STARTUP_UPDATE_BOOTSTRAP_PATH = "/api/v1/vibe-raising/startup-update/bootstrap/";
 const EMAIL_DRAFT_START_PATH = "/api/v1/vibe-raising/email-draft/start/";
 const EMAIL_DRAFT_STATUS_PATH = "/api/v1/vibe-raising/email-draft/status/";
@@ -123,6 +131,11 @@ const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisi
     key: "linear",
     label: "Linear",
     capabilities: ["context"],
+  },
+  manual_documents: {
+    key: "manual_documents",
+    label: "Manual documents",
+    capabilities: ["docs", "context"],
   },
 };
 
@@ -416,6 +429,49 @@ function asNullableNumber(value: unknown): number | null {
   return null;
 }
 
+function normalizeManualDocument(raw: unknown): VibeRaisingManualDocument | null {
+  if (!raw || typeof raw !== "object") return null;
+  const payload = raw as Record<string, unknown>;
+  const id = asNullableString(payload.id);
+  const originalFilename =
+    asNullableString(payload.originalFilename) ??
+    asNullableString(payload.original_filename);
+  if (!id || !originalFilename) return null;
+  return {
+    id,
+    originalFilename,
+    contentType:
+      asNullableString(payload.contentType) ??
+      asNullableString(payload.content_type) ??
+      "",
+    fileSizeBytes:
+      asNullableNumber(payload.fileSizeBytes ?? payload.file_size_bytes) ?? 0,
+    extractionStatus:
+      asNullableString(payload.extractionStatus) ??
+      asNullableString(payload.extraction_status) ??
+      "pending",
+    textSizeChars:
+      asNullableNumber(payload.textSizeChars ?? payload.text_size_chars) ?? 0,
+    parseNotes:
+      asNullableString(payload.parseNotes) ??
+      asNullableString(payload.parse_notes),
+    lastError:
+      asNullableString(payload.lastError) ??
+      asNullableString(payload.last_error),
+    createdAt:
+      asNullableString(payload.createdAt) ??
+      asNullableString(payload.created_at),
+    updatedAt:
+      asNullableString(payload.updatedAt) ??
+      asNullableString(payload.updated_at),
+  };
+}
+
+function normalizeManualDocuments(raw: unknown): VibeRaisingManualDocument[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.map(normalizeManualDocument).filter((item): item is VibeRaisingManualDocument => item !== null);
+}
+
 function normalizePastMonthSummary(raw: unknown) {
   const payload = unwrapPayload(raw) as Record<string, unknown>;
   return {
@@ -491,6 +547,7 @@ function normalizeDraftedContent(raw: unknown): VibeRaisingDraftedContent | null
       asNullableString(payload.pitchDeckSummary) ??
       asNullableString(payload.pitch_deck_summary) ??
       undefined,
+    manualDocuments: normalizeManualDocuments(payload.manualDocuments ?? payload.manual_documents),
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
@@ -619,6 +676,7 @@ function normalizeEmailDraftMonth(raw: unknown): VibeRaisingEmailDraftMonth | nu
       asNullableString(payload.pitchDeckSummary) ??
       asNullableString(payload.pitch_deck_summary) ??
       undefined,
+    manualDocuments: normalizeManualDocuments(payload.manualDocuments ?? payload.manual_documents),
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url) ??
@@ -724,6 +782,7 @@ function normalizeMonthlyUpdate(raw: unknown): VibeRaisingMonthlyUpdate | null {
     pitchDeckSummary:
       asNullableString(payload.pitchDeckSummary) ??
       asNullableString(payload.pitch_deck_summary),
+    manualDocuments: normalizeManualDocuments(payload.manualDocuments ?? payload.manual_documents),
     videoUrl:
       asNullableString(payload.videoUrl) ??
       asNullableString(payload.video_url),
@@ -1128,6 +1187,7 @@ function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey
   if (normalized === "google_drive" || normalized === "drive") return "google_drive";
   if (normalized === "slack") return "slack";
   if (normalized === "linear") return "linear";
+  if (normalized === "manual_documents" || normalized === "manual") return "manual_documents";
   return null;
 }
 
@@ -1483,7 +1543,7 @@ export function getVibeRaisingLoginHref(
   nextOverride?: string,
 ): string {
   const url = new URL(request.url);
-  const next = nextOverride ?? `${url.pathname}${url.search}`;
+  const next = normalizeAuthNextForApp("founder-tools", nextOverride ?? `${url.pathname}${url.search}`);
   const params = new URLSearchParams({
     app: "founder-tools",
     next,
@@ -1942,6 +2002,8 @@ export async function saveVibeRaisingMonthlyUpdate(
     videoFileSizeBytes?: number | null;
     videoOriginalFilename?: string | null;
     saveMode?: VibeRaisingSaveMode;
+    manualDocumentIds?: string[];
+    manualSummary?: string | null;
   },
 ): Promise<VibeRaisingMonthlyUpdate | null> {
   const buildDevSavedUpdate = () => {
@@ -1981,10 +2043,12 @@ export async function saveVibeRaisingMonthlyUpdate(
 
     const status = error.response?.status;
     const hasOptionalFields = Boolean(
-      body.summary ||
+        body.summary ||
         body.sourceUrl ||
         body.pitchDeckUrl ||
         body.pitchDeckSummary ||
+        (body.manualDocumentIds || []).length > 0 ||
+        body.manualSummary ||
         body.videoUrl ||
         body.learnings ||
         body.next30Days ||
@@ -2161,7 +2225,7 @@ export async function uploadVibeRaisingPitchDeck(
       method: "POST",
       body: JSON.stringify({
         originalFilename: file.name,
-        contentType: file.type,
+        contentType: file.type || "application/octet-stream",
         fileSizeBytes: file.size,
       }),
       signal,
@@ -2208,7 +2272,7 @@ export async function uploadVibeRaisingPitchDeck(
       body: JSON.stringify({
         storagePath: session.storagePath,
         originalFilename: file.name,
-        contentType: session.contentType || file.type,
+        contentType: session.contentType || file.type || "application/octet-stream",
         fileSizeBytes: file.size,
       }),
       signal,
@@ -2224,6 +2288,111 @@ export async function uploadVibeRaisingPitchDeck(
     originalFilename:
       String(response.originalFilename || response.original_filename || file.name || ""),
   };
+}
+
+export async function listVibeRaisingManualDocuments(
+  backendBaseUrl: string,
+): Promise<VibeRaisingManualDocument[]> {
+  const response = await requestBrowserJson<Record<string, unknown>>(
+    backendBaseUrl,
+    MANUAL_DOCUMENTS_PATH,
+    { method: "GET" },
+  );
+  return normalizeManualDocuments(response.documents);
+}
+
+export async function uploadVibeRaisingManualDocument(
+  backendBaseUrl: string,
+  file: File,
+  signal?: AbortSignal,
+  onPhase?: (phase: "creating_session" | "uploading" | "finalizing") => void,
+): Promise<VibeRaisingManualDocument> {
+  onPhase?.("creating_session");
+  const session = await requestBrowserJson<VibeRaisingManualDocumentUploadSessionResponse>(
+    backendBaseUrl,
+    MANUAL_DOCUMENT_UPLOAD_SESSION_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        originalFilename: file.name,
+        contentType: file.type || "application/octet-stream",
+        fileSizeBytes: file.size,
+      }),
+      signal,
+    },
+  );
+
+  const uploadHeaders = new Headers(session.requiredHeaders || {});
+  if (!uploadHeaders.has("Content-Type")) {
+    uploadHeaders.set("Content-Type", session.contentType || file.type || "application/octet-stream");
+  }
+
+  onPhase?.("uploading");
+  let uploadResponse: Response;
+  try {
+    uploadResponse = await fetch(session.uploadUrl, {
+      method: "PUT",
+      headers: uploadHeaders,
+      body: file,
+      signal,
+    });
+  } catch (error: any) {
+    error.requestPath = "signed-storage-upload";
+    error.message = "Storage upload failed before the file reached Firebase. Check Firebase Storage CORS and try again.";
+    throw error;
+  }
+
+  if (!uploadResponse.ok) {
+    const errorText = await uploadResponse.text().catch(() => "");
+    const error: any = new Error(
+      uploadResponse.status === 403
+        ? "The document upload session expired. Please select the document again."
+        : errorText || `Storage upload failed with status ${uploadResponse.status}`,
+    );
+    error.status = uploadResponse.status;
+    error.data = errorText;
+    error.requestPath = "signed-storage-upload";
+    throw error;
+  }
+
+  onPhase?.("finalizing");
+  const completed = await requestBrowserJson<VibeRaisingManualDocumentUploadResponse>(
+    backendBaseUrl,
+    MANUAL_DOCUMENT_UPLOAD_COMPLETE_PATH,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        storagePath: session.storagePath,
+        originalFilename: file.name,
+        contentType: session.contentType || file.type || "application/octet-stream",
+        fileSizeBytes: file.size,
+      }),
+      signal,
+    },
+  );
+  return completed.document;
+}
+
+export async function deleteVibeRaisingManualDocument(
+  backendBaseUrl: string,
+  documentId: string,
+): Promise<void> {
+  await requestBrowserJson<unknown>(
+    backendBaseUrl,
+    `${MANUAL_DOCUMENTS_PATH}${encodeURIComponent(documentId)}/`,
+    { method: "DELETE" },
+  );
+}
+
+export async function getVibeRaisingManualDocumentDownloadUrl(
+  backendBaseUrl: string,
+  documentId: string,
+): Promise<VibeRaisingManualDocumentDownloadResponse> {
+  return requestBrowserJson<VibeRaisingManualDocumentDownloadResponse>(
+    backendBaseUrl,
+    `${MANUAL_DOCUMENTS_PATH}${encodeURIComponent(documentId)}/download/`,
+    { method: "GET" },
+  );
 }
 
 export async function bootstrapVibeRaisingStartupUpdate(
@@ -2339,7 +2508,9 @@ export async function getVibeRaisingInputSourcesStatus(
   return { sources, financeUnavailable };
 }
 
-const CONNECTOR_PROVIDER_SLUGS: Record<Exclude<VibeRaisingInputSourceKey, "gmail">, string> = {
+type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+
+const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, string> = {
   stripe: "stripe",
   xero: "xero",
   bank_feed: "bank-feed",
@@ -2351,7 +2522,7 @@ const CONNECTOR_PROVIDER_SLUGS: Record<Exclude<VibeRaisingInputSourceKey, "gmail
 
 export function connectVibeRaisingInputSource(
   backendBaseUrl: string,
-  provider: Exclude<VibeRaisingInputSourceKey, "gmail">,
+  provider: ConnectableVibeRaisingInputSourceKey,
   nextUrl?: string,
 ): string {
   const normalizedBase = backendBaseUrl.endsWith("/") ? backendBaseUrl : `${backendBaseUrl}/`;
@@ -3198,6 +3369,8 @@ export async function runVibeRaisingStartupUpdate(
     forceRegenerate?: boolean;
     inputSources?: VibeRaisingInputSourceKey[];
     targetMonth?: string | null;
+    manualDocumentIds?: string[];
+    manualSummary?: string | null;
   },
 ): Promise<VibeRaisingStartupUpdateStatusResponse> {
   const body: Record<string, unknown> = {};
@@ -3213,6 +3386,16 @@ export async function runVibeRaisingStartupUpdate(
   if (inputSources.length > 0) {
     body.inputSources = inputSources;
     body.input_sources = inputSources;
+  }
+  const manualDocumentIds = Array.from(new Set((options?.manualDocumentIds ?? []).map((id) => id.trim()).filter(Boolean)));
+  if (manualDocumentIds.length > 0) {
+    body.manualDocumentIds = manualDocumentIds;
+    body.manual_document_ids = manualDocumentIds;
+  }
+  const manualSummary = String(options?.manualSummary || "").trim();
+  if (manualSummary) {
+    body.manualSummary = manualSummary;
+    body.manual_summary = manualSummary;
   }
 
   const response = await requestBrowserJson<Record<string, unknown>>(

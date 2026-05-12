@@ -6,6 +6,7 @@ import { GradientBackground } from "~/components/GradientBackground";
 import { Field, Input, Label } from "@headlessui/react";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
+import { normalizeAuthNextForApp } from "~/lib/auth-return";
 
 export const meta: Route.MetaFunction = () => [
     { title: "Sign In to the MLAI Platform | MLAI" },
@@ -13,17 +14,9 @@ export const meta: Route.MetaFunction = () => [
     { name: "robots", content: "noindex, nofollow" },
 ];
 
-function getDefaultNext(app: AuthAppName | null | undefined): string {
-    if (app === "hospital") return "/hospital/app";
-    if (app === "esafety") return "/esafety/dashboard";
-    if (app === "innovate-connect-alliance") return "/innovate-connect-alliance";
-    if (app === "founder-tools" || app === "vibe-raising") return "/founder-tools";
-    return "/hackathons";
-}
-
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "innovate-connect-alliance" || value === "founder-tools"
+    return value === "esafety" || value === "hospital" || value === "founder-tools"
         ? value
         : null;
 }
@@ -59,8 +52,12 @@ function getAuthErrorMessage(error: unknown, fallback: string) {
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
-    const app = parseAuthApp(url.searchParams.get("app"));
-    const next = url.searchParams.get("next") || getDefaultNext(app);
+    const appParam = url.searchParams.get("app");
+    const app = parseAuthApp(appParam);
+    if (appParam && !app) {
+        throw new Response("Not Found", { status: 404 });
+    }
+    const next = normalizeAuthNextForApp(app, url.searchParams.get("next"), { fallback: "/hackathons" });
     let user = null;
 
     try {
@@ -80,8 +77,12 @@ export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const formData = await request.formData();
     const intent = formData.get("intent")?.toString() ?? "check";
-    const app = parseAuthApp(formData.get("app")?.toString() ?? null) ?? undefined;
-    const next = formData.get("next")?.toString() ?? getDefaultNext(app ?? null);
+    const appParam = formData.get("app")?.toString() ?? null;
+    const app = parseAuthApp(appParam) ?? undefined;
+    if (appParam && !app) {
+        return { error: "Unsupported app." };
+    }
+    const next = normalizeAuthNextForApp(app ?? null, formData.get("next")?.toString(), { fallback: "/hackathons" });
     const email = String(formData.get("email") || "").trim();
     const role = formData.get("role")?.toString() as "participant" | "mentor" | "judge" | "organizer" ?? "participant";
 
@@ -139,7 +140,7 @@ export default function PlatformLogin() {
     const [searchParams] = useSearchParams();
     const app = parseAuthApp(searchParams.get("app"));
     const isFounderTools = app === "founder-tools";
-    const next = searchParams.get("next") || getDefaultNext(app);
+    const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: "/hackathons" });
     const error = searchParams.get("error");
     const submit = useSubmit();
 
@@ -184,7 +185,6 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
-        if (app === "innovate-connect-alliance") return "Sign in to Innovate Connect Alliance";
         if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";
     };
@@ -192,10 +192,6 @@ export default function PlatformLogin() {
     const getSupportText = () => {
         if (app === "founder-tools") {
             return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
-        }
-
-        if (app === "innovate-connect-alliance") {
-            return "Provide your email to create your account and access Innovate Connect Alliance.";
         }
 
         return "Provide your email to create your account";

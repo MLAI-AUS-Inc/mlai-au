@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-an-intelligent-agent-in-artificial-intelligence': {
+        title: "What Is an Intelligent Agent in Artificial Intelligence?",
+        date: "2026-05-09",
+        description: "What is intelligent agent in artificial intelligence? Learn how agents perceive, decide, act and support goal-directed AI workflows.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-an-intelligent-agent-in-artificial-intelligence",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-6e3a2103-531c-4ceb-bcd4-4f23a2f12c58.jpg?alt=media&token=bc7c5df0-4795-4456-95a7-3444817ada68",
+        imageAlt: "Close-up of teammates mapping AI intelligent agent decisions on a laptop in a candid workshop moment",
+        hasContent: true,
+    },
     'featured/what-is-a-unicorn-startup-and-why-it-matters': {
         title: "What Is a Unicorn Startup and Why It Matters",
         date: "2026-04-23",

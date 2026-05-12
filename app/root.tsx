@@ -53,6 +53,7 @@ export const links: Route.LinksFunction = () => [
 
 export default function Layout() {
   const location = useLocation();
+  const shouldLoadThirdPartyAnalytics = import.meta.env.PROD;
 
   // Hide the global chrome inside authenticated app surfaces.
   const isEsafetyApp = location.pathname.startsWith("/esafety");
@@ -107,22 +108,26 @@ export default function Layout() {
         <Meta />
         <Links />
 
-        <script
-          src="https://analytics.ahrefs.com/analytics.js"
-          data-key="R27fA2BeFrzb0BXu5adbpQ"
-          async
-        ></script>
+        {shouldLoadThirdPartyAnalytics ? (
+          <script
+            src="https://analytics.ahrefs.com/analytics.js"
+            data-key="R27fA2BeFrzb0BXu5adbpQ"
+            async
+          ></script>
+        ) : null}
       </head>
       <body>
-        <noscript>
-          <img
-            alt=""
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
-          />
-        </noscript>
+        {shouldLoadThirdPartyAnalytics ? (
+          <noscript>
+            <img
+              alt=""
+              height="1"
+              width="1"
+              style={{ display: "none" }}
+              src="https://www.facebook.com/tr?id=925764322445149&ev=PageView&noscript=1"
+            />
+          </noscript>
+        ) : null}
         {/* Only show platform-wide components if NOT in specific apps */}
         {!isAppRoute && <Sidebar />}
         {!isAppRoute && <SectionMarkers />}
@@ -132,46 +137,50 @@ export default function Layout() {
         {!isAppRoute && <Footer />}
         <ScrollRestoration />
 
-        {/* Google Analytics */}
-        <script
-          async
-          defer
-          src={`https://www.googletagmanager.com/gtag/js?id=G-JB8E813T8W}`}
-        />
-        <script
-          id="google-analytics"
-          async
-          suppressHydrationWarning={true}
-          dangerouslySetInnerHTML={{
-            __html: `
-            window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'G-JB8E813T8W');
-          `,
-          }}
-        />
+        {shouldLoadThirdPartyAnalytics ? (
+          <>
+            {/* Google Analytics */}
+            <script
+              async
+              defer
+              src={`https://www.googletagmanager.com/gtag/js?id=G-JB8E813T8W}`}
+            />
+            <script
+              id="google-analytics"
+              async
+              suppressHydrationWarning={true}
+              dangerouslySetInnerHTML={{
+                __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-JB8E813T8W');
+            `,
+              }}
+            />
 
-        {/* Meta Pixel Code */}
-        <script
-          id="meta-pixel"
-          async
-          defer
-          dangerouslySetInnerHTML={{
-            __html: `
-          !function(f,b,e,v,n,t,s)
-          {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-          n.queue=[];t=b.createElement(e);t.async=!0;
-          t.src=v;s=b.getElementsByTagName(e)[0];
-          s.parentNode.insertBefore(t,s)}(window, document,'script',
-          'https://connect.facebook.net/en_US/fbevents.js');
-          fbq('init', '925764322445149');
-          fbq('track', 'PageView');
-          `,
-          }}
-        />
+            {/* Meta Pixel Code */}
+            <script
+              id="meta-pixel"
+              async
+              defer
+              dangerouslySetInnerHTML={{
+                __html: `
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '925764322445149');
+            fbq('track', 'PageView');
+            `,
+              }}
+            />
+          </>
+        ) : null}
         <Scripts />
       </body>
     </html>

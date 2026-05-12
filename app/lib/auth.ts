@@ -1,7 +1,7 @@
 import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
-export type AuthAppName = "esafety" | "hospital" | "innovate-connect-alliance" | "founder-tools" | "vibe-raising";
+export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising";
 type GetCurrentUserOptions = {
     allowDevBypass?: boolean;
 };
@@ -17,8 +17,6 @@ function resolveAuthApp(body: {
         body.app ||
         (body.next?.startsWith("/esafety")
             ? "esafety"
-            : body.next?.startsWith("/innovate-connect-alliance")
-              ? "innovate-connect-alliance"
             : body.next?.startsWith("/founder-tools") || body.next?.startsWith("/vibe-raising")
               ? "founder-tools"
               : "hospital")

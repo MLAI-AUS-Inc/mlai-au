@@ -8,7 +8,17 @@ import { clsx } from "clsx";
 
 import type { VibeMarketingRunSummary, VibeMarketingStepState } from "~/types/vibe-marketing";
 
-type StageId = "setup" | "research" | "write" | "preview";
+type StageId =
+  | "preparing"
+  | "repo_access"
+  | "article_system"
+  | "startup_context"
+  | "research"
+  | "planning"
+  | "drafting"
+  | "assets"
+  | "preview"
+  | "review";
 type StageStatus = "complete" | "running" | "up_next" | "attention";
 
 interface StageDefinition {
@@ -26,44 +36,86 @@ interface StageView extends StageDefinition {
 
 interface ArticleRunStageProgressProps {
   run: VibeMarketingRunSummary;
-  pollingDegraded?: boolean;
+  variant?: "standalone" | "embedded";
 }
 
-const STAGES: StageDefinition[] = [
+const ARTICLE_PROGRESS_STAGES: StageDefinition[] = [
   {
-    id: "setup",
-    label: "Checking website setup",
-    activeText: "Checking your repo, article system, and publish setup.",
-    completeText: "Website and repository setup are ready.",
-    pendingText: "Setup checks run before writing starts.",
+    id: "preparing",
+    label: "Preparing run",
+    activeText: "Setting up the article generation run.",
+    completeText: "The article run is ready.",
+    pendingText: "The run setup starts first.",
+  },
+  {
+    id: "repo_access",
+    label: "Checking repository access",
+    activeText: "Confirming the website repository can be reached.",
+    completeText: "Repository access is ready.",
+    pendingText: "Repository access is checked before writing starts.",
+  },
+  {
+    id: "article_system",
+    label: "Understanding article system",
+    activeText: "Finding the right article structure and publishing path.",
+    completeText: "The article system is understood.",
+    pendingText: "The article system is checked after repository access.",
+  },
+  {
+    id: "startup_context",
+    label: "Loading startup context",
+    activeText: "Loading brand, audience, and website context.",
+    completeText: "Startup context is loaded.",
+    pendingText: "Startup context loads before topic research.",
   },
   {
     id: "research",
     label: "Researching topic",
     activeText: "Collecting sources and shaping the article brief.",
     completeText: "Topic research is ready.",
-    pendingText: "Research starts after setup checks pass.",
+    pendingText: "Topic research starts after context is loaded.",
   },
   {
-    id: "write",
-    label: "Writing article",
-    activeText: "Planning, drafting, grounding, and assembling the article.",
-    completeText: "Draft content has been assembled.",
-    pendingText: "Writing starts after research is complete.",
+    id: "planning",
+    label: "Planning article",
+    activeText: "Turning research into the article structure.",
+    completeText: "The article plan is ready.",
+    pendingText: "The article plan comes after research.",
+  },
+  {
+    id: "drafting",
+    label: "Writing draft",
+    activeText: "Writing and grounding the draft.",
+    completeText: "The draft is written.",
+    pendingText: "The draft is written after planning.",
+  },
+  {
+    id: "assets",
+    label: "Preparing images and assets",
+    activeText: "Preparing images and delivery assets.",
+    completeText: "Images and assets are prepared.",
+    pendingText: "Images and assets are prepared after the draft.",
   },
   {
     id: "preview",
-    label: "Preparing preview",
-    activeText: "Rendering, packaging, and verifying the article preview.",
-    completeText: "The article package is ready to review.",
-    pendingText: "Preview preparation runs after the draft is assembled.",
+    label: "Verifying preview",
+    activeText: "Rendering and checking the article preview.",
+    completeText: "The preview has been verified.",
+    pendingText: "The preview is verified after assets are ready.",
+  },
+  {
+    id: "review",
+    label: "Ready for review",
+    activeText: "Finishing the review package.",
+    completeText: "The article is ready to review.",
+    pendingText: "The article will be ready to review after verification.",
   },
 ];
 
-const STAGE_INDEX = new Map(STAGES.map((stage, index) => [stage.id, index]));
+const STAGE_INDEX = new Map(ARTICLE_PROGRESS_STAGES.map((stage, index) => [stage.id, index]));
 const COMPLETE_STEP_STATUSES = new Set(["completed", "skipped"]);
 const FAILED_STEP_STATUSES = new Set(["failed", "blocked", "cancelled", "blocked_verification", "denied"]);
-const RUNNING_STEP_STATUSES = new Set(["running", "retrying", "queued", "pending"]);
+const ACTIVE_STEP_STATUSES = new Set(["running", "retrying", "queued"]);
 const FAILED_RUN_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied", "cancelled"]);
 const RUNNING_RUN_STATUSES = new Set([
   "queued",
@@ -81,25 +133,52 @@ function normalizedKey(step: VibeMarketingStepState | string | null | undefined)
 
 function fallbackStageForIndex(index: number, total: number): StageId {
   const ratio = total > 0 ? index / total : 0;
-  if (ratio < 0.25) return "setup";
-  if (ratio < 0.45) return "research";
-  if (ratio < 0.75) return "write";
-  return "preview";
+  if (ratio < 0.1) return "preparing";
+  if (ratio < 0.2) return "repo_access";
+  if (ratio < 0.3) return "article_system";
+  if (ratio < 0.4) return "startup_context";
+  if (ratio < 0.5) return "research";
+  if (ratio < 0.6) return "planning";
+  if (ratio < 0.75) return "drafting";
+  if (ratio < 0.85) return "assets";
+  if (ratio < 0.95) return "preview";
+  return "review";
 }
 
-function stageForStep(step: VibeMarketingStepState | string | null | undefined, index = 0, total = 1): StageId {
+export function stageForStep(step: VibeMarketingStepState | string | null | undefined, index = 0, total = 1): StageId {
   const key = normalizedKey(step);
 
   if (
     key.includes("fetch_org_config") ||
+    key.includes("resolve_delivery_mode") ||
+    key.includes("initialize")
+  ) {
+    return "preparing";
+  }
+
+  if (
     key.includes("refresh_repo_auth") ||
     key.includes("repo_auth") ||
+    key.includes("github_auth") ||
+    key.includes("validate_github")
+  ) {
+    return "repo_access";
+  }
+
+  if (
     key.includes("scan_repository") ||
     key.includes("classify_repository") ||
     key.includes("synthesize_repository") ||
-    key === "load_context"
+    key.includes("repository_contract") ||
+    key.includes("article_system") ||
+    key.includes("target_contract") ||
+    key.includes("prepare_bootstrap_publish_target")
   ) {
-    return "setup";
+    return "article_system";
+  }
+
+  if (key === "load_context" || key.includes("load_revision_context")) {
+    return "startup_context";
   }
 
   if (
@@ -115,26 +194,48 @@ function stageForStep(step: VibeMarketingStepState | string | null | undefined, 
 
   if (
     key.includes("plan_article") ||
+    key.includes("title_policy") ||
+    key.includes("reconcile_title")
+  ) {
+    return "planning";
+  }
+
+  if (
     key.includes("draft_section") ||
     key.includes("ground_section") ||
-    key.includes("assemble_article") ||
+    key.includes("assemble_article")
+  ) {
+    return "drafting";
+  }
+
+  if (
     key.includes("generate_content_images") ||
+    key.includes("package_content_delivery") ||
+    key.includes("package_publish_bundle")
+  ) {
+    return "assets";
+  }
+
+  if (
+    key.includes("await_publish_approval") ||
+    key.includes("approval") ||
+    key.includes("archive_github") ||
     key === "finalize"
   ) {
-    return "write";
+    return "review";
   }
 
   if (
     key.includes("render_article") ||
-    key.includes("package_content_delivery") ||
     key.includes("validate_render") ||
     key.includes("prove_publish") ||
     key.includes("verify_") ||
     key.includes("review_visual_style") ||
     key.includes("preview") ||
-    key.includes("publish") ||
+    key.includes("publish_preview") ||
     key.includes("repair_") ||
-    key.includes("archive_github")
+    key.includes("browser") ||
+    key.includes("style")
   ) {
     return "preview";
   }
@@ -142,19 +243,11 @@ function stageForStep(step: VibeMarketingStepState | string | null | undefined, 
   return fallbackStageForIndex(index, total);
 }
 
-function formatStepName(value: string | null | undefined) {
-  return String(value ?? "")
-    .replace(/[:_]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
-
 function currentInternalStep(run: VibeMarketingRunSummary) {
   const currentKey = normalizedKey(run.currentStep);
   return (
     run.steps.find((step) => normalizedKey(step) === currentKey) ??
-    run.steps.find((step) => RUNNING_STEP_STATUSES.has(step.status)) ??
+    run.steps.find((step) => ACTIVE_STEP_STATUSES.has(step.status)) ??
     run.steps.find((step) => !COMPLETE_STEP_STATUSES.has(step.status)) ??
     [...run.steps].reverse().find((step) => COMPLETE_STEP_STATUSES.has(step.status)) ??
     null
@@ -182,7 +275,7 @@ function StageIcon({ status }: { status: StageStatus }) {
   return <ClockIcon className="h-5 w-5" />;
 }
 
-function deriveStages(run: VibeMarketingRunSummary): StageView[] {
+export function deriveArticleProgressStages(run: VibeMarketingRunSummary): StageView[] {
   const total = Math.max(run.stepOrder.length, run.steps.length, 1);
   const activeStep = currentInternalStep(run);
   const activeStage = stageForStep(activeStep ?? run.currentStep, activeStep ? run.steps.indexOf(activeStep) : 0, total);
@@ -193,7 +286,7 @@ function deriveStages(run: VibeMarketingRunSummary): StageView[] {
   const runComplete = run.status === "completed";
   const activeStageIndex = STAGE_INDEX.get(activeStage) ?? 0;
 
-  return STAGES.map((stage) => {
+  return ARTICLE_PROGRESS_STAGES.map((stage) => {
     const stageIndex = STAGE_INDEX.get(stage.id) ?? 0;
     const stageSteps = run.steps.filter((step, index) => stageForStep(step, index, total) === stage.id);
     const allStageStepsComplete =
@@ -224,49 +317,54 @@ export function articleRunTechnicalProgressLabel(run: VibeMarketingRunSummary) {
   return `${completed} of ${total} checks complete`;
 }
 
-export default function ArticleRunStageProgress({
-  run,
-  pollingDegraded = false,
-}: ArticleRunStageProgressProps) {
-  const stages = deriveStages(run);
-  const activeStage = stages.find((stage) => stage.status === "attention") ?? stages.find((stage) => stage.status === "running");
-  const activeStep = currentInternalStep(run);
+export default function ArticleRunStageProgress({ run, variant = "standalone" }: ArticleRunStageProgressProps) {
+  const stages = deriveArticleProgressStages(run);
+  const embedded = variant === "embedded";
+  const activeStage =
+    stages.find((stage) => stage.status === "attention") ??
+    stages.find((stage) => stage.status === "running") ??
+    stages.find((stage) => stage.status === "up_next") ??
+    stages[stages.length - 1];
+  const activeStageIndex = Math.max(0, stages.findIndex((stage) => stage.id === activeStage?.id));
   const headline =
     activeStage?.status === "attention"
       ? "This article run needs attention"
       : run.status === "completed"
-        ? "Article package ready"
+        ? "Article ready for review"
         : activeStage?.label ?? "Generating article";
-  const behindScenesStepName = activeStep?.name || formatStepName(activeStep?.key || run.currentStep || "Waiting");
-  const behindScenesMessage = activeStep?.message || activeStep?.error || "Waiting for the next update.";
 
   return (
-    <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">
+    <section className={clsx(embedded ? "space-y-4" : "rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm")}>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-wide text-violet-600">Generating article</p>
-          <h2 className="mt-1 text-xl font-black text-gray-950">{headline}</h2>
+          <h2 className={clsx("mt-1 font-black text-gray-950", embedded ? "text-lg" : "text-xl")}>{headline}</h2>
           <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
             {activeStage?.detail ?? "We are preparing the generated article package."}
           </p>
         </div>
-        <span className="rounded-full bg-violet-50 px-3 py-1.5 text-xs font-black uppercase tracking-wide text-violet-700">
-          {run.status.replace(/_/g, " ")}
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide text-violet-700 shadow-sm">
+            Step {Math.min(activeStageIndex + 1, stages.length)} of {stages.length}
+          </span>
+          <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black uppercase tracking-wide text-violet-700 shadow-sm">
+            {run.status.replace(/_/g, " ")}
+          </span>
+        </div>
       </div>
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className={clsx("grid gap-2 sm:grid-cols-2 lg:grid-cols-5", !embedded && "mt-5")}>
         {stages.map((stage) => (
           <div
             key={stage.id}
             className={clsx(
-              "rounded-xl border p-4 transition",
+              "rounded-xl border px-3 py-3 transition",
               stage.status === "running" && "shadow-sm ring-2 ring-violet-100",
               stageStatusTone(stage.status),
             )}
           >
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-white/80">
+              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-white/80">
                 <StageIcon status={stage.status} />
               </span>
               <div className="min-w-0">
@@ -274,21 +372,12 @@ export default function ArticleRunStageProgress({
                 <p className="mt-0.5 text-xs font-black uppercase tracking-wide">{stageStatusLabel(stage.status)}</p>
               </div>
             </div>
-            <p className="mt-3 text-sm font-semibold leading-5 text-gray-600">{stage.detail}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 rounded-xl bg-gray-50 px-4 py-3 text-xs font-semibold text-gray-500">
-        <span className="font-black text-gray-700">Behind the scenes:</span> {behindScenesStepName}
-        {behindScenesMessage ? ` - ${behindScenesMessage}` : ""}
-      </div>
-
-      {pollingDegraded ? (
-        <p className="mt-3 text-xs font-bold text-amber-700">Polling is retrying after a temporary connection problem.</p>
-      ) : null}
       {run.errors.length > 0 ? (
-        <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+        <div className={clsx("rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700", !embedded && "mt-3")}>
           {run.errors[0]}
         </div>
       ) : null}

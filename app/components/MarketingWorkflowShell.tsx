@@ -1,8 +1,10 @@
-import type { ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Form, Link } from "react-router";
 import {
   ArrowPathIcon,
   ArrowRightIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
   CodeBracketIcon,
   CheckCircleIcon,
   ClockIcon,
@@ -29,6 +31,10 @@ interface MarketingWorkflowShellProps {
   subtitle?: string;
   isSubmitting?: boolean;
   primaryActionSlot?: ReactNode;
+  topRightActionSlot?: ReactNode;
+  activeDetailSlot?: ReactNode;
+  activeDetailLabel?: string;
+  activeDetailDefaultExpanded?: boolean;
   showPrimaryAction?: boolean;
   className?: string;
 }
@@ -124,6 +130,22 @@ function statusTone(status: string) {
   return "border-gray-200 bg-gray-50 text-gray-500";
 }
 
+function iconCircleTone(status: string, active: boolean) {
+  if (active || status === "running") return "border-violet-200 bg-violet-100 text-violet-700 shadow-inner";
+  if (status === "complete") return "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-inner";
+  if (status === "needs_action" || status === "ready") return "border-orange-200 bg-orange-50 text-orange-600 shadow-inner";
+  if (status === "blocked") return "border-red-200 bg-red-50 text-red-600 shadow-inner";
+  return "border-gray-100 bg-gray-50 text-gray-400";
+}
+
+function connectorNodeTone(group: WorkflowDisplayGroup, nextGroup: WorkflowDisplayGroup | undefined, active: boolean, nextRequired: boolean) {
+  if (active || nextRequired || nextGroup?.status === "running") return "bg-violet-600";
+  if (group.status === "complete") return "bg-emerald-500";
+  if (group.status === "needs_action" || group.status === "ready") return "bg-orange-500";
+  if (group.status === "blocked") return "bg-red-500";
+  return "bg-gray-300";
+}
+
 function StepStatusIcon({ status }: { status: string }) {
   if (status === "complete") return <CheckCircleIcon className="h-4 w-4" />;
   if (status === "running") return <ArrowPathIcon className="h-4 w-4 animate-spin" />;
@@ -206,9 +228,15 @@ export default function MarketingWorkflowShell({
   subtitle,
   isSubmitting = false,
   primaryActionSlot,
+  topRightActionSlot,
+  activeDetailSlot,
+  activeDetailLabel = "Progress details",
+  activeDetailDefaultExpanded = true,
   showPrimaryAction = true,
   className,
 }: MarketingWorkflowShellProps) {
+  const activeDetailId = useId();
+  const [activeDetailExpanded, setActiveDetailExpanded] = useState(activeDetailDefaultExpanded);
   const steps = progress?.steps ?? [];
   if (!steps.length) return null;
   const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
@@ -219,10 +247,15 @@ export default function MarketingWorkflowShell({
   const viewingRequiredGroup = viewedGroup.id === requiredGroup.id;
   const viewedIndex = Math.max(0, displayGroups.findIndex((group) => group.id === viewedGroup.id));
   const completeCount = displayGroups.filter((group) => group.status === "complete").length;
-  const percent = Math.max(4, Math.round((completeCount / displayGroups.length) * 100));
+  const activeProgressCount = viewedGroup.status === "running" ? viewedIndex + 1 : completeCount;
+  const percent = Math.max(4, Math.round((Math.max(completeCount, activeProgressCount) / displayGroups.length) * 100));
   const headerLabel = viewingRequiredGroup
-    ? `Next required step: ${requiredGroup.label}`
-    : `Viewing: ${viewedGroup.label} - ${statusLabel(viewedGroup.status)}`;
+    ? viewedGroup.status === "running"
+      ? `Current step: ${viewedGroup.label}`
+      : `Next required step: ${requiredGroup.label}`
+    : viewedGroup.status === "running"
+      ? `Current step: ${viewedGroup.label}`
+      : `Viewing: ${viewedGroup.label} - ${statusLabel(viewedGroup.status)}`;
   const requiredNavigationAction =
     requiredGroup.primaryAction?.label
       ? {
@@ -232,36 +265,40 @@ export default function MarketingWorkflowShell({
         }
       : { label: `Go to ${requiredGroup.label}`, href: requiredGroup.href, variant: "secondary" as const };
   const HeadingTag = titleAs;
+  const hasActiveDetail = activeDetailSlot !== undefined && activeDetailSlot !== null;
+  const activeDetailAnchorPercent = ((viewedIndex + 0.5) / Math.max(displayGroups.length, 1)) * 100;
 
   return (
-    <section className={clsx("rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5", className)}>
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <section className={clsx("rounded-2xl border border-gray-200 bg-white px-5 py-7 shadow-md shadow-gray-200/60 sm:px-8 sm:py-9", className)}>
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-violet-600">
-            Step {viewedIndex + 1} of {displayGroups.length}
+          <p className="text-sm font-black uppercase tracking-wide text-violet-600">
+            STEP {viewedIndex + 1} OF {displayGroups.length}
           </p>
-          <HeadingTag className={clsx("mt-1 font-black text-gray-950", titleAs === "h1" ? "text-2xl" : "text-xl")}>
+          <HeadingTag className={clsx("mt-3 font-black tracking-tight text-gray-950", titleAs === "h1" ? "text-4xl" : "text-3xl")}>
             {title}
           </HeadingTag>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className={clsx("inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-black", statusTone(viewedGroup.status))}>
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <span className={clsx("inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-black", statusTone(viewedGroup.status))}>
               <StepStatusIcon status={viewedGroup.status} />
               {statusLabel(viewedGroup.status)}
             </span>
-            <span className="text-sm font-bold text-gray-700">{headerLabel}</span>
+            <span className="text-base font-black text-gray-700">{headerLabel}</span>
             {!viewingRequiredGroup ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-black text-violet-700">
+              <span className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-violet-50 px-3 py-1.5 text-sm font-black text-violet-700">
                 Next required step: {requiredGroup.label}
               </span>
             ) : null}
           </div>
-          <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-500">
+          <p className="mt-4 max-w-3xl text-lg font-bold leading-7 text-gray-500">
             {subtitle ?? viewedGroup.summary}
           </p>
         </div>
         {showPrimaryAction ? (
           <div className="flex flex-wrap gap-2">
-            {primaryActionSlot && viewedGroup.status !== "locked" ? (
+            {topRightActionSlot ? (
+              topRightActionSlot
+            ) : primaryActionSlot && viewedGroup.status !== "locked" ? (
               primaryActionSlot
             ) : viewingRequiredGroup ? (
               <ActionButton action={viewedGroup.primaryAction} disabled={isSubmitting} />
@@ -272,71 +309,112 @@ export default function MarketingWorkflowShell({
         ) : null}
       </div>
 
-      <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-gray-100" aria-hidden>
+      <div className="mt-9 h-2 overflow-hidden rounded-full bg-gray-100" aria-hidden>
         <div className="h-full rounded-full bg-violet-600 transition-all" style={{ width: `${percent}%` }} />
       </div>
 
-      <ol className="mt-5 grid gap-4 rounded-2xl border border-violet-100 bg-violet-50/60 p-4 shadow-sm shadow-violet-100/60 sm:grid-cols-2 lg:grid-cols-5 lg:p-5">
+      <ol className="mt-8 grid gap-5 rounded-2xl border border-violet-100 bg-violet-50/40 p-5 shadow-sm shadow-violet-100/60 sm:grid-cols-2 xl:grid-cols-5 xl:gap-8 xl:p-8">
         {displayGroups.map((group, index) => {
           const active = group.id === viewedGroup.id;
           const nextRequired = group.id === requiredGroup.id;
-          const locked = group.status === "locked";
+          const locked = group.status === "locked" && group.id !== "repo_article_system";
           const Icon = group.icon;
+          const nextGroup = displayGroups[index + 1];
+          const connectorNodeClass = connectorNodeTone(group, nextGroup, active, nextRequired);
           const content = (
-            <div className="relative flex h-full flex-col items-center gap-3 text-center">
+            <div className="relative flex h-full flex-col items-center justify-center text-center">
               <span
                 className={clsx(
-                  "flex h-14 w-14 items-center justify-center rounded-full border transition",
-                  active && "border-violet-200 bg-violet-200 text-violet-700 shadow-sm",
-                  !active && group.status === "complete" && "border-emerald-200 bg-white text-emerald-600",
-                  !active && group.status === "running" && "border-violet-100 bg-white text-violet-600",
-                  !active && (group.status === "needs_action" || group.status === "ready") && "border-amber-200 bg-white text-amber-600",
-                  !active && group.status === "blocked" && "border-red-200 bg-white text-red-600",
-                  !active && locked && "border-gray-100 bg-white/70 text-gray-400",
+                  "flex h-20 w-20 items-center justify-center rounded-full border transition",
+                  iconCircleTone(group.status, active),
                 )}
               >
                 {group.status === "complete" ? (
-                  <CheckCircleIcon className="h-6 w-6" />
+                  <CheckCircleIcon className="h-9 w-9" />
                 ) : group.status === "running" ? (
-                  <ArrowPathIcon className="h-6 w-6 animate-spin" />
+                  <ArrowPathIcon className="h-9 w-9 animate-spin" />
                 ) : (
-                  <Icon className="h-6 w-6" />
+                  <Icon className="h-9 w-9" />
                 )}
               </span>
-              <span className="max-w-[180px] text-sm font-black leading-5 text-gray-950">{group.label}</span>
-              <span className={clsx("text-xs font-bold", active ? "text-violet-700" : locked ? "text-gray-400" : "text-gray-500")}>
-                {statusLabel(group.status)}
-              </span>
-              {nextRequired && !active ? (
-                <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-black uppercase text-violet-700">
-                  Next required
-                </span>
-              ) : null}
-              {index < displayGroups.length - 1 ? (
-                <ArrowRightIcon className="absolute -right-5 top-5 hidden h-5 w-5 text-gray-400 lg:block" />
-              ) : null}
+              <span className="mt-7 max-w-[190px] text-lg font-black leading-6 text-gray-950">{group.label}</span>
+              <span className="sr-only">Status: {statusLabel(group.status)}</span>
             </div>
           );
           return (
-            <li key={group.id} className="min-h-[156px]">
+            <li key={group.id} className="relative min-h-[220px]">
               {locked ? (
-                <div className="h-full rounded-xl px-3 py-4 opacity-70">{content}</div>
+                <div className="h-full rounded-2xl border border-gray-100 bg-white/65 px-4 py-6 opacity-80 shadow-sm" aria-label={`${group.label}, ${statusLabel(group.status)}`}>
+                  {content}
+                </div>
               ) : (
                 <Link
                   to={group.href}
                   aria-current={active ? "step" : undefined}
+                  aria-label={`${group.label}, ${statusLabel(group.status)}`}
                   className={clsx(
-                    "block h-full rounded-xl px-3 py-4 transition",
-                    active ? "bg-white shadow-sm ring-1 ring-violet-200" : "hover:bg-white/80",
+                    "block h-full rounded-2xl border bg-white px-4 py-6 transition",
+                    active
+                      ? "border-violet-200 shadow-lg shadow-violet-100/70 ring-1 ring-violet-100"
+                      : "border-gray-100 shadow-sm hover:border-violet-100 hover:shadow-md",
                   )}
                 >
                   {content}
                 </Link>
               )}
+              {index < displayGroups.length - 1 ? (
+                <div className="pointer-events-none absolute left-[calc(100%+0.25rem)] top-1/2 hidden w-7 -translate-y-1/2 items-center text-gray-300 xl:flex">
+                  <span className="h-0 flex-1 border-t-2 border-dotted border-gray-300" />
+                  <span className="mx-1 flex h-6 w-6 items-center justify-center rounded-full border border-gray-200 bg-white">
+                    <span className={clsx("h-3 w-3 rounded-full", connectorNodeClass)} />
+                  </span>
+                  <span className="h-0 flex-1 border-t-2 border-dotted border-gray-300" />
+                </div>
+              ) : null}
             </li>
           );
         })}
       </ol>
+
+      {hasActiveDetail ? (
+        <div className="relative mt-4">
+          <span
+            className="pointer-events-none absolute -top-2 hidden h-4 w-4 -translate-x-1/2 rotate-45 rounded-[3px] border-l border-t border-violet-100 bg-white lg:block"
+            style={{ left: `${activeDetailAnchorPercent}%` }}
+            aria-hidden
+          />
+          <div className="rounded-2xl border border-violet-100 bg-white p-3 shadow-sm shadow-violet-100/50">
+            <button
+              type="button"
+              aria-expanded={activeDetailExpanded}
+              aria-controls={activeDetailId}
+              onClick={() => setActiveDetailExpanded((expanded) => !expanded)}
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+            >
+              <span className="min-w-0">
+                <span className="block text-sm font-black text-gray-950">{activeDetailLabel}</span>
+                <span className="mt-0.5 block text-xs font-bold text-gray-500">
+                  {viewedGroup.label} - {statusLabel(viewedGroup.status)}
+                </span>
+              </span>
+              <span className="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-violet-100 bg-white text-violet-700 shadow-sm">
+                {activeDetailExpanded ? (
+                  <ChevronUpIcon className="h-5 w-5" />
+                ) : (
+                  <ChevronDownIcon className="h-5 w-5" />
+                )}
+              </span>
+            </button>
+            <div id={activeDetailId} hidden={!activeDetailExpanded}>
+              {activeDetailExpanded ? (
+                <div className="mt-3 border-t border-violet-100 px-1 pt-4">
+                  {activeDetailSlot}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

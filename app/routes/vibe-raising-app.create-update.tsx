@@ -51,6 +51,7 @@ import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH
 import type {
     VibeRaisingInputSourceKey,
     VibeRaisingFounderProfile,
+    VibeRaisingManualDocument,
     VibeRaisingMetricSuggestion,
     VibeRaisingMonthlyUpdate,
     VibeRaisingStartupUpdateStatusResponse,
@@ -66,6 +67,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "google_drive",
     "slack",
     "linear",
+    "manual_documents",
 ]);
 
 const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
@@ -77,6 +79,7 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     google_drive: "Google Drive",
     slack: "Slack",
     linear: "Linear",
+    manual_documents: "Manual documents",
 };
 
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
@@ -84,20 +87,45 @@ const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 
-function readStoredManualMaterials(): { summary: string; sourceUrl: string; pitchDeckSummary: string; pitchDeckUrl: string } {
-    if (typeof window === "undefined") return { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "" };
+function readStoredManualMaterials(): {
+    summary: string;
+    sourceUrl: string;
+    pitchDeckSummary: string;
+    pitchDeckUrl: string;
+    manualDocumentIds: string[];
+    documents: VibeRaisingManualDocument[];
+} {
+    const empty = { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "", manualDocumentIds: [], documents: [] };
+    if (typeof window === "undefined") return empty;
     try {
         const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
-        if (!raw) return { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "" };
-        const parsed = JSON.parse(raw) as { summary?: unknown; sourceUrl?: unknown; pitchDeckSummary?: unknown; pitchDeckUrl?: unknown };
+        if (!raw) return empty;
+        const parsed = JSON.parse(raw) as {
+            summary?: unknown;
+            sourceUrl?: unknown;
+            pitchDeckSummary?: unknown;
+            pitchDeckUrl?: unknown;
+            manualDocumentIds?: unknown;
+            documents?: unknown;
+        };
+        const documents = Array.isArray(parsed.documents)
+            ? parsed.documents.filter((item): item is VibeRaisingManualDocument =>
+                Boolean(item && typeof item === "object" && typeof (item as VibeRaisingManualDocument).id === "string"),
+            )
+            : [];
+        const manualDocumentIds = Array.isArray(parsed.manualDocumentIds)
+            ? parsed.manualDocumentIds.map((item) => String(item || "").trim()).filter(Boolean)
+            : documents.map((document) => document.id);
         return {
             summary: typeof parsed.summary === "string" ? parsed.summary : "",
             sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
             pitchDeckSummary: typeof parsed.pitchDeckSummary === "string" ? parsed.pitchDeckSummary : "",
             pitchDeckUrl: typeof parsed.pitchDeckUrl === "string" ? parsed.pitchDeckUrl : "",
+            manualDocumentIds,
+            documents,
         };
     } catch {
-        return { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "" };
+        return empty;
     }
 }
 
@@ -259,12 +287,18 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     const rawPitchDeckFileSizeBytes = Number(formData.get("pitchDeckFileSizeBytes") || 0);
     const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
     const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
+    const manualDocumentIds = String(formData.get("manualDocumentIds") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
 
     return {
         month: String(formData.get("month") || "").trim(),
         year: Number(formData.get("year") || 0),
         summary: String(formData.get("summary") || "").trim() || null,
         sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
+        manualDocumentIds,
+        manualSummary: String(formData.get("manualSummary") || "").trim() || null,
         pitchDeckUrl: String(formData.get("pitchDeckUrl") || "").trim() || null,
         pitchDeckStoragePath: String(formData.get("pitchDeckStoragePath") || "").trim() || null,
         pitchDeckContentType: String(formData.get("pitchDeckContentType") || "").trim() || null,
@@ -1884,10 +1918,21 @@ export default function CreateUpdate() {
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
     const [showEmailWizard, setShowEmailWizard] = useState(false);
-    const [summary, setSummary] = useState<string>(() => defaultData?.summary || readStoredManualMaterials().summary || "");
-    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || readStoredManualMaterials().sourceUrl || "");
-    const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || readStoredManualMaterials().pitchDeckUrl || "");
-    const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || readStoredManualMaterials().pitchDeckSummary || "");
+    const storedManualMaterials = useMemo(() => readStoredManualMaterials(), []);
+    const [manualSummary, setManualSummary] = useState<string>(() => storedManualMaterials.summary || "");
+    const [manualDocumentIds, setManualDocumentIds] = useState<string[]>(() => {
+        const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
+        if (defaultDocuments.length > 0) return defaultDocuments.map((document: VibeRaisingManualDocument) => document.id);
+        return storedManualMaterials.manualDocumentIds;
+    });
+    const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => {
+        const defaultDocuments = Array.isArray(defaultData?.manualDocuments) ? defaultData.manualDocuments : [];
+        return defaultDocuments.length > 0 ? defaultDocuments : storedManualMaterials.documents;
+    });
+    const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
+    const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
+    const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
+    const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || storedManualMaterials.pitchDeckSummary || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -2092,6 +2137,11 @@ export default function CreateUpdate() {
         setNext30Days(data.next30Days || "");
         setSummary(data.summary || "");
         setSourceUrl(data.sourceUrl || data.source_url || "");
+        if (Array.isArray(data.manualDocuments || data.manual_documents)) {
+            const documents = (data.manualDocuments || data.manual_documents) as VibeRaisingManualDocument[];
+            setManualDocuments(documents);
+            setManualDocumentIds(documents.map((document) => document.id));
+        }
         if (data.videoUrl || data.video_url) {
             const nextVideoUrl = data.videoUrl || data.video_url;
             setUploadedVideoUrl(nextVideoUrl);
@@ -2513,6 +2563,8 @@ export default function CreateUpdate() {
                     ...(shouldForceRegenerate ? { forceRegenerate: true } : {}),
                     inputSources: selectedInputSources,
                     targetMonth: targetMonthIso,
+                    manualDocumentIds,
+                    manualSummary,
                 },
             );
             emailDraftIgnoredRunIdRef.current = null;
@@ -2533,7 +2585,7 @@ export default function CreateUpdate() {
         } finally {
             setEmailDraftActionBusy(false);
         }
-    }, [backendBaseUrl, emailDraftForceRegenerateKey, selectedInputSources, targetMonthIso]);
+    }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
         if (!canGenerateDraftFromEmail) {
@@ -2761,6 +2813,9 @@ export default function CreateUpdate() {
                 setPitchDeckUrl("");
                 setPitchDeckSummary("");
                 resetPitchDeckUpload();
+                setManualDocumentIds([]);
+                setManualDocuments([]);
+                setManualSummary("");
                 resetVideoUpload();
                 setHighlights("");
                 setChallenges("");
@@ -2793,6 +2848,9 @@ export default function CreateUpdate() {
         setPitchDeckSummary(existingUpdateForSelectedMonth.pitchDeckSummary || "");
         setPitchDeckUploadStatus(existingUpdateForSelectedMonth.pitchDeckUrl ? "ready" : "idle");
         setPitchDeckUploadError(null);
+        setManualDocuments(existingUpdateForSelectedMonth.manualDocuments || []);
+        setManualDocumentIds((existingUpdateForSelectedMonth.manualDocuments || []).map((document) => document.id));
+        setManualSummary("");
         setUploadedVideoUrl(existingUpdateForSelectedMonth.videoUrl || "");
         setVideoPreviewUrl(existingUpdateForSelectedMonth.videoUrl || null);
         setVideoStoragePath(existingUpdateForSelectedMonth.videoStoragePath || "");
@@ -3185,6 +3243,103 @@ export default function CreateUpdate() {
             stopMediaStream();
         };
     }, [revokePitchDeckPreviewObjectUrl, revokeVideoPreviewObjectUrl, stopMediaStream]);
+    }, [revokePitchDeckPreviewObjectUrl, revokeVideoPreviewObjectUrl, stopMediaStream]);
+
+    const resumeDraft = () => {
+        try {
+            const raw = localStorage.getItem("vibe_draft");
+            if (!raw) return;
+            const draft = JSON.parse(raw);
+
+            // Restore current month fields
+            if (draft.month) setSelectedMonth(draft.month);
+            if (draft.year) setSelectedYear(Number(draft.year));
+            setSummary(draft.summary || "");
+            setSourceUrl(draft.sourceUrl || "");
+            if (Array.isArray(draft.manualDocuments || draft.manual_documents)) {
+                const documents = (draft.manualDocuments || draft.manual_documents) as VibeRaisingManualDocument[];
+                setManualDocuments(documents);
+                setManualDocumentIds(documents.map((document) => document.id));
+            }
+            if (draft.manualSummary || draft.manual_summary) {
+                setManualSummary(draft.manualSummary || draft.manual_summary);
+            }
+            revokePitchDeckPreviewObjectUrl();
+            setPitchDeckUrl(draft.pitchDeckUrl || draft.pitch_deck_url || "");
+            setPitchDeckPreviewUrl(draft.pitchDeckUrl || draft.pitch_deck_url || null);
+            setUploadedPitchDeckUrl(draft.pitchDeckUrl || draft.pitch_deck_url || "");
+            setPitchDeckStoragePath(draft.pitchDeckStoragePath || draft.pitch_deck_storage_path || "");
+            setPitchDeckContentType(draft.pitchDeckContentType || draft.pitch_deck_content_type || "");
+            setPitchDeckFileSizeBytes(draft.pitchDeckFileSizeBytes || draft.pitch_deck_file_size_bytes || null);
+            setPitchDeckOriginalFilename(draft.pitchDeckOriginalFilename || draft.pitch_deck_original_filename || "");
+            setPitchDeckSummary(draft.pitchDeckSummary || draft.pitch_deck_summary || "");
+            setPitchDeckUploadStatus((draft.pitchDeckUrl || draft.pitch_deck_url) ? "ready" : "idle");
+            setPitchDeckUploadError(null);
+            revokeVideoPreviewObjectUrl();
+            setUploadedVideoUrl(draft.videoUrl || "");
+            setVideoPreviewUrl(draft.videoUrl || null);
+            setVideoStoragePath(draft.videoStoragePath || "");
+            setVideoContentType(draft.videoContentType || "");
+            setVideoFileSizeBytes(draft.videoFileSizeBytes ? Number(draft.videoFileSizeBytes) : null);
+            setVideoOriginalFilename(draft.videoOriginalFilename || "");
+            setVideoUploadStatus(draft.videoUrl ? "ready" : "idle");
+            setVideoUploadError(null);
+            setPreviewMediaKind(draft.videoUrl ? "video" : null);
+            setHighlights(draft.highlights || "");
+            setChallenges(draft.challenges || "");
+            setAsks(draft.asks || "");
+            setLearnings(draft.learnings || "");
+            setNext30Days(draft.next30Days || "");
+
+            // Restore current month metrics
+            const metrics: Record<string, string> = {};
+            METRIC_OPTIONS.forEach(opt => {
+                if (draft[opt.key]) metrics[opt.key] = draft[opt.key];
+            });
+            setMetricValues(metrics);
+            const restoredMetricKeys = String(draft.metricKeys || "")
+                .split(",")
+                .map((key: string) => key.trim())
+                .filter((key: string) => METRIC_OPTION_MAP.has(key));
+            const newSelected = new Set<string>([
+                ...restoredMetricKeys,
+                ...Object.keys(metrics).filter(k => metrics[k]),
+            ]);
+            setSelectedMetrics(newSelected);
+
+            // Reconstruct past month cards from flat pastMonth_N_* fields
+            const restoredPastMonths: EditorMonthCard[] = [];
+            for (let i = 0; draft[`pastMonth_${i}_month`]; i++) {
+                const pmMetrics: Record<string, string> = {};
+                METRIC_OPTIONS.forEach(opt => {
+                    const val = draft[`pastMonth_${i}_${opt.key}`];
+                    if (val) pmMetrics[opt.key] = val;
+                });
+                restoredPastMonths.push({
+                    month: draft[`pastMonth_${i}_month`] || "Unknown",
+                    expanded: false,
+                    highlights: draft[`pastMonth_${i}_highlights`] || "",
+                    challenges: draft[`pastMonth_${i}_challenges`] || "",
+                    asks: draft[`pastMonth_${i}_asks`] || "",
+                    learnings: draft[`pastMonth_${i}_learnings`] || "",
+                    next30Days: draft[`pastMonth_${i}_next30Days`] || "",
+                    metrics: pmMetrics,
+                });
+            }
+            if (restoredPastMonths.length > 0) {
+                setPastMonthCards(restoredPastMonths);
+            }
+
+            setHasDraft(false);
+        } catch (e) {
+            console.error("Failed to resume draft", e);
+        }
+    };
+
+    const dismissDraft = () => {
+        localStorage.removeItem("vibe_draft");
+        setHasDraft(false);
+    };
 
     const toggleMetric = (key: string) => {
         const wasSelected = selectedMetrics.has(key);
@@ -3705,6 +3860,11 @@ export default function CreateUpdate() {
                         name: user.fullName || "Founder",
                         linkedinUrl: "",
                     }];
+        const reviewManualDocuments = Array.isArray(reviewData?.manualDocuments || reviewData?.manual_documents)
+            ? (reviewData.manualDocuments || reviewData.manual_documents) as VibeRaisingManualDocument[]
+            : manualDocuments;
+        const reviewManualDocumentIds = reviewManualDocuments.map((document) => document.id);
+        const reviewManualSummary = String(reviewData?.manualSummary || reviewData?.manual_summary || manualSummary || "").trim();
         const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
         const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
@@ -4263,6 +4423,8 @@ export default function CreateUpdate() {
                                         <input type="hidden" name="pitchDeckFileSizeBytes" value={reviewPitchDeckFileSizeBytes ?? ""} />
                                         <input type="hidden" name="pitchDeckOriginalFilename" value={reviewPitchDeckOriginalFilename} />
                                         <input type="hidden" name="pitchDeckSummary" value={reviewPitchDeckSummary} />
+                                        <input type="hidden" name="manualDocumentIds" value={reviewManualDocumentIds.join(",")} />
+                                        <input type="hidden" name="manualSummary" value={reviewManualSummary} />
                                         <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
                                         <input type="hidden" name="videoStoragePath" value={reviewVideoStoragePath} />
                                         <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
@@ -4270,7 +4432,7 @@ export default function CreateUpdate() {
                                         <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
                                         <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                                         {Object.entries(data || {})
-                                            .filter(([key]) => !["summary", "sourceUrl", "pitchDeckUrl", "pitchDeckStoragePath", "pitchDeckContentType", "pitchDeckFileSizeBytes", "pitchDeckOriginalFilename", "pitchDeckSummary", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename", "founderProfiles"].includes(key))
+                                            .filter(([key]) => !["summary", "sourceUrl", "pitchDeckUrl", "pitchDeckStoragePath", "pitchDeckContentType", "pitchDeckFileSizeBytes", "pitchDeckOriginalFilename", "pitchDeckSummary", "manualDocumentIds", "manualSummary", "manualDocuments", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename", "founderProfiles"].includes(key))
                                             .map(([key, value]) => (
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
@@ -4860,6 +5022,8 @@ export default function CreateUpdate() {
                 <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
                 <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
                 <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
+                <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
+                <input type="hidden" name="manualSummary" value={manualSummary} />
                 <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
                 <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
                 <input type="hidden" name="videoContentType" value={videoContentType} />
@@ -4895,6 +5059,17 @@ export default function CreateUpdate() {
                                     </span>
                                 )}
                             </div>
+                            {manualDocuments.length > 0 ? (
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {manualDocuments.map((document) => (
+                                        <span key={document.id} className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-700 ring-1 ring-emerald-100">
+                                            {document.originalFilename}
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : null}
+                        </div>
+                        <div className="flex shrink-0 justify-end">
                             {!isEdit && (
                                 <Link
                                     to="/founder-tools/data-sources"

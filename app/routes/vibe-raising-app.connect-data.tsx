@@ -10,6 +10,8 @@ import {
   CheckIcon,
   CheckCircleIcon,
   ChevronDownIcon,
+  CloudArrowUpIcon,
+  DocumentTextIcon,
   FolderIcon,
   LinkIcon,
   LockClosedIcon,
@@ -29,6 +31,10 @@ import {
   getVibeRaisingInputSourcesStatus,
   getVibeRaisingLinearPreview,
   getVibeRaisingLinearProjects,
+  listVibeRaisingManualDocuments,
+  uploadVibeRaisingManualDocument,
+  deleteVibeRaisingManualDocument,
+  getVibeRaisingManualDocumentDownloadUrl,
   getVibeRaisingSlackChannels,
   getVibeRaisingSlackPreview,
   getVibeRaisingXeroPreview,
@@ -47,6 +53,7 @@ import type {
   VibeRaisingLinearPreview,
   VibeRaisingLinearProject,
   VibeRaisingLinearProjectsResponse,
+  VibeRaisingManualDocument,
   VibeRaisingSlackChannel,
   VibeRaisingSlackChannelsResponse,
   VibeRaisingSlackPreview,
@@ -130,34 +137,55 @@ const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
 ];
 
 type ManualMaterialsState = {
-  sourceUrl: string;
   summary: string;
+  manualDocumentIds: string[];
+  documents: VibeRaisingManualDocument[];
 };
 
+type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+
+function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
+  return key !== "gmail" && key !== "manual_documents";
+}
+
 function readStoredManualMaterials(): ManualMaterialsState {
-  if (typeof window === "undefined") return { sourceUrl: "", summary: "" };
+  if (typeof window === "undefined") return { summary: "", manualDocumentIds: [], documents: [] };
   try {
     const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
-    if (!raw) return { sourceUrl: "", summary: "" };
-    const parsed = JSON.parse(raw) as { sourceUrl?: unknown; summary?: unknown };
+    if (!raw) return { summary: "", manualDocumentIds: [], documents: [] };
+    const parsed = JSON.parse(raw) as {
+      sourceUrl?: unknown;
+      summary?: unknown;
+      manualDocumentIds?: unknown;
+      documents?: unknown;
+    };
+    const documents = Array.isArray(parsed.documents)
+      ? parsed.documents.filter((item): item is VibeRaisingManualDocument => Boolean(item && typeof item === "object" && "id" in item))
+      : [];
+    const manualDocumentIds = Array.isArray(parsed.manualDocumentIds)
+      ? parsed.manualDocumentIds.map((item) => String(item || "").trim()).filter(Boolean)
+      : documents.map((document) => document.id);
+
     return {
-      sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
       summary: typeof parsed.summary === "string" ? parsed.summary : "",
+      manualDocumentIds,
+      documents: documents.filter((document) => manualDocumentIds.includes(document.id)),
     };
   } catch {
-    return { sourceUrl: "", summary: "" };
+    return { summary: "", manualDocumentIds: [], documents: [] };
   }
 }
 
 function writeStoredManualMaterials(materials: ManualMaterialsState) {
   if (typeof window === "undefined") return;
-  const sourceUrl = materials.sourceUrl.trim();
   const summary = materials.summary.trim();
-  if (!sourceUrl && !summary) {
+  const manualDocumentIds = Array.from(new Set(materials.manualDocumentIds.map((item) => item.trim()).filter(Boolean)));
+  const documents = materials.documents.filter((document) => manualDocumentIds.includes(document.id));
+  if (manualDocumentIds.length === 0 && !summary) {
     window.localStorage.removeItem(MANUAL_MATERIALS_STORAGE_KEY);
     return;
   }
-  window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ sourceUrl, summary }));
+  window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ summary, manualDocumentIds, documents }));
 }
 
 const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; connectedUse: string }> = {
@@ -192,6 +220,10 @@ const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; conn
   linear: {
     description: "Pull project updates, active workstreams, and key tasks from Linear.",
     connectedUse: "Projects, tasks, updates",
+  },
+  manual_documents: {
+    description: "Use uploaded founder documents as deterministic context.",
+    connectedUse: "Documents, summary",
   },
 };
 
@@ -1482,7 +1514,7 @@ function ManualMaterialsCard({
   summary: string;
   onToggle: () => void;
 }) {
-  const cardCaption = "Add a source link or a short written summary for context outside your connected tools.";
+  const cardCaption = "Upload private documents or add a short written summary for context outside your connected tools.";
 
   return (
     <button
@@ -1501,7 +1533,7 @@ function ManualMaterialsCard({
         className="pointer-events-none flex items-start gap-3 pr-20"
       >
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-          <LinkIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+          <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
         </div>
         <h3
           className={clsx(
@@ -1529,7 +1561,7 @@ function ManualMaterialsCard({
         </p>
 
         <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-          {["Link", "Summary"].map((item) => (
+          {["Documents", "Summary"].map((item) => (
             <span
               key={item}
               className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
@@ -1722,7 +1754,12 @@ export default function ConnectData() {
   const [savingLinearProjects, setSavingLinearProjects] = useState(false);
   const [selectedLinearProjectIds, setSelectedLinearProjectIds] = useState<Set<string>>(new Set());
   const [manualMaterials, setManualMaterials] = useState<ManualMaterialsState>(() => readStoredManualMaterials());
+  const [manualDocuments, setManualDocuments] = useState<VibeRaisingManualDocument[]>(() => readStoredManualMaterials().documents);
+  const [loadingManualDocuments, setLoadingManualDocuments] = useState(false);
+  const [manualDocumentUploadStatus, setManualDocumentUploadStatus] = useState<"idle" | "creating_session" | "uploading" | "finalizing">("idle");
+  const [manualDocumentError, setManualDocumentError] = useState<string | null>(null);
   const [manualMaterialsExpanded, setManualMaterialsExpanded] = useState(false);
+  const manualDocumentInputRef = useRef<HTMLInputElement | null>(null);
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
@@ -1744,13 +1781,14 @@ export default function ConnectData() {
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
   const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
-  const hasManualMaterials = Boolean(manualMaterials.sourceUrl.trim() || manualMaterials.summary.trim());
+  const selectedManualDocumentIds = useMemo(() => new Set(manualMaterials.manualDocumentIds), [manualMaterials.manualDocumentIds]);
+  const hasManualMaterials = Boolean(manualMaterials.manualDocumentIds.length > 0 || manualMaterials.summary.trim());
   const manualMaterialsSummary = hasManualMaterials
     ? [
-      manualMaterials.sourceUrl.trim() ? "URL added" : null,
+      manualMaterials.manualDocumentIds.length > 0 ? `${manualMaterials.manualDocumentIds.length} document${manualMaterials.manualDocumentIds.length === 1 ? "" : "s"} selected` : null,
       manualMaterials.summary.trim() ? "summary added" : null,
     ].filter((value): value is string => Boolean(value)).join(" and ")
-    : "Add a source link or a short written summary when you want extra context in the draft.";
+    : "Upload private documents or add a short written summary when you want extra context in the draft.";
   const gmailSource = sourceByKey.get("gmail");
   const shouldShowGmailPreview = gmailSource?.status === "connected" || gmailSource?.status === "syncing" || gmailSource?.status === "error";
   const bankFeedSource = sourceByKey.get("bank_feed");
@@ -1792,6 +1830,39 @@ export default function ConnectData() {
       setManualMaterialsExpanded(true);
     }
   }, [hasManualMaterials]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoadingManualDocuments(true);
+    setManualDocumentError(null);
+    listVibeRaisingManualDocuments(backendBaseUrl)
+      .then((documents) => {
+        if (cancelled) return;
+        setManualDocuments(documents);
+        setManualMaterials((previous) => {
+          const selectedIds = new Set(previous.manualDocumentIds);
+          const selectedDocuments = documents.filter((document) => selectedIds.has(document.id));
+          const nextMaterials = {
+            ...previous,
+            manualDocumentIds: selectedDocuments.map((document) => document.id),
+            documents: selectedDocuments,
+          };
+          writeStoredManualMaterials(nextMaterials);
+          return nextMaterials;
+        });
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          setManualDocumentError(error instanceof Error ? error.message : "We couldn't load uploaded documents.");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingManualDocuments(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [backendBaseUrl]);
 
   useEffect(() => {
     if (!shouldShowGmailPreview) {
@@ -2085,6 +2156,7 @@ export default function ConnectData() {
         return;
       }
 
+      if (!isOAuthSourceKey(source.key)) return;
       window.location.assign(connectVibeRaisingInputSource(backendBaseUrl, source.key, currentReturnPath));
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : `We couldn't connect ${source.label}.`);
@@ -2379,8 +2451,12 @@ export default function ConnectData() {
     }
     writeStoredManualMaterials(manualMaterials);
     const target = new URL(next, "http://mlai.local");
-    if (includeInputs && selectedSources.size > 0) {
-      target.searchParams.set("inputs", Array.from(selectedSources).join(","));
+    const draftSources = new Set(selectedSources);
+    if (includeInputs && hasManualMaterials) {
+      draftSources.add("manual_documents");
+    }
+    if (includeInputs && draftSources.size > 0) {
+      target.searchParams.set("inputs", Array.from(draftSources).join(","));
     } else {
       target.searchParams.delete("inputs");
     }
@@ -2388,7 +2464,7 @@ export default function ConnectData() {
   };
 
   const handleManualMaterialsContinue = () => {
-    if (selectedSourceList.length === 0) {
+    if (selectedSourceList.length === 0 && !hasManualMaterials) {
       setShowNoSourcesModal(true);
       return;
     }
@@ -2408,8 +2484,72 @@ export default function ConnectData() {
     });
   };
 
+  const updateManualDocumentSelection = (document: VibeRaisingManualDocument, selected: boolean) => {
+    setManualMaterials((previous) => {
+      const idSet = new Set(previous.manualDocumentIds);
+      if (selected) {
+        idSet.add(document.id);
+      } else {
+        idSet.delete(document.id);
+      }
+      const documentsById = new Map([...manualDocuments, ...previous.documents, document].map((item) => [item.id, item]));
+      const nextMaterials = {
+        ...previous,
+        manualDocumentIds: Array.from(idSet),
+        documents: Array.from(idSet)
+          .map((documentId) => documentsById.get(documentId))
+          .filter((item): item is VibeRaisingManualDocument => Boolean(item)),
+      };
+      writeStoredManualMaterials(nextMaterials);
+      return nextMaterials;
+    });
+  };
+
   const clearManualMaterials = () => {
-    updateManualMaterials({ sourceUrl: "", summary: "" });
+    updateManualMaterials({ summary: "", manualDocumentIds: [], documents: [] });
+  };
+
+  const handleManualDocumentFile = async (file: File | null | undefined) => {
+    if (!file) return;
+    setManualDocumentError(null);
+    try {
+      const document = await uploadVibeRaisingManualDocument(
+        backendBaseUrl,
+        file,
+        undefined,
+        setManualDocumentUploadStatus,
+      );
+      setManualDocuments((previous) => [document, ...previous.filter((item) => item.id !== document.id)]);
+      updateManualDocumentSelection(document, true);
+    } catch (error) {
+      setManualDocumentError(error instanceof Error ? error.message : "We couldn't upload that document.");
+    } finally {
+      setManualDocumentUploadStatus("idle");
+      if (manualDocumentInputRef.current) {
+        manualDocumentInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleDeleteManualDocument = async (document: VibeRaisingManualDocument) => {
+    setManualDocumentError(null);
+    try {
+      await deleteVibeRaisingManualDocument(backendBaseUrl, document.id);
+      setManualDocuments((previous) => previous.filter((item) => item.id !== document.id));
+      updateManualDocumentSelection(document, false);
+    } catch (error) {
+      setManualDocumentError(error instanceof Error ? error.message : "We couldn't delete that document.");
+    }
+  };
+
+  const handleOpenManualDocument = async (document: VibeRaisingManualDocument) => {
+    setManualDocumentError(null);
+    try {
+      const response = await getVibeRaisingManualDocumentDownloadUrl(backendBaseUrl, document.id);
+      window.open(response.downloadUrl, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      setManualDocumentError(error instanceof Error ? error.message : "We couldn't open that document.");
+    }
   };
 
   const handleStepperClick = (step: MonthlyUpdateStepKey) => {
@@ -2431,7 +2571,7 @@ export default function ConnectData() {
   const stickyStatusDetail = selectedSourceList.length > 0
     ? selectedSourceList.map((source) => source.label).join(", ")
     : hasManualMaterials
-      ? "Your URL or summary will be included in the draft."
+      ? "Your uploaded documents or summary will be included in the draft."
       : "Continue with manual input only, or connect a source first.";
   const stickyStatusIcon = selectedSourceList.length > 0 ? (
     <div className="flex -space-x-2">
@@ -2587,7 +2727,7 @@ export default function ConnectData() {
             >
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-bold text-slate-500">
-                  Add a source URL or a short written summary for extra context.
+                  Upload documents or add a short written summary for extra context.
                 </p>
                 {hasManualMaterials ? (
                   <button
@@ -2600,30 +2740,104 @@ export default function ConnectData() {
                 ) : null}
               </div>
 
-              <label className="block">
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+                <div>
                 <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
-                  <LinkIcon className="h-4 w-4 text-gray-400" />
-                  Source URL
+                    <DocumentTextIcon className="h-4 w-4 text-gray-400" />
+                    Documents
                 </span>
-                <input
-                  type="url"
-                  value={manualMaterials.sourceUrl}
-                  onChange={(event) => updateManualMaterials({ sourceUrl: event.target.value })}
-                  placeholder="https://docs.google.com/document/..."
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
-                />
-              </label>
+                  <input
+                    ref={manualDocumentInputRef}
+                    type="file"
+                    className="sr-only"
+                    accept=".pdf,.docx,.pptx,.xlsx,.xlsm,.csv,.txt,.md,.html,.htm,.rtf,.odt"
+                    onChange={(event) => void handleManualDocumentFile(event.target.files?.[0])}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => manualDocumentInputRef.current?.click()}
+                    onDragOver={(event) => {
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = "copy";
+                    }}
+                    onDrop={(event) => {
+                      event.preventDefault();
+                      void handleManualDocumentFile(event.dataTransfer.files?.[0]);
+                    }}
+                    disabled={manualDocumentUploadStatus !== "idle"}
+                    className="flex min-h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] disabled:cursor-wait disabled:opacity-70"
+                  >
+                    <CloudArrowUpIcon className="h-8 w-8 text-[var(--vr-color-primary)]" />
+                    <span className="mt-3 text-sm font-extrabold text-gray-900">
+                      {manualDocumentUploadStatus === "idle" ? "Upload a document" : "Uploading document..."}
+                    </span>
+                    <span className="mt-1 text-xs font-medium text-slate-500">
+                      PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, RTF, or ODT up to 25 MB.
+                    </span>
+                  </button>
+                  {manualDocumentError ? (
+                    <p className="mt-2 text-sm font-semibold text-red-600">{manualDocumentError}</p>
+                  ) : null}
+                  <div className="mt-3 space-y-2">
+                    {loadingManualDocuments ? (
+                      <p className="text-sm font-semibold text-slate-500">Loading uploaded documents...</p>
+                    ) : manualDocuments.length > 0 ? (
+                      manualDocuments.map((document) => {
+                        const selected = selectedManualDocumentIds.has(document.id);
+                        return (
+                          <div
+                            key={document.id}
+                            className={clsx(
+                              "flex items-center justify-between gap-3 rounded-xl border px-3 py-2",
+                              selected ? "border-[rgba(0,255,215,0.34)] bg-[rgba(0,255,215,0.08)]" : "border-gray-200 bg-white",
+                            )}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => updateManualDocumentSelection(document, !selected)}
+                              className="min-w-0 flex-1 text-left"
+                            >
+                              <p className="truncate text-sm font-extrabold text-gray-900">{document.originalFilename}</p>
+                              <p className="mt-0.5 text-xs font-medium text-slate-500">
+                                {document.extractionStatus === "processed" ? "Ready for AI context" : document.extractionStatus}
+                              </p>
+                            </button>
+                            <div className="flex shrink-0 items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => void handleOpenManualDocument(document)}
+                                className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
+                              >
+                                Open
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void handleDeleteManualDocument(document)}
+                                className="rounded-lg border border-red-100 px-2 py-1 text-xs font-bold text-red-600 transition hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <p className="text-sm font-semibold text-slate-500">No uploaded documents yet.</p>
+                    )}
+                  </div>
+                </div>
 
-              <label className="block">
-                <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
-                <textarea
-                  value={manualMaterials.summary}
-                  onChange={(event) => updateManualMaterials({ summary: event.target.value })}
-                  rows={4}
-                  placeholder="Topline context investors should read before the detailed sections..."
-                  className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
-                />
-              </label>
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
+                  <textarea
+                    value={manualMaterials.summary}
+                    onChange={(event) => updateManualMaterials({ summary: event.target.value })}
+                    rows={4}
+                    placeholder="Topline context investors should read before the detailed sections..."
+                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+                  />
+                </label>
+              </div>
             </div>
           ) : null}
         </div>

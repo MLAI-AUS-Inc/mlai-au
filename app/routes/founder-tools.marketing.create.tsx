@@ -1,5 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation } from "react-router";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
+import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -7,6 +8,8 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
   CodeBracketIcon,
+  InformationCircleIcon,
+  LightBulbIcon,
   MagnifyingGlassIcon,
   PlayIcon,
   RocketLaunchIcon,
@@ -14,14 +17,21 @@ import {
 import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
-import { CustomTopicDecisionCard, TopicDecisionCard } from "~/components/TopicDecisionCard";
+import {
+  CustomTopicDecisionCard,
+  TopicDecisionCard,
+  TopicMetricExplainerStrip,
+  topicOpportunityBadge,
+} from "~/components/TopicDecisionCard";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
   connectVibeMarketingGithub,
+  getVibeMarketingGithubRepos,
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
@@ -33,7 +43,7 @@ import {
   startVibeMarketingDiscovery,
   startVibeMarketingScan,
 } from "~/lib/vibe-marketing";
-import type { VibeMarketingBootstrap } from "~/types/vibe-marketing";
+import type { VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
@@ -97,21 +107,21 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   },
   baseline: {
     why: "The baseline records current site health, search visibility, and traffic before content changes.",
-    next: "Run it or skip it for now, then connect the repository used for previews and publishing.",
+    next: "Run it or skip it for now, then connect GitHub only if you want direct website publishing.",
   },
   github: {
-    why: "Repository access lets us find the article system and prepare reviewable preview branches or PRs.",
-    next: "Choose the repo, review the permissions on GitHub, then return here to scan the article setup.",
-    safety: "Generated changes stay reviewable before publishing.",
+    why: "GitHub is optional. It lets us publish generated articles through your website repository.",
+    next: "Connect a repo for direct publishing, or continue with content-only article copy and assets.",
+    safety: "Generated changes stay reviewable before publishing when GitHub is connected.",
   },
   scan: {
-    why: "We inspect the repo so generated articles land in the right files and preview safely.",
+    why: "Repository scanning is only needed for direct website publishing.",
     next: "The scan records framework, routes, build commands, article components, and publish targets.",
     safety: "The scan does not publish changes.",
   },
   articleSystem: {
-    why: "The article system contract tells Content Factory how this website renders articles.",
-    next: "Once the contract is ready, topic research and generation can use the correct route and components.",
+    why: "The article system contract tells Content Factory how this website renders articles for direct publishing.",
+    next: "Content-only generation can continue without this setup; direct publishing uses it to write the correct files.",
     safety: "Preparation stays in setup until you explicitly generate or publish.",
   },
   research: {
@@ -132,7 +142,7 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   },
   reviewPublish: {
     why: "The package is the handoff point between reviewed content and an explicit publish action.",
-    next: "Publish to the website when ready, or inspect PR and preview evidence first.",
+    next: "If GitHub is connected, publish through the repo. Otherwise, copy or download the generated content package.",
     safety: "Package completion does not publish automatically.",
   },
   dailyAutomation: {
@@ -173,6 +183,27 @@ function createStepForWorkflowStep(stepId: string | null | undefined): VibeMarke
   return stepId ? CREATE_STEP_BY_WORKFLOW_STEP_ID[stepId] ?? null : null;
 }
 
+function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
+
+function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
+  const effective = bootstrap.settings.articleDeliveryModeEffective;
+  if (effective === "review_draft" || effective === "publish_code" || effective === "content_only") {
+    return effective;
+  }
+  const configured = bootstrap.settings.articleDeliveryMode;
+  if (configured === "review_draft" || configured === "publish_code") {
+    return configured;
+  }
+  if (configured === "content_only" && !isGithubPublishingReady(bootstrap)) {
+    return "content_only";
+  }
+  return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
+}
+
 function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
   const requiredStep =
     createStepForWorkflowStep(bootstrap.workflowProgress?.currentStepId) ??
@@ -180,8 +211,14 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
   const requested = normalizeStep(value, requiredStep);
   const requestedWorkflowStepId = WORKFLOW_STEP_ID_BY_CREATE_STEP[requested];
   const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
+  const contentOnlyAllowedStep = ["research", "chooseArticle"].includes(requested);
+  const repoArticleAllowedStep = ["github", "scan", "articleSystem"].includes(requested);
 
-  if (requestedWorkflowStep?.status === "locked") {
+  if (
+    requestedWorkflowStep?.status === "locked" &&
+    !repoArticleAllowedStep &&
+    !(contentOnlyAllowedStep && bootstrap.checks.baseline?.passed && !isGithubPublishingReady(bootstrap))
+  ) {
     return requiredStep;
   }
 
@@ -190,12 +227,30 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  await requireVibeRaisingFounder(env, request);
   const bootstrap = await getVibeMarketingBootstrap(env, request);
-  const url = new URL(request.url);
-  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
-  const requestedStep = normalizeStep(url.searchParams.get("step"), activeStep);
-  return { bootstrap, activeStep, requestedStep, shouldRefreshGoogleBaseline: url.searchParams.get("googleBaseline") === "refresh" };
+  let githubRepos: VibeMarketingGithubReposResponse = {
+    status: "unavailable",
+    repos: [],
+    repositories: [],
+  };
+  try {
+    githubRepos = await getVibeMarketingGithubRepos(env, request);
+  } catch (error) {
+    githubRepos = {
+      status: "unavailable",
+      repos: [],
+      repositories: [],
+      error: error instanceof Error ? error.message : "Unable to load repositories.",
+    };
+  }
+  return { bootstrap, githubRepos };
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (shouldSkipVibeMarketingCreateRevalidation(args)) {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -304,6 +359,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-scan") {
       const result = await startVibeMarketingScan(env, request, {
         githubRepo: stringFromForm(formData, "githubRepo"),
+        github_repo: stringFromForm(formData, "githubRepo"),
+        articleSurfaceMode: "existing",
+        article_surface_mode: "existing",
+        articleSurfaceUrl: stringFromForm(formData, "articleSurfaceUrl"),
+        article_surface_url: stringFromForm(formData, "articleSurfaceUrl"),
+        autoSetupPreview: true,
+        auto_setup_preview: true,
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=scan");
@@ -351,7 +413,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode"),
+        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
+        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
         sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
@@ -470,12 +533,17 @@ function PanelHeader({
 }
 
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, activeStep, requestedStep, shouldRefreshGoogleBaseline } = useLoaderData<typeof loader>();
+  const { bootstrap, githubRepos } = useLoaderData<typeof loader>();
+  const [searchParams] = useSearchParams();
+  const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
+  const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
+  const shouldRefreshGoogleBaseline = searchParams.get("googleBaseline") === "refresh";
   const actionData = useActionData<typeof action>();
   const latestActionIntent = actionDataIntent(actionData);
   const latestActionError = actionDataError(actionData);
   const actionErrorStep = actionIntentStep(latestActionIntent);
-  const githubConnectError = activeStep === "github" && latestActionIntent === "connect-github" ? latestActionError : null;
+  const isRepoArticleStep = activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem";
+  const githubConnectError = isRepoArticleStep && latestActionIntent === "connect-github" ? latestActionError : null;
   const topActionError =
     latestActionError && latestActionIntent !== "connect-github" && (!actionErrorStep || actionErrorStep === activeStep)
       ? latestActionError
@@ -503,20 +571,38 @@ export default function FounderToolsMarketingCreate() {
       return true;
     });
   }, [bootstrap.hiddenTopicCandidates, bootstrap.topicCandidates]);
-  const chooseArticleStatusLabel = !bootstrap.checks.baseline?.passed
-    ? "Needs baseline"
-    : selectableTopicCandidates.length > 0
-      ? "Ready"
-      : alreadyWrittenCandidates.length > 0
-        ? "Topics written"
-        : "No pending topics";
   const defaultTopicCandidateId = selectableTopicCandidates[0]?.id ?? "__custom__";
   const [selectedTopicCandidateId, setSelectedTopicCandidateId] = useState(defaultTopicCandidateId);
+  const [expandedTopicCandidateId, setExpandedTopicCandidateId] = useState<string | null>(null);
   const selectedTopicCandidate = useMemo(
     () => selectableTopicCandidates.find((candidate) => candidate.id === selectedTopicCandidateId) ?? null,
     [selectableTopicCandidates, selectedTopicCandidateId],
   );
+  const isCustomArticleSelected = selectedTopicCandidateId === "__custom__";
   const selectedTopicLabel = selectedTopicCandidate?.title ?? "Custom article";
+  const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
+  const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
+  const directPublishMode = effectiveDeliveryMode === "publish_code";
+  const reviewDraftMode = effectiveDeliveryMode === "review_draft";
+  const githubRepoOptions = githubRepos.repos ?? githubRepos.repositories ?? [];
+  const selectedGithubRepo =
+    githubRepos.selectedRepo ??
+    githubRepos.selected_repo ??
+    bootstrap.settings.githubRepo ??
+    githubRepoOptions[0]?.fullName ??
+    "";
+  const [repoSelection, setRepoSelection] = useState(selectedGithubRepo);
+  const deliveryModeNote = directPublishMode
+    ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
+    : reviewDraftMode
+      ? "This will generate an article preview for comments before publishing."
+      : "This will generate article copy and images for manual publishing.";
+  const reviewDescription =
+    directPublishMode
+      ? "The run workspace shows generation status, revision controls, preview links, PR links, and publish approval."
+      : reviewDraftMode
+        ? "The run workspace shows the generated article preview, component comments, and AI revision controls before publishing."
+        : "The run workspace shows generated article copy, image assets, and revision controls for manual publishing.";
 
   useEffect(() => {
     const selectionStillValid =
@@ -526,6 +612,10 @@ export default function FounderToolsMarketingCreate() {
       setSelectedTopicCandidateId(defaultTopicCandidateId);
     }
   }, [defaultTopicCandidateId, selectableTopicCandidates, selectedTopicCandidateId]);
+
+  useEffect(() => {
+    setRepoSelection((current) => current || selectedGithubRepo);
+  }, [selectedGithubRepo]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -561,63 +651,111 @@ export default function FounderToolsMarketingCreate() {
           />
         ) : null}
 
-          {activeStep === "github" ? (
+          {activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem" ? (
             <>
               <PanelHeader
-                title="Connect GitHub"
-                description="Vibe Marketing needs repository access to detect your article system and open previewable article PRs."
-                passed={Boolean(bootstrap.checks.github?.passed)}
-                explainer={STEP_EXPLAINERS.github}
+                title="Connect repo & article system"
+                description="Choose the GitHub repository, tell us where articles live, then scan before any setup or upgrade patch is approved."
+                passed={Boolean(bootstrap.checks.scaffold?.passed)}
+                explainer={STEP_EXPLAINERS.articleSystem}
               />
-              <Form method="POST" className="space-y-5">
-                <input type="hidden" name="intent" value="connect-github" />
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-gray-700">Repository</span>
-                  <input
-                    name="githubRepo"
-                    defaultValue={bootstrap.settings.githubRepo ?? ""}
-                    placeholder="owner/repo"
-                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                  />
-                </label>
-                <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
-                  Connect GitHub
-                </button>
-                {githubConnectError ? (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                    {githubConnectError}
-                  </div>
-                ) : null}
-              </Form>
-            </>
-          ) : null}
 
-          {activeStep === "scan" || activeStep === "articleSystem" ? (
-            <>
-              <PanelHeader
-                title={activeStep === "scan" ? "Scan repository" : "Prepare article system"}
-                description="The scan detects your framework, build commands, article directories, registries, components, and safe publish targets."
-                passed={activeStep === "scan" ? Boolean(bootstrap.checks.scan?.passed) : Boolean(bootstrap.checks.scaffold?.passed)}
-                explainer={STEP_EXPLAINERS[activeStep]}
-              />
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+                <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                  <p className="text-sm font-black text-gray-950">GitHub connection</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-600">
+                    {githubReadyForPublishing ? `Connected to ${bootstrap.settings.githubRepo}.` : "Connect GitHub so Content Factory can scan and publish through the website repo."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className={clsx("rounded-full px-3 py-1 text-xs font-black uppercase", githubReadyForPublishing ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
+                      {githubReadyForPublishing ? "Connected" : "Connection needed"}
+                    </span>
+                    {githubRepos.error ? <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">Repo list unavailable</span> : null}
+                  </div>
+                </div>
+
+                <Form method="POST" className="rounded-xl border border-gray-200 bg-white p-4">
+                  <input type="hidden" name="intent" value="connect-github" />
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-bold text-gray-700">Repository</span>
+                    {githubRepoOptions.length ? (
+                      <select
+                        name="githubRepo"
+                        value={repoSelection}
+                        onChange={(event) => setRepoSelection(event.target.value)}
+                        className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                      >
+                        {githubRepoOptions.map((repo) => (
+                          <option key={repo.fullName} value={repo.fullName}>
+                            {repo.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        name="githubRepo"
+                        value={repoSelection}
+                        onChange={(event) => setRepoSelection(event.target.value)}
+                        placeholder="owner/repo"
+                        className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                      />
+                    )}
+                  </label>
+                  <button type="submit" disabled={isSubmitting || !repoSelection} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
+                    {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
+                    {githubReadyForPublishing ? "Reconnect GitHub" : "Connect GitHub"}
+                  </button>
+                  {githubConnectError ? (
+                    <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                      {githubConnectError}
+                    </div>
+                  ) : null}
+                </Form>
+              </div>
+
               {latestScan ? (
-                <div className="mb-5 rounded-xl border border-gray-100 bg-gray-50 p-4">
-                  <p className="text-sm font-black text-gray-950">Latest scan: {latestScan.status.replace(/_/g, " ")}</p>
-                  <p className="mt-1 text-xs font-semibold text-gray-500">{latestScan.currentStep ?? latestScan.runId}</p>
-                  <Link to={`/founder-tools/marketing/runs/${latestScan.runId}`} className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">
-                    View scan run
+                <div className="mt-5">
+                  <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                    <p className="text-sm font-black text-gray-950">Latest scan: {latestScan.status.replace(/_/g, " ")}</p>
+                    <p className="mt-1 text-xs font-semibold text-gray-500">{latestScan.currentStep ?? latestScan.runId}</p>
+                    <Link to={`/founder-tools/marketing/runs/${latestScan.runId}`} className="mt-3 inline-flex text-sm font-bold text-violet-700 hover:text-violet-900">
+                      View scan run
+                    </Link>
+                  </div>
+                </div>
+              ) : null}
+
+              <Form method="POST" className="mt-5 space-y-5 rounded-xl border border-violet-100 bg-violet-50/30 p-4">
+                <input type="hidden" name="intent" value="start-scan" />
+                <input type="hidden" name="githubRepo" value={repoSelection} />
+                <label className="block">
+                  <span className="mb-2 block text-sm font-bold text-gray-700">Where should articles or blog posts live on this website?</span>
+                  <input
+                    name="articleSurfaceUrl"
+                    required
+                    placeholder="https://www.mlai.au/articles or /articles"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                  />
+                  <span className="mt-2 block text-xs font-semibold text-gray-500">
+                    We verify this route against the repo before drafting the setup preview.
+                  </span>
+                </label>
+                <button type="submit" disabled={isSubmitting || !repoSelection} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                  Scan and draft preview
+                </button>
+              </Form>
+              {!githubReadyForPublishing ? (
+                <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <p className="text-sm font-semibold leading-6 text-gray-700">
+                    Skip repository setup for now and generate article copy and images for manual publishing.
+                  </p>
+                  <Link to="/founder-tools/marketing/create?step=chooseArticle" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
+                    Continue content-only
+                    <ArrowRightIcon className="h-4 w-4" />
                   </Link>
                 </div>
               ) : null}
-              <Form method="POST">
-                <input type="hidden" name="intent" value="start-scan" />
-                <input type="hidden" name="githubRepo" value={bootstrap.settings.githubRepo ?? ""} />
-                <button type="submit" disabled={isSubmitting || !bootstrap.settings.githubRepo} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                  Run repository scan
-                </button>
-              </Form>
             </>
           ) : null}
 
@@ -652,13 +790,26 @@ export default function FounderToolsMarketingCreate() {
 
           {activeStep === "chooseArticle" ? (
             <>
-              <PanelHeader
-                title="Choose article"
-                description="Pick a discovered topic or enter a known keyword and title angle."
-                passed={Boolean(latestArticle || selectableTopicCandidates.length > 0)}
-                statusLabel={chooseArticleStatusLabel}
-                explainer={STEP_EXPLAINERS.chooseArticle}
-              />
+              <div className="mb-6 border-b border-gray-100 pb-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div>
+                    <h1 className="inline-flex items-center gap-2 text-2xl font-black tracking-tight text-gray-950">
+                      Discover SEO article opportunities
+                      <InformationCircleIcon className="h-4 w-4 text-gray-400" />
+                    </h1>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-gray-600">
+                      We found topics your audience is already searching for. Pick one and we will{" "}
+                      {directPublishMode
+                        ? "prepare it for your website repository."
+                        : "generate article copy and images for manual publishing."}
+                    </p>
+                  </div>
+                  <div className="rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold leading-5 text-violet-700 ring-1 ring-violet-100 lg:max-w-sm">
+                    <LightBulbIcon className="mr-1 inline h-4 w-4 align-[-2px]" />
+                    Tip: Focus on topics with high Opportunity Score, growing trend, and lower difficulty.
+                  </div>
+                </div>
+              </div>
               {!bootstrap.checks.baseline?.passed ? (
                 <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                   Run or skip the website baseline before generating an article.
@@ -670,6 +821,9 @@ export default function FounderToolsMarketingCreate() {
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
+                {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
+                {!isCustomArticleSelected ? <input type="hidden" name="deliveryModeExplicit" value="false" /> : null}
+                <TopicMetricExplainerStrip />
                 <div className="grid gap-3">
                   {selectableTopicCandidates.length === 0 ? (
                     <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
@@ -678,12 +832,17 @@ export default function FounderToolsMarketingCreate() {
                         : "No pending discovered topics are available yet. Run topic research or enter a custom article."}
                     </div>
                   ) : null}
-                  {selectableTopicCandidates.map((candidate) => (
+                  {selectableTopicCandidates.map((candidate, index) => (
                     <TopicDecisionCard
                       key={candidate.id}
                       candidate={candidate}
+                      rank={index + 1}
+                      expanded={expandedTopicCandidateId === candidate.id}
                       checked={selectedTopicCandidateId === candidate.id}
                       onChange={() => setSelectedTopicCandidateId(candidate.id)}
+                      onToggleDetails={() =>
+                        setExpandedTopicCandidateId((current) => (current === candidate.id ? null : candidate.id))
+                      }
                     />
                   ))}
                   <CustomTopicDecisionCard
@@ -704,52 +863,46 @@ export default function FounderToolsMarketingCreate() {
                     </div>
                   </details>
                 ) : null}
-                {bootstrap.writtenTopics.length > 0 ? (
-                  <div className="rounded-xl border border-gray-200 p-4">
-                    <div className="text-sm font-black text-gray-900">Recent written topics</div>
-                    <div className="mt-3 grid gap-2 md:grid-cols-2">
-                      {bootstrap.writtenTopics.slice(0, 6).map((topic) => (
-                        <div key={topic.id ?? `${topic.slug}:${topic.keyword}`} className="rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                          <div className="font-bold text-gray-900">{topic.title}</div>
-                          <div className="mt-1 text-xs font-semibold text-gray-500">{topic.keyword}</div>
-                          {topic.articleUrl || topic.prUrl ? (
-                            <a href={topic.articleUrl || topic.prUrl || "#"} className="mt-2 inline-flex text-xs font-black text-violet-700 underline">
-                              Open evidence
-                            </a>
-                          ) : null}
-                        </div>
-                      ))}
+                {isCustomArticleSelected ? (
+                  <>
+                    <input type="hidden" name="deliveryModeExplicit" value="true" />
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
+                        <input name="targetKeyword" placeholder="Optional keyword override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                      </label>
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Custom title</span>
+                        <input name="customTitle" placeholder="Optional article title override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                      </label>
                     </div>
-                  </div>
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <label className="block">
+                        <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
+                        <select name="deliveryMode" defaultValue={effectiveDeliveryMode} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
+                          <option value="review_draft">Review draft first</option>
+                          <option value="publish_code">Publish code</option>
+                          <option value="content_only">Content only</option>
+                        </select>
+                      </label>
+                    </div>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-bold text-gray-700">Article context</span>
+                      <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
+                    </label>
+                  </>
                 ) : null}
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Custom keyword</span>
-                    <input name="targetKeyword" placeholder="Optional keyword override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                  </label>
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Custom title</span>
-                    <input name="customTitle" placeholder="Optional article title override" className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                  </label>
-                </div>
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-bold text-gray-700">Delivery mode</span>
-                    <select name="deliveryMode" defaultValue={bootstrap.settings.articleDeliveryMode ?? "publish_code"} className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-bold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
-                      <option value="publish_code">Publish code</option>
-                      <option value="content_only">Content only</option>
-                    </select>
-                  </label>
-                </div>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-bold text-gray-700">Article context</span>
-                  <textarea name="articleContext" rows={4} placeholder="Add any angle, product detail, proof point, or audience note." className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-                </label>
-                <div className="sticky bottom-4 z-10 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-lg backdrop-blur">
+                <div className="sticky bottom-4 z-10 rounded-xl border border-violet-100 bg-violet-50/95 p-3 shadow-lg backdrop-blur">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                       <p className="text-[11px] font-black uppercase tracking-wide text-gray-400">Selected topic</p>
-                      <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2">
+                        <p className="max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedTopicLabel}</p>
+                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
+                          {isCustomArticleSelected ? "Custom topic" : topicOpportunityBadge(selectedTopicCandidate)}
+                        </span>
+                      </div>
+                      <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
@@ -764,8 +917,18 @@ export default function FounderToolsMarketingCreate() {
           {["writeCheck", "editArticle", "reviewPublish"].includes(activeStep) ? (
             <>
               <PanelHeader
-                title={activeStep === "editArticle" ? "Edit article" : activeStep === "reviewPublish" ? "Review publish" : "Write and check"}
-                description="The run workspace shows generation status, content package evidence, revision controls, preview links, PR links, and publish approval."
+                title={
+                  activeStep === "editArticle"
+                    ? "Edit article"
+                    : activeStep === "reviewPublish"
+                      ? effectiveDeliveryMode === "publish_code"
+                        ? "Review publish"
+                        : effectiveDeliveryMode === "review_draft"
+                          ? "Review draft"
+                        : "Review content package"
+                      : "Write and check"
+                }
+                description={reviewDescription}
                 passed={
                   activeStep === "reviewPublish"
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
