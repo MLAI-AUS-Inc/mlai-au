@@ -1,4 +1,5 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
 import {
@@ -26,6 +27,7 @@ import {
   deleteVibeMarketingComponentComment,
   getVibeMarketingBootstrap,
   getVibeMarketingRun,
+  replayVibeMarketingDaily,
   submitVibeMarketingComponentComments,
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
@@ -198,7 +200,16 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "cancel-article") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true });
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
-    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr"].includes(intent)) {
+    } else if (intent === "enable-daily-automation") {
+      await controlVibeMarketingRun(env, request, runId, intent, {
+        defaultTimezone: stringFromForm(formData, "defaultTimezone"),
+      });
+    } else if (intent === "run-daily-discovery-now") {
+      const result = await replayVibeMarketingDaily(env, request, {});
+      if (result.runId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      }
+    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr"].includes(intent)) {
       const result = await controlVibeMarketingRun(env, request, runId, intent);
       if (result.runId && result.runId !== runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
@@ -1306,6 +1317,243 @@ function ArticleGenerationReviewDetail({
   );
 }
 
+function PublishAndAutomateDetail({
+  run,
+  bootstrap,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  bootstrap: VibeMarketingBootstrap;
+  isSubmitting: boolean;
+}) {
+  const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
+  const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
+  const prUrl = publishPrUrlForRun(run);
+  const previewUrl = publishPreviewUrlForRun(run);
+  const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
+  const publishPending = Boolean(
+    publishStep?.status === "running" ||
+      run.result?.["publish_handoff_pending"] === true ||
+      (publishChildRunId && !prUrl && !previewUrl),
+  );
+  const prNumber =
+    stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
+    prNumberFromPullUrl(prUrl);
+  const checksStatus = stringResultValue(run, "checks_status", "checksStatus");
+  const mergeStatus = stringResultValue(run, "merge_status", "mergeStatus");
+  const isMerged = mergeStatus === "merged";
+  const dailyCheck = bootstrap.checks.dailyAutomation as
+    | (VibeMarketingBootstrap["checks"][string] & { ready?: boolean; enabled?: boolean })
+    | undefined;
+  const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
+  const dailyReady = Boolean(dailyEnabled || dailyCheck?.ready || dailyCheck?.passed);
+  const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+
+  return (
+    <div className="space-y-5">
+      <ArticleRunStageProgress run={run} variant="embedded" />
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish & automate</p>
+            <h2 className="mt-1 text-xl font-black text-gray-950">Finish publishing this article</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
+              Create the publish PR, merge it after checks pass, then turn on Slack research prompts for the next article.
+            </p>
+          </div>
+          <WorkflowStatusPill status={automationStep?.status === "complete" ? "complete" : publishStep?.status ?? "ready"} />
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <PublishFlowCard
+            title="Publish PR"
+            status={prUrl ? "complete" : publishPending ? "running" : "ready"}
+            eyebrow={prUrl ? "PR ready" : publishPending ? "Preparing PR" : "Ready"}
+          >
+            {prUrl ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {prNumber ? `Pull request #${prNumber} is ready for review.` : "The publish pull request is ready for review."}
+                </p>
+                <a
+                  href={prUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
+                >
+                  Open PR
+                </a>
+              </div>
+            ) : publishPending ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The publish handoff has started. This page will update when the PR is available.
+                </p>
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-100 px-4 py-2.5 text-sm font-black text-gray-500"
+                >
+                  <ArrowPathIcon className="h-4 w-4 animate-spin" />
+                  Preparing PR
+                </button>
+              </div>
+            ) : (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  Generate the website changes as a pull request before anything is merged.
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="promote-bundle"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  Create publish PR
+                </button>
+              </Form>
+            )}
+          </PublishFlowCard>
+
+          <PublishFlowCard
+            title="Merge to main"
+            status={isMerged ? "complete" : prUrl ? "ready" : "locked"}
+            eyebrow={isMerged ? "Merged" : checksStatus ? `Checks ${checksStatus}` : prUrl ? "Ready to check" : "Waiting for PR"}
+          >
+            {isMerged ? (
+              <p className="text-sm font-semibold text-gray-600">The publish pull request has been merged.</p>
+            ) : (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The app checks GitHub status before merging. If checks are still pending or failing, it will leave the PR open.
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="merge-publish-pr"
+                  disabled={isSubmitting || !prUrl}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:bg-gray-100 disabled:text-gray-500"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  Check and merge
+                </button>
+              </Form>
+            )}
+          </PublishFlowCard>
+
+          <PublishFlowCard
+            title="Daily research reminder"
+            status={dailyEnabled ? "complete" : dailyReady ? "ready" : "locked"}
+            eyebrow={dailyEnabled ? "Slack enabled" : dailyReady ? "Ready" : "Needs setup"}
+          >
+            <div className="space-y-3">
+              <Form method="POST" className="space-y-3">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
+                  <input
+                    name="defaultTimezone"
+                    defaultValue={defaultTimezone}
+                    className="w-full rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-semibold outline-none focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="enable-daily-automation"
+                  disabled={isSubmitting || dailyEnabled || !dailyReady}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
+                >
+                  {dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+                  {dailyEnabled ? "Enabled" : "Enable Slack reminder"}
+                </button>
+              </Form>
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="run-daily-discovery-now"
+                  disabled={isSubmitting || !dailyEnabled}
+                  className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Run today now
+                </button>
+              </Form>
+            </div>
+          </PublishFlowCard>
+        </div>
+
+        {previewUrl ? (
+          <div className="mt-4 rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+            <a href={previewUrl} target="_blank" rel="noreferrer" className="text-sm font-black text-emerald-800 hover:text-emerald-950">
+              Open published preview
+            </a>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+}
+
+function PublishFlowCard({
+  title,
+  status,
+  eyebrow,
+  children,
+}: {
+  title: string;
+  status: string;
+  eyebrow: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-base font-black text-gray-950">{title}</h3>
+          <p className="mt-1 text-xs font-black uppercase tracking-wide text-gray-500">{eyebrow}</p>
+        </div>
+        <WorkflowStatusPill status={status} compact />
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function WorkflowStatusPill({ status, compact = false }: { status: string; compact?: boolean }) {
+  const normalized = String(status || "").toLowerCase();
+  const label =
+    normalized === "complete"
+      ? "Complete"
+      : normalized === "running"
+        ? "Running"
+        : normalized === "ready"
+          ? "Ready"
+          : normalized === "locked"
+            ? "Locked"
+            : "Needs attention";
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center rounded-full font-black uppercase tracking-wide",
+        compact ? "px-2.5 py-1 text-[10px]" : "px-3 py-1.5 text-xs",
+        normalized === "complete"
+          ? "bg-emerald-50 text-emerald-700"
+          : normalized === "running"
+            ? "bg-violet-50 text-violet-700"
+            : normalized === "ready"
+              ? "bg-blue-50 text-blue-700"
+              : normalized === "locked"
+                ? "bg-gray-100 text-gray-500"
+                : "bg-red-50 text-red-700",
+      )}
+    >
+      {label}
+    </span>
+  );
+}
+
 function ArticleCommentCanvas({
   comments,
   components,
@@ -1714,7 +1962,7 @@ function ArticleWorkflowPrimaryAction({
   isSubmitting: boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
-  const publishUrl = run.previewUrl || run.prUrl || (typeof run.result?.["preview_url"] === "string" ? run.result["preview_url"] : "") || (typeof run.result?.["pr_url"] === "string" ? run.result["pr_url"] : "");
+  const publishUrl = publishPreviewUrlForRun(run) || publishPrUrlForRun(run);
   const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
 
   if (isPublishApprovalGate(run)) return null;
@@ -1754,6 +2002,30 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
   return "";
 }
 
+function publishPrUrlForRun(run: VibeMarketingRunSummary) {
+  return run.prUrl?.trim() || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl");
+}
+
+function publishPreviewUrlForRun(run: VibeMarketingRunSummary) {
+  return run.previewUrl?.trim() || stringResultValue(run, "preview_url", "previewUrl", "article_url", "articleUrl", "url");
+}
+
+function prNumberFromPullUrl(url: string) {
+  const match = url.match(/\/pull\/(\d+)/);
+  return match?.[1] ?? "";
+}
+
+function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
+  return Boolean(
+    publishPrUrlForRun(run) ||
+      publishPreviewUrlForRun(run) ||
+      stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id", "promote_bundle_requested_at") ||
+      run.result?.["publish_handoff_pending"] === true ||
+      run.workflowProgress?.currentStepId === "publish" ||
+      run.workflowProgress?.currentStepId === "automation",
+  );
+}
+
 function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketingBootstrap) {
   const runMode = stringResultValue(run, "resolved_delivery_mode", "delivery_mode", "deliveryMode");
   if (runMode === "review_draft" || runMode === "publish_code" || runMode === "content_only") {
@@ -1763,7 +2035,7 @@ function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketi
 }
 
 function hasReviewTarget(run: VibeMarketingRunSummary) {
-  return Boolean(run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl"));
+  return Boolean(publishPreviewUrlForRun(run) || publishPrUrlForRun(run));
 }
 
 function isRunApprovalRequired(run: VibeMarketingRunSummary) {
@@ -1794,11 +2066,9 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   }
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
   if (workflow === "website_baseline") return "baseline";
-  if (workflow === "article_revision") return "revise";
+  if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (isArticleWorkflow(workflow)) {
-    const publishUrl = run.previewUrl || run.prUrl || stringResultValue(run, "preview_url", "previewUrl", "pr_url", "prUrl");
-    const isPublishRun = run.workflowProgress?.currentStepId === "publish" && (POLLING_STATUSES.has(run.status) || Boolean(publishUrl));
-    if (isPublishRun) return "publish";
+    if (hasPublishHandoffEvidence(run)) return "publish";
     if (POLLING_STATUSES.has(run.status)) return "generate";
     if (run.componentManifest) return "review";
     if (run.contentPackage?.contentPackaged) return "package";
@@ -1813,6 +2083,9 @@ function workflowProgressForRunPage(
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (!progress || !isArticleGenerationWorkflow(run.workflow) || !POLLING_STATUSES.has(run.status)) {
+    return progress;
+  }
+  if (progress.currentStepId === "publish" || progress.currentStepId === "automation" || hasPublishHandoffEvidence(run)) {
     return progress;
   }
 
@@ -1842,14 +2115,12 @@ export default function FounderToolsMarketingRun() {
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const isSubmitting = navigation.state === "submitting";
-  const shouldPoll = POLLING_STATUSES.has(run.status) || hasPendingArticlePreview(run);
+  const shouldPoll = POLLING_STATUSES.has(run.status) || hasPendingArticlePreview(run) || hasPublishHandoffEvidence(run);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
-  const isCompletedArticleReviewPage =
-    hasArticlePreview && run.status === "completed";
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation";
@@ -1870,6 +2141,8 @@ export default function FounderToolsMarketingRun() {
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
+  const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
+  const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
   const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
   const previewFailed = isFailedArticlePreview(run.livePreview);
   const shouldAutoStartPreview = Boolean(
@@ -1953,13 +2226,15 @@ export default function FounderToolsMarketingRun() {
       <MarketingWorkflowShell
         progress={workflowProgress}
         viewedStepId={viewedWorkflowStepId}
-        title={directPublishMode ? "Create and publish article" : "Create article"}
+        title={directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
         titleAs="h1"
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
-        primaryActionSlot={isArticleWorkflowRun && directPublishMode ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
         activeDetailSlot={
-          isArticleGenerationRun ? (
+          isArticleGenerationRun && isPublishAutomateView ? (
+            <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} />
+          ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
               run={run}
               selectedComponent={selectedComponent}
@@ -1968,7 +2243,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel="Generating article progress"
+        activeDetailLabel={isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
