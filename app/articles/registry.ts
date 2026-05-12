@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-many-people-use-artificial-intelligence-in-2026': {
+        title: "How Many People Use Artificial Intelligence in 2026?",
+        date: "2026-05-11",
+        description: "How many people use artificial intelligence? Over 1B.",
+        author: "Dr Sam Donegan",
+        slug: "featured/how-many-people-use-artificial-intelligence-in-2026",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-8583b06a-0bec-421b-80b1-4b077b41d73a.jpg?alt=media&token=63af1baf-eb47-47d6-8d65-b78c7dabc210",
+        imageAlt: "Close-up of people using AI tools on laptops and phones in a candid workspace moment",
+        hasContent: true,
+    },
     'featured/what-is-an-intelligent-agent-in-artificial-intelligence': {
         title: "What Is an Intelligent Agent in Artificial Intelligence?",
         date: "2026-05-09",
