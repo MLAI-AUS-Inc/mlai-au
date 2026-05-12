@@ -206,6 +206,9 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
     workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
+    publishChildStatus: asNullableString(payload.publishChildStatus) ?? asNullableString(payload.publish_child_status),
+    publishChildRecoverable: Boolean(payload.publishChildRecoverable ?? payload.publish_child_recoverable),
+    publishChildWaitReason: asNullableString(payload.publishChildWaitReason) ?? asNullableString(payload.publish_child_wait_reason),
     result:
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)
