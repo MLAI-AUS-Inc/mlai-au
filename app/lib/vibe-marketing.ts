@@ -209,6 +209,11 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     publishChildStatus: asNullableString(payload.publishChildStatus) ?? asNullableString(payload.publish_child_status),
     publishChildRecoverable: Boolean(payload.publishChildRecoverable ?? payload.publish_child_recoverable),
     publishChildWaitReason: asNullableString(payload.publishChildWaitReason) ?? asNullableString(payload.publish_child_wait_reason),
+    stale: Boolean(payload.stale),
+    staleReason: asNullableString(payload.staleReason) ?? asNullableString(payload.stale_reason),
+    retryAvailable: Boolean(payload.retryAvailable ?? payload.retry_available),
+    queueName: asNullableString(payload.queueName) ?? asNullableString(payload.queue_name),
+    queuedAt: asNullableString(payload.queuedAt) ?? asNullableString(payload.queued_at),
     result:
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)

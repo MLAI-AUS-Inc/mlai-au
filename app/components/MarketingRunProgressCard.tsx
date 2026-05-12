@@ -13,10 +13,13 @@ function labelForStatus(status: string) {
 export default function MarketingRunProgressCard({ run }: MarketingRunProgressCardProps) {
   const isFailed = ["failed", "blocked", "blocked_verification", "denied"].includes(run.status);
   const isScanRun = ["repo_scan", "content_factory_scan"].includes(run.workflow);
+  const isStaleQueuedScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
-  const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status) && !isScanActionNeeded;
-  const statusLabel = isScanActionNeeded ? "scan complete, action needed" : labelForStatus(run.status);
-  const currentStepLabel = isScanActionNeeded
+  const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status) && !isScanActionNeeded && !isStaleQueuedScan;
+  const statusLabel = isStaleQueuedScan ? "scan did not start" : isScanActionNeeded ? "scan complete, action needed" : labelForStatus(run.status);
+  const currentStepLabel = isStaleQueuedScan
+    ? "The scan worker did not pick up this job. Retry the scan or cancel it and start again."
+    : isScanActionNeeded
     ? "The repository scan finished. Choose the article route, start a new setup preview, or cancel this scan."
     : run.currentStep
       ? run.currentStep.replace(/_/g, " ")
@@ -28,17 +31,17 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
     <div
       className={clsx(
         "relative overflow-hidden rounded-xl border p-5 shadow-sm",
-        isFailed ? "border-red-200 bg-red-50" : "border-violet-100 bg-violet-50/70",
+        isFailed || isStaleQueuedScan ? "border-red-200 bg-red-50" : "border-violet-100 bg-violet-50/70",
       )}
     >
       <div className="flex items-start gap-4">
-        <div className={clsx("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", isFailed ? "bg-red-100 text-red-600" : "bg-white text-violet-600")}>
-          {isFailed ? <ExclamationTriangleIcon className="h-6 w-6" /> : isRunning ? <ArrowPathIcon className="h-6 w-6 animate-spin" /> : <SparklesIcon className="h-6 w-6" />}
+        <div className={clsx("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", isFailed || isStaleQueuedScan ? "bg-red-100 text-red-600" : "bg-white text-violet-600")}>
+          {isFailed || isStaleQueuedScan ? <ExclamationTriangleIcon className="h-6 w-6" /> : isRunning ? <ArrowPathIcon className="h-6 w-6 animate-spin" /> : <SparklesIcon className="h-6 w-6" />}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-base font-black text-gray-950">{run.workflow.replace(/_/g, " ")}</h2>
-            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", isFailed ? "bg-red-100 text-red-700" : "bg-white text-violet-700")}>
+            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", isFailed || isStaleQueuedScan ? "bg-red-100 text-red-700" : "bg-white text-violet-700")}>
               {statusLabel}
             </span>
           </div>

@@ -53,6 +53,11 @@ export interface VibeMarketingRunSummary {
   publishChildStatus?: string | null;
   publishChildRecoverable?: boolean;
   publishChildWaitReason?: string | null;
+  stale?: boolean;
+  staleReason?: string | null;
+  retryAvailable?: boolean;
+  queueName?: string | null;
+  queuedAt?: string | null;
   result?: Record<string, unknown>;
 }
 
