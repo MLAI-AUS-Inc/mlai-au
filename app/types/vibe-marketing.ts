@@ -50,6 +50,9 @@ export interface VibeMarketingRunSummary {
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
   workflowProgress?: VibeMarketingWorkflowProgress | null;
+  publishChildStatus?: string | null;
+  publishChildRecoverable?: boolean;
+  publishChildWaitReason?: string | null;
   result?: Record<string, unknown>;
 }
 

@@ -230,7 +230,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
     } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr"].includes(intent)) {
-      const result = await controlVibeMarketingRun(env, request, runId, intent);
+      const sourceRunId = stringFromForm(formData, "sourceRunId");
+      const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
+      const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
       if (result.runId && result.runId !== runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
@@ -1484,6 +1486,26 @@ function PublishAndAutomateDetail({
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
+  const publishSourceRunId = stringResultValue(run, "source_run_id", "sourceRunId", "review_source_run_id", "reviewSourceRunId");
+  const publishChildStatus =
+    run.publishChildStatus ||
+    stringResultValue(run, "publish_child_status", "publishChildStatus") ||
+    (publishChildRunId === run.runId ? run.status : "");
+  const publishChildRecoverable = Boolean(
+    run.publishChildRecoverable ||
+      run.result?.["publish_child_recoverable"] === true ||
+      (publishChildRunId === run.runId && run.status === "awaiting_confirmation" && !prUrl && !previewUrl),
+  );
+  const publishChildRunning = Boolean(
+    publishChildStatus === "queued" ||
+      publishChildStatus === "running" ||
+      (publishChildRunId === run.runId && (run.status === "queued" || run.status === "running")),
+  );
+  const publishChildApprovalRequired = Boolean(
+    publishChildStatus === "awaiting_approval" ||
+      publishChildStatus === "approval_required" ||
+      (publishChildRunId === run.runId && run.approvalState === "approval_required"),
+  );
   const publishHandoffPending = run.result?.["publish_handoff_pending"] === true;
   const publishHandoffStale = Boolean(
     publishHandoffPending &&
@@ -1494,9 +1516,11 @@ function PublishAndAutomateDetail({
   );
   const publishPending = Boolean(
     !publishHandoffStale &&
+      !publishChildRecoverable &&
+      !publishChildApprovalRequired &&
       (publishStep?.status === "running" ||
-        publishHandoffPending ||
-        (publishChildRunId && !prUrl && !previewUrl)),
+        publishChildRunning ||
+        (publishHandoffPending && !publishChildRunId)),
   );
   const prNumber =
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
@@ -1530,7 +1554,19 @@ function PublishAndAutomateDetail({
           <PublishFlowCard
             title="Publish PR"
             status={prUrl ? "complete" : publishPending ? "running" : "ready"}
-            eyebrow={prUrl ? "PR ready" : publishPending ? "Preparing PR" : publishHandoffStale ? "Retry needed" : "Ready"}
+            eyebrow={
+              prUrl
+                ? "PR ready"
+                : publishPending
+                  ? "Preparing PR"
+                  : publishChildRecoverable
+                    ? "Resume needed"
+                    : publishChildApprovalRequired
+                      ? "Review needed"
+                      : publishHandoffStale
+                        ? "Retry needed"
+                        : "Ready"
+            }
           >
             {prUrl ? (
               <div className="space-y-3">
@@ -1559,6 +1595,39 @@ function PublishAndAutomateDetail({
                   <ArrowPathIcon className="h-4 w-4 animate-spin" />
                   Preparing PR
                 </button>
+              </div>
+            ) : publishChildRecoverable ? (
+              <Form method="POST" className="space-y-3">
+                {publishSourceRunId ? <input type="hidden" name="sourceRunId" value={publishSourceRunId} /> : null}
+                <p className="text-sm font-semibold text-gray-600">
+                  The publish run is waiting for confirmation instead of creating a PR. Resume will safely reuse the existing publish run.
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="promote-bundle"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
+                  Resume publish PR
+                </button>
+              </Form>
+            ) : publishChildApprovalRequired ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The publish run needs review before it can continue.
+                </p>
+                {publishChildRunId && publishChildRunId !== run.runId ? (
+                  <a
+                    href={`/founder-tools/marketing/runs/${encodeURIComponent(publishChildRunId)}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
+                  >
+                    Open publish review
+                  </a>
+                ) : (
+                  <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
+                )}
               </div>
             ) : publishHandoffStale ? (
               <Form method="POST" className="space-y-3">
@@ -2289,10 +2358,13 @@ export default function FounderToolsMarketingRun() {
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const isSubmitting = navigation.state === "submitting";
-  const shouldPoll = POLLING_STATUSES.has(run.status) || hasPendingArticlePreview(run) || hasPublishHandoffEvidence(run);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
+  const shouldPoll =
+    POLLING_STATUSES.has(run.status) ||
+    hasPendingArticlePreview(run) ||
+    hasPublishHandoffEvidence(run);
   const isArticleSystemSetupRun = workflow === "article_system_setup";
   const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
