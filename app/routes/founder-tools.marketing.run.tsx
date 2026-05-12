@@ -1484,10 +1484,19 @@ function PublishAndAutomateDetail({
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
+  const publishHandoffPending = run.result?.["publish_handoff_pending"] === true;
+  const publishHandoffStale = Boolean(
+    publishHandoffPending &&
+      run.result?.["publish_handoff_stale"] === true &&
+      !publishChildRunId &&
+      !prUrl &&
+      !previewUrl,
+  );
   const publishPending = Boolean(
-    publishStep?.status === "running" ||
-      run.result?.["publish_handoff_pending"] === true ||
-      (publishChildRunId && !prUrl && !previewUrl),
+    !publishHandoffStale &&
+      (publishStep?.status === "running" ||
+        publishHandoffPending ||
+        (publishChildRunId && !prUrl && !previewUrl)),
   );
   const prNumber =
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
@@ -1521,7 +1530,7 @@ function PublishAndAutomateDetail({
           <PublishFlowCard
             title="Publish PR"
             status={prUrl ? "complete" : publishPending ? "running" : "ready"}
-            eyebrow={prUrl ? "PR ready" : publishPending ? "Preparing PR" : "Ready"}
+            eyebrow={prUrl ? "PR ready" : publishPending ? "Preparing PR" : publishHandoffStale ? "Retry needed" : "Ready"}
           >
             {prUrl ? (
               <div className="space-y-3">
@@ -1551,6 +1560,22 @@ function PublishAndAutomateDetail({
                   Preparing PR
                 </button>
               </div>
+            ) : publishHandoffStale ? (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  The previous publish handoff did not produce a PR. Retry will safely reuse any existing publish run if one was created.
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="promote-bundle"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
+                  Retry creating PR
+                </button>
+              </Form>
             ) : (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
