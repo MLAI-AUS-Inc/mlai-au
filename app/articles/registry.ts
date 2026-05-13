@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/what-is-supervised-machine-learning-for-builders': {
+        title: "What is supervised machine learning for builders?",
+        date: "2026-05-13",
+        description: "What is supervised machine learning? Learn labels and uses.",
+        author: "Dr Sam Donegan",
+        slug: "featured/what-is-supervised-machine-learning-for-builders",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-80e66436-5e59-491d-8bd3-95efb0595766.jpg?alt=media&token=b966dbd0-be0b-4b7b-8cef-a0c1ab9bc2e0",
+        imageAlt: "Builder labeling training data on a laptop during a candid supervised machine learning workshop",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
