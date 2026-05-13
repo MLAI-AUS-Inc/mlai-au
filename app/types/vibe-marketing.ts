@@ -174,6 +174,7 @@ export interface VibeMarketingSettings {
   articleDeliveryMode?: string | null;
   articleDeliveryModeEffective?: string | null;
   githubRepo?: string | null;
+  pendingArticleSystemSetup?: Record<string, unknown> | null;
   dailyDiscoveryEnabled: boolean;
   dailyDiscoveryPriority?: number | null;
   defaultTimezone?: string | null;

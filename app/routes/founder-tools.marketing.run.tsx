@@ -267,20 +267,48 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "start-scan") {
       const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
+      const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
       if (!githubRepo) return { error: "Choose a GitHub repository before scanning." };
-      if (!articleSurfaceUrl) return { error: "Enter the articles or blog URL before scanning." };
+      if (scanPurpose !== "inventory" && !articleSurfaceUrl) return { error: "Enter the articles or blog URL before scanning." };
       const result = await startVibeMarketingScan(env, request, {
         githubRepo,
         github_repo: githubRepo,
-        articleSurfaceMode: "existing",
-        article_surface_mode: "existing",
-        articleSurfaceUrl,
-        article_surface_url: articleSurfaceUrl,
+        scanPurpose,
+        scan_purpose: scanPurpose,
+        articleSurfaceMode: scanPurpose === "inventory" ? "not_sure" : "existing",
+        article_surface_mode: scanPurpose === "inventory" ? "not_sure" : "existing",
+        ...(scanPurpose === "inventory"
+          ? {}
+          : {
+              articleSurfaceUrl,
+              article_surface_url: articleSurfaceUrl,
+            }),
         autoSetupPreview: false,
         auto_setup_preview: false,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return { error: result.error || result.errors?.[0] || "Repository scan could not be started." };
+    } else if (intent === "confirm-article-surface" || intent === "create-article-surface") {
+      const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
+      const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
+      if (!githubRepo) return { error: "Choose a GitHub repository before continuing." };
+      if (!articleSurfaceUrl) return { error: "Choose or enter an article/blog route before continuing." };
+      const result = await startVibeMarketingScan(env, request, {
+        githubRepo,
+        github_repo: githubRepo,
+        scanPurpose: "setup",
+        scan_purpose: "setup",
+        articleSurfaceMode: intent === "create-article-surface" ? "none" : "existing",
+        article_surface_mode: intent === "create-article-surface" ? "none" : "existing",
+        articleSurfaceUrl,
+        article_surface_url: articleSurfaceUrl,
+        sourceScanRunId: runId,
+        source_scan_run_id: runId,
+        autoSetupPreview: false,
+        auto_setup_preview: false,
+      });
+      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      return { error: result.error || result.errors?.[0] || "Article system setup could not be started." };
     } else if (intent === "build-article-system-preview") {
       const result = await controlVibeMarketingRun(env, request, runId, "approve", { workflow: "repo_scan" });
       const setupRunId = setupRunIdForRun(result);

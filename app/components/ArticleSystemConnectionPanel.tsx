@@ -1,4 +1,4 @@
-import { Form, Link } from "react-router";
+import { Form, Link, useFetcher, useRevalidator } from "react-router";
 import { clsx } from "clsx";
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import {
@@ -33,6 +33,7 @@ type ArticleSystemConnectionPanelProps = {
   scanRun?: VibeMarketingRunSummary | null;
   framed?: boolean;
   showDenySetupAction?: boolean;
+  autoStartInventoryScan?: boolean;
 };
 
 const SCAN_RUNNING_STATUSES = new Set(["queued", "running"]);
@@ -134,6 +135,42 @@ function isScanAwaitingSetupApproval(run: VibeMarketingRunSummary | null | undef
   if (SCAN_ACTION_NEEDED_STATUSES.has(run.status)) return true;
   const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
   return requestedAction === "article_system_setup" || requestedAction === "scaffold_publish_route";
+}
+
+function runRequestObject(run: VibeMarketingRunSummary | null | undefined): Record<string, unknown> {
+  if (!run) return {};
+  const request = run.result?.["run_request"] ?? run.result?.["request"];
+  return resultObject(request);
+}
+
+function scanPurposeForRun(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return "";
+  const request = runRequestObject(run);
+  return String(
+    run.result?.["scan_purpose"] ??
+      run.result?.["scanPurpose"] ??
+      request.scan_purpose ??
+      request.scanPurpose ??
+      "",
+  ).trim();
+}
+
+function scanHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return false;
+  return Boolean(resultValue(run, "article_surface_hint") || run.result?.["articleSurfaceHint"]);
+}
+
+function isInventoryScan(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return false;
+  const purpose = scanPurposeForRun(run);
+  if (purpose) return purpose === "inventory";
+  return !scanHasArticleSurfaceHint(run) && !isScanAwaitingSetupApproval(run);
+}
+
+function isSetupTargetScan(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return false;
+  const purpose = scanPurposeForRun(run);
+  return purpose === "setup" || scanHasArticleSurfaceHint(run) || isScanAwaitingSetupApproval(run);
 }
 
 function hasScanMissingArticleParts(run: VibeMarketingRunSummary | null | undefined, scaffoldReady: boolean) {
@@ -293,8 +330,12 @@ export default function ArticleSystemConnectionPanel({
   scanRun,
   framed = true,
   showDenySetupAction = false,
+  autoStartInventoryScan = false,
 }: ArticleSystemConnectionPanelProps) {
+  const inventoryFetcher = useFetcher();
+  const revalidator = useRevalidator();
   const connected = isGithubConnected(githubRepos, bootstrap);
+  void showDenySetupAction;
   const repos = repoNames(githubRepos);
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
@@ -310,17 +351,59 @@ export default function ArticleSystemConnectionPanel({
   const setupRunId = scanRun ? setupRunIdForRun(scanRun) : "";
   const previewShouldStartOpen = Boolean(scanNeedsSetupApproval || scanFailed || scanStale || scanMissingArticleParts);
   const [articlePreviewOpen, setArticlePreviewOpen] = useState(previewShouldStartOpen);
-  const continueBlocked = Boolean(scanRun && (scanRunning || scanFailed || scanStale || scanNeedsSetupApproval));
-  const canContinue = connected && scaffoldReady && !continueBlocked;
-  const continueHelp = !scaffoldReady
-    ? "Scan the repository and complete any article-system setup before continuing."
-    : continueBlocked
-      ? "Resolve the current scan state before continuing."
-      : "Article system confirmed. You can continue to topic research.";
+  const inventoryScan = isInventoryScan(scanRun);
+  const setupTargetScan = isSetupTargetScan(scanRun);
+  const inventoryReady = Boolean(scanRun && inventoryScan && scanRun.status === "completed");
+  const setupTargetReady = Boolean(scanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
+  const continueBlocked = Boolean(scanRun && (scanRunning || scanFailed || scanStale) && !setupTargetReady);
+  const canContinue = connected && (scaffoldReady || setupTargetReady) && !continueBlocked;
+  const continueHelp = setupTargetReady
+    ? "Route intent saved. Continue to generate and review the article system setup."
+    : !scaffoldReady
+      ? "Scan the repository, then choose where articles should live."
+      : continueBlocked
+        ? "Resolve the current scan state before continuing."
+        : "Article system confirmed. You can continue to topic research.";
 
   useEffect(() => {
     setArticlePreviewOpen(previewShouldStartOpen);
   }, [previewShouldStartOpen, scanRun?.runId, scanRun?.status]);
+
+  useEffect(() => {
+    if (!autoStartInventoryScan || !connected || !selectedRepo || scanRun || inventoryFetcher.state !== "idle") return;
+    const key = `vibe-marketing:auto-inventory-scan:${bootstrap.organization.id ?? "org"}:${selectedRepo}`;
+    if (typeof window !== "undefined" && window.sessionStorage.getItem(key) === "started") return;
+    if (typeof window !== "undefined") window.sessionStorage.setItem(key, "started");
+    const formData = new FormData();
+    formData.set("intent", "start-scan");
+    formData.set("scanPurpose", "inventory");
+    formData.set("articleSurfaceMode", "not_sure");
+    formData.set("githubRepo", selectedRepo);
+    void inventoryFetcher.submit(formData, { method: "POST" });
+  }, [autoStartInventoryScan, bootstrap.organization.id, connected, inventoryFetcher, scanRun, selectedRepo]);
+
+  useEffect(() => {
+    if (connected || typeof window === "undefined") return;
+    const maybeRevalidate = () => {
+      if (window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true") {
+        revalidator.revalidate();
+      }
+    };
+    window.addEventListener("focus", maybeRevalidate);
+    document.addEventListener("visibilitychange", maybeRevalidate);
+    const timer = window.setInterval(maybeRevalidate, 5000);
+    return () => {
+      window.removeEventListener("focus", maybeRevalidate);
+      document.removeEventListener("visibilitychange", maybeRevalidate);
+      window.clearInterval(timer);
+    };
+  }, [connected, revalidator]);
+
+  useEffect(() => {
+    if (connected && typeof window !== "undefined") {
+      window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
+    }
+  }, [connected]);
 
   const repoControlProps = onRepoSelectionChange
     ? {
@@ -382,6 +465,9 @@ export default function ArticleSystemConnectionPanel({
             <input type="hidden" name="intent" value="connect-github" />
             <button
               type="submit"
+              onClick={() => {
+                if (typeof window !== "undefined") window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
+              }}
               disabled={isSubmitting}
               className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
             >
@@ -444,6 +530,9 @@ export default function ArticleSystemConnectionPanel({
               <input type="hidden" name="forceReconnect" value="true" />
               <button
                 type="submit"
+                onClick={() => {
+                  if (typeof window !== "undefined") window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
+                }}
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-50"
               >
@@ -467,7 +556,9 @@ export default function ArticleSystemConnectionPanel({
       {connected ? (
         <Form method="POST" className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <input type="hidden" name="intent" value="start-scan" />
-          <div className="grid gap-4 lg:grid-cols-[minmax(220px,360px)_1fr]">
+          <input type="hidden" name="scanPurpose" value="inventory" />
+          <input type="hidden" name="articleSurfaceMode" value="not_sure" />
+          <div className="grid gap-4 lg:grid-cols-[minmax(220px,420px)_1fr]">
             <label className="block">
               <span className="mb-2 block text-sm font-black text-slate-800">Repository</span>
               {repos.length ? (
@@ -491,33 +582,26 @@ export default function ArticleSystemConnectionPanel({
                 />
               )}
             </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-black text-slate-800">Where are your articles or blog posts?</span>
-              <input
-                name="articleSurfaceUrl"
-                required
-                defaultValue={articleSurfaceDefault}
-                placeholder={locationPlaceholder}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-              />
-              <span className="mt-2 block text-xs font-semibold text-slate-500">
-                Examples: /content/articles, /src/content/blog, /website/posts
-              </span>
-            </label>
+            <div className="rounded-xl bg-slate-50 px-4 py-3">
+              <p className="text-sm font-black text-slate-800">First we scan the repo.</p>
+              <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+                After the scan, choose from the routes we found or create a new articles directory. No setup changes are generated from this scan.
+              </p>
+            </div>
           </div>
           <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="inline-flex max-w-xl items-start gap-3 rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-700">
               <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
                 <Sparkles className="h-4 w-4" />
               </span>
-              <span>We&apos;ll only create and update content within this path. No other files or folders will be touched.</span>
+              <span>We&apos;ll scan route and content structure first, then ask where article setup should happen.</span>
             </div>
             <button
               type="submit"
-              disabled={isSubmitting || (repos.length > 0 && !selectedRepo)}
+              disabled={isSubmitting || inventoryFetcher.state !== "idle" || scanRunning || (repos.length > 0 && !selectedRepo)}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {isSubmitting || inventoryFetcher.state !== "idle" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Scan repository
             </button>
           </div>
@@ -581,57 +665,73 @@ export default function ArticleSystemConnectionPanel({
             className="flex w-full flex-col gap-3 p-4 text-left sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <p className="text-sm font-black text-slate-950">Article directory preview</p>
+              <p className="text-sm font-black text-slate-950">
+                {setupTargetScan ? "Article system target saved" : "Choose article location"}
+              </p>
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                Review the route, files, and setup requirements Content Factory found for this repository.
+                {setupTargetScan
+                  ? "Continue to the generate step to build and review the article system preview."
+                  : "Pick a detected route from the scan, or create a new articles directory."}
               </p>
             </div>
             <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-violet-700">
-              {articlePreviewOpen ? "Hide preview" : "Show preview"}
+              {articlePreviewOpen ? "Hide" : "Show"}
               <ChevronDown className={clsx("h-4 w-4 transition", articlePreviewOpen && "rotate-180")} />
             </span>
           </button>
           {articlePreviewOpen ? (
             <div className="space-y-4 border-t border-slate-100 p-4">
-              <ArticleSystemSurfaceSummary run={scanRun} />
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                {scanNeedsSetupApproval ? (
-                  <Form method="POST">
-                    <input type="hidden" name="scanRunId" value={scanRun.runId} />
+              {setupTargetScan ? (
+                <>
+                  <ArticleSystemSurfaceSummary run={scanRun} />
+                  <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
+                    <p className="text-sm font-black text-violet-950">Ready to generate the articles page setup.</p>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-violet-800">
+                      The setup target is saved. The next step will create the setup branch, build the Cloudflare preview, and open the visual inspector.
+                    </p>
+                  </div>
+                </>
+              ) : inventoryReady ? (
+                <>
+                  <Form method="POST" className="space-y-4">
+                    <input type="hidden" name="intent" value="confirm-article-surface" />
+                    <input type="hidden" name="githubRepo" value={selectedRepo} />
+                    <input type="hidden" name="sourceScanRunId" value={scanRun.runId} />
+                    <ArticleSystemSurfaceSummary run={scanRun} selectable fieldName="articleSurfaceUrl" />
                     <button
                       type="submit"
-                      name="intent"
-                      value="build-article-system-preview"
                       disabled={isSubmitting}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
                     >
                       {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      Build article system preview
+                      Continue to generate article system
                     </button>
                   </Form>
-                ) : setupRunId ? (
-                  <Link
-                    to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50"
-                  >
-                    Open setup preview
-                    <ExternalLink className="h-4 w-4" />
-                  </Link>
-                ) : null}
-                {showDenySetupAction && scanNeedsSetupApproval ? (
-                  <Form method="POST">
+                  <Form method="POST" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <input type="hidden" name="intent" value="create-article-surface" />
+                    <input type="hidden" name="githubRepo" value={selectedRepo} />
+                    <input type="hidden" name="sourceScanRunId" value={scanRun.runId} />
+                    <label className="block">
+                      <span className="text-sm font-black text-slate-900">None of these. Create a new articles directory.</span>
+                      <input
+                        name="articleSurfaceUrl"
+                        defaultValue={articleSurfaceDefault || "/articles"}
+                        placeholder={locationPlaceholder}
+                        className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                      />
+                    </label>
                     <button
                       type="submit"
-                      name="intent"
-                      value="deny"
                       disabled={isSubmitting}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
                     >
-                      Deny setup
+                      Create and continue
                     </button>
                   </Form>
-                ) : null}
-              </div>
+                </>
+              ) : (
+                <ArticleSystemSurfaceSummary run={scanRun} />
+              )}
             </div>
           ) : null}
         </section>
@@ -642,10 +742,10 @@ export default function ArticleSystemConnectionPanel({
           <p className="text-sm font-semibold text-slate-500">{continueHelp}</p>
           {canContinue ? (
             <Link
-              to="/founder-tools/marketing/create?step=research"
+              to={setupTargetReady ? "/founder-tools/marketing/create?step=writeCheck" : "/founder-tools/marketing/create?step=research"}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
             >
-              Continue
+              {setupTargetReady ? "Continue to generate article system" : "Continue"}
               <ArrowRight className="h-4 w-4" />
             </Link>
           ) : (
