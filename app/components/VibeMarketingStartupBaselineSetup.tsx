@@ -135,11 +135,6 @@ function listFromUnknown(value: unknown): string[] {
   return [];
 }
 
-function looksTechnical(value: string | null | undefined) {
-  if (!value) return false;
-  return /https?:\/\/|httperror|traceback|api has not been used|accessnotconfigured|quota|json|exception/i.test(value);
-}
-
 function competitorSuggestion(value: unknown): VibeMarketingAutofillCompetitor | null {
   if (!value || typeof value !== "object") {
     const text = String(value ?? "").trim();
@@ -777,85 +772,6 @@ function RequiredPill() {
   return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
 }
 
-function SetupSectionCard({
-  step,
-  title,
-  description,
-  status,
-  active = true,
-  children,
-}: {
-  step: string;
-  title: string;
-  description: string;
-  status?: ReactNode;
-  active?: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <section className={clsx("rounded-2xl border bg-white p-5 shadow-sm sm:p-6", active ? "border-gray-200" : "border-gray-100 bg-gray-50/70")}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 gap-4">
-          <span
-            className={clsx(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-black shadow-sm",
-              active ? "bg-violet-700 text-white shadow-violet-100" : "bg-gray-200 text-gray-600",
-            )}
-          >
-            {step}
-          </span>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <h3 className="text-xl font-black tracking-normal text-gray-950">{title}</h3>
-              {status}
-            </div>
-            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">{description}</p>
-          </div>
-        </div>
-      </div>
-      <div className="mt-6">{children}</div>
-    </section>
-  );
-}
-
-function FieldGroupCard({
-  title,
-  description,
-  icon: Icon,
-  children,
-  className,
-}: {
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={clsx("min-w-0 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5", className)}>
-      <div className="flex items-start gap-3 border-b border-gray-100 pb-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
-          <Icon className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-sm font-black text-gray-950">{title}</p>
-          <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">{description}</p>
-        </div>
-      </div>
-      <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">{children}</div>
-    </div>
-  );
-}
-
-function AiFilledPill() {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-[11px] font-black text-violet-700 ring-1 ring-violet-100">
-      <Sparkles className="h-3.5 w-3.5" />
-      AI assisted
-    </span>
-  );
-}
-
 function ControlIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400">
@@ -1018,158 +934,6 @@ function BaselineComparisonChart() {
   );
 }
 
-function CollapsibleTechnicalNotice({
-  summary,
-  details,
-  tone = "rose",
-}: {
-  summary: string;
-  details?: string | null;
-  tone?: "rose" | "amber" | "slate";
-}) {
-  return (
-    <div
-      className={clsx(
-        "rounded-xl border px-4 py-3 text-sm font-semibold",
-        tone === "rose" && "border-rose-200 bg-rose-50 text-rose-700",
-        tone === "amber" && "border-amber-200 bg-amber-50 text-amber-800",
-        tone === "slate" && "border-gray-200 bg-gray-50 text-gray-700",
-      )}
-    >
-      <div className="flex gap-3">
-        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-        <div className="min-w-0 flex-1">
-          <p className="leading-6">{summary}</p>
-          {details ? (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs font-black uppercase tracking-wide">Technical details</summary>
-              <pre className="mt-2 max-h-24 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-white/80 p-3 text-[11px] font-semibold leading-5 text-gray-600 ring-1 ring-black/5">
-                {details}
-              </pre>
-            </details>
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BaselineActionCard({
-  step,
-  title,
-  description,
-  icon: Icon,
-  status,
-  children,
-}: {
-  step: string;
-  title: string;
-  description: string;
-  icon: LucideIcon;
-  status?: ReactNode;
-  children: ReactNode;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 gap-4">
-          <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-700 ring-1 ring-violet-100">
-            <Icon className="h-5 w-5" />
-            <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-violet-700 text-[10px] font-black text-white ring-2 ring-white">
-              {step}
-            </span>
-          </span>
-          <div className="min-w-0">
-            <p className="text-base font-black text-gray-950">{title}</p>
-            <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">{description}</p>
-          </div>
-        </div>
-        {status}
-      </div>
-      <div className="mt-5">{children}</div>
-    </div>
-  );
-}
-
-function BaselineOverviewCard({
-  score,
-  band,
-  domain,
-  collectedLabel,
-  status,
-}: {
-  score: number | null;
-  band: ReturnType<typeof baselineScoreBand>;
-  domain: string;
-  collectedLabel: string;
-  status: ReactNode;
-}) {
-  return (
-    <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-sm">
-      <div className="grid gap-0 xl:grid-cols-[minmax(0,1fr)_360px]">
-        <div className="min-w-0 p-6 sm:p-7">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="text-2xl font-black tracking-normal text-gray-950 sm:text-3xl">Your website baseline</h2>
-            {status}
-          </div>
-          <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-            Capture where the site stands before publishing articles, then compare future growth against the same starting point.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2 text-sm font-bold text-gray-600">
-            <span className="inline-flex min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5">
-              <Globe2 className="h-4 w-4 shrink-0 text-violet-600" />
-              <span className="truncate text-gray-950">{domain}</span>
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5">
-              <BarChart3 className="h-4 w-4 text-violet-600" />
-              {collectedLabel === "Not collected yet" ? collectedLabel : `Collected ${collectedLabel}`}
-            </span>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-100 bg-gradient-to-br from-violet-50 via-white to-emerald-50 p-6 xl:border-l xl:border-t-0">
-          <div className="flex items-center gap-4">
-            <BaselineScoreRing score={score} tone={band.tone} />
-            <div className="min-w-0">
-              <p className="text-sm font-black text-gray-500">Overall baseline</p>
-              <div className="mt-1 flex items-end gap-1">
-                <span className="text-4xl font-black text-gray-950">{score === null ? "-" : score}</span>
-                {score !== null ? <span className="pb-1 text-sm font-black text-gray-500">/100</span> : null}
-              </div>
-              <p
-                className={clsx(
-                  "mt-1 text-sm font-black",
-                  band.tone === "amber" && "text-orange-600",
-                  band.tone === "emerald" && "text-emerald-600",
-                  band.tone === "rose" && "text-rose-600",
-                  band.tone === "slate" && "text-slate-600",
-                  band.tone === "violet" && "text-violet-700",
-                  band.tone === "sky" && "text-sky-700",
-                )}
-              >
-                {band.label}
-              </p>
-            </div>
-          </div>
-          <div className="mt-5 rounded-2xl border border-white/80 bg-white/70 p-4 shadow-sm">
-            <div className="flex gap-3">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 ring-1 ring-violet-100">
-                <ShieldCheck className="h-5 w-5" />
-              </span>
-              <div>
-                <p className="text-sm font-black text-gray-950">Why this matters</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                  Every article can be measured against this point without blocking setup.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function MetricVisual({
   metric,
   score,
@@ -1240,13 +1004,13 @@ function BaselineMetricCard({
   const message = metricMessage(label, metric);
   const classes = baselineToneClasses[tone];
   return (
-    <div className={clsx("flex min-w-0 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm", compact ? "min-h-[196px]" : "min-h-[252px]")}>
+    <div className={clsx("min-w-0 rounded-xl border border-gray-200 bg-white p-5 shadow-sm", compact ? "min-h-[190px]" : "min-h-[238px]")}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", classes.icon, classes.iconText)}>
             <Icon className="h-5 w-5" />
           </span>
-          <p className="min-w-0 break-words text-sm font-black text-gray-950">{label}</p>
+          <p className="min-w-0 text-sm font-black text-gray-950">{label}</p>
           <MetricInfoTooltip label={label} body={metricHelpText(label)} />
         </div>
         <SourceStatusBadge status={status} />
@@ -1255,9 +1019,9 @@ function BaselineMetricCard({
         <span className="text-3xl font-black text-gray-950">{score === null ? "-" : score}</span>
         {score !== null ? <span className="pb-1 text-sm font-black text-gray-500">/100</span> : null}
       </div>
-      <p className={clsx("mt-2 break-words text-sm font-semibold leading-6 text-gray-600", compact ? "line-clamp-4" : "line-clamp-3")}>{message ?? description}</p>
+      <p className={clsx("mt-2 text-sm font-semibold leading-6 text-gray-600", !compact && "line-clamp-3")}>{message ?? description}</p>
       {action ? <div className="mt-4">{action}</div> : null}
-      {!compact ? <div className="mt-auto"><MetricVisual metric={metric} score={score} status={status} tone={tone} visual={visual} trendShape={trendShape} /></div> : null}
+      {!compact ? <MetricVisual metric={metric} score={score} status={status} tone={tone} visual={visual} trendShape={trendShape} /> : null}
     </div>
   );
 }
@@ -1608,28 +1372,18 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselineBand = baselineScoreBand(baselineScore);
   const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
   const coreWebVitalsMetric = deriveCoreWebVitalsMetric(baselineMetrics);
-  const rawBaselineError = baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error ?? null;
-  const baselineErrorSummary = rawBaselineError
-    ? looksTechnical(rawBaselineError)
-      ? "We could not complete that baseline action. You can continue setup, retry, or review the technical details."
-      : rawBaselineError
-    : null;
-  const googleTrafficTechnicalMessage = looksTechnical(googleTrafficMessage) ? googleTrafficMessage : null;
-  const googleTrafficSummary = googleTrafficTechnicalMessage
-    ? "Search Console traffic could not be loaded. You can keep going without traffic data or reconnect Search Console later."
-    : googleTrafficMessage;
   const normalizedSetupProgress =
     typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
       ? Math.max(0, Math.min(100, setupProgressPercent))
       : null;
 
   const inputClass =
-    "w-full min-h-12 rounded-xl border border-gray-200 bg-white py-3 pr-4 text-sm font-semibold text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full rounded-lg border border-gray-200 bg-white py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
   const inputWithIconClass = `${inputClass} pl-11`;
   const textareaClass =
-    "w-full min-h-32 max-h-64 resize-y overflow-auto rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
   const textareaWithIconClass =
-    "w-full min-h-32 max-h-64 resize-y overflow-auto rounded-xl border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm font-semibold leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full resize-y rounded-lg border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
 
   const updateValue = (field: StartupSetupField, value: string) => {
     setStartupValues((current) => ({ ...current, [field]: value }));
@@ -1996,117 +1750,73 @@ export default function VibeMarketingStartupBaselineSetup({
           </aside>
         </div>
 
-        <SetupSectionCard
-          step="2"
-          title="Company details"
-          description="Review the AI-filled profile and refine anything that should shape article strategy, tone, and targeting."
-          status={<AiFilledPill />}
-        >
-          <div className="grid gap-5 xl:grid-cols-2">
-            <FieldGroupCard title="Basics" description="Foundational details that identify the organization." icon={Building2}>
-              <FormField label="Startup location" className="xl:col-span-6">
-                <div className="relative">
-                  <ControlIcon icon={MapPin} />
-                  <input
-                    name="location"
-                    value={startupValues.location}
-                    onChange={(event) => updateValue("location", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="Melbourne, Australia"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-              <FormField label="Founder names" className="xl:col-span-6">
+        <section className={clsx("rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6", researchLocked && "bg-gray-50/80")}>
+          <div className="flex items-start gap-4">
+            <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-black shadow-sm", researchLocked ? "bg-violet-700 text-white shadow-violet-200" : "bg-gray-200 text-gray-600")}>2</span>
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-xl font-black tracking-normal text-gray-950">Company details</h3>
+                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-700">Will be filled by AI</span>
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">Sit back while we gather information about your business, then review and edit anything.</p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <FormField label="Startup location">
+              <div className="relative">
+                <ControlIcon icon={MapPin} />
                 <input
-                  name="founderNames"
-                  value={startupValues.founderNames}
-                  onChange={(event) => updateValue("founderNames", event.target.value)}
+                  name="location"
+                  value={startupValues.location}
+                  onChange={(event) => updateValue("location", event.target.value)}
                   disabled={researchLocked}
-                  placeholder="Sam Donegan, Alex Founder"
-                  className={`${inputClass} px-4`}
+                  placeholder="Melbourne, Australia"
+                  className={inputWithIconClass}
                 />
-              </FormField>
-              <FormField label="Stage" className="xl:col-span-6">
-                <select
-                  name="stage"
-                  value={startupValues.stage}
-                  onChange={(event) => updateValue("stage", event.target.value)}
-                  disabled={researchLocked}
-                  className={`${inputClass} px-4`}
-                >
-                  {STARTUP_STAGE_OPTIONS.map((option) => (
-                    <option key={option || "blank"} value={option}>
-                      {option || "Select stage"}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Organization type" className="xl:col-span-6">
-                <select
-                  name="organizationKind"
-                  value={startupValues.organizationKind}
-                  onChange={(event) => updateValue("organizationKind", event.target.value)}
-                  disabled={researchLocked}
-                  className={`${inputClass} px-4`}
-                >
-                  {ORGANIZATION_KIND_OPTIONS.map((option) => (
-                    <option key={option || "blank"} value={option}>
-                      {option || "Select type"}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </FieldGroupCard>
-
-            <FieldGroupCard title="Research inputs" description="Extra signals for search topics, competitors, and business verification." icon={Search}>
-              <FormField label="ABN" className="xl:col-span-6">
-                <div className="relative">
-                  <ControlIcon icon={BadgeInfo} />
-                  <input
-                    name="abn"
-                    value={startupValues.abn}
-                    onChange={(event) => updateValue("abn", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="Search ABN or business name"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-
-              <FormField label="Seed keywords" className="xl:col-span-6">
-                <div className="relative">
-                  <ControlIcon icon={Tags} />
-                  <textarea
-                    name="seedKeywords"
-                    value={startupValues.seedKeywords}
-                    onChange={(event) => updateValue("seedKeywords", event.target.value)}
-                    disabled={researchLocked}
-                    rows={4}
-                    placeholder="onboarding automation, product analytics"
-                    className={textareaWithIconClass}
-                  />
-                </div>
-              </FormField>
-
-              <FormField label="Competitors" className="md:col-span-2 xl:col-span-12">
-                <div className="relative">
-                  <ControlIcon icon={Users} />
-                  <textarea
-                    name="competitors"
-                    value={startupValues.competitors}
-                    onChange={(event) => updateValue("competitors", event.target.value)}
-                    disabled={researchLocked}
-                    rows={5}
-                    placeholder="competitor.com&#10;another competitor"
-                    className={textareaWithIconClass}
-                  />
-                </div>
-              </FormField>
-            </FieldGroupCard>
-
-            <FieldGroupCard title="Positioning" description="The narrative and audience context the article writer should honor." icon={PenLine} className="xl:col-span-2">
-              <FormField label="Short description" className="md:col-span-2 xl:col-span-6">
+              </div>
+            </FormField>
+            <FormField label="Founder names">
+              <input
+                name="founderNames"
+                value={startupValues.founderNames}
+                onChange={(event) => updateValue("founderNames", event.target.value)}
+                disabled={researchLocked}
+                placeholder="Sam Donegan, Alex Founder"
+                className={`${inputClass} px-4`}
+              />
+            </FormField>
+            <FormField label="Stage">
+              <select
+                name="stage"
+                value={startupValues.stage}
+                onChange={(event) => updateValue("stage", event.target.value)}
+                disabled={researchLocked}
+                className={`${inputClass} px-4`}
+              >
+                {STARTUP_STAGE_OPTIONS.map((option) => (
+                  <option key={option || "blank"} value={option}>
+                    {option || "Select stage"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Organization type">
+              <select
+                name="organizationKind"
+                value={startupValues.organizationKind}
+                onChange={(event) => updateValue("organizationKind", event.target.value)}
+                disabled={researchLocked}
+                className={`${inputClass} px-4`}
+              >
+                {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                  <option key={option || "blank"} value={option}>
+                    {option || "Select type"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Short description" className="md:col-span-2">
                 <textarea
                   name="shortDescription"
                   value={startupValues.shortDescription}
@@ -2119,7 +1829,21 @@ export default function VibeMarketingStartupBaselineSetup({
                 />
               </FormField>
 
-              <FormField label="What you do" className="md:col-span-2 xl:col-span-6">
+            <FormField label="Target audience" className="md:col-span-2">
+              <div className="relative">
+                <ControlIcon icon={Users} />
+                <input
+                  name="targetAudience"
+                  value={startupValues.targetAudience}
+                  onChange={(event) => updateValue("targetAudience", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
+                  className={inputWithIconClass}
+                />
+              </div>
+            </FormField>
+
+            <FormField label="What you do" className="md:col-span-2">
                 <textarea
                   name="problemSolved"
                   value={startupValues.problemSolved}
@@ -2132,57 +1856,117 @@ export default function VibeMarketingStartupBaselineSetup({
                 />
               </FormField>
 
-              <FormField label="Target audience" className="md:col-span-2 xl:col-span-12">
-                <div className="relative">
-                  <ControlIcon icon={Users} />
-                  <input
-                    name="targetAudience"
-                    value={startupValues.targetAudience}
-                    onChange={(event) => updateValue("targetAudience", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-            </FieldGroupCard>
+            <FormField label="ABN">
+              <div className="relative">
+                <ControlIcon icon={BadgeInfo} />
+                <input
+                  name="abn"
+                  value={startupValues.abn}
+                  onChange={(event) => updateValue("abn", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="Search ABN or business name"
+                  className={inputWithIconClass}
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Seed keywords">
+              <div className="relative">
+                <ControlIcon icon={Tags} />
+                <textarea
+                  name="seedKeywords"
+                  value={startupValues.seedKeywords}
+                  onChange={(event) => updateValue("seedKeywords", event.target.value)}
+                  disabled={researchLocked}
+                  rows={4}
+                  placeholder="onboarding automation, product analytics"
+                  className={textareaWithIconClass}
+                />
+              </div>
+            </FormField>
+
+            <FormField label="Competitors" className="md:col-span-2 xl:col-span-4">
+              <div className="relative">
+                <ControlIcon icon={Users} />
+                <textarea
+                  name="competitors"
+                  value={startupValues.competitors}
+                  onChange={(event) => updateValue("competitors", event.target.value)}
+                  disabled={researchLocked}
+                  rows={5}
+                  placeholder="competitor.com&#10;another competitor"
+                  className={textareaWithIconClass}
+                />
+              </div>
+            </FormField>
           </div>
-        </SetupSectionCard>
+        </section>
       </div>
 
       {includeBaseline ? (
         <section
           ref={baselineRef}
           className={clsx(
-            "border-t border-gray-100 bg-gradient-to-b from-white to-slate-50/80 py-8",
+            "border-t border-gray-100 bg-white py-8",
             embedded ? "" : "px-6 lg:px-8",
             focusSection === "baseline" && "scroll-mt-28",
           )}
         >
-          <BaselineOverviewCard
-            score={baselineScore}
-            band={baselineBand}
-            domain={baselineDomain}
-            collectedLabel={baselineCollectedLabel}
-            status={<BaselineStatusPill baseline={effectiveBaseline} active={baselineActive} />}
-          />
+          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_344px] lg:items-start">
+            <div>
+              <h2 className="text-2xl font-black tracking-normal text-gray-950 sm:text-3xl">Your website baseline</h2>
+              <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
+                This snapshot shows your site&apos;s current SEO and visibility before we publish your first article.
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-bold text-gray-600">
+                <span className="inline-flex min-w-0 items-center gap-2">
+                  <Globe2 className="h-4 w-4 shrink-0 text-violet-600" />
+                  <span className="truncate text-gray-950">{baselineDomain}</span>
+                </span>
+                <span className="hidden h-4 w-px bg-gray-200 sm:block" />
+                <span>{baselineCollectedLabel === "Not collected yet" ? baselineCollectedLabel : `Collected ${baselineCollectedLabel}`}</span>
+                <BaselineStatusPill baseline={effectiveBaseline} active={baselineActive} />
+              </div>
+            </div>
 
-          <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.92fr)]">
-            <BaselineActionCard
-              step="1"
-              title="Connect Google Search Console"
-              description="Optional, but useful for clicks, impressions, and verified search query data."
-              icon={Globe2}
-              status={
-                hasGoogleBaselineScopes ? (
+            <div className="rounded-xl border border-violet-100 bg-violet-50/70 p-5 shadow-sm">
+              <div className="flex gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white text-violet-700 shadow-sm">
+                  <BarChart3 className="h-6 w-6" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-black text-gray-950">Why a baseline?</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                    A baseline lets us show real growth after your articles go live. You can always re-run it later.
+                  </p>
+                  <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                    Learn more <ArrowRight className="h-4 w-4" />
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 xl:grid-cols-[1.08fr_1.08fr_.92fr]">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-700 text-sm font-black text-white shadow-sm">1</span>
+                  <div className="min-w-0">
+                    <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
+                    <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                      Get the most accurate baseline by connecting your Search Console account.
+                    </p>
+                  </div>
+                </div>
+                {hasGoogleBaselineScopes ? (
                   <span className="inline-flex shrink-0 items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black text-emerald-700 ring-1 ring-emerald-100">
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Connected
                   </span>
-                ) : null
-              }
-            >
-              <div className="flex flex-wrap items-center gap-3">
+                ) : null}
+              </div>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
                 {hasGoogleBaselineScopes ? (
                   <button
                     type="button"
@@ -2203,37 +1987,28 @@ export default function VibeMarketingStartupBaselineSetup({
                     <ExternalLink className="h-3.5 w-3.5" />
                   </a>
                 ) : (
-                  <span className="rounded-full bg-gray-50 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                  <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
                     Search Console can be skipped
                   </span>
                 )}
               </div>
-              {googleTrafficTechnicalMessage ? (
-                <div className="mt-4">
-                  <CollapsibleTechnicalNotice summary={googleTrafficSummary} details={googleTrafficTechnicalMessage} tone="amber" />
-                </div>
-              ) : (
-                <p className="mt-3 text-xs font-bold leading-5 text-gray-500">{googleTrafficSummary}</p>
-              )}
-            </BaselineActionCard>
+              <p className="mt-3 text-xs font-bold leading-5 text-gray-500">{googleTrafficMessage}</p>
+            </div>
 
-            <BaselineActionCard
-              step="2"
-              title="Generate baseline snapshot"
-              description="Collect the latest metrics for SEO health, AI visibility, authority, and traffic."
-              icon={BarChart3}
-            >
-              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
-                <div className="min-w-0 rounded-xl bg-gray-50 px-4 py-3 ring-1 ring-gray-100">
-                  <p className="truncate text-sm font-black text-gray-950">{baselineDomain}</p>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
-                  <p className="mt-1 text-xs font-semibold text-gray-500">
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <div className="flex items-start gap-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-black text-violet-700 shadow-sm">2</span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black text-gray-950">Generate baseline snapshot</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
+                    We&apos;ll collect the latest data and calculate your starting metrics across SEO, visibility, and traffic.
+                  </p>
+                  <p className="mt-4 text-sm font-black text-gray-950">{baselineDomain}</p>
+                  <p className="mt-1 text-sm font-semibold text-gray-600">{baselineSummaryText(effectiveBaseline.summary)}</p>
+                  <p className="mt-2 text-xs font-semibold text-gray-500">
                     Last updated: {baselineCollectedLabel}
                     {effectiveBaseline.stale ? " · stale" : ""}
                   </p>
-                </div>
-                <div className="hidden rounded-xl border border-violet-100 bg-white p-3 shadow-sm md:block">
-                  <BaselineComparisonChart />
                 </div>
               </div>
               <div className="mt-5 flex flex-wrap gap-3">
@@ -2250,21 +2025,22 @@ export default function VibeMarketingStartupBaselineSetup({
                   type="button"
                   onClick={skipBaseline}
                   disabled={skipBaselinePending}
-                  className="inline-flex items-center gap-2 rounded-xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-black text-gray-600 transition hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-transparent bg-transparent px-4 py-2.5 text-sm font-black text-gray-600 transition hover:bg-white disabled:opacity-50"
                 >
                   Skip for now
                 </button>
               </div>
-            </BaselineActionCard>
+            </div>
+
+            <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+              <BaselineComparisonChart />
+              <p className="mt-3 text-sm font-semibold leading-6 text-gray-600">We compare future results to this baseline.</p>
+            </div>
           </div>
 
-          {baselineErrorSummary ? (
-            <div className="mt-4">
-              <CollapsibleTechnicalNotice
-                summary={baselineErrorSummary}
-                details={looksTechnical(rawBaselineError) ? rawBaselineError : null}
-                tone="rose"
-              />
+          {baselineStartData?.error || googleBaselineFetcher.data?.error || skipBaselineFetcher.data?.error ? (
+            <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
+              {baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error}
             </div>
           ) : null}
 
@@ -2284,69 +2060,44 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           ) : null}
 
-          <div className="mt-5 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm" id="baseline-scorecard">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-black text-gray-950">Baseline scorecard</p>
-                <MetricInfoTooltip label="Baseline scorecard" body={metricHelpText("Baseline scorecard")} />
-              </div>
-              <details className="rounded-xl bg-gray-50 px-4 py-2 text-sm font-semibold text-gray-600 ring-1 ring-gray-100">
-                <summary className="cursor-pointer font-black text-violet-700">How scores are calculated</summary>
-                <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                  {[
-                    { color: "bg-emerald-500", range: "80-100", label: "Strong" },
-                    { color: "bg-orange-500", range: "50-79", label: "Fair" },
-                    { color: "bg-rose-500", range: "0-49", label: "Needs work" },
-                  ].map((item) => (
-                    <div key={item.range} className="flex items-center gap-2 text-xs">
-                      <span className={clsx("h-2.5 w-2.5 rounded-full", item.color)} />
-                      <span className="font-black text-gray-950">{item.label}</span>
-                      <span>{item.range}</span>
-                    </div>
-                  ))}
-                </div>
-              </details>
+          <div className="mt-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm" id="baseline-scorecard">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-black text-gray-950">Baseline scorecard</p>
+              <MetricInfoTooltip label="Baseline scorecard" body={metricHelpText("Baseline scorecard")} />
             </div>
-
-            <div className="mt-5 grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-center">
-              <div className="flex items-center gap-5 rounded-2xl bg-gray-50 p-4 ring-1 ring-gray-100">
-                <BaselineScoreRing score={baselineScore} tone={baselineBand.tone} />
+            <div className="mt-4 grid gap-6 lg:grid-cols-[1.1fr_1fr_1.5fr] lg:items-center">
+              <div className="flex items-center gap-5">
                 <div>
-                  <p className="text-sm font-semibold text-gray-600">Overall score</p>
-                  <div className="mt-2 flex items-end gap-1">
+                  <p className="text-sm font-semibold text-gray-600">Overall baseline score</p>
+                  <div className="mt-2 flex items-end gap-2">
                     <span className="text-5xl font-black text-gray-950">{baselineScore === null ? "-" : baselineScore}</span>
-                    {baselineScore !== null ? <span className="pb-2 text-sm font-black text-gray-500">/100</span> : null}
+                    <span className="pb-2 text-sm font-black text-gray-500">out of 100</span>
                   </div>
                 </div>
+                <BaselineScoreRing score={baselineScore} tone={baselineBand.tone} />
               </div>
 
-              <div>
-                <p
-                  className={clsx(
-                    "text-2xl font-black",
-                    baselineBand.tone === "amber" && "text-orange-600",
-                    baselineBand.tone === "emerald" && "text-emerald-600",
-                    baselineBand.tone === "rose" && "text-rose-600",
-                    baselineBand.tone === "slate" && "text-slate-600",
-                    baselineBand.tone === "violet" && "text-violet-700",
-                    baselineBand.tone === "sky" && "text-sky-700",
-                  )}
-                >
-                  {baselineBand.label}
+              <div className="border-gray-100 lg:border-l lg:pl-6">
+                <p className={clsx("text-2xl font-black", baselineBand.tone === "amber" ? "text-orange-600" : baselineBand.tone === "emerald" ? "text-emerald-600" : baselineBand.tone === "rose" ? "text-rose-600" : "text-slate-600")}>{baselineBand.label}</p>
+                <p className="mt-3 text-sm font-semibold leading-6 text-gray-600">{baselineBand.description}</p>
+                <p className="mt-3 inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                  How scores are calculated <ArrowRight className="h-4 w-4" />
                 </p>
-                <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">{baselineBand.description}</p>
-                <div className="mt-4 grid gap-3 text-xs font-bold text-gray-600 sm:grid-cols-3">
-                  {[
-                    "Publish articles",
-                    "Measure changes",
-                    "Compare growth",
-                  ].map((item) => (
-                    <div key={item} className="flex items-center gap-2 rounded-xl bg-gray-50 px-3 py-2 ring-1 ring-gray-100">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-700" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
+              </div>
+
+              <div className="space-y-4 border-gray-100 lg:border-l lg:pl-6">
+                {[
+                  { color: "bg-emerald-500", range: "80-100", label: "Strong", detail: "You're well positioned to rank." },
+                  { color: "bg-orange-500", range: "50-79", label: "Fair", detail: "You're on the right track with room to grow." },
+                  { color: "bg-rose-500", range: "0-49", label: "Needs work", detail: "Important areas need attention." },
+                ].map((item) => (
+                  <div key={item.range} className="grid grid-cols-[18px_70px_88px_minmax(0,1fr)] items-center gap-3 text-sm">
+                    <span className={clsx("h-3 w-3 rounded-full", item.color)} />
+                    <span className="font-semibold text-gray-700">{item.range}</span>
+                    <span className="font-black text-gray-950">{item.label}</span>
+                    <span className="min-w-0 text-xs font-semibold text-gray-500">{item.detail}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
