@@ -7,16 +7,15 @@ import {
   ArrowPathIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  CodeBracketIcon,
   InformationCircleIcon,
   LightBulbIcon,
   MagnifyingGlassIcon,
-  PlayIcon,
   RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import {
   CustomTopicDecisionCard,
@@ -174,21 +173,6 @@ function createStepForWorkflowStep(stepId: string | null | undefined): VibeMarke
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
-}
-
-function githubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  return String(
-    githubRepos.connectionState ??
-      githubRepos.connection_state ??
-      bootstrap.settings.githubConnectionState ??
-      githubRepos.status ??
-      "",
-  ).trim();
-}
-
-function isGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  const state = githubConnectionState(githubRepos, bootstrap).toLowerCase();
-  return isGithubPublishingReady(bootstrap) || state === "connected" || state === "already_connected" || Boolean(githubRepos.repos?.length || githubRepos.repositories?.length);
 }
 
 function resultObject(value: unknown): Record<string, unknown> {
@@ -652,8 +636,6 @@ export default function FounderToolsMarketingCreate() {
     githubRepoOptions[0]?.fullName ??
     "";
   const [repoSelection, setRepoSelection] = useState(selectedGithubRepo);
-  const githubConnected = isGithubConnected(githubRepos, bootstrap);
-  const githubStateLabel = githubConnectionState(githubRepos, bootstrap).replace(/_/g, " ") || (githubConnected ? "connected" : "not connected");
   const latestScanNeedsSetupApproval = isScanAwaitingSetupApproval(latestScan);
   const latestScanSetupRunId = latestScan ? setupRunIdForRun(latestScan) : "";
   const latestScanIsConfirmed = latestScan?.status === "completed" || Boolean(bootstrap.checks.scaffold?.passed);
@@ -718,126 +700,16 @@ export default function FounderToolsMarketingCreate() {
 
           {activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem" ? (
             <>
-              <PanelHeader
-                title="Connect repo & article system"
-                description="Choose the GitHub repository, tell us where articles live, then scan before any setup or upgrade patch is approved."
-                passed={Boolean(bootstrap.checks.scaffold?.passed)}
-                explainer={STEP_EXPLAINERS.articleSystem}
+              <ArticleSystemConnectionPanel
+                bootstrap={bootstrap}
+                githubRepos={githubRepos}
+                isSubmitting={isSubmitting}
+                repoSelection={repoSelection}
+                onRepoSelectionChange={setRepoSelection}
+                articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
+                connectionError={githubConnectError}
+                framed={false}
               />
-
-              {!githubConnected ? (
-                <div className="rounded-xl border border-violet-100 bg-violet-50/40 p-5">
-                  <div className="grid gap-4 lg:grid-cols-3">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Why connect GitHub</p>
-                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
-                        Content Factory needs read access to understand how this website stores articles before it can publish safely.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">What the agent will do</p>
-                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
-                        It scans routes and support files, then drafts setup changes on a review branch only after you approve.
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Your control</p>
-                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">
-                        Nothing is merged or published until you inspect the hosted preview and approve the final step.
-                      </p>
-                    </div>
-                  </div>
-                  <Form method="POST" className="mt-5">
-                    <input type="hidden" name="intent" value="connect-github" />
-                    <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
-                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
-                      Connect GitHub
-                    </button>
-                  </Form>
-                  {githubConnectError ? (
-                    <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
-                      {githubConnectError}
-                    </div>
-                  ) : null}
-                </div>
-              ) : (
-                <>
-                  <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
-                    <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
-                      <p className="text-sm font-black text-gray-950">GitHub connection</p>
-                      <p className="mt-1 text-sm font-semibold text-gray-600">
-                        {bootstrap.settings.githubRepo ? `Connected to ${bootstrap.settings.githubRepo}.` : "GitHub is connected. Choose the website repository before scanning."}
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase text-emerald-700">
-                          {githubStateLabel}
-                        </span>
-                        {githubRepos.error ? <span className="rounded-full bg-red-50 px-3 py-1 text-xs font-black text-red-700">Repo list unavailable</span> : null}
-                      </div>
-                    </div>
-
-                    <Form method="POST" className="rounded-xl border border-gray-200 bg-white p-4">
-                      <input type="hidden" name="intent" value="connect-github" />
-                      {repoSelection ? <input type="hidden" name="githubRepo" value={repoSelection} /> : null}
-                      <p className="text-sm font-black text-gray-950">GitHub access</p>
-                      <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                        Reconnect if the repo list is missing, stale, or the GitHub App needs access to another repository.
-                      </p>
-                      <button type="submit" disabled={isSubmitting} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-60">
-                        {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
-                        Reconnect GitHub
-                      </button>
-                    </Form>
-                  </div>
-
-                  <Form method="POST" className="mt-5 space-y-5 rounded-xl border border-violet-100 bg-violet-50/30 p-4">
-                    <input type="hidden" name="intent" value="start-scan" />
-                    <div className="grid gap-4 lg:grid-cols-2">
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-bold text-gray-700">Repository</span>
-                        {githubRepoOptions.length ? (
-                          <select
-                            name="githubRepo"
-                            value={repoSelection}
-                            onChange={(event) => setRepoSelection(event.target.value)}
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                          >
-                            {githubRepoOptions.map((repo) => (
-                              <option key={repo.fullName} value={repo.fullName}>
-                                {repo.fullName}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <input
-                            name="githubRepo"
-                            value={repoSelection}
-                            onChange={(event) => setRepoSelection(event.target.value)}
-                            placeholder="owner/repo"
-                            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                          />
-                        )}
-                      </label>
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-bold text-gray-700">Where should articles or blog posts live on this website?</span>
-                        <input
-                          name="articleSurfaceUrl"
-                          required
-                          placeholder="https://www.mlai.au/articles or /articles"
-                          className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                        />
-                        <span className="mt-2 block text-xs font-semibold text-gray-500">
-                          We verify this route against the repo before drafting any setup preview.
-                        </span>
-                      </label>
-                    </div>
-                    <button type="submit" disabled={isSubmitting || !repoSelection} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                      Scan repository
-                    </button>
-                  </Form>
-                </>
-              )}
 
               {latestScan ? (
                 <div className="mt-5 space-y-4">
