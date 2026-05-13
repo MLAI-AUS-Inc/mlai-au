@@ -263,7 +263,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     ...listFromUnknown(payload.seedKeywords),
     ...listFromUnknown(payload.seed_keywords),
   ];
-  const seedKeywords = explicitSeedKeywords.length ? explicitSeedKeywords : groups.flatMap((group) => group.keywords);
+  const seedKeywords = explicitSeedKeywords;
   const profileFields = autofillProfileFields(payload.profileFields ?? payload.profile_fields);
   return {
     partial: Boolean(payload.partial),
@@ -1229,7 +1229,7 @@ function ProfileResearchProgressCard({
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-violet-800">
               <span>{sourceCount} sources reviewed</span>
               <span>{competitorCount} competitors found</span>
-              <span>{seedKeywordCount} keywords generated</span>
+              <span>{seedKeywordCount} high-fit keywords selected</span>
             </div>
           ) : null}
           {autofill?.warnings?.length ? <p className="mt-2 text-xs font-semibold text-amber-700">{autofill.warnings[0]}</p> : null}
