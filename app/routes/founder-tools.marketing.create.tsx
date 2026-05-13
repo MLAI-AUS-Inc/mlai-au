@@ -15,6 +15,7 @@ import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
+import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -221,6 +222,26 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
+function runResultValue(run: VibeMarketingRunSummary | null | undefined, key: string): unknown {
+  if (!run) return undefined;
+  if (run.result?.[key] !== undefined) return run.result[key];
+  const nested = resultObject(run.result?.result);
+  return nested[key];
+}
+
+function scanRunHasPendingArticleSystemSetup(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
+  const purpose = String(runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? "").trim();
+  const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
+  return (
+    purpose === "setup" ||
+    Boolean(runResultValue(run, "pending_article_system_setup")) ||
+    Boolean(runResultValue(run, "article_surface_hint")) ||
+    requestedAction === "article_system_setup" ||
+    requestedAction === "scaffold_publish_route"
+  );
+}
+
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
@@ -247,10 +268,13 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
   const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
   const contentOnlyAllowedStep = ["research", "chooseArticle"].includes(requested);
   const repoArticleAllowedStep = ["github", "scan", "articleSystem"].includes(requested);
+  const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
+  const articleSystemSetupAllowedStep = scanRunHasPendingArticleSystemSetup(latestScan) && ["writeCheck", "editArticle", "reviewPublish"].includes(requested);
 
   if (
     requestedWorkflowStep?.status === "locked" &&
     !repoArticleAllowedStep &&
+    !articleSystemSetupAllowedStep &&
     !(contentOnlyAllowedStep && bootstrap.checks.baseline?.passed && !isGithubPublishingReady(bootstrap))
   ) {
     return requiredStep;
@@ -411,17 +435,46 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-scan") {
+      const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
       await startVibeMarketingScan(env, request, {
         githubRepo: stringFromForm(formData, "githubRepo"),
         github_repo: stringFromForm(formData, "githubRepo"),
-        articleSurfaceMode: "existing",
-        article_surface_mode: "existing",
-        articleSurfaceUrl: stringFromForm(formData, "articleSurfaceUrl"),
-        article_surface_url: stringFromForm(formData, "articleSurfaceUrl"),
+        scanPurpose,
+        scan_purpose: scanPurpose,
+        articleSurfaceMode: scanPurpose === "inventory" ? "not_sure" : "existing",
+        article_surface_mode: scanPurpose === "inventory" ? "not_sure" : "existing",
+        ...(scanPurpose === "inventory"
+          ? {}
+          : {
+              articleSurfaceUrl: stringFromForm(formData, "articleSurfaceUrl"),
+              article_surface_url: stringFromForm(formData, "articleSurfaceUrl"),
+            }),
         autoSetupPreview: false,
         auto_setup_preview: false,
       });
       return redirect("/founder-tools/marketing/create?step=scan");
+    }
+
+    if (intent === "confirm-article-surface" || intent === "create-article-surface") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl");
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
+      if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
+      await startVibeMarketingScan(env, request, {
+        githubRepo,
+        github_repo: githubRepo,
+        scanPurpose: "setup",
+        scan_purpose: "setup",
+        articleSurfaceMode: intent === "create-article-surface" ? "none" : "existing",
+        article_surface_mode: intent === "create-article-surface" ? "none" : "existing",
+        articleSurfaceUrl,
+        article_surface_url: articleSurfaceUrl,
+        sourceScanRunId: stringFromForm(formData, "sourceScanRunId"),
+        source_scan_run_id: stringFromForm(formData, "sourceScanRunId"),
+        autoSetupPreview: false,
+        auto_setup_preview: false,
+      });
+      return redirect("/founder-tools/marketing/create?step=writeCheck");
     }
 
     if (intent === "retry-scan" || intent === "cancel-scan") {
@@ -532,6 +585,7 @@ function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (intent === "build-article-system-preview") return "articleSystem";
   if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
   if (intent === "start-scan") return "scan";
+  if (intent === "confirm-article-surface" || intent === "create-article-surface") return "writeCheck";
   if (intent === "save-article-system") return "articleSystem";
   if (intent === "start-discovery") return "research";
   if (intent === "start-article") return "chooseArticle";
@@ -628,6 +682,8 @@ export default function FounderToolsMarketingCreate() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
+  const pendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
+  const pendingArticleSystemSetupRunId = pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "";
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
   const latestContentPackage = latestArticle?.contentPackage ?? bootstrap.publishEvidence?.contentPackage ?? null;
@@ -744,6 +800,7 @@ export default function FounderToolsMarketingCreate() {
                 connectionError={githubConnectError}
                 scanRun={latestScan}
                 framed={false}
+                autoStartInventoryScan
               />
 
               {!githubReadyForPublishing ? (
@@ -919,6 +976,13 @@ export default function FounderToolsMarketingCreate() {
             <>
               <PanelHeader
                 title={
+                  pendingArticleSystemScan
+                    ? activeStep === "reviewPublish"
+                      ? "Publish article system"
+                      : activeStep === "editArticle"
+                        ? "Review articles page preview"
+                        : "Generate article system"
+                    :
                   activeStep === "editArticle"
                     ? "Edit article"
                     : activeStep === "reviewPublish"
@@ -929,15 +993,56 @@ export default function FounderToolsMarketingCreate() {
                         : "Review content package"
                       : "Write and check"
                 }
-                description={reviewDescription}
+                description={
+                  pendingArticleSystemScan
+                    ? "Build the articles/blog page setup, inspect the Cloudflare preview, then approve the setup PR."
+                    : reviewDescription
+                }
                 passed={
-                  activeStep === "reviewPublish"
+                  pendingArticleSystemScan
+                    ? Boolean(pendingArticleSystemSetupRunId)
+                    : activeStep === "reviewPublish"
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
                     : Boolean(bootstrap.checks.write?.passed)
                 }
                 explainer={STEP_EXPLAINERS[activeStep]}
               />
-              {latestArticle ? (
+              {pendingArticleSystemScan ? (
+                <div className="space-y-4">
+                  <MarketingRunProgressCard run={pendingArticleSystemScan} />
+                  {pendingArticleSystemSetupRunId ? (
+                    <Link
+                      to={`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
+                    >
+                      Open article system preview
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  ) : pendingArticleSystemScan.status === "awaiting_confirmation" || pendingArticleSystemScan.status === "awaiting_approval" || pendingArticleSystemScan.status === "approval_required" ? (
+                    <Form method="POST">
+                      <input type="hidden" name="scanRunId" value={pendingArticleSystemScan.runId} />
+                      <button
+                        type="submit"
+                        name="intent"
+                        value="build-article-system-preview"
+                        disabled={isSubmitting}
+                        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+                      >
+                        {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
+                        Generate article system preview
+                      </button>
+                    </Form>
+                  ) : (
+                    <Link
+                      to={`/founder-tools/marketing/runs/${pendingArticleSystemScan.runId}`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
+                    >
+                      Open setup scan
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </Link>
+                  )}
+                </div>
+              ) : latestArticle ? (
                 <div className="space-y-4">
                   {latestContentPackage ? (
                     <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-900">

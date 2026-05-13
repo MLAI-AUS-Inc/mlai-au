@@ -285,6 +285,12 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
         asNullableString(settings.article_delivery_mode_effective) ??
         null,
       githubRepo: asNullableString(settings.githubRepo) ?? asNullableString(settings.github_repo),
+      pendingArticleSystemSetup:
+        settings.pendingArticleSystemSetup && typeof settings.pendingArticleSystemSetup === "object"
+          ? (settings.pendingArticleSystemSetup as Record<string, unknown>)
+          : settings.pending_article_system_setup && typeof settings.pending_article_system_setup === "object"
+            ? (settings.pending_article_system_setup as Record<string, unknown>)
+            : null,
       dailyDiscoveryEnabled: Boolean(settings.dailyDiscoveryEnabled ?? settings.daily_discovery_enabled),
       dailyDiscoveryPriority: Number(settings.dailyDiscoveryPriority ?? 0) || 0,
       defaultTimezone: asNullableString(settings.defaultTimezone) ?? asNullableString(settings.default_timezone),
@@ -823,6 +829,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
     articleDeliveryMode: "review_draft",
     articleDeliveryModeEffective: "review_draft",
     githubRepo: null,
+    pendingArticleSystemSetup: null,
     dailyDiscoveryEnabled: false,
     githubConnectionState: null,
   },
