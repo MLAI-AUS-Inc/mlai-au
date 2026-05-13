@@ -10,6 +10,7 @@ VITE_GOOGLE_CLIENT_ID=
 VITE_DEV_AUTH_BYPASS=false
 # Local full stub mode: set to true to skip auth and stub backend API responses on localhost.
 VITE_STUB_BACKEND=false
+VITE_ENABLE_FOUNDER_TOOLS_DISCOVER=false
 PRIVATE_HUMANITIX_API_KEY=
 PUBLIC_HUMANITIX_API_KEY=
 LUMA_API_KEY=

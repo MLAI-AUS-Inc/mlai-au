@@ -555,10 +555,22 @@
 
 /* ── Past update row (collapsed) ──────────────────────────── */
 
-.vr-scope .vr-past-row {
+.vr-scope .vr-past-card {
   background: var(--vr-color-bg);
   border: 1px solid var(--vr-color-border);
   border-radius: var(--vr-radius-lg);
+  overflow: hidden;
+  box-shadow: var(--vr-shadow-sm);
+}
+
+.vr-scope .vr-past-card.is-expanded {
+  box-shadow: var(--vr-shadow-md);
+}
+
+.vr-scope .vr-past-row {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -571,8 +583,7 @@
 }
 
 .vr-scope .vr-past-row:hover {
-  box-shadow: var(--vr-shadow-md);
-  transform: translateY(-1px);
+  background: rgba(0, 128, 128, 0.04);
 }
 
 .vr-scope .vr-past-left {
@@ -612,6 +623,33 @@
   color: var(--vr-color-text-sub);
   font-size: 18px;
   line-height: 1;
+  transition: transform 0.15s ease;
+}
+
+.vr-scope .vr-past-arrow.is-expanded {
+  transform: rotate(90deg);
+}
+
+.vr-scope .vr-past-body {
+  border-top: 1px solid var(--vr-color-border);
+  padding: 18px 20px 20px;
+}
+
+.vr-scope .vr-past-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--vr-color-text-sub);
+  font-size: var(--vr-font-size-sm);
+  flex-wrap: wrap;
+}
+
+.vr-scope .vr-past-footer {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--vr-color-border);
 }
 
 /* ── Badges ───────────────────────────────────────────────── */
@@ -650,6 +688,39 @@
   background: var(--vr-color-surface);
   color: var(--vr-color-text-mid);
   border: 1px solid var(--vr-color-border-md);
+}
+
+/* Investor card grid */
+.vr-scope .vr-investor-card {
+  border: 1px solid var(--vr-color-border);
+  box-shadow: var(--vr-shadow-sm);
+  transition:
+    transform 0.28s ease-out,
+    box-shadow 0.28s ease-out,
+    border-color 0.28s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover {
+  transform: scale(1.008);
+  box-shadow: var(--vr-shadow-md);
+  border-color: rgba(0, 128, 128, 0.24);
+}
+
+.vr-scope .vr-investor-card-banner {
+  transition: transform 0.5s ease-out;
+  will-change: transform;
+}
+
+.vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+  transform: scale(1.015);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vr-scope .vr-investor-card:hover,
+  .vr-scope .vr-investor-card:hover .vr-investor-card-banner {
+    transform: none;
+  }
 }
 
 /* ── Empty-state dashboard hero preview ───────────────────── */

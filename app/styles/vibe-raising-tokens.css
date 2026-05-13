@@ -68,9 +68,11 @@
   --vr-color-border:    var(--vr-palette-gray-soft);
   --vr-color-border-md: var(--vr-palette-teal-soft);
   --vr-color-text:      var(--vr-color-neutral-900);
+  --vr-color-text-strong: var(--vr-color-neutral-900);
   --vr-color-text-mid:  var(--vr-color-neutral-700);
   --vr-color-text-sub:  var(--vr-color-neutral-500);
   --vr-color-primary:   var(--vr-color-brand-teal);
+  --vr-color-primary-dark: var(--vr-palette-teal);
   --vr-color-primary-contrast: #FFFFFF;
   --vr-color-primary-soft: rgba(0, 128, 128, 0.12);
   --vr-color-secondary: var(--vr-color-brand-blue);
@@ -84,6 +86,7 @@
   --vr-color-shell-sidebar: var(--vr-palette-black);
   --vr-color-shell-active: var(--vr-palette-mint);
   --vr-color-shell-active-text: var(--vr-palette-black);
+  --vr-color-shell-active-accent: var(--vr-palette-black);
   --vr-color-shell-hover: rgba(0, 255, 215, 0.14);
   --vr-color-shell-muted: var(--vr-palette-gray-soft);
 

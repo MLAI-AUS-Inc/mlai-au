@@ -7,6 +7,7 @@ import {
     getOptionalVibeRaisingContext,
     getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
+import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
 import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -815,25 +816,128 @@ function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
     );
 }
 
-function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => void }) {
+function VRPastUpdateRow({
+    update,
+    user,
+    expanded,
+    onToggle,
+}: {
+    update: any;
+    user: any;
+    expanded: boolean;
+    onToggle: () => void;
+}) {
     const previewSource = update.highlights || update.challenges || "";
     const preview = previewSource.length > 0
         ? (previewSource.split(/(?<=\.)\s+/)[0] || previewSource).slice(0, 80) + (previewSource.length > 80 ? "…" : "")
         : "No content yet";
+    const highlights = splitItems(update.highlights || "");
+    const challenges = splitItems(update.challenges || "");
+    const asks = splitItems(update.asks || "");
+    const learnings = splitItems(update.learnings || "");
+    const next30Days = splitItems(update.next30Days || "");
+
     return (
-        <button type="button" className="vr-past-row" onClick={onClick}>
-            <div className="vr-past-left">
-                <span className="vr-past-dot" />
-                <div>
-                    <div className="vr-past-month">{update.month}</div>
-                    <div className="vr-past-preview">{preview}</div>
+        <div className={clsx("vr-past-card", expanded && "is-expanded")}>
+            <button type="button" className="vr-past-row" onClick={onToggle} aria-expanded={expanded}>
+                <div className="vr-past-left">
+                    <span className="vr-past-dot" />
+                    <div>
+                        <div className="vr-past-month">{update.month}</div>
+                        <div className="vr-past-preview">{preview}</div>
+                    </div>
                 </div>
-            </div>
-            <div className="vr-past-right">
-                <span className="vr-badge vr-badge-teal">Sent</span>
-                <span className="vr-past-arrow" aria-hidden="true">›</span>
-            </div>
-        </button>
+                <div className="vr-past-right">
+                    <span className="vr-badge vr-badge-teal">Sent</span>
+                    <span className={clsx("vr-past-arrow", expanded && "is-expanded")} aria-hidden="true">›</span>
+                </div>
+            </button>
+
+            {expanded ? (
+                <div className="vr-past-body">
+                    <div className="vr-past-meta">
+                        <span>{format(new Date(update.date), "MMMM d, yyyy")}</span>
+                        <Link
+                            to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                            className="inline-flex items-center gap-1.5 text-sm font-medium"
+                            style={{ color: "var(--vr-color-text-mid)" }}
+                        >
+                            <PencilSquareIcon className="h-4 w-4" />
+                            Edit
+                        </Link>
+                    </div>
+
+                    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                        {update.metrics?.revenue ? (
+                            <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
+                        ) : null}
+                        {update.metrics?.users ? (
+                            <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
+                        ) : null}
+                        {update.metrics?.runway ? (
+                            <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
+                        ) : null}
+                        {update.metrics?.mrr ? (
+                            <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
+                        ) : null}
+                        {update.metrics?.burnRate ? (
+                            <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
+                        ) : null}
+                        {update.metrics?.monthlyCosts ? (
+                            <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
+                        ) : null}
+                    </div>
+
+                    <VRUpdateSection
+                        icon={SparklesIcon}
+                        iconColorVar="--vr-color-warning"
+                        label="Key Highlights"
+                        items={highlights}
+                    />
+                    <VRUpdateSection
+                        icon={ExclamationCircleIcon}
+                        iconColorVar="--vr-color-brand-orange"
+                        label="Challenges"
+                        items={challenges}
+                    />
+                    <VRUpdateSection
+                        icon={LightBulbIcon}
+                        iconColorVar="--vr-color-warning"
+                        label="Learnings"
+                        items={learnings}
+                    />
+                    <VRUpdateSection
+                        icon={CalendarIcon}
+                        iconColorVar="--vr-color-primary"
+                        label="Next 30 Days"
+                        items={next30Days}
+                    />
+                    <VRUpdateSection
+                        icon={QuestionMarkCircleIcon}
+                        iconColorVar="--vr-color-primary"
+                        label="Ask from Investors"
+                        items={asks}
+                    />
+
+                    <div className="vr-past-footer">
+                        <div className="vr-ucf-left">
+                            <div className="vr-ucf-avatar">
+                                {(user.fullName || user.companyName || "U")
+                                    .split(" ")
+                                    .map((part: string) => part[0])
+                                    .join("")
+                                    .slice(0, 2)
+                                    .toUpperCase()}
+                            </div>
+                            <div>
+                                <div className="vr-ucf-name">{user.companyName}</div>
+                                <div className="vr-ucf-company">Past investor update</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+        </div>
     );
 }
 
@@ -841,6 +945,7 @@ function VRPastUpdateRow({ update, onClick }: { update: any; onClick?: () => voi
 function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const { triggerAnnouncement } = useOutletContext<{ triggerAnnouncement: (cb?: () => void) => void }>();
     const navigate = useNavigate();
+    const showDiscover = isFounderToolsDiscoverEnabled();
     const firstName = user.fullName.split(' ')[0];
     const hasUpdates = updates.length > 0;
 
@@ -849,10 +954,24 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const isOverdue = daysSinceLast > 21;
     const daysOverdue = daysSinceLast - 21;
 
-    // Current vs past update split for the tabs below
-    const currentUpdate = updates.find(u => u.isCurrent) || updates[0] || null;
-    const pastUpdates = updates.filter(u => u !== currentUpdate);
-    const [activeTab, setActiveTab] = useState<"current" | "past">("current");
+    const now = new Date();
+    const currentUpdate = updates.find((update) => {
+        const updateDate = new Date(update.date);
+        return (
+            !Number.isNaN(updateDate.getTime()) &&
+            updateDate.getMonth() === now.getMonth() &&
+            updateDate.getFullYear() === now.getFullYear()
+        );
+    }) || null;
+    const pastUpdates = currentUpdate
+        ? updates.filter((update) => update !== currentUpdate)
+        : updates;
+    const [activeTab, setActiveTab] = useState<"current" | "past">(
+        currentUpdate ? "current" : "past"
+    );
+    const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
+        currentUpdate ? null : pastUpdates[0]?.id ?? null
+    );
 
     if (!hasUpdates) {
         return (
@@ -974,18 +1093,20 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     </p>
                 </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
-                        onClick={() => navigate("/founder-tools/updates")}
-                    >
-                        Analytics
-                    </button>
+                    {showDiscover ? (
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                            style={{
+                                color: "var(--vr-color-text-mid)",
+                                borderColor: "var(--vr-color-border-md)",
+                                background: "transparent",
+                            }}
+                            onClick={() => navigate("/founder-tools/discover")}
+                        >
+                            Discover Investors
+                        </button>
+                    ) : null}
                     <Link
                         to="/founder-tools/data-sources"
                         className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
@@ -1137,7 +1258,9 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                     <VRPastUpdateRow
                                         key={`${user.activeCompanyId || "default"}-${u.id}`}
                                         update={u}
-                                        onClick={() => navigate(`/founder-tools/updates/create?edit=${u.id}`)}
+                                        user={user}
+                                        expanded={expandedPastUpdateId === u.id}
+                                        onToggle={() => setExpandedPastUpdateId((current) => current === u.id ? null : u.id)}
                                     />
                                 ))
                             ) : (

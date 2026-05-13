@@ -1588,20 +1588,20 @@ const DEV_VIBE_PROFILE_STUB: VibeRaisingProfile | null = {
   organizationName: null,
   companies: [
     {
-      id: "dev-company",
-      name: "Shan AI",
-      domain: "shan.ai",
+      id: "supportsorted-company",
+      name: "SupportSorted (SuSo)",
+      domain: "supportsorted.com.au",
       abn: null,
       location: "Melbourne, Australia",
       founderProfiles: [
-        { name: "Shan Yang", linkedinUrl: "https://www.linkedin.com/in/shan-yang" },
+        { name: "Dr Sam Donegan", linkedinUrl: "https://www.linkedin.com/in/samdonegan" },
       ],
-      founderNames: ["Shan Yang"],
+      founderNames: ["Dr Sam Donegan"],
       stage: "Pre-seed",
       registered: true,
     },
   ],
-  activeCompanyId: "dev-company",
+  activeCompanyId: "supportsorted-company",
 };
 
 export async function getVibeRaisingProfile(
@@ -1769,88 +1769,34 @@ export async function setVibeRaisingActiveCompany(
 // shows realistic content without the backend.
 const DEV_MONTHLY_UPDATES_STUB: VibeRaisingMonthlyUpdate[] = [
   {
-    id: "update-2026-04",
-    isoMonth: "2026-04",
-    month: "April 2026",
-    monthName: "April",
+    id: "supportsorted-update-2026-01",
+    isoMonth: "2026-01",
+    month: "January 2026",
+    monthName: "January",
     year: 2026,
-    date: "2026-04-01T00:00:00.000Z",
+    date: "2026-01-30T00:00:00.000Z",
     status: "ready",
     visibility: "published",
-    publishedAt: "2026-04-01T00:00:00.000Z",
-    summary: "AI workflow automation for mid-market teams, with enterprise pilots converting into paid deployments.",
-    sourceUrl: "https://example.com/dev-update-april",
+    publishedAt: "2026-01-30T00:00:00.000Z",
+    summary:
+      "SupportSorted (SuSo) is an AI-powered referral and matching platform for disability support professionals, allied-health clinics, and care coordinators. We are seeing early product-market resonance, active pilots, and MAP accelerator backing while we focus this quarter on shipping and tightening the core matching loop.",
+    sourceUrl: "https://mlai.au/founder-tools/updates",
     metrics: {
-      revenue: "$62,400 MRR",
-      growth: "+18% MoM",
-      users: "2,140 active",
-      runway: "11 months",
+      revenue: "250+ matches",
+      users: "10k+ professionals",
+      mrr: "12 paying pilots",
+      runway: "MAP cohort",
     },
     highlights:
-      "Closed three enterprise pilots with Melbourne-based firms. Shipped a redesigned onboarding that lifted activation from 41% to 58%.",
+      "Accepted into the Melbourne Accelerator Program (MAP), giving us a five-month runway of mentoring, ecosystem access, and Demo Day preparation.\nRolled out a simpler pricing model across Free, Solo, and Micro tiers, with early-bird discounts live until January 30.\nPilots are active with 3 support coordinators and 10 allied-health clinics, helping us pressure-test matching quality and workflow fit.",
     challenges:
-      "Sales cycle for enterprise is running 6-8 weeks longer than forecast. Hiring a second AE has stalled after two declined offers.",
+      "Referrals across disability support and allied health are still highly manual, so onboarding and habit change takes longer than we want.\nWe have intentionally paused external fundraising for now so the founder can stay focused on product velocity and execution.\nWe still need sharper conversion benchmarks between profile engagement, successful matches, and paid clinic adoption.",
     asks:
-      "Intros to Sydney-based CTOs evaluating internal tooling, and warm leads to senior AEs open to pre-Series A equity.",
+      "Warm intros to support coordinators, allied-health professionals, practice managers, and relevant NDIA contacts.\nFeedback from early-stage healthtech investors on the right KPI set to re-open a pre-seed raise.\nIntroductions to clinics willing to trial a faster referral workflow.",
     learnings:
-      "The strongest activation lift came from guided onboarding, not additional dashboard depth.",
+      "The strongest signal so far is not just profile traffic, but whether support coordinators can quickly trust the match quality and provider availability.\nA narrower, simpler pricing story is easier for clinics to absorb than a feature-heavy packaging model.\nIn this market, workflow reliability and trust matter more than flashy marketplace breadth.",
     next30Days:
-      "Convert two enterprise pilots to paid annual agreements. Restart AE hiring with a narrower candidate profile.",
-  },
-  {
-    id: "update-2026-03",
-    isoMonth: "2026-03",
-    month: "March 2026",
-    monthName: "March",
-    year: 2026,
-    date: "2026-03-01T00:00:00.000Z",
-    status: "sent",
-    visibility: "published",
-    publishedAt: "2026-03-01T00:00:00.000Z",
-    summary: "Analytics v2 increased engagement while the team tested pricing and retention improvements.",
-    metrics: {
-      revenue: "$52,900 MRR",
-      growth: "+12% MoM",
-      users: "1,820 active",
-      runway: "12 months",
-    },
-    highlights:
-      "Launched the v2 analytics dashboard. Early data shows users spending 2.3x longer in-app per session.",
-    challenges:
-      "Churn ticked up to 4.1% as a large cohort from the Q4 promo ended their trial without converting.",
-    asks:
-      "Feedback on our pricing experiment - considering a usage-based tier for teams under 20 seats.",
-    learnings:
-      "Self-serve teams need clearer usage limits before pricing conversations become productive.",
-    next30Days:
-      "Finish pricing interviews and ship the retention prompts for the Q4 promo cohort.",
-  },
-  {
-    id: "update-2026-02",
-    isoMonth: "2026-02",
-    month: "February 2026",
-    monthName: "February",
-    year: 2026,
-    date: "2026-02-01T00:00:00.000Z",
-    status: "sent",
-    visibility: "published",
-    publishedAt: "2026-02-01T00:00:00.000Z",
-    summary: "Healthcare design partnership and engineering hires moved the product toward a vertical AI wedge.",
-    metrics: {
-      revenue: "$47,200 MRR",
-      growth: "+9% MoM",
-      users: "1,620 active",
-      runway: "13 months",
-    },
-    highlights:
-      "Signed our first design partner in healthcare. Team grew from 6 to 8 with two senior engineers joining.",
-    challenges:
-      "Infra costs rose 22% as we scaled the ML inference layer - investigating GPU spot instances.",
-    asks: "Intros to AI infra investors who have conviction on vertical SaaS.",
-    learnings:
-      "Healthcare design partners want workflow ownership more than generic model accuracy claims.",
-    next30Days:
-      "Complete the healthcare workflow prototype and benchmark GPU spot savings.",
+      "Complete the MAP program milestones and tighten the Demo Day narrative.\nGrow from 12 paying professionals to a broader pilot base across support coordinators and clinics.\nLock in pricing conversion benchmarks and prepare to re-open the pre-seed raise once matching KPIs are consistently trending up.",
   },
 ];
 
@@ -1865,18 +1811,19 @@ const DEV_MONTHLY_DRAFTS_STUB: VibeRaisingMonthlyUpdate[] = [
     status: "draft",
     visibility: "private",
     publishedAt: null,
-    summary: "Saved privately while the founder refines metrics and investor asks.",
-    sourceUrl: "https://example.com/private-may-update",
+    summary: "Saved privately while the founder refines MAP milestone progress, pilot signals, and investor asks.",
+    sourceUrl: "https://mlai.au/founder-tools/drafts",
     metrics: {
-      revenue: "$68,100 MRR",
-      activeUsers: "2,480",
-      runway: "10 months",
+      revenue: "300+ matches",
+      users: "11k+ professionals",
+      mrr: "14 paying pilots",
+      runway: "MAP cohort",
     },
-    highlights: "Drafted the topline momentum and captured product usage gains for May.",
-    challenges: "Still refining the enterprise sales narrative before publishing.",
-    asks: "Need two customer intro targets before sending.",
-    learnings: "The onboarding narrative lands better when product usage is shown beside retention.",
-    next30Days: "Finalize the revenue story, tighten asks, and publish once the board pack is ready.",
+    highlights: "Drafted the May topline around MAP progress, pilot expansion, and marketplace match quality.",
+    challenges: "Still refining the conversion benchmark story before publishing.",
+    asks: "Need two clinic introduction targets and feedback on the pre-seed KPI set before sending.",
+    learnings: "Trust in referral quality is still the strongest adoption signal.",
+    next30Days: "Finalize the pilot story, tighten asks, and publish once the MAP update is ready.",
   },
 ];
 
