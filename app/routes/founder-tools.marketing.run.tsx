@@ -1816,7 +1816,11 @@ function PublishAndAutomateDetail({
   const prUrl = publishPrUrlForRun(run);
   const previewUrl = publishPreviewUrlForRun(run);
   const publishChildRunId = stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id");
-  const publishSourceRunId = stringResultValue(run, "source_run_id", "sourceRunId", "review_source_run_id", "reviewSourceRunId");
+  const publishSourceRunId =
+    run.sourceRunId ||
+    stringResultValue(run, "source_run_id", "sourceRunId", "review_source_run_id", "reviewSourceRunId");
+  const publishChildWaitReason =
+    run.publishChildWaitReason || stringResultValue(run, "publish_child_wait_reason", "publishChildWaitReason");
   const publishChildStatus =
     run.publishChildStatus ||
     stringResultValue(run, "publish_child_status", "publishChildStatus") ||
@@ -1825,6 +1829,9 @@ function PublishAndAutomateDetail({
     run.publishChildRecoverable ||
       run.result?.["publish_child_recoverable"] === true ||
       (publishChildRunId === run.runId && run.status === "awaiting_confirmation" && !prUrl && !previewUrl),
+  );
+  const publishChildMissingRemote = Boolean(
+    publishChildRecoverable && /not found in content factory|recorded locally but was not found/i.test(publishChildWaitReason),
   );
   const publishChildRunning = Boolean(
     publishChildStatus === "queued" ||
@@ -1930,7 +1937,9 @@ function PublishAndAutomateDetail({
               <Form method="POST" className="space-y-3">
                 {publishSourceRunId ? <input type="hidden" name="sourceRunId" value={publishSourceRunId} /> : null}
                 <p className="text-sm font-semibold text-gray-600">
-                  The publish run is waiting for confirmation instead of creating a PR. Resume will safely reuse the existing publish run.
+                  {publishChildMissingRemote
+                    ? "The publish run was recorded locally but is missing in Content Factory. Retry will safely recreate the same publish run."
+                    : "The publish run is waiting for confirmation instead of creating a PR. Resume will safely reuse the existing publish run."}
                 </p>
                 <button
                   type="submit"
@@ -1940,7 +1949,7 @@ function PublishAndAutomateDetail({
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
                   {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
-                  Resume publish PR
+                  {publishChildMissingRemote ? "Retry creating PR" : "Resume publish PR"}
                 </button>
               </Form>
             ) : publishChildApprovalRequired ? (
