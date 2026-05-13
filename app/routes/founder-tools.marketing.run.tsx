@@ -6,7 +6,6 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   CheckCircleIcon,
-  CodeBracketIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
   PaperAirplaneIcon,
@@ -17,6 +16,7 @@ import {
 import { clsx } from "clsx";
 
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
@@ -90,21 +90,6 @@ function isArticleGenerationWorkflow(workflow: string | null | undefined) {
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
-}
-
-function githubConnectionState(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  return String(
-    githubRepos.connectionState ??
-      githubRepos.connection_state ??
-      bootstrap.settings.githubConnectionState ??
-      githubRepos.status ??
-      "",
-  ).trim();
-}
-
-function isGithubConnected(githubRepos: VibeMarketingGithubReposResponse, bootstrap: VibeMarketingBootstrap) {
-  const state = githubConnectionState(githubRepos, bootstrap).toLowerCase();
-  return isGithubPublishingReady(bootstrap) || state === "connected" || state === "already_connected" || Boolean(githubRepos.repos?.length || githubRepos.repositories?.length);
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -659,111 +644,21 @@ function ArticleSystemScanFormPanel({
   githubRepos: VibeMarketingGithubReposResponse;
   isSubmitting: boolean;
 }) {
-  const repos = (githubRepos.repos?.length ? githubRepos.repos : githubRepos.repositories ?? [])
-    .map((repo) => repo.fullName || repo.full_name || [repo.owner, repo.name].filter(Boolean).join("/"))
-    .filter(Boolean);
   const selectedRepo =
     run.githubRepo ||
     stringResultValue(run, "github_repo", "githubRepo") ||
-    githubRepos.selectedRepo ||
-    githubRepos.selected_repo ||
-    githubRepos.githubRepo ||
-    githubRepos.github_repo ||
-    bootstrap.settings.githubRepo ||
-    repos.find((repo) => repo.toLowerCase() === "mlai-aus-inc/mlai-au") ||
-    repos[0] ||
     "";
-  const githubConnected = isGithubConnected(githubRepos, bootstrap);
-  const githubStateLabel = githubConnectionState(githubRepos, bootstrap).replace(/_/g, " ") || (githubConnected ? "connected" : "not connected");
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-black text-gray-950">Connect repo & article system</h2>
-          <p className="mt-1 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-            Connect GitHub, choose the repo and public articles/blog route, then scan before setup changes are drafted.
-          </p>
-        </div>
-        <span className={clsx("inline-flex w-fit rounded-full px-3 py-1 text-xs font-black uppercase", githubConnected ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700")}>
-          GitHub {githubStateLabel}
-        </span>
-      </div>
-
-      {!githubConnected ? (
-        <div className="mt-4 rounded-xl border border-violet-100 bg-violet-50/40 p-4">
-          <div className="grid gap-3 lg:grid-cols-3">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Why we need this</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">We scan the website repo to find the exact article route and files.</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">What the agent will do</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">It proposes a setup branch only after the scan confirms what needs to change.</p>
-            </div>
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-wide text-violet-700">Safety</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">Nothing is merged or published until you approve the preview.</p>
-            </div>
-          </div>
-          <Form method="POST" className="mt-4">
-            <input type="hidden" name="intent" value="connect-github" />
-            <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50">
-              {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CodeBracketIcon className="h-4 w-4" />}
-              Connect GitHub
-            </button>
-          </Form>
-        </div>
-      ) : (
-        <>
-          <Form method="POST" className="mt-4 grid gap-4 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-            <input type="hidden" name="intent" value="start-scan" />
-            <label className="block">
-              <span className="mb-2 block text-sm font-black text-gray-950">Repository</span>
-              {repos.length ? (
-                <select name="githubRepo" defaultValue={selectedRepo} className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10">
-                  {repos.map((repo) => <option key={repo} value={repo}>{repo}</option>)}
-                </select>
-              ) : (
-                <input name="githubRepo" defaultValue={selectedRepo} placeholder="owner/repo" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-              )}
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-black text-gray-950">Where should articles or blog posts live on this website?</span>
-              <input name="articleSurfaceUrl" defaultValue={articleSurfaceRouteFromRun(run) || "/articles"} placeholder="/articles" className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-bold text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10" />
-            </label>
-            <button type="submit" disabled={isSubmitting || (repos.length > 0 && !selectedRepo)} className="inline-flex justify-center rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
-              {isSubmitting ? <ArrowPathIcon className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Scan repository
-            </button>
-          </Form>
-          <Form method="POST" className="mt-3">
-            <input type="hidden" name="intent" value="connect-github" />
-            {selectedRepo ? <input type="hidden" name="githubRepo" value={selectedRepo} /> : null}
-            <button type="submit" disabled={isSubmitting} className="text-sm font-black text-violet-700 transition hover:text-violet-900 disabled:opacity-50">
-              Reconnect GitHub
-            </button>
-          </Form>
-        </>
-      )}
-      <div className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-gray-500">
-          {run.stale ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details." : "Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later."}
-        </p>
-        <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-          {run.retryAvailable || run.stale ? (
-            <button type="submit" name="intent" value="retry-scan" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50">
-              <ArrowPathIcon className="h-4 w-4" />
-              Retry scan
-            </button>
-          ) : null}
-          <button type="submit" name="intent" value="cancel-scan" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50">
-            <XCircleIcon className="h-4 w-4" />
-            Cancel scan
-          </button>
-        </Form>
-      </div>
-    </section>
+    <ArticleSystemConnectionPanel
+      bootstrap={bootstrap}
+      githubRepos={githubRepos}
+      isSubmitting={isSubmitting}
+      repoSelection={selectedRepo}
+      articleSurfaceDefault={articleSurfaceRouteFromRun(run) || "/articles"}
+      articleSurfacePlaceholder="/articles"
+      scanRun={run}
+    />
   );
 }
 
