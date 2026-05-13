@@ -193,17 +193,20 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (authUrl) throw redirect(authUrl);
       throw redirect("/founder-tools/marketing/create?step=scan");
     } else if (intent === "add-component-comment") {
-      const comment = await addVibeMarketingComponentComment(env, request, runId, componentCommentPayloadFromForm(formData));
+      const targetRunId = stringFromForm(formData, "targetRunId") || runId;
+      const comment = await addVibeMarketingComponentComment(env, request, targetRunId, componentCommentPayloadFromForm(formData));
       return { ok: true, comment };
     } else if (intent === "update-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
       if (!commentId) return { error: "Comment id is required." };
-      const comment = await updateVibeMarketingComponentComment(env, request, runId, commentId, componentCommentPayloadFromForm(formData));
+      const targetRunId = stringFromForm(formData, "targetRunId") || runId;
+      const comment = await updateVibeMarketingComponentComment(env, request, targetRunId, commentId, componentCommentPayloadFromForm(formData));
       return { ok: true, comment };
     } else if (intent === "delete-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
       if (!commentId) return { error: "Comment id is required." };
-      const componentFeedback = await deleteVibeMarketingComponentComment(env, request, runId, commentId);
+      const targetRunId = stringFromForm(formData, "targetRunId") || runId;
+      const componentFeedback = await deleteVibeMarketingComponentComment(env, request, targetRunId, commentId);
       return { ok: true, componentFeedback };
     } else if (intent === "submit-component-comments") {
       const result = await submitVibeMarketingComponentComments(env, request, runId);
@@ -737,10 +740,14 @@ function ScanSetupApprovalPanel({ run, isSubmitting }: { run: VibeMarketingRunSu
 function ArticleSystemSetupPreviewPanel({
   run,
   sourceRun,
+  selectedComponent,
+  onSelectComponent,
   isSubmitting,
 }: {
   run: VibeMarketingRunSummary;
   sourceRun?: VibeMarketingRunSummary | null;
+  selectedComponent: VibeMarketingComponentManifestItem | null;
+  onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
 }) {
   const setup = articleSystemSetupPayload(run);
@@ -770,7 +777,6 @@ function ArticleSystemSetupPreviewPanel({
     .filter(Boolean)
     .slice(0, 8);
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
-  const feedbackBatchId = `article-system-${setupRunId}-${Date.now().toString(36)}`;
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -790,7 +796,6 @@ function ArticleSystemSetupPreviewPanel({
             ) : null}
           </div>
         </div>
-        {canApprove ? <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve article system" denyLabel="Deny setup" /> : null}
       </div>
 
       <ArticleSystemSurfaceSummary run={source} />
@@ -808,40 +813,100 @@ function ArticleSystemSetupPreviewPanel({
         </div>
       ) : null}
 
-      {previewUrl ? (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-          <iframe
-            title="Article system setup preview"
-            src={previewUrl}
-            className="h-[760px] w-full bg-white"
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
-        </div>
-      ) : (
-        <div className="rounded-xl border border-violet-100 bg-violet-50 px-4 py-5 text-sm font-semibold text-violet-800">
-          The hosted preview is being built. Refreshing this page is safe.
-        </div>
-      )}
-
-      <Form method="POST" className="rounded-xl border border-gray-200 bg-gray-50 p-4">
-        <input type="hidden" name="intent" value="submit-article-system-comments" />
-        <input type="hidden" name="setupRunId" value={setupRunId} />
-        <input type="hidden" name="feedbackBatchId" value={feedbackBatchId} />
-        <label className="block">
-          <span className="mb-2 block text-sm font-black text-gray-950">Review comments</span>
-          <textarea
-            name="reviewComment"
-            rows={3}
-            placeholder="Describe what should change in the articles page setup."
-            className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-          />
-        </label>
-        <button type="submit" disabled={isSubmitting} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-50">
-          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-          Send setup comments
-        </button>
-      </Form>
+      <LivePreviewCommentInspectorPanel
+        run={run}
+        targetRunId={setupRunId}
+        selectedComponent={selectedComponent}
+        onSelectComponent={onSelectComponent}
+        previewUrlFallback={previewUrl}
+        previewTitle="Article system setup preview"
+        reviewTitle="Setup review comments"
+        draftNoun="setup pin"
+        emptyDraftText="0 draft setup pins ready for review."
+        submittedRetryText="Submitted setup comments are ready to retry."
+        waitingBridgeText="Waiting for setup comment bridge"
+        unavailableSlot={<ArticleSystemSetupPreviewUnavailable run={run} previewUrl={previewUrl} />}
+        actionSlot={(reviewState) => {
+          const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
+          const approveDisabled = isSubmitting || needsCommentSubmitFirst;
+          return (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Form method="POST">
+                <input type="hidden" name="setupRunId" value={setupRunId} />
+                <button
+                  type="submit"
+                  name="intent"
+                  value="submit-article-system-comments"
+                  disabled={isSubmitting || !reviewState.canSendRevisionRequest}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  {reviewState.canRetrySubmittedBatch ? "Retry setup comments" : "Send setup comments"}
+                </button>
+              </Form>
+              {canApprove ? (
+                <>
+                  <Form method="POST">
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="deny"
+                      disabled={isSubmitting}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                    >
+                      <XCircleIcon className="h-4 w-4" />
+                      Deny setup
+                    </button>
+                  </Form>
+                  <Form method="POST">
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="approve"
+                      disabled={approveDisabled}
+                      title={needsCommentSubmitFirst ? "Send or clear draft setup comments before approving." : undefined}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                    >
+                      <CheckCircleIcon className="h-4 w-4" />
+                      Approve article system
+                    </button>
+                  </Form>
+                </>
+              ) : null}
+            </div>
+          );
+        }}
+      />
     </section>
+  );
+}
+
+function ArticleSystemSetupPreviewUnavailable({
+  run,
+  previewUrl,
+}: {
+  run: VibeMarketingRunSummary;
+  previewUrl?: string | null;
+}) {
+  const preview = run.livePreview;
+  const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
+  const error = String(preview?.error || run.errors?.[0] || "").trim();
+  const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
+  if (previewUrl) return null;
+  return (
+    <div className={clsx(
+      "rounded-xl border px-4 py-5 text-sm font-semibold",
+      error ? "border-red-200 bg-red-50 text-red-800" : "border-violet-100 bg-violet-50 text-violet-800",
+    )}>
+      <p className="font-black">{error ? "Setup preview could not be prepared" : "Hosted setup preview is being built"}</p>
+      <p className="mt-1">Preview status: {previewStatus}. Refreshing this page is safe.</p>
+      {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
+      {logsUrl ? (
+        <a href={logsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex font-black underline">
+          Open preview build logs
+        </a>
+      ) : null}
+    </div>
   );
 }
 
@@ -1138,20 +1203,69 @@ function reconcileSavedComment(
   return replaced ? next : [...next, savedComment];
 }
 
-function LiveArticlePreviewPanel({
+interface LivePreviewCommentInspectorState {
+  draftComments: VibeMarketingComponentFeedbackComment[];
+  latestBatch: NonNullable<VibeMarketingRunSummary["componentFeedback"]>["latestBatch"] | null;
+  latestBatchStatus: string;
+  hasPendingRevisionBatch: boolean;
+  canRetrySubmittedBatch: boolean;
+  canSendRevisionRequest: boolean;
+  canRenderPreview: boolean;
+  batchId: string;
+  sourceRunId: string;
+}
+
+function LivePreviewCommentInspectorPanel({
   run,
+  targetRunId,
   selectedComponent,
   onSelectComponent,
-  isSubmitting,
+  previewUrlFallback,
+  previewTitle,
+  reviewTitle = "Review comments",
+  draftNoun = "draft pin",
+  emptyDraftText = "0 draft pins ready for revision.",
+  submittedRetryText = "Submitted comments are ready to retry.",
+  waitingBridgeText = "Waiting for comment bridge",
+  actionSlot,
+  unavailableSlot,
 }: {
   run: VibeMarketingRunSummary;
+  targetRunId?: string | null;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
-  isSubmitting: boolean;
+  previewUrlFallback?: string | null;
+  previewTitle: string;
+  reviewTitle?: string;
+  draftNoun?: string;
+  emptyDraftText?: string;
+  submittedRetryText?: string;
+  waitingBridgeText?: string;
+  actionSlot: (state: LivePreviewCommentInspectorState) => ReactNode;
+  unavailableSlot?: ReactNode;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
-  const preview = run.livePreview;
+  const preview = useMemo(() => {
+    const fallbackUrl = String(previewUrlFallback || "").trim();
+    if (run.livePreview) {
+      const previewUrl = run.livePreview.previewUrl || fallbackUrl;
+      return {
+        ...run.livePreview,
+        available: Boolean(run.livePreview.available || previewUrl),
+        previewUrl,
+      };
+    }
+    if (!fallbackUrl) return null;
+    return {
+      available: true,
+      status: "running",
+      previewUrl: fallbackUrl,
+      previewMode: "platform_deployment",
+      inspectorProtocolVersion: null,
+      inspectorMode: null,
+    } as NonNullable<VibeMarketingRunSummary["livePreview"]>;
+  }, [previewUrlFallback, run.livePreview]);
   const canRenderPreview = Boolean(preview?.available && preview.previewUrl);
   const [componentMeasurements, setComponentMeasurements] = useState<Record<string, InspectorComponentMeasurement>>({});
   const [pendingPin, setPendingPin] = useState<PendingCommentPin | null>(null);
@@ -1220,24 +1334,18 @@ function LiveArticlePreviewPanel({
     latestBatch?.id ||
     (typeof run.result?.["feedback_batch_id"] === "string" ? run.result["feedback_batch_id"] : "") ||
     "";
-  const canAcceptRevision =
-    run.workflow === "article_revision" &&
-    run.status === "completed" &&
-    latestBatch?.status !== "accepted" &&
-    Boolean(batchId);
-  const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
-  const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
-  const canAcceptArticleForPublish = Boolean(
-    run.status === "completed" &&
-      run.contentPackage?.contentPackaged &&
-      canRenderPreview &&
-      draftComments.length === 0 &&
-      !canAcceptRevision &&
-      !hasPendingRevisionBatch &&
-      publishStep?.status === "ready" &&
-      acceptArticleIntent,
-  );
   const previewMessageOrigin = useMemo(() => previewOriginFromUrl(preview?.previewUrl), [preview?.previewUrl]);
+  const reviewState: LivePreviewCommentInspectorState = {
+    draftComments,
+    latestBatch,
+    latestBatchStatus,
+    hasPendingRevisionBatch,
+    canRetrySubmittedBatch,
+    canSendRevisionRequest,
+    canRenderPreview,
+    batchId,
+    sourceRunId,
+  };
 
   const sendInspectorCommand = useCallback((message: Record<string, unknown>) => {
     const targetWindow = iframeRef.current?.contentWindow;
@@ -1331,29 +1439,20 @@ function LiveArticlePreviewPanel({
   }, [selectedComponent, sendInspectorCommand]);
 
   return (
-    <section className="space-y-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-lg font-black text-gray-950">Live article preview</h2>
-          <p className="mt-1 text-sm font-semibold text-gray-500">
-            Review the generated article and pin comments directly on sections that need changes.
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-4">
       <div className="space-y-4">
         <div className="sticky top-3 z-20 flex flex-col gap-3 rounded-xl border border-gray-200 bg-white/95 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-gray-950">Review comments</p>
+            <p className="text-sm font-black text-gray-950">{reviewTitle}</p>
             <p className="text-xs font-semibold text-gray-500">
               {draftComments.length > 0
-                ? `${draftComments.length} draft pin${draftComments.length === 1 ? "" : "s"} ready for revision.`
+                ? `${draftComments.length} ${draftNoun}${draftComments.length === 1 ? "" : "s"} ready for review.`
                 : canRetrySubmittedBatch
-                  ? "Submitted comments are ready to retry."
-                  : "0 draft pins ready for revision."}
+                  ? submittedRetryText
+                  : emptyDraftText}
             </p>
             <p className={clsx("mt-1 text-xs font-black", commentModeActive ? "text-emerald-700" : "text-amber-700")}>
-              {commentModeActive ? "Comment mode active" : "Waiting for comment bridge"}
+              {commentModeActive ? "Comment mode active" : waitingBridgeText}
             </p>
             {previewWarnings.length ? (
               <details className="mt-2 text-xs font-semibold text-amber-800">
@@ -1368,49 +1467,7 @@ function LiveArticlePreviewPanel({
               </details>
             ) : null}
           </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {canAcceptArticleForPublish ? (
-              <Form method="POST">
-                <button
-                  type="submit"
-                  name="intent"
-                  value={acceptArticleIntent}
-                  disabled={isSubmitting}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-                >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                  Accept article and continue
-                </button>
-              </Form>
-            ) : null}
-            {canAcceptRevision ? (
-              <Form method="POST">
-                <input type="hidden" name="intent" value="accept-component-revision" />
-                <input type="hidden" name="batchId" value={batchId} />
-                <input type="hidden" name="sourceRunId" value={sourceRunId} />
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-                >
-                  <CheckCircleIcon className="h-4 w-4" />
-                  Accept revised article
-                </button>
-              </Form>
-            ) : null}
-            <Form method="POST">
-              <button
-                type="submit"
-                name="intent"
-                value="submit-component-comments"
-                disabled={isSubmitting || !canSendRevisionRequest}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
-              >
-                {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                {canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
-              </button>
-            </Form>
-          </div>
+          {actionSlot(reviewState)}
         </div>
 
         <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
@@ -1423,7 +1480,7 @@ function LiveArticlePreviewPanel({
             <>
               <iframe
                 ref={iframeRef}
-                title="Live generated article preview"
+                title={previewTitle}
                 src={preview?.previewUrl ?? ""}
                 className="h-[820px] w-full bg-white"
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -1439,6 +1496,7 @@ function LiveArticlePreviewPanel({
                 components={components}
                 measurements={componentMeasurements}
                 pendingPin={pendingPin}
+                targetRunId={targetRunId}
                 openCommentId={openCommentId}
                 onOpenComment={setOpenCommentId}
                 onClearPending={() => setPendingPin(null)}
@@ -1446,9 +1504,112 @@ function LiveArticlePreviewPanel({
                 onSelectComponent={onSelectComponent}
               />
             </>
-          ) : null}
+          ) : (
+            unavailableSlot ?? (
+              <div className="rounded-xl border border-violet-100 bg-violet-50 px-4 py-5 text-sm font-semibold text-violet-800">
+                The hosted preview is being prepared. Refreshing this page is safe.
+              </div>
+            )
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function LiveArticlePreviewPanel({
+  run,
+  selectedComponent,
+  onSelectComponent,
+  isSubmitting,
+}: {
+  run: VibeMarketingRunSummary;
+  selectedComponent: VibeMarketingComponentManifestItem | null;
+  onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
+  isSubmitting: boolean;
+}) {
+  const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
+  const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
+
+  return (
+    <section className="space-y-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className="text-lg font-black text-gray-950">Live article preview</h2>
+          <p className="mt-1 text-sm font-semibold text-gray-500">
+            Review the generated article and pin comments directly on sections that need changes.
+          </p>
+        </div>
+      </div>
+
+      <LivePreviewCommentInspectorPanel
+        run={run}
+        selectedComponent={selectedComponent}
+        onSelectComponent={onSelectComponent}
+        previewTitle="Live generated article preview"
+        actionSlot={(reviewState) => {
+          const canAcceptRevision =
+            run.workflow === "article_revision" &&
+            run.status === "completed" &&
+            reviewState.latestBatch?.status !== "accepted" &&
+            Boolean(reviewState.batchId);
+          const canAcceptArticleForPublish = Boolean(
+            run.status === "completed" &&
+              run.contentPackage?.contentPackaged &&
+              reviewState.canRenderPreview &&
+              reviewState.draftComments.length === 0 &&
+              !canAcceptRevision &&
+              !reviewState.hasPendingRevisionBatch &&
+              publishStep?.status === "ready" &&
+              acceptArticleIntent,
+          );
+          return (
+            <div className="flex flex-col gap-2 sm:flex-row">
+              {canAcceptArticleForPublish ? (
+                <Form method="POST">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value={acceptArticleIntent}
+                    disabled={isSubmitting}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                  >
+                    {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    Accept article and continue
+                  </button>
+                </Form>
+              ) : null}
+              {canAcceptRevision ? (
+                <Form method="POST">
+                  <input type="hidden" name="intent" value="accept-component-revision" />
+                  <input type="hidden" name="batchId" value={reviewState.batchId} />
+                  <input type="hidden" name="sourceRunId" value={reviewState.sourceRunId} />
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                  >
+                    <CheckCircleIcon className="h-4 w-4" />
+                    Accept revised article
+                  </button>
+                </Form>
+              ) : null}
+              <Form method="POST">
+                <button
+                  type="submit"
+                  name="intent"
+                  value="submit-component-comments"
+                  disabled={isSubmitting || !reviewState.canSendRevisionRequest}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+                >
+                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  {reviewState.canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
+                </button>
+              </Form>
+            </div>
+          );
+        }}
+      />
     </section>
   );
 }
@@ -1975,6 +2136,7 @@ function ArticleCommentCanvas({
   components,
   measurements,
   pendingPin,
+  targetRunId,
   openCommentId,
   onOpenComment,
   onClearPending,
@@ -1985,6 +2147,7 @@ function ArticleCommentCanvas({
   components: VibeMarketingComponentManifestItem[];
   measurements: Record<string, InspectorComponentMeasurement>;
   pendingPin: PendingCommentPin | null;
+  targetRunId?: string | null;
   openCommentId: string | null;
   onOpenComment: (id: string | null) => void;
   onClearPending: () => void;
@@ -2011,6 +2174,7 @@ function ArticleCommentCanvas({
   }) {
     const formData = new FormData();
     formData.set("intent", intent);
+    if (targetRunId) formData.set("targetRunId", targetRunId);
     if (options.commentId) formData.set("commentId", options.commentId);
     appendCommentFormFields(formData, options.component, options.body, options.anchor, options.context);
     if (intent === "add-component-comment") {
@@ -2057,6 +2221,7 @@ function ArticleCommentCanvas({
   function deleteComment(commentId: string) {
     const formData = new FormData();
     formData.set("intent", "delete-component-comment");
+    if (targetRunId) formData.set("targetRunId", targetRunId);
     formData.set("commentId", commentId);
     onCommentsChange((current) => current.filter((comment) => comment.id !== commentId));
     fetcher.submit(formData, { method: "POST" });
@@ -2726,6 +2891,8 @@ export default function FounderToolsMarketingRun() {
             <ArticleSystemSetupPreviewPanel
               run={effectiveSetupPreviewRun}
               sourceRun={isScanRun ? run : null}
+              selectedComponent={selectedComponent}
+              onSelectComponent={setSelectedComponent}
               isSubmitting={isSubmitting}
             />
           ) : isScanRun ? (
