@@ -295,7 +295,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return redirect("/founder-tools/marketing");
       }
 
-      return redirect("/founder-tools/marketing/create?step=baseline");
+      return redirect("/founder-tools/marketing/create?step=github");
     }
 
     if (intent === "start-autofill") {
