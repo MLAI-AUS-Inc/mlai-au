@@ -80,20 +80,20 @@ const WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = [
     icon: UserCircleIcon,
   },
   {
-    id: "research_topic",
-    label: "Research & choose topic",
-    summary: "Find topic opportunities and choose the article brief.",
-    stepIds: ["research", "choose_topic"],
-    completionStepId: "choose_topic",
-    icon: MagnifyingGlassIcon,
-  },
-  {
     id: "repo_article_system",
     label: "Connect repo & article system",
     summary: "Connect GitHub, scan the repository, and prepare the article system.",
     stepIds: ["repo", "article_system"],
     completionStepId: "article_system",
     icon: CodeBracketIcon,
+  },
+  {
+    id: "research_topic",
+    label: "Research & choose topic",
+    summary: "Find topic opportunities and choose the article brief.",
+    stepIds: ["research", "choose_topic"],
+    completionStepId: "choose_topic",
+    icon: MagnifyingGlassIcon,
   },
   {
     id: "article_creation",

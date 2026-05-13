@@ -333,7 +333,10 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (companyId) {
         await setVibeRaisingActiveCompany(env, request, companyId);
       }
-      return redirect("/founder-tools/marketing/create?step=baseline");
+      if (stringFromForm(formData, "nextAction") === "save-exit") {
+        return redirect("/founder-tools/marketing");
+      }
+      return redirect("/founder-tools/marketing/create?step=github");
     }
 
     if (intent === "start-autofill") {
@@ -759,7 +762,7 @@ export default function FounderToolsMarketingCreate() {
                         </Link>
                       ) : null}
                       {latestScanIsConfirmed && !latestScanNeedsSetupApproval ? (
-                        <Link to="/founder-tools/marketing/create?step=chooseArticle" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-800">
+                        <Link to="/founder-tools/marketing/create?step=research" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-800">
                           Continue
                           <ArrowRightIcon className="h-4 w-4" />
                         </Link>
@@ -774,8 +777,8 @@ export default function FounderToolsMarketingCreate() {
                   <p className="text-sm font-semibold leading-6 text-gray-700">
                     Skip repository setup for now and generate article copy and images for manual publishing.
                   </p>
-                  <Link to="/founder-tools/marketing/create?step=chooseArticle" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
-                    Continue content-only
+                  <Link to="/founder-tools/marketing/create?step=research" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
+                    Continue to topic research
                     <ArrowRightIcon className="h-4 w-4" />
                   </Link>
                 </div>

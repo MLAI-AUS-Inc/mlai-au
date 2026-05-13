@@ -1510,7 +1510,8 @@ export default function VibeMarketingStartupBaselineSetup({
     message: googleTrafficMessage,
   };
   const embedded = variant === "workflow";
-  const shouldShowSecondaryAction = showSecondaryAction ?? !embedded;
+  const shouldShowSecondaryAction = showSecondaryAction ?? true;
+  const defaultPrimaryActionLabel = includeBaseline ? "Continue to GitHub setup" : embedded ? "Save and continue" : "Continue";
   const baselineActive = baselinePending || baselinePolling;
   const baselineDomain = effectiveBaseline.domain || startupValues.domain || bootstrap.organization.domain || bootstrap.company.domain || "No domain saved yet";
   const baselineScore = clampScore(effectiveBaseline.overallScore);
@@ -2402,15 +2403,6 @@ export default function VibeMarketingStartupBaselineSetup({
           Your data is secure and never shared.
         </p>
         <div className="flex flex-col gap-3 sm:flex-row">
-          {includeBaseline && embedded && focusSection === "baseline" ? (
-            <Link
-              to="/founder-tools/marketing/create?step=github"
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
-            >
-              Continue to GitHub
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          ) : null}
           {shouldShowSecondaryAction ? (
             <button
               type="submit"
@@ -2431,7 +2423,7 @@ export default function VibeMarketingStartupBaselineSetup({
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {primaryActionLabel ?? (embedded ? (focusSection === "baseline" ? "Save startup profile" : "Save and continue") : "Continue to website")}
+            {primaryActionLabel ?? defaultPrimaryActionLabel}
           </button>
         </div>
       </div>
