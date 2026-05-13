@@ -7,12 +7,15 @@ import {
   ScrollRestoration,
   useLocation,
 } from "react-router";
+import { useEffect } from "react";
 import Footer from "~/components/footer";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
+
+const GA_MEASUREMENT_ID = "G-1645KKLT8B";
 
 export const meta: Route.MetaFunction = () => [
   { title: "MLAI" },
@@ -54,6 +57,20 @@ export const links: Route.LinksFunction = () => [
 export default function Layout() {
   const location = useLocation();
   const shouldLoadThirdPartyAnalytics = import.meta.env.PROD;
+  const pagePath = `${location.pathname}${location.search}`;
+
+  useEffect(() => {
+    if (!shouldLoadThirdPartyAnalytics) return;
+
+    const gtag = (window as typeof window & { gtag?: (...args: unknown[]) => void }).gtag;
+    if (!gtag) return;
+
+    gtag("event", "page_view", {
+      page_path: pagePath,
+      page_location: `${window.location.origin}${pagePath}`,
+      page_title: document.title,
+    });
+  }, [pagePath, shouldLoadThirdPartyAnalytics]);
 
   // Hide the global chrome inside authenticated app surfaces.
   const isEsafetyApp = location.pathname.startsWith("/esafety");
@@ -143,7 +160,7 @@ export default function Layout() {
             <script
               async
               defer
-              src={`https://www.googletagmanager.com/gtag/js?id=G-JB8E813T8W}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
             />
             <script
               id="google-analytics"
@@ -154,7 +171,7 @@ export default function Layout() {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', 'G-JB8E813T8W');
+              gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
             `,
               }}
             />
