@@ -78,10 +78,13 @@ export default [
   // Founder Tools App routes
   route("/founder-tools", "routes/vibe-raising-app.tsx", { id: "founder-tools-root" }, [
     index("routes/founder-tools.index.tsx"),
+    route("overview", "routes/vibe-raising-app.overview.tsx"),
     route("updates", "routes/vibe-raising-app._index.tsx"),
+    route("drafts", "routes/vibe-raising-app.drafts.tsx"),
     route("company-setup", "routes/vibe-raising-app.company-setup.tsx"),
     route("data-sources", "routes/vibe-raising-app.connect-data.tsx"),
     route("updates/create", "routes/vibe-raising-app.create-update.tsx"),
+    route("discover", "routes/vibe-raising-app.investors.tsx"),
     route("companies", "routes/vibe-raising-app.companies.tsx"),
     route("marketing", "routes/founder-tools.marketing.tsx"),
     route("marketing/create", "routes/founder-tools.marketing.create.tsx"),

@@ -5,7 +5,6 @@ import {
     BellIcon,
     ChevronDownIcon,
     HomeIcon,
-    MagnifyingGlassIcon,
     UserCircleIcon,
     XMarkIcon,
     UsersIcon,
@@ -50,11 +49,20 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
     const navigation = customNavigation || defaultNavigation;
 
-    const updatedNavigation = navigation.map(item => ({
-        ...item,
-        current: item.exact
+    const activeNavigationIndex = navigation.reduce<number>((bestIndex, item, index) => {
+        const currentMatch = item.exact
             ? pathname === item.href
-            : pathname === item.href || (item.href !== '/esafety' && pathname.startsWith(item.href)),
+            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+        if (!currentMatch) return bestIndex;
+        if (bestIndex === -1) return index;
+
+        return item.href.length > navigation[bestIndex].href.length ? index : bestIndex;
+    }, -1);
+
+    const updatedNavigation = navigation.map((item, index) => ({
+        ...item,
+        current: index === activeNavigationIndex,
     }));
 
     const defaultUserNavigation = [
@@ -155,7 +163,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                         isFounderToolsApp
                                                                             ? item.current
                                                                                 ? 'bg-[var(--vr-color-shell-active)] text-[var(--vr-color-shell-active-text)]'
-                                                                                : 'text-[var(--vr-color-text-mid)] hover:bg-[rgba(0,255,215,0.16)] hover:text-[var(--vr-color-text)]'
+                                                                                : 'text-[var(--vr-color-text-mid)] hover:bg-[var(--vr-color-primary-soft)] hover:text-[var(--vr-color-text)]'
                                                                             : item.current
                                                                                 ? 'bg-gray-50 text-indigo-600'
                                                                                 : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600',
@@ -188,7 +196,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                         className={classNames(
                                                             "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200 ease-in-out",
                                                             isFounderToolsApp
-                                                                ? "text-[var(--vr-color-text-mid)] hover:bg-[rgba(0,255,215,0.16)] hover:text-[var(--vr-color-text)]"
+                                                                ? "text-[var(--vr-color-text-mid)] hover:bg-[var(--vr-color-primary-soft)] hover:text-[var(--vr-color-text)]"
                                                                 : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600"
                                                         )}
                                                     >
@@ -216,9 +224,10 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                 {/* Static sidebar for desktop with hover animation */}
                 <div
                     className={classNames(
-                        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 ease-in-out",
+                        "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-[width] duration-[320ms]",
                         isExpanded ? "w-64" : "w-20"
                     )}
+                    style={{ transitionTimingFunction: "cubic-bezier(0.2, 0.8, 0.2, 1)" }}
                     onMouseEnter={() => setIsExpanded(true)}
                     onMouseLeave={() => setIsExpanded(false)}
                 >
@@ -228,16 +237,28 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             isFounderToolsApp ? "bg-[var(--vr-color-shell-sidebar)]" : "bg-indigo-600"
                         )}
                     >
-                        <div className="flex h-16 shrink-0 items-center mt-4 justify-center">
-                            <ImageWithFallback
-                                className={classNames("h-auto transition-all duration-300", isExpanded ? "w-72 max-w-none" : "w-16")}
-                                src={isExpanded
-                                    ? "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Untitled%20design%20(27).png?alt=media&token=39cbb611-0854-4d36-b3f3-ad200c5e9abd"
-                                    : "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84"}
-                                alt="MLAI Logo"
-                                width={220}
-                                height={80}
-                            />
+                        <div className="mt-4 flex h-16 shrink-0 items-center">
+                            <Link
+                                to={appHomeHref}
+                                className="flex min-w-0 items-center gap-3"
+                                aria-label="MLAI home"
+                            >
+                                <ImageWithFallback
+                                    className="h-10 w-10 shrink-0 rounded-md object-contain"
+                                    src="/MLAI-Logo.png"
+                                    alt="MLAI Logo"
+                                    width={40}
+                                    height={40}
+                                />
+                                <span
+                                    className={classNames(
+                                        "whitespace-nowrap text-lg font-semibold text-white transition-all duration-300",
+                                        isExpanded ? "translate-x-0 opacity-100" : "-translate-x-1 opacity-0"
+                                    )}
+                                >
+                                    MLAI
+                                </span>
+                            </Link>
                         </div>
                         <nav className="flex flex-1 flex-col">
                             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -257,10 +278,12 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                             : item.current
                                                                 ? 'bg-indigo-700 text-white'
                                                                 : 'text-white hover:bg-indigo-700 hover:text-white',
-                                                        'group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200',
-                                                        isExpanded ? '' : 'justify-center'
+                                                        'group relative flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200'
                                                     )}
                                                 >
+                                                    {isFounderToolsApp && item.current ? (
+                                                        <span className="absolute inset-y-2 left-0 w-1 rounded-full bg-[var(--vr-color-shell-active-accent)]" aria-hidden="true" />
+                                                    ) : null}
                                                     <item.icon
                                                         className={classNames(
                                                             isFounderToolsApp
@@ -268,8 +291,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                     ? 'text-[var(--vr-color-shell-active-text)]'
                                                                     : 'text-[var(--vr-color-shell-muted)] group-hover:text-white'
                                                                 : item.current ? 'text-white' : 'text-white group-hover:text-white',
-                                                            'h-6 w-6 shrink-0 transition-all duration-300',
-                                                            isExpanded ? 'mr-0' : 'mr-0'
+                                                            'h-6 w-6 shrink-0 transition-colors duration-200'
                                                         )}
                                                         aria-hidden="true"
                                                     />
@@ -293,8 +315,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             "group -mx-2 flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-all duration-200",
                                             isFounderToolsApp
                                                 ? "text-[var(--vr-color-shell-muted)] hover:bg-[var(--vr-color-shell-hover)] hover:text-white"
-                                                : "text-white hover:bg-indigo-700 hover:text-white",
-                                            isExpanded ? '' : 'justify-center'
+                                                : "text-white hover:bg-indigo-700 hover:text-white"
                                         )}
                                     >
                                         <ArrowLeftOnRectangleIcon
@@ -349,31 +370,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
-                            <form action="#" method="GET" className="relative flex flex-1">
-                                <label htmlFor="search-field" className="sr-only">
-                                    Search
-                                </label>
-                                <MagnifyingGlassIcon
-                                    aria-hidden="true"
-                                    className={classNames(
-                                        "pointer-events-none absolute inset-y-0 left-0 h-full w-5",
-                                        isFounderToolsApp ? "text-[var(--vr-color-text-sub)]" : "text-gray-400"
-                                    )}
-                                />
-                                <input
-                                    id="search-field"
-                                    name="search"
-                                    type="search"
-                                    placeholder="Search..."
-                                    className={classNames(
-                                        "block h-full w-full border-0 bg-transparent py-0 pl-8 pr-0 focus:ring-0 sm:text-sm",
-                                        isFounderToolsApp
-                                            ? "text-[var(--vr-color-text)] placeholder:text-[var(--vr-color-text-sub)]"
-                                            : "text-gray-900 placeholder:text-gray-400"
-                                    )}
-                                />
-                            </form>
+                        <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 <button
                                     type="button"

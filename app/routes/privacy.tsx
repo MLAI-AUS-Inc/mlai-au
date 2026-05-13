@@ -1,7 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { Container } from "~/components/ui/Container";
 
-const LAST_UPDATED = "4 May 2026";
+const LAST_UPDATED = "13 May 2026";
 
 export const meta: MetaFunction = () => {
   return [
@@ -9,12 +9,12 @@ export const meta: MetaFunction = () => {
     {
       name: "description",
       content:
-        "Privacy Policy for MLAI Vibe Raising, including Google OAuth, Gmail data access, AI-assisted monthly founder updates, retention, deletion, and Limited Use commitments.",
+        "Privacy Policy for MLAI Vibe Raising, including Google OAuth, Gmail data access, connected sources, AI-assisted monthly founder updates, retention, deletion, and Limited Use commitments.",
     },
     {
       name: "keywords",
       content:
-        "MLAI Vibe Raising privacy policy, Gmail integration, Google OAuth, Google user data, Limited Use, data deletion",
+        "MLAI Vibe Raising privacy policy, Gmail integration, Slack integration, Xero integration, Google OAuth, Google user data, Limited Use, data deletion",
     },
   ];
 };
@@ -82,11 +82,24 @@ export default function Privacy() {
                 You may choose to connect third-party services so MLAI Vibe
                 Raising can use relevant context for the update workflow.
                 Connected sources may include Google services such as Gmail and
-                Google Account profile information, as well as other data sources
-                that are available in the product from time to time. You should
-                only connect accounts and data that you own or are authorized to
-                use.
+                Google Drive, Slack, Xero, Linear, Notion, manual materials, and
+                other data sources that are available in the product from time to
+                time. You should only connect accounts, workspaces, files,
+                channels, and data that you own or are authorized to use.
               </p>
+
+              <p className="mt-4 text-base leading-7 text-zinc-600">
+                Depending on the connector and permissions you choose, MLAI may
+                process:
+              </p>
+              <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
+                <li><strong>Slack:</strong> workspace and channel identifiers, selected channel names, public or private channel indicators, message text, thread context, timestamps, and related metadata.</li>
+                <li><strong>Xero:</strong> organization, tenant, invoice, payment, contact, account, report, profit and loss, balance sheet, and metric information permitted by granted scopes.</li>
+                <li><strong>Linear:</strong> workspace, project, issue, comment, status, assignee, cycle, label, and delivery context where a Linear integration is enabled.</li>
+                <li><strong>Notion and Google Drive:</strong> page, file, document, folder, metadata, and extracted text where enabled and authorized.</li>
+                <li><strong>Manual materials:</strong> source URLs, short summaries, recorded notes, uploaded files, pasted text, and other materials you add directly.</li>
+                <li><strong>Generated outputs:</strong> monthly update drafts, generated sections, extracted events, metrics, evidence, recommendations, review results, and final updates.</li>
+              </ul>
 
               <h3 className="mt-6 text-lg font-semibold leading-7 text-gray-900">
                 Google and Gmail Data We Access
@@ -138,10 +151,11 @@ export default function Privacy() {
               <p className="mt-4 text-base leading-7 text-zinc-600">
                 MLAI Vibe Raising may use automated systems and AI models to
                 analyze founder-provided data and optional connected data,
-                including Gmail data, for the purpose of producing the
-                user-facing monthly update workflow you requested. We do not use
-                Google Workspace API data, including Gmail data, to create, train,
-                or improve generalized AI or machine learning models.
+                including Gmail, Slack, Xero, Linear, Notion, Google Drive, and
+                manual materials, for the purpose of producing the user-facing
+                monthly update workflow you requested. We do not use Google
+                Workspace API data, including Gmail data, to create, train, or
+                improve generalized AI or machine learning models.
               </p>
 
               <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">
@@ -165,14 +179,14 @@ export default function Privacy() {
                 Sharing and Disclosure
               </h2>
               <p className="mt-4 text-base leading-7 text-zinc-600">
-                We do not sell your personal information, Google user data, or
-                Gmail data. We may disclose information only in the following
-                limited circumstances:
+                We do not sell your personal information, Google user data,
+                Gmail data, or connected-source data. We may disclose
+                information only in the following limited circumstances:
               </p>
               <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
                 <li>To service providers that help us operate, host, secure, support, or provide MLAI services, subject to confidentiality and data protection obligations.</li>
                 <li>To AI infrastructure providers only as needed to provide the user-facing feature you requested, and not for generalized model training on Google Workspace API data.</li>
-                <li>When you direct us to share an output, send an update, invite a collaborator, or otherwise disclose information through the product.</li>
+                <li>When you direct us to share an output, send an update, invite a collaborator, connect a third-party service, or otherwise disclose information through the product.</li>
                 <li>When required by law, regulation, legal process, or to protect rights, safety, security, and prevent abuse.</li>
                 <li>In connection with a merger, acquisition, financing, reorganization, or sale of assets, subject to applicable law and required user consent where Google policy requires it.</li>
               </ul>
@@ -204,19 +218,22 @@ export default function Privacy() {
                 <li>OAuth tokens and connected account identifiers are retained while your Google connection is active.</li>
                 <li>Selected Gmail message and thread artifacts, extracted text, metadata, relevance signals, and derived outputs may be retained while needed to generate, display, troubleshoot, and improve the user-facing update workflow.</li>
                 <li>Generated drafts, monthly updates, summaries, metrics, and other derived outputs may be retained while your account is active or until you delete them or request deletion.</li>
+                <li>Non-Google connected-source artifacts, selected channel or project settings, uploaded files, source URLs, and extracted text may be retained while needed to provide, display, troubleshoot, secure, and improve the requested workflow.</li>
                 <li>When you disconnect Google, revoke access, delete your account, or request deletion, we will delete or de-identify associated Google tokens, Gmail artifacts, and derived outputs within a reasonable time unless retention is required or permitted by law, security, or legitimate operational needs.</li>
+                <li>When you disconnect another connector, future sync for that connector stops, but historical generated outputs or cached source artifacts may remain until you delete them where product controls are available or request deletion.</li>
               </ul>
 
               <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">
                 Your Choices and Controls
               </h2>
               <p className="mt-4 text-base leading-7 text-zinc-600">
-                You may choose not to connect Gmail. If you connect Gmail, you may
-                disconnect it in MLAI account settings where available, revoke
-                MLAI's access from your Google Account permissions page, or email
-                us at hi@mlai.au. You may also request access, correction,
-                deletion, export, or restriction of your personal information,
-                subject to applicable law and verification of your request.
+                You may choose not to connect Gmail or any other source. If you
+                connect a source, you may disconnect it in MLAI account settings
+                where available, revoke MLAI&apos;s access from the third-party
+                provider, or email us at hi@mlai.au. You may also request
+                access, correction, deletion, export, or restriction of your
+                personal information, subject to applicable law and verification
+                of your request.
               </p>
 
               <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">

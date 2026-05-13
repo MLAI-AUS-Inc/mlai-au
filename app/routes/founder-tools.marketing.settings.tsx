@@ -4,6 +4,7 @@ import { ArrowLeftIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/
 
 import FounderStartupDetailsStep from "~/components/FounderStartupDetailsStep";
 import { getEnv } from "~/lib/env.server";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { getVibeMarketingBootstrap, saveVibeMarketingSettings } from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
@@ -22,6 +23,18 @@ function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
+function founderNamesFromForm(formData: FormData) {
+  const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+  const founderNames = founderProfiles
+    .map((profile) => profile.name)
+    .filter(Boolean);
+
+  return {
+    founderProfiles,
+    founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
+  };
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
@@ -33,6 +46,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   const { appUser } = await requireVibeRaisingFounder(env, request);
   const activeCompany = getActiveVibeRaisingCompany(appUser);
   const formData = await request.formData();
+  const { founderProfiles, founderNames } = founderNamesFromForm(formData);
 
   try {
     await saveVibeRaisingCompany(env, request, {
@@ -45,7 +59,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       companyContext: stringFromForm(formData, "companyContext"),
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
-      founderNames: listFromForm(formData.get("founderNames")),
+      founderNames,
+      founderProfiles,
       stage: stringFromForm(formData, "stage"),
       organizationKind: stringFromForm(formData, "organizationKind"),
       githubRepo: stringFromForm(formData, "githubRepo"),
@@ -116,6 +131,7 @@ export default function FounderToolsMarketingSettings() {
             competitors: bootstrap.organization.competitors,
             seedKeywords: bootstrap.organization.seedKeywords,
             founderNames: bootstrap.startupProfile.founderNames,
+            founderProfiles: bootstrap.startupProfile.founderProfiles ?? [],
             stage: bootstrap.startupProfile.stage,
             organizationKind: bootstrap.startupProfile.organizationKind,
             notes: bootstrap.startupProfile.notes,

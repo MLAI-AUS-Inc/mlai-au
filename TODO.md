@@ -1,3 +1,67 @@
+- [x] Update the Vibe Raising relationship callout heading to mention building investor relationships 6 months in advance
+- [x] Restore the Vibe Raising bottom cue text to "Don't Wait Until You Need Money"
+- [x] Update the Vibe Raising bottom cue text to the new 6-month investor relationship line
+- [x] Simplify the Vibe Raising scroll cue to a bottom-centered arrow with the new money warning line
+- [x] Update the Vibe Raising hero captions to explain monthly updates building investor relationships
+- [x] Add obvious scroll indicators to the Vibe Raising hero pages
+- [x] Replace the Vibe Raising hero captions with the single "Don't wait until you need money" line
+- [x] Align Vibe Raising overview "How It Works" with the real four-step product flow
+- [x] Add a homepage hero scroll cue so users know there is more content below the fold
+- [x] Run `bun run typecheck` (fails on pre-existing founder-profile errors in `app/lib/vibe-marketing.ts` and `app/lib/vibe-raising.ts`)
+- [x] Verify the homepage hero scroll cue in the local browser
+- [x] Make the top source-connection trust card privacy-first and attach the Privacy Policy button to that section
+- [x] Verify privacy-first trust card hierarchy on source connection page
+- [x] Add prominent data-safety messaging to the source connection page
+- [x] Verify privacy/trust messaging layout on source connection page
+- [x] Promote Google Drive into the featured source row beside Notion
+- [x] Run targeted verification for Google Drive source card placement
+- [x] Unify Vibe Raising step-two pitch deck and video inputs into one investor materials section
+- [x] Persist pitch deck fields through Vibe Raising draft, review, and publish flows
+- [x] Run `bun run typecheck` (still fails on pre-existing `app/lib/vibe-marketing.ts` and `app/lib/vibe-raising.ts` founder-profile typing errors)
+- [x] Unify step-two deck and walkthrough uploads into one shared investor-materials drop zone
+- [x] Recover missing founder LinkedIn URLs inside step two and persist them through review and publish
+- [x] Run targeted verification for the unified investor-materials step
+- [x] Reorder source connection cards to feature Google Analytics, Stripe, and Notion first
+- [x] Move remaining source connectors behind a More options expander
+- [x] Restore four-column source card rhythm with More options as a tile
+- [ ] Run targeted verification for source connection page
+- [x] Restyle the Vibe Raising investor-materials upload section into a drag-and-drop box
+- [x] Let the shared upload box clearly accept both walkthrough videos and pitch decks
+- [x] Revert the create-update input page to the simpler "Say it your way" version
+- [x] Hide deck-link action and the extra materials sections under the main upload box
+- [x] Restyle the step-two "How it works" block to match the data privacy section
+- [x] Remove the nested step-two "How it works" bar and use the same plain section format as data privacy
+- [x] Remove the nested connect-data "How it works" bar and fold it into the privacy section
+- [x] Revert the MLAI homepage scroll cue so only Vibe Raising keeps the new hero reference treatment
+- [x] Redesign the Vibe Raising founder-overview How It Works section with line dividers instead of cards
+- [x] Remove founder-overview heading icons from the redesigned How It Works section
+- [x] Add no-metrics story-materials guidance popup to Vibe Raising draft step
+- [x] Run draft-step guidance verification (`bun run typecheck` blocked by sandbox `spawn EPERM`; `bunx tsc -b` reaches pre-existing founder-profile type errors)
+- [x] Fix no-metrics popup trigger so hidden/stored pitch deck URLs do not suppress the April manual draft case
+- [x] Split the shared investor-materials upload box into pitch deck and video lanes with a thin divider
+- [x] Move the no-metrics guidance popup into the centered hero-video modal format
+- [x] Surface record-walkthrough permission, recording, upload, and error states in the shared upload box
+- [x] Show recorded walkthrough preview inline after recording stops
+- [x] Show pitch deck upload feedback with PDF first-page preview and PPT/PPTX attachment card
+- [x] Replace review metrics with pitch deck preview and founder LinkedIn when a deck is uploaded
+- [x] Keep local PDF preview URL for pitch deck review and simplify founder LinkedIn to an inline link
+- [x] Display registration LinkedIn data in pitch-deck review instead of falling back to Not attached
+- [x] Show walkthrough video preview inside pitch-deck review when both deck and video are attached
+- [x] Combine review How it works and Your audience into the step-one card format
+- [x] Preserve registration founder LinkedIn when reviewing drafts with empty hidden founder profile fields
+- [x] Move review LinkedIn into a header button with an inline edit popup
+- [x] Prevent create-update edit loader from crashing when monthly updates endpoint returns 500
+- [x] Turn review LinkedIn button active blue when a LinkedIn URL is entered from the popup
+- [x] Hide the investor deck preview caption under the review Pitch Deck heading
+- [x] Support MP3/audio walkthrough uploads and show audio previews on review
+- [x] Restore the branded review banner while keeping MP3/MP4 previews in the media section
+- [x] Add remove buttons for pitch deck and walkthrough media on the draft page
+- [x] Fix founder profiles layout on registration/setup forms
+- [x] Persist founder LinkedIn profiles from founder setup forms
+- [x] Run `bun run typecheck` (fails on pre-existing `vibe-marketing` / `vibe-raising` type errors)
+- [x] Reduce Vibe Raising create-step month picker to current month plus previous month only
+- [x] Keep review and dashboard month displays unchanged
+- [ ] Run `bun run typecheck`
 - [x] Add targeted 301 redirects for Google legacy 404 URLs
 - [x] Restore registry entries for the missing canonical article targets
 - [x] Regenerate `public/sitemap.xml`
@@ -255,3 +319,16 @@
 - [x] Start moving step 1 source-card layout onto the shared Vibe Raising token/component CSS system
 - [x] Restore the step 2 manual-only draft template when no sources are selected
 - [x] Show the full 16-metric set for manual-only monthly update drafting
+- [x] Embed a static example monthly update into the empty-state founder dashboard hero
+- [x] Keep the founder hero example preview non-interactive and mobile-safe
+- [x] Re-run `bun run typecheck`
+- [x] Move Save as Draft from local-only storage into the live backend-backed create-update flow
+- [x] Add a founder-only My Drafts page for private drafts and ready-to-publish updates
+- [x] Keep private drafts off the main founder dashboard and expose My Drafts in founder navigation
+- [x] Add a dedicated founder Overview route for the Vibe Raising hero page
+- [x] Keep the operational Updates dashboard working separately from the hero page
+- [x] Run `bun run typegen` and `bun run typecheck`
+- [x] Prepare Roo-inspired kangaroo Codex pet run
+- [x] Generate Roo kangaroo base pet art
+- [x] Generate Roo kangaroo animation rows
+- [x] Finalize and package Roo kangaroo pet

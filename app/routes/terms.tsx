@@ -1,7 +1,7 @@
 import type { MetaFunction } from "react-router";
 import { Container } from "~/components/ui/Container";
 
-const LAST_UPDATED = "4 May 2026";
+const LAST_UPDATED = "13 May 2026";
 
 export const meta: MetaFunction = () => {
     return [
@@ -9,12 +9,12 @@ export const meta: MetaFunction = () => {
         {
             name: "description",
             content:
-                "Terms of Service for MLAI services, including MLAI Vibe Raising, Google/Gmail connections, AI-generated monthly updates, retention, and data deletion.",
+                "Terms of Service for MLAI services, including MLAI Vibe Raising, Google/Gmail connections, connected sources, AI-generated monthly updates, retention, and data deletion.",
         },
         {
             name: "keywords",
             content:
-                "terms of service, MLAI Vibe Raising, Gmail integration, Google OAuth, AI summaries, retention, data deletion",
+                "terms of service, MLAI Vibe Raising, Gmail integration, Slack integration, Xero integration, Google OAuth, AI summaries, retention, data deletion",
         },
     ];
 };
@@ -54,9 +54,11 @@ export default function TermsOfService() {
                                 MLAI Vibe Raising helps founders draft monthly startup and
                                 investor updates from information the founder chooses to enter,
                                 upload, generate, or connect. Some features allow you to
-                                connect third-party accounts, including Google and Gmail, so
-                                MLAI can process relevant context for user-requested summaries,
-                                drafts, metrics, asks, risks, and follow-ups.
+                                connect third-party accounts, including Google, Gmail,
+                                Google Drive, Slack, Xero, Linear, and Notion, or upload
+                                manual materials, so MLAI can process relevant context for
+                                user-requested summaries, drafts, metrics, asks, risks,
+                                and follow-ups.
                             </p>
 
                             <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">
@@ -69,38 +71,38 @@ export default function TermsOfService() {
                             </ul>
 
                             <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">
-                                3. Google/Gmail Connection (OAuth) and Email Analysis
+                                3. Connected Accounts, OAuth, and Source Analysis
                             </h2>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                Gmail connection is optional. If you choose to connect your
-                                Google account, you authorize MLAI to access the Google user
-                                data you explicitly grant through the Google consent screen for
-                                the purpose of providing the MLAI Vibe Raising feature you
-                                requested, such as drafting a monthly founder or investor
-                                update from relevant email context.
+                                Connector use is optional. If you choose to connect an
+                                account, workspace, channel, file store, or project system,
+                                you authorize MLAI to access the data you explicitly grant
+                                through the relevant consent screen, API authorization, or
+                                in-product selection flow for the purpose of providing the
+                                MLAI Vibe Raising feature you requested.
                             </p>
 
                             <h3 className="mt-6 text-lg font-semibold leading-7 text-gray-900">
                                 3.1 What you are authorizing
                             </h3>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                Depending on the feature you enable, MLAI may access Gmail data
-                                such as message and thread identifiers, labels, headers, dates,
-                                sender and recipient fields, subjects, snippets, body text,
-                                cleaned or extracted text, attachment metadata, and attachment
-                                content when processed for the requested update workflow. The
-                                exact permissions are shown on the Google consent screen before
-                                you grant access.
+                                Depending on the feature you enable, MLAI may access data from
+                                connected services such as Gmail messages and attachments,
+                                Slack channels and threads, Xero invoices, payments, contacts,
+                                accounts and reports, Linear projects and issues, Notion
+                                pages, Google Drive files, manual materials, and related
+                                metadata. The exact permissions are shown on the relevant
+                                consent screen or connector UI before you grant access.
                             </p>
 
                             <h3 className="mt-6 text-lg font-semibold leading-7 text-gray-900">
-                                3.2 What we do with Gmail data
+                                3.2 What we do with connected-source data
                             </h3>
                             <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
-                                <li>We use Gmail data only to provide or improve the user-facing MLAI Vibe Raising workflow you requested.</li>
-                                <li>We use Gmail context to identify relevant update signals such as investor feedback, customer conversations, milestones, risks, asks, metrics, and follow-ups.</li>
-                                <li>We may process Gmail data using automated systems and AI models to produce requested drafts, summaries, extracted facts, and related outputs.</li>
-                                <li>We may store OAuth tokens, connected account identifiers, selected message or thread artifacts, and derived outputs while needed to provide the Services.</li>
+                                <li>We use connected-source data only to provide or improve the user-facing MLAI Vibe Raising workflow you requested.</li>
+                                <li>We use source context to identify relevant update signals such as investor feedback, customer conversations, milestones, risks, asks, metrics, financial changes, delivery progress, and follow-ups.</li>
+                                <li>We may process connected-source data using automated systems and AI models to produce requested drafts, summaries, extracted facts, metrics, evidence, and related outputs.</li>
+                                <li>We may store OAuth tokens, connected account identifiers, selected source artifacts, extracted text, and derived outputs while needed to provide the Services.</li>
                             </ul>
 
                             <h3 className="mt-6 text-lg font-semibold leading-7 text-gray-900">
@@ -122,14 +124,15 @@ export default function TermsOfService() {
                                 3.4 What we store
                             </h3>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                Our goal is to minimize the Google user data we store while
-                                still providing the MLAI Vibe Raising workflow you requested.
-                                We may store:
+                                Our goal is to minimize the source data we store while still
+                                providing the MLAI Vibe Raising workflow you requested. We may
+                                store:
                             </p>
                             <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
-                                <li><strong>Connection data:</strong> OAuth tokens, refresh tokens, and basic account identifiers, such as the connected Google account email address, while your connection is active.</li>
+                                <li><strong>Connection data:</strong> OAuth tokens, refresh tokens, and basic account or workspace identifiers while your connection is active.</li>
                                 <li><strong>Selected Gmail artifacts:</strong> message and thread metadata, extracted or cleaned text, attachment information, relevance signals, and source context needed to generate, display, troubleshoot, and improve the requested update workflow.</li>
-                                <li><strong>Derived outputs:</strong> monthly update drafts, summaries, insights, events, metrics, asks, follow-ups, and other outputs associated with your account.</li>
+                                <li><strong>Other source artifacts:</strong> selected Slack messages, Xero records, Linear issues, Notion pages, Google Drive documents, uploaded files, source URLs, extracted text, and related metadata needed for the requested workflow.</li>
+                                <li><strong>Derived outputs:</strong> monthly update drafts, summaries, insights, events, metrics, evidence, recommendations, asks, follow-ups, and other outputs associated with your account.</li>
                             </ul>
 
                             <h3 className="mt-6 text-lg font-semibold leading-7 text-gray-900">
@@ -138,6 +141,7 @@ export default function TermsOfService() {
                             <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
                                 <li><strong>OAuth tokens:</strong> We retain tokens while your Gmail connection is active. If you disconnect Google/Gmail, revoke access, or delete your account, we will delete or invalidate stored tokens within a reasonable time.</li>
                                 <li><strong>Gmail artifacts and source context:</strong> We retain selected artifacts only while needed to provide, display, troubleshoot, secure, and improve the user-facing update workflow, unless you request deletion or a longer period is required or permitted by law.</li>
+                                <li><strong>Other connected-source artifacts:</strong> We retain selected artifacts, uploaded materials, extracted text, evidence, and connector settings only while needed for the requested workflow, unless you request deletion or a longer period is required or permitted by law.</li>
                                 <li><strong>Derived outputs:</strong> We retain generated drafts and reports while your account remains active or until you delete them or request deletion, subject to legal, security, and operational requirements.</li>
                             </ul>
 
@@ -145,18 +149,18 @@ export default function TermsOfService() {
                                 3.6 Disconnecting, deleting data, and revoking access
                             </h3>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                You can disconnect your Google account from MLAI in account
-                                settings where available, revoke MLAI's access at any time in
-                                your Google Account permissions page, or email hi@mlai.au.
-                                After you disconnect or revoke access, Gmail-powered features
-                                may stop working.
+                                You can disconnect connected accounts from MLAI in account
+                                settings where available, revoke MLAI&apos;s access directly
+                                with the relevant third-party provider, or email hi@mlai.au.
+                                After you disconnect or revoke access, connector-powered
+                                features may stop working.
                             </p>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                If you want MLAI to delete data associated with your Gmail
-                                connection, generated updates, or AI outputs, you can use the
-                                settings area where available or email hi@mlai.au with your
-                                request. Please include the Google email address you connected
-                                and your MLAI account email if different. We will action
+                                If you want MLAI to delete data associated with a connector,
+                                generated updates, or AI outputs, you can use the settings
+                                area where available or email hi@mlai.au with your request.
+                                Please include the MLAI account email and, where relevant, the
+                                third-party account or workspace you connected. We will action
                                 deletion requests within a reasonable time and confirm where
                                 applicable.
                             </p>
@@ -165,7 +169,7 @@ export default function TermsOfService() {
                                 4. Your Responsibilities
                             </h2>
                             <ul className="mt-4 list-disc pl-5 space-y-2 text-base leading-7 text-zinc-600">
-                                <li>You may only connect accounts and data that you own or are authorized to use.</li>
+                                <li>You may only connect accounts, workspaces, channels, files, and data that you own, administer, or are authorized to use.</li>
                                 <li>You are responsible for ensuring that your use of the Services complies with applicable laws, regulations, confidentiality obligations, and contracts with third parties.</li>
                                 <li>You are responsible for reviewing any generated update, summary, metric, ask, or other output before relying on it or sharing it with investors or other recipients.</li>
                             </ul>
@@ -214,11 +218,14 @@ export default function TermsOfService() {
                                 8. Third-Party Services
                             </h2>
                             <p className="mt-4 text-base leading-7 text-zinc-600">
-                                The Services may integrate with third-party services, including
-                                Google. Third-party services are governed by their own terms and
-                                policies. MLAI is not responsible for third-party services.
-                                Your use of Google services remains subject to Google's terms
-                                and policies.
+                                The Services may integrate with third-party services,
+                                including Google, Gmail, Google Drive, Slack, Xero, Linear,
+                                Notion, OpenAI, and infrastructure providers. Third-party
+                                services are governed by their own terms and policies. MLAI is
+                                not responsible for third-party services. Connector features
+                                may be affected by third-party API outages, rate limits,
+                                revoked scopes, expired tokens, permission changes, product
+                                changes, policy changes, or account restrictions.
                             </p>
 
                             <h2 className="mt-8 text-xl font-semibold leading-7 text-gray-900">

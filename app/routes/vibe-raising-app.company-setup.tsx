@@ -2,6 +2,7 @@ import { redirect, useActionData, useLoaderData } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
   getVibeMarketingBootstrap,
   startVibeMarketingAutofill,
@@ -169,6 +170,18 @@ function companyContextFromForm(formData: FormData) {
   );
 }
 
+function founderNamesFromForm(formData: FormData) {
+    const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+    const founderNames = founderProfiles
+        .map((profile) => profile.name)
+        .filter(Boolean);
+
+    return {
+        founderProfiles,
+        founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
+    };
+}
+
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const vibeContext = await getOptionalVibeRaisingContext(env, request);
@@ -274,6 +287,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       : vibeContext.profile
         ? getActiveVibeRaisingCompany(vibeContext.profile)
         : null;
+    const { founderProfiles, founderNames } = founderNamesFromForm(formData);
     const companyId = await saveVibeRaisingCompany(env, request, {
       companyId: isAddingNew ? null : activeCompany?.id ?? null,
       name: companyName,
@@ -285,7 +299,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       companyContext,
       competitors: listFromForm(formData.get("competitors")),
       seedKeywords: listFromForm(formData.get("seedKeywords")),
-      founderNames: listFromForm(formData.get("founderNames")),
+      founderNames,
+      founderProfiles,
       stage: stringFromForm(formData, "stage"),
       organizationKind: stringFromForm(formData, "organizationKind"),
       notes: stringFromForm(formData, "targetAudience"),

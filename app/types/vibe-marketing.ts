@@ -181,6 +181,7 @@ export interface VibeMarketingSettings {
 
 export interface VibeMarketingStartupProfile {
   founderNames: string[];
+  founderProfiles?: Array<{ name: string; linkedinUrl?: string | null }>;
   stage?: string | null;
   organizationKind?: string | null;
   notes?: string | null;
