@@ -467,10 +467,24 @@ function metricScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, sta
   return status === "measured" && typeof metric?.score === "number" ? Math.round(metric.score) : null;
 }
 
+function looksLikeTechnicalBaselineMessage(message: string | null | undefined) {
+  if (!message) return false;
+  return /https?:\/\/|httperror|googleapis|traceback|exception|accessnotconfigured|api has not been used|quota|pagespeed|details:/i.test(message);
+}
+
 function metricMessage(label: string, metric?: VibeMarketingWebsiteBaselineMetric) {
   const message = typeof metric?.message === "string" ? metric.message : null;
   if (label === "Lighthouse" && metric?.reasonCode === "rate_limited") {
-    return message || "PageSpeed Insights is temporarily rate limited. Try again later or configure PAGESPEED_API_KEY for higher quota.";
+    return "PageSpeed Insights could not load right now. You can keep going and retry later.";
+  }
+  if (label === "Lighthouse" && looksLikeTechnicalBaselineMessage(message)) {
+    return "PageSpeed Insights could not load right now. You can keep going and retry later.";
+  }
+  if (label === "Traffic/users" && looksLikeTechnicalBaselineMessage(message)) {
+    return "Search Console traffic lookup failed. You can keep going and retry it later.";
+  }
+  if (looksLikeTechnicalBaselineMessage(message)) {
+    return "This baseline source failed to load. You can keep going and retry later.";
   }
   return message;
 }
@@ -614,32 +628,69 @@ function sparklinePoints(values: number[], width = 240, height = 74) {
     .join(" ");
 }
 
-function aiVisibilityRows(metric: VibeMarketingWebsiteBaselineMetric | undefined) {
-  const displayRows = objectArray(metric?.displayRows);
-  if (displayRows?.length) {
-    return displayRows.slice(0, 4).map((row, index) => ({
-      name: String(row.label ?? row.name ?? `AI signal ${index + 1}`).trim(),
-      value: numericValue(row.value),
-      unit: typeof row.unit === "string" ? row.unit : "",
-      detail: typeof row.detail === "string" ? row.detail : undefined,
-    }));
+const AI_VISIBILITY_PLATFORMS = [
+  { key: "chatgpt", label: "ChatGPT", short: "GPT", badge: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
+  { key: "claude", label: "Claude", short: "CL", badge: "bg-orange-50 text-orange-700 ring-orange-100" },
+  { key: "copilot", label: "Copilot", short: "CO", badge: "bg-sky-50 text-sky-700 ring-sky-100" },
+  { key: "gemini", label: "Gemini", short: "GE", badge: "bg-violet-50 text-violet-700 ring-violet-100" },
+  { key: "grok", label: "Grok", short: "GR", badge: "bg-slate-50 text-slate-700 ring-slate-100" },
+] as const;
+
+function normalizeAiPlatformKey(value: unknown) {
+  return String(value ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function scoreFromAiPlatformPayload(value: unknown) {
+  const payload = plainObject(value);
+  const rawScore = payload
+    ? numericValue(payload.score) ??
+      numericValue(payload.visibilityScore) ??
+      numericValue(payload.visibility_score) ??
+      numericValue(payload.visibility) ??
+      numericValue(payload.value) ??
+      numericValue(payload.rate) ??
+      numericValue(payload.mentionRate) ??
+      numericValue(payload.mention_rate)
+    : numericValue(value);
+  if (rawScore === null) return null;
+  return Math.round(Math.max(0, Math.min(100, rawScore <= 1 ? rawScore * 100 : rawScore)));
+}
+
+function findAiPlatformScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, platformKey: string, platformLabel: string) {
+  const targetKeys = new Set([normalizeAiPlatformKey(platformKey), normalizeAiPlatformKey(platformLabel)]);
+  const containerKeys = ["platforms", "providers", "engines", "aiTools", "tools", "visibilityByPlatform", "platformScores", "providerScores"];
+
+  for (const key of containerKeys) {
+    const value = metric?.[key];
+    const rows = objectArray(value);
+    if (rows?.length) {
+      for (const row of rows) {
+        const rowKey = normalizeAiPlatformKey(row.key ?? row.id ?? row.label ?? row.name ?? row.platform ?? row.provider ?? row.engine ?? row.tool);
+        if (targetKeys.has(rowKey)) {
+          return scoreFromAiPlatformPayload(row);
+        }
+      }
+    }
+
+    const record = plainObject(value);
+    if (record) {
+      for (const [recordKey, recordValue] of Object.entries(record)) {
+        if (targetKeys.has(normalizeAiPlatformKey(recordKey))) {
+          return scoreFromAiPlatformPayload(recordValue);
+        }
+      }
+    }
   }
 
-  const queryRows = objectArray(metric?.topQueries) ?? objectArray(metric?.queries) ?? [];
-  return queryRows.slice(0, 4).map((row, index) => {
-    const query = String(row.query ?? row.keyword ?? `Query ${index + 1}`).trim();
-    const signals = [
-      row.mentioned ? "mentioned" : "",
-      row.cited ? "cited" : "",
-      row.aiOverviewPresent ? "AI overview" : "",
-    ].filter(Boolean);
-    return {
-      name: query,
-      value: null,
-      unit: signals.length ? signals.join(", ") : "measured",
-      detail: "Measured query from the AI visibility baseline.",
-    };
-  });
+  return null;
+}
+
+function aiVisibilityPlatformRows(metric: VibeMarketingWebsiteBaselineMetric | undefined, fallbackScore: number | null) {
+  const measuredFallback = metric?.status === "measured" ? fallbackScore : null;
+  return AI_VISIBILITY_PLATFORMS.map((platform) => ({
+    ...platform,
+    score: findAiPlatformScore(metric, platform.key, platform.label) ?? measuredFallback,
+  }));
 }
 
 function averageFromStrategies(strategies: Record<string, unknown> | undefined, key: string) {
@@ -771,6 +822,14 @@ function FormField({
 
 function RequiredPill() {
   return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
+}
+
+function StepNumberBadge({ children }: { children: ReactNode }) {
+  return (
+    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xl font-black text-white shadow-sm shadow-violet-200">
+      {children}
+    </span>
+  );
 }
 
 function AiAssistPill() {
@@ -1095,25 +1154,25 @@ function MetricVisual({
   trendShape?: BaselineTrendShape;
 }) {
   if (visual === "ai-sources") {
-    const rows = aiVisibilityRows(metric);
-    if (!rows.length) {
+    const rows = aiVisibilityPlatformRows(metric, score);
+    if (!rows.some((row) => row.score !== null)) {
       return (
         <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
-          {status === "measured" ? "Query detail will appear after more AI visibility data is collected." : "AI visibility detail is unavailable right now."}
+          {status === "measured" ? "AI tool visibility detail will appear after more platform data is collected." : "AI visibility detail is unavailable right now."}
         </div>
       );
     }
     return (
-      <div className="mt-5 divide-y divide-gray-100 rounded-xl bg-slate-50/70 px-3">
+      <div className="mt-5 grid gap-2 rounded-xl bg-slate-50/70 p-3">
         {rows.map((row) => (
-          <div key={row.name} className="flex items-center justify-between gap-3 py-2 text-xs font-bold">
-            <span className="min-w-0">
-              <span className="block truncate text-slate-700">{row.name}</span>
-              {row.detail ? <span className="mt-0.5 block line-clamp-2 text-[11px] font-semibold text-slate-500">{row.detail}</span> : null}
+          <div key={row.key} className="flex items-center justify-between gap-3 rounded-lg bg-white px-3 py-2 shadow-sm ring-1 ring-slate-100">
+            <span className="flex min-w-0 items-center gap-3">
+              <span className={clsx("flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-black ring-1", row.badge)}>
+                {row.short}
+              </span>
+              <span className="truncate text-sm font-black text-slate-800">{row.label}</span>
             </span>
-            <span className="shrink-0 text-right text-slate-950">
-              {row.value === null ? row.unit || "Measured" : `${row.value} ${row.unit}`.trim()}
-            </span>
+            <span className="shrink-0 text-lg font-black text-slate-950">{row.score === null ? "-" : row.score}</span>
           </div>
         ))}
       </div>
@@ -1518,6 +1577,12 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselineBand = baselineScoreBand(baselineScore);
   const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
   const coreWebVitalsMetric = deriveCoreWebVitalsMetric(baselineMetrics);
+  const baselineActionError = baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error ?? null;
+  const baselineActionErrorMessage = baselineActionError
+    ? looksLikeTechnicalBaselineMessage(baselineActionError)
+      ? "Baseline action failed. You can keep going, retry, or reconnect the data source later."
+      : baselineActionError
+    : null;
   const normalizedSetupProgress =
     typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
       ? Math.max(0, Math.min(100, setupProgressPercent))
@@ -1776,7 +1841,7 @@ export default function VibeMarketingStartupBaselineSetup({
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-4">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-700 text-base font-black text-white shadow-sm shadow-violet-200">1</span>
+              <StepNumberBadge>1</StepNumberBadge>
               <div>
                 <h3 className="text-xl font-black tracking-normal text-gray-950">Add the basics</h3>
                 <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">These details help our AI find the right information about your company.</p>
@@ -1898,14 +1963,7 @@ export default function VibeMarketingStartupBaselineSetup({
 
         <section className={clsx("rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7", researchLocked && "bg-gray-50/80")}>
           <div className="flex items-start gap-5">
-            <span
-              className={clsx(
-                "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-black shadow-sm",
-                researchLocked ? "bg-violet-700 text-white shadow-violet-200" : "bg-violet-100 text-violet-700",
-              )}
-            >
-              2
-            </span>
+            <StepNumberBadge>2</StepNumberBadge>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
                 <h3 className="text-2xl font-black tracking-normal text-gray-950">Company details</h3>
@@ -2114,7 +2172,7 @@ export default function VibeMarketingStartupBaselineSetup({
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-700 text-sm font-black text-white shadow-sm">1</span>
+                  <StepNumberBadge>1</StepNumberBadge>
                   <div className="min-w-0">
                     <p className="text-sm font-black text-gray-950">Connect Google Search Console</p>
                     <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
@@ -2160,7 +2218,7 @@ export default function VibeMarketingStartupBaselineSetup({
 
             <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
               <div className="flex items-start gap-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-violet-100 text-sm font-black text-violet-700 shadow-sm">2</span>
+                <StepNumberBadge>2</StepNumberBadge>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-black text-gray-950">Generate baseline snapshot</p>
                   <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
@@ -2201,9 +2259,9 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           </div>
 
-          {baselineStartData?.error || googleBaselineFetcher.data?.error || skipBaselineFetcher.data?.error ? (
+          {baselineActionErrorMessage ? (
             <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
-              {baselineStartData?.error ?? googleBaselineFetcher.data?.error ?? skipBaselineFetcher.data?.error}
+              {baselineActionErrorMessage}
             </div>
           ) : null}
 
