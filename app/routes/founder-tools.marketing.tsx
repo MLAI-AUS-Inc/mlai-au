@@ -846,7 +846,7 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     ...listFromUnknown(payload.seedKeywords),
     ...listFromUnknown(payload.seed_keywords),
   ];
-  const seedKeywords = explicitSeedKeywords.length ? explicitSeedKeywords : groups.flatMap((group) => group.keywords);
+  const seedKeywords = explicitSeedKeywords;
   return {
     brandName: typeof payload.brandName === "string" ? payload.brandName : typeof payload.brand_name === "string" ? payload.brand_name : null,
     companyLinkedInUrl:
@@ -1190,7 +1190,7 @@ function ProfileResearchProgressCard({
             <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-violet-800">
               <span>{sourceCount} sources reviewed</span>
               <span>{competitorCount} competitors found</span>
-              <span>{seedKeywordCount} seed keywords generated</span>
+              <span>{seedKeywordCount} high-fit keywords selected</span>
             </div>
           ) : null}
           {autofill?.sources?.length ? (
