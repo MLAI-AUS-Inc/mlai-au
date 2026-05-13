@@ -3,6 +3,7 @@ import { Menu, Dialog, Transition } from '@headlessui/react';
 import {
     Bars3Icon,
     BellIcon,
+    ChartBarSquareIcon,
     ChevronDownIcon,
     HomeIcon,
     UserCircleIcon,
@@ -26,7 +27,13 @@ interface AuthenticatedLayoutProps {
     logoutAction?: string;
 }
 
-type NavigationItem = { name: string; href: string; icon: any; exact?: boolean };
+type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; matchPaths?: string[] };
+
+const VIBE_RAISING_TOP_NAVIGATION = [
+    { name: 'My Update', href: '/founder-tools/updates' },
+    { name: 'Data Sources', href: '/founder-tools/data-sources' },
+    { name: 'My Companies', href: '/founder-tools/companies' },
+];
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
@@ -39,6 +46,20 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const pathname = location.pathname;
     const isFounderToolsApp = pathname === "/founder-tools" || pathname.startsWith("/founder-tools/");
     const appHomeHref = isFounderToolsApp ? "/founder-tools/updates" : "/esafety/dashboard";
+    const showVibeRaisingTopNavigation =
+        isFounderToolsApp &&
+        (
+            pathname === "/founder-tools/overview" ||
+            pathname.startsWith("/founder-tools/overview/") ||
+            pathname === "/founder-tools/updates" ||
+            pathname.startsWith("/founder-tools/updates/") ||
+            pathname === "/founder-tools/drafts" ||
+            pathname.startsWith("/founder-tools/drafts/") ||
+            pathname === "/founder-tools/data-sources" ||
+            pathname.startsWith("/founder-tools/data-sources/") ||
+            pathname === "/founder-tools/companies" ||
+            pathname.startsWith("/founder-tools/companies/")
+        );
 
     const defaultNavigation: NavigationItem[] = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
@@ -50,14 +71,22 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const navigation = customNavigation || defaultNavigation;
 
     const activeNavigationIndex = navigation.reduce<number>((bestIndex, item, index) => {
-        const currentMatch = item.exact
-            ? pathname === item.href
-            : pathname === item.href || pathname.startsWith(`${item.href}/`);
+        const currentMatch = item.matchPaths?.some((matchPath) => (
+            pathname === matchPath || pathname.startsWith(`${matchPath}/`)
+        )) ?? (
+            item.exact
+                ? pathname === item.href
+                : pathname === item.href || pathname.startsWith(`${item.href}/`)
+        );
 
         if (!currentMatch) return bestIndex;
         if (bestIndex === -1) return index;
 
-        return item.href.length > navigation[bestIndex].href.length ? index : bestIndex;
+        const currentSpecificity = Math.max(item.href.length, ...(item.matchPaths?.map((matchPath) => matchPath.length) ?? []));
+        const bestItem = navigation[bestIndex];
+        const bestSpecificity = Math.max(bestItem.href.length, ...(bestItem.matchPaths?.map((matchPath) => matchPath.length) ?? []));
+
+        return currentSpecificity > bestSpecificity ? index : bestIndex;
     }, -1);
 
     const updatedNavigation = navigation.map((item, index) => ({
@@ -156,6 +185,13 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                     <ul role="list" className="-mx-2 space-y-1">
                                                         {updatedNavigation.map((item) => (
                                                             <li key={item.name}>
+                                                                {(() => {
+                                                                    const ItemIcon =
+                                                                        isFounderToolsApp && item.name === 'Dashboard'
+                                                                            ? ChartBarSquareIcon
+                                                                            : item.icon;
+
+                                                                    return (
                                                                 <Link
                                                                     to={item.href}
                                                                     onClick={() => setSidebarOpen(false)}
@@ -171,7 +207,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                         'transition-all duration-200 ease-in-out'
                                                                     )}
                                                                 >
-                                                                    <item.icon
+                                                                    <ItemIcon
                                                                         className={classNames(
                                                                             isFounderToolsApp
                                                                                 ? item.current
@@ -185,6 +221,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                                     />
                                                                     {item.name}
                                                                 </Link>
+                                                                    );
+                                                                })()}
                                                             </li>
                                                         ))}
                                                     </ul>
@@ -370,7 +408,31 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
+                        <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
+                            {showVibeRaisingTopNavigation ? (
+                                <nav className="flex min-w-0 items-center gap-2 overflow-x-auto py-2" aria-label="Vibe Raising">
+                                    {VIBE_RAISING_TOP_NAVIGATION.map((item) => {
+                                        const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+                                        return (
+                                            <Link
+                                                key={item.name}
+                                                to={item.href}
+                                                className={classNames(
+                                                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] transition sm:px-4",
+                                                    current
+                                                        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-shell-active-text)] shadow-sm"
+                                                        : "border-[var(--vr-color-border)] bg-[rgba(255,255,255,0.72)] text-[var(--vr-color-text-mid)] hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-text)]"
+                                                )}
+                                            >
+                                                {item.name}
+                                            </Link>
+                                        );
+                                    })}
+                                </nav>
+                            ) : (
+                                <div />
+                            )}
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 <button
                                     type="button"

@@ -21,13 +21,52 @@ function parseAuthApp(value: string | null): AuthAppName | null {
         : null;
 }
 
-function getAuthErrorMessage(error: unknown, fallback: string) {
+function isLocalBackendUrl(value: string | undefined) {
+    if (!value) return false;
+
+    try {
+        const url = new URL(value);
+        return url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1";
+    } catch {
+        return value.includes("localhost") || value.includes("127.0.0.1");
+    }
+}
+
+function getAuthErrorMessage(error: unknown, fallback: string, env?: Env) {
     const maybeError = error as {
+        code?: string;
         message?: string;
+        cause?: {
+            code?: string;
+            message?: string;
+        };
         response?: {
             data?: unknown;
+            status?: number;
         };
     } | null | undefined;
+
+    const backendUrl = env?.BACKEND_BASE_URL;
+    const code = String(maybeError?.code || maybeError?.cause?.code || "");
+    const message = maybeError?.message?.trim();
+    const causeMessage = maybeError?.cause?.message?.trim();
+    const combinedMessage = `${message || ""} ${causeMessage || ""}`.toLowerCase();
+    const looksLikeUnavailableLocalBackend =
+        isLocalBackendUrl(backendUrl) &&
+        !maybeError?.response &&
+        (
+            code === "ECONNREFUSED" ||
+            code === "ECONNRESET" ||
+            code === "ETIMEDOUT" ||
+            combinedMessage.includes("connection refused") ||
+            combinedMessage.includes("unable to connect") ||
+            combinedMessage.includes("network connection lost") ||
+            combinedMessage.includes("internal error; reference")
+        );
+
+    if (looksLikeUnavailableLocalBackend) {
+        return "Local backend is not running at http://localhost:8000. Start the backend, or update BACKEND_BASE_URL and VITE_API_URL before sending a magic link.";
+    }
 
     const responseData = maybeError?.response?.data;
     if (responseData && typeof responseData === "object") {
@@ -41,12 +80,53 @@ function getAuthErrorMessage(error: unknown, fallback: string) {
         }
     }
 
-    const message = maybeError?.message?.trim();
     if (message) {
         return `${fallback} (${message})`;
     }
 
     return fallback;
+}
+
+function isLocalRequest(request: Request) {
+    const hostname = new URL(request.url).hostname;
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
+function rewriteMagicLinkForRequestOrigin(magicLink: unknown, request: Request) {
+    if (typeof magicLink !== "string" || !magicLink.trim() || !isLocalRequest(request)) {
+        return magicLink;
+    }
+
+    try {
+        const requestUrl = new URL(request.url);
+        const rewritten = new URL(magicLink, requestUrl.origin);
+
+        if (
+            rewritten.pathname === "/verify-email" &&
+            rewritten.origin !== requestUrl.origin
+        ) {
+            rewritten.protocol = requestUrl.protocol;
+            rewritten.host = requestUrl.host;
+        }
+
+        return rewritten.toString();
+    } catch {
+        return magicLink;
+    }
+}
+
+function shouldWarnAboutLiveMagicEmail(result: Record<string, unknown>, request: Request) {
+    if (!isLocalRequest(request) || typeof result.magic_link !== "string") {
+        return false;
+    }
+
+    try {
+        const requestOrigin = new URL(request.url).origin;
+        const magicLinkOrigin = new URL(result.magic_link).origin;
+        return magicLinkOrigin !== requestOrigin && result.magic_link_sent !== false;
+    } catch {
+        return false;
+    }
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -105,12 +185,13 @@ export async function action({ request, context }: Route.ActionArgs) {
                 sent: true,
                 email,
                 message: result.message,
-                magicLink: result.magic_link,
+                magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
                 magicLinkSent: result.magic_link_sent,
+                magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
             };
         } catch (error) {
             console.error("Failed to create account:", error);
-            return { error: getAuthErrorMessage(error, "Failed to create account. Please try again.") };
+            return { error: getAuthErrorMessage(error, "Failed to create account. Please try again.", env) };
         }
     }
 
@@ -126,12 +207,13 @@ export async function action({ request, context }: Route.ActionArgs) {
             sent: true,
             email,
             message: result.message,
-            magicLink: result.magic_link,
+            magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
             magicLinkSent: result.magic_link_sent,
+            magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
         };
     } catch (error) {
         console.error("Failed to send magic link:", error);
-        return { error: getAuthErrorMessage(error, "Failed to send magic link. Please try again.") };
+        return { error: getAuthErrorMessage(error, "Failed to send magic link. Please try again.", env) };
     }
 }
 
@@ -259,6 +341,12 @@ export default function PlatformLogin() {
                 <p>
                     {data?.message || `Please click the link sent to your email: ${email}.`}
                 </p>
+                {data?.magicLinkEmailUsesLiveSite && (
+                    <p className="mt-2 text-sm">
+                        Local testing note: the email sent by the deployed backend may open the live website.
+                        Use the local magic link below to continue on this localhost session.
+                    </p>
+                )}
                 {data?.magicLink && (
                     <div className="mt-3">
                         <a
