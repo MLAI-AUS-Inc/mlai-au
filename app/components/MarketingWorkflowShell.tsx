@@ -232,7 +232,7 @@ export default function MarketingWorkflowShell({
   activeDetailSlot,
   activeDetailLabel = "Progress details",
   activeDetailDefaultExpanded = true,
-  showPrimaryAction = true,
+  showPrimaryAction = false,
   className,
 }: MarketingWorkflowShellProps) {
   const activeDetailId = useId();

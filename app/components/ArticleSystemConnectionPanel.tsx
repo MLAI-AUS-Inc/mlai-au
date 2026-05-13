@@ -378,7 +378,7 @@ export default function ArticleSystemConnectionPanel({
           <p className="mx-auto mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
             This gives the AI agent permission to create and update content in your articles location only.
           </p>
-          <Form method="POST" className="mt-5">
+          <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
             <input type="hidden" name="intent" value="connect-github" />
             <button
               type="submit"
@@ -439,7 +439,7 @@ export default function ArticleSystemConnectionPanel({
                 </p>
               </div>
             </div>
-            <Form method="POST" className="flex flex-col items-start gap-2 lg:items-end">
+            <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="flex flex-col items-start gap-2 lg:items-end">
               <input type="hidden" name="intent" value="connect-github" />
               <input type="hidden" name="forceReconnect" value="true" />
               <button
