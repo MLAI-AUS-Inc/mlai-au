@@ -98,6 +98,9 @@ type VibeMarketingStartupBaselineSetupProps = {
   primaryActionLabel?: string;
   showSecondaryAction?: boolean;
   advancedOpenByDefault?: boolean;
+  setupProgressPercent?: number | null;
+  setupProgressLabel?: string;
+  showSetupProgress?: boolean;
 };
 
 function listFromText(value: unknown): string[] {
@@ -744,24 +747,89 @@ function FormField({
   label,
   help,
   children,
+  badge,
+  className,
 }: {
   label: string;
   help?: string;
   children: ReactNode;
+  badge?: ReactNode;
+  className?: string;
 }) {
   return (
-    <label className="block">
-      <span className="mb-2 block text-sm font-bold text-gray-700">{label}</span>
+    <label className={clsx("block", className)}>
+      <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-gray-700">
+        <span>{label}</span>
+        {badge}
+      </span>
       {help ? <span className="mb-2 block text-sm font-semibold text-gray-500">{help}</span> : null}
       {children}
     </label>
   );
 }
 
+function RequiredPill() {
+  return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
+}
+
 function ControlIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400">
       <Icon className="h-5 w-5" />
+    </div>
+  );
+}
+
+function SetupDocumentMockups() {
+  return (
+    <div className="hidden min-w-[390px] items-center justify-end gap-6 lg:flex">
+      <div className="h-20 w-36 rounded-lg border border-gray-200 bg-white/75 p-3 opacity-70 shadow-sm">
+        <div className="h-2 w-16 rounded-full bg-gray-100" />
+        <div className="mt-3 space-y-2">
+          <div className="h-1.5 w-24 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-20 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-28 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-16 rounded-full bg-gray-100" />
+        </div>
+      </div>
+      <ArrowRight className="h-5 w-5 text-gray-400" />
+      <div className="relative h-20 w-36 rounded-lg border border-violet-300 bg-white p-3 shadow-sm shadow-violet-100">
+        <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-white">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+        </span>
+        <div className="h-2 w-16 rounded-full bg-gray-100" />
+        <div className="mt-3 space-y-2">
+          <div className="h-1.5 w-24 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-28 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-20 rounded-full bg-gray-200" />
+          <div className="h-1.5 w-10 rounded-full bg-emerald-100" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function NextStepItem({
+  icon: Icon,
+  title,
+  body,
+  last = false,
+}: {
+  icon: LucideIcon;
+  title: string;
+  body: string;
+  last?: boolean;
+}) {
+  return (
+    <div className="relative flex gap-4">
+      {!last ? <span className="absolute left-5 top-11 h-10 border-l border-dashed border-violet-200" /> : null}
+      <span className="relative z-10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+        <Icon className="h-5 w-5" />
+      </span>
+      <div>
+        <p className="text-sm font-black text-gray-950">{title}</p>
+        <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">{body}</p>
+      </div>
     </div>
   );
 }
@@ -1181,12 +1249,11 @@ export default function VibeMarketingStartupBaselineSetup({
   setupEyebrow = "Step 1 of 5",
   setupTitle = "Tell us about your startup",
   setupDescription = "This helps us understand your business, audience, and what makes you unique.",
-  guidanceTitle = "Why we ask this",
-  guidanceBody = "The more details you provide, the better we can research and write high-performing articles that rank and convert.",
-  guidanceTips = ["Be specific about what you do", "Focus on the value you deliver", "Think about your ideal customer", "You can always update this later"],
   primaryActionLabel,
   showSecondaryAction,
-  advancedOpenByDefault = false,
+  setupProgressPercent = 20,
+  setupProgressLabel = "20% complete",
+  showSetupProgress = true,
 }: VibeMarketingStartupBaselineSetupProps) {
   const navigation = useNavigation();
   const autofillStartFetcher = useFetcher<{
@@ -1305,14 +1372,18 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselineBand = baselineScoreBand(baselineScore);
   const baselineCollectedLabel = effectiveBaseline.collectedAt ? formatStableDate(effectiveBaseline.collectedAt) : "Not collected yet";
   const coreWebVitalsMetric = deriveCoreWebVitalsMetric(baselineMetrics);
+  const normalizedSetupProgress =
+    typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
+      ? Math.max(0, Math.min(100, setupProgressPercent))
+      : null;
 
   const inputClass =
-    "w-full rounded-xl border border-gray-200 py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full rounded-lg border border-gray-200 bg-white py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
   const inputWithIconClass = `${inputClass} pl-11`;
   const textareaClass =
-    "w-full resize-y rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full resize-y rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
   const textareaWithIconClass =
-    "w-full resize-y rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
+    "w-full resize-y rounded-lg border border-gray-200 bg-white py-3 pl-11 pr-4 text-sm font-medium leading-6 text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
 
   const updateValue = (field: StartupSetupField, value: string) => {
     setStartupValues((current) => ({ ...current, [field]: value }));
@@ -1507,8 +1578,8 @@ export default function VibeMarketingStartupBaselineSetup({
     <Form
       method="POST"
       className={clsx(
-        "bg-white",
-        embedded ? "space-y-0" : "mt-10 overflow-hidden rounded-2xl border border-gray-200 shadow-sm",
+        "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm",
+        embedded ? "" : "mt-10",
       )}
     >
       <input type="hidden" name="intent" value="save-startup-details" />
@@ -1517,68 +1588,89 @@ export default function VibeMarketingStartupBaselineSetup({
         <div className="border-b border-rose-100 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-700">{error}</div>
       ) : null}
 
-      <div className={clsx("grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] xl:gap-12", embedded ? "" : "p-6 lg:p-8")}>
-        <div>
-          <p className="text-sm font-black text-violet-700">{setupEyebrow}</p>
-          <h2 className="mt-3 text-2xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
-          <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">
-            {setupDescription}
-          </p>
-
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            <FormField label="Company name" help="This will be used as the author for your articles.">
-              <div className="relative">
-                <ControlIcon icon={Building2} />
-                <input
-                  name="companyName"
-                  value={startupValues.companyName}
-                  onChange={(event) => updateValue("companyName", event.target.value)}
-                  disabled={researchLocked}
-                  required
-                  autoComplete="organization"
-                  placeholder="Acme AI"
-                  className={inputWithIconClass}
-                />
-              </div>
-            </FormField>
-
-            <FormField label="Website domain" help="Connect this company to its website and article system.">
-              <div className="relative">
-                <ControlIcon icon={Globe2} />
-                <input
-                  name="domain"
-                  value={startupValues.domain}
-                  onChange={(event) => updateValue("domain", event.target.value)}
-                  disabled={researchLocked}
-                  required
-                  autoComplete="url"
-                  placeholder="example.com"
-                  className={inputWithIconClass}
-                />
-              </div>
-            </FormField>
+      <div className="space-y-6 p-5 sm:p-6 lg:p-8">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,520px)] lg:items-start">
+          <div>
+            <p className="text-sm font-black uppercase tracking-wide text-violet-700">{setupEyebrow}</p>
+            <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
+            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">{setupDescription}</p>
           </div>
+          {showSetupProgress && normalizedSetupProgress !== null ? (
+            <div className="pt-2 lg:pt-10">
+              <div className="flex items-center gap-4">
+                <div className="h-2 flex-1 rounded-full bg-gray-100">
+                  <div className="h-2 rounded-full bg-violet-700" style={{ width: `${normalizedSetupProgress}%` }} />
+                </div>
+                <span className="shrink-0 text-sm font-black text-gray-600">{setupProgressLabel}</span>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
-          <div className="mt-7 space-y-3 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 via-white to-indigo-50 p-5 shadow-sm shadow-violet-100/60">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <section className="overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70 p-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex gap-4">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-white shadow-lg shadow-violet-200">
+                <Sparkles className="h-7 w-7" />
+              </span>
               <div>
-                <p className="text-sm font-black text-gray-950">Fill in with AI</p>
-                <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-                  Use the website and public company info to fill the profile fields below.
+                <h3 className="text-xl font-black tracking-normal text-violet-800">Save time - let our AI do the heavy lifting</h3>
+                <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-700">
+                  Add a few basic details below, then research your company and automatically fill in the rest of your profile.
+                  <span className="ml-2 inline-flex items-center gap-1 font-black text-violet-700">
+                    Learn how it works <ArrowRight className="h-4 w-4" />
+                  </span>
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={startAutofill}
-                disabled={!canStartAutofill}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {autofillPending || autofillPolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {autofillPending || autofillPolling ? "Generating..." : "Generate with AI"}
-              </button>
             </div>
-            <div className="rounded-xl border border-violet-100 bg-white/70 p-4">
-              <FormField label="Company LinkedIn URL (optional)" help="Helps AI identify the right company and competitors.">
+            <SetupDocumentMockups />
+          </div>
+        </section>
+
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+          <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex items-start gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-violet-700 text-base font-black text-white shadow-sm shadow-violet-200">1</span>
+              <div>
+                <h3 className="text-xl font-black tracking-normal text-gray-950">Add the basics</h3>
+                <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">These details help our AI find the right information about your company.</p>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-5 lg:grid-cols-2">
+              <FormField label="Company name" badge={<RequiredPill />} className="lg:col-span-2">
+                <div className="relative">
+                  <ControlIcon icon={Building2} />
+                  <input
+                    name="companyName"
+                    value={startupValues.companyName}
+                    onChange={(event) => updateValue("companyName", event.target.value)}
+                    disabled={researchLocked}
+                    required
+                    autoComplete="organization"
+                    placeholder="e.g. Acme Inc."
+                    className={inputWithIconClass}
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="Website domain" badge={<RequiredPill />}>
+                <div className="relative">
+                  <ControlIcon icon={Globe2} />
+                  <input
+                    name="domain"
+                    value={startupValues.domain}
+                    onChange={(event) => updateValue("domain", event.target.value)}
+                    disabled={researchLocked}
+                    required
+                    autoComplete="url"
+                    placeholder="e.g. acme.com"
+                    className={inputWithIconClass}
+                  />
+                </div>
+              </FormField>
+
+              <FormField label="LinkedIn company page" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
                 <div className="relative">
                   <ControlIcon icon={Link2} />
                   <input
@@ -1586,39 +1678,145 @@ export default function VibeMarketingStartupBaselineSetup({
                     value={startupValues.companyLinkedInUrl}
                     onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
                     disabled={researchLocked}
-                    placeholder="https://www.linkedin.com/company/acme"
+                    placeholder="e.g. linkedin.com/company/acme-inc"
                     className={inputWithIconClass}
                   />
                 </div>
+                {showLinkedInDisambiguationHint ? (
+                  <p className="mt-2 text-xs font-bold text-amber-700">
+                    A LinkedIn company URL helps us disambiguate names like {startupValues.companyName.trim()}.
+                  </p>
+                ) : null}
               </FormField>
-              {showLinkedInDisambiguationHint ? (
-                <p className="mt-2 text-xs font-bold text-amber-700">
-                  A LinkedIn company URL helps us disambiguate names like {startupValues.companyName.trim()}.
-                </p>
-              ) : null}
             </div>
+
+            <button
+              type="button"
+              onClick={startAutofill}
+              disabled={!canStartAutofill}
+              className="mt-6 flex w-full items-center justify-between gap-4 rounded-xl bg-violet-700 px-6 py-5 text-left text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <span className="flex min-w-0 items-center gap-4">
+                {autofillPending || autofillPolling ? <Loader2 className="h-7 w-7 shrink-0 animate-spin" /> : <Sparkles className="h-7 w-7 shrink-0" />}
+                <span className="min-w-0">
+                  <span className="block text-lg font-black">Research my company & auto-fill the rest</span>
+                  <span className="mt-1 block text-sm font-semibold text-violet-100">Our AI will find and fill in the next section for you</span>
+                </span>
+              </span>
+              <ArrowRight className="h-6 w-6 shrink-0" />
+            </button>
+
             {!canStartAutofill && !autofillPending && !autofillPolling ? (
-              <p className="text-xs font-bold text-gray-500">Add a company name and website domain before generating with AI.</p>
+              <p className="mt-3 text-xs font-bold text-gray-500">Add a company name and website domain before researching with AI.</p>
             ) : null}
+            <p className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
+              <ShieldCheck className="h-4 w-4" />
+              We only use this information to research your company. You can review and edit everything.
+            </p>
             {autofillStartData?.error && !autofillStartData?.autofillRunId ? (
-              <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{autofillStartData.error}</div>
+              <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{autofillStartData.error}</div>
             ) : null}
-            <ProfileResearchProgressCard
-              run={autofillRun}
-              runId={autofillRunId}
-              pending={autofillPending}
-              startStatus={autofillStartStatus}
-              startError={autofillStartError}
-              stalled={autofillStalled}
-              unavailable={autofillUnavailable}
-              onRetry={startAutofill}
-              retryDisabled={!canRetryAutofill}
-            />
+            <div className="mt-4">
+              <ProfileResearchProgressCard
+                run={autofillRun}
+                runId={autofillRunId}
+                pending={autofillPending}
+                startStatus={autofillStartStatus}
+                startError={autofillStartError}
+                stalled={autofillStalled}
+                unavailable={autofillUnavailable}
+                onRetry={startAutofill}
+                retryDisabled={!canRetryAutofill}
+              />
+            </div>
+          </section>
+
+          <aside className="self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <h3 className="text-base font-black text-gray-950">What happens next?</h3>
+            <div className="mt-5 space-y-5">
+              <NextStepItem icon={Search} title="We research your company" body="Our AI looks at your website, LinkedIn page, and other trusted sources." />
+              <NextStepItem icon={PenLine} title="We fill in your profile" body="Industry, description, audience, value props, competitors, and more." />
+              <NextStepItem icon={CheckCircle2} title="You review & perfect" body="You are in control. Edit anything before moving forward." last />
+            </div>
+            <div className="mt-6 rounded-xl bg-gray-50 p-4">
+              <div className="flex gap-3">
+                <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-gray-700" />
+                <div>
+                  <p className="text-sm font-black text-gray-950">You&apos;re always in control</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">We&apos;ll never publish or make changes unless you specifically approve.</p>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section className={clsx("rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6", researchLocked && "bg-gray-50/80")}>
+          <div className="flex items-start gap-4">
+            <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-black shadow-sm", researchLocked ? "bg-violet-700 text-white shadow-violet-200" : "bg-gray-200 text-gray-600")}>2</span>
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h3 className="text-xl font-black tracking-normal text-gray-950">Company details</h3>
+                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-700">Will be filled by AI</span>
+              </div>
+              <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">Sit back while we gather information about your business, then review and edit anything.</p>
+            </div>
           </div>
 
-          <div className={clsx("mt-8 rounded-2xl border border-gray-200 bg-white p-5", researchLocked && "bg-gray-50/80")}>
-            <div className="grid gap-5 lg:grid-cols-2">
-              <FormField label="Short description" help="In 1-2 sentences, what does your startup do?">
+          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <FormField label="Startup location">
+              <div className="relative">
+                <ControlIcon icon={MapPin} />
+                <input
+                  name="location"
+                  value={startupValues.location}
+                  onChange={(event) => updateValue("location", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="Melbourne, Australia"
+                  className={inputWithIconClass}
+                />
+              </div>
+            </FormField>
+            <FormField label="Founder names">
+              <input
+                name="founderNames"
+                value={startupValues.founderNames}
+                onChange={(event) => updateValue("founderNames", event.target.value)}
+                disabled={researchLocked}
+                placeholder="Sam Donegan, Alex Founder"
+                className={`${inputClass} px-4`}
+              />
+            </FormField>
+            <FormField label="Stage">
+              <select
+                name="stage"
+                value={startupValues.stage}
+                onChange={(event) => updateValue("stage", event.target.value)}
+                disabled={researchLocked}
+                className={`${inputClass} px-4`}
+              >
+                {STARTUP_STAGE_OPTIONS.map((option) => (
+                  <option key={option || "blank"} value={option}>
+                    {option || "Select stage"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Organization type">
+              <select
+                name="organizationKind"
+                value={startupValues.organizationKind}
+                onChange={(event) => updateValue("organizationKind", event.target.value)}
+                disabled={researchLocked}
+                className={`${inputClass} px-4`}
+              >
+                {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                  <option key={option || "blank"} value={option}>
+                    {option || "Select type"}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            <FormField label="Short description" className="md:col-span-2">
                 <textarea
                   name="shortDescription"
                   value={startupValues.shortDescription}
@@ -1631,7 +1829,21 @@ export default function VibeMarketingStartupBaselineSetup({
                 />
               </FormField>
 
-              <FormField label="What problem do you solve?" help="What's the main problem you help your customers solve?">
+            <FormField label="Target audience" className="md:col-span-2">
+              <div className="relative">
+                <ControlIcon icon={Users} />
+                <input
+                  name="targetAudience"
+                  value={startupValues.targetAudience}
+                  onChange={(event) => updateValue("targetAudience", event.target.value)}
+                  disabled={researchLocked}
+                  placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
+                  className={inputWithIconClass}
+                />
+              </div>
+            </FormField>
+
+            <FormField label="What you do" className="md:col-span-2">
                 <textarea
                   name="problemSolved"
                   value={startupValues.problemSolved}
@@ -1644,113 +1856,21 @@ export default function VibeMarketingStartupBaselineSetup({
                 />
               </FormField>
 
-              <FormField label="Who is your target audience?" help="Who do you serve?">
-                <div className="relative">
-                  <ControlIcon icon={Users} />
-                  <input
-                    name="targetAudience"
-                    value={startupValues.targetAudience}
-                    onChange={(event) => updateValue("targetAudience", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-            </div>
-          </div>
-
-          <details className="mt-8 rounded-2xl border border-gray-200 bg-gray-50/70 p-5" open={advancedOpenByDefault || Boolean(startupValues.location || startupValues.abn || startupValues.founderNames || startupValues.stage || startupValues.organizationKind)}>
-            <summary className="cursor-pointer text-sm font-black text-gray-950">Advanced startup details</summary>
-            <div className="mt-5 grid gap-5 lg:grid-cols-2">
-              <FormField label="Startup location">
-                <div className="relative">
-                  <ControlIcon icon={MapPin} />
-                  <input
-                    name="location"
-                    value={startupValues.location}
-                    onChange={(event) => updateValue("location", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="Melbourne, Australia"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-              <FormField label="ABN">
-                <div className="relative">
-                  <ControlIcon icon={BadgeInfo} />
-                  <input
-                    name="abn"
-                    value={startupValues.abn}
-                    onChange={(event) => updateValue("abn", event.target.value)}
-                    disabled={researchLocked}
-                    placeholder="Search ABN or business name"
-                    className={inputWithIconClass}
-                  />
-                </div>
-              </FormField>
-              <FormField label="Founder names">
+            <FormField label="ABN">
+              <div className="relative">
+                <ControlIcon icon={BadgeInfo} />
                 <input
-                  name="founderNames"
-                  value={startupValues.founderNames}
-                  onChange={(event) => updateValue("founderNames", event.target.value)}
+                  name="abn"
+                  value={startupValues.abn}
+                  onChange={(event) => updateValue("abn", event.target.value)}
                   disabled={researchLocked}
-                  placeholder="Sam Donegan, Alex Founder"
-                  className={`${inputClass} px-4`}
+                  placeholder="Search ABN or business name"
+                  className={inputWithIconClass}
                 />
-              </FormField>
-              <FormField label="Stage">
-                <select
-                  name="stage"
-                  value={startupValues.stage}
-                  onChange={(event) => updateValue("stage", event.target.value)}
-                  disabled={researchLocked}
-                  className={`${inputClass} px-4`}
-                >
-                  {STARTUP_STAGE_OPTIONS.map((option) => (
-                    <option key={option || "blank"} value={option}>
-                      {option || "Select stage"}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-              <FormField label="Organization type">
-                <select
-                  name="organizationKind"
-                  value={startupValues.organizationKind}
-                  onChange={(event) => updateValue("organizationKind", event.target.value)}
-                  disabled={researchLocked}
-                  className={`${inputClass} px-4`}
-                >
-                  {ORGANIZATION_KIND_OPTIONS.map((option) => (
-                    <option key={option || "blank"} value={option}>
-                      {option || "Select type"}
-                    </option>
-                  ))}
-                </select>
-              </FormField>
-            </div>
-          </details>
-        </div>
+              </div>
+            </FormField>
 
-        <aside className="self-start rounded-2xl border border-gray-200 bg-white p-6">
-          <h3 className="flex items-center gap-2 text-sm font-black text-gray-950">
-            {guidanceTitle} <CheckCircle2 className="h-4 w-4 text-gray-400" />
-          </h3>
-          <p className="mt-5 text-sm font-semibold leading-7 text-gray-600">
-            {guidanceBody}
-          </p>
-          <p className="mt-7 text-sm font-black text-gray-950">Tips</p>
-          <ul className="mt-4 space-y-4 text-sm font-semibold text-gray-600">
-            {guidanceTips.map((tip) => (
-              <li key={tip} className="flex gap-3">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-7 space-y-6 border-t border-gray-100 pt-6">
-            <FormField label="Seed keywords" help="Optional starting keywords, separated by commas.">
+            <FormField label="Seed keywords">
               <div className="relative">
                 <ControlIcon icon={Tags} />
                 <textarea
@@ -1765,7 +1885,7 @@ export default function VibeMarketingStartupBaselineSetup({
               </div>
             </FormField>
 
-            <FormField label="Competitors" help="One competitor domain or company per line.">
+            <FormField label="Competitors" className="md:col-span-2 xl:col-span-4">
               <div className="relative">
                 <ControlIcon icon={Users} />
                 <textarea
@@ -1780,7 +1900,7 @@ export default function VibeMarketingStartupBaselineSetup({
               </div>
             </FormField>
           </div>
-        </aside>
+        </section>
       </div>
 
       {includeBaseline ? (
