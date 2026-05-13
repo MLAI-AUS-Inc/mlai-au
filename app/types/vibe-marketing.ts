@@ -30,6 +30,7 @@ export interface VibeMarketingRunSummary {
   workflow: string;
   domain: string;
   githubRepo?: string | null;
+  sourceRunId?: string | null;
   status: VibeMarketingRunStatus;
   currentStep?: string | null;
   approvalState?: string | null;
