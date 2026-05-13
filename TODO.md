@@ -1,3 +1,4 @@
+- [x] Fix GA4 Measurement ID and SPA page-view tracking
 - [x] Update the main-page Slack invite link
 - [x] Update the Vibe Raising relationship callout heading to mention building investor relationships 6 months in advance
 - [x] Restore the Vibe Raising bottom cue text to "Don't Wait Until You Need Money"
