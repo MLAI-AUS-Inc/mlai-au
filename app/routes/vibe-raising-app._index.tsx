@@ -996,6 +996,17 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         >
                             View Overview
                         </Link>
+                        <Link
+                            to="/founder-tools/drafts"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                            style={{
+                                color: "var(--vr-color-text-mid)",
+                                borderColor: "var(--vr-color-border-md)",
+                                background: "transparent",
+                            }}
+                        >
+                            My Draft
+                        </Link>
                         <button
                             type="button"
                             onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
@@ -1107,6 +1118,17 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                             Discover Investors
                         </button>
                     ) : null}
+                    <Link
+                        to="/founder-tools/drafts"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                        style={{
+                            color: "var(--vr-color-text-mid)",
+                            borderColor: "var(--vr-color-border-md)",
+                            background: "transparent",
+                        }}
+                    >
+                        My Draft
+                    </Link>
                     <Link
                         to="/founder-tools/data-sources"
                         className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"

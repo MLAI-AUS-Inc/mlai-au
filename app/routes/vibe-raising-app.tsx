@@ -9,31 +9,33 @@ import {
 import AuthenticatedLayout from "~/components/AuthenticatedLayout";
 import VibeRaisingIntroPopup from "~/components/VibeRaisingIntroPopup";
 import { getEnv } from "~/lib/env.server";
-import { isFounderToolsDiscoverEnabled } from "~/lib/founder-tools-preview";
 import {
   getOptionalVibeRaisingContext,
   getVibeRaisingLoginHref,
 } from "~/lib/vibe-raising";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
-  BuildingOffice2Icon,
-  CircleStackIcon,
+  ChartBarIcon,
   DocumentTextIcon,
-  DocumentDuplicateIcon,
-  HomeIcon,
   MegaphoneIcon,
-  UsersIcon,
 } from "@heroicons/react/24/outline";
 
 const BASE_FOUNDER_NAVIGATION = [
-  { name: "Overview", href: "/founder-tools/overview", icon: HomeIcon, exact: true },
-  { name: "Dashboard", href: "/founder-tools", icon: HomeIcon, exact: true },
-  { name: "Vibe Raising", href: "/founder-tools/updates", icon: DocumentTextIcon, exact: true },
-  { name: "My Drafts", href: "/founder-tools/drafts", icon: DocumentDuplicateIcon },
-  { name: "Discover Investors", href: "/founder-tools/discover", icon: UsersIcon },
+  { name: "Dashboard", href: "/founder-tools", icon: ChartBarIcon, exact: true },
+  {
+    name: "Vibe Raising",
+    href: "/founder-tools/overview",
+    icon: DocumentTextIcon,
+    matchPaths: [
+      "/founder-tools/overview",
+      "/founder-tools/updates",
+      "/founder-tools/drafts",
+      "/founder-tools/data-sources",
+      "/founder-tools/companies",
+      "/founder-tools/discover",
+    ],
+  },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
-  { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
-  { name: "Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
 ];
 
 function canAccessDuringCompanySetup(pathname: string) {
@@ -85,9 +87,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 export default function VibeRaisingApp() {
   const { user } = useLoaderData<typeof loader>();
-  const founderNavigation = isFounderToolsDiscoverEnabled()
-    ? BASE_FOUNDER_NAVIGATION
-    : BASE_FOUNDER_NAVIGATION.filter((item) => item.href !== "/founder-tools/discover");
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [onCompleteCallback, setOnCompleteCallback] =
     useState<(() => void) | undefined>();
@@ -100,7 +99,7 @@ export default function VibeRaisingApp() {
   return (
     <AuthenticatedLayout
       user={user}
-      navigation={founderNavigation}
+      navigation={BASE_FOUNDER_NAVIGATION}
       userNavigation={[]}
       logoutAction="/founder-tools/logout"
     >
