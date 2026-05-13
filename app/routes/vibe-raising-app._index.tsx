@@ -11,7 +11,6 @@ import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
-    ExclamationTriangleIcon,
     ClockIcon,
     ChartBarIcon,
     PencilSquareIcon,
@@ -37,7 +36,6 @@ import {
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
 } from "@heroicons/react/24/outline";
-import ResponsibleInvestorsSection from "~/components/ResponsibleInvestorsSection";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 
@@ -858,83 +856,107 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
     if (!hasUpdates) {
         return (
-            <div className="-m-6 sm:-m-8 lg:-m-10">
-                {/* Hero section with background image */}
-                <div className="relative min-h-[60vh] sm:min-h-[calc(100vh-64px)] overflow-hidden">
-                    {/* Background image — cropped to viewport height */}
-                    <img
-                        src="/hero-bg.jpg"
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover object-top"
-                    />
-                    {/* Dark overlay for readability */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
-
-                    {/* Content over the image */}
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-16">
-                        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white mb-4 tracking-tight drop-shadow-lg">
-                            Let's get you ready to raise, {firstName}.
-                        </h1>
-                        <p className="text-base sm:text-lg text-white/80 max-w-md mx-auto mb-8 leading-snug">
-                            Build investor trust and secure funding through
-                            <br />
-                            consistent, transparent monthly updates.
+            <div className="vr-scope space-y-8 pb-12">
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
+                        <h1 className="vr-text-page-title">Your Monthly Updates</h1>
+                        <p className="vr-text-body-small mt-1" style={{ color: "var(--vr-color-text-mid)" }}>
+                            Keep your update workspace ready, then jump into the overview page whenever you want the full founder pitch surface again.
                         </p>
-                        <button
-                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
-                            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-900 font-bold rounded-xl transition-all shadow-lg hover:shadow-xl hover:bg-gray-100 active:scale-[0.98]"
+                    </div>
+                    <div className="flex items-center gap-2.5 flex-wrap">
+                        <Link
+                            to="/founder-tools/overview"
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
+                            style={{
+                                color: "var(--vr-color-text-mid)",
+                                borderColor: "var(--vr-color-border-md)",
+                                background: "transparent",
+                            }}
                         >
-                            Create Your First Update
-                            <ArrowRightIcon className="w-5 h-5" />
+                            View Overview
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
+                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
+                            style={{
+                                background: "var(--vr-color-primary)",
+                                color: "#fff",
+                                boxShadow: "var(--vr-shadow-sm)",
+                            }}
+                        >
+                            <PlusIcon className="w-4 h-4" />
+                            Create Update
                         </button>
                     </div>
                 </div>
 
-                <ResponsibleInvestorsSection />
-
-                {/* How It Works - thin vertical line separators */}
-                <div className="px-6 py-14">
-                    <h2 className="text-2xl font-bold text-gray-900 text-center mb-12">How It Works</h2>
-                    <div className="flex items-center justify-center max-w-5xl mx-auto">
-                        {[
-                            { step: 1, title: "Create Your Update", desc: "Draft your monthly progress in minutes" },
-                            { step: 2, title: "Get AI Feedback", desc: "Receive scoring and suggestions instantly" },
-                            { step: 3, title: "Engage with Investors", desc: "We match you with the right investors" }
-                        ].map((item, idx) => (
-                            <div key={item.step} className="flex items-center">
-                                <div className="text-center px-8 sm:px-14 space-y-2">
-                                    <span className="text-3xl font-extrabold text-[var(--vr-color-primary)]">{item.step}</span>
-                                    <p className="font-bold text-gray-900 text-sm whitespace-nowrap">{item.title}</p>
-                                    <p className="text-xs text-gray-500 whitespace-nowrap">{item.desc}</p>
-                                </div>
-                                {idx < 2 && (
-                                    <div className="w-px h-16 bg-gray-300 flex-shrink-0" />
-                                )}
+                <div
+                    className="rounded-[28px] border p-6 sm:p-8"
+                    style={{
+                        borderColor: "var(--vr-color-border-md)",
+                        background: "linear-gradient(135deg, rgba(0,255,215,0.08), rgba(255,255,255,0.95))",
+                        boxShadow: "var(--vr-shadow-sm)",
+                    }}
+                >
+                    <div className="grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:items-center">
+                        <div className="space-y-4">
+                            <div className="inline-flex rounded-full bg-[rgba(0,128,128,0.10)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--vr-color-text-strong)]">
+                                Dashboard ready
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Warning card - investor outreach timing */}
-                <div className="max-w-4xl mx-auto px-6 pb-14">
-                    <div className="relative rounded-2xl border border-[rgba(242,114,63,0.24)] bg-white p-10 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
-                        <div className="flex items-start gap-5">
-                            <div className="mt-1 flex-shrink-0 rounded-lg bg-[rgba(242,114,63,0.12)] p-2">
-                                <ExclamationTriangleIcon className="h-7 w-7 text-[var(--vr-palette-coral)]" />
-                            </div>
-                            <div className="space-y-4">
-                                <h2 className="text-2xl font-bold text-gray-900">Don't Wait Until You Need Money</h2>
-                                <p className="text-gray-600 leading-relaxed text-lg">
-                                    If you're reaching out to investors only when you need capital, it's already too late.
-                                    Investors can smell desperation - and when that moment comes, you've already messed up.
-                                    The best founders plan ahead. Start building relationships at least 6 months before you
-                                    need funding. Send regular updates, share your progress and challenges honestly.
-                                    We will match you with the proper investors based on your updates, so when the time comes
-                                    to raise, the trust is already there.
-                                </p>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+                                No monthly update yet, {firstName}.
+                            </h2>
+                            <p className="max-w-2xl text-base leading-7 text-gray-600">
+                                Your workspace is ready. Start a draft from your data sources, or head back to the overview page any time to revisit the full founder-facing hero and example update.
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
+                                    className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-text-strong)] px-6 py-3 font-bold text-white transition-all hover:opacity-95"
+                                >
+                                    Create Your First Update
+                                    <ArrowRightIcon className="h-5 w-5" />
+                                </button>
+                                <Link
+                                    to="/founder-tools/overview"
+                                    className="inline-flex items-center gap-2 rounded-xl border px-6 py-3 font-semibold"
+                                    style={{
+                                        borderColor: "var(--vr-color-border-md)",
+                                        color: "var(--vr-color-text-strong)",
+                                        background: "rgba(255,255,255,0.9)",
+                                    }}
+                                >
+                                    Revisit Overview
+                                </Link>
                             </div>
                         </div>
-                        <div className="absolute bottom-0 left-0 top-0 w-1.5 rounded-l-2xl bg-[var(--vr-palette-coral)]" />
+
+                        <div className="rounded-[24px] border bg-white/90 p-5 backdrop-blur-sm" style={{ borderColor: "var(--vr-color-border-md)" }}>
+                            <div className="space-y-4">
+                                <div>
+                                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--vr-color-primary-dark)]">
+                                        Next steps
+                                    </p>
+                                    <h3 className="mt-2 text-xl font-bold text-gray-900">Build your first investor-ready update</h3>
+                                </div>
+                                <div className="space-y-3">
+                                    {[
+                                        "Connect one source or start with manual materials.",
+                                        "Generate a private draft and keep refining it.",
+                                        "Publish when you are ready for investors to see it.",
+                                    ].map((item) => (
+                                        <div className="flex items-start gap-3" key={item}>
+                                            <span className="mt-1 h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-color-primary)]" />
+                                            <p className="text-sm leading-6 text-gray-600">{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

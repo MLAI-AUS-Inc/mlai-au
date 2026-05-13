@@ -1,4 +1,4 @@
-import { Form, Link, useActionData, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
+import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
@@ -7,13 +7,18 @@ import {
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
     getVibeRaisingMonthlyUpdates,
+    getVibeRaisingMonthlyUpdateById,
     getVibeRaisingStartupUpdateActiveRun,
     getVibeRaisingStartupUpdateDraftResults,
     getVibeRaisingStartupUpdateStatus,
+    publishVibeRaisingMonthlyUpdate,
+    saveVibeRaisingCompany,
     runVibeRaisingStartupUpdate,
     saveVibeRaisingMonthlyUpdate,
+    uploadVibeRaisingPitchDeck,
     uploadVibeRaisingUpdateVideo,
 } from "~/lib/vibe-raising";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
     XMarkIcon,
     SparklesIcon,
@@ -45,6 +50,7 @@ import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
 import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
+    VibeRaisingFounderProfile,
     VibeRaisingManualDocument,
     VibeRaisingMetricSuggestion,
     VibeRaisingMonthlyUpdate,
@@ -81,14 +87,24 @@ const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
 
-function readStoredManualMaterials(): { summary: string; sourceUrl: string; manualDocumentIds: string[]; documents: VibeRaisingManualDocument[] } {
-    if (typeof window === "undefined") return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
+function readStoredManualMaterials(): {
+    summary: string;
+    sourceUrl: string;
+    pitchDeckSummary: string;
+    pitchDeckUrl: string;
+    manualDocumentIds: string[];
+    documents: VibeRaisingManualDocument[];
+} {
+    const empty = { summary: "", sourceUrl: "", pitchDeckSummary: "", pitchDeckUrl: "", manualDocumentIds: [], documents: [] };
+    if (typeof window === "undefined") return empty;
     try {
         const raw = window.localStorage.getItem(MANUAL_MATERIALS_STORAGE_KEY);
-        if (!raw) return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
+        if (!raw) return empty;
         const parsed = JSON.parse(raw) as {
             summary?: unknown;
             sourceUrl?: unknown;
+            pitchDeckSummary?: unknown;
+            pitchDeckUrl?: unknown;
             manualDocumentIds?: unknown;
             documents?: unknown;
         };
@@ -103,11 +119,13 @@ function readStoredManualMaterials(): { summary: string; sourceUrl: string; manu
         return {
             summary: typeof parsed.summary === "string" ? parsed.summary : "",
             sourceUrl: typeof parsed.sourceUrl === "string" ? parsed.sourceUrl : "",
+            pitchDeckSummary: typeof parsed.pitchDeckSummary === "string" ? parsed.pitchDeckSummary : "",
+            pitchDeckUrl: typeof parsed.pitchDeckUrl === "string" ? parsed.pitchDeckUrl : "",
             manualDocumentIds,
             documents,
         };
     } catch {
-        return { summary: "", sourceUrl: "", manualDocumentIds: [], documents: [] };
+        return empty;
     }
 }
 
@@ -145,6 +163,27 @@ function isFutureMonthlyUpdate(month: string, year: number | string) {
     return parsedYear > now.getFullYear() || (parsedYear === now.getFullYear() && monthIndex > now.getMonth());
 }
 
+function getCurrentMonthlyUpdatePeriod(now = new Date()) {
+    return {
+        month: VIBE_RAISING_MONTH_OPTIONS[now.getMonth()]?.name || "January",
+        year: now.getFullYear(),
+    };
+}
+
+function getPreviousMonthlyUpdatePeriod(now = new Date()) {
+    const previous = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return {
+        month: VIBE_RAISING_MONTH_OPTIONS[previous.getMonth()]?.name || "December",
+        year: previous.getFullYear(),
+    };
+}
+
+function getCreateStepMonthOptions(now = new Date()) {
+    const previous = getPreviousMonthlyUpdatePeriod(now);
+    const current = getCurrentMonthlyUpdatePeriod(now);
+    return [previous, current];
+}
+
 function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
     const isoMonth = String(update.isoMonth || "").trim();
     const isoMatch = isoMonth.match(/^(\d{4})-(\d{2})/);
@@ -156,6 +195,38 @@ function getMonthlyUpdateStorageKey(update: VibeRaisingMonthlyUpdate) {
 
     const parsed = parseVibeRaisingMonthYear(update.month);
     return getMonthlyUpdateKey(parsed.month, parsed.year);
+}
+
+function buildExistingUpdateFormData(update: VibeRaisingMonthlyUpdate) {
+    const parsedPeriod = parseVibeRaisingMonthYear(update.month);
+    const metrics = update.metrics || {};
+    return {
+        id: update.id,
+        month: update.monthName || parsedPeriod.month,
+        year: update.year || parsedPeriod.year,
+        summary: update.summary || "",
+        sourceUrl: update.sourceUrl || "",
+        pitchDeckUrl: update.pitchDeckUrl || "",
+        pitchDeckStoragePath: update.pitchDeckStoragePath || "",
+        pitchDeckContentType: update.pitchDeckContentType || "",
+        pitchDeckFileSizeBytes: update.pitchDeckFileSizeBytes || null,
+        pitchDeckOriginalFilename: update.pitchDeckOriginalFilename || "",
+        pitchDeckSummary: update.pitchDeckSummary || "",
+        videoUrl: update.videoUrl || "",
+        videoStoragePath: update.videoStoragePath || "",
+        videoContentType: update.videoContentType || "",
+        videoFileSizeBytes: update.videoFileSizeBytes || null,
+        videoOriginalFilename: update.videoOriginalFilename || "",
+        highlights: update.highlights || "",
+        challenges: update.challenges || "",
+        asks: update.asks || "",
+        learnings: update.learnings || "",
+        next30Days: update.next30Days || "",
+        metrics,
+        metricSuggestions: update.metricSuggestions || [],
+        metricKeys: Object.keys(metrics).join(","),
+        ...metrics,
+    };
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -177,22 +248,17 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
     let existingData = null;
     if (editId) {
-        // Mock existing data (matching the Test update on dashboard)
-        existingData = {
-            month: "January",
-            year: 2026,
-            revenue: "127500",
-            growth: "18",
-            activeUsers: "3420",
-            highlights: "Closed 3 new enterprise deals with Fortune 500 companies totaling $75K ARR. Launched new dashboard feature which increased user engagement by 32%. Featured in TechCrunch - drove 1,200+ signups. Team grew to 8 people with new Head of Sales joining.",
-            challenges: "Customer onboarding time is averaging 14 days vs target of 7 days. Need to streamline our implementation process. CAC increased to $850 this month due to increased competition in paid channels.",
-            asks: "Looking for introductions to VP of Customer Success at B2B SaaS companies to help optimize our onboarding process. Would appreciate feedback on our pricing strategy as we move upmarket.",
-            learnings: "Enterprise buyers care most about implementation speed once the security review is complete.",
-            next30Days: "Reduce onboarding time to 10 days and close two more enterprise pilots."
-        };
+        const existingUpdate = await getVibeRaisingMonthlyUpdateById(env, request, editId).catch((error) => {
+            console.warn("Unable to load Vibe Raising update for editing.", error);
+            return null;
+        });
+        existingData = existingUpdate ? buildExistingUpdateFormData(existingUpdate) : null;
     }
 
-    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request);
+    const existingMonthlyUpdates = await getVibeRaisingMonthlyUpdates(env, request).catch((error) => {
+        console.warn("Unable to load existing Vibe Raising monthly updates for create flow.", error);
+        return [];
+    });
 
     return {
         user,
@@ -205,14 +271,100 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     };
 }
 
+function buildMonthlyUpdateSavePayload(formData: FormData) {
+    const dynamicMetricKeys = String(formData.get("metricKeys") || "")
+        .split(",")
+        .map((key) => key.trim())
+        .filter((key) => key && METRIC_OPTION_MAP.has(key));
+    const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
+    const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
+    const metrics = Object.fromEntries(
+        metricKeys
+            .map((key) => [key, String(formData.get(key) || "").trim()] as const)
+            .filter(([, value]) => value.length > 0),
+    );
+    const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
+    const rawPitchDeckFileSizeBytes = Number(formData.get("pitchDeckFileSizeBytes") || 0);
+    const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
+    const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
+    const manualDocumentIds = String(formData.get("manualDocumentIds") || "")
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
+    return {
+        month: String(formData.get("month") || "").trim(),
+        year: Number(formData.get("year") || 0),
+        summary: String(formData.get("summary") || "").trim() || null,
+        sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
+        manualDocumentIds,
+        manualSummary: String(formData.get("manualSummary") || "").trim() || null,
+        pitchDeckUrl: String(formData.get("pitchDeckUrl") || "").trim() || null,
+        pitchDeckStoragePath: String(formData.get("pitchDeckStoragePath") || "").trim() || null,
+        pitchDeckContentType: String(formData.get("pitchDeckContentType") || "").trim() || null,
+        pitchDeckFileSizeBytes: Number.isFinite(rawPitchDeckFileSizeBytes) && rawPitchDeckFileSizeBytes > 0 ? rawPitchDeckFileSizeBytes : null,
+        pitchDeckOriginalFilename: String(formData.get("pitchDeckOriginalFilename") || "").trim() || null,
+        pitchDeckSummary: String(formData.get("pitchDeckSummary") || "").trim() || null,
+        videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
+        videoStoragePath: String(formData.get("videoStoragePath") || "").trim() || null,
+        videoContentType: String(formData.get("videoContentType") || "").trim() || null,
+        videoFileSizeBytes: Number.isFinite(rawVideoFileSizeBytes) && rawVideoFileSizeBytes > 0 ? rawVideoFileSizeBytes : null,
+        videoOriginalFilename: String(formData.get("videoOriginalFilename") || "").trim() || null,
+        highlights: String(formData.get("highlights") || ""),
+        challenges: String(formData.get("challenges") || ""),
+        asks: String(formData.get("asks") || ""),
+        learnings: String(formData.get("learnings") || ""),
+        next30Days: String(formData.get("next30Days") || ""),
+        metrics,
+        metricSuggestions,
+    };
+}
+
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
-    const { appUser: user } = await requireVibeRaisingFounder(env, request);
+    const { appUser } = await requireVibeRaisingFounder(env, request);
     const formData = await request.formData();
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
+    const savePayload = buildMonthlyUpdateSavePayload(formData);
+    const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+    const activeCompany =
+        appUser.companies.find((company) => company.id === appUser.activeCompanyId) ??
+        appUser.companies[0] ??
+        null;
+    const founderProfilesForCompanySave =
+        founderProfiles.some((profile) => String(profile.linkedinUrl || "").trim())
+            ? founderProfiles
+            : activeCompany?.founderProfiles?.length
+                ? activeCompany.founderProfiles
+                : founderProfiles;
+    const founderNamesForCompanySave = founderProfilesForCompanySave
+        .map((profile) => profile.name)
+        .filter(Boolean);
+
+    if (activeCompany && formData.has("founderProfiles")) {
+        await saveVibeRaisingCompany(env, request, {
+            companyId: activeCompany.id,
+            name: activeCompany.name || appUser.companyName,
+            domain: activeCompany.domain ?? appUser.domain ?? null,
+            companyLinkedInUrl: activeCompany.companyLinkedInUrl ?? null,
+            abn: activeCompany.abn ?? appUser.abn ?? null,
+            location: activeCompany.location ?? appUser.location ?? null,
+            founderNames: founderNamesForCompanySave.length > 0
+                ? founderNamesForCompanySave
+                : (activeCompany.founderNames ?? []),
+            founderProfiles: founderProfilesForCompanySave,
+            stage: activeCompany.stage ?? appUser.stage ?? null,
+            registered: activeCompany.registered ?? appUser.companyRegistered,
+        });
+    }
 
     if (intent === "review") {
+        await saveVibeRaisingMonthlyUpdate(env, request, {
+            ...savePayload,
+            saveMode: "ready",
+        });
+
         // Mock AI analysis
         return {
             step: "feedback",
@@ -233,46 +385,26 @@ export async function action({ request, context }: Route.ActionArgs) {
         };
     }
 
-    if (intent === "publish") {
-        const dynamicMetricKeys = String(formData.get("metricKeys") || "")
-            .split(",")
-            .map((key) => key.trim())
-            .filter((key) => key && METRIC_OPTION_MAP.has(key));
-        const selectedMetricKeys = Array.from(new Set(dynamicMetricKeys));
-        const metricKeys = Array.from(new Set([...METRIC_FORM_KEYS, ...selectedMetricKeys]));
-        const metrics = Object.fromEntries(
-            metricKeys
-                .map((key) => [key, String(formData.get(key) || "").trim()] as const)
-                .filter(([, value]) => value.length > 0),
-        );
-        const metricSuggestions = metricSuggestionsFromKeys(selectedMetricKeys, metrics);
-        const rawVideoUrl = String(formData.get("videoUrl") || "").trim();
-        const rawVideoFileSizeBytes = Number(formData.get("videoFileSizeBytes") || 0);
-        const manualDocumentIds = String(formData.get("manualDocumentIds") || "")
-            .split(",")
-            .map((item) => item.trim())
-            .filter(Boolean);
-
-        await saveVibeRaisingMonthlyUpdate(env, request, {
-            month: String(formData.get("month") || "").trim(),
-            year: Number(formData.get("year") || 0),
-            summary: String(formData.get("summary") || "").trim() || null,
-            sourceUrl: String(formData.get("sourceUrl") || "").trim() || null,
-            manualDocumentIds,
-            manualSummary: String(formData.get("manualSummary") || "").trim() || null,
-            videoUrl: rawVideoUrl && !rawVideoUrl.startsWith("blob:") ? rawVideoUrl : null,
-            videoStoragePath: String(formData.get("videoStoragePath") || "").trim() || null,
-            videoContentType: String(formData.get("videoContentType") || "").trim() || null,
-            videoFileSizeBytes: Number.isFinite(rawVideoFileSizeBytes) && rawVideoFileSizeBytes > 0 ? rawVideoFileSizeBytes : null,
-            videoOriginalFilename: String(formData.get("videoOriginalFilename") || "").trim() || null,
-            highlights: String(formData.get("highlights") || ""),
-            challenges: String(formData.get("challenges") || ""),
-            asks: String(formData.get("asks") || ""),
-            learnings: String(formData.get("learnings") || ""),
-            next30Days: String(formData.get("next30Days") || ""),
-            metrics,
-            metricSuggestions,
+    if (intent === "save-draft") {
+        const update = await saveVibeRaisingMonthlyUpdate(env, request, {
+            ...savePayload,
+            saveMode: "draft",
         });
+
+        return {
+            step: "draft-saved",
+            update,
+        };
+    }
+
+    if (intent === "publish") {
+        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
+            ...savePayload,
+            saveMode: "ready",
+        });
+        if (savedUpdate?.id) {
+            await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
+        }
 
         return redirect("/founder-tools/updates");
     }
@@ -378,6 +510,7 @@ function MonthYearTabs({
     onMonthChange,
     onYearChange,
     onPeriodChange,
+    monthChoices,
     submitDateFields = true,
     isDateEditable = true,
 }: {
@@ -386,12 +519,18 @@ function MonthYearTabs({
     onMonthChange: (month: string) => void;
     onYearChange: (year: number) => void;
     onPeriodChange?: (key: string) => void;
+    monthChoices?: Array<{ month: string; year: number }>;
     submitDateFields?: boolean;
     isDateEditable?: boolean;
 }) {
     const [isYearMenuOpen, setIsYearMenuOpen] = useState(false);
     const yearMenuRef = useRef<HTMLDivElement | null>(null);
     const yearOptions = Array.from({ length: 11 }, (_, index) => year - 5 + index);
+    const visibleMonthChoices = monthChoices?.length
+        ? monthChoices
+        : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
+    const useCompactCreateTimeline = Boolean(monthChoices?.length);
+    const showYearInMonthLabel = new Set(visibleMonthChoices.map((option) => option.year)).size > 1;
 
     useEffect(() => {
         if (!isYearMenuOpen) return;
@@ -423,31 +562,44 @@ function MonthYearTabs({
             <div className="min-w-0 flex-1">
                 {submitDateFields && <input type="hidden" name="month" value={month} />}
                 <div className="overflow-hidden rounded-t-2xl rounded-b-lg border border-[var(--vr-color-border)] bg-white shadow-xl ring-1 ring-white/40">
-                    <div role="listbox" aria-label="Update month" className="grid w-full grid-cols-12">
-                        {VIBE_RAISING_MONTH_OPTIONS.map((option) => {
-                            const isSelected = option.name === month;
+                    <div
+                        role="listbox"
+                        aria-label="Update month"
+                        className={clsx(
+                            "grid w-full",
+                            useCompactCreateTimeline ? "grid-cols-2" : "grid-cols-12",
+                        )}
+                    >
+                        {visibleMonthChoices.map((option) => {
+                            const monthTheme = getVibeRaisingMonthTheme(option.month);
+                            const isSelected = option.month === month && option.year === year;
+                            const monthLabel = showYearInMonthLabel
+                                ? `${option.month.slice(0, 3).toUpperCase()} ${option.year}`
+                                : option.month.slice(0, 3).toUpperCase();
                             return (
                                 <button
-                                    key={option.name}
+                                    key={`${option.year}-${option.month}`}
                                     type="button"
                                     role="option"
                                     aria-selected={isSelected}
                                     disabled={!isDateEditable}
                                     onClick={() => {
                                         if (!isDateEditable) return;
-                                        onMonthChange(option.name);
+                                        onMonthChange(option.month);
+                                        onYearChange(option.year);
                                         onPeriodChange?.("current");
                                         setIsYearMenuOpen(false);
                                     }}
                                     className={clsx(
-                                        "flex min-h-[54px] min-w-0 items-center justify-center border-r border-[var(--vr-color-border)] px-1 text-center text-[9px] font-black uppercase tracking-[0.08em] transition-colors last:border-r-0 sm:text-[10px] md:text-[11px]",
+                                        "flex min-h-[54px] min-w-0 items-center justify-center border-r border-[var(--vr-color-border)] px-2 text-center font-black uppercase tracking-[0.08em] transition-colors last:border-r-0",
+                                        useCompactCreateTimeline ? "text-[11px] sm:text-xs md:text-sm" : "text-[9px] sm:text-[10px] md:text-[11px]",
                                         isDateEditable ? "cursor-pointer" : "cursor-default",
                                         isSelected
-                                            ? `${option.tabClass} ${option.textClass} shadow-none`
+                                            ? `${monthTheme.tabClass} ${monthTheme.textClass} shadow-none`
                                             : "bg-[var(--vr-palette-paper)] text-slate-500 hover:bg-white hover:text-gray-950",
                                     )}
                                 >
-                                    <span className="truncate">{option.name.slice(0, 3).toUpperCase()}</span>
+                                    <span className="truncate">{monthLabel}</span>
                                 </button>
                             );
                         })}
@@ -456,68 +608,77 @@ function MonthYearTabs({
             </div>
 
             <div ref={yearMenuRef} className="relative sm:min-w-[108px]">
-                <div
-                    className={clsx(
-                        "relative z-10 flex h-full items-center overflow-hidden bg-gray-950 text-white shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-150",
-                        isYearMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
-                    )}
-                >
-                    {submitDateFields && <input type="hidden" name="year" value={year} />}
-                    <button
-                        type="button"
-                        disabled={!isDateEditable}
-                        onClick={() => {
-                            if (!isDateEditable) return;
-                            setIsYearMenuOpen((current) => !current);
-                        }}
-                        className={clsx(
-                            "flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-black tracking-[0.12em] transition-colors",
-                            isDateEditable ? "hover:bg-white/10" : "cursor-default",
-                        )}
-                        aria-label="Select update year"
-                        aria-haspopup={isDateEditable ? "listbox" : undefined}
-                        aria-expanded={isDateEditable ? isYearMenuOpen : undefined}
-                    >
+                {useCompactCreateTimeline ? (
+                    <div className="relative z-10 flex h-full items-center justify-center overflow-hidden rounded-t-2xl rounded-b-lg bg-gray-950 px-4 py-3 text-sm font-black tracking-[0.12em] text-white shadow-lg shadow-black/20 ring-1 ring-white/10">
+                        {submitDateFields && <input type="hidden" name="year" value={year} />}
                         <span>{year}</span>
-                        {isDateEditable && (
-                            <ChevronDownIcon className={clsx("h-3.5 w-3.5 text-white/75 transition-transform duration-150", isYearMenuOpen && "rotate-180")} />
-                        )}
-                    </button>
-                </div>
-                <div
-                    className={clsx(
-                        "absolute left-0 top-full z-40 w-full origin-top overflow-hidden rounded-b-2xl border border-t-0 border-gray-800 bg-gray-950 shadow-2xl shadow-black/20 ring-1 ring-black/10 transition-all duration-150",
-                        isDateEditable && isYearMenuOpen
-                            ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
-                            : "pointer-events-none -translate-y-1 scale-95 opacity-0",
-                    )}
-                >
-                    <div role="listbox" aria-label="Update year" className="max-h-72 overflow-y-auto py-1">
-                        {yearOptions.map((optionYear) => {
-                            const isSelected = optionYear === year;
-                            return (
-                                <button
-                                    key={optionYear}
-                                    type="button"
-                                    role="option"
-                                    aria-selected={isSelected}
-                                    onClick={() => {
-                                        onYearChange(optionYear);
-                                        setIsYearMenuOpen(false);
-                                    }}
-                                    className={clsx(
-                                        "flex w-full items-center justify-center px-4 py-2 text-sm font-black tracking-[0.12em] transition-colors",
-                                        isSelected
-                                            ? "bg-white text-gray-950"
-                                            : "text-white/70 hover:bg-white/10 hover:text-white",
-                                    )}
-                                >
-                                    {optionYear}
-                                </button>
-                            );
-                        })}
                     </div>
-                </div>
+                ) : (
+                    <>
+                        <div
+                            className={clsx(
+                                "relative z-10 flex h-full items-center overflow-hidden bg-gray-950 text-white shadow-lg shadow-black/20 ring-1 ring-white/10 transition-all duration-150",
+                                isYearMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
+                            )}
+                        >
+                            {submitDateFields && <input type="hidden" name="year" value={year} />}
+                            <button
+                                type="button"
+                                disabled={!isDateEditable}
+                                onClick={() => {
+                                    if (!isDateEditable) return;
+                                    setIsYearMenuOpen((current) => !current);
+                                }}
+                                className={clsx(
+                                    "flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-black tracking-[0.12em] transition-colors",
+                                    isDateEditable ? "hover:bg-white/10" : "cursor-default",
+                                )}
+                                aria-label="Select update year"
+                                aria-haspopup={isDateEditable ? "listbox" : undefined}
+                                aria-expanded={isDateEditable ? isYearMenuOpen : undefined}
+                            >
+                                <span>{year}</span>
+                                {isDateEditable && (
+                                    <ChevronDownIcon className={clsx("h-3.5 w-3.5 text-white/75 transition-transform duration-150", isYearMenuOpen && "rotate-180")} />
+                                )}
+                            </button>
+                        </div>
+                        <div
+                            className={clsx(
+                                "absolute left-0 top-full z-40 w-full origin-top overflow-hidden rounded-b-2xl border border-t-0 border-gray-800 bg-gray-950 shadow-2xl shadow-black/20 ring-1 ring-black/10 transition-all duration-150",
+                                isDateEditable && isYearMenuOpen
+                                    ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+                                    : "pointer-events-none -translate-y-1 scale-95 opacity-0",
+                            )}
+                        >
+                            <div role="listbox" aria-label="Update year" className="max-h-72 overflow-y-auto py-1">
+                                {yearOptions.map((optionYear) => {
+                                    const isSelected = optionYear === year;
+                                    return (
+                                        <button
+                                            key={optionYear}
+                                            type="button"
+                                            role="option"
+                                            aria-selected={isSelected}
+                                            onClick={() => {
+                                                onYearChange(optionYear);
+                                                setIsYearMenuOpen(false);
+                                            }}
+                                            className={clsx(
+                                                "flex w-full items-center justify-center px-4 py-2 text-sm font-black tracking-[0.12em] transition-colors",
+                                                isSelected
+                                                    ? "bg-white text-gray-950"
+                                                    : "text-white/70 hover:bg-white/10 hover:text-white",
+                                            )}
+                                        >
+                                            {optionYear}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );
@@ -535,11 +696,26 @@ type PersistedEmailDraftRun = {
 
 type RecordedMediaKind = "video" | "audio";
 type VideoUploadStatus = "idle" | "validating" | "compressing" | "creating_session" | "uploading" | "finalizing" | "ready" | "error";
+type PitchDeckUploadStatus = "idle" | "creating_session" | "uploading" | "finalizing" | "ready" | "error";
+type MissingFounderLinkedInDraft = {
+    id: string;
+    sourceIndex: number;
+    name: string;
+    linkedinUrl: string;
+};
 
 const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024;
 const MAX_SOURCE_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_PITCH_DECK_UPLOAD_BYTES = 50 * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
+const STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD = 4;
+const PITCH_DECK_ACCEPT = {
+    "application/pdf": [".pdf"],
+    "application/vnd.ms-powerpoint": [".ppt"],
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"],
+};
+const SUPPORTED_PITCH_DECK_EXTENSIONS = [".pdf", ".ppt", ".pptx"];
 const SUPPORTED_VIDEO_EXTENSIONS = [
     ".mp4",
     ".mov",
@@ -553,6 +729,7 @@ const SUPPORTED_VIDEO_EXTENSIONS = [
     ".ogv",
     ".mkv",
 ];
+const SUPPORTED_AUDIO_EXTENSIONS = [".mp3", ".m4a", ".wav", ".webm", ".ogg"];
 const VIDEO_ACCEPT = {
     "video/mp4": [".mp4", ".m4v"],
     "video/quicktime": [".mov"],
@@ -566,6 +743,20 @@ const VIDEO_ACCEPT = {
     "video/*": SUPPORTED_VIDEO_EXTENSIONS,
     "application/octet-stream": [".mkv", ".avi", ".mov", ".mp4"],
 };
+const AUDIO_ACCEPT = {
+    "audio/mpeg": [".mp3"],
+    "audio/mp3": [".mp3"],
+    "audio/mp4": [".m4a"],
+    "audio/wav": [".wav"],
+    "audio/webm": [".webm"],
+    "audio/ogg": [".ogg"],
+    "audio/*": SUPPORTED_AUDIO_EXTENSIONS,
+};
+const SHARED_MATERIAL_ACCEPT = {
+    ...PITCH_DECK_ACCEPT,
+    ...VIDEO_ACCEPT,
+    ...AUDIO_ACCEPT,
+};
 const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
     ".mp4": "video/mp4",
     ".mov": "video/quicktime",
@@ -578,6 +769,9 @@ const VIDEO_EXTENSION_CONTENT_TYPES: Record<string, string> = {
     ".3g2": "video/3gpp2",
     ".ogv": "video/ogg",
     ".mkv": "video/x-matroska",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".wav": "audio/wav",
 };
 
 type DraftStageKey = "reporting";
@@ -587,6 +781,14 @@ const BROWSER_PLAYABLE_VIDEO_TYPES = new Set([
     "video/webm",
     "video/ogg",
     "video/quicktime",
+]);
+const BROWSER_PLAYABLE_AUDIO_TYPES = new Set([
+    "audio/mpeg",
+    "audio/mp3",
+    "audio/mp4",
+    "audio/wav",
+    "audio/webm",
+    "audio/ogg",
 ]);
 
 let ffmpegLoaderPromise: Promise<{
@@ -621,20 +823,76 @@ function isBrowserPlayableVideo(contentType?: string | null, fileName?: string |
     return document.createElement("video").canPlayType(inferredType).length > 0;
 }
 
+function isAudioMedia(contentType?: string | null, fileName?: string | null) {
+    const inferredType = inferVideoContentType(contentType, fileName);
+    return inferredType.startsWith("audio/") || SUPPORTED_AUDIO_EXTENSIONS.includes(getFileExtension(fileName));
+}
+
+function isBrowserPlayableAudio(contentType?: string | null, fileName?: string | null) {
+    const inferredType = inferVideoContentType(contentType, fileName);
+    if (!inferredType) return true;
+    if (!BROWSER_PLAYABLE_AUDIO_TYPES.has(inferredType)) return false;
+    if (typeof document === "undefined") return true;
+    return document.createElement("audio").canPlayType(inferredType).length > 0;
+}
+
 function isSupportedVideoFile(file: File) {
     const contentType = String(file.type || "").toLowerCase();
     if (contentType.startsWith("video/")) return true;
-    return SUPPORTED_VIDEO_EXTENSIONS.includes(getFileExtension(file.name));
+    if (contentType.startsWith("audio/")) return true;
+    const extension = getFileExtension(file.name);
+    return SUPPORTED_VIDEO_EXTENSIONS.includes(extension) || SUPPORTED_AUDIO_EXTENSIONS.includes(extension);
 }
 
 function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
     const firstError = fileRejections[0]?.errors[0];
-    if (!firstError) return "We couldn't use that file. Please try another video.";
+    if (!firstError) return "We couldn't use that file. Add a PDF, PPT, PPTX, or a supported video walkthrough.";
     if (firstError.code === "file-too-large") return "File is too large. Use a file under 50 MB.";
     if (firstError.code === "file-invalid-type") {
-        return "Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
+        return "Use a PDF, PPT, PPTX, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
     }
-    return firstError.message || "We couldn't use that file. Please try another video.";
+    return firstError.message || "We couldn't use that file. Add a PDF, PPT, PPTX, or a supported video walkthrough.";
+}
+
+function inferPitchDeckContentType(contentType?: string | null, fileName?: string | null) {
+    const normalized = String(contentType || "").split(";")[0].trim().toLowerCase();
+    if (normalized) return normalized;
+    const extension = getFileExtension(fileName);
+    if (extension === ".pdf") return "application/pdf";
+    if (extension === ".ppt") return "application/vnd.ms-powerpoint";
+    if (extension === ".pptx") {
+        return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+    }
+    return "";
+}
+
+function isSupportedPitchDeckFile(file: File) {
+    const extension = getFileExtension(file.name);
+    return SUPPORTED_PITCH_DECK_EXTENSIONS.includes(extension);
+}
+
+function getPitchDeckUploadErrorMessage(error: unknown) {
+    const statusCode = (error as { status?: number })?.status;
+    const requestPath = String((error as { requestPath?: string })?.requestPath || "");
+    const data = (error as { data?: { detail?: string; error?: string } | string })?.data;
+    const detail =
+        typeof data === "string"
+            ? data
+            : data?.detail || data?.error || (error instanceof Error ? error.message : "");
+
+    if (statusCode === 404 && requestPath.includes("/uploads/pitch-deck/session/")) {
+        return "Pitch deck uploads are not available on the backend yet. Deploy the latest backend release and try again.";
+    }
+    if (statusCode === 413) {
+        return "This deck is too large. Use a file under 50 MB.";
+    }
+    if (statusCode === 403 && requestPath === "signed-storage-upload") {
+        return "The pitch deck upload session expired. Please select the file again.";
+    }
+    if (requestPath === "signed-storage-upload") {
+        return "Storage rejected the pitch deck upload. Please try again.";
+    }
+    return detail || "Pitch deck upload failed. Please try again.";
 }
 
 function shouldCompressVideo(file: File, forceCompress?: boolean) {
@@ -759,13 +1017,30 @@ function VideoAssetPreview({
     className?: string;
 }) {
     const [playbackFailed, setPlaybackFailed] = useState(false);
-    const canPreview = !playbackFailed && isBrowserPlayableVideo(contentType, fileName || src);
+    const isAudio = isAudioMedia(contentType, fileName || src);
+    const canPreview = !playbackFailed && (isAudio
+        ? isBrowserPlayableAudio(contentType, fileName || src)
+        : isBrowserPlayableVideo(contentType, fileName || src));
 
     useEffect(() => {
         setPlaybackFailed(false);
     }, [src, contentType, fileName]);
 
     if (canPreview) {
+        if (isAudio) {
+            return (
+                <div className={clsx("flex min-h-32 flex-col justify-center bg-gray-950 p-6 text-white", className)}>
+                    <p className="mb-3 text-sm font-bold">{fileName || "Audio walkthrough"}</p>
+                    <audio
+                        src={src}
+                        controls
+                        onError={() => setPlaybackFailed(true)}
+                        className="w-full"
+                    />
+                </div>
+            );
+        }
+
         return (
             <video
                 src={src}
@@ -779,9 +1054,9 @@ function VideoAssetPreview({
     return (
         <div className={clsx("flex min-h-40 flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-950 p-6 text-center text-white", className)}>
             <CloudArrowUpIcon className="h-8 w-8 text-white/50" />
-            <p className="mt-3 text-sm font-bold">Video uploaded</p>
+            <p className="mt-3 text-sm font-bold">{isAudio ? "Audio uploaded" : "Video uploaded"}</p>
             <p className="mt-1 max-w-sm text-xs leading-5 text-white/60">
-                {fileName || "This format may not preview in your browser."}
+                {fileName || `This ${isAudio ? "audio" : "video"} format may not preview in your browser.`}
                 {formatFileSize(fileSizeBytes) ? ` · ${formatFileSize(fileSizeBytes)}` : ""}
             </p>
             <a
@@ -790,11 +1065,92 @@ function VideoAssetPreview({
                 rel="noreferrer"
                 className="mt-4 inline-flex items-center gap-2 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 hover:bg-gray-100"
             >
-                Open video
+                Open {isAudio ? "audio" : "video"}
                 <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
             </a>
         </div>
     );
+}
+
+function isPdfPitchDeck(contentType?: string | null, fileName?: string | null, src?: string | null) {
+    return (
+        String(contentType || "").split(";")[0].trim().toLowerCase() === "application/pdf" ||
+        getFileExtension(fileName || src || "") === ".pdf"
+    );
+}
+
+function PitchDeckAssetPreview({
+    src,
+    openUrl,
+    contentType,
+    fileName,
+    fileSizeBytes,
+}: {
+    src: string;
+    openUrl?: string | null;
+    contentType?: string | null;
+    fileName?: string | null;
+    fileSizeBytes?: number | null;
+}) {
+    const isPdf = isPdfPitchDeck(contentType, fileName, src);
+    const previewSrc = isPdf ? `${src}#page=1&toolbar=0&navpanes=0&scrollbar=0` : src;
+    const externalUrl = openUrl || src;
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-left">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--vr-color-border)] px-4 py-3">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-gray-950">
+                        {fileName || (isPdf ? "Pitch deck PDF" : "Pitch deck")}
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                        {isPdf ? "First page preview" : "PowerPoint file attached"}
+                        {formatFileSize(fileSizeBytes) ? ` · ${formatFileSize(fileSizeBytes)}` : ""}
+                    </p>
+                </div>
+                <a
+                    href={externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="flex-shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 ring-1 ring-[var(--vr-color-border)] transition hover:text-[var(--vr-color-primary)]"
+                >
+                    Open
+                </a>
+            </div>
+            {isPdf ? (
+                <iframe
+                    src={previewSrc}
+                    title="Pitch deck first page preview"
+                    className="h-80 w-full bg-white"
+                />
+            ) : (
+                <div className="flex min-h-48 flex-col items-center justify-center px-6 py-8 text-center">
+                    <CloudArrowUpIcon className="h-10 w-10 text-slate-300" />
+                    <p className="mt-3 text-sm font-black text-gray-950">Deck uploaded</p>
+                    <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                        PPT/PPTX first-slide rendering needs a slide converter. For now, the file is attached and ready to open.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function uniqueFounderProfiles(profiles: VibeRaisingFounderProfile[]) {
+    const seen = new Set<string>();
+    const result: VibeRaisingFounderProfile[] = [];
+
+    profiles.forEach((profile) => {
+        const name = String(profile.name || "").trim();
+        const linkedinUrl = String(profile.linkedinUrl || "").trim();
+        const key = `${name.toLowerCase()}|${linkedinUrl.toLowerCase()}`;
+        if ((!name && !linkedinUrl) || seen.has(key)) return;
+        seen.add(key);
+        result.push(linkedinUrl ? { name: name || "Founder", linkedinUrl } : { name: name || "Founder" });
+    });
+
+    return result;
 }
 
 function getEmailDraftStorageKey(domain?: string | null) {
@@ -1487,6 +1843,7 @@ export default function CreateUpdate() {
         existingMonthlyUpdates,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
+    const saveDraftFetcher = useFetcher<typeof action>();
     const navigate = useNavigate();
     const location = useLocation();
     const navigation = useNavigation();
@@ -1508,6 +1865,15 @@ export default function CreateUpdate() {
     const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
+    const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
+    const [uploadedPitchDeckUrl, setUploadedPitchDeckUrl] = useState<string>(defaultData?.pitchDeckUrl || "");
+    const [pitchDeckUploadStatus, setPitchDeckUploadStatus] = useState<PitchDeckUploadStatus>(defaultData?.pitchDeckUrl ? "ready" : "idle");
+    const [pitchDeckUploadError, setPitchDeckUploadError] = useState<string | null>(null);
+    const [materialsUploadError, setMaterialsUploadError] = useState<string | null>(null);
+    const [pitchDeckStoragePath, setPitchDeckStoragePath] = useState<string>(defaultData?.pitchDeckStoragePath || "");
+    const [pitchDeckContentType, setPitchDeckContentType] = useState<string>(defaultData?.pitchDeckContentType || "");
+    const [pitchDeckFileSizeBytes, setPitchDeckFileSizeBytes] = useState<number | null>(defaultData?.pitchDeckFileSizeBytes || null);
+    const [pitchDeckOriginalFilename, setPitchDeckOriginalFilename] = useState<string>(defaultData?.pitchDeckOriginalFilename || "");
     const [videoPreviewUrl, setVideoPreviewUrl] = useState<string | null>(defaultData?.videoUrl || null);
     const [uploadedVideoUrl, setUploadedVideoUrl] = useState<string>(defaultData?.videoUrl || "");
     const [videoUploadStatus, setVideoUploadStatus] = useState<VideoUploadStatus>(defaultData?.videoUrl ? "ready" : "idle");
@@ -1515,6 +1881,7 @@ export default function CreateUpdate() {
     const [monthConfirmed, setMonthConfirmed] = useState(false);
     const [selectedDraftStage, setSelectedDraftStage] = useState<DraftStageKey | null>(null);
     const [metricsConfirmed, setMetricsConfirmed] = useState(false);
+    const [isRecordingPermissionPending, setIsRecordingPermissionPending] = useState(false);
     const [videoStoragePath, setVideoStoragePath] = useState<string>(defaultData?.videoStoragePath || "");
     const [videoContentType, setVideoContentType] = useState<string>(defaultData?.videoContentType || "");
     const [videoFileSizeBytes, setVideoFileSizeBytes] = useState<number | null>(defaultData?.videoFileSizeBytes || null);
@@ -1524,20 +1891,29 @@ export default function CreateUpdate() {
     const [recordingError, setRecordingError] = useState<string | null>(null);
     const [draftSaved, setDraftSaved] = useState(false);
     const [showConfirmPopup, setShowConfirmPopup] = useState(false);
-    const [hasDraft, setHasDraft] = useState<boolean>(() => {
-        if (typeof window === "undefined") return false;
-        return !!localStorage.getItem("vibe_draft");
-    });
     const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+    const [showReviewLinkedInPopup, setShowReviewLinkedInPopup] = useState(false);
+    const [showStoryMaterialsSuggestion, setShowStoryMaterialsSuggestion] = useState(false);
+    const [dismissedStoryMaterialsSuggestionKey, setDismissedStoryMaterialsSuggestionKey] = useState<string | null>(null);
+    const [highlightMaterialsSection, setHighlightMaterialsSection] = useState(false);
     const [pendingDraftRequest, setPendingDraftRequest] = useState<{
         forceRegenerate?: boolean;
         clearPersistedRun?: boolean;
     } | null>(null);
+    const currentCreatePeriod = getCurrentMonthlyUpdatePeriod();
+    const createStepMonthOptions = getCreateStepMonthOptions();
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
         if (actionData?.step === "feedback") setDismissedFeedback(false);
     }, [actionData]);
+
+    useEffect(() => {
+        if (saveDraftFetcher.data?.step !== "draft-saved") return;
+        setDraftSaved(true);
+        const timeoutId = window.setTimeout(() => setDraftSaved(false), 2500);
+        return () => window.clearTimeout(timeoutId);
+    }, [saveDraftFetcher.data]);
 
     // State declarations
     const [isClientMounted, setIsClientMounted] = useState(false);
@@ -1555,6 +1931,8 @@ export default function CreateUpdate() {
     });
     const [summary, setSummary] = useState<string>(() => defaultData?.summary || storedManualMaterials.summary || "");
     const [sourceUrl, setSourceUrl] = useState<string>(() => defaultData?.sourceUrl || storedManualMaterials.sourceUrl || "");
+    const [pitchDeckUrl, setPitchDeckUrl] = useState<string>(() => defaultData?.pitchDeckUrl || storedManualMaterials.pitchDeckUrl || "");
+    const [pitchDeckSummary, setPitchDeckSummary] = useState<string>(() => defaultData?.pitchDeckSummary || storedManualMaterials.pitchDeckSummary || "");
     const [highlights, setHighlights] = useState<string>(defaultData?.highlights || "");
     const [challenges, setChallenges] = useState<string>(defaultData?.challenges || "");
     const [asks, setAsks] = useState<string>(defaultData?.asks || "");
@@ -1563,8 +1941,8 @@ export default function CreateUpdate() {
     const [pastMonthCards, setPastMonthCards] = useState<EditorMonthCard[]>([]);
     const [expandedCards, setExpandedCards] = useState<Set<number>>(new Set());
 
-    const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || "February");
-    const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || 2026);
+    const [selectedMonth, setSelectedMonth] = useState<string>(defaultData?.month || currentCreatePeriod.month);
+    const [selectedYear, setSelectedYear] = useState<number>(defaultData?.year || currentCreatePeriod.year);
     const [activePeriodKey, setActivePeriodKey] = useState("current");
     const selectedMonthTheme = getVibeRaisingMonthTheme(selectedMonth);
     const selectedMonthUpdateKey = getMonthlyUpdateKey(selectedMonth, selectedYear);
@@ -1609,6 +1987,71 @@ export default function CreateUpdate() {
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
         ? selectedInputSourceLabels.join(", ")
         : "Manual materials only";
+    const activeUserCompany = useMemo(
+        () =>
+            user.companies.find((company) => company.id === user.activeCompanyId) ??
+            user.companies[0] ??
+            null,
+        [user.activeCompanyId, user.companies],
+    );
+    const founderProfiles = useMemo(
+        () =>
+            uniqueFounderProfiles([
+                ...(user.founderProfiles || []),
+                ...(activeUserCompany?.founderProfiles || []),
+            ])
+                .map((profile) => ({
+                    name: String(profile.name || "").trim(),
+                    linkedinUrl: String(profile.linkedinUrl || "").trim(),
+                }))
+                .filter((profile) => profile.name),
+        [activeUserCompany?.founderProfiles, user.founderProfiles],
+    );
+    const missingFounderLinkedInDefaults = useMemo<MissingFounderLinkedInDraft[]>(
+        () =>
+            founderProfiles
+                .map((profile, sourceIndex) => ({
+                    id: `${sourceIndex}-${profile.name}`,
+                    sourceIndex,
+                    name: profile.name,
+                    linkedinUrl: "",
+                }))
+                .filter((profile) => !founderProfiles[profile.sourceIndex]?.linkedinUrl),
+        [founderProfiles],
+    );
+    const [missingFounderLinkedInDrafts, setMissingFounderLinkedInDrafts] = useState<MissingFounderLinkedInDraft[]>(() => missingFounderLinkedInDefaults);
+    useEffect(() => {
+        setMissingFounderLinkedInDrafts(missingFounderLinkedInDefaults);
+    }, [missingFounderLinkedInDefaults]);
+    const founderProfilesForSave = useMemo(() => {
+        const mergedProfiles = founderProfiles.map((profile, index) => {
+            const missingDraft = missingFounderLinkedInDrafts.find((entry) => entry.sourceIndex === index);
+            const linkedinUrl = String(missingDraft?.linkedinUrl || profile.linkedinUrl || "").trim();
+            return linkedinUrl ? { name: profile.name, linkedinUrl } : { name: profile.name };
+        });
+
+        activeUserCompany?.founderProfiles?.forEach((profile) => {
+            if (!String(profile.linkedinUrl || "").trim()) return;
+            const existingIndex = mergedProfiles.findIndex(
+                (entry) =>
+                    String(entry.name || "").trim().toLowerCase() === String(profile.name || "").trim().toLowerCase(),
+            );
+            if (existingIndex >= 0) {
+                mergedProfiles[existingIndex] = {
+                    ...mergedProfiles[existingIndex],
+                    linkedinUrl: String(mergedProfiles[existingIndex].linkedinUrl || profile.linkedinUrl || "").trim(),
+                };
+                return;
+            }
+            mergedProfiles.push({
+                name: profile.name || "Founder",
+                linkedinUrl: String(profile.linkedinUrl || "").trim(),
+            });
+        });
+
+        return uniqueFounderProfiles(mergedProfiles).filter((profile) => profile.name);
+    }, [activeUserCompany?.founderProfiles, founderProfiles, missingFounderLinkedInDrafts]);
+    const isEarlyStageCompany = ["idea", "pre-seed"].includes(String(user.stage || "").trim().toLowerCase());
     const canGenerateDraftFromEmail = Boolean((user.domain || "").trim());
     const emailDraftStorageKey = getEmailDraftStorageKey(user.domain);
     const emailDraftForceRegenerateKey = getEmailDraftForceRegenerateKey(user.domain);
@@ -1620,12 +2063,16 @@ export default function CreateUpdate() {
     const [emailDraftPollDelayMs, setEmailDraftPollDelayMs] = useState(EMAIL_DRAFT_POLL_INTERVAL_MS);
     const emailDraftRecoveryKeyRef = useRef<string | null>(null);
     const emailDraftIgnoredRunIdRef = useRef<string | null>(null);
+    const pitchDeckLinkInputRef = useRef<HTMLInputElement | null>(null);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
+    const materialsSectionRef = useRef<HTMLElement | null>(null);
     const recordedChunksRef = useRef<BlobPart[]>([]);
     const videoUploadAbortRef = useRef<AbortController | null>(null);
     const videoUploadSequenceRef = useRef(0);
     const videoPreviewObjectUrlRef = useRef<string | null>(null);
+    const pitchDeckUploadAbortRef = useRef<AbortController | null>(null);
+    const pitchDeckPreviewObjectUrlRef = useRef<string | null>(null);
     const loadedExistingUpdateKeyRef = useRef<string | null>(null);
     const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
     const shouldDimMetricsTemplate = isManualOnlyDraftFlow && draftMetricOptions.length >= 12;
@@ -1641,6 +2088,16 @@ export default function CreateUpdate() {
             });
         }
     }, [shouldDimMetricsTemplate]);
+
+    useEffect(() => {
+        if (isEdit) return;
+        const isVisibleCreateStepMonth = createStepMonthOptions.some(
+            (option) => option.month === selectedMonth && option.year === selectedYear,
+        );
+        if (isVisibleCreateStepMonth) return;
+        setSelectedMonth(currentCreatePeriod.month);
+        setSelectedYear(currentCreatePeriod.year);
+    }, [createStepMonthOptions, currentCreatePeriod.month, currentCreatePeriod.year, isEdit, selectedMonth, selectedYear]);
 
     const dismissMetricCard = useCallback((metricKey: string) => {
         setAwakeMetricCards((previous) => {
@@ -1695,7 +2152,7 @@ export default function CreateUpdate() {
             setVideoOriginalFilename(data.videoOriginalFilename || data.video_original_filename || "");
             setVideoUploadStatus("ready");
             setVideoUploadError(null);
-            setPreviewMediaKind("video");
+            setPreviewMediaKind(isAudioMedia(data.videoContentType || data.video_content_type, data.videoOriginalFilename || data.video_original_filename || nextVideoUrl) ? "audio" : "video");
         }
         const currentMetrics = data.metrics || {};
         setMetricValues(currentMetrics);
@@ -1750,6 +2207,13 @@ export default function CreateUpdate() {
         }
     }, []);
 
+    const revokePitchDeckPreviewObjectUrl = useCallback(() => {
+        if (pitchDeckPreviewObjectUrlRef.current) {
+            URL.revokeObjectURL(pitchDeckPreviewObjectUrlRef.current);
+            pitchDeckPreviewObjectUrlRef.current = null;
+        }
+    }, []);
+
     const resetVideoUpload = useCallback(() => {
         videoUploadAbortRef.current?.abort();
         videoUploadAbortRef.current = null;
@@ -1764,7 +2228,29 @@ export default function CreateUpdate() {
         setPreviewMediaKind(null);
         setVideoUploadStatus("idle");
         setVideoUploadError(null);
+        setMaterialsUploadError(null);
     }, [revokeVideoPreviewObjectUrl]);
+
+    const resetPitchDeckUpload = useCallback(() => {
+        pitchDeckUploadAbortRef.current?.abort();
+        pitchDeckUploadAbortRef.current = null;
+        revokePitchDeckPreviewObjectUrl();
+        setPitchDeckPreviewUrl(null);
+        setUploadedPitchDeckUrl("");
+        setPitchDeckStoragePath("");
+        setPitchDeckContentType("");
+        setPitchDeckFileSizeBytes(null);
+        setPitchDeckOriginalFilename("");
+        setPitchDeckUploadStatus("idle");
+        setPitchDeckUploadError(null);
+        setMaterialsUploadError(null);
+    }, [revokePitchDeckPreviewObjectUrl]);
+
+    const removePitchDeck = useCallback(() => {
+        setPitchDeckUrl("");
+        setPitchDeckSummary("");
+        resetPitchDeckUpload();
+    }, [resetPitchDeckUpload]);
 
     const uploadVideoFile = useCallback(async (file: File, options?: { forceCompress?: boolean }) => {
         const sequence = videoUploadSequenceRef.current + 1;
@@ -1773,6 +2259,7 @@ export default function CreateUpdate() {
         const abortController = new AbortController();
         videoUploadAbortRef.current = abortController;
 
+        setMaterialsUploadError(null);
         setVideoUploadStatus("validating");
         setVideoUploadError(null);
         setUploadedVideoUrl("");
@@ -1780,7 +2267,7 @@ export default function CreateUpdate() {
         setVideoContentType(file.type || inferVideoContentType(null, file.name));
         setVideoFileSizeBytes(file.size);
         setVideoOriginalFilename(file.name);
-        setPreviewMediaKind("video");
+        setPreviewMediaKind(isAudioMedia(file.type, file.name) ? "audio" : "video");
         revokeVideoPreviewObjectUrl();
         setVideoPreviewUrl(null);
 
@@ -1859,6 +2346,59 @@ export default function CreateUpdate() {
             }
         }
     }, [backendBaseUrl, revokeVideoPreviewObjectUrl]);
+
+    const uploadPitchDeckFile = useCallback(async (file: File) => {
+        pitchDeckUploadAbortRef.current?.abort();
+        const abortController = new AbortController();
+        pitchDeckUploadAbortRef.current = abortController;
+
+        setMaterialsUploadError(null);
+        setPitchDeckUploadError(null);
+        setPitchDeckUploadStatus("creating_session");
+        setUploadedPitchDeckUrl("");
+        setPitchDeckStoragePath("");
+        setPitchDeckContentType(inferPitchDeckContentType(file.type, file.name));
+        setPitchDeckFileSizeBytes(file.size);
+        setPitchDeckOriginalFilename(file.name);
+
+        if (!isSupportedPitchDeckFile(file)) {
+            setPitchDeckUploadStatus("error");
+            setPitchDeckUploadError("Use a PDF, PPT, or PPTX pitch deck.");
+            return;
+        }
+
+        if (file.size > MAX_PITCH_DECK_UPLOAD_BYTES) {
+            setPitchDeckUploadStatus("error");
+            setPitchDeckUploadError("Pitch deck is too large. Use a file under 50 MB.");
+            return;
+        }
+
+        revokePitchDeckPreviewObjectUrl();
+        const localPitchDeckPreviewUrl = URL.createObjectURL(file);
+        pitchDeckPreviewObjectUrlRef.current = localPitchDeckPreviewUrl;
+        setPitchDeckPreviewUrl(localPitchDeckPreviewUrl);
+
+        try {
+            setPitchDeckUploadStatus("uploading");
+            const uploaded = await uploadVibeRaisingPitchDeck(backendBaseUrl, file, abortController.signal);
+            if (abortController.signal.aborted) return;
+            setUploadedPitchDeckUrl(uploaded.pitchDeckUrl);
+            setPitchDeckStoragePath(uploaded.storagePath);
+            setPitchDeckContentType(uploaded.contentType);
+            setPitchDeckFileSizeBytes(uploaded.fileSizeBytes);
+            setPitchDeckOriginalFilename(uploaded.originalFilename);
+            setPitchDeckUrl(uploaded.pitchDeckUrl);
+            setPitchDeckUploadStatus("ready");
+        } catch (error) {
+            if (abortController.signal.aborted) return;
+            setPitchDeckUploadStatus("error");
+            setPitchDeckUploadError(getPitchDeckUploadErrorMessage(error));
+        } finally {
+            if (pitchDeckUploadAbortRef.current === abortController) {
+                pitchDeckUploadAbortRef.current = null;
+            }
+        }
+    }, [backendBaseUrl, revokePitchDeckPreviewObjectUrl]);
 
     const persistEmailDraftRun = useEffectEvent((statusResponse: VibeRaisingStartupUpdateStatusResponse) => {
         if (typeof window === "undefined" || !statusResponse.runId) return;
@@ -2270,6 +2810,9 @@ export default function CreateUpdate() {
                 editorMonthKeyRef.current = selectedMonthUpdateKey;
                 setSummary("");
                 setSourceUrl("");
+                setPitchDeckUrl("");
+                setPitchDeckSummary("");
+                resetPitchDeckUpload();
                 setManualDocumentIds([]);
                 setManualDocuments([]);
                 setManualSummary("");
@@ -2294,6 +2837,17 @@ export default function CreateUpdate() {
 
         setSummary(existingUpdateForSelectedMonth.summary || "");
         setSourceUrl(existingUpdateForSelectedMonth.sourceUrl || "");
+        revokePitchDeckPreviewObjectUrl();
+        setPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
+        setPitchDeckPreviewUrl(existingUpdateForSelectedMonth.pitchDeckUrl || null);
+        setUploadedPitchDeckUrl(existingUpdateForSelectedMonth.pitchDeckUrl || "");
+        setPitchDeckStoragePath(existingUpdateForSelectedMonth.pitchDeckStoragePath || "");
+        setPitchDeckContentType(existingUpdateForSelectedMonth.pitchDeckContentType || "");
+        setPitchDeckFileSizeBytes(existingUpdateForSelectedMonth.pitchDeckFileSizeBytes || null);
+        setPitchDeckOriginalFilename(existingUpdateForSelectedMonth.pitchDeckOriginalFilename || "");
+        setPitchDeckSummary(existingUpdateForSelectedMonth.pitchDeckSummary || "");
+        setPitchDeckUploadStatus(existingUpdateForSelectedMonth.pitchDeckUrl ? "ready" : "idle");
+        setPitchDeckUploadError(null);
         setManualDocuments(existingUpdateForSelectedMonth.manualDocuments || []);
         setManualDocumentIds((existingUpdateForSelectedMonth.manualDocuments || []).map((document) => document.id));
         setManualSummary("");
@@ -2303,7 +2857,9 @@ export default function CreateUpdate() {
         setVideoContentType(existingUpdateForSelectedMonth.videoContentType || "");
         setVideoFileSizeBytes(existingUpdateForSelectedMonth.videoFileSizeBytes || null);
         setVideoOriginalFilename(existingUpdateForSelectedMonth.videoOriginalFilename || "");
-        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl ? "video" : null);
+        setPreviewMediaKind(existingUpdateForSelectedMonth.videoUrl
+            ? isAudioMedia(existingUpdateForSelectedMonth.videoContentType, existingUpdateForSelectedMonth.videoOriginalFilename || existingUpdateForSelectedMonth.videoUrl) ? "audio" : "video"
+            : null);
         setVideoUploadStatus(existingUpdateForSelectedMonth.videoUrl ? "ready" : "idle");
         setVideoUploadError(null);
         setHighlights(existingUpdateForSelectedMonth.highlights || "");
@@ -2320,7 +2876,7 @@ export default function CreateUpdate() {
                 : new Set(),
         );
         setActivePeriodKey("current");
-    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetVideoUpload, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
+    }, [existingUpdateForSelectedMonth, isEmailDraftBusy, resetPitchDeckUpload, resetVideoUpload, revokePitchDeckPreviewObjectUrl, selectedMonthUpdateKey, shouldDimMetricsTemplate]);
 
     const emailDraftCardVisible =
         isEmailDraftBusy ||
@@ -2379,7 +2935,7 @@ export default function CreateUpdate() {
         videoUploadStatus === "validating"
             ? "Checking video..."
             : videoUploadStatus === "compressing"
-                ? "Compressing video..."
+                                ? "Compressing video..."
                 : videoUploadStatus === "creating_session"
                     ? "Preparing upload..."
                     : videoUploadStatus === "uploading"
@@ -2387,8 +2943,18 @@ export default function CreateUpdate() {
                         : videoUploadStatus === "finalizing"
                             ? "Finalizing video..."
                             : videoUploadStatus === "ready"
-                                ? "Video ready"
+                                    ? isAudioMedia(videoContentType, videoOriginalFilename) ? "Audio ready" : "Video ready"
                                 : null;
+    const pitchDeckUploadStatusLabel =
+        pitchDeckUploadStatus === "creating_session"
+            ? "Preparing deck upload..."
+            : pitchDeckUploadStatus === "uploading"
+                ? "Uploading deck..."
+                : pitchDeckUploadStatus === "finalizing"
+                    ? "Finalizing deck..."
+                    : pitchDeckUploadStatus === "ready"
+                        ? "Deck ready"
+                        : null;
     const shouldShowEmailDraftProgress = emailDraftActionBusy || emailDraftCardVisible;
     const isAutoDrafting = shouldShowEmailDraftProgress || showEmailWizard;
     const canContinueDraftManually =
@@ -2403,6 +2969,50 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         (!isAutoDrafting || canContinueDraftManually) &&
         !showEmailWizard;
+    const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
+    const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
+    const hasQualitativeDraftText =
+        qualitativeDraftText.replace(/[\s\-•]+/g, "").length >= STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD;
+    const hasUploadedStoryMaterial = Boolean(
+        String(uploadedPitchDeckUrl || pitchDeckStoragePath || "").trim() ||
+        (pitchDeckUploadStatus === "ready" && String(pitchDeckPreviewUrl || "").trim()) ||
+        String(uploadedVideoUrl || videoStoragePath || "").trim() ||
+        (videoUploadStatus === "ready" && String(videoPreviewUrl || "").trim())
+    );
+    const shouldSuggestStoryMaterials =
+        hasDraftTemplate &&
+        hasQualitativeDraftText &&
+        !hasAnyMetricValue &&
+        !hasUploadedStoryMaterial &&
+        dismissedStoryMaterialsSuggestionKey !== selectedMonthUpdateKey;
+
+    useEffect(() => {
+        if (!shouldSuggestStoryMaterials) {
+            setShowStoryMaterialsSuggestion(false);
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            setShowStoryMaterialsSuggestion(true);
+        }, 900);
+
+        return () => window.clearTimeout(timeoutId);
+    }, [shouldSuggestStoryMaterials]);
+
+    const dismissStoryMaterialsSuggestion = useCallback(() => {
+        setDismissedStoryMaterialsSuggestionKey(selectedMonthUpdateKey);
+        setShowStoryMaterialsSuggestion(false);
+    }, [selectedMonthUpdateKey]);
+
+    const handleAddStoryMaterials = useCallback(() => {
+        dismissStoryMaterialsSuggestion();
+        window.setTimeout(() => {
+            materialsSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            setHighlightMaterialsSection(true);
+            window.setTimeout(() => setHighlightMaterialsSection(false), 2400);
+        }, 80);
+    }, [dismissStoryMaterialsSuggestion]);
+
     const draftStickyStatusIcon = (
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
             {hasDraftTemplate ? <CheckCircleIcon className="h-5 w-5" /> : <SparklesIcon className="h-5 w-5" />}
@@ -2518,17 +3128,34 @@ export default function CreateUpdate() {
         mediaStreamRef.current = null;
     }, []);
 
+    const getRecordingErrorMessage = (error: unknown) => {
+        const name = error instanceof DOMException ? error.name : "";
+        if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+            return "Camera or microphone permission was blocked. Allow access in your browser, then try recording again.";
+        }
+        if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+            return "No camera or microphone was found. Upload a pitch deck or video file instead.";
+        }
+        if (name === "SecurityError") {
+            return "Recording needs a secure browser context. Try localhost/HTTPS, or upload a file instead.";
+        }
+        return "We couldn't access your camera or microphone. Upload a pitch deck or video file instead.";
+    };
+
     const startRecording = useCallback(async () => {
+        if (isRecording || isRecordingPermissionPending) return;
         if (typeof window === "undefined" || typeof navigator === "undefined") {
             return;
         }
         if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
-            setRecordingError("Recording is not supported in this browser. Upload a file or add manual materials instead.");
+            setRecordingError("Recording is not supported in this browser. Upload a pitch deck or video file instead.");
             return;
         }
 
         try {
             setRecordingError(null);
+            setMaterialsUploadError(null);
+            setIsRecordingPermissionPending(true);
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
                 .catch(() => navigator.mediaDevices.getUserMedia({ audio: true }));
             const hasVideo = stream.getVideoTracks().length > 0;
@@ -2571,13 +3198,15 @@ export default function CreateUpdate() {
             };
             recorder.start();
             setIsRecording(true);
-        } catch {
-            setRecordingError("We couldn't access your camera or microphone. Upload a file or add manual materials instead.");
+        } catch (error) {
+            setRecordingError(getRecordingErrorMessage(error));
             setIsRecording(false);
             setRecordingMode(null);
             stopMediaStream();
+        } finally {
+            setIsRecordingPermissionPending(false);
         }
-    }, [resetVideoUpload, stopMediaStream, uploadVideoFile]);
+    }, [isRecording, isRecordingPermissionPending, resetVideoUpload, stopMediaStream, uploadVideoFile]);
 
     const stopRecording = useCallback(() => {
         const recorder = mediaRecorderRef.current;
@@ -2590,101 +3219,30 @@ export default function CreateUpdate() {
         stopMediaStream();
     }, [stopMediaStream]);
 
+    const removeWalkthroughMedia = useCallback(() => {
+        if (mediaRecorderRef.current?.state === "recording") {
+            mediaRecorderRef.current.stop();
+        }
+        setRecordingError(null);
+        setRecordingMode(null);
+        setIsRecording(false);
+        setIsRecordingPermissionPending(false);
+        stopMediaStream();
+        resetVideoUpload();
+    }, [resetVideoUpload, stopMediaStream]);
+
     useEffect(() => {
         return () => {
             videoUploadAbortRef.current?.abort();
             revokeVideoPreviewObjectUrl();
+            pitchDeckUploadAbortRef.current?.abort();
+            revokePitchDeckPreviewObjectUrl();
             if (mediaRecorderRef.current?.state === "recording") {
                 mediaRecorderRef.current.stop();
             }
             stopMediaStream();
         };
-    }, [revokeVideoPreviewObjectUrl, stopMediaStream]);
-
-    const resumeDraft = () => {
-        try {
-            const raw = localStorage.getItem("vibe_draft");
-            if (!raw) return;
-            const draft = JSON.parse(raw);
-
-            // Restore current month fields
-            if (draft.month) setSelectedMonth(draft.month);
-            if (draft.year) setSelectedYear(Number(draft.year));
-            setSummary(draft.summary || "");
-            setSourceUrl(draft.sourceUrl || "");
-            if (Array.isArray(draft.manualDocuments || draft.manual_documents)) {
-                const documents = (draft.manualDocuments || draft.manual_documents) as VibeRaisingManualDocument[];
-                setManualDocuments(documents);
-                setManualDocumentIds(documents.map((document) => document.id));
-            }
-            if (draft.manualSummary || draft.manual_summary) {
-                setManualSummary(draft.manualSummary || draft.manual_summary);
-            }
-            revokeVideoPreviewObjectUrl();
-            setUploadedVideoUrl(draft.videoUrl || "");
-            setVideoPreviewUrl(draft.videoUrl || null);
-            setVideoStoragePath(draft.videoStoragePath || "");
-            setVideoContentType(draft.videoContentType || "");
-            setVideoFileSizeBytes(draft.videoFileSizeBytes ? Number(draft.videoFileSizeBytes) : null);
-            setVideoOriginalFilename(draft.videoOriginalFilename || "");
-            setVideoUploadStatus(draft.videoUrl ? "ready" : "idle");
-            setVideoUploadError(null);
-            setPreviewMediaKind(draft.videoUrl ? "video" : null);
-            setHighlights(draft.highlights || "");
-            setChallenges(draft.challenges || "");
-            setAsks(draft.asks || "");
-            setLearnings(draft.learnings || "");
-            setNext30Days(draft.next30Days || "");
-
-            // Restore current month metrics
-            const metrics: Record<string, string> = {};
-            METRIC_OPTIONS.forEach(opt => {
-                if (draft[opt.key]) metrics[opt.key] = draft[opt.key];
-            });
-            setMetricValues(metrics);
-            const restoredMetricKeys = String(draft.metricKeys || "")
-                .split(",")
-                .map((key: string) => key.trim())
-                .filter((key: string) => METRIC_OPTION_MAP.has(key));
-            const newSelected = new Set<string>([
-                ...restoredMetricKeys,
-                ...Object.keys(metrics).filter(k => metrics[k]),
-            ]);
-            setSelectedMetrics(newSelected);
-
-            // Reconstruct past month cards from flat pastMonth_N_* fields
-            const restoredPastMonths: EditorMonthCard[] = [];
-            for (let i = 0; draft[`pastMonth_${i}_month`]; i++) {
-                const pmMetrics: Record<string, string> = {};
-                METRIC_OPTIONS.forEach(opt => {
-                    const val = draft[`pastMonth_${i}_${opt.key}`];
-                    if (val) pmMetrics[opt.key] = val;
-                });
-                restoredPastMonths.push({
-                    month: draft[`pastMonth_${i}_month`] || "Unknown",
-                    expanded: false,
-                    highlights: draft[`pastMonth_${i}_highlights`] || "",
-                    challenges: draft[`pastMonth_${i}_challenges`] || "",
-                    asks: draft[`pastMonth_${i}_asks`] || "",
-                    learnings: draft[`pastMonth_${i}_learnings`] || "",
-                    next30Days: draft[`pastMonth_${i}_next30Days`] || "",
-                    metrics: pmMetrics,
-                });
-            }
-            if (restoredPastMonths.length > 0) {
-                setPastMonthCards(restoredPastMonths);
-            }
-
-            setHasDraft(false);
-        } catch (e) {
-            console.error("Failed to resume draft", e);
-        }
-    };
-
-    const dismissDraft = () => {
-        localStorage.removeItem("vibe_draft");
-        setHasDraft(false);
-    };
+    }, [revokePitchDeckPreviewObjectUrl, revokeVideoPreviewObjectUrl, stopMediaStream]);
 
     const toggleMetric = (key: string) => {
         const wasSelected = selectedMetrics.has(key);
@@ -2889,31 +3447,41 @@ export default function CreateUpdate() {
     };
 
     // Dropzone setup
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-        const video = acceptedFiles.find(isSupportedVideoFile);
-        if (video) {
-            void uploadVideoFile(video);
+    const onMaterialsDrop = useCallback((acceptedFiles: File[]) => {
+        const uploadedFile = acceptedFiles[0];
+        if (!uploadedFile) return;
+        setMaterialsUploadError(null);
+        if (isSupportedPitchDeckFile(uploadedFile)) {
+            void uploadPitchDeckFile(uploadedFile);
             return;
         }
-        setVideoUploadStatus("error");
-        setVideoUploadError("Use a common video format: MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
-    }, [uploadVideoFile]);
-    const onDropRejected = useCallback((fileRejections: any[]) => {
-        setVideoUploadStatus("error");
-        setVideoUploadError(getDropzoneRejectionMessage(fileRejections));
+        if (isSupportedVideoFile(uploadedFile)) {
+            void uploadVideoFile(uploadedFile);
+            return;
+        }
+        setMaterialsUploadError("Use a PDF, PPT, PPTX, MP3, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.");
+    }, [uploadPitchDeckFile, uploadVideoFile]);
+    const onMaterialsDropRejected = useCallback((fileRejections: any[]) => {
+        setMaterialsUploadError(getDropzoneRejectionMessage(fileRejections));
     }, []);
-    const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
-        onDrop,
-        onDropRejected,
+    const { getRootProps: getMaterialsRootProps, getInputProps: getMaterialsInputProps, isDragActive: isMaterialsDragActive, open: openMaterialsPicker } = useDropzone({
+        onDrop: onMaterialsDrop,
+        onDropRejected: onMaterialsDropRejected,
         maxFiles: 1,
         multiple: false,
         noClick: true,
         maxSize: MAX_SOURCE_VIDEO_BYTES,
-        accept: VIDEO_ACCEPT,
+        accept: SHARED_MATERIAL_ACCEPT,
     });
 
-    const videoInputSection = (
-        <section>
+    const materialsSection = (
+        <section
+            ref={materialsSectionRef}
+            className={clsx(
+                "scroll-mt-28 rounded-[2rem] transition-all duration-300",
+                highlightMaterialsSection && "ring-4 ring-[rgba(242,114,63,0.28)] ring-offset-4 ring-offset-[var(--vr-palette-paper)]",
+            )}
+        >
             <div className="flex items-end justify-between gap-4">
                 <div>
                     <h2 className="text-xl font-black text-gray-950">Say it your way</h2>
@@ -2924,129 +3492,230 @@ export default function CreateUpdate() {
             </div>
             <div className="relative mt-6">
                 <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                    <div
-                        {...getRootProps()}
-                        className={clsx(
-                            "relative flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-all sm:p-12",
-                            isDragActive ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]" : "border-[var(--vr-color-border)] bg-white hover:bg-[var(--vr-color-neutral-50)]"
-                        )}
-                    >
-                        <input {...getInputProps()} />
-
-                        <div className="flex max-w-sm flex-col items-center">
-                            <div className="mb-4 h-12 w-12 text-gray-400">
-                                <CloudArrowUpIcon className="h-full w-full stroke-1" />
-                            </div>
-
-                            <p className="mb-1 text-lg font-bold text-gray-900">
-                                Drag a video here to upload
-                            </p>
-
-                            <p className="mb-1 text-sm font-medium text-gray-600">
-                                MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV
-                            </p>
-
-                            <p className="mb-6 text-sm text-gray-500">
-                                Larger videos are compressed first. Final upload limit: 50 MB.
-                            </p>
-
-                            <div className="flex w-full flex-col gap-3 sm:flex-row">
-                                <button
-                                    type="button"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        if (isRecording) {
-                                            stopRecording();
-                                        } else {
-                                            void startRecording();
-                                        }
-                                    }}
-                                    disabled={isEmailDraftBusy}
-                                    className={clsx(
-                                        "flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-2.5 font-bold transition-all shadow-sm",
-                                        isRecording
-                                            ? "animate-pulse bg-[rgba(242,114,63,0.14)] text-[var(--vr-palette-coral)] ring-2 ring-[rgba(242,114,63,0.22)]"
-                                            : "bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.16)] active:scale-95"
-                                    )}
-                                >
-                                    <span className="h-2.5 w-2.5 rounded-full bg-[var(--vr-palette-coral)]" />
-                                    {isRecording ? "Stop Recording" : "Record"}
-                                </button>
-
-                                <button
-                                    type="button"
-                                    disabled={isEmailDraftBusy}
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        open();
-                                    }}
-                                    className="flex-1 rounded-xl bg-black px-6 py-2.5 font-bold text-white shadow-sm transition-all hover:bg-gray-900 active:scale-95 disabled:opacity-60"
-                                >
-                                    Select file
-                                </button>
-                            </div>
-                            {videoUploadStatusLabel && (
-                                <p
-                                    className={clsx(
-                                        "mt-4 text-sm font-semibold",
-                                        videoUploadStatus === "ready" ? "text-[var(--vr-color-primary)]" : "text-[var(--vr-palette-blue)]",
-                                    )}
-                                >
-                                    {videoUploadStatusLabel}
-                                </p>
+                    <div className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+                        <div
+                            {...getMaterialsRootProps()}
+                            className={clsx(
+                                "relative flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-all sm:p-12",
+                                isMaterialsDragActive
+                                    ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
+                                    : "border-[var(--vr-color-border)] bg-white hover:bg-[var(--vr-color-neutral-50)]",
                             )}
-                            {videoUploadError && (
-                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{videoUploadError}</p>
-                            )}
-                            {isRecording && (
-                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">
-                                    {recordingMode === "audio" ? "Recording audio. Click Stop Recording when done." : "Recording video. Click Stop Recording when done."}
-                                </p>
-                            )}
-                            {recordingError && (
-                                <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{recordingError}</p>
-                            )}
-                            {videoPreviewUrl && (
-                                <div className="mt-5 w-full rounded-xl border border-gray-100 bg-gray-50 p-3 text-left">
-                                    <div className="mb-2 flex items-center justify-between gap-3">
-                                        <p className="text-xs font-bold uppercase tracking-wide text-gray-500">
-                                            {previewMediaKind === "audio" ? "Recorded audio" : "Update video"}
-                                        </p>
-                                        <button
-                                            type="button"
-                                            onClick={resetVideoUpload}
-                                            className="text-xs font-bold text-gray-400 hover:text-gray-700"
-                                        >
-                                            Remove
-                                        </button>
+                        >
+                            <input {...getMaterialsInputProps()} />
+                            <div className="w-full max-w-4xl">
+                                <div className="mb-8 flex flex-col items-center text-center">
+                                    <div className="mb-4 h-12 w-12 text-gray-400">
+                                        <CloudArrowUpIcon className="h-full w-full stroke-1" />
                                     </div>
-                                    {previewMediaKind === "audio" ? (
-                                        <audio src={videoPreviewUrl} controls className="w-full" />
-                                    ) : (
-                                        <VideoAssetPreview
-                                            src={videoPreviewUrl}
-                                            contentType={videoContentType}
-                                            fileName={videoOriginalFilename || videoPreviewUrl}
-                                            fileSizeBytes={videoFileSizeBytes}
-                                            className="aspect-video w-full"
-                                        />
-                                    )}
-                                    {videoUploadStatus === "ready" && uploadedVideoUrl && (
-                                        <p className="mt-2 text-xs font-medium text-[var(--vr-color-primary)]">
-                                            Uploaded and ready to publish.
-                                        </p>
-                                    )}
+                                    <p className="text-lg font-bold text-gray-900">
+                                        {isMaterialsDragActive ? "Drop your file here" : "Drag your pitch deck or video here"}
+                                    </p>
+                                    <p className="mt-2 max-w-md text-sm text-gray-500">
+                                        Choose the format that tells the investor story best. Final upload limit: 50 MB.
+                                    </p>
                                 </div>
-                            )}
+
+                                <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+                                    <div className="flex flex-col items-center text-center md:items-start md:text-left">
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                            Pitch deck
+                                        </p>
+                                        <h3 className="mt-2 text-xl font-black text-gray-950">Upload the deck</h3>
+                                        <p className="mt-3 text-sm leading-6 text-slate-500">
+                                            Best for slides, founder bio, market story, and early traction notes.
+                                        </p>
+                                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                                            PDF, PPT, or PPTX
+                                        </p>
+                                    </div>
+
+                                    <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
+
+                                    <div className="flex flex-col items-center text-center md:items-start md:text-left">
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                            Walkthrough video
+                                        </p>
+                                        <h3 className="mt-2 text-xl font-black text-gray-950">Record the founder story</h3>
+                                        <p className="mt-3 text-sm leading-6 text-slate-500">
+                                            Best when metrics are light and investors need to hear the founder thinking.
+                                        </p>
+                                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                                            MP4, MOV, WebM and more
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                                    <button
+                                        type="button"
+                                        disabled={isEmailDraftBusy}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            openMaterialsPicker();
+                                        }}
+                                        className="rounded-xl bg-black px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-gray-900 active:scale-95 disabled:opacity-60"
+                                    >
+                                        Choose pitch deck
+                                    </button>
+                                    <button
+                                        type="button"
+                                        disabled={isEmailDraftBusy || isRecordingPermissionPending}
+                                        onClick={(event) => {
+                                            event.stopPropagation();
+                                            if (isRecording) {
+                                                stopRecording();
+                                            } else {
+                                                void startRecording();
+                                            }
+                                        }}
+                                        className={clsx(
+                                            "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition shadow-sm disabled:opacity-60",
+                                            isRecording
+                                                ? "animate-pulse bg-[rgba(242,114,63,0.14)] text-[var(--vr-palette-coral)] ring-2 ring-[rgba(242,114,63,0.22)]"
+                                                : "bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.16)]",
+                                        )}
+                                    >
+                                        <span className="h-2.5 w-2.5 rounded-full bg-[var(--vr-palette-coral)]" aria-hidden />
+                                        {isRecordingPermissionPending ? "Requesting access..." : isRecording ? "Stop recording" : "Record walkthrough"}
+                                    </button>
+                                </div>
+                                {isRecordingPermissionPending ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">
+                                        Waiting for your browser camera and microphone prompt...
+                                    </p>
+                                ) : null}
+                                {isRecording ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">
+                                        Recording {recordingMode === "audio" ? "audio" : "video"} now. Click Stop recording when you are done.
+                                    </p>
+                                ) : null}
+                                {pitchDeckPreviewUrl ? (
+                                    <div
+                                        className="mt-6"
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
+                                        <div className="mb-3 flex items-center justify-between gap-3 text-left">
+                                            <div>
+                                                <p className="text-sm font-black text-gray-950">Pitch deck preview</p>
+                                                <p className="mt-1 text-xs font-semibold text-slate-500">
+                                                    {isPdfPitchDeck(pitchDeckContentType, pitchDeckOriginalFilename, pitchDeckPreviewUrl)
+                                                        ? "Showing the first PDF page."
+                                                        : "PowerPoint file attached."}
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-shrink-0 items-center gap-2">
+                                                {pitchDeckUploadStatusLabel ? (
+                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
+                                                        {pitchDeckUploadStatusLabel}
+                                                    </span>
+                                                ) : null}
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        removePitchDeck();
+                                                    }}
+                                                    className="rounded-full border border-[rgba(242,114,63,0.24)] bg-white px-3 py-1 text-xs font-extrabold text-[var(--vr-palette-coral)] transition hover:bg-[rgba(242,114,63,0.08)]"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <PitchDeckAssetPreview
+                                            src={pitchDeckPreviewUrl}
+                                            openUrl={uploadedPitchDeckUrl || pitchDeckUrl || pitchDeckPreviewUrl}
+                                            contentType={pitchDeckContentType}
+                                            fileName={pitchDeckOriginalFilename}
+                                            fileSizeBytes={pitchDeckFileSizeBytes}
+                                        />
+                                    </div>
+                                ) : null}
+                                {videoPreviewUrl && previewMediaKind ? (
+                                    <div
+                                        className="mt-6 overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4 text-left"
+                                        onClick={(event) => event.stopPropagation()}
+                                    >
+                                        <div className="mb-3 flex items-center justify-between gap-3">
+                                            <div>
+                                                <p className="text-sm font-black text-gray-950">
+                                                    {previewMediaKind === "audio" ? "Recorded audio preview" : "Recorded video preview"}
+                                                </p>
+                                                <p className="mt-1 text-xs font-semibold text-slate-500">
+                                                    Review it here before you continue.
+                                                </p>
+                                            </div>
+                                            <div className="flex flex-shrink-0 items-center gap-2">
+                                                {videoUploadStatusLabel ? (
+                                                    <span className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)]">
+                                                        {videoUploadStatusLabel}
+                                                    </span>
+                                                ) : null}
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        removeWalkthroughMedia();
+                                                    }}
+                                                    className="rounded-full border border-[rgba(242,114,63,0.24)] bg-white px-3 py-1 text-xs font-extrabold text-[var(--vr-palette-coral)] transition hover:bg-[rgba(242,114,63,0.08)]"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                        {previewMediaKind === "audio" ? (
+                                            <audio
+                                                src={videoPreviewUrl}
+                                                controls
+                                                className="w-full"
+                                            />
+                                        ) : (
+                                            <VideoAssetPreview
+                                                src={videoPreviewUrl}
+                                                contentType={videoContentType || "video/webm"}
+                                                fileName={videoOriginalFilename || "Recorded walkthrough"}
+                                                fileSizeBytes={videoFileSizeBytes}
+                                                className="aspect-video w-full rounded-xl"
+                                            />
+                                        )}
+                                    </div>
+                                ) : null}
+                                {recordingError ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{recordingError}</p>
+                                ) : null}
+                                {videoUploadStatusLabel && !videoPreviewUrl ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{videoUploadStatusLabel}</p>
+                                ) : null}
+                                {videoUploadError ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{videoUploadError}</p>
+                                ) : null}
+                                {pitchDeckUploadStatusLabel && !pitchDeckPreviewUrl ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">{pitchDeckUploadStatusLabel}</p>
+                                ) : null}
+                                {pitchDeckUploadError ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{pitchDeckUploadError}</p>
+                                ) : null}
+                                {materialsUploadError ? (
+                                    <p className="mt-4 text-sm font-semibold text-[var(--vr-palette-coral)]">{materialsUploadError}</p>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
                 </fieldset>
                 {isEmailDraftBusy && (
-                    <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/30" aria-hidden />
+                    <div className="absolute inset-0 z-10 cursor-wait rounded-[2rem] bg-white/30" aria-hidden />
                 )}
             </div>
         </section>
     );
+
+    const handlePersistDraft = useCallback(() => {
+        const draftForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
+        if (!(draftForm instanceof HTMLFormElement)) return;
+        const nextFormData = new FormData(draftForm);
+        nextFormData.set("intent", "save-draft");
+        saveDraftFetcher.submit(nextFormData, { method: "post" });
+    }, [saveDraftFetcher]);
 
     // 1. Feedback View — preview-dominant with rating sidebar
     if (actionData?.step === "feedback" && !dismissedFeedback) {
@@ -3056,26 +3725,74 @@ export default function CreateUpdate() {
         const reviewYear = Number(reviewData?.year || selectedYear);
         const reviewSummary = String(reviewData?.summary || "").trim();
         const reviewSourceUrl = String(reviewData?.sourceUrl || "").trim();
+        const reviewPitchDeckUrl = String(reviewData?.pitchDeckUrl || "").trim();
+        const reviewPitchDeckStoragePath = String(reviewData?.pitchDeckStoragePath || "").trim();
+        const reviewPitchDeckContentType = String(reviewData?.pitchDeckContentType || "").trim();
+        const reviewPitchDeckOriginalFilename = String(reviewData?.pitchDeckOriginalFilename || "").trim();
+        const reviewPitchDeckSummary = String(reviewData?.pitchDeckSummary || "").trim();
+        const reviewPitchDeckFileSizeBytes = Number(reviewData?.pitchDeckFileSizeBytes || 0) || null;
+        const reviewPitchDeckPreviewUrl = pitchDeckPreviewUrl || reviewPitchDeckUrl || uploadedPitchDeckUrl;
+        const reviewPitchDeckOpenUrl = reviewPitchDeckUrl || uploadedPitchDeckUrl || pitchDeckPreviewUrl;
+        const hasReviewPitchDeck = Boolean(reviewPitchDeckPreviewUrl);
+        const reviewFounderProfiles = parseFounderProfilesFormValue(reviewData?.founderProfiles ?? null);
+        const reviewFounderProfilesForDisplay = uniqueFounderProfiles([
+            ...reviewFounderProfiles,
+            ...founderProfilesForSave,
+            ...(activeUserCompany?.founderProfiles || []),
+            ...(user.founderProfiles || []),
+        ]);
+        const reviewFounderLinkedInProfiles = reviewFounderProfilesForDisplay.filter((profile) => String(profile.linkedinUrl || "").trim());
+        const reviewCompanyLinkedInUrl = String(activeUserCompany?.companyLinkedInUrl || "").trim();
+        const hasReviewLinkedIn =
+            reviewFounderLinkedInProfiles.length > 0 ||
+            Boolean(reviewCompanyLinkedInUrl) ||
+            missingFounderLinkedInDrafts.some((draft) => String(draft.linkedinUrl || "").trim());
+        const reviewLinkedInDrafts =
+            missingFounderLinkedInDrafts.length > 0
+                ? missingFounderLinkedInDrafts
+                : founderProfiles.length > 0
+                    ? founderProfiles.map((profile, index) => ({
+                        id: `review-${index}-${profile.name}`,
+                        sourceIndex: index,
+                        name: profile.name,
+                        linkedinUrl: profile.linkedinUrl || "",
+                    }))
+                    : [{
+                        id: "review-founder-0",
+                        sourceIndex: 0,
+                        name: user.fullName || "Founder",
+                        linkedinUrl: "",
+                    }];
         const reviewManualDocuments = Array.isArray(reviewData?.manualDocuments || reviewData?.manual_documents)
             ? (reviewData.manualDocuments || reviewData.manual_documents) as VibeRaisingManualDocument[]
             : manualDocuments;
         const reviewManualDocumentIds = reviewManualDocuments.map((document) => document.id);
         const reviewManualSummary = String(reviewData?.manualSummary || reviewData?.manual_summary || manualSummary || "").trim();
-        const reviewVideoUrl = String(reviewData?.videoUrl || (previewMediaKind === "video" ? videoPreviewUrl : "") || "").trim();
+        const reviewVideoUrl = String(reviewData?.videoUrl || videoPreviewUrl || "").trim();
         const reviewVideoStoragePath = String(reviewData?.videoStoragePath || videoStoragePath || "").trim();
         const reviewVideoContentType = String(reviewData?.videoContentType || videoContentType || "").trim();
         const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
         const reviewVideoFileSizeBytes = Number(reviewData?.videoFileSizeBytes || videoFileSizeBytes || 0) || null;
-
-        const handleSaveDraft = () => {
-            try {
-                localStorage.setItem("vibe_draft", JSON.stringify(data));
-                setDraftSaved(true);
-                setTimeout(() => setDraftSaved(false), 2500);
-            } catch (e) {
-                console.error("Failed to save draft", e);
-            }
-        };
+        const reviewMediaIsAudio = isAudioMedia(reviewVideoContentType, reviewVideoOriginalFilename || reviewVideoUrl);
+        const reviewAudienceText = [
+            String(reviewData?.highlights || ""),
+            String(reviewData?.challenges || ""),
+            String(reviewData?.learnings || ""),
+            String(reviewData?.next30Days || ""),
+            String(reviewData?.asks || ""),
+            reviewPitchDeckOriginalFilename,
+            reviewVideoOriginalFilename,
+        ].join(" ").toLowerCase();
+        const reviewAudienceCriteria: string[] = [];
+        if (reviewAudienceText.includes("saas") || reviewAudienceText.includes("software")) reviewAudienceCriteria.push("B2B SaaS");
+        if (reviewAudienceText.includes("health") || reviewAudienceText.includes("medtech") || reviewAudienceText.includes("medical")) reviewAudienceCriteria.push("MedTech");
+        if (reviewAudienceText.includes("agri") || reviewAudienceText.includes("farm") || reviewAudienceText.includes("agriculture")) reviewAudienceCriteria.push("AgTech");
+        if (reviewAudienceText.includes("ai") || reviewAudienceText.includes("machine learning") || reviewAudienceText.includes("artificial intelligence")) reviewAudienceCriteria.push("AI/ML");
+        if (reviewAudienceText.includes("enterprise") || reviewAudienceText.includes("b2b") || reviewAudienceText.includes("fortune 500")) reviewAudienceCriteria.push("Enterprise");
+        if (reviewAudienceText.includes("fintech") || reviewAudienceText.includes("finance") || reviewAudienceText.includes("payment")) reviewAudienceCriteria.push("FinTech");
+        if (reviewAudienceText.includes("consumer") || reviewAudienceText.includes("b2c")) reviewAudienceCriteria.push("Consumer Tech");
+        if (reviewAudienceCriteria.length === 0) reviewAudienceCriteria.push("Sector Agnostic", "Early Stage");
+        const reviewAudienceCount = 18 + (reviewAudienceCriteria.length * 14);
 
         const handleReviewStepperClick = (step: MonthlyUpdateStepKey) => {
             if (step === "connect") {
@@ -3111,16 +3828,37 @@ export default function CreateUpdate() {
                     className="mt-8"
                 />
 
-                <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
-                    <div className="flex min-w-0 gap-4">
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+                    <div className="flex min-w-0 items-start gap-4">
+                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
                             <SparklesIcon className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
+                            <h2 className="text-lg font-black text-gray-950">How it works</h2>
                             <p className="mt-1 text-sm leading-6 text-slate-600">
                                 Preview page shows exactly what investors will see before you publish this monthly update.
                             </p>
+                        </div>
+                    </div>
+
+                    <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
+                        <div className="flex min-w-0 items-start gap-4">
+                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(76,110,245,0.10)] text-[var(--vr-palette-blue)] shadow-sm ring-1 ring-[rgba(76,110,245,0.22)]">
+                                <UsersIcon className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <h3 className="text-lg font-black text-gray-950">Your audience</h3>
+                                <p className="mt-1 text-sm leading-6 text-slate-600">
+                                    We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{reviewAudienceCount} investors</strong> on Vibe Raising actively looking for updates matching your criteria.
+                                </p>
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                    {reviewAudienceCriteria.map((criteria) => (
+                                        <span key={criteria} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-[rgba(76,110,245,0.08)] px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)]">
+                                            {criteria}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3131,47 +3869,35 @@ export default function CreateUpdate() {
                     {/* PREVIEW — dominant, takes most of the width */}
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                            {/* Hero banner — video or gradient */}
-                            {reviewVideoUrl ? (
-                                <div className="relative w-full aspect-video bg-black">
-                                    <VideoAssetPreview
-                                        src={reviewVideoUrl}
-                                        contentType={reviewVideoContentType}
-                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
-                                        fileSizeBytes={reviewVideoFileSizeBytes}
-                                        className="h-full w-full rounded-none"
-                                    />
-                                </div>
-                            ) : (
-                                <div className="relative w-full h-32 overflow-hidden">
-                                    <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
-                                    <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
-                                        <circle cx="120" cy="80" r="100" fill="white" />
-                                        <circle cx="650" cy="140" r="70" fill="white" />
-                                        <circle cx="400" cy="30" r="50" fill="white" />
-                                        <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
-                                    </svg>
-                                    <div className="absolute inset-0 flex items-end px-6 pb-4">
-                                        <div className="flex items-center gap-3">
-                                            {user.domain ? (
-                                                <img
-                                                    src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
-                                                    alt=""
-                                                    className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
-                                                    <span className="text-sm font-bold text-white">{user.companyName.charAt(0)}</span>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
-                                                <p className="text-white/70 text-xs">Investor Update</p>
+                            {/* Hero banner */}
+                            <div className="relative w-full h-32 overflow-hidden">
+                                <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
+                                <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
+                                    <circle cx="120" cy="80" r="100" fill="white" />
+                                    <circle cx="650" cy="140" r="70" fill="white" />
+                                    <circle cx="400" cy="30" r="50" fill="white" />
+                                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                                </svg>
+                                <div className="absolute inset-0 flex items-end px-6 pb-4">
+                                    <div className="flex items-center gap-3">
+                                        {user.domain ? (
+                                            <img
+                                                src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                                alt=""
+                                                className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 shadow-sm"
+                                            />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 flex items-center justify-center">
+                                                <span className="text-sm font-bold text-white">{user.companyName.charAt(0)}</span>
                                             </div>
+                                        )}
+                                        <div>
+                                            <p className="text-white font-bold text-sm drop-shadow-sm">{user.companyName}</p>
+                                            <p className="text-white/70 text-xs">Investor Update</p>
                                         </div>
                                     </div>
                                 </div>
-                            )}
+                            </div>
 
                             {/* Preview header */}
                             <div className="px-6 pt-6 pb-4 border-b border-gray-100">
@@ -3183,59 +3909,141 @@ export default function CreateUpdate() {
                                         <div className="mt-2 flex flex-wrap items-center gap-2">
                                             <VibeRaisingDateTabs month={reviewMonth} year={reviewYear} size="compact" />
                                             <StartupRegionBadge location={user.location} />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowReviewLinkedInPopup(true)}
+                                                className={clsx(
+                                                    "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-black shadow-sm ring-1 transition",
+                                                    hasReviewLinkedIn
+                                                        ? "bg-[#0A66C2] text-white ring-[#0A66C2]/20 hover:bg-[#084f96]"
+                                                        : "bg-gray-100 text-gray-400 ring-gray-200 hover:bg-gray-200 hover:text-gray-600",
+                                                )}
+                                                aria-label={hasReviewLinkedIn ? "Edit founder LinkedIn" : "Add founder LinkedIn"}
+                                            >
+                                                LinkedIn
+                                                {hasReviewLinkedIn ? (
+                                                    <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                                                ) : null}
+                                            </button>
                                         </div>
                                     </div>
                                     <span className="text-xs text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                             </div>
 
-                            {/* Metrics — square boxes */}
-                            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                                    {(() => {
-                                        const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
-                                        const selectedReviewKeys = String((data as any)?.metricKeys || "")
-                                            .split(",")
-                                            .map((key) => key.trim())
-                                            .filter(Boolean);
-                                        const options = selectedReviewKeys.length > 0
-                                            ? metricOptionsFromKeys(selectedReviewKeys)
-                                            : getMetricOptionsForDisplay(metricRecord);
-                                        return options.map(m => {
-                                        const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
-                                        return (
-                                            <div
-                                                key={m.key}
-                                                className={clsx(
-                                                    "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
-                                                    val
-                                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                        : "border-gray-200 bg-gray-50 opacity-40"
-                                                )}
-	                                            >
-                                                <MetricInfoBadge info={m.info} />
-	                                                <div className={clsx(
-                                                    "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                                                    val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-                                                )}>
-                                                    {m.icon}
-                                                </div>
-                                                <p className={clsx(
-                                                    "text-base font-extrabold leading-tight",
-                                                    val ? "text-gray-900" : "text-gray-300"
-                                                )}>
-                                                    {val ? `${m.prefix || ""}${val}` : "—"}
+                            {hasReviewPitchDeck ? (
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="mb-3">
+                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                                    Pitch deck
                                                 </p>
-                                                <p className={clsx(
-                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
-                                                    val ? "text-gray-600" : "text-gray-400"
-                                                )}>{m.label}</p>
                                             </div>
-                                        );
-                                    });
-                                    })()}
+                                            <PitchDeckAssetPreview
+                                                src={reviewPitchDeckPreviewUrl}
+                                                openUrl={reviewPitchDeckOpenUrl}
+                                                contentType={reviewPitchDeckContentType || pitchDeckContentType}
+                                                fileName={reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename}
+                                                fileSizeBytes={reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes}
+                                            />
+                                        </div>
+                                        {reviewVideoUrl ? (
+                                            <div>
+                                                <div className="mb-3">
+                                                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                                        {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
+                                                    </p>
+                                                    <h4 className="mt-1 text-base font-black text-gray-950">
+                                                        Founder {reviewMediaIsAudio ? "audio" : "video"} preview
+                                                    </h4>
+                                                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                                                        This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so investors can hear the story directly.
+                                                    </p>
+                                                </div>
+                                                <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
+                                                    <VideoAssetPreview
+                                                        src={reviewVideoUrl}
+                                                        contentType={reviewVideoContentType}
+                                                        fileName={reviewVideoOriginalFilename || reviewVideoUrl}
+                                                        fileSizeBytes={reviewVideoFileSizeBytes}
+                                                        className="aspect-video w-full rounded-none"
+                                                    />
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                                        {(() => {
+                                            const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
+                                            const selectedReviewKeys = String((data as any)?.metricKeys || "")
+                                                .split(",")
+                                                .map((key) => key.trim())
+                                                .filter(Boolean);
+                                            const options = selectedReviewKeys.length > 0
+                                                ? metricOptionsFromKeys(selectedReviewKeys)
+                                                : getMetricOptionsForDisplay(metricRecord);
+                                            return options.map(m => {
+                                            const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
+                                            return (
+                                                <div
+                                                    key={m.key}
+                                                    className={clsx(
+                                                        "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+                                                        val
+                                                            ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                                                            : "border-gray-200 bg-gray-50 opacity-40"
+                                                    )}
+	                                                >
+                                                    <MetricInfoBadge info={m.info} />
+	                                                    <div className={clsx(
+                                                        "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
+                                                        val ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
+                                                    )}>
+                                                        {m.icon}
+                                                    </div>
+                                                    <p className={clsx(
+                                                        "text-base font-extrabold leading-tight",
+                                                        val ? "text-gray-900" : "text-gray-300"
+                                                    )}>
+                                                        {val ? `${m.prefix || ""}${val}` : "—"}
+                                                    </p>
+                                                    <p className={clsx(
+                                                        "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                        val ? "text-gray-600" : "text-gray-400"
+                                                    )}>{m.label}</p>
+                                                </div>
+                                            );
+                                        });
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+
+                            {!hasReviewPitchDeck && reviewVideoUrl ? (
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                                    <div className="mb-3">
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                            {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
+                                        </p>
+                                        <h4 className="mt-1 text-base font-black text-gray-950">
+                                            Founder {reviewMediaIsAudio ? "audio" : "video"} preview
+                                        </h4>
+                                    </div>
+                                    <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
+                                        <VideoAssetPreview
+                                            src={reviewVideoUrl}
+                                            contentType={reviewVideoContentType}
+                                            fileName={reviewVideoOriginalFilename || reviewVideoUrl}
+                                            fileSizeBytes={reviewVideoFileSizeBytes}
+                                            className="aspect-video w-full rounded-none"
+                                        />
+                                    </div>
+                                </div>
+                            ) : null}
 
                             {/* Content sections */}
                             <div className="px-6 py-5 space-y-5">
@@ -3307,7 +4115,7 @@ export default function CreateUpdate() {
                         </div>
 
                         {/* Revenue + Active Users charts + Past month previews */}
-                        {(() => {
+                        {!hasReviewPitchDeck && (() => {
                             const d = data as any;
                             const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
                             for (let i = 0; d?.[`pastMonth_${i}_month`]; i++) {
@@ -3392,82 +4200,104 @@ export default function CreateUpdate() {
                             );
                         })()}
 
-                        {/* Your Audience Block */}
-                        {(() => {
-                            const d = data as any;
-                            const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
-                            
-                            const criteria = [];
-                            if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
-                            if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
-                            if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
-                            if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
-                            if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
-                            if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
-                            if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
-                            if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
-
-                            const count = 18 + (criteria.length * 14);
-
-                            return (
-                                <div className="mt-6 rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm">
-                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--vr-color-text)]">
-                                        <UsersIcon className="h-4 w-4 text-[var(--vr-palette-blue)]" />
-                                        Your Audience
-                                    </h3>
-                                    <p className="mb-3 text-sm text-[var(--vr-color-text-mid)]">
-                                        We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
-                                    </p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {criteria.map(c => (
-                                            <span key={c} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)] shadow-sm">
-                                                {c}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            );
-                        })()}
-
-                        {/* Secondary action below preview */}
-                        <div className="mt-6">
-                            <button
-                                type="button"
-                                onClick={handleSaveDraft}
-                                className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
-                            >
-                                {draftSaved ? (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--vr-color-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Draft Saved!
-                                    </>
-                                ) : (
-                                    <>Save as Draft</>
-                                )}
-                            </button>
+                        <div className="mt-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] p-4">
+                            <p className="text-sm font-semibold text-[var(--vr-color-text)]">
+                                This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you publish it.
+                            </p>
                         </div>
                     </div>
 
+                    {showReviewLinkedInPopup ? (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                            <div
+                                className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                                onClick={() => setShowReviewLinkedInPopup(false)}
+                                aria-hidden
+                            />
+                            <section
+                                role="dialog"
+                                aria-modal="true"
+                                aria-labelledby="review-linkedin-popup-title"
+                                className="relative z-[110] w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
+                            >
+                                <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
+                                    <div>
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0A66C2]">
+                                            Founder LinkedIn
+                                        </p>
+                                        <h2 id="review-linkedin-popup-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
+                                            Add a founder LinkedIn link
+                                        </h2>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviewLinkedInPopup(false)}
+                                        className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
+                                        aria-label="Close founder LinkedIn popup"
+                                    >
+                                        <XMarkIcon className="h-5 w-5" />
+                                    </button>
+                                </div>
+
+                                <div className="space-y-4 px-6 py-6">
+                                    <p className="text-sm leading-6 text-[var(--vr-color-text-mid)]">
+                                        Investors use founder LinkedIn as a quick trust signal. Add or update it here and it will be saved with this update.
+                                    </p>
+                                    {reviewLinkedInDrafts.map((draft) => (
+                                        <label key={draft.id} className="block">
+                                            <span className="mb-2 block text-sm font-black text-gray-950">{draft.name || "Founder"}</span>
+                                            <input
+                                                type="url"
+                                                inputMode="url"
+                                                value={draft.linkedinUrl}
+                                                onChange={(event) => {
+                                                    const nextValue = event.target.value;
+                                                    setMissingFounderLinkedInDrafts((current) => {
+                                                        if (current.some((item) => item.id === draft.id)) {
+                                                            return current.map((item) =>
+                                                                item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
+                                                            );
+                                                        }
+                                                        return [
+                                                            ...current,
+                                                            {
+                                                                id: draft.id,
+                                                                sourceIndex: draft.sourceIndex,
+                                                                name: draft.name || "Founder",
+                                                                linkedinUrl: nextValue,
+                                                            },
+                                                        ];
+                                                    });
+                                                }}
+                                                placeholder="https://www.linkedin.com/in/founder"
+                                                className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[#0A66C2] focus:ring-4 focus:ring-[#0A66C2]/10"
+                                            />
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviewLinkedInPopup(false)}
+                                        className="inline-flex flex-1 items-center justify-center rounded-xl bg-[#0A66C2] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-[#0A66C2]/10 transition hover:bg-[#084f96] active:scale-[0.98]"
+                                    >
+                                        Save LinkedIn
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowReviewLinkedInPopup(false)}
+                                        className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
+                    ) : null}
+
                     {/* Pre-Publish Confirmation Popup */}
-                    {showConfirmPopup && (() => {
-                        const d = data as any;
-                        const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
-                        
-                        const criteria = [];
-                        if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
-                        if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
-                        if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
-                        if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
-                        if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
-                        if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
-                        if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
-                        if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
-
-                        const count = 18 + (criteria.length * 14);
-
-                        return (
+                    {showConfirmPopup && (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
                                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
                                     <MonthlyUpdateStepper
@@ -3480,19 +4310,22 @@ export default function CreateUpdate() {
                                     />
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                                        Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{count} investors</strong> matching your criteria: {criteria.join(", ")}.
+                                        Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
                                     </p>
 
                                     <Form 
                                         method="POST" 
                                         className="space-y-3"
-                                        onSubmit={() => {
-                                            localStorage.removeItem("vibe_draft");
-                                        }}
                                     >
                                         <input type="hidden" name="intent" value="publish" />
                                         <input type="hidden" name="summary" value={reviewSummary} />
                                         <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
+                                        <input type="hidden" name="pitchDeckUrl" value={reviewPitchDeckUrl} />
+                                        <input type="hidden" name="pitchDeckStoragePath" value={reviewPitchDeckStoragePath} />
+                                        <input type="hidden" name="pitchDeckContentType" value={reviewPitchDeckContentType} />
+                                        <input type="hidden" name="pitchDeckFileSizeBytes" value={reviewPitchDeckFileSizeBytes ?? ""} />
+                                        <input type="hidden" name="pitchDeckOriginalFilename" value={reviewPitchDeckOriginalFilename} />
+                                        <input type="hidden" name="pitchDeckSummary" value={reviewPitchDeckSummary} />
                                         <input type="hidden" name="manualDocumentIds" value={reviewManualDocumentIds.join(",")} />
                                         <input type="hidden" name="manualSummary" value={reviewManualSummary} />
                                         <input type="hidden" name="videoUrl" value={reviewVideoUrl} />
@@ -3500,8 +4333,9 @@ export default function CreateUpdate() {
                                         <input type="hidden" name="videoContentType" value={reviewVideoContentType} />
                                         <input type="hidden" name="videoFileSizeBytes" value={reviewVideoFileSizeBytes ?? ""} />
                                         <input type="hidden" name="videoOriginalFilename" value={reviewVideoOriginalFilename} />
+                                        <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                                         {Object.entries(data || {})
-                                            .filter(([key]) => !["summary", "sourceUrl", "manualDocumentIds", "manualSummary", "manualDocuments", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename"].includes(key))
+                                            .filter(([key]) => !["summary", "sourceUrl", "pitchDeckUrl", "pitchDeckStoragePath", "pitchDeckContentType", "pitchDeckFileSizeBytes", "pitchDeckOriginalFilename", "pitchDeckSummary", "manualDocumentIds", "manualSummary", "manualDocuments", "videoUrl", "videoStoragePath", "videoContentType", "videoFileSizeBytes", "videoOriginalFilename", "founderProfiles"].includes(key))
                                             .map(([key, value]) => (
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
@@ -3523,8 +4357,7 @@ export default function CreateUpdate() {
                                     </Form>
                                 </div>
                             </div>
-                        );
-                    })()}
+                    )}
 
                     {SHOW_AI_REVIEW_FEEDBACK && (
                         <div className="w-full space-y-3 lg:sticky lg:top-6 lg:w-56 lg:flex-shrink-0">
@@ -3623,13 +4456,13 @@ export default function CreateUpdate() {
                     className="mt-8"
                 />
 
-                <div className="rounded-2xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-5 py-4 shadow-sm">
-                    <div className="flex min-w-0 gap-4">
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+                    <div className="flex min-w-0 items-start gap-4">
+                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
                             <SparklesIcon className="h-5 w-5" />
                         </div>
                         <div className="min-w-0">
-                            <h2 className="text-sm font-extrabold text-[var(--vr-color-primary)]">How it works</h2>
+                            <h2 className="text-lg font-black text-gray-950">How it works</h2>
                             <p className="mt-1 text-sm leading-6 text-slate-600">
                                 Bring in your raw materials first. We keep the selected month, inputs, and draft fields together through review and publish.
                                 <br />
@@ -3673,6 +4506,7 @@ export default function CreateUpdate() {
                                                 onMonthChange={setSelectedMonth}
                                                 onYearChange={setSelectedYear}
                                                 onPeriodChange={setActivePeriodKey}
+                                                monthChoices={!isEdit ? createStepMonthOptions : undefined}
                                                 isDateEditable={!isEmailDraftBusy}
                                             />
                                             {isSelectedMonthInFuture && (
@@ -3756,11 +4590,18 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
                                     <input type="hidden" name="summary" value={summary} />
                                     <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                                    <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
+                                    <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
+                                    <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
+                                    <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
+                                    <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
+                                    <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
                                     <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
                                     <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
                                     <input type="hidden" name="videoContentType" value={videoContentType} />
                                     <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
                                     <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
+                                    <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
                                     <input type="hidden" name="month" value={selectedMonth} />
                                     <input type="hidden" name="year" value={selectedYear} />
 
@@ -3892,9 +4733,35 @@ export default function CreateUpdate() {
                                     </div>
 
                                 </Form>
+                                <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="min-w-0">
+                                        <p className="text-sm font-black text-gray-950">
+                                            {draftSaved ? "Draft saved privately in My Drafts." : "Save privately now and come back later from My Drafts."}
+                                        </p>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                            Private drafts stay visible only to you until you publish them.
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                                        <Link
+                                            to="/founder-tools/drafts"
+                                            className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-3 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
+                                        >
+                                            Open My Drafts
+                                        </Link>
+                                        <button
+                                            type="button"
+                                            onClick={handlePersistDraft}
+                                            disabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
+                                            className="inline-flex min-w-40 items-center justify-center rounded-xl bg-[var(--vr-palette-black)] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[var(--vr-color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {saveDraftFetcher.state !== "idle" ? "Saving..." : draftSaved ? "Draft Saved" : "Save as Draft"}
+                                        </button>
+                                    </div>
+                                </div>
                                 </div>
                             ) : null}
-                            {videoInputSection}
+                            {materialsSection}
                         </>
                     ) : null}
 
@@ -3913,40 +4780,97 @@ export default function CreateUpdate() {
                 primaryForm={draftStickyBar.primaryForm}
             />
 
+            {showStoryMaterialsSuggestion ? (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div
+                        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                        onClick={dismissStoryMaterialsSuggestion}
+                        aria-hidden
+                    />
+
+                    <section
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="story-materials-suggestion-title"
+                        className="relative z-[110] w-full max-w-2xl overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl"
+                    >
+                        <div className="flex items-start justify-between gap-4 border-b border-[var(--vr-color-border)] px-6 pb-4 pt-6">
+                            <div>
+                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                    Founder-first update
+                                </p>
+                                <h2 id="story-materials-suggestion-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
+                                    No metrics yet? A pitch deck or short video may work better.
+                                </h2>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={dismissStoryMaterialsSuggestion}
+                                className="flex-shrink-0 rounded-full p-2 text-[var(--vr-color-text-sub)] transition hover:bg-[var(--vr-color-neutral-100)] hover:text-[var(--vr-color-text)]"
+                                aria-label="Dismiss pitch deck and video suggestion"
+                            >
+                                <XMarkIcon className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        <div className="px-6 py-6">
+                            <p className="text-sm leading-7 text-[var(--vr-color-text-mid)]">
+                                For early-stage startups, investors often value founder accountability, clarity, and founder-market fit before the numbers are mature. A short walkthrough, founder bio, pitch deck, and LinkedIn link can tell that story faster than empty metrics.
+                            </p>
+
+                            {missingFounderLinkedInDrafts.length > 0 ? (
+                                <div className="mt-5 space-y-3 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] p-4">
+                                    <p className="text-sm font-black text-[var(--vr-color-text)]">Strongly recommended: founder LinkedIn</p>
+                                    {missingFounderLinkedInDrafts.map((draft) => (
+                                        <label key={draft.id} className="block">
+                                            <span className="mb-1 block text-xs font-bold text-[var(--vr-color-text-sub)]">{draft.name}</span>
+                                            <input
+                                                type="url"
+                                                inputMode="url"
+                                                value={draft.linkedinUrl}
+                                                onChange={(event) => {
+                                                    const nextValue = event.target.value;
+                                                    setMissingFounderLinkedInDrafts((current) =>
+                                                        current.map((item) =>
+                                                            item.id === draft.id ? { ...item, linkedinUrl: nextValue } : item,
+                                                        ),
+                                                    );
+                                                }}
+                                                placeholder="https://www.linkedin.com/in/..."
+                                                className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
+                                            />
+                                        </label>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="mt-5 rounded-2xl border border-[rgba(0,128,128,0.14)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-primary)]">
+                                    Founder LinkedIn links are already attached. Nice, that gives investors a trust trail.
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col gap-3 px-6 pb-6 sm:flex-row">
+                            <button
+                                type="button"
+                                onClick={handleAddStoryMaterials}
+                                className="inline-flex flex-1 items-center justify-center rounded-xl bg-[var(--vr-palette-black)] px-5 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-black/10 transition hover:bg-[var(--vr-palette-coral)] active:scale-[0.98]"
+                            >
+                                Add pitch deck or video
+                            </button>
+                            <button
+                                type="button"
+                                onClick={dismissStoryMaterialsSuggestion}
+                                className="inline-flex flex-1 items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-5 py-3.5 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] active:scale-[0.98]"
+                            >
+                                Keep writing
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            ) : null}
+
             {showLegacyDraftFlow ? (
             <>
-            {/* Draft Resume Banner */}
-            {hasDraft && (
-                <div className="mb-5 flex items-center gap-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-5 py-3.5 shadow-sm">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[rgba(255,200,1,0.24)]">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-[var(--vr-palette-orange)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-semibold text-gray-900">You have a saved draft</p>
-                        <p className="text-xs text-gray-500">Resume where you left off.</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={resumeDraft}
-                        disabled={isEmailDraftBusy}
-                        className="rounded-lg bg-[rgba(255,200,1,0.22)] px-4 py-1.5 text-sm font-bold text-[var(--vr-color-text)] transition-colors hover:bg-[rgba(255,200,1,0.30)] disabled:opacity-60"
-                    >
-                        Resume Draft
-                    </button>
-                    <button
-                        type="button"
-                        onClick={dismissDraft}
-                        disabled={isEmailDraftBusy}
-                        className="text-gray-400 hover:text-gray-600 transition-colors"
-                        aria-label="Dismiss"
-                    >
-                        <XMarkIcon className="w-4 h-4" />
-                    </button>
-                </div>
-            )}
-
             {showRegenerateConfirm && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-950/55 p-4 backdrop-blur-sm">
                     <div className="w-full max-w-lg overflow-hidden rounded-2xl bg-[var(--vr-color-card)] shadow-2xl ring-1 ring-black/5">
@@ -3995,6 +4919,12 @@ export default function CreateUpdate() {
                 />
                 <input type="hidden" name="summary" value={summary} />
                 <input type="hidden" name="sourceUrl" value={sourceUrl} />
+                <input type="hidden" name="pitchDeckUrl" value={pitchDeckUrl} />
+                <input type="hidden" name="pitchDeckStoragePath" value={pitchDeckStoragePath} />
+                <input type="hidden" name="pitchDeckContentType" value={pitchDeckContentType} />
+                <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
+                <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
+                <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
                 <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
                 <input type="hidden" name="manualSummary" value={manualSummary} />
                 <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
@@ -4002,9 +4932,10 @@ export default function CreateUpdate() {
                 <input type="hidden" name="videoContentType" value={videoContentType} />
                 <input type="hidden" name="videoFileSizeBytes" value={videoFileSizeBytes ?? ""} />
                 <input type="hidden" name="videoOriginalFilename" value={videoOriginalFilename} />
+                <input type="hidden" name="founderProfiles" value={JSON.stringify(founderProfilesForSave)} />
 
                 <section>
-                    {videoInputSection}
+                    {materialsSection}
                 </section>
 
                 <section>
@@ -4518,24 +5449,6 @@ export default function CreateUpdate() {
                     </div>
                 )}
 
-                        {/* Footer Buttons */}
-                        <div className="flex items-center gap-4 pt-6 border-t border-gray-100">
-                            <button
-                                type="button"
-                                onClick={() => navigate("/founder-tools/updates")}
-                                disabled={isEmailDraftBusy}
-                                className="flex-1 px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-60"
-                            >
-                                Cancel
-                            </button>
-	                            <button
-	                                type="submit"
-	                                disabled={isSubmitting || isEmailDraftBusy || isVideoUploadBlocking}
-	                                className="flex-1 rounded-lg bg-[var(--vr-color-primary)] px-6 py-3 text-sm font-medium text-white shadow-sm hover:bg-[var(--vr-palette-black)] disabled:opacity-60"
-	                            >
-	                                {isSubmitting ? "Reviewing..." : isVideoUploadPending ? "Uploading video..." : "Review"}
-	                            </button>
-                        </div>
                     </fieldset>
                     {isEmailDraftBusy && (
                         <div className="absolute inset-0 z-10 cursor-wait rounded-2xl bg-white/25" aria-hidden />

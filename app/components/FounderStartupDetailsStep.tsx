@@ -22,6 +22,7 @@ type StartupDetailsDefaults = {
   competitors?: string[];
   seedKeywords?: string[];
   founderNames?: string[];
+  founderProfiles?: Array<{ name: string; linkedinUrl?: string | null }>;
   stage?: string | null;
   organizationKind?: string | null;
   notes?: string | null;
@@ -76,6 +77,47 @@ const STARTUP_STAGE_OPTIONS = [
 ];
 
 const ORGANIZATION_KIND_OPTIONS = ["", "For-profit", "Not-for-profit"];
+
+type FounderProfileDraft = {
+  id: string;
+  name: string;
+  linkedinUrl: string;
+};
+
+function createFounderProfileId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeFounderProfileDrafts(defaults: StartupDetailsDefaults): FounderProfileDraft[] {
+  const explicitProfiles = (defaults.founderProfiles ?? [])
+    .map((profile) => ({
+      id: createFounderProfileId(),
+      name: String(profile?.name ?? "").trim(),
+      linkedinUrl: String(profile?.linkedinUrl ?? "").trim(),
+    }))
+    .filter((profile) => profile.name || profile.linkedinUrl);
+
+  if (explicitProfiles.length > 0) {
+    return explicitProfiles;
+  }
+
+  const legacyNames = (defaults.founderNames ?? [])
+    .map((name) => String(name || "").trim())
+    .filter(Boolean);
+
+  if (legacyNames.length > 0) {
+    return legacyNames.map((name) => ({
+      id: createFounderProfileId(),
+      name,
+      linkedinUrl: "",
+    }));
+  }
+
+  return [{ id: createFounderProfileId(), name: "", linkedinUrl: "" }];
+}
 
 type LookupState<T> = {
   configured: boolean;
@@ -442,6 +484,24 @@ export default function FounderStartupDetailsStep({
       : { defaultValue: fallback };
   const hint = (field: StartupDetailsField) =>
     autofilled.has(field) ? <span className="ml-2 text-xs font-semibold text-emerald-600">Autofilled from website</span> : null;
+  const [founderProfiles, setFounderProfiles] = useState<FounderProfileDraft[]>(() =>
+    normalizeFounderProfileDrafts(defaults),
+  );
+
+  useEffect(() => {
+    setFounderProfiles(normalizeFounderProfileDrafts(defaults));
+  }, [defaults.founderNames, defaults.founderProfiles]);
+
+  const sanitizedFounderProfiles = founderProfiles
+    .map((profile) => ({
+      name: profile.name.trim(),
+      linkedinUrl: profile.linkedinUrl.trim(),
+    }))
+    .filter((profile) => profile.name || profile.linkedinUrl);
+  const founderNamesValue = sanitizedFounderProfiles
+    .map((profile) => profile.name)
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className="space-y-6">
@@ -553,56 +613,120 @@ export default function FounderStartupDetailsStep({
         </label>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_220px_220px]">
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Founder names{hint("founderNames")}</span>
-          <input
-            name="founderNames"
-            {...inputProps("founderNames", (defaults.founderNames ?? []).join(", "))}
-            placeholder="Sam Donegan, Alex Founder"
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-          />
-        </label>
-
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Stage{hint("stage")}</span>
-          <select
-            name="stage"
-            {...(isControlled
-              ? {
-                  value: textValue("stage", defaults.stage ?? ""),
-                  onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("stage", event.target.value),
-                }
-              : { defaultValue: defaults.stage ?? "" })}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-          >
-            {STARTUP_STAGE_OPTIONS.map((option) => (
-              <option key={option || "blank"} value={option}>
-                {option || "Select stage"}
-              </option>
+      <div className="space-y-4">
+        <div className="block">
+          <span className="mb-2 block text-sm font-bold text-gray-700">Founder profiles{hint("founderNames")}</span>
+          <input type="hidden" name="founderNames" value={founderNamesValue} />
+          <input type="hidden" name="founderProfiles" value={JSON.stringify(sanitizedFounderProfiles)} />
+          <div className="space-y-3 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">
+            {founderProfiles.map((profile, index) => (
+              <div key={profile.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <div className="space-y-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">Name</span>
+                    <input
+                      value={profile.name}
+                      onChange={(event) =>
+                        setFounderProfiles((current) =>
+                          current.map((item) =>
+                            item.id === profile.id ? { ...item, name: event.target.value } : item,
+                          ),
+                        )
+                      }
+                      placeholder="Sam Donegan"
+                      className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-gray-500">LinkedIn URL</span>
+                    <div className="relative">
+                      <FieldIcon><LinkIcon /></FieldIcon>
+                      <input
+                        value={profile.linkedinUrl}
+                        onChange={(event) =>
+                          setFounderProfiles((current) =>
+                            current.map((item) =>
+                              item.id === profile.id ? { ...item, linkedinUrl: event.target.value } : item,
+                            ),
+                          )
+                        }
+                        placeholder="https://www.linkedin.com/in/founder"
+                        className="w-full rounded-xl border border-gray-200 py-3 pl-11 pr-4 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                      />
+                    </div>
+                  </label>
+                  {founderProfiles.length > 1 ? (
+                    <div className="flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFounderProfiles((current) => current.filter((item) => item.id !== profile.id))
+                        }
+                        className="rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-500 transition hover:border-gray-300 hover:text-gray-900"
+                      >
+                        Remove founder {index + 1}
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
             ))}
-          </select>
-        </label>
+            <button
+              type="button"
+              onClick={() =>
+                setFounderProfiles((current) => [
+                  ...current,
+                  { id: createFounderProfileId(), name: "", linkedinUrl: "" },
+                ])
+              }
+              className="inline-flex rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:border-gray-300 hover:bg-white"
+            >
+              Add founder
+            </button>
+          </div>
+        </div>
 
-        <label className="block">
-          <span className="mb-2 block text-sm font-bold text-gray-700">Organization type{hint("organizationKind")}</span>
-          <select
-            name="organizationKind"
-            {...(isControlled
-              ? {
-                  value: textValue("organizationKind", defaults.organizationKind ?? ""),
-                  onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("organizationKind", event.target.value),
-                }
-              : { defaultValue: defaults.organizationKind ?? "" })}
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-          >
-            {ORGANIZATION_KIND_OPTIONS.map((option) => (
-              <option key={option || "blank"} value={option}>
-                {option || "Select type"}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-gray-700">Stage{hint("stage")}</span>
+            <select
+              name="stage"
+              {...(isControlled
+                ? {
+                    value: textValue("stage", defaults.stage ?? ""),
+                    onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("stage", event.target.value),
+                  }
+                : { defaultValue: defaults.stage ?? "" })}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            >
+              {STARTUP_STAGE_OPTIONS.map((option) => (
+                <option key={option || "blank"} value={option}>
+                  {option || "Select stage"}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-bold text-gray-700">Organization type{hint("organizationKind")}</span>
+            <select
+              name="organizationKind"
+              {...(isControlled
+                ? {
+                    value: textValue("organizationKind", defaults.organizationKind ?? ""),
+                    onChange: (event: ChangeEvent<HTMLSelectElement>) => onValueChange?.("organizationKind", event.target.value),
+                  }
+                : { defaultValue: defaults.organizationKind ?? "" })}
+              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-medium text-gray-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            >
+              {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                <option key={option || "blank"} value={option}>
+                  {option || "Select type"}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
     </div>
   );

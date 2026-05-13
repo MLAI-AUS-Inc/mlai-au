@@ -27,6 +27,7 @@ import { clsx } from "clsx";
 
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
+import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
   controlVibeMarketingRun,
   getVibeMarketingBootstrap,
@@ -80,6 +81,18 @@ function listFromForm(value: FormDataEntryValue | null) {
 
 function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
+}
+
+function founderNamesFromForm(formData: FormData) {
+  const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
+  const founderNames = founderProfiles
+    .map((profile) => profile.name)
+    .filter(Boolean);
+
+  return {
+    founderProfiles,
+    founderNames: founderNames.length > 0 ? founderNames : listFromForm(formData.get("founderNames")),
+  };
 }
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
@@ -234,6 +247,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   try {
     if (intent === "save-startup-details") {
+      const { founderProfiles, founderNames } = founderNamesFromForm(formData);
       const name = stringFromForm(formData, "companyName");
       const domain = stringFromForm(formData, "domain");
       const shortDescription = stringFromForm(formData, "shortDescription") || stringFromForm(formData, "companyContext");
@@ -265,7 +279,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         companyContext,
         competitors: listFromForm(formData.get("competitors")),
         seedKeywords: listFromForm(formData.get("seedKeywords")),
-        founderNames: listFromForm(formData.get("founderNames")),
+        founderNames,
+        founderProfiles,
         stage: stringFromForm(formData, "stage"),
         organizationKind: stringFromForm(formData, "organizationKind"),
         notes: targetAudience,
