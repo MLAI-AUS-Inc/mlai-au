@@ -354,17 +354,20 @@ export default function ArticleSystemConnectionPanel({
                 </p>
               </div>
             </div>
-            <Form method="POST">
+            <Form method="POST" className="flex flex-col items-start gap-2 lg:items-end">
               <input type="hidden" name="intent" value="connect-github" />
-              {selectedRepo ? <input type="hidden" name="githubRepo" value={selectedRepo} /> : null}
+              <input type="hidden" name="forceReconnect" value="true" />
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-50"
               >
                 <GitHubMark className="h-5 w-5" />
-                Change repository
+                Manage GitHub access
               </button>
+              <p className="max-w-48 text-left text-xs font-semibold leading-5 text-slate-500 lg:text-right">
+                Use this if the repo you need is not listed.
+              </p>
             </Form>
           </div>
           <div className="grid border-t border-slate-100 px-5 sm:grid-cols-2 lg:grid-cols-4">

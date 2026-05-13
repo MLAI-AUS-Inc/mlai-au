@@ -184,13 +184,26 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   try {
     if (intent === "connect-github") {
       const githubRepo = stringFromForm(formData, "githubRepo");
+      const forceReconnect = stringFromForm(formData, "forceReconnect") === "true";
       const response = await connectVibeMarketingGithub(
         env,
         request,
-        githubRepo ? { githubRepo, github_repo: githubRepo } : {},
+        {
+          ...(githubRepo && !forceReconnect ? { githubRepo, github_repo: githubRepo } : {}),
+          ...(forceReconnect ? { forceReconnect: true, force_reconnect: true } : {}),
+        },
       );
       const authUrl = response.auth_url ?? response.authUrl;
       if (authUrl) throw redirect(authUrl);
+      if (forceReconnect) {
+        return {
+          intent,
+          error:
+            response.detail ??
+            response.error ??
+            "GitHub is connected, but we could not open the GitHub access settings. Use the repository dropdown if the repo is already listed.",
+        };
+      }
       throw redirect("/founder-tools/marketing/create?step=scan");
     } else if (intent === "add-component-comment") {
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
