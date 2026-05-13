@@ -1,9 +1,11 @@
-import { Form } from "react-router";
+import { Form, Link } from "react-router";
 import { clsx } from "clsx";
-import type { ChangeEvent, ReactNode } from "react";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import {
+  ArrowRight,
   Check,
   CheckCircle2,
+  ChevronDown,
   Code2,
   ExternalLink,
   Eye,
@@ -15,6 +17,8 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
+import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 type ArticleSystemConnectionPanelProps = {
@@ -28,7 +32,12 @@ type ArticleSystemConnectionPanelProps = {
   connectionError?: string | null;
   scanRun?: VibeMarketingRunSummary | null;
   framed?: boolean;
+  showDenySetupAction?: boolean;
 };
+
+const SCAN_RUNNING_STATUSES = new Set(["queued", "running"]);
+const SCAN_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied"]);
+const SCAN_ACTION_NEEDED_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
@@ -81,6 +90,61 @@ function selectedRepoName({
     repos.find((repo) => repo.toLowerCase() === "mlai-aus-inc/mlai-au") ||
     repos[0] ||
     ""
+  );
+}
+
+function resultObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function resultValue(run: VibeMarketingRunSummary, key: string): unknown {
+  if (run.result?.[key] !== undefined) return run.result[key];
+  const nested = resultObject(run.result?.result);
+  if (nested[key] !== undefined) return nested[key];
+  const latestControl = resultObject(run.result?.latest_control_response);
+  return latestControl[key];
+}
+
+function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
+  for (const key of keys) {
+    const value = resultValue(run, key);
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function articleSystemSetupPayload(run: VibeMarketingRunSummary) {
+  const direct = resultObject(run.result?.article_system_setup);
+  if (Object.keys(direct).length) return direct;
+  const nested = resultObject(resultObject(run.result?.result).article_system_setup);
+  if (Object.keys(nested).length) return nested;
+  return resultObject(resultObject(run.result?.latest_control_response).article_system_setup);
+}
+
+function setupRunIdForRun(run: VibeMarketingRunSummary) {
+  const direct = stringResultValue(run, "setup_run_id", "setupRunId", "scaffold_job_id", "scaffoldJobId");
+  if (direct) return direct;
+  const setup = articleSystemSetupPayload(run);
+  const value = setup.setup_run_id ?? setup.setupRunId;
+  return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function isScanAwaitingSetupApproval(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return false;
+  if (SCAN_ACTION_NEEDED_STATUSES.has(run.status)) return true;
+  const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
+  return requestedAction === "article_system_setup" || requestedAction === "scaffold_publish_route";
+}
+
+function hasScanMissingArticleParts(run: VibeMarketingRunSummary | null | undefined, scaffoldReady: boolean) {
+  if (!run || scaffoldReady || SCAN_RUNNING_STATUSES.has(run.status)) return false;
+  const readiness = resultObject(resultValue(run, "article_system_readiness"));
+  const readinessStatus = String(readiness.status ?? "").trim().toLowerCase();
+  const scaffoldRequired = Boolean(resultValue(run, "scaffold_required") ?? readiness.scaffold_required);
+  return (
+    scaffoldRequired ||
+    ["manual_blocked", "missing", "needs_setup", "approval_required", "blocked"].includes(readinessStatus) ||
+    run.status === "completed"
   );
 }
 
@@ -228,6 +292,7 @@ export default function ArticleSystemConnectionPanel({
   connectionError,
   scanRun,
   framed = true,
+  showDenySetupAction = false,
 }: ArticleSystemConnectionPanelProps) {
   const connected = isGithubConnected(githubRepos, bootstrap);
   const repos = repoNames(githubRepos);
@@ -236,6 +301,26 @@ export default function ArticleSystemConnectionPanel({
   const locationPlaceholder = connected ? articleSurfacePlaceholder : "e.g. /content/articles";
   const statusLabel = bootstrap.checks.scaffold?.passed ? "Ready" : connected ? "Connected" : "Ready";
   const connectionLabel = githubConnectionState(githubRepos, bootstrap).replace(/_/g, " ") || (connected ? "connected" : "not connected");
+  const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
+  const scanRunning = Boolean(scanRun && SCAN_RUNNING_STATUSES.has(scanRun.status));
+  const scanFailed = Boolean(scanRun && SCAN_FAILED_STATUSES.has(scanRun.status));
+  const scanStale = Boolean(scanRun?.stale || scanRun?.staleReason === "scan_queue_not_started");
+  const scanNeedsSetupApproval = isScanAwaitingSetupApproval(scanRun);
+  const scanMissingArticleParts = hasScanMissingArticleParts(scanRun, scaffoldReady);
+  const setupRunId = scanRun ? setupRunIdForRun(scanRun) : "";
+  const previewShouldStartOpen = Boolean(scanNeedsSetupApproval || scanFailed || scanStale || scanMissingArticleParts);
+  const [articlePreviewOpen, setArticlePreviewOpen] = useState(previewShouldStartOpen);
+  const continueBlocked = Boolean(scanRun && (scanRunning || scanFailed || scanStale || scanNeedsSetupApproval));
+  const canContinue = connected && scaffoldReady && !continueBlocked;
+  const continueHelp = !scaffoldReady
+    ? "Scan the repository and complete any article-system setup before continuing."
+    : continueBlocked
+      ? "Resolve the current scan state before continuing."
+      : "Article system confirmed. You can continue to topic research.";
+
+  useEffect(() => {
+    setArticlePreviewOpen(previewShouldStartOpen);
+  }, [previewShouldStartOpen, scanRun?.runId, scanRun?.status]);
 
   const repoControlProps = onRepoSelectionChange
     ? {
@@ -430,7 +515,7 @@ export default function ArticleSystemConnectionPanel({
             <button
               type="submit"
               disabled={isSubmitting || (repos.length > 0 && !selectedRepo)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
               Scan repository
@@ -444,35 +529,135 @@ export default function ArticleSystemConnectionPanel({
       )}
 
       {scanRun ? (
-        <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-semibold text-slate-500">
-            {scanRun.stale
-              ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details."
-              : "Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later."}
-          </p>
-          <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-            {scanRun.retryAvailable || scanRun.stale ? (
+        <div className="mt-5 space-y-4">
+          <MarketingRunProgressCard run={scanRun} />
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold text-slate-500">
+                {scanRun.stale
+                  ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details."
+                  : "Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later."}
+              </p>
+              <Link
+                to={`/founder-tools/marketing/runs/${encodeURIComponent(scanRun.runId)}`}
+                className="mt-2 inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
+              >
+                View scan run
+              </Link>
+            </div>
+            <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
+              <input type="hidden" name="scanRunId" value={scanRun.runId} />
+              {scanRun.retryAvailable || scanRun.stale ? (
+                <button
+                  type="submit"
+                  name="intent"
+                  value="retry-scan"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                >
+                  <Loader2 className="h-4 w-4" />
+                  Retry scan
+                </button>
+              ) : null}
               <button
                 type="submit"
                 name="intent"
-                value="retry-scan"
+                value="cancel-scan"
                 disabled={isSubmitting}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
               >
-                <Loader2 className="h-4 w-4" />
-                Retry scan
+                Cancel scan
               </button>
-            ) : null}
-            <button
-              type="submit"
-              name="intent"
-              value="cancel-scan"
-              disabled={isSubmitting}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+            </Form>
+          </div>
+        </div>
+      ) : null}
+
+      {scanRun ? (
+        <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <button
+            type="button"
+            onClick={() => setArticlePreviewOpen((open) => !open)}
+            className="flex w-full flex-col gap-3 p-4 text-left sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div>
+              <p className="text-sm font-black text-slate-950">Article directory preview</p>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Review the route, files, and setup requirements Content Factory found for this repository.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-violet-700">
+              {articlePreviewOpen ? "Hide preview" : "Show preview"}
+              <ChevronDown className={clsx("h-4 w-4 transition", articlePreviewOpen && "rotate-180")} />
+            </span>
+          </button>
+          {articlePreviewOpen ? (
+            <div className="space-y-4 border-t border-slate-100 p-4">
+              <ArticleSystemSurfaceSummary run={scanRun} />
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                {scanNeedsSetupApproval ? (
+                  <Form method="POST">
+                    <input type="hidden" name="scanRunId" value={scanRun.runId} />
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="build-article-system-preview"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                      Build article system preview
+                    </button>
+                  </Form>
+                ) : setupRunId ? (
+                  <Link
+                    to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50"
+                  >
+                    Open setup preview
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                ) : null}
+                {showDenySetupAction && scanNeedsSetupApproval ? (
+                  <Form method="POST">
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="deny"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
+                    >
+                      Deny setup
+                    </button>
+                  </Form>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {connected ? (
+        <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm font-semibold text-slate-500">{continueHelp}</p>
+          {canContinue ? (
+            <Link
+              to="/founder-tools/marketing/create?step=research"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
             >
-              Cancel scan
+              Continue
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white opacity-45 shadow-sm"
+            >
+              Continue
+              <ArrowRight className="h-4 w-4" />
             </button>
-          </Form>
+          )}
         </div>
       ) : null}
     </section>

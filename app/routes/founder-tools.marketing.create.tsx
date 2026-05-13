@@ -6,7 +6,6 @@ import {
   ArrowLeftIcon,
   ArrowPathIcon,
   ArrowRightIcon,
-  CheckCircleIcon,
   InformationCircleIcon,
   LightBulbIcon,
   MagnifyingGlassIcon,
@@ -16,7 +15,6 @@ import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
-import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -223,13 +221,6 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
-function isScanAwaitingSetupApproval(run: VibeMarketingRunSummary | undefined) {
-  if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
-  if (["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status)) return true;
-  const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
-  return requestedAction === "article_system_setup" || requestedAction === "scaffold_publish_route";
-}
-
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
@@ -420,7 +411,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-scan") {
-      const result = await startVibeMarketingScan(env, request, {
+      await startVibeMarketingScan(env, request, {
         githubRepo: stringFromForm(formData, "githubRepo"),
         github_repo: stringFromForm(formData, "githubRepo"),
         articleSurfaceMode: "existing",
@@ -430,7 +421,18 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: false,
         auto_setup_preview: false,
       });
-      if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      return redirect("/founder-tools/marketing/create?step=scan");
+    }
+
+    if (intent === "retry-scan" || intent === "cancel-scan") {
+      const scanRunId = stringFromForm(formData, "scanRunId");
+      if (!scanRunId) {
+        return { intent, error: "No repository scan was available to update." };
+      }
+      await controlVibeMarketingRun(env, request, scanRunId, intent === "retry-scan" ? "resume" : "cancel", {
+        ...(intent === "cancel-scan" ? { cleanup: true } : {}),
+        workflow: "repo_scan",
+      });
       return redirect("/founder-tools/marketing/create?step=scan");
     }
 
@@ -667,9 +669,6 @@ export default function FounderToolsMarketingCreate() {
     githubRepoOptions[0]?.fullName ??
     "";
   const [repoSelection, setRepoSelection] = useState(selectedGithubRepo);
-  const latestScanNeedsSetupApproval = isScanAwaitingSetupApproval(latestScan);
-  const latestScanSetupRunId = latestScan ? setupRunIdForRun(latestScan) : "";
-  const latestScanIsConfirmed = latestScan?.status === "completed" || Boolean(bootstrap.checks.scaffold?.passed);
   const deliveryModeNote = directPublishMode
     ? `This will generate a draft and prepare it for publishing through ${bootstrap.settings.githubRepo}.`
     : reviewDraftMode
@@ -743,48 +742,10 @@ export default function FounderToolsMarketingCreate() {
                 onRepoSelectionChange={setRepoSelection}
                 articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
                 connectionError={githubConnectError}
+                scanRun={latestScan}
                 framed={false}
               />
 
-              {latestScan ? (
-                <div className="mt-5 space-y-4">
-                  <div className={clsx("rounded-xl border p-4", latestScanNeedsSetupApproval ? "border-amber-200 bg-amber-50" : latestScanIsConfirmed ? "border-emerald-200 bg-emerald-50" : "border-gray-100 bg-gray-50")}>
-                    <p className="text-sm font-black text-gray-950">Latest scan: {latestScan.status.replace(/_/g, " ")}</p>
-                    <p className="mt-1 text-xs font-semibold text-gray-600">
-                      {latestScanNeedsSetupApproval
-                        ? "Scan complete. Review the detected article route and approve the setup preview build."
-                        : latestScanIsConfirmed
-                          ? "Article system confirmed. You can continue to article generation."
-                          : (latestScan.currentStep ?? latestScan.runId)}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <Link to={`/founder-tools/marketing/runs/${latestScan.runId}`} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-bold text-violet-700 hover:text-violet-900">
-                        View scan run
-                      </Link>
-                      {latestScanNeedsSetupApproval ? (
-                        <Form method="POST">
-                          <input type="hidden" name="scanRunId" value={latestScan.runId} />
-                          <button type="submit" name="intent" value="build-article-system-preview" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-700 disabled:opacity-50">
-                            {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                            Build article system preview
-                          </button>
-                        </Form>
-                      ) : latestScanSetupRunId ? (
-                        <Link to={`/founder-tools/marketing/runs/${latestScanSetupRunId}`} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-3 py-2 text-sm font-bold text-white hover:bg-violet-700">
-                          Open setup preview
-                        </Link>
-                      ) : null}
-                      {latestScanIsConfirmed && !latestScanNeedsSetupApproval ? (
-                        <Link to="/founder-tools/marketing/create?step=research" className="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-800">
-                          Continue
-                          <ArrowRightIcon className="h-4 w-4" />
-                        </Link>
-                      ) : null}
-                    </div>
-                  </div>
-                  {latestScanNeedsSetupApproval ? <ArticleSystemSurfaceSummary run={latestScan} /> : null}
-                </div>
-              ) : null}
               {!githubReadyForPublishing ? (
                 <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
                   <p className="text-sm font-semibold leading-6 text-gray-700">
