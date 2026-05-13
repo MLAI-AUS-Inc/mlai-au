@@ -1,5 +1,5 @@
 import { Form, Link, useFetcher, useNavigation } from "react-router";
-import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -8,6 +8,7 @@ import {
   Building2,
   CheckCircle2,
   ExternalLink,
+  FileText,
   Globe2,
   Link2,
   Loader2,
@@ -19,9 +20,9 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
-  Tags,
   TrendingUp,
   Users,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { clsx } from "clsx";
@@ -772,10 +773,154 @@ function RequiredPill() {
   return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
 }
 
+function AiAssistPill() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 px-3 py-1 text-[11px] font-black text-violet-700 ring-1 ring-violet-100">
+      <Sparkles className="h-3.5 w-3.5" />
+      Will be filled by AI
+    </span>
+  );
+}
+
+function CompanyDetailsPanel({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: LucideIcon;
+  children: ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-100">
+          <Icon className="h-5 w-5" />
+        </span>
+        <p className="text-base font-black text-gray-950">{title}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 function ControlIcon({ icon: Icon }: { icon: LucideIcon }) {
   return (
     <div className="pointer-events-none absolute left-3.5 top-3.5 h-5 w-5 text-gray-400">
       <Icon className="h-5 w-5" />
+    </div>
+  );
+}
+
+function uniqueChipValues(values: string[]) {
+  const seen = new Set<string>();
+  return values.filter((value) => {
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function serializeChips(values: string[], separator: "comma" | "newline") {
+  return values.join(separator === "newline" ? "\n" : ", ");
+}
+
+function ChipListInput({
+  name,
+  value,
+  onChange,
+  disabled,
+  placeholder,
+  separator = "comma",
+}: {
+  name: StartupSetupField;
+  value: string;
+  onChange: (value: string) => void;
+  disabled?: boolean;
+  placeholder: string;
+  separator?: "comma" | "newline";
+}) {
+  const [draft, setDraft] = useState("");
+  const chips = useMemo(() => uniqueChipValues(listFromText(value)), [value]);
+
+  const updateChips = (nextChips: string[]) => {
+    onChange(serializeChips(uniqueChipValues(nextChips), separator));
+  };
+
+  const commitDraft = (rawDraft = draft) => {
+    const nextValues = uniqueChipValues([...chips, ...listFromText(rawDraft)]);
+    if (nextValues.length !== chips.length || rawDraft.trim()) {
+      updateChips(nextValues);
+    }
+    setDraft("");
+  };
+
+  const removeChip = (chipToRemove: string) => {
+    updateChips(chips.filter((chip) => chip.toLowerCase() !== chipToRemove.toLowerCase()));
+  };
+
+  const handleKeyDown = (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    if (event.key === "Enter" || event.key === ",") {
+      event.preventDefault();
+      commitDraft();
+      return;
+    }
+    if (event.key === "Backspace" && !draft && chips.length) {
+      event.preventDefault();
+      updateChips(chips.slice(0, -1));
+    }
+  };
+
+  const hiddenValue = serializeChips(chips, separator);
+
+  return (
+    <div
+      className={clsx(
+        "min-h-[118px] rounded-lg border border-gray-200 bg-white px-3 py-3 outline-none transition focus-within:border-violet-500 focus-within:ring-4 focus-within:ring-violet-500/10",
+        disabled && "bg-gray-50",
+      )}
+    >
+      <input type="hidden" name={name} value={hiddenValue} />
+      <div className="flex flex-wrap gap-2">
+        {chips.map((chip) => (
+          <span
+            key={chip}
+            className="inline-flex max-w-full items-center gap-1.5 rounded-lg bg-violet-50 px-3 py-1.5 text-sm font-black text-violet-700 ring-1 ring-violet-100"
+          >
+            <span className="truncate">{chip}</span>
+            <button
+              type="button"
+              onClick={() => removeChip(chip)}
+              disabled={disabled}
+              aria-label={`Remove ${chip}`}
+              className="rounded-full p-0.5 text-violet-500 transition hover:bg-violet-100 hover:text-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </span>
+        ))}
+        {!disabled ? (
+          <input
+            value={draft}
+            onChange={(event) => {
+              const nextValue = event.target.value;
+              if (/[,\n]/.test(nextValue)) {
+                commitDraft(nextValue);
+              } else {
+                setDraft(nextValue);
+              }
+            }}
+            onKeyDown={handleKeyDown}
+            onBlur={() => commitDraft()}
+            placeholder={chips.length ? "" : placeholder}
+            className="min-w-[180px] flex-1 border-0 bg-transparent px-1 py-1.5 text-sm font-medium text-gray-900 outline-none placeholder:text-gray-400"
+          />
+        ) : null}
+      </div>
+      {disabled && !chips.length ? <p className="px-1 py-1.5 text-sm font-medium text-gray-400">{placeholder}</p> : null}
     </div>
   );
 }
@@ -1750,155 +1895,173 @@ export default function VibeMarketingStartupBaselineSetup({
           </aside>
         </div>
 
-        <section className={clsx("rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6", researchLocked && "bg-gray-50/80")}>
-          <div className="flex items-start gap-4">
-            <span className={clsx("flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-black shadow-sm", researchLocked ? "bg-violet-700 text-white shadow-violet-200" : "bg-gray-200 text-gray-600")}>2</span>
-            <div>
+        <section className={clsx("rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7", researchLocked && "bg-gray-50/80")}>
+          <div className="flex items-start gap-5">
+            <span
+              className={clsx(
+                "flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-xl font-black shadow-sm",
+                researchLocked ? "bg-violet-700 text-white shadow-violet-200" : "bg-violet-100 text-violet-700",
+              )}
+            >
+              2
+            </span>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
-                <h3 className="text-xl font-black tracking-normal text-gray-950">Company details</h3>
-                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-black text-violet-700">Will be filled by AI</span>
+                <h3 className="text-2xl font-black tracking-normal text-gray-950">Company details</h3>
+                <AiAssistPill />
               </div>
-              <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">Sit back while we gather information about your business, then review and edit anything.</p>
+              <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
+                Sit back while we gather information about your business, then review and edit anything.
+              </p>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            <FormField label="Startup location">
-              <div className="relative">
-                <ControlIcon icon={MapPin} />
+          <div className="mt-7 border-t border-gray-100 pt-7">
+            <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+              <FormField label="Startup location">
+                <div className="relative">
+                  <ControlIcon icon={MapPin} />
+                  <input
+                    name="location"
+                    value={startupValues.location}
+                    onChange={(event) => updateValue("location", event.target.value)}
+                    disabled={researchLocked}
+                    placeholder="Melbourne, Australia"
+                    className={inputWithIconClass}
+                  />
+                </div>
+              </FormField>
+              <FormField label="Founder names">
                 <input
-                  name="location"
-                  value={startupValues.location}
-                  onChange={(event) => updateValue("location", event.target.value)}
+                  name="founderNames"
+                  value={startupValues.founderNames}
+                  onChange={(event) => updateValue("founderNames", event.target.value)}
                   disabled={researchLocked}
-                  placeholder="Melbourne, Australia"
-                  className={inputWithIconClass}
-                />
-              </div>
-            </FormField>
-            <FormField label="Founder names">
-              <input
-                name="founderNames"
-                value={startupValues.founderNames}
-                onChange={(event) => updateValue("founderNames", event.target.value)}
-                disabled={researchLocked}
-                placeholder="Sam Donegan, Alex Founder"
-                className={`${inputClass} px-4`}
-              />
-            </FormField>
-            <FormField label="Stage">
-              <select
-                name="stage"
-                value={startupValues.stage}
-                onChange={(event) => updateValue("stage", event.target.value)}
-                disabled={researchLocked}
-                className={`${inputClass} px-4`}
-              >
-                {STARTUP_STAGE_OPTIONS.map((option) => (
-                  <option key={option || "blank"} value={option}>
-                    {option || "Select stage"}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Organization type">
-              <select
-                name="organizationKind"
-                value={startupValues.organizationKind}
-                onChange={(event) => updateValue("organizationKind", event.target.value)}
-                disabled={researchLocked}
-                className={`${inputClass} px-4`}
-              >
-                {ORGANIZATION_KIND_OPTIONS.map((option) => (
-                  <option key={option || "blank"} value={option}>
-                    {option || "Select type"}
-                  </option>
-                ))}
-              </select>
-            </FormField>
-            <FormField label="Short description" className="md:col-span-2">
-                <textarea
-                  name="shortDescription"
-                  value={startupValues.shortDescription}
-                  onChange={(event) => updateValue("shortDescription", event.target.value)}
-                  disabled={researchLocked}
-                  placeholder="e.g. We help SaaS companies automate customer onboarding..."
-                  rows={5}
-                  maxLength={600}
-                  className={textareaClass}
+                  placeholder="Sam Donegan, Alex Founder"
+                  className={`${inputClass} px-4`}
                 />
               </FormField>
-
-            <FormField label="Target audience" className="md:col-span-2">
-              <div className="relative">
-                <ControlIcon icon={Users} />
-                <input
-                  name="targetAudience"
-                  value={startupValues.targetAudience}
-                  onChange={(event) => updateValue("targetAudience", event.target.value)}
+              <FormField label="Stage">
+                <select
+                  name="stage"
+                  value={startupValues.stage}
+                  onChange={(event) => updateValue("stage", event.target.value)}
                   disabled={researchLocked}
-                  placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
-                  className={inputWithIconClass}
-                />
-              </div>
-            </FormField>
-
-            <FormField label="What you do" className="md:col-span-2">
-                <textarea
-                  name="problemSolved"
-                  value={startupValues.problemSolved}
-                  onChange={(event) => updateValue("problemSolved", event.target.value)}
-                  disabled={researchLocked}
-                  placeholder="e.g. SaaS teams waste time on manual processes..."
-                  rows={5}
-                  maxLength={400}
-                  className={textareaClass}
-                />
+                  className={`${inputClass} px-4`}
+                >
+                  {STARTUP_STAGE_OPTIONS.map((option) => (
+                    <option key={option || "blank"} value={option}>
+                      {option || "Select stage"}
+                    </option>
+                  ))}
+                </select>
               </FormField>
-
-            <FormField label="ABN">
-              <div className="relative">
-                <ControlIcon icon={BadgeInfo} />
-                <input
-                  name="abn"
-                  value={startupValues.abn}
-                  onChange={(event) => updateValue("abn", event.target.value)}
+              <FormField label="Organization type">
+                <select
+                  name="organizationKind"
+                  value={startupValues.organizationKind}
+                  onChange={(event) => updateValue("organizationKind", event.target.value)}
                   disabled={researchLocked}
-                  placeholder="Search ABN or business name"
-                  className={inputWithIconClass}
-                />
-              </div>
-            </FormField>
+                  className={`${inputClass} px-4`}
+                >
+                  {ORGANIZATION_KIND_OPTIONS.map((option) => (
+                    <option key={option || "blank"} value={option}>
+                      {option || "Select type"}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
 
-            <FormField label="Seed keywords">
-              <div className="relative">
-                <ControlIcon icon={Tags} />
-                <textarea
-                  name="seedKeywords"
-                  value={startupValues.seedKeywords}
-                  onChange={(event) => updateValue("seedKeywords", event.target.value)}
-                  disabled={researchLocked}
-                  rows={4}
-                  placeholder="onboarding automation, product analytics"
-                  className={textareaWithIconClass}
-                />
-              </div>
-            </FormField>
+            <div className="mt-7 grid gap-6 xl:grid-cols-2">
+              <CompanyDetailsPanel title="About your business" icon={FileText}>
+                <div className="space-y-6">
+                  <FormField label="Short description">
+                    <textarea
+                      name="shortDescription"
+                      value={startupValues.shortDescription}
+                      onChange={(event) => updateValue("shortDescription", event.target.value)}
+                      disabled={researchLocked}
+                      placeholder="e.g. We help SaaS companies automate customer onboarding..."
+                      rows={6}
+                      maxLength={600}
+                      className={textareaClass}
+                    />
+                  </FormField>
 
-            <FormField label="Competitors" className="md:col-span-2 xl:col-span-4">
-              <div className="relative">
-                <ControlIcon icon={Users} />
-                <textarea
-                  name="competitors"
-                  value={startupValues.competitors}
-                  onChange={(event) => updateValue("competitors", event.target.value)}
-                  disabled={researchLocked}
-                  rows={5}
-                  placeholder="competitor.com&#10;another competitor"
-                  className={textareaWithIconClass}
-                />
-              </div>
-            </FormField>
+                  <div className="border-t border-gray-100 pt-6">
+                    <FormField label="What you do">
+                      <textarea
+                        name="problemSolved"
+                        value={startupValues.problemSolved}
+                        onChange={(event) => updateValue("problemSolved", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. SaaS teams waste time on manual processes..."
+                        rows={5}
+                        maxLength={400}
+                        className={textareaClass}
+                      />
+                    </FormField>
+                  </div>
+                </div>
+              </CompanyDetailsPanel>
+
+              <CompanyDetailsPanel title="Key details" icon={Users}>
+                <div className="space-y-6">
+                  <FormField label="Target audience">
+                    <div className="relative">
+                      <ControlIcon icon={Users} />
+                      <textarea
+                        name="targetAudience"
+                        value={startupValues.targetAudience}
+                        onChange={(event) => updateValue("targetAudience", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="e.g. SaaS founders, marketing teams, eCommerce brands"
+                        rows={3}
+                        className={textareaWithIconClass}
+                      />
+                    </div>
+                  </FormField>
+
+                  <FormField label="ABN">
+                    <div className="relative max-w-md">
+                      <ControlIcon icon={BadgeInfo} />
+                      <input
+                        name="abn"
+                        value={startupValues.abn}
+                        onChange={(event) => updateValue("abn", event.target.value)}
+                        disabled={researchLocked}
+                        placeholder="Search ABN or business name"
+                        className={inputWithIconClass}
+                      />
+                    </div>
+                  </FormField>
+
+                  <div>
+                    <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-gray-700">Seed keywords</span>
+                    <ChipListInput
+                      name="seedKeywords"
+                      value={startupValues.seedKeywords}
+                      onChange={(value) => updateValue("seedKeywords", value)}
+                      disabled={researchLocked}
+                      placeholder="Add a keyword, then press Enter"
+                    />
+                  </div>
+
+                  <div>
+                    <span className="mb-2 flex flex-wrap items-center gap-2 text-sm font-bold text-gray-700">Competitors</span>
+                    <ChipListInput
+                      name="competitors"
+                      value={startupValues.competitors}
+                      onChange={(value) => updateValue("competitors", value)}
+                      disabled={researchLocked}
+                      placeholder="Add a competitor, then press Enter"
+                      separator="newline"
+                    />
+                  </div>
+                </div>
+              </CompanyDetailsPanel>
+            </div>
           </div>
         </section>
       </div>
@@ -1907,8 +2070,7 @@ export default function VibeMarketingStartupBaselineSetup({
         <section
           ref={baselineRef}
           className={clsx(
-            "border-t border-gray-100 bg-white py-8",
-            embedded ? "" : "px-6 lg:px-8",
+            "border-t border-gray-100 bg-white px-6 py-8 lg:px-8",
             focusSection === "baseline" && "scroll-mt-28",
           )}
         >
