@@ -335,28 +335,27 @@ export default function CompanySetup() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-          <VibeMarketingStartupBaselineSetup
-            bootstrap={bootstrap}
-            error={error}
-            variant="workflow"
-            includeBaseline={false}
-            setupEyebrow="Company setup"
-            setupTitle="Tell us about your startup"
-            setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
-            guidanceTitle="Shared profile"
-            guidanceBody="The same company details will be reused for investor updates, marketing research, and article generation."
-            guidanceTips={[
-              "Use the public website domain",
-              "Add LinkedIn if the company name is ambiguous",
-              "Describe your customer and problem clearly",
-              "You can edit these details later",
-            ]}
-            primaryActionLabel={isAddingNew ? "Add company" : "Save and go to dashboard"}
-            showSecondaryAction={false}
-            advancedOpenByDefault
-          />
-        </div>
+        <VibeMarketingStartupBaselineSetup
+          bootstrap={bootstrap}
+          error={error}
+          variant="workflow"
+          includeBaseline={false}
+          setupEyebrow="Company setup"
+          setupTitle="Tell us about your startup"
+          setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
+          guidanceTitle="Shared profile"
+          guidanceBody="The same company details will be reused for investor updates, marketing research, and article generation."
+          guidanceTips={[
+            "Use the public website domain",
+            "Add LinkedIn if the company name is ambiguous",
+            "Describe your customer and problem clearly",
+            "You can edit these details later",
+          ]}
+          primaryActionLabel={isAddingNew ? "Add company" : "Save and go to dashboard"}
+          showSecondaryAction={false}
+          advancedOpenByDefault
+          showSetupProgress={false}
+        />
       </div>
     </div>
   );

@@ -679,6 +679,8 @@ export default function FounderToolsMarketingCreate() {
     setRepoSelection((current) => current || selectedGithubRepo);
   }, [selectedGithubRepo]);
 
+  const setupStepActive = activeStep === "startupDetails" || activeStep === "baseline";
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <nav className="border-b border-gray-200 pb-4" aria-label="Breadcrumb">
@@ -688,13 +690,15 @@ export default function FounderToolsMarketingCreate() {
         </Link>
       </nav>
 
-      <MarketingWorkflowShell
-        progress={bootstrap.workflowProgress}
-        viewedStepId={WORKFLOW_STEP_ID_BY_CREATE_STEP[activeStep]}
-        title="Create and publish article"
-        isSubmitting={isSubmitting}
-        showPrimaryAction={false}
-      />
+      {!setupStepActive ? (
+        <MarketingWorkflowShell
+          progress={bootstrap.workflowProgress}
+          viewedStepId={WORKFLOW_STEP_ID_BY_CREATE_STEP[activeStep]}
+          title="Create and publish article"
+          isSubmitting={isSubmitting}
+          showPrimaryAction={false}
+        />
+      ) : null}
 
       {topActionError ? (
         <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
@@ -702,8 +706,8 @@ export default function FounderToolsMarketingCreate() {
         </div>
       ) : null}
 
-      <main className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-        {activeStep === "startupDetails" || activeStep === "baseline" ? (
+      <main className={clsx(setupStepActive ? "space-y-6" : "rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6")}>
+        {setupStepActive ? (
           <VibeMarketingStartupBaselineSetup
             bootstrap={bootstrap}
             error={topActionError}
