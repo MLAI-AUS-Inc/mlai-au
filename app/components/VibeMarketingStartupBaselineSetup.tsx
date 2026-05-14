@@ -634,9 +634,8 @@ function sparklinePoints(values: number[], width = 240, height = 74) {
 const AI_VISIBILITY_PLATFORMS = [
   { key: "chatgpt", label: "ChatGPT", short: "GPT", badge: "bg-emerald-50 text-emerald-700 ring-emerald-100" },
   { key: "claude", label: "Claude", short: "CL", badge: "bg-orange-50 text-orange-700 ring-orange-100" },
-  { key: "copilot", label: "Copilot", short: "CO", badge: "bg-sky-50 text-sky-700 ring-sky-100" },
   { key: "gemini", label: "Gemini", short: "GE", badge: "bg-violet-50 text-violet-700 ring-violet-100" },
-  { key: "grok", label: "Grok", short: "GR", badge: "bg-slate-50 text-slate-700 ring-slate-100" },
+  { key: "perplexity", label: "Perplexity", short: "PX", badge: "bg-sky-50 text-sky-700 ring-sky-100" },
 ] as const;
 
 function normalizeAiPlatformKey(value: unknown) {
@@ -659,7 +658,7 @@ function scoreFromAiPlatformPayload(value: unknown) {
   return Math.round(Math.max(0, Math.min(100, rawScore <= 1 ? rawScore * 100 : rawScore)));
 }
 
-function findAiPlatformScore(metric: VibeMarketingWebsiteBaselineMetric | undefined, platformKey: string, platformLabel: string) {
+function findAiPlatformPayload(metric: VibeMarketingWebsiteBaselineMetric | undefined, platformKey: string, platformLabel: string) {
   const targetKeys = new Set([normalizeAiPlatformKey(platformKey), normalizeAiPlatformKey(platformLabel)]);
   const containerKeys = ["platforms", "providers", "engines", "aiTools", "tools", "visibilityByPlatform", "platformScores", "providerScores"];
 
@@ -670,7 +669,7 @@ function findAiPlatformScore(metric: VibeMarketingWebsiteBaselineMetric | undefi
       for (const row of rows) {
         const rowKey = normalizeAiPlatformKey(row.key ?? row.id ?? row.label ?? row.name ?? row.platform ?? row.provider ?? row.engine ?? row.tool);
         if (targetKeys.has(rowKey)) {
-          return scoreFromAiPlatformPayload(row);
+          return row;
         }
       }
     }
@@ -679,7 +678,7 @@ function findAiPlatformScore(metric: VibeMarketingWebsiteBaselineMetric | undefi
     if (record) {
       for (const [recordKey, recordValue] of Object.entries(record)) {
         if (targetKeys.has(normalizeAiPlatformKey(recordKey))) {
-          return scoreFromAiPlatformPayload(recordValue);
+          return recordValue;
         }
       }
     }
@@ -688,12 +687,21 @@ function findAiPlatformScore(metric: VibeMarketingWebsiteBaselineMetric | undefi
   return null;
 }
 
-function aiVisibilityPlatformRows(metric: VibeMarketingWebsiteBaselineMetric | undefined, fallbackScore: number | null) {
-  const measuredFallback = metric?.status === "measured" ? fallbackScore : null;
+function aiVisibilityPlatformRows(metric: VibeMarketingWebsiteBaselineMetric | undefined) {
   return AI_VISIBILITY_PLATFORMS.map((platform) => ({
     ...platform,
-    score: findAiPlatformScore(metric, platform.key, platform.label) ?? measuredFallback,
-  }));
+    payload: findAiPlatformPayload(metric, platform.key, platform.label),
+  })).map((row) => {
+    const payload = plainObject(row.payload);
+    const status = String(payload?.status ?? "").toLowerCase();
+    const score = scoreFromAiPlatformPayload(row.payload);
+    return {
+      ...row,
+      hasData: Boolean(row.payload),
+      score: status === "unavailable" || status === "error" ? null : score,
+      status,
+    };
+  });
 }
 
 function averageFromStrategies(strategies: Record<string, unknown> | undefined, key: string) {
@@ -1208,11 +1216,11 @@ function MetricVisual({
   trendShape?: BaselineTrendShape;
 }) {
   if (visual === "ai-sources") {
-    const rows = aiVisibilityPlatformRows(metric, score);
-    if (!rows.some((row) => row.score !== null)) {
+    const rows = aiVisibilityPlatformRows(metric);
+    if (!rows.some((row) => row.hasData)) {
       return (
         <div className="mt-5 rounded-xl bg-slate-50 px-4 py-3 text-xs font-bold leading-5 text-slate-500">
-          {status === "measured" ? "AI tool visibility detail will appear after more platform data is collected." : "AI visibility detail is unavailable right now."}
+          {status === "measured" ? "AI platform detail was not collected for this baseline." : "AI visibility detail is unavailable right now."}
         </div>
       );
     }
@@ -1226,7 +1234,11 @@ function MetricVisual({
               </span>
               <span className="truncate text-sm font-black text-slate-800">{row.label}</span>
             </span>
-            <span className="shrink-0 text-lg font-black text-slate-950">{row.score === null ? "-" : row.score}</span>
+            {row.score === null ? (
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-slate-500">Unavailable</span>
+            ) : (
+              <span className="shrink-0 text-lg font-black text-slate-950">{row.score}</span>
+            )}
           </div>
         ))}
       </div>
