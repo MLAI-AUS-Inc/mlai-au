@@ -1,5 +1,6 @@
 import { CheckCircleIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
+import { useState } from "react";
 
 import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
@@ -119,14 +120,31 @@ function hintStatusTone(status: string) {
   return "border-gray-200 bg-gray-50 text-gray-700";
 }
 
+function isSelectablePublicRoute(route: string) {
+  return Boolean(route && route.startsWith("/") && !/[{[]/.test(route));
+}
+
+function candidateLabel(candidate: SurfaceCandidate) {
+  if (candidate.route && candidate.path && candidate.path !== candidate.route) return `${candidate.route} - ${candidate.path}`;
+  return candidate.route || candidate.path;
+}
+
 export default function ArticleSystemSurfaceSummary({
   run,
   selectable = false,
   fieldName = "articleSurfaceUrl",
+  selectionValue,
+  manualValue,
+  onSelectionValueChange,
+  onManualValueChange,
 }: {
   run: VibeMarketingRunSummary;
   selectable?: boolean;
   fieldName?: string;
+  selectionValue?: string;
+  manualValue?: string;
+  onSelectionValueChange?: (value: string) => void;
+  onManualValueChange?: (value: string) => void;
 }) {
   const candidates = articleSurfaceCandidates(run);
   const files = supportFiles(run);
@@ -136,9 +154,109 @@ export default function ArticleSystemSurfaceSummary({
   const setup = resultRecord(run, "article_system_setup");
   const readinessStatus = asString(readiness.status) || asString(setup.status);
   const reason = asString(readiness.reason) || asString(resultValue(run, "scaffold_reason"));
+  const publicRouteCandidates = candidates.filter((candidate) => isSelectablePublicRoute(candidate.route));
+  const fileOnlyCandidates = candidates.filter((candidate) => !isSelectablePublicRoute(candidate.route));
+  const [internalSelection, setInternalSelection] = useState("");
+  const [internalManualValue, setInternalManualValue] = useState("");
+  const selectedRoute = selectionValue ?? internalSelection;
+  const pastedRoute = manualValue ?? internalManualValue;
+  const submittedRoute = pastedRoute.trim() || selectedRoute;
+  const selectedCandidate = publicRouteCandidates.find((candidate) => candidate.route === selectedRoute);
+  const updateSelection = (value: string) => {
+    onSelectionValueChange?.(value);
+    if (selectionValue === undefined) setInternalSelection(value);
+    onManualValueChange?.("");
+    if (manualValue === undefined) setInternalManualValue("");
+  };
+  const updateManualValue = (value: string) => {
+    onManualValueChange?.(value);
+    if (manualValue === undefined) setInternalManualValue(value);
+    if (value.trim()) {
+      onSelectionValueChange?.("");
+      if (selectionValue === undefined) setInternalSelection("");
+    }
+  };
 
   if (!candidates.length && !files.required.length && hintStatus === "ignored" && !readinessStatus) {
     return null;
+  }
+
+  if (selectable) {
+    return (
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <input type="hidden" name={fieldName} value={submittedRoute} />
+        <div>
+          <h2 className="text-base font-black text-slate-950">Choose where articles live</h2>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+            Select a public page found during the read-only scan, or paste the articles/blog URL yourself.
+          </p>
+        </div>
+
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <label className="block">
+            <span className="mb-2 block text-sm font-black text-slate-800">Choose the articles or blog page we found</span>
+            <select
+              value={selectedRoute}
+              onChange={(event) => updateSelection(event.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            >
+              <option value="">Select a found route</option>
+              {publicRouteCandidates.map((candidate) => (
+                <option key={candidate.key} value={candidate.route}>
+                  {candidateLabel(candidate)}
+                </option>
+              ))}
+            </select>
+            {!publicRouteCandidates.length ? (
+              <span className="mt-2 block text-xs font-semibold text-slate-500">
+                We did not find a clean public articles route. Paste the URL/path, or create a new articles directory below.
+              </span>
+            ) : null}
+          </label>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-black text-slate-800">Or paste the articles/blog URL or path</span>
+            <input
+              value={pastedRoute}
+              onChange={(event) => updateManualValue(event.target.value)}
+              placeholder="https://example.com/articles or /articles"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+            />
+            <span className="mt-2 block text-xs font-semibold text-slate-500">Use this if the right route is not in the dropdown.</span>
+          </label>
+        </div>
+
+        {selectedCandidate?.path && selectedCandidate.path !== selectedCandidate.route ? (
+          <div className="mt-4 rounded-xl bg-slate-50 px-4 py-3">
+            <p className="text-xs font-black uppercase tracking-wide text-slate-400">Repo evidence</p>
+            <p className="mt-1 break-all text-sm font-semibold text-slate-700">{selectedCandidate.path}</p>
+          </div>
+        ) : null}
+
+        {fileOnlyCandidates.length ? (
+          <details className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <summary className="cursor-pointer text-sm font-black text-slate-800">Pages found without a public URL</summary>
+            <div className="mt-3 space-y-2">
+              {fileOnlyCandidates.map((candidate) => (
+                <div key={candidate.key} className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600">
+                  <p className="break-all font-black text-slate-800">{candidate.path || candidate.route}</p>
+                  {candidate.group ? <p className="mt-1 uppercase tracking-wide text-slate-400">{candidate.group.replace(/_/g, " ")}</p> : null}
+                </div>
+              ))}
+            </div>
+          </details>
+        ) : null}
+
+        <details className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+          <summary className="cursor-pointer text-sm font-black text-slate-800">Technical scan details</summary>
+          <div className="mt-3 space-y-3 text-sm font-semibold text-slate-600">
+            {asString(hint.route_path) ? <p>User hint: <span className="font-black text-slate-900">{asString(hint.route_path)}</span></p> : null}
+            <p>Hint status: <span className="font-black text-slate-900">{hintStatus.replace(/_/g, " ")}</span></p>
+            {reason ? <p className="rounded-lg bg-amber-50 px-3 py-2 text-amber-900">{reason}</p> : null}
+          </div>
+        </details>
+      </section>
+    );
   }
 
   return (
@@ -147,7 +265,7 @@ export default function ArticleSystemSurfaceSummary({
         <div>
           <h2 className="text-base font-black text-gray-950">Article surface scan</h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-            Confirm the public route and repo files Content Factory will use before setup patches are approved.
+            Review the scanner findings if you need to audit the route or setup files.
           </p>
         </div>
         <span className={clsx("inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase", hintStatusTone(hintStatus))}>
@@ -155,89 +273,79 @@ export default function ArticleSystemSurfaceSummary({
         </span>
       </div>
 
-      {asString(hint.route_path) ? (
-        <p className="mt-3 rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600">
-          User hint: <span className="text-gray-950">{asString(hint.route_path)}</span>
-        </p>
-      ) : null}
+      <p className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-600">
+        {candidates.length
+          ? `${candidates.length} possible article surface${candidates.length === 1 ? "" : "s"} found.`
+          : "No public article surface candidates were confirmed."}
+      </p>
 
-      {reason ? (
-        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
-          {reason}
-        </div>
-      ) : null}
+      <details className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-3">
+        <summary className="cursor-pointer text-sm font-black text-slate-800">Technical scan details</summary>
+        <div className="mt-4 space-y-4">
+          {asString(hint.route_path) ? (
+            <p className="rounded-lg bg-gray-50 px-3 py-2 text-xs font-bold text-gray-600">
+              User hint: <span className="text-gray-950">{asString(hint.route_path)}</span>
+            </p>
+          ) : null}
 
-      {candidates.length ? (
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {candidates.map((candidate, index) => {
-            const selectableValue = candidate.route || candidate.path;
-            const content = (
-              <>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-black text-gray-950">{candidate.route || candidate.path}</p>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-wide text-gray-400">{candidate.group.replace(/_/g, " ")}</p>
+          {reason ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-900">
+              {reason}
+            </div>
+          ) : null}
+
+          {candidates.length ? (
+            <div className="grid gap-3 lg:grid-cols-2">
+              {candidates.map((candidate) => (
+                <div key={candidate.key} className="rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-black text-gray-950">{candidate.route || candidate.path}</p>
+                      <p className="mt-1 text-xs font-bold uppercase tracking-wide text-gray-400">{candidate.group.replace(/_/g, " ")}</p>
+                    </div>
+                    {candidate.confidence !== null ? (
+                      <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] font-black text-violet-700">
+                        {Math.round(candidate.confidence * 100)}%
+                      </span>
+                    ) : null}
                   </div>
-                  {candidate.confidence !== null ? (
-                    <span className="rounded-full bg-violet-50 px-2 py-1 text-[11px] font-black text-violet-700">
-                      {Math.round(candidate.confidence * 100)}%
-                    </span>
+                  {candidate.path && candidate.path !== candidate.route ? (
+                    <p className="mt-3 break-all rounded-lg bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">{candidate.path}</p>
                   ) : null}
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-wide text-gray-500">
+                    {candidate.kind ? <span className="rounded-full bg-gray-100 px-2 py-1">{candidate.kind}</span> : null}
+                    {candidate.systemType ? <span className="rounded-full bg-gray-100 px-2 py-1">{candidate.systemType}</span> : null}
+                    <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">Patch only if confirmed safe</span>
+                  </div>
                 </div>
-                {candidate.path && candidate.path !== candidate.route ? (
-                  <p className="mt-3 break-all rounded-lg bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">{candidate.path}</p>
-                ) : null}
-                <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-wide text-gray-500">
-                  {candidate.kind ? <span className="rounded-full bg-gray-100 px-2 py-1">{candidate.kind}</span> : null}
-                  {candidate.systemType ? <span className="rounded-full bg-gray-100 px-2 py-1">{candidate.systemType}</span> : null}
-                  <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">Patch only if confirmed safe</span>
-                </div>
-              </>
-            );
-            return selectable && selectableValue ? (
-              <label key={candidate.key} className="block cursor-pointer rounded-xl border border-gray-200 bg-white p-4 transition hover:border-violet-200 hover:bg-violet-50/40">
-                <div className="flex gap-3">
-                  <input
-                    type="radio"
-                    name={fieldName}
-                    value={selectableValue}
-                    defaultChecked={index === 0}
-                    className="mt-1 h-4 w-4 border-gray-300 text-violet-600 focus:ring-violet-500"
-                  />
-                  <div className="min-w-0 flex-1">{content}</div>
-                </div>
-              </label>
-            ) : (
-              <div key={candidate.key} className="rounded-xl border border-gray-200 bg-white p-4">
-                {content}
-              </div>
-            );
-          })}
-        </div>
-      ) : null}
+              ))}
+            </div>
+          ) : null}
 
-      {files.required.length ? (
-        <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-black text-emerald-900">
-              <CheckCircleIcon className="h-4 w-4" />
-              Support files found
+          {files.required.length ? (
+            <div className="grid gap-3 lg:grid-cols-2">
+              <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-black text-emerald-900">
+                  <CheckCircleIcon className="h-4 w-4" />
+                  Support files found
+                </div>
+                <p className="mt-2 text-xs font-semibold leading-5 text-emerald-800">
+                  {files.found.length ? files.found.join(", ") : "None confirmed yet"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
+                <div className="flex items-center gap-2 text-sm font-black text-amber-900">
+                  <ExclamationTriangleIcon className="h-4 w-4" />
+                  Missing or planned files
+                </div>
+                <p className="mt-2 text-xs font-semibold leading-5 text-amber-800">
+                  {files.missing.length ? files.missing.join(", ") : "No missing support files detected"}
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-xs font-semibold leading-5 text-emerald-800">
-              {files.found.length ? files.found.join(", ") : "None confirmed yet"}
-            </p>
-          </div>
-          <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-            <div className="flex items-center gap-2 text-sm font-black text-amber-900">
-              <ExclamationTriangleIcon className="h-4 w-4" />
-              Missing or planned files
-            </div>
-            <p className="mt-2 text-xs font-semibold leading-5 text-amber-800">
-              {files.missing.length ? files.missing.join(", ") : "No missing support files detected"}
-            </p>
-          </div>
+          ) : null}
         </div>
-      ) : null}
+      </details>
     </section>
   );
 }
