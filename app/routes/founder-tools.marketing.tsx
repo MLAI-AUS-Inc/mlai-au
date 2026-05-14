@@ -1,5 +1,5 @@
 import type { Route } from "./+types/founder-tools.marketing";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
 import type { KeyboardEvent, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -28,6 +28,7 @@ import { clsx } from "clsx";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
   getVibeMarketingBootstrap,
@@ -494,6 +495,12 @@ function actionError(data: unknown): string | null {
   if (!data || typeof data !== "object" || !("error" in data)) return null;
   const error = (data as { error?: unknown }).error;
   return typeof error === "string" ? error : null;
+}
+
+function actionIntent(data: unknown): string | null {
+  if (!data || typeof data !== "object" || !("intent" in data)) return null;
+  const intent = (data as { intent?: unknown }).intent;
+  return typeof intent === "string" ? intent : null;
 }
 
 function numericValue(value: unknown): number | null {
@@ -2323,11 +2330,14 @@ function TopicDeclineRequest({
 function ReturningTopicPickerPage({
   bootstrap,
   error,
+  errorIntent,
 }: {
   bootstrap: VibeMarketingBootstrap;
   error: string | null;
+  errorIntent?: string | null;
 }) {
   const navigation = useNavigation();
+  const location = useLocation();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
@@ -2366,10 +2376,19 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
-  const [articleStartPending, setArticleStartPending] = useState(false);
-  const isSubmitting = navigation.state === "submitting";
-  const isArticleStartNavigation = navigation.formData?.get("intent") === "start-article";
-  const articleSubmitting = articleStartPending || (navigation.state !== "idle" && isArticleStartNavigation);
+  const latestArticleRunId =
+    bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article", "article_revision"].includes(run.workflow))?.runId ?? "";
+  const latestDiscoveryRunId =
+    bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow))?.runId ?? "";
+  const pendingActions = useMarketingActionPending({
+    navigationState: navigation.state,
+    navigationFormData: navigation.formData,
+    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}`,
+    errorKey: error ? errorIntent : null,
+  });
+  const isSubmitting = pendingActions.isAnyPending;
+  const articleSubmitting = pendingActions.isPending("start-article");
+  const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
   const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
@@ -2378,10 +2397,6 @@ function ReturningTopicPickerPage({
     if (articleSubmitting || !selectedTopic) return;
     articleFormRef.current?.requestSubmit();
   }, [articleSubmitting, selectedTopic]);
-
-  const handleArticleSubmit = useCallback(() => {
-    setArticleStartPending(true);
-  }, []);
 
   const submitRestoreFeedback = useCallback((feedbackId: string) => {
     const formData = new FormData();
@@ -2428,18 +2443,6 @@ function ReturningTopicPickerPage({
       setSelectedTopicId(topics[0].id);
     }
   }, [selectedTopicId, topics]);
-
-  useEffect(() => {
-    if (navigation.state !== "idle" && isArticleStartNavigation) {
-      setArticleStartPending(true);
-    }
-  }, [isArticleStartNavigation, navigation.state]);
-
-  useEffect(() => {
-    if (navigation.state === "idle") {
-      setArticleStartPending(false);
-    }
-  }, [navigation.state]);
 
   const handleDeclineResult = useCallback((data: TopicFeedbackActionData) => {
     if (!data || data.intent !== "decline-topic") return;
@@ -2502,7 +2505,7 @@ function ReturningTopicPickerPage({
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form ref={articleFormRef} method="POST" onSubmit={handleArticleSubmit} className="space-y-5">
+        <Form ref={articleFormRef} method="POST" className="space-y-5">
           <input type="hidden" name="intent" value="start-article" />
           <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
           <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
@@ -2774,8 +2777,8 @@ function ReturningTopicPickerPage({
                   disabled={isSubmitting}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-5 py-3 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  Generate ideas
+                  {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                  {discoverySubmitting ? "Generating ideas..." : "Generate ideas"}
                 </button>
               </Form>
             </div>
@@ -2797,12 +2800,13 @@ export default function FounderToolsMarketing() {
   const { bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const error = actionError(actionData);
+  const errorIntent = actionIntent(actionData);
   const shouldShowTopicPicker = bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow);
 
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
       {shouldShowTopicPicker ? (
-        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} />
+        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} />
       ) : (
         <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}

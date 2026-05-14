@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { Form, Link, redirect, useActionData, useLoaderData, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, redirect, useActionData, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -26,6 +26,7 @@ import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartup
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
@@ -680,7 +681,7 @@ export default function FounderToolsMarketingCreate() {
       ? latestActionError
       : null;
   const navigation = useNavigation();
-  const isSubmitting = navigation.state === "submitting";
+  const location = useLocation();
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const pendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
   const pendingArticleSystemSetupRunId = pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "";
@@ -688,6 +689,35 @@ export default function FounderToolsMarketingCreate() {
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
   const latestContentPackage = latestArticle?.contentPackage ?? bootstrap.publishEvidence?.contentPackage ?? null;
   const contentPackageReady = Boolean(latestContentPackage?.contentPackaged);
+  const pendingActions = useMarketingActionPending({
+    navigationState: navigation.state,
+    navigationFormData: navigation.formData,
+    clearSignal: [
+      location.pathname,
+      location.search,
+      activeStep,
+      latestScan?.runId,
+      latestScan?.status,
+      latestScan?.stale,
+      latestScan?.retryAvailable,
+      latestScan ? setupRunIdForRun(latestScan) : "",
+      latestDiscovery?.runId,
+      latestDiscovery?.status,
+      latestArticle?.runId,
+      latestArticle?.status,
+      bootstrap.checks.scaffold?.passed,
+      bootstrap.checks.dailyAutomation?.passed,
+      bootstrap.settings.dailyDiscoveryEnabled,
+      bootstrap.topicCandidates.length,
+    ].join("|"),
+    errorKey: latestActionError ? latestActionIntent : null,
+  });
+  const isSubmitting = pendingActions.isAnyPending;
+  const discoveryPending = pendingActions.isPending("start-discovery");
+  const articleStartPending = pendingActions.isPending("start-article");
+  const buildArticleSystemPreviewPending = pendingActions.isPending("build-article-system-preview");
+  const saveDailyPending = pendingActions.isPending("save-daily");
+  const dailyReplayPending = pendingActions.isPending("daily-replay");
   const selectableTopicCandidates = useMemo(
     () => bootstrap.topicCandidates.filter((candidate) => !candidate.alreadyWritten).slice(0, 5),
     [bootstrap.topicCandidates],
@@ -794,6 +824,7 @@ export default function FounderToolsMarketingCreate() {
                 bootstrap={bootstrap}
                 githubRepos={githubRepos}
                 isSubmitting={isSubmitting}
+                isActionPending={pendingActions.isPending}
                 repoSelection={repoSelection}
                 onRepoSelectionChange={setRepoSelection}
                 articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
@@ -838,8 +869,8 @@ export default function FounderToolsMarketingCreate() {
               <Form method="POST">
                 <input type="hidden" name="intent" value="start-discovery" />
                 <button type="submit" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <MagnifyingGlassIcon className="h-4 w-4" />}
-                  Start topic research
+                  {discoveryPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <MagnifyingGlassIcon className="h-4 w-4" />}
+                  {discoveryPending ? "Starting research..." : "Start topic research"}
                 </button>
               </Form>
               {latestDiscovery ? <Link to={`/founder-tools/marketing/runs/${latestDiscovery.runId}`} className="mt-4 inline-flex text-sm font-bold text-violet-700">View latest research run</Link> : null}
@@ -963,8 +994,8 @@ export default function FounderToolsMarketingCreate() {
                       <p className="mt-1 max-w-2xl text-xs font-semibold leading-5 text-gray-500">{deliveryModeNote}</p>
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                      {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                      Generate draft article
+                      {articleStartPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
+                      {articleStartPending ? "Starting article..." : "Generate draft article"}
                     </button>
                   </div>
                 </div>
@@ -1028,8 +1059,8 @@ export default function FounderToolsMarketingCreate() {
                         disabled={isSubmitting}
                         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
                       >
-                        {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                        Generate article system preview
+                        {buildArticleSystemPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
+                        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate article system preview"}
                       </button>
                     </Form>
                   ) : (
@@ -1087,10 +1118,12 @@ export default function FounderToolsMarketingCreate() {
                 </label>
                 <div className="flex flex-wrap gap-3">
                   <button type="submit" name="intent" value="save-daily" disabled={isSubmitting} className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
-                    Save daily settings
+                    {saveDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                    {saveDailyPending ? "Saving..." : "Save daily settings"}
                   </button>
                   <button type="submit" name="intent" value="daily-replay" disabled={isSubmitting || !bootstrap.checks.dailyAutomation?.passed} className="inline-flex items-center gap-2 rounded-xl border border-gray-200 px-5 py-3 text-sm font-bold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-60">
-                    Run today now
+                    {dailyReplayPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                    {dailyReplayPending ? "Starting..." : "Run today now"}
                   </button>
                 </div>
               </Form>

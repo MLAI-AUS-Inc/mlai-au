@@ -1,4 +1,4 @@
-import { Form, Link, useFetcher, useNavigation } from "react-router";
+import { Form, Link, useFetcher, useLocation, useNavigation } from "react-router";
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
 import {
   AlertTriangle,
@@ -6,6 +6,7 @@ import {
   BadgeInfo,
   BarChart3,
   Building2,
+  ChevronDown,
   CheckCircle2,
   ExternalLink,
   FileText,
@@ -35,6 +36,7 @@ import {
   type StartupSetupField,
   type StartupSetupValues,
 } from "~/lib/vibe-marketing-startup-setup";
+import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import type {
   VibeMarketingAutofillCompetitor,
   VibeMarketingAutofillResult,
@@ -102,6 +104,7 @@ type VibeMarketingStartupBaselineSetupProps = {
   setupProgressPercent?: number | null;
   setupProgressLabel?: string;
   showSetupProgress?: boolean;
+  collapseCompletedSectionsByDefault?: boolean;
 };
 
 function listFromText(value: unknown): string[] {
@@ -824,6 +827,15 @@ function RequiredPill() {
   return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
 }
 
+function CompletePill() {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-100">
+      <CheckCircle2 className="h-3.5 w-3.5" />
+      Complete
+    </span>
+  );
+}
+
 function StepNumberBadge({ children }: { children: ReactNode }) {
   return (
     <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-xl font-black text-white shadow-sm shadow-violet-200">
@@ -839,6 +851,48 @@ function AiAssistPill() {
       Will be filled by AI
     </span>
   );
+}
+
+function hasSetupText(value: string | null | undefined) {
+  return Boolean(String(value ?? "").trim());
+}
+
+function isBasicsComplete(values: StartupSetupValues) {
+  return hasSetupText(values.companyName) && hasSetupText(values.domain);
+}
+
+function isCompanyDetailsComplete(values: StartupSetupValues) {
+  return hasSetupText(values.shortDescription) && (hasSetupText(values.targetAudience) || hasSetupText(values.problemSolved));
+}
+
+function defaultSectionExpanded(values: StartupSetupValues, complete: (values: StartupSetupValues) => boolean, collapseCompletedSectionsByDefault: boolean) {
+  return !collapseCompletedSectionsByDefault || !complete(values);
+}
+
+function basicsSummary(values: StartupSetupValues) {
+  return [values.companyName.trim(), values.domain.trim(), values.companyLinkedInUrl.trim() ? "LinkedIn added" : ""].filter(Boolean).join(" • ");
+}
+
+function savedCompanyDetailLabels(values: StartupSetupValues) {
+  return [
+    hasSetupText(values.shortDescription) ? "description" : "",
+    hasSetupText(values.problemSolved) ? "what you do" : "",
+    hasSetupText(values.targetAudience) ? "audience" : "",
+    hasSetupText(values.location) ? "location" : "",
+    hasSetupText(values.founderNames) ? "founders" : "",
+    hasSetupText(values.stage) ? "stage" : "",
+    hasSetupText(values.organizationKind) ? "organization type" : "",
+    hasSetupText(values.seedKeywords) ? "keywords" : "",
+    hasSetupText(values.competitors) ? "competitors" : "",
+  ].filter(Boolean);
+}
+
+function companyDetailsSummary(values: StartupSetupValues) {
+  const labels = savedCompanyDetailLabels(values);
+  if (!labels.length) return "No company details saved yet.";
+  if (labels.length === 1) return `${labels[0]} saved.`;
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]} saved.`;
+  return `${labels[0]}, ${labels[1]}, and ${labels.length - 2} more saved.`;
 }
 
 function CompanyDetailsPanel({
@@ -1331,6 +1385,7 @@ function ProfileResearchProgressCard({
   const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
   const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
   const failed = isResearchFailedStatus(effectiveStatus) || unavailable;
+  const completed = run?.status === "completed" && !failed;
   const completedSteps = completedResearchStepCount(run, pending);
   const totalSteps = PROFILE_RESEARCH_STEPS.length;
   const progressLabel = `${Math.min(completedSteps, totalSteps)} of ${totalSteps} steps`;
@@ -1366,20 +1421,27 @@ function ProfileResearchProgressCard({
           ? partial
             ? "border-amber-200 bg-amber-50 text-amber-950"
             : "border-rose-200 bg-rose-50 text-rose-900"
-          : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
+          : completed
+            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
       )}
     >
       <div
         className={clsx(
           "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
-          failed ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : "bg-purple-200/30",
+          failed ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : completed ? "bg-emerald-200/40" : "bg-purple-200/30",
         )}
       />
       <div className="relative z-10 flex gap-4">
-        <div className={clsx("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl", failed ? (partial ? "bg-amber-100" : "bg-rose-100") : "bg-purple-100")}>
+        <div
+          className={clsx(
+            "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
+            failed ? (partial ? "bg-amber-100" : "bg-rose-100") : completed ? "bg-emerald-100" : "bg-purple-100",
+          )}
+        >
           {failed ? (
             <AlertTriangle className={clsx("h-6 w-6", partial ? "text-amber-600" : "text-rose-600")} />
-          ) : run?.status === "completed" ? (
+          ) : completed ? (
             <CheckCircle2 className="h-6 w-6 text-emerald-600" />
           ) : (
             <Sparkles className="h-6 w-6 text-purple-600" />
@@ -1389,19 +1451,34 @@ function ProfileResearchProgressCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-base font-black text-gray-950">{label}</p>
-            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide", failed ? (partial ? "bg-white/80 text-amber-700" : "bg-white/80 text-rose-700") : "bg-white/80 text-purple-700")}>
-              {failed ? (partial ? "Review needed" : "Retry available") : progressLabel}
+            <span
+              className={clsx(
+                "rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
+                failed
+                  ? partial
+                    ? "bg-white/80 text-amber-700"
+                    : "bg-white/80 text-rose-700"
+                  : completed
+                    ? "bg-white/80 text-emerald-700"
+                    : "bg-white/80 text-purple-700",
+              )}
+            >
+              {failed ? (partial ? "Review needed" : "Retry available") : completed ? "Complete" : progressLabel}
             </span>
           </div>
 
-          <p className="mt-1 text-sm font-semibold text-gray-700">
-            {pending ? "Contacting the AI fill service" : run?.status === "completed" || partial ? "AI suggestions have been applied to the form." : autofillStepLabel(run?.currentStep)}
-          </p>
-          <p className="mt-1 text-sm font-medium text-gray-500">
-            {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? (partial ? "The form is unlocked so you can review, edit, or retry." : "The form is unlocked so you can retry or fill the fields manually.") : "Review the populated fields before continuing."}
-          </p>
+          {!completed ? (
+            <>
+              <p className="mt-1 text-sm font-semibold text-gray-700">
+                {pending ? "Contacting the AI fill service" : partial ? "AI suggestions have been applied to the form." : autofillStepLabel(run?.currentStep)}
+              </p>
+              <p className="mt-1 text-sm font-medium text-gray-500">
+                {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? (partial ? "The form is unlocked so you can review, edit, or retry." : "The form is unlocked so you can retry or fill the fields manually.") : "Review the populated fields before continuing."}
+              </p>
+            </>
+          ) : null}
 
-          {!failed ? (
+          {!failed && !completed ? (
             <div className="mt-4 space-y-2">
               <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
               <p className="text-xs font-semibold text-gray-500">We will keep checking until the fields below are ready to review.</p>
@@ -1430,13 +1507,13 @@ function ProfileResearchProgressCard({
           ) : null}
 
           {autofill ? (
-            <div className="mt-4 flex flex-wrap gap-2 text-xs font-black text-violet-800">
+            <div className={clsx("mt-4 flex flex-wrap gap-2 text-xs font-black", completed ? "text-emerald-800" : "text-violet-800")}>
               <span>{sourceCount} sources reviewed</span>
               <span>{competitorCount} competitors found</span>
               <span>{seedKeywordCount} high-fit keywords selected</span>
             </div>
           ) : null}
-          {autofill?.warnings?.length ? <p className="mt-2 text-xs font-semibold text-amber-700">{autofill.warnings[0]}</p> : null}
+          {autofill?.warnings?.length && !completed ? <p className="mt-2 text-xs font-semibold text-amber-700">{autofill.warnings[0]}</p> : null}
         </div>
       </div>
     </div>
@@ -1458,8 +1535,10 @@ export default function VibeMarketingStartupBaselineSetup({
   setupProgressPercent = 20,
   setupProgressLabel = "20% complete",
   showSetupProgress = true,
+  collapseCompletedSectionsByDefault = true,
 }: VibeMarketingStartupBaselineSetupProps) {
   const navigation = useNavigation();
+  const location = useLocation();
   const autofillStartFetcher = useFetcher<{
     intent?: string;
     autofillRunId?: string | null;
@@ -1488,6 +1567,8 @@ export default function VibeMarketingStartupBaselineSetup({
   const autofillPollStateRef = useRef(autofillRunFetcher.state);
   const baselinePollStateRef = useRef(baselineRunFetcher.state);
   const [startupValues, setStartupValues] = useState<StartupSetupValues>(startupDefaults);
+  const [basicsExpanded, setBasicsExpanded] = useState(() => defaultSectionExpanded(startupDefaults, isBasicsComplete, collapseCompletedSectionsByDefault));
+  const [companyDetailsExpanded, setCompanyDetailsExpanded] = useState(() => defaultSectionExpanded(startupDefaults, isCompanyDetailsComplete, collapseCompletedSectionsByDefault));
   const [autofillRunId, setAutofillRunId] = useState<string | null>(null);
   const [appliedAutofillRunId, setAppliedAutofillRunId] = useState<string | null>(null);
   const [baselineRunId, setBaselineRunId] = useState<string | null>(null);
@@ -1520,7 +1601,6 @@ export default function VibeMarketingStartupBaselineSetup({
     effectiveBaseline.status !== "missing" &&
       (effectiveBaseline.passed || effectiveBaseline.status === "completed" || typeof effectiveBaseline.overallScore === "number"),
   );
-  const isSubmitting = navigation.state === "submitting";
   const autofillPending = autofillStartFetcher.state !== "idle";
   const baselinePending = baselineStartFetcher.state !== "idle";
   const googleBaselinePending = googleBaselineFetcher.state !== "idle";
@@ -1551,6 +1631,15 @@ export default function VibeMarketingStartupBaselineSetup({
       compactCompanyName === compactCompanyName.toUpperCase() &&
       !startupValues.companyLinkedInUrl.trim(),
   );
+  const savePending = useMarketingActionPending({
+    navigationState: navigation.state,
+    navigationFormData: navigation.formData,
+    clearSignal: `${location.pathname}${location.search}:${activeCompanyKey}:${startupDefaultsSignature}`,
+    errorKey: error ? "save-startup-details" : null,
+  });
+  const saveExitPending = savePending.isPending("save-startup-details:save-exit");
+  const continuePending = savePending.isPending("save-startup-details:continue");
+  const saveActionPending = savePending.isAnyPending;
   const searchConsole = plainObject(trafficMetric?.googleSearchConsole);
   const searchConsoleSummary = plainObject(searchConsole?.last28Days);
   const trafficMetricMessage = metricMessage("Traffic/users", trafficMetric);
@@ -1583,6 +1672,17 @@ export default function VibeMarketingStartupBaselineSetup({
       ? "Baseline action failed. You can keep going, retry, or reconnect the data source later."
       : baselineActionError
     : null;
+  const autofillStartHasImmediateError = Boolean(autofillStartData?.error && !autofillStartData?.autofillRunId);
+  const autofillRunFailed = Boolean(autofillRun && isResearchFailedStatus(autofillRun.status));
+  const profileResearchRequiresExpandedSections = Boolean(
+    autofillPending || autofillPolling || autofillStalled || autofillUnavailable || autofillStartHasImmediateError || autofillStartError || autofillRunFailed,
+  );
+  const basicsComplete = isBasicsComplete(startupValues);
+  const companyDetailsComplete = isCompanyDetailsComplete(startupValues);
+  const basicsContentExpanded =
+    !collapseCompletedSectionsByDefault || !basicsComplete || basicsExpanded || profileResearchRequiresExpandedSections;
+  const companyDetailsContentExpanded =
+    !collapseCompletedSectionsByDefault || !companyDetailsComplete || companyDetailsExpanded || profileResearchRequiresExpandedSections;
   const normalizedSetupProgress =
     typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
       ? Math.max(0, Math.min(100, setupProgressPercent))
@@ -1653,6 +1753,8 @@ export default function VibeMarketingStartupBaselineSetup({
     if (activeCompanyKeyRef.current === activeCompanyKey) return;
     activeCompanyKeyRef.current = activeCompanyKey;
     setStartupValues(startupDefaults);
+    setBasicsExpanded(defaultSectionExpanded(startupDefaults, isBasicsComplete, collapseCompletedSectionsByDefault));
+    setCompanyDetailsExpanded(defaultSectionExpanded(startupDefaults, isCompanyDetailsComplete, collapseCompletedSectionsByDefault));
     setAutofillRunId(null);
     setBaselineRunId(null);
     setGoogleBaseline(null);
@@ -1662,7 +1764,7 @@ export default function VibeMarketingStartupBaselineSetup({
     setAutofillLastPollAt(null);
     setAutofillProgressSignature("");
     googleAutoRefreshSubmittedRef.current = false;
-  }, [activeCompanyKey, startupDefaults, startupDefaultsSignature]);
+  }, [activeCompanyKey, collapseCompletedSectionsByDefault, startupDefaults, startupDefaultsSignature]);
 
   useEffect(() => {
     if (focusSection !== "baseline") return;
@@ -1838,16 +1940,35 @@ export default function VibeMarketingStartupBaselineSetup({
           </div>
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className={clsx("grid gap-5", basicsContentExpanded && "xl:grid-cols-[minmax(0,1fr)_390px]")}>
           <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm sm:p-6">
-            <div className="flex items-start gap-4">
-              <StepNumberBadge>1</StepNumberBadge>
-              <div>
-                <h3 className="text-xl font-black tracking-normal text-gray-950">Add the basics</h3>
-                <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">These details help our AI find the right information about your company.</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex items-start gap-4">
+                <StepNumberBadge>1</StepNumberBadge>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-3">
+                    <h3 className="text-xl font-black tracking-normal text-gray-950">Add the basics</h3>
+                    {basicsComplete ? <CompletePill /> : null}
+                  </div>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-gray-600">These details help our AI find the right information about your company.</p>
+                </div>
               </div>
+              {basicsComplete ? (
+                <button
+                  type="button"
+                  onClick={() => setBasicsExpanded((current) => !current)}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                  aria-expanded={basicsContentExpanded}
+                >
+                  {basicsContentExpanded ? "Collapse" : "Edit"}
+                  <ChevronDown className={clsx("h-4 w-4 transition", basicsContentExpanded && "rotate-180")} />
+                </button>
+              ) : null}
             </div>
 
+            {!basicsContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{basicsSummary(startupValues)}</p> : null}
+
+            <div className={clsx(!basicsContentExpanded && "hidden")}>
             <div className="mt-6 grid gap-5 lg:grid-cols-2">
               <FormField label="Company name" badge={<RequiredPill />} className="lg:col-span-2">
                 <div className="relative">
@@ -1940,9 +2061,10 @@ export default function VibeMarketingStartupBaselineSetup({
                 retryDisabled={!canRetryAutofill}
               />
             </div>
+            </div>
           </section>
 
-          <aside className="self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+          <aside className={clsx("self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm", !basicsContentExpanded && "hidden")}>
             <h3 className="text-base font-black text-gray-950">What happens next?</h3>
             <div className="mt-5 space-y-5">
               <NextStepItem icon={Search} title="We research your company" body="Our AI looks at your website, LinkedIn page, and other trusted sources." />
@@ -1962,20 +2084,36 @@ export default function VibeMarketingStartupBaselineSetup({
         </div>
 
         <section className={clsx("rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7", researchLocked && "bg-gray-50/80")}>
-          <div className="flex items-start gap-5">
-            <StepNumberBadge>2</StepNumberBadge>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <h3 className="text-2xl font-black tracking-normal text-gray-950">Company details</h3>
-                <AiAssistPill />
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex items-start gap-5">
+              <StepNumberBadge>2</StepNumberBadge>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-3">
+                  <h3 className="text-2xl font-black tracking-normal text-gray-950">Company details</h3>
+                  <AiAssistPill />
+                  {companyDetailsComplete ? <CompletePill /> : null}
+                </div>
+                <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
+                  Sit back while we gather information about your business, then review and edit anything.
+                </p>
               </div>
-              <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
-                Sit back while we gather information about your business, then review and edit anything.
-              </p>
             </div>
+            {companyDetailsComplete ? (
+              <button
+                type="button"
+                onClick={() => setCompanyDetailsExpanded((current) => !current)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50"
+                aria-expanded={companyDetailsContentExpanded}
+              >
+                {companyDetailsContentExpanded ? "Collapse" : "Edit"}
+                <ChevronDown className={clsx("h-4 w-4 transition", companyDetailsContentExpanded && "rotate-180")} />
+              </button>
+            ) : null}
           </div>
 
-          <div className="mt-7 border-t border-gray-100 pt-7">
+          {!companyDetailsContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{companyDetailsSummary(startupValues)}</p> : null}
+
+          <div className={clsx("mt-7 border-t border-gray-100 pt-7", !companyDetailsContentExpanded && "hidden")}>
             <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               <FormField label="Startup location">
                 <div className="relative">
@@ -2455,33 +2593,33 @@ export default function VibeMarketingStartupBaselineSetup({
         </section>
       ) : null}
 
-      <div className={clsx("flex flex-col gap-4 border-t border-gray-100 bg-gray-50/70 py-5 sm:flex-row sm:items-center sm:justify-between", embedded ? "" : "px-6 lg:px-8")}>
+      <div className="flex flex-col gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
           <ShieldCheck className="h-5 w-5 text-gray-400" />
           Your data is secure and never shared.
         </p>
-        <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           {shouldShowSecondaryAction ? (
             <button
               type="submit"
               name="nextAction"
               value="save-exit"
-              disabled={isSubmitting || researchLocked}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={saveActionPending || researchLocked}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6"
             >
-              <Save className="h-4 w-4" />
-              Save and exit
+              {saveExitPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {saveExitPending ? "Saving..." : "Save and exit"}
             </button>
           ) : null}
           <button
             type="submit"
             name="nextAction"
             value="continue"
-            disabled={isSubmitting || researchLocked}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-700 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={saveActionPending || researchLocked}
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7"
           >
-            {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {primaryActionLabel ?? defaultPrimaryActionLabel}
+            {continuePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            {continuePending ? "Continuing..." : primaryActionLabel ?? defaultPrimaryActionLabel}
           </button>
         </div>
       </div>
