@@ -1,22 +1,31 @@
 import { Form, Link, useFetcher, useRevalidator } from "react-router";
 import { clsx } from "clsx";
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   ArrowRight,
-  Check,
   CheckCircle2,
   ChevronDown,
-  Code2,
   ExternalLink,
   Eye,
-  Info,
+  FileText,
+  FolderSearch,
+  HelpCircle,
+  Home,
+  Link2,
   Loader2,
   LockKeyhole,
+  Plus,
+  Search,
   ShieldCheck,
-  Sparkles,
+  UserCheck,
 } from "lucide-react";
 
-import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
+import ArticleSystemSurfaceSummary, {
+  articleSurfaceCandidates,
+  candidateLabel,
+  isSelectablePublicRoute,
+  type SurfaceCandidate,
+} from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
@@ -173,16 +182,21 @@ function isSetupTargetScan(run: VibeMarketingRunSummary | null | undefined) {
   return purpose === "setup" || scanHasArticleSurfaceHint(run) || isScanAwaitingSetupApproval(run);
 }
 
-function hasScanMissingArticleParts(run: VibeMarketingRunSummary | null | undefined, scaffoldReady: boolean) {
-  if (!run || scaffoldReady || SCAN_RUNNING_STATUSES.has(run.status)) return false;
-  const readiness = resultObject(resultValue(run, "article_system_readiness"));
-  const readinessStatus = String(readiness.status ?? "").trim().toLowerCase();
-  const scaffoldRequired = Boolean(resultValue(run, "scaffold_required") ?? readiness.scaffold_required);
-  return (
-    scaffoldRequired ||
-    ["manual_blocked", "missing", "needs_setup", "approval_required", "blocked"].includes(readinessStatus) ||
-    run.status === "completed"
-  );
+function normalizeManualLocation(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return { value: "", error: "Enter a public URL, route path, or repo path." };
+  if (/^https?:\/\//i.test(trimmed)) {
+    try {
+      const url = new URL(trimmed);
+      return { value: url.pathname || "/", error: "" };
+    } catch {
+      return { value: "", error: "Enter a valid URL, route path, or repo path." };
+    }
+  }
+  if (trimmed.startsWith("/") || /^[A-Za-z0-9._~:/@-]+$/.test(trimmed)) {
+    return { value: trimmed, error: "" };
+  }
+  return { value: "", error: "Enter a valid URL, route path, or repo path." };
 }
 
 function GitHubMark({ className }: { className?: string }) {
@@ -193,62 +207,70 @@ function GitHubMark({ className }: { className?: string }) {
   );
 }
 
-function TrustBullet({ children, tone = "violet" }: { children: string; tone?: "violet" | "blue" | "emerald" }) {
+function ReassuranceItem({ icon, title, copy, tone }: { icon: ReactNode; title: string; copy: string; tone: "emerald" | "blue" | "violet" | "orange" }) {
   const toneClass = {
-    violet: "bg-violet-600 text-white",
-    blue: "bg-blue-600 text-white",
-    emerald: "bg-emerald-600 text-white",
+    emerald: "bg-emerald-50 text-emerald-700",
+    blue: "bg-blue-50 text-blue-700",
+    violet: "bg-violet-50 text-violet-700",
+    orange: "bg-orange-50 text-orange-700",
   }[tone];
   return (
-    <li className="flex gap-3 text-sm font-medium leading-6 text-slate-700">
-      <span className={clsx("mt-1 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full", toneClass)}>
-        <Check className="h-3 w-3" strokeWidth={3} />
-      </span>
-      <span>{children}</span>
-    </li>
+    <div className="flex items-center gap-3 border-slate-100 px-4 py-3 sm:border-r last:sm:border-r-0">
+      <span className={clsx("flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full", toneClass)}>{icon}</span>
+      <div>
+        <p className="text-sm font-black text-slate-950">{title}</p>
+        <p className="mt-0.5 text-xs font-semibold text-slate-500">{copy}</p>
+      </div>
+    </div>
   );
 }
 
-function TrustCard({
-  title,
-  icon,
-  tone,
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  tone: "violet" | "blue" | "emerald";
-  children: ReactNode;
-}) {
-  const styles = {
-    violet: {
-      card: "border-violet-100 bg-violet-50/50",
-      title: "text-violet-700",
-      icon: "from-violet-700 to-violet-500 text-white",
-    },
-    blue: {
-      card: "border-blue-100 bg-blue-50/50",
-      title: "text-blue-700",
-      icon: "from-blue-700 to-blue-500 text-white",
-    },
-    emerald: {
-      card: "border-emerald-100 bg-emerald-50/60",
-      title: "text-emerald-700",
-      icon: "from-emerald-700 to-emerald-500 text-white",
-    },
-  }[tone];
+function ReassuranceStrip() {
   return (
-    <section className={clsx("rounded-2xl border p-5 shadow-sm", styles.card)}>
-      <div className="flex gap-4">
-        <div className={clsx("flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br shadow-sm", styles.icon)}>
-          {icon}
+    <div className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm sm:grid-cols-2 xl:grid-cols-4">
+      <ReassuranceItem tone="emerald" icon={<ShieldCheck className="h-5 w-5" />} title="Connected securely" copy="We use GitHub OAuth" />
+      <ReassuranceItem tone="blue" icon={<LockKeyhole className="h-5 w-5" />} title="Read-only scan" copy="We only read your files" />
+      <ReassuranceItem tone="violet" icon={<UserCheck className="h-5 w-5" />} title="You choose" copy="You pick the correct location" />
+      <ReassuranceItem tone="orange" icon={<Eye className="h-5 w-5" />} title="Approval required" copy="No changes without approval" />
+    </div>
+  );
+}
+
+function FlowStep({
+  number,
+  title,
+  description,
+  children,
+  muted = false,
+}: {
+  number: number;
+  title: string;
+  description?: string;
+  children: ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className="relative pl-12">
+      <div className="absolute left-4 top-10 bottom-[-1.25rem] w-px bg-slate-200 last:hidden" aria-hidden="true" />
+      <span
+        className={clsx(
+          "absolute left-0 top-5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow-sm",
+          muted ? "bg-slate-200 text-slate-500" : "bg-violet-600 text-white",
+        )}
+      >
+        {number}
+      </span>
+      <section className={clsx("rounded-2xl border bg-white p-4 shadow-sm sm:p-5", muted ? "border-slate-200" : "border-slate-200")}>
+        <div className="mb-4">
+          <h3 className="flex items-center gap-2 text-lg font-black text-slate-950">
+            <HelpCircle className="h-4 w-4 text-violet-600" />
+            {title}
+          </h3>
+          {description ? <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{description}</p> : null}
         </div>
-        <div className="min-w-0">
-          <h3 className={clsx("text-base font-black", styles.title)}>{title}</h3>
-          <ul className="mt-3 space-y-2">{children}</ul>
-        </div>
-      </div>
-    </section>
+        {children}
+      </section>
+    </div>
   );
 }
 
@@ -261,25 +283,105 @@ function SmallProof({ icon, label }: { icon: ReactNode; label: string }) {
   );
 }
 
-function PermissionPill({
-  children,
-  tone = "emerald",
-  icon,
+function SurfaceIcon({ candidate }: { candidate: SurfaceCandidate }) {
+  if (candidate.route === "/") return <Home className="h-6 w-6" />;
+  return <FileText className="h-6 w-6" />;
+}
+
+function candidateFiles(candidate: SurfaceCandidate) {
+  return candidate.files.length ? candidate.files : [candidate.path].filter(Boolean);
+}
+
+function SurfaceChoiceCard({
+  candidate,
+  selected,
+  bestMatch,
+  onSelect,
 }: {
-  children: ReactNode;
-  tone?: "emerald" | "violet" | "slate";
-  icon: ReactNode;
+  candidate: SurfaceCandidate;
+  selected: boolean;
+  bestMatch: boolean;
+  onSelect: () => void;
 }) {
-  const toneClass = {
-    emerald: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    violet: "bg-violet-50 text-violet-700 ring-violet-100",
-    slate: "bg-slate-50 text-slate-700 ring-slate-100",
-  }[tone];
+  const files = candidateFiles(candidate);
   return (
-    <span className={clsx("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-black ring-1", toneClass)}>
-      {icon}
-      {children}
-    </span>
+    <label
+      className={clsx(
+        "block cursor-pointer rounded-xl border p-4 transition",
+        selected ? "border-violet-400 bg-violet-50/50 shadow-sm" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+      )}
+    >
+      <div className="flex gap-4">
+        <input type="radio" checked={selected} onChange={onSelect} className="mt-4 h-5 w-5 border-slate-300 text-violet-600 focus:ring-violet-500" />
+        <span className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+          <SurfaceIcon candidate={candidate} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-black text-slate-950">{candidateLabel(candidate)}</p>
+            {bestMatch ? <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] font-black text-emerald-700">Best match</span> : null}
+          </div>
+          <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {candidate.route}</p>
+          {files.length ? (
+            <p className="mt-1 break-words text-xs font-semibold leading-5 text-slate-500">Files: {files.slice(0, 3).join(", ")}</p>
+          ) : null}
+          <p className="mt-1 text-xs font-semibold leading-5 text-slate-500">{candidate.reason}</p>
+          <details className="mt-3">
+            <summary className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-black text-slate-600">
+              Why this? <ChevronDown className="h-3 w-3" />
+            </summary>
+            <div className="mt-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-semibold leading-5 text-slate-600">
+              {candidate.confidence !== null ? <p>Confidence: {Math.round(candidate.confidence * 100)}%</p> : null}
+              <p>Candidate type: {[candidate.group, candidate.kind, candidate.systemType].filter(Boolean).join(" / ") || "route candidate"}</p>
+              {candidate.path && candidate.path !== candidate.route ? <p className="break-all">Repo evidence: {candidate.path}</p> : null}
+            </div>
+          </details>
+        </div>
+      </div>
+    </label>
+  );
+}
+
+function CreateNewChoiceCard({
+  selected,
+  createNewPath,
+  onSelect,
+  onPathChange,
+}: {
+  selected: boolean;
+  createNewPath: string;
+  onSelect: () => void;
+  onPathChange: (value: string) => void;
+}) {
+  return (
+    <label
+      className={clsx(
+        "block cursor-pointer rounded-xl border p-4 transition",
+        selected ? "border-emerald-300 bg-emerald-50/60 shadow-sm" : "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/40",
+      )}
+    >
+      <div className="flex gap-4">
+        <input type="radio" checked={selected} onChange={onSelect} className="mt-4 h-5 w-5 border-slate-300 text-violet-600 focus:ring-violet-500" />
+        <span className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+          <Plus className="h-6 w-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-black text-slate-950">Create a new articles folder</p>
+          <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
+            Use this if your site does not already have an articles or blog section.
+          </p>
+          {selected ? (
+            <input
+              value={createNewPath}
+              onChange={(event) => onPathChange(event.target.value)}
+              onFocus={onSelect}
+              placeholder="/articles"
+              className="mt-3 w-full rounded-xl border border-emerald-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10"
+            />
+          ) : null}
+        </div>
+      </div>
+    </label>
   );
 }
 
@@ -291,7 +393,7 @@ export default function ArticleSystemConnectionPanel({
   repoSelection,
   onRepoSelectionChange,
   articleSurfaceDefault = "",
-  articleSurfacePlaceholder = "https://www.mlai.au/articles or /articles",
+  articleSurfacePlaceholder = "https://example.com/articles or /articles",
   connectionError,
   scanRun,
   framed = true,
@@ -306,52 +408,73 @@ export default function ArticleSystemConnectionPanel({
   const repos = repoNames(githubRepos);
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
-  const locationPlaceholder = connected ? articleSurfacePlaceholder : "e.g. /content/articles";
-  const statusLabel = bootstrap.checks.scaffold?.passed ? "Ready" : connected ? "Connected" : "Ready";
-  const connectionLabel = githubConnectionState(githubRepos, bootstrap).replace(/_/g, " ") || (connected ? "connected" : "not connected");
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
   const scanRunning = Boolean(scanRun && SCAN_RUNNING_STATUSES.has(scanRun.status));
   const scanFailed = Boolean(scanRun && SCAN_FAILED_STATUSES.has(scanRun.status));
   const scanStale = Boolean(scanRun?.stale || scanRun?.staleReason === "scan_queue_not_started");
   const scanNeedsSetupApproval = isScanAwaitingSetupApproval(scanRun);
-  const scanMissingArticleParts = hasScanMissingArticleParts(scanRun, scaffoldReady);
   const setupRunId = scanRun ? setupRunIdForRun(scanRun) : "";
   const inventoryScan = isInventoryScan(scanRun);
   const setupTargetScan = isSetupTargetScan(scanRun);
   const inventoryReady = Boolean(scanRun && inventoryScan && scanRun.status === "completed");
   const setupTargetReady = Boolean(scanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
-  const previewShouldStartOpen = Boolean(inventoryReady || setupTargetReady || scanFailed || scanStale || scanMissingArticleParts);
-  const [articlePreviewOpen, setArticlePreviewOpen] = useState(previewShouldStartOpen);
-  const [selectedArticleRoute, setSelectedArticleRoute] = useState("");
-  const [manualArticleRoute, setManualArticleRoute] = useState("");
-  const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
-    typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
-  );
-  const hasExistingSurfaceChoice = Boolean(selectedArticleRoute || manualArticleRoute.trim());
-  const showScanProgress = Boolean(scanRun && (scanRunning || scanFailed || scanStale));
   const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
   const retryScanPending = actionPending("retry-scan");
   const cancelScanPending = actionPending("cancel-scan");
   const confirmSurfacePending = actionPending("confirm-article-surface");
   const createSurfacePending = actionPending("create-article-surface");
-  const continueBlocked = Boolean(scanRun && (scanRunning || scanFailed || scanStale) && !setupTargetReady);
-  const canContinue = connected && (scaffoldReady || setupTargetReady) && !continueBlocked;
-  const continueHelp = setupTargetReady
-    ? "Route intent saved. Continue to generate and review the article system setup."
-    : !scaffoldReady
-      ? "Scan the repository, then choose where articles should live."
-      : continueBlocked
-        ? "Resolve the current scan state before continuing."
-        : "Article system confirmed. You can continue to topic research.";
+  const [selectedChoiceId, setSelectedChoiceId] = useState("");
+  const [manualArticleRoute, setManualArticleRoute] = useState("");
+  const [manualRouteError, setManualRouteError] = useState("");
+  const [createNewPath, setCreateNewPath] = useState(articleSurfaceDefault || "/articles");
+  const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
+    typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
+  );
+
+  const candidates = useMemo(() => (scanRun ? articleSurfaceCandidates(scanRun) : []), [scanRun]);
+  const publicRouteCandidates = useMemo(() => candidates.filter((candidate) => isSelectablePublicRoute(candidate.route)), [candidates]);
+  const fileOnlyCandidates = useMemo(() => candidates.filter((candidate) => !isSelectablePublicRoute(candidate.route)), [candidates]);
+  const bestCandidateKey = useMemo(() => {
+    const ranked = publicRouteCandidates
+      .map((candidate, index) => ({ candidate, score: candidate.confidence ?? (index === 0 ? 0.5 : 0) }))
+      .sort((left, right) => right.score - left.score);
+    return ranked[0]?.candidate.key ?? "";
+  }, [publicRouteCandidates]);
+  const selectedCandidate = publicRouteCandidates.find((candidate) => candidate.key === selectedChoiceId);
+  const selectedMode = selectedChoiceId === "create" ? "create" : selectedChoiceId === "manual" ? "manual" : selectedCandidate ? "existing" : "";
+  const selectedSurfaceUrl =
+    selectedMode === "existing"
+      ? selectedCandidate?.route ?? ""
+      : selectedMode === "manual"
+        ? manualArticleRoute.trim()
+        : selectedMode === "create"
+          ? createNewPath.trim()
+          : "";
+  const selectedTitle =
+    selectedMode === "existing"
+      ? selectedCandidate
+        ? candidateLabel(selectedCandidate)
+        : "Selected route"
+      : selectedMode === "manual"
+        ? "Manual article location"
+        : selectedMode === "create"
+          ? "New articles folder"
+          : "";
+  const selectedFiles =
+    selectedMode === "existing" && selectedCandidate
+      ? candidateFiles(selectedCandidate)
+      : selectedMode === "create"
+        ? [createNewPath.trim() || "/articles"]
+        : [manualArticleRoute.trim()].filter(Boolean);
+  const saveIntent = selectedMode === "create" ? "create-article-surface" : "confirm-article-surface";
+  const savePending = confirmSurfacePending || createSurfacePending;
 
   useEffect(() => {
-    setArticlePreviewOpen(previewShouldStartOpen);
-  }, [previewShouldStartOpen, scanRun?.runId, scanRun?.status]);
-
-  useEffect(() => {
-    setSelectedArticleRoute("");
+    setSelectedChoiceId("");
     setManualArticleRoute("");
-  }, [scanRun?.runId]);
+    setManualRouteError("");
+    setCreateNewPath(articleSurfaceDefault || "/articles");
+  }, [articleSurfaceDefault, scanRun?.runId]);
 
   useEffect(() => {
     if (!autoStartInventoryScan || !connected || !selectedRepo || scanRun || inventoryFetcher.state !== "idle") return;
@@ -367,11 +490,9 @@ export default function ArticleSystemConnectionPanel({
   }, [autoStartInventoryScan, bootstrap.organization.id, connected, inventoryFetcher, scanRun, selectedRepo]);
 
   useEffect(() => {
-    if (connected || typeof window === "undefined") return;
+    if (!githubAuthWaiting || typeof window === "undefined") return;
     const maybeRevalidate = () => {
-      if (window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true") {
-        revalidator.revalidate();
-      }
+      revalidator.revalidate();
     };
     window.addEventListener("focus", maybeRevalidate);
     document.addEventListener("visibilitychange", maybeRevalidate);
@@ -381,14 +502,7 @@ export default function ArticleSystemConnectionPanel({
       document.removeEventListener("visibilitychange", maybeRevalidate);
       window.clearInterval(timer);
     };
-  }, [connected, revalidator]);
-
-  useEffect(() => {
-    if (connected && typeof window !== "undefined") {
-      window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
-      setGithubAuthWaiting(false);
-    }
-  }, [connected]);
+  }, [githubAuthWaiting, revalidator]);
 
   const markGithubAuthOpen = () => {
     if (typeof window === "undefined") return;
@@ -405,6 +519,15 @@ export default function ArticleSystemConnectionPanel({
         defaultValue: selectedRepo,
       };
 
+  const checkManualRoute = () => {
+    const normalized = normalizeManualLocation(manualArticleRoute);
+    setManualRouteError(normalized.error);
+    if (!normalized.error) {
+      setManualArticleRoute(normalized.value);
+      setSelectedChoiceId("manual");
+    }
+  };
+
   return (
     <section className={clsx(framed && "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6")}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -412,352 +535,384 @@ export default function ArticleSystemConnectionPanel({
           <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
             Connect GitHub & set your articles location
           </h2>
-          <p className="mt-3 max-w-5xl text-base font-medium leading-7 text-slate-600">
-            We connect to your repository so our AI agent can help you create content.
-            <br className="hidden sm:block" />
-            <span className="font-black text-slate-800"> You&apos;re always in control.</span> The AI will never publish or make changes unless you{" "}
-            <span className="font-black text-violet-700">specifically</span> approve them.
+          <p className="mt-3 max-w-4xl text-base font-medium leading-7 text-slate-600">
+            Choose the repository that contains your website, run a read-only scan, then choose where articles should live.
           </p>
         </div>
         <span className="inline-flex w-fit items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-black text-emerald-700 ring-1 ring-emerald-100">
-          {statusLabel}
+          {connected ? "Connected" : "Ready"}
           <CheckCircle2 className="h-4 w-4" />
         </span>
       </div>
 
-      {!connected ? (
-        <div className="mt-7 grid gap-4 lg:grid-cols-3">
-          <TrustCard title="You're always in control" tone="violet" icon={<ShieldCheck className="h-8 w-8" />}>
-            <TrustBullet tone="violet">We will never publish or make any changes unless you specifically approve.</TrustBullet>
-            <TrustBullet tone="violet">Every change is shown to you first for review.</TrustBullet>
-            <TrustBullet tone="violet">You decide what goes live.</TrustBullet>
-          </TrustCard>
-          <TrustCard title="Only your articles, never your code" tone="blue" icon={<Code2 className="h-8 w-8" />}>
-            <TrustBullet tone="blue">We only write to your articles/blogs location.</TrustBullet>
-            <TrustBullet tone="blue">We will never delete or change code or files in any other part of your app or website.</TrustBullet>
-            <TrustBullet tone="blue">Your app, settings and configuration stay untouched.</TrustBullet>
-          </TrustCard>
-          <TrustCard title="Secure & transparent" tone="emerald" icon={<LockKeyhole className="h-8 w-8" />}>
-            <TrustBullet tone="emerald">Connected via GitHub with granular permissions.</TrustBullet>
-            <TrustBullet tone="emerald">Your code and content stays yours.</TrustBullet>
-            <TrustBullet tone="emerald">You can disconnect at any time.</TrustBullet>
-          </TrustCard>
-        </div>
-      ) : null}
+      <div className="mt-6">
+        <ReassuranceStrip />
+      </div>
 
-      {!connected ? (
-        <section className="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-slate-50 text-slate-950">
-            <GitHubMark className="h-8 w-8" />
-          </div>
-          <h3 className="mt-4 text-lg font-black text-slate-950">Connect your GitHub repository</h3>
-          <p className="mx-auto mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
-            This gives the AI agent permission to create and update content in your articles location only.
-          </p>
-          <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
-            <input type="hidden" name="intent" value="connect-github" />
-            <button
-              type="submit"
-              onClick={markGithubAuthOpen}
-              className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
-            >
-              <GitHubMark className="h-5 w-5" />
-              {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
-            </button>
-          </Form>
-          {githubAuthWaiting ? (
-            <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-800">
-              GitHub opened in a new tab. Finish authorising there, then return here; this page will refresh when the connection is ready.
-            </div>
-          ) : null}
-          <div className="mt-5 flex flex-wrap justify-center gap-4">
-            <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
-            <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
-            <SmallProof icon={<Eye className="h-4 w-4" />} label="You're in control" />
-          </div>
-          <div className="mx-auto mt-5 flex max-w-3xl items-start gap-3 rounded-xl bg-violet-50 px-4 py-3 text-left text-sm font-semibold leading-5 text-slate-700">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-              <Sparkles className="h-4 w-4" />
-            </span>
-            <span>
-              We only request access to what we need. You can review and revoke access at any time.
-              <span className="ml-1 inline-flex items-center gap-1 font-black text-violet-700">
-                Learn more about our permissions <ExternalLink className="h-3.5 w-3.5" />
-              </span>
-            </span>
-          </div>
-          {connectionError ? (
-            <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700">
-              {connectionError}
-            </div>
-          ) : null}
-        </section>
-      ) : (
-        <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col gap-4 p-5 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex gap-4">
-              <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-950">
+      <div className="mt-6 space-y-5">
+        <FlowStep
+          number={1}
+          title="Connect GitHub & choose repository"
+          description="Choose the repository that contains your website."
+        >
+          {!connected ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-8 text-center">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-slate-950 shadow-sm">
                 <GitHubMark className="h-8 w-8" />
               </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-950">GitHub connection</h3>
-                <p className="mt-2 text-sm font-black text-slate-700">
-                  Connected to {selectedRepo || "your selected repository"}
-                  {repoUrl ? (
-                    <a href={repoUrl} target="_blank" rel="noreferrer" className="ml-2 inline-flex text-slate-500 transition hover:text-violet-700">
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  ) : null}
-                </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <PermissionPill icon={<CheckCircle2 className="h-3.5 w-3.5" />}>Connected</PermissionPill>
-                  <PermissionPill tone="emerald" icon={<ShieldCheck className="h-3.5 w-3.5" />}>Write access limited</PermissionPill>
-                  <PermissionPill tone="slate" icon={<Info className="h-3.5 w-3.5" />}>{connectionLabel}</PermissionPill>
-                </div>
-                <p className="mt-4 max-w-2xl text-sm font-medium leading-6 text-slate-500">
-                  We have write access to create and update content in your articles location only.
-                  <span className="block font-black text-slate-700">We will never delete or change any other files.</span>
-                </p>
-              </div>
-            </div>
-            <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="flex flex-col items-start gap-2 lg:items-end">
-              <input type="hidden" name="intent" value="connect-github" />
-              <input type="hidden" name="forceReconnect" value="true" />
-              <button
-                type="submit"
-                onClick={markGithubAuthOpen}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-50"
-              >
-                <GitHubMark className="h-5 w-5" />
-                {githubAuthWaiting ? "Open GitHub again" : "Manage GitHub access"}
-              </button>
-              <p className="max-w-48 text-left text-xs font-semibold leading-5 text-slate-500 lg:text-right">
-                {githubAuthWaiting ? "Waiting for the GitHub tab to finish authorising." : "Use this if the repo you need is not listed."}
+              <h4 className="mt-4 text-lg font-black text-slate-950">Connect your GitHub repository</h4>
+              <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
+                GitHub opens in a new tab. This page will refresh when the connection is ready.
               </p>
-            </Form>
-          </div>
-        </section>
-      )}
-
-      {connected ? (
-        <Form method="POST" className="mt-5 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <input type="hidden" name="intent" value="start-scan" />
-          <input type="hidden" name="scanPurpose" value="inventory" />
-          <input type="hidden" name="articleSurfaceMode" value="not_sure" />
-          <div className="grid gap-4 lg:grid-cols-[minmax(220px,420px)_1fr]">
-            <label className="block">
-              <span className="mb-2 block text-sm font-black text-slate-800">Repository</span>
-              {repos.length ? (
-                <select
-                  name="githubRepo"
-                  {...repoControlProps}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                >
-                  {repos.map((repo) => (
-                    <option key={repo} value={repo}>
-                      {repo}
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <input
-                  name="githubRepo"
-                  {...repoControlProps}
-                  placeholder="owner/repo"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
-                />
-              )}
-            </label>
-            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
-              <p className="text-sm font-black text-slate-800">Read-only inventory scan</p>
-              <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                We will find likely article/blog pages and ask you to choose one. No setup files or pull requests are created from this scan.
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button
-              type="submit"
-              disabled={scanStartPending || scanRunning || (repos.length > 0 && !selectedRepo)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
-            >
-              {scanStartPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              {scanStartPending ? "Starting scan..." : "Scan repository"}
-            </button>
-          </div>
-        </Form>
-      ) : null}
-
-      {showScanProgress && scanRun ? (
-        <div className="mt-5 space-y-4">
-          <MarketingRunProgressCard run={scanRun} />
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-xs font-semibold text-slate-500">
-                {scanRun.stale
-                  ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details."
-                  : scanFailed
-                    ? "The scan needs attention. Retry it, or cancel and start again with a different repo."
-                    : "Scanning is read-only. No files are changed."}
-              </p>
-              <Link
-                to={`/founder-tools/marketing/runs/${encodeURIComponent(scanRun.runId)}`}
-                className="mt-2 inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
-              >
-                View scan run
-              </Link>
-            </div>
-            <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-              <input type="hidden" name="scanRunId" value={scanRun.runId} />
-              {scanRun.retryAvailable || scanRun.stale ? (
+              <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
+                <input type="hidden" name="intent" value="connect-github" />
                 <button
                   type="submit"
-                  name="intent"
-                  value="retry-scan"
-                  disabled={retryScanPending || cancelScanPending}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                  onClick={markGithubAuthOpen}
+                  className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
                 >
-                  <Loader2 className={clsx("h-4 w-4", retryScanPending && "animate-spin")} />
-                  {retryScanPending ? "Retrying..." : "Retry scan"}
+                  <GitHubMark className="h-5 w-5" />
+                  {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
                 </button>
+              </Form>
+              <div className="mt-5 flex flex-wrap justify-center gap-4">
+                <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
+                <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
+                <SmallProof icon={<Eye className="h-4 w-4" />} label="You're in control" />
+              </div>
+              {githubAuthWaiting ? (
+                <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-800">
+                  Finish authorising in the GitHub tab, then return here.
+                </div>
               ) : null}
-              <button
-                type="submit"
-                name="intent"
-                value="cancel-scan"
-                disabled={retryScanPending || cancelScanPending}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-              >
-                {cancelScanPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                {cancelScanPending ? "Cancelling..." : "Cancel scan"}
-              </button>
-            </Form>
-          </div>
-        </div>
-      ) : null}
-
-      {scanRun && (inventoryReady || setupTargetReady || scanFailed || scanStale) ? (
-        <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <button
-            type="button"
-            onClick={() => setArticlePreviewOpen((open) => !open)}
-            className="flex w-full flex-col gap-3 p-4 text-left sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div>
-              <p className="text-sm font-black text-slate-950">
-                {setupTargetReady ? "Article system target saved" : "Choose article location"}
-              </p>
-              <p className="mt-1 text-xs font-semibold text-slate-500">
-                {setupTargetReady
-                  ? "Continue to the generate step to build and review the article system preview."
-                  : scanFailed || scanStale
-                    ? "The scan could not confidently confirm a route. Try again, or paste a route after a successful scan."
-                    : "Pick a detected route from the scan, paste the correct URL, or create a new articles directory."}
-              </p>
+              {connectionError ? (
+                <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-left text-sm font-semibold text-red-700">
+                  {connectionError}
+                </div>
+              ) : null}
             </div>
-            <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-violet-700">
-              {articlePreviewOpen ? "Hide" : "Show"}
-              <ChevronDown className={clsx("h-4 w-4 transition", articlePreviewOpen && "rotate-180")} />
-            </span>
-          </button>
-          {articlePreviewOpen ? (
-            <div className="space-y-4 border-t border-slate-100 p-4">
-              {setupTargetReady ? (
-                <>
-                  <ArticleSystemSurfaceSummary run={scanRun} />
-                  <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
-                    <p className="text-sm font-black text-violet-950">Ready to generate the articles page setup.</p>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-violet-800">
-                      The setup target is saved. The next step will create the setup branch, build the Cloudflare preview, and open the visual inspector.
-                    </p>
-                  </div>
-                </>
-              ) : inventoryReady ? (
-                <>
-                  <Form method="POST" className="space-y-4">
-                    <input type="hidden" name="intent" value="confirm-article-surface" />
-                    <input type="hidden" name="githubRepo" value={selectedRepo} />
-                    <input type="hidden" name="sourceScanRunId" value={scanRun.runId} />
-                    <ArticleSystemSurfaceSummary
-                      run={scanRun}
-                      selectable
-                      fieldName="articleSurfaceUrl"
-                      selectionValue={selectedArticleRoute}
-                      manualValue={manualArticleRoute}
-                      onSelectionValueChange={setSelectedArticleRoute}
-                      onManualValueChange={setManualArticleRoute}
-                    />
-                    <button
-                      type="submit"
-                      disabled={confirmSurfacePending || createSurfacePending || !hasExistingSurfaceChoice}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
-                    >
-                      {confirmSurfacePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      {confirmSurfacePending ? "Saving route..." : "Continue to generate article system"}
-                    </button>
-                  </Form>
-                  <Form method="POST" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                    <input type="hidden" name="intent" value="create-article-surface" />
-                    <input type="hidden" name="githubRepo" value={selectedRepo} />
-                    <input type="hidden" name="sourceScanRunId" value={scanRun.runId} />
-                    <label className="block">
-                      <span className="text-sm font-black text-slate-900">None of these. Create a new articles directory.</span>
+          ) : (
+            <div className="grid gap-5 lg:grid-cols-[minmax(260px,1fr)_minmax(260px,420px)]">
+              <div className="space-y-4">
+                <Form method="POST" className="space-y-4">
+                  <input type="hidden" name="intent" value="start-scan" />
+                  <input type="hidden" name="scanPurpose" value="inventory" />
+                  <input type="hidden" name="articleSurfaceMode" value="not_sure" />
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-black text-slate-800">Repository</span>
+                    {repos.length ? (
+                      <select
+                        name="githubRepo"
+                        {...repoControlProps}
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                      >
+                        {repos.map((repo) => (
+                          <option key={repo} value={repo}>
+                            {repo}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
                       <input
-                        name="articleSurfaceUrl"
-                        defaultValue={articleSurfaceDefault || "/articles"}
-                        placeholder={locationPlaceholder}
-                        className="mt-3 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                        name="githubRepo"
+                        {...repoControlProps}
+                        placeholder="owner/repo"
+                        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
                       />
-                    </label>
+                    )}
+                  </label>
+                  <div className="flex justify-center pt-2">
                     <button
                       type="submit"
-                      disabled={confirmSurfacePending || createSurfacePending}
-                      className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
+                      disabled={scanStartPending || scanRunning || (repos.length > 0 && !selectedRepo)}
+                      className="inline-flex min-w-56 items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                     >
-                      {createSurfacePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      {createSurfacePending ? "Creating route..." : "Create and continue"}
+                      {scanStartPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      {scanStartPending ? "Starting scan..." : "Scan repository"}
+                    </button>
+                  </div>
+                  <p className="flex justify-center gap-2 text-xs font-semibold text-slate-500">
+                    <LockKeyhole className="h-4 w-4" />
+                    This scan only reads file names, routes and page structure.
+                  </p>
+                </Form>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-slate-500">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    Connected to GitHub{selectedRepo ? ` as ${selectedRepo.split("/")[0]}` : ""}.
+                    {repoUrl ? (
+                      <a href={repoUrl} target="_blank" rel="noreferrer" className="inline-flex text-slate-500 transition hover:text-violet-700">
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : null}
+                  </p>
+                  <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument>
+                    <input type="hidden" name="intent" value="connect-github" />
+                    <input type="hidden" name="forceReconnect" value="true" />
+                    <button
+                      type="submit"
+                      onClick={markGithubAuthOpen}
+                      className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                    >
+                      Manage GitHub access
                     </button>
                   </Form>
-                </>
-              ) : (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-                  <p className="text-sm font-black text-amber-950">We could not confidently match an articles page.</p>
-                  <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
-                    Retry the scan, manage GitHub access if the repo is wrong, or start a new scan after choosing the correct repository.
+                </div>
+              </div>
+              <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">
+                <span className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-violet-100 text-violet-700">
+                  <FolderSearch className="h-8 w-8" />
+                </span>
+                <div>
+                  <p className="text-sm font-black text-slate-950">We&apos;ll scan this repository</p>
+                  <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">
+                    We&apos;ll look for article or blog routes and content folders so you can choose the right location.
                   </p>
-                  <div className="mt-3">
-                    <ArticleSystemSurfaceSummary run={scanRun} />
-                  </div>
+                  <p className="mt-2 text-xs font-black text-slate-600">No code is changed during this scan.</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </FlowStep>
+
+        {scanRun && inventoryScan ? (
+          <FlowStep number={2} title="Scanning repository" description="Looking for article pages and content locations">
+            <MarketingRunProgressCard run={scanRun} />
+            {scanRunning || scanFailed || scanStale ? (
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Link
+                  to={`/founder-tools/marketing/runs/${encodeURIComponent(scanRun.runId)}`}
+                  className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
+                >
+                  View scan run
+                </Link>
+                <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
+                  <input type="hidden" name="scanRunId" value={scanRun.runId} />
+                  {scanRun.retryAvailable || scanRun.stale ? (
+                    <button
+                      type="submit"
+                      name="intent"
+                      value="retry-scan"
+                      disabled={retryScanPending || cancelScanPending}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                    >
+                      <Loader2 className={clsx("h-4 w-4", retryScanPending && "animate-spin")} />
+                      {retryScanPending ? "Retrying..." : "Retry scan"}
+                    </button>
+                  ) : null}
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="cancel-scan"
+                    disabled={retryScanPending || cancelScanPending}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {cancelScanPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    {cancelScanPending ? "Cancelling..." : "Cancel scan"}
+                  </button>
+                </Form>
+              </div>
+            ) : null}
+          </FlowStep>
+        ) : null}
+
+        {inventoryReady ? (
+          <FlowStep
+            number={3}
+            title="Choose your articles location"
+            description="Pick the right place from routes we found, paste a path manually, or create a new articles directory."
+          >
+            <div className="space-y-3">
+              {publicRouteCandidates.length ? (
+                publicRouteCandidates.map((candidate) => (
+                  <SurfaceChoiceCard
+                    key={candidate.key}
+                    candidate={candidate}
+                    selected={selectedChoiceId === candidate.key}
+                    bestMatch={bestCandidateKey === candidate.key}
+                    onSelect={() => {
+                      setManualRouteError("");
+                      setSelectedChoiceId(candidate.key);
+                    }}
+                  />
+                ))
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+                  We did not find a clean public articles route. Paste the correct URL/path, or create a new articles directory.
                 </div>
               )}
-            </div>
-          ) : null}
-        </section>
-      ) : null}
 
-      {connected ? (
-        <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm font-semibold text-slate-500">{continueHelp}</p>
-          {canContinue ? (
-            <Link
-              to={setupTargetReady ? "/founder-tools/marketing/create?step=writeCheck" : "/founder-tools/marketing/create?step=research"}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-            >
-              {setupTargetReady ? "Continue to generate article system" : "Continue"}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          ) : (
-            <button
-              type="button"
-              disabled
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white opacity-45 shadow-sm"
-            >
-              Continue
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-      ) : null}
+              <CreateNewChoiceCard
+                selected={selectedChoiceId === "create"}
+                createNewPath={createNewPath}
+                onSelect={() => {
+                  setManualRouteError("");
+                  setSelectedChoiceId("create");
+                }}
+                onPathChange={(value) => {
+                  setCreateNewPath(value);
+                  setSelectedChoiceId("create");
+                }}
+              />
+
+              <div className="border-t border-slate-100 pt-4">
+                <p className="text-sm font-black text-slate-950">Or paste manually</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">Already know the right location? Paste the public URL, route path, or repo path.</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <div className="relative flex-1">
+                    <Link2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <input
+                      value={manualArticleRoute}
+                      onChange={(event) => {
+                        setManualArticleRoute(event.target.value);
+                        if (selectedChoiceId === "manual") setSelectedChoiceId("");
+                        setManualRouteError("");
+                      }}
+                      placeholder={articleSurfacePlaceholder}
+                      className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm font-bold text-slate-900 outline-none transition focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={checkManualRoute}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-800 shadow-sm transition hover:border-violet-200 hover:bg-violet-50"
+                  >
+                    Check this location
+                  </button>
+                </div>
+                {manualRouteError ? <p className="mt-2 text-xs font-black text-red-600">{manualRouteError}</p> : null}
+              </div>
+
+              {fileOnlyCandidates.length ? (
+                <details className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <summary className="cursor-pointer text-sm font-black text-slate-800">Pages found without a public URL</summary>
+                  <div className="mt-3 grid gap-2 md:grid-cols-2">
+                    {fileOnlyCandidates.map((candidate) => (
+                      <div key={candidate.key} className="rounded-lg bg-white px-3 py-2 text-xs font-semibold text-slate-600">
+                        <p className="break-all font-black text-slate-800">{candidate.path || candidate.route}</p>
+                        <p className="mt-1">{candidate.reason}</p>
+                      </div>
+                    ))}
+                  </div>
+                </details>
+              ) : null}
+
+              <div className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm font-semibold text-violet-800">
+                You can change this anytime later from your project settings.
+              </div>
+
+              {scanRun ? <ArticleSystemSurfaceSummary run={scanRun} /> : null}
+            </div>
+          </FlowStep>
+        ) : null}
+
+        {selectedSurfaceUrl || setupTargetReady ? (
+          <FlowStep number={4} title="Article location selected">
+            {setupTargetReady ? (
+              <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex gap-3">
+                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <FileText className="h-6 w-6" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-black text-slate-950">Article system target saved</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-500">
+                        Continue to generate and review the article system preview.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col justify-center gap-3">
+                  <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                    Content Factory will use this location when preparing article drafts and previews.
+                  </p>
+                  <Link
+                    to="/founder-tools/marketing/create?step=writeCheck"
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
+                  >
+                    Continue to generate
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex gap-3">
+                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                      <FileText className="h-6 w-6" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-black text-slate-950">{selectedTitle}</p>
+                      <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {selectedSurfaceUrl}</p>
+                      {selectedFiles.length ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {selectedFiles.slice(0, 4).map((file) => (
+                            <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
+                              {file}
+                            </span>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col justify-center gap-3">
+                  <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                    Good choice. Content Factory will use this location for the setup preview.
+                  </p>
+                  <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedChoiceId("");
+                        setManualRouteError("");
+                      }}
+                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+                    >
+                      Change selection
+                    </button>
+                    <Form method="POST">
+                      <input type="hidden" name="intent" value={saveIntent} />
+                      <input type="hidden" name="githubRepo" value={selectedRepo} />
+                      <input type="hidden" name="sourceScanRunId" value={scanRun?.runId ?? ""} />
+                      <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
+                      <button
+                        type="submit"
+                        disabled={savePending || !selectedSurfaceUrl}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                      >
+                        {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                        {savePending ? "Saving..." : "Save and continue"}
+                        {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
+                      </button>
+                    </Form>
+                  </div>
+                </div>
+              </div>
+            )}
+          </FlowStep>
+        ) : null}
+
+        {connected && !scanRun && !inventoryFetcher.data ? (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
+            Run the repository scan first. It is read-only and will not create branches, pull requests, or setup files.
+          </div>
+        ) : null}
+
+        {connected && scaffoldReady && !setupTargetReady && !inventoryReady ? (
+          <Link
+            to="/founder-tools/marketing/create?step=research"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
+          >
+            Continue
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : null}
+      </div>
     </section>
   );
 }
