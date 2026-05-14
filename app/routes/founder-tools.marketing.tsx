@@ -251,7 +251,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const { founderProfiles, founderNames } = founderNamesFromForm(formData);
       const name = stringFromForm(formData, "companyName");
       const domain = stringFromForm(formData, "domain");
-      const shortDescription = stringFromForm(formData, "shortDescription") || stringFromForm(formData, "companyContext");
+      const shortDescription = stringFromForm(formData, "shortDescription");
       const problemSolved = stringFromForm(formData, "problemSolved");
       const targetAudience = stringFromForm(formData, "targetAudience");
       const companyContext =
@@ -284,6 +284,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         founderProfiles,
         stage: stringFromForm(formData, "stage"),
         organizationKind: stringFromForm(formData, "organizationKind"),
+        shortDescription,
+        problemSolved,
+        targetAudience,
         notes: targetAudience,
         registered: true,
       });
@@ -317,6 +320,16 @@ export async function action({ request, context }: Route.ActionArgs) {
         abn: stringFromForm(formData, "abn"),
         organizationKind: stringFromForm(formData, "organizationKind"),
         organization_kind: stringFromForm(formData, "organizationKind"),
+        shortDescription: stringFromForm(formData, "shortDescription"),
+        short_description: stringFromForm(formData, "shortDescription"),
+        problemSolved: stringFromForm(formData, "problemSolved"),
+        problem_solved: stringFromForm(formData, "problemSolved"),
+        targetAudience: stringFromForm(formData, "targetAudience"),
+        target_audience: stringFromForm(formData, "targetAudience"),
+        founderNames: listFromForm(formData.get("founderNames")),
+        founder_names: listFromForm(formData.get("founderNames")),
+        stage: stringFromForm(formData, "stage"),
+        notes: stringFromForm(formData, "targetAudience"),
         existingFields: {
           companyContext:
             stringFromForm(formData, "companyContext") ||
@@ -328,6 +341,16 @@ export async function action({ request, context }: Route.ActionArgs) {
           competitors: listFromForm(formData.get("competitors")),
           seedKeywords: listFromForm(formData.get("seedKeywords")),
           companyLinkedInUrl: stringFromForm(formData, "companyLinkedInUrl"),
+          profileFields: {
+            shortDescription: stringFromForm(formData, "shortDescription"),
+            problemSolved: stringFromForm(formData, "problemSolved"),
+            targetAudience: stringFromForm(formData, "targetAudience"),
+            location: stringFromForm(formData, "location"),
+            founderNames: listFromForm(formData.get("founderNames")),
+            stage: stringFromForm(formData, "stage"),
+            organizationKind: stringFromForm(formData, "organizationKind"),
+            abn: stringFromForm(formData, "abn"),
+          },
         },
         companyContext:
           stringFromForm(formData, "companyContext") ||

@@ -1744,6 +1744,9 @@ export async function saveVibeRaisingCompany(
     founderProfiles?: VibeRaisingFounderProfile[];
     stage?: string | null;
     organizationKind?: string | null;
+    shortDescription?: string | null;
+    problemSolved?: string | null;
+    targetAudience?: string | null;
     notes?: string | null;
     githubRepo?: string | null;
     articleDeliveryMode?: string | null;
