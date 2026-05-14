@@ -9,7 +9,6 @@ import {
   Code2,
   ExternalLink,
   Eye,
-  FileText,
   Info,
   Loader2,
   LockKeyhole,
@@ -25,6 +24,7 @@ type ArticleSystemConnectionPanelProps = {
   bootstrap: VibeMarketingBootstrap;
   githubRepos: VibeMarketingGithubReposResponse;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
   repoSelection?: string;
   onRepoSelectionChange?: (value: string) => void;
   articleSurfaceDefault?: string;
@@ -283,45 +283,11 @@ function PermissionPill({
   );
 }
 
-function SafetyFeature({ icon, title, body }: { icon: ReactNode; title: string; body: string }) {
-  return (
-    <div className="flex items-center gap-3 border-slate-100 py-3 sm:border-r sm:pr-5 last:border-r-0">
-      <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-slate-50 text-violet-700">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm font-black text-slate-900">{title}</p>
-        <p className="text-xs font-semibold text-slate-500">{body}</p>
-      </div>
-    </div>
-  );
-}
-
-function DisabledArticleLocationCard({ placeholder }: { placeholder: string }) {
-  return (
-    <section className="rounded-2xl border border-slate-200 bg-white/70 p-4 opacity-80">
-      <h3 className="text-base font-black text-slate-900">Where are your articles or blog posts?</h3>
-      <p className="mt-1 text-sm font-medium text-slate-500">Tell us where your content lives in this repository.</p>
-      <input
-        disabled
-        placeholder={placeholder}
-        className="mt-4 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-500 outline-none"
-      />
-      <p className="mt-2 text-xs font-semibold text-slate-500">Connect GitHub first, then choose a repository and scan this location.</p>
-      <div className="mt-4 inline-flex max-w-xl items-start gap-3 rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-700">
-        <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-          <Sparkles className="h-4 w-4" />
-        </span>
-        <span>We only create and update content within the article location you approve.</span>
-      </div>
-    </section>
-  );
-}
-
 export default function ArticleSystemConnectionPanel({
   bootstrap,
   githubRepos,
   isSubmitting,
+  isActionPending,
   repoSelection,
   onRepoSelectionChange,
   articleSurfaceDefault = "",
@@ -334,6 +300,7 @@ export default function ArticleSystemConnectionPanel({
 }: ArticleSystemConnectionPanelProps) {
   const inventoryFetcher = useFetcher();
   const revalidator = useRevalidator();
+  const actionPending = isActionPending ?? (() => isSubmitting);
   const connected = isGithubConnected(githubRepos, bootstrap);
   void showDenySetupAction;
   const repos = repoNames(githubRepos);
@@ -349,12 +316,24 @@ export default function ArticleSystemConnectionPanel({
   const scanNeedsSetupApproval = isScanAwaitingSetupApproval(scanRun);
   const scanMissingArticleParts = hasScanMissingArticleParts(scanRun, scaffoldReady);
   const setupRunId = scanRun ? setupRunIdForRun(scanRun) : "";
-  const previewShouldStartOpen = Boolean(scanNeedsSetupApproval || scanFailed || scanStale || scanMissingArticleParts);
-  const [articlePreviewOpen, setArticlePreviewOpen] = useState(previewShouldStartOpen);
   const inventoryScan = isInventoryScan(scanRun);
   const setupTargetScan = isSetupTargetScan(scanRun);
   const inventoryReady = Boolean(scanRun && inventoryScan && scanRun.status === "completed");
   const setupTargetReady = Boolean(scanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
+  const previewShouldStartOpen = Boolean(inventoryReady || setupTargetReady || scanFailed || scanStale || scanMissingArticleParts);
+  const [articlePreviewOpen, setArticlePreviewOpen] = useState(previewShouldStartOpen);
+  const [selectedArticleRoute, setSelectedArticleRoute] = useState("");
+  const [manualArticleRoute, setManualArticleRoute] = useState("");
+  const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
+    typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
+  );
+  const hasExistingSurfaceChoice = Boolean(selectedArticleRoute || manualArticleRoute.trim());
+  const showScanProgress = Boolean(scanRun && (scanRunning || scanFailed || scanStale));
+  const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
+  const retryScanPending = actionPending("retry-scan");
+  const cancelScanPending = actionPending("cancel-scan");
+  const confirmSurfacePending = actionPending("confirm-article-surface");
+  const createSurfacePending = actionPending("create-article-surface");
   const continueBlocked = Boolean(scanRun && (scanRunning || scanFailed || scanStale) && !setupTargetReady);
   const canContinue = connected && (scaffoldReady || setupTargetReady) && !continueBlocked;
   const continueHelp = setupTargetReady
@@ -368,6 +347,11 @@ export default function ArticleSystemConnectionPanel({
   useEffect(() => {
     setArticlePreviewOpen(previewShouldStartOpen);
   }, [previewShouldStartOpen, scanRun?.runId, scanRun?.status]);
+
+  useEffect(() => {
+    setSelectedArticleRoute("");
+    setManualArticleRoute("");
+  }, [scanRun?.runId]);
 
   useEffect(() => {
     if (!autoStartInventoryScan || !connected || !selectedRepo || scanRun || inventoryFetcher.state !== "idle") return;
@@ -402,8 +386,15 @@ export default function ArticleSystemConnectionPanel({
   useEffect(() => {
     if (connected && typeof window !== "undefined") {
       window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
+      setGithubAuthWaiting(false);
     }
   }, [connected]);
+
+  const markGithubAuthOpen = () => {
+    if (typeof window === "undefined") return;
+    window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
+    setGithubAuthWaiting(true);
+  };
 
   const repoControlProps = onRepoSelectionChange
     ? {
@@ -434,23 +425,25 @@ export default function ArticleSystemConnectionPanel({
         </span>
       </div>
 
-      <div className="mt-7 grid gap-4 lg:grid-cols-3">
-        <TrustCard title="You're always in control" tone="violet" icon={<ShieldCheck className="h-8 w-8" />}>
-          <TrustBullet tone="violet">We will never publish or make any changes unless you specifically approve.</TrustBullet>
-          <TrustBullet tone="violet">Every change is shown to you first for review.</TrustBullet>
-          <TrustBullet tone="violet">You decide what goes live.</TrustBullet>
-        </TrustCard>
-        <TrustCard title="Only your articles, never your code" tone="blue" icon={<Code2 className="h-8 w-8" />}>
-          <TrustBullet tone="blue">We only write to your articles/blogs location.</TrustBullet>
-          <TrustBullet tone="blue">We will never delete or change code or files in any other part of your app or website.</TrustBullet>
-          <TrustBullet tone="blue">Your app, settings and configuration stay untouched.</TrustBullet>
-        </TrustCard>
-        <TrustCard title="Secure & transparent" tone="emerald" icon={<LockKeyhole className="h-8 w-8" />}>
-          <TrustBullet tone="emerald">Connected via GitHub with granular permissions.</TrustBullet>
-          <TrustBullet tone="emerald">Your code and content stays yours.</TrustBullet>
-          <TrustBullet tone="emerald">You can disconnect at any time.</TrustBullet>
-        </TrustCard>
-      </div>
+      {!connected ? (
+        <div className="mt-7 grid gap-4 lg:grid-cols-3">
+          <TrustCard title="You're always in control" tone="violet" icon={<ShieldCheck className="h-8 w-8" />}>
+            <TrustBullet tone="violet">We will never publish or make any changes unless you specifically approve.</TrustBullet>
+            <TrustBullet tone="violet">Every change is shown to you first for review.</TrustBullet>
+            <TrustBullet tone="violet">You decide what goes live.</TrustBullet>
+          </TrustCard>
+          <TrustCard title="Only your articles, never your code" tone="blue" icon={<Code2 className="h-8 w-8" />}>
+            <TrustBullet tone="blue">We only write to your articles/blogs location.</TrustBullet>
+            <TrustBullet tone="blue">We will never delete or change code or files in any other part of your app or website.</TrustBullet>
+            <TrustBullet tone="blue">Your app, settings and configuration stay untouched.</TrustBullet>
+          </TrustCard>
+          <TrustCard title="Secure & transparent" tone="emerald" icon={<LockKeyhole className="h-8 w-8" />}>
+            <TrustBullet tone="emerald">Connected via GitHub with granular permissions.</TrustBullet>
+            <TrustBullet tone="emerald">Your code and content stays yours.</TrustBullet>
+            <TrustBullet tone="emerald">You can disconnect at any time.</TrustBullet>
+          </TrustCard>
+        </div>
+      ) : null}
 
       {!connected ? (
         <section className="mt-5 rounded-2xl border border-slate-200 bg-white px-5 py-8 text-center shadow-sm">
@@ -465,16 +458,18 @@ export default function ArticleSystemConnectionPanel({
             <input type="hidden" name="intent" value="connect-github" />
             <button
               type="submit"
-              onClick={() => {
-                if (typeof window !== "undefined") window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
-              }}
-              disabled={isSubmitting}
+              onClick={markGithubAuthOpen}
               className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
             >
-              {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <GitHubMark className="h-5 w-5" />}
-              Connect GitHub
+              <GitHubMark className="h-5 w-5" />
+              {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
             </button>
           </Form>
+          {githubAuthWaiting ? (
+            <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-800">
+              GitHub opened in a new tab. Finish authorising there, then return here; this page will refresh when the connection is ready.
+            </div>
+          ) : null}
           <div className="mt-5 flex flex-wrap justify-center gap-4">
             <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
             <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
@@ -530,25 +525,16 @@ export default function ArticleSystemConnectionPanel({
               <input type="hidden" name="forceReconnect" value="true" />
               <button
                 type="submit"
-                onClick={() => {
-                  if (typeof window !== "undefined") window.sessionStorage.setItem("vibe-marketing:github-auth-open", "true");
-                }}
-                disabled={isSubmitting}
+                onClick={markGithubAuthOpen}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-900 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-50"
               >
                 <GitHubMark className="h-5 w-5" />
-                Manage GitHub access
+                {githubAuthWaiting ? "Open GitHub again" : "Manage GitHub access"}
               </button>
               <p className="max-w-48 text-left text-xs font-semibold leading-5 text-slate-500 lg:text-right">
-                Use this if the repo you need is not listed.
+                {githubAuthWaiting ? "Waiting for the GitHub tab to finish authorising." : "Use this if the repo you need is not listed."}
               </p>
             </Form>
-          </div>
-          <div className="grid border-t border-slate-100 px-5 sm:grid-cols-2 lg:grid-cols-4">
-            <SafetyFeature icon={<FileText className="h-5 w-5" />} title="Can write to" body="Articles/blogs location only" />
-            <SafetyFeature icon={<ShieldCheck className="h-5 w-5 text-emerald-700" />} title="Will never delete" body="No file deletions, ever" />
-            <SafetyFeature icon={<Code2 className="h-5 w-5 text-blue-700" />} title="Will never touch code" body="No changes outside articles" />
-            <SafetyFeature icon={<Eye className="h-5 w-5 text-amber-600" />} title="Requires approval" body="Nothing goes live without you" />
           </div>
         </section>
       )}
@@ -582,37 +568,27 @@ export default function ArticleSystemConnectionPanel({
                 />
               )}
             </label>
-            <div className="rounded-xl bg-slate-50 px-4 py-3">
-              <p className="text-sm font-black text-slate-800">First we scan the repo.</p>
+            <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3">
+              <p className="text-sm font-black text-slate-800">Read-only inventory scan</p>
               <p className="mt-1 text-sm font-semibold leading-6 text-slate-500">
-                After the scan, choose from the routes we found or create a new articles directory. No setup changes are generated from this scan.
+                We will find likely article/blog pages and ask you to choose one. No setup files or pull requests are created from this scan.
               </p>
             </div>
           </div>
-          <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="inline-flex max-w-xl items-start gap-3 rounded-xl bg-violet-50 px-4 py-3 text-sm font-semibold text-slate-700">
-              <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-100 text-violet-700">
-                <Sparkles className="h-4 w-4" />
-              </span>
-              <span>We&apos;ll scan route and content structure first, then ask where article setup should happen.</span>
-            </div>
+          <div className="mt-4 flex justify-end">
             <button
               type="submit"
-              disabled={isSubmitting || inventoryFetcher.state !== "idle" || scanRunning || (repos.length > 0 && !selectedRepo)}
+              disabled={scanStartPending || scanRunning || (repos.length > 0 && !selectedRepo)}
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
             >
-              {isSubmitting || inventoryFetcher.state !== "idle" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Scan repository
+              {scanStartPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              {scanStartPending ? "Starting scan..." : "Scan repository"}
             </button>
           </div>
         </Form>
-      ) : (
-        <div className="mt-5">
-          <DisabledArticleLocationCard placeholder={locationPlaceholder} />
-        </div>
-      )}
+      ) : null}
 
-      {scanRun ? (
+      {showScanProgress && scanRun ? (
         <div className="mt-5 space-y-4">
           <MarketingRunProgressCard run={scanRun} />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -620,7 +596,9 @@ export default function ArticleSystemConnectionPanel({
               <p className="text-xs font-semibold text-slate-500">
                 {scanRun.stale
                   ? "This scan did not start on the worker queue. Retry it, or cancel and start with new details."
-                  : "Cancelling abandons this scan locally and ignores stale scan callbacks that arrive later."}
+                  : scanFailed
+                    ? "The scan needs attention. Retry it, or cancel and start again with a different repo."
+                    : "Scanning is read-only. No files are changed."}
               </p>
               <Link
                 to={`/founder-tools/marketing/runs/${encodeURIComponent(scanRun.runId)}`}
@@ -636,28 +614,29 @@ export default function ArticleSystemConnectionPanel({
                   type="submit"
                   name="intent"
                   value="retry-scan"
-                  disabled={isSubmitting}
+                  disabled={retryScanPending || cancelScanPending}
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
                 >
-                  <Loader2 className="h-4 w-4" />
-                  Retry scan
+                  <Loader2 className={clsx("h-4 w-4", retryScanPending && "animate-spin")} />
+                  {retryScanPending ? "Retrying..." : "Retry scan"}
                 </button>
               ) : null}
               <button
                 type="submit"
                 name="intent"
                 value="cancel-scan"
-                disabled={isSubmitting}
+                disabled={retryScanPending || cancelScanPending}
                 className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
               >
-                Cancel scan
+                {cancelScanPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {cancelScanPending ? "Cancelling..." : "Cancel scan"}
               </button>
             </Form>
           </div>
         </div>
       ) : null}
 
-      {scanRun ? (
+      {scanRun && (inventoryReady || setupTargetReady || scanFailed || scanStale) ? (
         <section className="mt-5 rounded-2xl border border-slate-200 bg-white shadow-sm">
           <button
             type="button"
@@ -666,12 +645,14 @@ export default function ArticleSystemConnectionPanel({
           >
             <div>
               <p className="text-sm font-black text-slate-950">
-                {setupTargetScan ? "Article system target saved" : "Choose article location"}
+                {setupTargetReady ? "Article system target saved" : "Choose article location"}
               </p>
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                {setupTargetScan
+                {setupTargetReady
                   ? "Continue to the generate step to build and review the article system preview."
-                  : "Pick a detected route from the scan, or create a new articles directory."}
+                  : scanFailed || scanStale
+                    ? "The scan could not confidently confirm a route. Try again, or paste a route after a successful scan."
+                    : "Pick a detected route from the scan, paste the correct URL, or create a new articles directory."}
               </p>
             </div>
             <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-violet-700">
@@ -681,7 +662,7 @@ export default function ArticleSystemConnectionPanel({
           </button>
           {articlePreviewOpen ? (
             <div className="space-y-4 border-t border-slate-100 p-4">
-              {setupTargetScan ? (
+              {setupTargetReady ? (
                 <>
                   <ArticleSystemSurfaceSummary run={scanRun} />
                   <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
@@ -697,14 +678,22 @@ export default function ArticleSystemConnectionPanel({
                     <input type="hidden" name="intent" value="confirm-article-surface" />
                     <input type="hidden" name="githubRepo" value={selectedRepo} />
                     <input type="hidden" name="sourceScanRunId" value={scanRun.runId} />
-                    <ArticleSystemSurfaceSummary run={scanRun} selectable fieldName="articleSurfaceUrl" />
+                    <ArticleSystemSurfaceSummary
+                      run={scanRun}
+                      selectable
+                      fieldName="articleSurfaceUrl"
+                      selectionValue={selectedArticleRoute}
+                      manualValue={manualArticleRoute}
+                      onSelectionValueChange={setSelectedArticleRoute}
+                      onManualValueChange={setManualArticleRoute}
+                    />
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={confirmSurfacePending || createSurfacePending || !hasExistingSurfaceChoice}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                      Continue to generate article system
+                      {confirmSurfacePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {confirmSurfacePending ? "Saving route..." : "Continue to generate article system"}
                     </button>
                   </Form>
                   <Form method="POST" className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -722,15 +711,24 @@ export default function ArticleSystemConnectionPanel({
                     </label>
                     <button
                       type="submit"
-                      disabled={isSubmitting}
+                      disabled={confirmSurfacePending || createSurfacePending}
                       className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
                     >
-                      Create and continue
+                      {createSurfacePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {createSurfacePending ? "Creating route..." : "Create and continue"}
                     </button>
                   </Form>
                 </>
               ) : (
-                <ArticleSystemSurfaceSummary run={scanRun} />
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-sm font-black text-amber-950">We could not confidently match an articles page.</p>
+                  <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
+                    Retry the scan, manage GitHub access if the repo is wrong, or start a new scan after choosing the correct repository.
+                  </p>
+                  <div className="mt-3">
+                    <ArticleSystemSurfaceSummary run={scanRun} />
+                  </div>
+                </div>
               )}
             </div>
           ) : null}

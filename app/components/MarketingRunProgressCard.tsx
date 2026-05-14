@@ -10,6 +10,16 @@ function labelForStatus(status: string) {
   return status.replace(/_/g, " ");
 }
 
+function shortErrorMessage(run: VibeMarketingRunSummary, error: string) {
+  if (["repo_scan", "content_factory_scan"].includes(run.workflow)) {
+    return "Repository scan failed. Retry the scan or choose a different repository.";
+  }
+  if (/Missing required .* components/i.test(error)) {
+    return "Article preview failed because required article components are missing.";
+  }
+  return "This run failed. Technical details are available if needed.";
+}
+
 export default function MarketingRunProgressCard({ run }: MarketingRunProgressCardProps) {
   const isFailed = ["failed", "blocked", "blocked_verification", "denied"].includes(run.status);
   const isScanRun = ["repo_scan", "content_factory_scan"].includes(run.workflow);
@@ -69,9 +79,10 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
             {completedSteps} of {totalSteps} run steps complete. Refreshing this page is safe.
           </p>
           {run.errors.length > 0 ? (
-            <div className="mt-3 rounded-xl border border-red-200 bg-white/80 px-4 py-3 text-sm text-red-700">
-              {run.errors[0]}
-            </div>
+            <details className="mt-3 rounded-xl border border-red-200 bg-white/80 px-4 py-3 text-sm text-red-700">
+              <summary className="cursor-pointer font-bold">{shortErrorMessage(run, run.errors[0])}</summary>
+              <p className="mt-2 break-words font-mono text-xs leading-5 text-red-600">{run.errors[0]}</p>
+            </details>
           ) : null}
         </div>
       </div>
