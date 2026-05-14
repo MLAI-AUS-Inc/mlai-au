@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -22,6 +22,7 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
+import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
@@ -211,13 +212,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       return { ok: true, comment };
     } else if (intent === "update-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
-      if (!commentId) return { error: "Comment id is required." };
+      if (!commentId) return { intent, error: "Comment id is required." };
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const comment = await updateVibeMarketingComponentComment(env, request, targetRunId, commentId, componentCommentPayloadFromForm(formData));
       return { ok: true, comment };
     } else if (intent === "delete-component-comment") {
       const commentId = stringFromForm(formData, "commentId");
-      if (!commentId) return { error: "Comment id is required." };
+      if (!commentId) return { intent, error: "Comment id is required." };
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const componentFeedback = await deleteVibeMarketingComponentComment(env, request, targetRunId, commentId);
       return { ok: true, componentFeedback };
@@ -263,13 +264,13 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "retry-scan") {
       const result = await controlVibeMarketingRun(env, request, runId, "resume", { workflow: "repo_scan" });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return { error: result.errors?.[0] || "Repository scan could not be retried." };
+      return { intent, error: result.errors?.[0] || "Repository scan could not be retried." };
     } else if (intent === "start-scan") {
       const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
       const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
-      if (!githubRepo) return { error: "Choose a GitHub repository before scanning." };
-      if (scanPurpose !== "inventory" && !articleSurfaceUrl) return { error: "Enter the articles or blog URL before scanning." };
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before scanning." };
+      if (scanPurpose !== "inventory" && !articleSurfaceUrl) return { intent, error: "Enter the articles or blog URL before scanning." };
       const result = await startVibeMarketingScan(env, request, {
         githubRepo,
         github_repo: githubRepo,
@@ -287,12 +288,12 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         auto_setup_preview: false,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return { error: result.error || result.errors?.[0] || "Repository scan could not be started." };
+      return { intent, error: result.error || result.errors?.[0] || "Repository scan could not be started." };
     } else if (intent === "confirm-article-surface" || intent === "create-article-surface") {
       const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
-      if (!githubRepo) return { error: "Choose a GitHub repository before continuing." };
-      if (!articleSurfaceUrl) return { error: "Choose or enter an article/blog route before continuing." };
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
+      if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
       const result = await startVibeMarketingScan(env, request, {
         githubRepo,
         github_repo: githubRepo,
@@ -308,7 +309,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         auto_setup_preview: false,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return { error: result.error || result.errors?.[0] || "Article system setup could not be started." };
+      return { intent, error: result.error || result.errors?.[0] || "Article system setup could not be started." };
     } else if (intent === "build-article-system-preview") {
       const result = await controlVibeMarketingRun(env, request, runId, "approve", { workflow: "repo_scan" });
       const setupRunId = setupRunIdForRun(result);
@@ -349,7 +350,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const targetKeyword = stringFromForm(formData, "targetKeyword") || candidateKeyword || selectedCandidate?.keyword || customTitle;
       const topic = customTitle || targetKeyword;
       if (!topic && !targetKeyword) {
-        return { error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
+        return { intent, error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
       }
       const result = await startVibeMarketingArticle(env, request, {
         topic,
@@ -368,6 +369,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
   } catch (error: any) {
     if (error instanceof Response) throw error;
     return {
+      intent,
       error:
         error?.data?.detail ??
         error?.response?.data?.detail ??
@@ -555,13 +557,17 @@ function RunStepTimeline({ run, framed = true }: { run: VibeMarketingRunSummary;
 
 function RunApprovalActions({
   isSubmitting,
+  isActionPending,
   approveLabel = "Approve",
   denyLabel = "Deny",
 }: {
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
   approveLabel?: string;
   denyLabel?: string;
 }) {
+  const approvePending = isActionPending?.("approve") ?? isSubmitting;
+  const denyPending = isActionPending?.("deny") ?? isSubmitting;
   return (
     <div className="flex flex-wrap gap-2">
       <Form method="POST">
@@ -572,8 +578,8 @@ function RunApprovalActions({
           disabled={isSubmitting}
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50"
         >
-          <XCircleIcon className="h-4 w-4" />
-          {denyLabel}
+          {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
+          {denyPending ? "Denying..." : denyLabel}
         </button>
       </Form>
       <Form method="POST">
@@ -584,8 +590,8 @@ function RunApprovalActions({
           disabled={isSubmitting}
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
         >
-          <CheckCircleIcon className="h-4 w-4" />
-          {approveLabel}
+          {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+          {approvePending ? "Approving..." : approveLabel}
         </button>
       </Form>
     </div>
@@ -595,9 +601,11 @@ function RunApprovalActions({
 function PublishApprovalPanel({
   run,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const previewUrl = run.previewUrl || stringResultValue(run, "preview_url", "previewUrl", "article_url", "articleUrl");
   const prUrl = run.prUrl || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl");
@@ -633,7 +641,7 @@ function PublishApprovalPanel({
             ) : null}
           </div>
         </div>
-        <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
+        <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
       </div>
     </section>
   );
@@ -682,11 +690,13 @@ function ArticleSystemScanFormPanel({
   bootstrap,
   githubRepos,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   githubRepos: VibeMarketingGithubReposResponse;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const selectedRepo =
     run.githubRepo ||
@@ -698,6 +708,7 @@ function ArticleSystemScanFormPanel({
       bootstrap={bootstrap}
       githubRepos={githubRepos}
       isSubmitting={isSubmitting}
+      isActionPending={isActionPending}
       repoSelection={selectedRepo}
       articleSurfaceDefault={articleSurfaceRouteFromRun(run) || "/articles"}
       articleSurfacePlaceholder="/articles"
@@ -713,12 +724,14 @@ function ArticleSystemSetupPreviewPanel({
   selectedComponent,
   onSelectComponent,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   sourceRun?: VibeMarketingRunSummary | null;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const setup = articleSystemSetupPayload(run);
   const source = sourceRun ?? run;
@@ -799,6 +812,9 @@ function ArticleSystemSetupPreviewPanel({
         actionSlot={(reviewState) => {
           const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
           const approveDisabled = isSubmitting || needsCommentSubmitFirst;
+          const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
+          const denyPending = isActionPending?.("deny") ?? isSubmitting;
+          const approvePending = isActionPending?.("approve") ?? isSubmitting;
           return (
             <div className="flex flex-col gap-2 sm:flex-row">
               <Form method="POST">
@@ -810,8 +826,8 @@ function ArticleSystemSetupPreviewPanel({
                   disabled={isSubmitting || !reviewState.canSendRevisionRequest}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {reviewState.canRetrySubmittedBatch ? "Retry setup comments" : "Send setup comments"}
+                  {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry setup comments" : "Send setup comments"}
                 </button>
               </Form>
               {canApprove ? (
@@ -824,8 +840,8 @@ function ArticleSystemSetupPreviewPanel({
                       disabled={isSubmitting}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
                     >
-                      <XCircleIcon className="h-4 w-4" />
-                      Deny setup
+                      {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
+                      {denyPending ? "Denying..." : "Deny setup"}
                     </button>
                   </Form>
                   <Form method="POST">
@@ -837,8 +853,8 @@ function ArticleSystemSetupPreviewPanel({
                       title={needsCommentSubmitFirst ? "Send or clear draft setup comments before approving." : undefined}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                     >
-                      <CheckCircleIcon className="h-4 w-4" />
-                      Approve article system
+                      {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                      {approvePending ? "Approving..." : "Approve article system"}
                     </button>
                   </Form>
                 </>
@@ -1492,11 +1508,13 @@ function LiveArticlePreviewPanel({
   selectedComponent,
   onSelectComponent,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
@@ -1533,6 +1551,9 @@ function LiveArticlePreviewPanel({
               publishStep?.status === "ready" &&
               acceptArticleIntent,
           );
+          const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
+          const acceptRevisionPending = isActionPending?.("accept-component-revision") ?? isSubmitting;
+          const submitCommentsPending = isActionPending?.("submit-component-comments") ?? isSubmitting;
           return (
             <div className="flex flex-col gap-2 sm:flex-row">
               {canAcceptArticleForPublish ? (
@@ -1544,8 +1565,8 @@ function LiveArticlePreviewPanel({
                     disabled={isSubmitting}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
-                    {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                    Accept article and continue
+                    {acceptArticlePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    {acceptArticlePending ? "Continuing..." : "Accept article and continue"}
                   </button>
                 </Form>
               ) : null}
@@ -1559,8 +1580,8 @@ function LiveArticlePreviewPanel({
                     disabled={isSubmitting}
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
-                    <CheckCircleIcon className="h-4 w-4" />
-                    Accept revised article
+                    {acceptRevisionPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    {acceptRevisionPending ? "Accepting..." : "Accept revised article"}
                   </button>
                 </Form>
               ) : null}
@@ -1572,8 +1593,8 @@ function LiveArticlePreviewPanel({
                   disabled={isSubmitting || !reviewState.canSendRevisionRequest}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {reviewState.canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
+                  {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry AI revision request" : "Send comments for AI revision"}
                 </button>
               </Form>
             </div>
@@ -1587,9 +1608,11 @@ function LiveArticlePreviewPanel({
 function ArticlePreviewEmptyState({
   run,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
@@ -1631,6 +1654,7 @@ function ArticlePreviewEmptyState({
   ).trim();
   const displayError =
     String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
+  const retryPreviewPending = isActionPending?.("start-live-preview") ?? isSubmitting;
   const diagnosticRows = [
     failedPhase ? ["Phase", failedPhase] : null,
     failedCommand ? ["Command", failedCommand] : null,
@@ -1690,11 +1714,11 @@ function ArticlePreviewEmptyState({
                 type="submit"
                 name="intent"
                 value="start-live-preview"
-                disabled={isSubmitting}
+                disabled={retryPreviewPending}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
               >
-                {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                Retry preview
+                {retryPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                {retryPreviewPending ? "Starting preview..." : "Retry preview"}
               </button>
             </Form>
           ) : (
@@ -1748,11 +1772,13 @@ function ArticleGenerationReviewDetail({
   selectedComponent,
   onSelectComponent,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   selectedComponent: VibeMarketingComponentManifestItem | null;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const hasArticlePreview = hasReadyArticlePreview(run);
   return (
@@ -1764,9 +1790,10 @@ function ArticleGenerationReviewDetail({
           selectedComponent={selectedComponent}
           onSelectComponent={onSelectComponent}
           isSubmitting={isSubmitting}
+          isActionPending={isActionPending}
         />
       ) : (
-        <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} />
+        <ArticlePreviewEmptyState run={run} isSubmitting={isSubmitting} isActionPending={isActionPending} />
       )}
     </div>
   );
@@ -1776,10 +1803,12 @@ function PublishAndAutomateDetail({
   run,
   bootstrap,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   bootstrap: VibeMarketingBootstrap;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const automationStep = run.workflowProgress?.steps.find((step) => step.id === "automation");
@@ -1833,6 +1862,10 @@ function PublishAndAutomateDetail({
     stringResultValue(run, "pr_number", "pull_request_number", "draft_pr_number") ||
     prNumberFromPullUrl(prUrl);
   const checksStatus = stringResultValue(run, "checks_status", "checksStatus");
+  const promotePending = isActionPending?.("promote-bundle", "publish-pr") ?? isSubmitting;
+  const mergePending = isActionPending?.("merge-publish-pr") ?? isSubmitting;
+  const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
+  const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
   const mergeStatus = stringResultValue(run, "merge_status", "mergeStatus");
   const isMerged = mergeStatus === "merged";
   const dailyCheck = bootstrap.checks.dailyAutomation as
@@ -1918,8 +1951,8 @@ function PublishAndAutomateDetail({
                   disabled={isSubmitting}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
-                  {publishChildMissingRemote ? "Retry creating PR" : "Resume publish PR"}
+                  <ArrowPathIcon className={clsx("h-4 w-4", promotePending && "animate-spin")} />
+                  {promotePending ? "Preparing PR..." : publishChildMissingRemote ? "Retry creating PR" : "Resume publish PR"}
                 </button>
               </Form>
             ) : publishChildApprovalRequired ? (
@@ -1935,7 +1968,7 @@ function PublishAndAutomateDetail({
                     Open publish review
                   </a>
                 ) : (
-                  <RunApprovalActions isSubmitting={isSubmitting} approveLabel="Approve publish" denyLabel="Deny publish" />
+                  <RunApprovalActions isSubmitting={isSubmitting} isActionPending={isActionPending} approveLabel="Approve publish" denyLabel="Deny publish" />
                 )}
               </div>
             ) : publishHandoffStale ? (
@@ -1950,8 +1983,8 @@ function PublishAndAutomateDetail({
                   disabled={isSubmitting}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <ArrowPathIcon className="h-4 w-4" />}
-                  Retry creating PR
+                  <ArrowPathIcon className={clsx("h-4 w-4", promotePending && "animate-spin")} />
+                  {promotePending ? "Preparing PR..." : "Retry creating PR"}
                 </button>
               </Form>
             ) : (
@@ -1966,8 +1999,8 @@ function PublishAndAutomateDetail({
                   disabled={isSubmitting}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  Create publish PR
+                  {promotePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                  {promotePending ? "Creating PR..." : "Create publish PR"}
                 </button>
               </Form>
             )}
@@ -1992,8 +2025,8 @@ function PublishAndAutomateDetail({
                   disabled={isSubmitting || !prUrl}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:bg-gray-100 disabled:text-gray-500"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                  Check and merge
+                  {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  {mergePending ? "Checking..." : "Check and merge"}
                 </button>
               </Form>
             )}
@@ -2021,8 +2054,8 @@ function PublishAndAutomateDetail({
                   disabled={isSubmitting || dailyEnabled || !dailyReady}
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
                 >
-                  {dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
-                  {dailyEnabled ? "Enabled" : "Enable Slack reminder"}
+                  {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+                  {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable Slack reminder"}
                 </button>
               </Form>
               <Form method="POST">
@@ -2031,9 +2064,10 @@ function PublishAndAutomateDetail({
                   name="intent"
                   value="run-daily-discovery-now"
                   disabled={isSubmitting || !dailyEnabled}
-                  className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
                 >
-                  Run today now
+                  {runDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                  {runDailyPending ? "Starting..." : "Run today now"}
                 </button>
               </Form>
             </div>
@@ -2435,13 +2469,16 @@ function hasExternalPublishEvidence(run: VibeMarketingRunSummary) {
 function ArticleRunActionsMenu({
   run,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const canCancel = canCancelArticleRun(run);
+  const cancelPending = isActionPending?.("cancel-article") ?? isSubmitting;
 
   return (
     <div className="relative">
@@ -2488,7 +2525,7 @@ function ArticleRunActionsMenu({
             <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <button
                 type="button"
-                disabled={isSubmitting}
+                disabled={cancelPending}
                 onClick={() => setConfirmOpen(false)}
                 className="inline-flex justify-center rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
               >
@@ -2499,11 +2536,11 @@ function ArticleRunActionsMenu({
                   type="submit"
                   name="intent"
                   value="cancel-article"
-                  disabled={isSubmitting}
+                  disabled={cancelPending}
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:opacity-50 sm:w-auto"
                 >
-                  {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <TrashIcon className="h-4 w-4" />}
-                  Cancel article
+                  {cancelPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <TrashIcon className="h-4 w-4" />}
+                  {cancelPending ? "Cancelling..." : "Cancel article"}
                 </button>
               </Form>
             </div>
@@ -2517,9 +2554,11 @@ function ArticleRunActionsMenu({
 function ArticleWorkflowPrimaryAction({
   run,
   isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
   const publishUrl = publishPreviewUrlForRun(run) || publishPrUrlForRun(run);
@@ -2528,11 +2567,12 @@ function ArticleWorkflowPrimaryAction({
   if (isPublishApprovalGate(run)) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
+    const publishPending = isActionPending?.(publishStep.primaryAction.intent) ?? isSubmitting;
     return (
       <Form method="POST">
         <button type="submit" name="intent" value={publishStep.primaryAction.intent} disabled={isSubmitting} className={`${buttonClass} bg-gray-950 text-white hover:bg-black`}>
-          {isSubmitting ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-          {publishStep.primaryAction.label || "Publish to website"}
+          {publishPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+          {publishPending ? "Preparing publish..." : publishStep.primaryAction.label || "Publish to website"}
         </button>
       </Form>
     );
@@ -2669,13 +2709,13 @@ export default function FounderToolsMarketingRun() {
   const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
+  const location = useLocation();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const previewStartFetcher = useFetcher<typeof action>();
   const previewStartRunRef = useRef("");
   const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
-  const isSubmitting = navigation.state === "submitting";
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
@@ -2725,6 +2765,34 @@ export default function FounderToolsMarketingRun() {
       previewStatus !== "starting" &&
       previewStartFetcher.state === "idle",
   );
+  const pendingActions = useMarketingActionPending({
+    navigationState: navigation.state,
+    navigationFormData: navigation.formData,
+    clearSignal: [
+      location.pathname,
+      location.search,
+      run.runId,
+      run.status,
+      run.currentStep,
+      run.updatedAt,
+      run.previewUrl,
+      run.prUrl,
+      run.publishChildStatus,
+      run.publishChildRecoverable,
+      run.publishChildWaitReason,
+      run.livePreview?.status,
+      run.livePreview?.previewUrl,
+      run.componentFeedback?.latestBatch?.id,
+      run.componentFeedback?.latestBatch?.status,
+      run.workflowProgress?.steps.map((step) => `${step.id}:${step.status}`).join(","),
+      setupRun?.runId,
+      setupRun?.status,
+      bootstrap.latestRuns.map((item) => `${item.runId}:${item.status}`).join(","),
+      bootstrap.settings.dailyDiscoveryEnabled,
+    ].join("|"),
+    errorKey: actionData?.error && typeof actionData.intent === "string" ? actionData.intent : null,
+  });
+  const isSubmitting = pendingActions.isAnyPending || previewStartFetcher.state !== "idle";
 
   useEffect(() => {
     setPolledRun(null);
@@ -2799,24 +2867,25 @@ export default function FounderToolsMarketingRun() {
         title={directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
         titleAs="h1"
         isSubmitting={isSubmitting}
-        topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} /> : undefined}
-        primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} /> : undefined}
+        topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
+        primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         activeDetailSlot={
           isArticleGenerationRun && isPublishAutomateView ? (
-            <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} />
+            <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
               run={run}
               selectedComponent={selectedComponent}
               onSelectComponent={setSelectedComponent}
               isSubmitting={isSubmitting || previewStartFetcher.state !== "idle"}
+              isActionPending={pendingActions.isPending}
             />
           ) : undefined
         }
         activeDetailLabel={isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
-      {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} /> : null}
+      {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
@@ -2851,8 +2920,8 @@ export default function FounderToolsMarketingRun() {
                         <p className="mt-1 max-w-2xl text-sm font-black leading-5 text-gray-950">{selectedDiscoveryCandidate.title}</p>
                       </div>
                       <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
-                        <CheckCircleIcon className="h-4 w-4" />
-                        Generate draft article
+                        {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                        {pendingActions.isPending("start-article") ? "Starting article..." : "Generate draft article"}
                       </button>
                     </div>
                   </div>
@@ -2872,9 +2941,10 @@ export default function FounderToolsMarketingRun() {
               selectedComponent={selectedComponent}
               onSelectComponent={setSelectedComponent}
               isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
             />
           ) : isScanRun ? (
-            <ArticleSystemScanFormPanel run={run} bootstrap={bootstrap} githubRepos={githubRepos} isSubmitting={isSubmitting} />
+            <ArticleSystemScanFormPanel run={run} bootstrap={bootstrap} githubRepos={githubRepos} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : null}
 
           {showRunAttentionBanner ? (
@@ -2896,8 +2966,8 @@ export default function FounderToolsMarketingRun() {
                       disabled={isSubmitting}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-bold text-amber-900 shadow-sm transition hover:bg-amber-100 disabled:opacity-50 sm:w-auto"
                     >
-                      <PlayIcon className="h-4 w-4" />
-                      Resume run
+                      {pendingActions.isPending("resume") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                      {pendingActions.isPending("resume") ? "Resuming..." : "Resume run"}
                     </button>
                   </Form>
                 ) : null}

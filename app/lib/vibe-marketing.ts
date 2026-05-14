@@ -872,8 +872,8 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   hasCompletedArticleFlow: false,
   startPageMode: "first_article_setup",
   workflowProgress: {
-    currentStepId: "choose_topic",
-    nextStepId: "generate",
+    currentStepId: "research",
+    nextStepId: "choose_topic",
     steps: [
       {
         id: "profile",
@@ -919,20 +919,20 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
         id: "research",
         label: "Research topics",
         phase: "Plan",
-        status: "complete",
+        status: "ready",
         href: "/founder-tools/marketing/create?step=research",
         summary: "Find article candidates from the company context.",
-        primaryAction: null,
+        primaryAction: { label: "Start topic research", href: "/founder-tools/marketing/create?step=research" },
         order: 5,
       },
       {
         id: "choose_topic",
         label: "Choose topic",
         phase: "Plan",
-        status: "needs_action",
+        status: "locked",
         href: "/founder-tools/marketing/create?step=chooseArticle",
         summary: "Pick a discovered topic or enter a custom article brief.",
-        primaryAction: { label: "Choose article topic", href: "/founder-tools/marketing/create?step=chooseArticle" },
+        primaryAction: null,
         order: 6,
       },
       {
