@@ -117,11 +117,11 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   },
   scan: {
     why: "Repository scanning is only needed for direct website publishing.",
-    next: "The scan records framework, routes, build commands, article components, and publish targets.",
+    next: "The scan records framework, routes, build commands, article components, and publishing details.",
     safety: "The scan does not publish changes.",
   },
   articleSystem: {
-    why: "GitHub access lets Content Factory inspect the website repo and find the exact article route before editing anything.",
+    why: "GitHub access lets Content Factory inspect the website repo and find the exact articles/blogs location before editing anything.",
     next: "Choose the repo and articles URL, scan the structure, then approve a setup preview only if changes are needed.",
     safety: "The agent creates review branches and previews; nothing is merged or published until you explicitly approve.",
   },
@@ -493,7 +493,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "build-article-system-preview") {
       const scanRunId = stringFromForm(formData, "scanRunId");
       if (!scanRunId) {
-        return { intent, error: "Open the scan result before building the article system preview." };
+        return { intent, error: "Open the scan result before building the articles setup preview." };
       }
       const result = await controlVibeMarketingRun(env, request, scanRunId, "approve", { workflow: "repo_scan" });
       const setupRunId = setupRunIdForRun(result);
@@ -685,6 +685,8 @@ export default function FounderToolsMarketingCreate() {
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const pendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
   const pendingArticleSystemSetupRunId = pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "";
+  const pendingSetupStepActive = Boolean(pendingArticleSystemScan && ["writeCheck", "editArticle", "reviewPublish"].includes(activeStep));
+  const articleSetupFlowActive = isRepoArticleStep || pendingSetupStepActive;
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
   const latestContentPackage = latestArticle?.contentPackage ?? bootstrap.publishEvidence?.contentPackage ?? null;
@@ -794,8 +796,10 @@ export default function FounderToolsMarketingCreate() {
       {!setupStepActive ? (
         <MarketingWorkflowShell
           progress={bootstrap.workflowProgress}
-          viewedStepId={WORKFLOW_STEP_ID_BY_CREATE_STEP[activeStep]}
-          title="Create and publish article"
+          viewedStepId={articleSetupFlowActive ? "article_system" : WORKFLOW_STEP_ID_BY_CREATE_STEP[activeStep]}
+          workflowMode={articleSetupFlowActive ? "article_setup" : "article"}
+          title={articleSetupFlowActive ? "Set up articles/blogs location" : "Create and publish article"}
+          subtitle={articleSetupFlowActive ? "Prepare the repo location where future articles will be written." : undefined}
           isSubmitting={isSubmitting}
           showPrimaryAction={false}
         />
@@ -1009,10 +1013,10 @@ export default function FounderToolsMarketingCreate() {
                 title={
                   pendingArticleSystemScan
                     ? activeStep === "reviewPublish"
-                      ? "Publish article system"
+                      ? "Approve articles setup"
                       : activeStep === "editArticle"
-                        ? "Review articles page preview"
-                        : "Generate article system"
+                        ? "Review articles setup preview"
+                        : "Generate articles setup preview"
                     :
                   activeStep === "editArticle"
                     ? "Edit article"
@@ -1026,7 +1030,7 @@ export default function FounderToolsMarketingCreate() {
                 }
                 description={
                   pendingArticleSystemScan
-                    ? "Build the articles/blog page setup, inspect the Cloudflare preview, then approve the setup PR."
+                    ? "Build the articles/blogs location setup, inspect the Cloudflare preview, then approve the setup PR."
                     : reviewDescription
                 }
                 passed={
@@ -1046,7 +1050,7 @@ export default function FounderToolsMarketingCreate() {
                       to={`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}`}
                       className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
                     >
-                      Open article system preview
+                      Open articles setup preview
                       <ArrowRightIcon className="h-4 w-4" />
                     </Link>
                   ) : pendingArticleSystemScan.status === "awaiting_confirmation" || pendingArticleSystemScan.status === "awaiting_approval" || pendingArticleSystemScan.status === "approval_required" ? (
@@ -1060,7 +1064,7 @@ export default function FounderToolsMarketingCreate() {
                         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
                       >
                         {buildArticleSystemPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate article system preview"}
+                        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate articles setup preview"}
                       </button>
                     </Form>
                   ) : (

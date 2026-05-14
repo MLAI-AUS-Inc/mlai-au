@@ -533,7 +533,7 @@ export default function ArticleSystemConnectionPanel({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="text-2xl font-black tracking-tight text-slate-950 sm:text-3xl">
-            Connect GitHub & set your articles location
+            Connect GitHub & set your articles/blogs location
           </h2>
           <p className="mt-3 max-w-4xl text-base font-medium leading-7 text-slate-600">
             Choose the repository that contains your website, run a read-only scan, then choose where articles should live.
@@ -719,7 +719,7 @@ export default function ArticleSystemConnectionPanel({
         {inventoryReady ? (
           <FlowStep
             number={3}
-            title="Choose your articles location"
+            title="Choose your articles/blogs location"
             description="Pick the right place from routes we found, paste a path manually, or create a new articles directory."
           >
             <div className="space-y-3">
@@ -807,7 +807,7 @@ export default function ArticleSystemConnectionPanel({
         ) : null}
 
         {selectedSurfaceUrl || setupTargetReady ? (
-          <FlowStep number={4} title="Article location selected">
+          <FlowStep number={4} title="Articles/blogs location selected">
             {setupTargetReady ? (
               <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
                 <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -816,9 +816,9 @@ export default function ArticleSystemConnectionPanel({
                       <FileText className="h-6 w-6" />
                     </span>
                     <div>
-                      <p className="text-sm font-black text-slate-950">Article system target saved</p>
+                      <p className="text-sm font-black text-slate-950">Articles/blogs location saved</p>
                       <p className="mt-1 text-sm font-semibold text-slate-500">
-                        Continue to generate and review the article system preview.
+                        Continue to setup review to build and inspect the articles setup preview.
                       </p>
                     </div>
                   </div>
@@ -832,7 +832,7 @@ export default function ArticleSystemConnectionPanel({
                     to="/founder-tools/marketing/create?step=writeCheck"
                     className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
                   >
-                    Continue to generate
+                    Generate articles setup preview
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -862,7 +862,7 @@ export default function ArticleSystemConnectionPanel({
                 <div className="flex flex-col justify-center gap-3">
                   <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    Good choice. Content Factory will use this location for the setup preview.
+                    Good choice. Content Factory will use this location for the articles setup preview.
                   </p>
                   <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
                     <button

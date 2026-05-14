@@ -56,10 +56,10 @@ const ARTICLE_PROGRESS_STAGES: StageDefinition[] = [
   },
   {
     id: "article_system",
-    label: "Understanding article system",
-    activeText: "Finding the right article structure and publishing path.",
-    completeText: "The article system is understood.",
-    pendingText: "The article system is checked after repository access.",
+    label: "Understanding articles location",
+    activeText: "Finding the right articles/blogs structure and publishing path.",
+    completeText: "The articles location is understood.",
+    pendingText: "The articles location is checked after repository access.",
   },
   {
     id: "startup_context",

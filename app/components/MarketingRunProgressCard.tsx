@@ -10,6 +10,16 @@ function labelForStatus(status: string) {
   return status.replace(/_/g, " ");
 }
 
+function labelForWorkflow(workflow: string) {
+  if (workflow === "article_system_setup") return "Articles setup";
+  if (workflow === "repo_scan" || workflow === "content_factory_scan") return "Repository scan";
+  return workflow.replace(/_/g, " ");
+}
+
+function labelForCurrentStep(step: string) {
+  return step.replace(/article_system/g, "articles_setup").replace(/_/g, " ");
+}
+
 function shortErrorMessage(run: VibeMarketingRunSummary, error: string) {
   if (["repo_scan", "content_factory_scan"].includes(run.workflow)) {
     return "Repository scan failed. Retry the scan or choose a different repository.";
@@ -30,9 +40,9 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
   const currentStepLabel = isStaleQueuedScan
     ? "The scan worker did not pick up this job. Retry the scan or cancel it and start again."
     : isScanActionNeeded
-    ? "The repository scan finished. Choose the article route, start a new setup preview, or cancel this scan."
+    ? "The repository scan finished. Choose the articles/blogs location, start a new setup preview, or cancel this scan."
     : run.currentStep
-      ? run.currentStep.replace(/_/g, " ")
+      ? labelForCurrentStep(run.currentStep)
       : "Waiting for next update";
   const totalSteps = Math.max(run.steps.length, run.stepOrder.length, 1);
   const completedSteps = run.steps.filter((step) => step.status === "completed" || step.status === "skipped").length;
@@ -50,7 +60,7 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-black text-gray-950">{run.workflow.replace(/_/g, " ")}</h2>
+            <h2 className="text-base font-black text-gray-950">{labelForWorkflow(run.workflow)}</h2>
             <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", isFailed || isStaleQueuedScan ? "bg-red-100 text-red-700" : "bg-white text-violet-700")}>
               {statusLabel}
             </span>

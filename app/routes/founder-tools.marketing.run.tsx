@@ -309,7 +309,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         auto_setup_preview: false,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
-      return { intent, error: result.error || result.errors?.[0] || "Article system setup could not be started." };
+      return { intent, error: result.error || result.errors?.[0] || "Articles setup could not be started." };
     } else if (intent === "build-article-system-preview") {
       const result = await controlVibeMarketingRun(env, request, runId, "approve", { workflow: "repo_scan" });
       const setupRunId = setupRunIdForRun(result);
@@ -760,14 +760,15 @@ function ArticleSystemSetupPreviewPanel({
     .filter(Boolean)
     .slice(0, 8);
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
+  const setupCompleted = run.status === "completed" || run.approvalState === "approved";
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-lg font-black text-gray-950">Article system preview</h2>
+          <h2 className="text-lg font-black text-gray-950">Articles setup preview</h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-            Review the drafted articles page setup before it is merged into the website repo.
+            Review the drafted articles/blogs setup before it is merged into the website repo.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
             {repo ? <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{repo}</span> : null}
@@ -802,12 +803,12 @@ function ArticleSystemSetupPreviewPanel({
         selectedComponent={selectedComponent}
         onSelectComponent={onSelectComponent}
         previewUrlFallback={previewUrl}
-        previewTitle="Article system setup preview"
-        reviewTitle="Setup review comments"
-        draftNoun="setup pin"
-        emptyDraftText="0 draft setup pins ready for review."
-        submittedRetryText="Submitted setup comments are ready to retry."
-        waitingBridgeText="Waiting for setup comment bridge"
+        previewTitle="Articles setup preview"
+        reviewTitle="Articles setup comments"
+        draftNoun="revision pin"
+        emptyDraftText="0 draft revision pins ready for review."
+        submittedRetryText="Submitted revision comments are ready to retry."
+        waitingBridgeText="Waiting for revision bridge"
         unavailableSlot={<ArticleSystemSetupPreviewUnavailable run={run} previewUrl={previewUrl} />}
         actionSlot={(reviewState) => {
           const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
@@ -827,7 +828,7 @@ function ArticleSystemSetupPreviewPanel({
                   className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
                 >
                   {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry setup comments" : "Send setup comments"}
+                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry revision comments" : "Send revision comments"}
                 </button>
               </Form>
               {canApprove ? (
@@ -841,7 +842,7 @@ function ArticleSystemSetupPreviewPanel({
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
                     >
                       {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
-                      {denyPending ? "Denying..." : "Deny setup"}
+                      {denyPending ? "Rejecting..." : "Reject setup"}
                     </button>
                   </Form>
                   <Form method="POST">
@@ -850,11 +851,11 @@ function ArticleSystemSetupPreviewPanel({
                       name="intent"
                       value="approve"
                       disabled={approveDisabled}
-                      title={needsCommentSubmitFirst ? "Send or clear draft setup comments before approving." : undefined}
+                      title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                     >
                       {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                      {approvePending ? "Approving..." : "Approve article system"}
+                      {approvePending ? "Approving..." : "Approve articles setup"}
                     </button>
                   </Form>
                 </>
@@ -863,6 +864,23 @@ function ArticleSystemSetupPreviewPanel({
           );
         }}
       />
+
+      {setupCompleted ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-emerald-950">Articles setup approved</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
+              Future articles can now be generated into this repo location.
+            </p>
+          </div>
+          <Link
+            to="/founder-tools/marketing/create?step=research"
+            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
+          >
+            Continue to topic research
+          </Link>
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -884,7 +902,7 @@ function ArticleSystemSetupPreviewUnavailable({
       "rounded-xl border px-4 py-5 text-sm font-semibold",
       error ? "border-red-200 bg-red-50 text-red-800" : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
-      <p className="font-black">{error ? "Setup preview could not be prepared" : "Hosted setup preview is being built"}</p>
+      <p className="font-black">{error ? "Articles setup preview could not be prepared" : "Articles setup preview is being built"}</p>
       <p className="mt-1">Preview status: {previewStatus}. Refreshing this page is safe.</p>
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       {logsUrl ? (
@@ -2666,6 +2684,7 @@ function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
     return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
   }
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
+  if (workflow === "article_system_setup") return "article_system";
   if (workflow === "website_baseline") return "baseline";
   if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (isArticleWorkflow(workflow)) {
@@ -2752,6 +2771,7 @@ export default function FounderToolsMarketingRun() {
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
+  const isArticleSetupContext = isScanRun || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
   const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
   const previewFailed = isFailedArticlePreview(run.livePreview);
@@ -2864,8 +2884,10 @@ export default function FounderToolsMarketingRun() {
       <MarketingWorkflowShell
         progress={workflowProgress}
         viewedStepId={viewedWorkflowStepId}
-        title={directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
+        workflowMode={isArticleSetupContext ? "article_setup" : "article"}
+        title={isArticleSetupContext ? "Set up articles/blogs location" : directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
         titleAs="h1"
+        subtitle={isArticleSetupContext ? "Prepare the repo location where future articles will be written." : undefined}
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
@@ -2882,7 +2904,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}

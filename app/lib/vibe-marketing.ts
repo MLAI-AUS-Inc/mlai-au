@@ -907,11 +907,11 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
       },
       {
         id: "article_system",
-        label: "Article system",
+        label: "Articles location",
         phase: "Setup",
         status: "complete",
         href: "/founder-tools/marketing/create?step=articleSystem",
-        summary: "Detect or prepare the article route, registry, and publish target.",
+        summary: "Detect or prepare the articles/blogs route and repo location.",
         primaryAction: null,
         order: 4,
       },
