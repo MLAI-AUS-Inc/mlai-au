@@ -26,6 +26,7 @@ import type {
 interface MarketingWorkflowShellProps {
   progress?: VibeMarketingWorkflowProgress | null;
   viewedStepId?: string | null;
+  workflowMode?: "article" | "article_setup";
   title?: string;
   titleAs?: "h1" | "h2";
   subtitle?: string;
@@ -81,8 +82,8 @@ const WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = [
   },
   {
     id: "repo_article_system",
-    label: "Connect repo & article system",
-    summary: "Connect GitHub, scan the repository, and prepare the article system.",
+    label: "Connect repo & articles location",
+    summary: "Connect GitHub, scan the repository, and prepare the articles/blogs location.",
     stepIds: ["repo", "article_system"],
     completionStepId: "article_system",
     icon: CodeBracketIcon,
@@ -108,6 +109,49 @@ const WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = [
     label: "Publish & automate",
     summary: "Review the package, publish to the site, and enable daily automation.",
     stepIds: ["package", "publish", "automation"],
+    completionStepId: "automation",
+    icon: RocketLaunchIcon,
+  },
+];
+
+const ARTICLE_SETUP_WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = [
+  {
+    id: "profile_baseline",
+    label: "Startup profile & baseline",
+    summary: "Company details, competitors, seed keywords, and the starting website baseline.",
+    stepIds: ["profile", "baseline"],
+    completionStepId: "baseline",
+    icon: UserCircleIcon,
+  },
+  {
+    id: "repo_article_system",
+    label: "Connect repo & articles location",
+    summary: "Prepare the repo location where future articles will be written.",
+    stepIds: ["repo", "article_system", "generate", "review", "revise", "package", "publish"],
+    completionStepId: "article_system",
+    icon: CodeBracketIcon,
+  },
+  {
+    id: "research_topic",
+    label: "Research & choose topic",
+    summary: "Find topic opportunities and choose the article brief after setup is complete.",
+    stepIds: ["research", "choose_topic"],
+    completionStepId: "choose_topic",
+    icon: MagnifyingGlassIcon,
+  },
+  {
+    id: "article_creation",
+    label: "Generate article",
+    summary: "Generate the first SEO article after the articles location is ready.",
+    stepIds: [],
+    completionStepId: "generate",
+    icon: PencilSquareIcon,
+  },
+  {
+    id: "publish_automation",
+    label: "Publish & automate",
+    summary: "Publish reviewed articles and enable daily automation after setup is complete.",
+    stepIds: [],
     completionStepId: "automation",
     icon: RocketLaunchIcon,
   },
@@ -194,9 +238,10 @@ function groupForStepId(stepId: string | null | undefined, groups: WorkflowDispl
   return groups.find((group) => group.childSteps.some((step) => step.id === stepId));
 }
 
-function buildWorkflowDisplayGroups(steps: VibeMarketingWorkflowStep[]): WorkflowDisplayGroup[] {
+function buildWorkflowDisplayGroups(steps: VibeMarketingWorkflowStep[], workflowMode: MarketingWorkflowShellProps["workflowMode"]): WorkflowDisplayGroup[] {
+  const definitions = workflowMode === "article_setup" ? ARTICLE_SETUP_WORKFLOW_DISPLAY_GROUPS : WORKFLOW_DISPLAY_GROUPS;
   const stepById = new Map(steps.map((step) => [step.id, step]));
-  return WORKFLOW_DISPLAY_GROUPS.map((definition) => {
+  return definitions.map((definition) => {
     const childSteps = definition.stepIds.map((stepId) => stepById.get(stepId)).filter((step): step is VibeMarketingWorkflowStep => Boolean(step));
     const actionableStep = childSteps.find((step) => ACTIONABLE_STATUSES.has(step.status));
     const completionStep = stepById.get(definition.completionStepId) ?? childSteps[childSteps.length - 1] ?? childSteps[0];
@@ -223,6 +268,7 @@ function buildWorkflowDisplayGroups(steps: VibeMarketingWorkflowStep[]): Workflo
 export default function MarketingWorkflowShell({
   progress,
   viewedStepId,
+  workflowMode = "article",
   title = "Article workflow",
   titleAs = "h2",
   subtitle,
@@ -241,7 +287,7 @@ export default function MarketingWorkflowShell({
   if (!steps.length) return null;
   const requiredStep = steps.find((step) => step.id === progress?.currentStepId) ?? steps.find((step) => step.status !== "complete" && step.status !== "locked") ?? steps[0];
   const viewedStep = steps.find((step) => step.id === viewedStepId) ?? requiredStep;
-  const displayGroups = buildWorkflowDisplayGroups(steps);
+  const displayGroups = buildWorkflowDisplayGroups(steps, workflowMode);
   const requiredGroup = groupForStepId(requiredStep.id, displayGroups) ?? displayGroups[0];
   const viewedGroup = groupForStepId(viewedStep.id, displayGroups) ?? requiredGroup;
   const viewingRequiredGroup = viewedGroup.id === requiredGroup.id;

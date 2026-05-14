@@ -1635,7 +1635,7 @@ function FirstArticleSetupPage({
                 />
               </FormField>
 
-              <FormField label="Website domain" help="Connect this company to its website and article system.">
+              <FormField label="Website domain" help="Connect this company to its website and articles setup.">
                 <input
                   name="domain"
                   value={startupValues.domain}
