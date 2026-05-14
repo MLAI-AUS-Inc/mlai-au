@@ -74,20 +74,21 @@ export function splitCompanyContext(context: string | null | undefined, fallback
 export function startupSetupDefaultsFromBootstrap(bootstrap: VibeMarketingBootstrap): StartupSetupValues {
   const splitContext = splitCompanyContext(bootstrap.settings.companyContext, bootstrap.startupProfile.notes);
   const companyName = bootstrap.company.name === "Company" ? "" : bootstrap.company.name ?? "";
+  const startupProfile = bootstrap.startupProfile;
   return {
     companyName,
     domain: bootstrap.company.domain ?? bootstrap.organization.domain ?? "",
     companyLinkedInUrl: bootstrap.organization.companyLinkedInUrl ?? bootstrap.company.companyLinkedInUrl ?? "",
     location: bootstrap.company.location ?? "",
     abn: bootstrap.company.abn ?? "",
-    shortDescription: splitContext.shortDescription,
-    problemSolved: splitContext.problemSolved,
-    targetAudience: splitContext.targetAudience,
+    shortDescription: startupProfile.shortDescription ?? splitContext.shortDescription,
+    problemSolved: startupProfile.problemSolved ?? splitContext.problemSolved,
+    targetAudience: startupProfile.targetAudience ?? splitContext.targetAudience,
     competitors: (bootstrap.organization.competitors ?? []).join("\n"),
     seedKeywords: (bootstrap.organization.seedKeywords ?? []).join(", "),
-    founderNames: (bootstrap.startupProfile.founderNames ?? []).join(", "),
-    stage: bootstrap.startupProfile.stage ?? "",
-    organizationKind: bootstrap.startupProfile.organizationKind ?? "",
+    founderNames: (startupProfile.founderNames ?? []).join(", "),
+    stage: startupProfile.stage ?? "",
+    organizationKind: startupProfile.organizationKind ?? "",
   };
 }
 
