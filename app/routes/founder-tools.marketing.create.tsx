@@ -460,7 +460,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-scan") {
       const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
-      await startVibeMarketingScan(env, request, {
+      const result = await startVibeMarketingScan(env, request, {
         githubRepo: stringFromForm(formData, "githubRepo"),
         github_repo: stringFromForm(formData, "githubRepo"),
         scanPurpose,
@@ -476,6 +476,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: false,
         auto_setup_preview: false,
       });
+      if (result.runId) {
+        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+      }
       return redirect("/founder-tools/marketing/create?step=scan");
     }
 
@@ -506,10 +509,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!scanRunId) {
         return { intent, error: "No repository scan was available to update." };
       }
-      await controlVibeMarketingRun(env, request, scanRunId, intent === "retry-scan" ? "resume" : "cancel", {
+      const result = await controlVibeMarketingRun(env, request, scanRunId, intent === "retry-scan" ? "resume" : "cancel", {
         ...(intent === "cancel-scan" ? { cleanup: true } : {}),
         workflow: "repo_scan",
       });
+      if (intent === "retry-scan" && result.runId) {
+        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+      }
       return redirect("/founder-tools/marketing/create?step=scan");
     }
 
