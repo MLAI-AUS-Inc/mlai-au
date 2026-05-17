@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { Form, Link, redirect, useActionData, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -15,7 +15,7 @@ import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
-import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -95,6 +95,10 @@ const CREATE_STEP_BY_WORKFLOW_STEP_ID: Record<string, VibeMarketingStepKey> = {
   automation: "dailyAutomation",
 };
 
+const SETUP_POLLING_STATUSES = new Set(["queued", "pending", "starting", "running"]);
+const SETUP_READY_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
+const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied", "cancelled"]);
+
 type StepExplainer = {
   why: string;
   next: string;
@@ -149,6 +153,22 @@ const STEP_EXPLAINERS: Record<VibeMarketingStepKey, StepExplainer> = {
   dailyAutomation: {
     why: "Automation keeps new topic candidates flowing without removing human review.",
     next: "Daily candidates still need selection, review, revision, and publish approval.",
+  },
+};
+
+const ARTICLE_SETUP_STEP_EXPLAINERS: Partial<Record<VibeMarketingStepKey, StepExplainer>> = {
+  writeCheck: {
+    why: "Setup generation creates the articles/blogs location changes and validates the repo files before review.",
+    next: "When the setup preview is ready, open the Cloudflare preview and inspect the articles/blogs location.",
+  },
+  editArticle: {
+    why: "Review shows the proposed articles/blogs setup as it will render in the target app.",
+    next: "Leave revision comments if needed, then continue once the setup preview is acceptable.",
+  },
+  reviewPublish: {
+    why: "Approval merges the reviewed setup PR so future articles have a known publishing location.",
+    next: "After setup is approved, continue to topic research and generate the first SEO article.",
+    safety: "Nothing is merged or published until you approve the articles setup.",
   },
 };
 
@@ -241,6 +261,44 @@ function scanRunHasPendingArticleSystemSetup(run: VibeMarketingRunSummary | null
     requestedAction === "article_system_setup" ||
     requestedAction === "scaffold_publish_route"
   );
+}
+
+function isArticleSystemSetupRun(run: VibeMarketingRunSummary | null | undefined) {
+  return run?.workflow === "article_system_setup";
+}
+
+function isSetupProgressTerminal(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return true;
+  return (
+    SETUP_READY_STATUSES.has(run.status) ||
+    SETUP_FAILED_STATUSES.has(run.status) ||
+    run.status === "completed" ||
+    run.approvalState === "approved"
+  );
+}
+
+function findSetupChildRun(
+  setupRunId: string,
+  parentRunId: string,
+  latestRuns: VibeMarketingRunSummary[],
+  polledChildRun: VibeMarketingRunSummary | null,
+) {
+  if (setupRunId && polledChildRun?.runId === setupRunId) return polledChildRun;
+  if (setupRunId) {
+    const exact = latestRuns.find((run) => run.runId === setupRunId);
+    if (exact) return exact;
+  }
+  return latestRuns.find((run) => isArticleSystemSetupRun(run) && run.sourceRunId === parentRunId) ?? null;
+}
+
+function activeSetupProgressRun(
+  parentScan: VibeMarketingRunSummary | null | undefined,
+  latestRuns: VibeMarketingRunSummary[],
+  polledChildRun: VibeMarketingRunSummary | null,
+) {
+  if (!parentScan) return null;
+  const setupRunId = setupRunIdForRun(parentScan);
+  return findSetupChildRun(setupRunId, parentScan.runId, latestRuns, polledChildRun) ?? parentScan;
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -498,8 +556,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         article_surface_url: articleSurfaceUrl,
         sourceScanRunId: stringFromForm(formData, "sourceScanRunId"),
         source_scan_run_id: stringFromForm(formData, "sourceScanRunId"),
-        autoSetupPreview: false,
-        auto_setup_preview: false,
+        autoSetupPreview: true,
+        auto_setup_preview: true,
       });
       return redirect("/founder-tools/marketing/create?step=writeCheck");
     }
@@ -711,10 +769,25 @@ export default function FounderToolsMarketingCreate() {
       : null;
   const navigation = useNavigation();
   const location = useLocation();
+  const setupScanStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const setupChildStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
-  const pendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
+  const bootstrapPendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
+  const [polledSetupScan, setPolledSetupScan] = useState<VibeMarketingRunSummary | null>(null);
+  const [polledSetupChildRun, setPolledSetupChildRun] = useState<VibeMarketingRunSummary | null>(null);
+  const pendingArticleSystemScan =
+    polledSetupScan?.runId === bootstrapPendingArticleSystemScan?.runId ? polledSetupScan : bootstrapPendingArticleSystemScan;
   const pendingArticleSystemSetupRunId = pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "";
-  const pendingSetupStepActive = Boolean(pendingArticleSystemScan && ["writeCheck", "editArticle", "reviewPublish"].includes(activeStep));
+  const setupChildRun = pendingArticleSystemScan
+    ? findSetupChildRun(
+        pendingArticleSystemSetupRunId,
+        pendingArticleSystemScan.runId,
+        bootstrap.latestRuns,
+        polledSetupChildRun?.runId === pendingArticleSystemSetupRunId ? polledSetupChildRun : null,
+      )
+    : null;
+  const setupProgressRun = activeSetupProgressRun(pendingArticleSystemScan, bootstrap.latestRuns, setupChildRun);
+  const pendingSetupStepActive = Boolean(setupProgressRun && ["writeCheck", "editArticle", "reviewPublish"].includes(activeStep));
   const articleSetupFlowActive = isRepoArticleStep || pendingSetupStepActive;
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
   const latestArticle = bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article"].includes(run.workflow));
@@ -731,7 +804,9 @@ export default function FounderToolsMarketingCreate() {
       latestScan?.status,
       latestScan?.stale,
       latestScan?.retryAvailable,
-      latestScan ? setupRunIdForRun(latestScan) : "",
+      setupProgressRun?.runId,
+      setupProgressRun?.status,
+      pendingArticleSystemSetupRunId,
       latestDiscovery?.runId,
       latestDiscovery?.status,
       latestArticle?.runId,
@@ -799,6 +874,75 @@ export default function FounderToolsMarketingCreate() {
         : "The run workspace shows generated article copy, image assets, and revision controls for manual publishing.";
 
   useEffect(() => {
+    setPolledSetupScan(null);
+    setPolledSetupChildRun(null);
+  }, [bootstrapPendingArticleSystemScan?.runId]);
+
+  useEffect(() => {
+    if (setupScanStatusFetcher.state !== "idle") return;
+    if (!setupScanStatusFetcher.data?.runId || setupScanStatusFetcher.data.runId !== bootstrapPendingArticleSystemScan?.runId) {
+      return;
+    }
+    setPolledSetupScan(setupScanStatusFetcher.data);
+  }, [bootstrapPendingArticleSystemScan?.runId, setupScanStatusFetcher.data, setupScanStatusFetcher.state]);
+
+  useEffect(() => {
+    if (!pendingArticleSystemScan?.runId || setupScanStatusFetcher.state !== "idle") return;
+    const shouldPollParent =
+      SETUP_POLLING_STATUSES.has(pendingArticleSystemScan.status) ||
+      (!pendingArticleSystemSetupRunId && !isSetupProgressTerminal(pendingArticleSystemScan));
+    if (!shouldPollParent) return;
+    const hasLoadedCurrentRun = setupScanStatusFetcher.data?.runId === pendingArticleSystemScan.runId;
+    const timer = window.setTimeout(
+      () => {
+        setupScanStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemScan.runId)}/status`);
+      },
+      hasLoadedCurrentRun ? 2500 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [
+    pendingArticleSystemScan?.runId,
+    pendingArticleSystemScan?.status,
+    pendingArticleSystemSetupRunId,
+    setupScanStatusFetcher,
+    setupScanStatusFetcher.data?.runId,
+    setupScanStatusFetcher.state,
+  ]);
+
+  useEffect(() => {
+    setPolledSetupChildRun(null);
+  }, [pendingArticleSystemSetupRunId]);
+
+  useEffect(() => {
+    if (setupChildStatusFetcher.state !== "idle") return;
+    if (!setupChildStatusFetcher.data?.runId || setupChildStatusFetcher.data.runId !== pendingArticleSystemSetupRunId) {
+      return;
+    }
+    setPolledSetupChildRun(setupChildStatusFetcher.data);
+  }, [pendingArticleSystemSetupRunId, setupChildStatusFetcher.data, setupChildStatusFetcher.state]);
+
+  useEffect(() => {
+    if (!pendingArticleSystemSetupRunId || setupChildStatusFetcher.state !== "idle") return;
+    if (setupChildRun && isSetupProgressTerminal(setupChildRun)) return;
+    const hasLoadedCurrentRun = setupChildStatusFetcher.data?.runId === pendingArticleSystemSetupRunId;
+    const timer = window.setTimeout(
+      () => {
+        setupChildStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}/status`);
+      },
+      hasLoadedCurrentRun ? 2500 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [
+    pendingArticleSystemSetupRunId,
+    setupChildRun?.runId,
+    setupChildRun?.status,
+    setupChildRun?.approvalState,
+    setupChildStatusFetcher,
+    setupChildStatusFetcher.data?.runId,
+    setupChildStatusFetcher.state,
+  ]);
+
+  useEffect(() => {
     const selectionStillValid =
       selectedTopicCandidateId === "__custom__" ||
       selectableTopicCandidates.some((candidate) => candidate.id === selectedTopicCandidateId);
@@ -812,6 +956,69 @@ export default function FounderToolsMarketingCreate() {
   }, [selectedGithubRepo]);
 
   const setupStepActive = activeStep === "startupDetails" || activeStep === "baseline";
+  const setupProgressTechnicalUrl = setupProgressRun
+    ? `/founder-tools/marketing/runs/${encodeURIComponent(setupProgressRun.runId)}`
+    : "";
+  const setupPreviewRunId = setupChildRun?.runId || pendingArticleSystemSetupRunId;
+  const setupReadyWithoutPreview = Boolean(
+    pendingArticleSystemScan &&
+      !setupChildRun &&
+      !pendingArticleSystemSetupRunId &&
+      pendingArticleSystemScan.status === "completed",
+  );
+  const setupApproved = Boolean(
+    setupReadyWithoutPreview || (setupChildRun && (setupChildRun.status === "completed" || setupChildRun.approvalState === "approved")),
+  );
+  const setupPreviewReady = Boolean(
+    setupChildRun &&
+      !setupApproved &&
+      (SETUP_READY_STATUSES.has(setupChildRun.status) || setupChildRun.livePreview?.previewUrl || setupChildRun.previewUrl),
+  );
+  const setupLegacyNeedsPreview = Boolean(
+    pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),
+  );
+  const setupProgressFailed = Boolean(setupProgressRun && SETUP_FAILED_STATUSES.has(setupProgressRun.status));
+  const setupProgressActionSlot = setupApproved ? (
+    <Link
+      to="/founder-tools/marketing/create?step=research"
+      className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
+    >
+      Continue to topic research
+    </Link>
+  ) : setupPreviewReady && setupPreviewRunId ? (
+    <Link
+      to={`/founder-tools/marketing/runs/${encodeURIComponent(setupPreviewRunId)}`}
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
+    >
+      Review articles setup preview
+      <ArrowRightIcon className="h-4 w-4" />
+    </Link>
+  ) : setupLegacyNeedsPreview ? (
+    <Form method="POST">
+      <input type="hidden" name="scanRunId" value={pendingArticleSystemScan?.runId ?? ""} />
+      <button
+        type="submit"
+        name="intent"
+        value="build-article-system-preview"
+        disabled={isSubmitting}
+        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
+      >
+        {buildArticleSystemPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
+        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate articles setup preview"}
+      </button>
+    </Form>
+  ) : setupProgressFailed ? null : setupProgressRun ? (
+    <button
+      type="button"
+      disabled
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white opacity-60 shadow-sm"
+    >
+      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+      {setupProgressRun.workflow === "article_system_setup" || pendingArticleSystemSetupRunId
+        ? "Building preview..."
+        : "Preparing setup..."}
+    </button>
+  ) : null;
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
@@ -1064,48 +1271,19 @@ export default function FounderToolsMarketingCreate() {
                 }
                 passed={
                   pendingArticleSystemScan
-                    ? Boolean(pendingArticleSystemSetupRunId)
+                    ? Boolean(setupPreviewReady || setupApproved)
                     : activeStep === "reviewPublish"
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
                     : Boolean(bootstrap.checks.write?.passed)
                 }
-                explainer={STEP_EXPLAINERS[activeStep]}
+                explainer={pendingArticleSystemScan ? ARTICLE_SETUP_STEP_EXPLAINERS[activeStep] ?? STEP_EXPLAINERS[activeStep] : STEP_EXPLAINERS[activeStep]}
               />
-              {pendingArticleSystemScan ? (
-                <div className="space-y-4">
-                  <MarketingRunProgressCard run={pendingArticleSystemScan} />
-                  {pendingArticleSystemSetupRunId ? (
-                    <Link
-                      to={`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
-                    >
-                      Open articles setup preview
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  ) : pendingArticleSystemScan.status === "awaiting_confirmation" || pendingArticleSystemScan.status === "awaiting_approval" || pendingArticleSystemScan.status === "approval_required" ? (
-                    <Form method="POST">
-                      <input type="hidden" name="scanRunId" value={pendingArticleSystemScan.runId} />
-                      <button
-                        type="submit"
-                        name="intent"
-                        value="build-article-system-preview"
-                        disabled={isSubmitting}
-                        className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
-                      >
-                        {buildArticleSystemPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate articles setup preview"}
-                      </button>
-                    </Form>
-                  ) : (
-                    <Link
-                      to={`/founder-tools/marketing/runs/${pendingArticleSystemScan.runId}`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-gray-950 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-black"
-                    >
-                      Open setup scan
-                      <ArrowRightIcon className="h-4 w-4" />
-                    </Link>
-                  )}
-                </div>
+              {pendingArticleSystemScan && setupProgressRun ? (
+                <ArticlesSetupProgressCard
+                  run={setupProgressRun}
+                  technicalUrl={setupProgressTechnicalUrl}
+                  actionSlot={setupProgressActionSlot}
+                />
               ) : latestArticle ? (
                 <div className="space-y-4">
                   {latestContentPackage ? (
