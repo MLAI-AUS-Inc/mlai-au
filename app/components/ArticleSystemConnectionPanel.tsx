@@ -1,4 +1,4 @@
-import { Form, Link, useFetcher, useRevalidator } from "react-router";
+import { Form, Link, useFetcher, useLocation, useRevalidator } from "react-router";
 import { clsx } from "clsx";
 import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
 import {
@@ -45,7 +45,8 @@ type ArticleSystemConnectionPanelProps = {
   autoStartInventoryScan?: boolean;
 };
 
-const SCAN_RUNNING_STATUSES = new Set(["queued", "running"]);
+const SCAN_RUNNING_STATUSES = new Set(["queued", "running", "pending", "starting"]);
+const SCAN_POLLING_STATUSES = SCAN_RUNNING_STATUSES;
 const SCAN_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied"]);
 const SCAN_ACTION_NEEDED_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
 
@@ -401,6 +402,8 @@ export default function ArticleSystemConnectionPanel({
   autoStartInventoryScan = false,
 }: ArticleSystemConnectionPanelProps) {
   const inventoryFetcher = useFetcher();
+  const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const location = useLocation();
   const revalidator = useRevalidator();
   const actionPending = isActionPending ?? (() => isSubmitting);
   const connected = isGithubConnected(githubRepos, bootstrap);
@@ -409,15 +412,20 @@ export default function ArticleSystemConnectionPanel({
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
-  const scanRunning = Boolean(scanRun && SCAN_RUNNING_STATUSES.has(scanRun.status));
-  const scanFailed = Boolean(scanRun && SCAN_FAILED_STATUSES.has(scanRun.status));
-  const scanStale = Boolean(scanRun?.stale || scanRun?.staleReason === "scan_queue_not_started");
-  const scanNeedsSetupApproval = isScanAwaitingSetupApproval(scanRun);
-  const setupRunId = scanRun ? setupRunIdForRun(scanRun) : "";
-  const inventoryScan = isInventoryScan(scanRun);
-  const setupTargetScan = isSetupTargetScan(scanRun);
-  const inventoryReady = Boolean(scanRun && inventoryScan && scanRun.status === "completed");
-  const setupTargetReady = Boolean(scanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
+  const requestedScanRunId = new URLSearchParams(location.search).get("scanRunId")?.trim() ?? "";
+  const currentScanRunId = requestedScanRunId || scanRun?.runId || "";
+  const scanRunForCurrentId = !requestedScanRunId || scanRun?.runId === requestedScanRunId ? scanRun : null;
+  const [polledScanRun, setPolledScanRun] = useState<VibeMarketingRunSummary | null>(null);
+  const effectiveScanRun = polledScanRun?.runId === currentScanRunId ? polledScanRun : scanRunForCurrentId;
+  const scanRunning = Boolean(effectiveScanRun && SCAN_RUNNING_STATUSES.has(effectiveScanRun.status));
+  const scanFailed = Boolean(effectiveScanRun && SCAN_FAILED_STATUSES.has(effectiveScanRun.status));
+  const scanStale = Boolean(effectiveScanRun?.stale || effectiveScanRun?.staleReason === "scan_queue_not_started");
+  const scanNeedsSetupApproval = isScanAwaitingSetupApproval(effectiveScanRun);
+  const setupRunId = effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "";
+  const inventoryScan = isInventoryScan(effectiveScanRun);
+  const setupTargetScan = isSetupTargetScan(effectiveScanRun);
+  const inventoryReady = Boolean(effectiveScanRun && inventoryScan && effectiveScanRun.status === "completed");
+  const setupTargetReady = Boolean(effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
   const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
   const retryScanPending = actionPending("retry-scan");
   const cancelScanPending = actionPending("cancel-scan");
@@ -431,7 +439,7 @@ export default function ArticleSystemConnectionPanel({
     typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
   );
 
-  const candidates = useMemo(() => (scanRun ? articleSurfaceCandidates(scanRun) : []), [scanRun]);
+  const candidates = useMemo(() => (effectiveScanRun ? articleSurfaceCandidates(effectiveScanRun) : []), [effectiveScanRun]);
   const publicRouteCandidates = useMemo(() => candidates.filter((candidate) => isSelectablePublicRoute(candidate.route)), [candidates]);
   const fileOnlyCandidates = useMemo(() => candidates.filter((candidate) => !isSelectablePublicRoute(candidate.route)), [candidates]);
   const bestCandidateKey = useMemo(() => {
@@ -474,10 +482,50 @@ export default function ArticleSystemConnectionPanel({
     setManualArticleRoute("");
     setManualRouteError("");
     setCreateNewPath(articleSurfaceDefault || "/articles");
-  }, [articleSurfaceDefault, scanRun?.runId]);
+  }, [articleSurfaceDefault, effectiveScanRun?.runId]);
 
   useEffect(() => {
-    if (!autoStartInventoryScan || !connected || !selectedRepo || scanRun || inventoryFetcher.state !== "idle") return;
+    setPolledScanRun(null);
+  }, [currentScanRunId]);
+
+  useEffect(() => {
+    if (
+      runStatusFetcher.state !== "idle" ||
+      !runStatusFetcher.data?.runId ||
+      runStatusFetcher.data.runId !== currentScanRunId
+    ) {
+      return;
+    }
+    setPolledScanRun(runStatusFetcher.data);
+  }, [currentScanRunId, runStatusFetcher.data, runStatusFetcher.state]);
+
+  useEffect(() => {
+    if (!currentScanRunId || runStatusFetcher.state !== "idle") return;
+    const shouldPollScan =
+      !effectiveScanRun ||
+      (SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
+        !SCAN_ACTION_NEEDED_STATUSES.has(effectiveScanRun.status) &&
+        !scanStale);
+    if (!shouldPollScan) return;
+    const hasLoadedCurrentRun = runStatusFetcher.data?.runId === currentScanRunId;
+    const timer = window.setTimeout(
+      () => {
+        void runStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(currentScanRunId)}/status`);
+      },
+      hasLoadedCurrentRun ? 2500 : 0,
+    );
+    return () => window.clearTimeout(timer);
+  }, [
+    currentScanRunId,
+    effectiveScanRun,
+    runStatusFetcher,
+    runStatusFetcher.data?.runId,
+    runStatusFetcher.state,
+    scanStale,
+  ]);
+
+  useEffect(() => {
+    if (!autoStartInventoryScan || !connected || !selectedRepo || currentScanRunId || inventoryFetcher.state !== "idle") return;
     const key = `vibe-marketing:auto-inventory-scan:${bootstrap.organization.id ?? "org"}:${selectedRepo}`;
     if (typeof window !== "undefined" && window.sessionStorage.getItem(key) === "started") return;
     if (typeof window !== "undefined") window.sessionStorage.setItem(key, "started");
@@ -487,7 +535,7 @@ export default function ArticleSystemConnectionPanel({
     formData.set("articleSurfaceMode", "not_sure");
     formData.set("githubRepo", selectedRepo);
     void inventoryFetcher.submit(formData, { method: "POST" });
-  }, [autoStartInventoryScan, bootstrap.organization.id, connected, inventoryFetcher, scanRun, selectedRepo]);
+  }, [autoStartInventoryScan, bootstrap.organization.id, connected, currentScanRunId, inventoryFetcher, selectedRepo]);
 
   useEffect(() => {
     if (!githubAuthWaiting || typeof window === "undefined") return;
@@ -675,20 +723,28 @@ export default function ArticleSystemConnectionPanel({
           )}
         </FlowStep>
 
-        {scanRun && inventoryScan ? (
+        {currentScanRunId && !effectiveScanRun ? (
+          <FlowStep number={2} title="Scanning repository" description="Loading scan progress">
+            <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4 text-sm font-semibold text-violet-800">
+              Loading scan progress...
+            </div>
+          </FlowStep>
+        ) : null}
+
+        {effectiveScanRun && inventoryScan ? (
           <FlowStep number={2} title="Scanning repository" description="Looking for article pages and content locations">
-            <MarketingRunProgressCard run={scanRun} />
+            <MarketingRunProgressCard run={effectiveScanRun} />
             {scanRunning || scanFailed || scanStale ? (
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Link
-                  to={`/founder-tools/marketing/runs/${encodeURIComponent(scanRun.runId)}`}
+                  to={`/founder-tools/marketing/runs/${encodeURIComponent(effectiveScanRun.runId)}`}
                   className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
                 >
                   View scan run
                 </Link>
                 <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-                  <input type="hidden" name="scanRunId" value={scanRun.runId} />
-                  {scanRun.retryAvailable || scanRun.stale ? (
+                  <input type="hidden" name="scanRunId" value={effectiveScanRun.runId} />
+                  {effectiveScanRun.retryAvailable || effectiveScanRun.stale ? (
                     <button
                       type="submit"
                       name="intent"
@@ -801,7 +857,7 @@ export default function ArticleSystemConnectionPanel({
                 You can change this anytime later from your project settings.
               </div>
 
-              {scanRun ? <ArticleSystemSurfaceSummary run={scanRun} /> : null}
+              {effectiveScanRun ? <ArticleSystemSurfaceSummary run={effectiveScanRun} /> : null}
             </div>
           </FlowStep>
         ) : null}
@@ -878,7 +934,7 @@ export default function ArticleSystemConnectionPanel({
                     <Form method="POST">
                       <input type="hidden" name="intent" value={saveIntent} />
                       <input type="hidden" name="githubRepo" value={selectedRepo} />
-                      <input type="hidden" name="sourceScanRunId" value={scanRun?.runId ?? ""} />
+                      <input type="hidden" name="sourceScanRunId" value={effectiveScanRun?.runId ?? ""} />
                       <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
                       <button
                         type="submit"
@@ -897,7 +953,7 @@ export default function ArticleSystemConnectionPanel({
           </FlowStep>
         ) : null}
 
-        {connected && !scanRun && !inventoryFetcher.data ? (
+        {connected && !currentScanRunId && !inventoryFetcher.data ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
             Run the repository scan first. It is read-only and will not create branches, pull requests, or setup files.
           </div>
