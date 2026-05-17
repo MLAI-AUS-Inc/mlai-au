@@ -421,7 +421,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                 className={classNames(
                                                     "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] transition sm:px-4",
                                                     current
-                                                        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-shell-active-text)] shadow-sm"
+                                                        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-primary-contrast)] shadow-sm"
                                                         : "border-[var(--vr-color-border)] bg-[rgba(255,255,255,0.72)] text-[var(--vr-color-text-mid)] hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-text)]"
                                                 )}
                                             >

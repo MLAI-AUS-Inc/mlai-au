@@ -1,5 +1,5 @@
 import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
-import React, { startTransition, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
 import {
@@ -34,6 +34,7 @@ import {
     ChartBarIcon,
     UsersIcon,
     FireIcon,
+    ArrowLeftIcon,
     ArrowRightIcon,
     BanknotesIcon,
     InformationCircleIcon,
@@ -84,8 +85,16 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
 
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
+const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
+
+type CreateUpdateMobileTourStep = {
+    key: string;
+    title: string;
+    body: string;
+    targetRef: RefObject<Element | null>;
+};
 
 function readStoredManualMaterials(): {
     summary: string;
@@ -1832,6 +1841,122 @@ function GrowthChart({
     );
 }
 
+function CreateUpdateMobileTour({
+    open,
+    stepIndex,
+    steps,
+    onBack,
+    onClose,
+    onNext,
+}: {
+    open: boolean;
+    stepIndex: number;
+    steps: CreateUpdateMobileTourStep[];
+    onBack: () => void;
+    onClose: () => void;
+    onNext: () => void;
+}) {
+    const titleId = useId();
+    const step = steps[stepIndex];
+    const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+    useEffect(() => {
+        if (!open || !step) {
+            setTargetRect(null);
+            return;
+        }
+
+        const updateTargetRect = () => {
+            const node = step.targetRef.current;
+            if (!node) {
+                setTargetRect(null);
+                return;
+            }
+
+            const rect = node.getBoundingClientRect();
+            setTargetRect({
+                top: Math.max(rect.top - 8, 12),
+                left: Math.max(rect.left - 8, 12),
+                width: Math.min(rect.width + 16, window.innerWidth - 24),
+                height: rect.height + 16,
+            });
+        };
+
+        const handleViewportChange = () => window.requestAnimationFrame(updateTargetRect);
+
+        handleViewportChange();
+        window.addEventListener("resize", handleViewportChange);
+        window.addEventListener("scroll", handleViewportChange, true);
+        return () => {
+            window.removeEventListener("resize", handleViewportChange);
+            window.removeEventListener("scroll", handleViewportChange, true);
+        };
+    }, [open, step]);
+
+    if (!open || !step) return null;
+
+    return (
+        <div className="fixed inset-0 z-[140] sm:hidden" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+            <button
+                type="button"
+                className="absolute inset-0 bg-slate-950/55"
+                onClick={onClose}
+                aria-label="Close create update tour"
+            />
+
+            {targetRect ? (
+                <>
+                    <div
+                        className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
+                        style={targetRect}
+                    />
+                    <div
+                        className="pointer-events-none absolute rounded-full bg-[var(--vr-color-primary)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg"
+                        style={{ left: targetRect.left, top: Math.max(targetRect.top - 34, 10) }}
+                    >
+                        Step {stepIndex + 1}
+                    </div>
+                </>
+            ) : null}
+
+            <section className="absolute inset-x-4 bottom-4 rounded-[28px] bg-white p-5 shadow-2xl shadow-black/20">
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vr-color-primary)]">Quick mobile tour</p>
+                <h2 id={titleId} className="mt-2 text-xl font-black text-gray-950">{step.title}</h2>
+                <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{step.body}</p>
+
+                <div className="mt-5 flex items-center justify-between gap-3">
+                    <button
+                        type="button"
+                        onClick={onClose}
+                        className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                    >
+                        Skip
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        {stepIndex > 0 ? (
+                            <button
+                                type="button"
+                                onClick={onBack}
+                                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+                            >
+                                Back
+                            </button>
+                        ) : null}
+                        <button
+                            type="button"
+                            onClick={onNext}
+                            className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
+                        >
+                            {stepIndex === steps.length - 1 ? "Got it" : "Next"}
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    );
+}
+
 export default function CreateUpdate() {
     const {
         user,
@@ -1984,6 +2109,10 @@ export default function CreateUpdate() {
             : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
     const mobileDraftMetricBatchSize = 6;
     const [mobileVisibleDraftMetricCount, setMobileVisibleDraftMetricCount] = useState(mobileDraftMetricBatchSize);
+    const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
+    const [mobileTourOpen, setMobileTourOpen] = useState(false);
+    const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
+    const [mobileTourChecked, setMobileTourChecked] = useState(false);
     const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
@@ -2077,8 +2206,12 @@ export default function CreateUpdate() {
     const pitchDeckPreviewObjectUrlRef = useRef<string | null>(null);
     const loadedExistingUpdateKeyRef = useRef<string | null>(null);
     const editorMonthKeyRef = useRef<string>(selectedMonthUpdateKey);
+    const draftStepperRef = useRef<HTMLDivElement | null>(null);
+    const monthSelectorRef = useRef<HTMLDivElement | null>(null);
+    const draftStickyTriggerRef = useRef<HTMLDivElement | null>(null);
     const shouldDimMetricsTemplate = isManualOnlyDraftFlow && draftMetricOptions.length >= 12;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
+    const [showDraftStickyOnMobile, setShowDraftStickyOnMobile] = useState(false);
 
     const wakeMetricCard = useCallback((metricKey: string) => {
         if (shouldDimMetricsTemplate) {
@@ -2464,6 +2597,71 @@ export default function CreateUpdate() {
     useEffect(() => {
         setIsClientMounted(true);
     }, []);
+
+    useEffect(() => {
+        const mediaQuery = window.matchMedia("(max-width: 639px)");
+        const syncViewport = () => setIsMobileTourViewport(mediaQuery.matches);
+        syncViewport();
+        mediaQuery.addEventListener("change", syncViewport);
+        return () => mediaQuery.removeEventListener("change", syncViewport);
+    }, []);
+
+    useEffect(() => {
+        if (mobileTourChecked || !isMobileTourViewport || monthConfirmed || selectedDraftStage === "reporting") return;
+        setMobileTourChecked(true);
+
+        try {
+            if (window.localStorage.getItem(CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY) === "1") return;
+        } catch {
+            // Ignore storage failures and still show the tour for this session.
+        }
+
+        const timer = window.setTimeout(() => {
+            setMobileTourStepIndex(0);
+            setMobileTourOpen(true);
+        }, 450);
+
+        return () => window.clearTimeout(timer);
+    }, [isMobileTourViewport, mobileTourChecked, monthConfirmed, selectedDraftStage]);
+
+    const closeMobileTour = () => {
+        setMobileTourOpen(false);
+        try {
+            window.localStorage.setItem(CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY, "1");
+        } catch {
+            // Ignore storage failures.
+        }
+    };
+
+    const goToPreviousMobileTourStep = () => {
+        setMobileTourStepIndex((current) => Math.max(0, current - 1));
+    };
+
+    const goToNextMobileTourStep = () => {
+        if (mobileTourStepIndex >= 1) {
+            closeMobileTour();
+            return;
+        }
+        setMobileTourStepIndex((current) => current + 1);
+    };
+
+    const mobileTourSteps = useMemo<CreateUpdateMobileTourStep[]>(
+        () => [
+            {
+                key: "stepper",
+                title: "Keep your materials together",
+                body: "Bring in your raw materials first. We keep the selected month, inputs, and draft fields together through review and publish.",
+                targetRef: draftStepperRef,
+            },
+            {
+                key: "month",
+                title: "Pick a month, then draft",
+                body: "Choose the update month first. Early stage? No worries. A selfie video or short presentation can still tell the investor story well.",
+                targetRef: monthSelectorRef,
+            },
+        ],
+        [],
+    );
 
     const hydrateCompletedEmailDraft = useEffectEvent(async (runId?: string | null) => {
         const results = await getVibeRaisingStartupUpdateDraftResults(backendBaseUrl, runId);
@@ -2977,6 +3175,31 @@ export default function CreateUpdate() {
         metricsConfirmed &&
         (!isAutoDrafting || canContinueDraftManually) &&
         !showEmailWizard;
+    useEffect(() => {
+        if (!isMobileTourViewport || selectedDraftStage !== "reporting" || !hasDraftTemplate) {
+            setShowDraftStickyOnMobile(false);
+            return;
+        }
+
+        const updateStickyVisibility = () => {
+            const trigger = draftStickyTriggerRef.current;
+            if (!trigger) {
+                setShowDraftStickyOnMobile(false);
+                return;
+            }
+
+            const rect = trigger.getBoundingClientRect();
+            setShowDraftStickyOnMobile(rect.top <= window.innerHeight - 140);
+        };
+
+        updateStickyVisibility();
+        window.addEventListener("scroll", updateStickyVisibility, true);
+        window.addEventListener("resize", updateStickyVisibility);
+        return () => {
+            window.removeEventListener("scroll", updateStickyVisibility, true);
+            window.removeEventListener("resize", updateStickyVisibility);
+        };
+    }, [hasDraftTemplate, isMobileTourViewport, selectedDraftStage]);
     const hasAnyMetricValue = Object.values(metricValues).some((value) => String(value || "").trim().length > 0);
     const qualitativeDraftText = [highlights, challenges, learnings, next30Days, asks].join("\n");
     const hasQualitativeDraftText =
@@ -3020,6 +3243,15 @@ export default function CreateUpdate() {
             window.setTimeout(() => setHighlightMaterialsSection(false), 2400);
         }, 80);
     }, [dismissStoryMaterialsSuggestion]);
+
+    const returnToMonthSelection = useCallback(() => {
+        setMonthConfirmed(false);
+        setSelectedDraftStage(null);
+        setMetricsConfirmed(false);
+        if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    }, []);
 
     const draftStickyStatusIcon = (
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
@@ -3502,26 +3734,26 @@ export default function CreateUpdate() {
             </div>
             <div className="relative mt-6">
                 <fieldset disabled={isEmailDraftBusy} className={clsx(isEmailDraftBusy && "opacity-80")}>
-                    <div className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-6 shadow-sm sm:p-8 lg:p-10">
+                    <div className="contents">
                         <div
                             {...getMaterialsRootProps()}
                             className={clsx(
-                                "relative flex flex-col items-center justify-center rounded-2xl border p-6 text-center transition-all sm:p-12",
+                                "relative flex flex-col items-center justify-center rounded-[2rem] border p-6 text-center shadow-sm transition-all sm:p-8 lg:p-10",
                                 isMaterialsDragActive
                                     ? "scale-[1.01] border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)]"
-                                    : "border-[var(--vr-color-border)] bg-white hover:bg-[var(--vr-color-neutral-50)]",
+                                    : "border-[var(--vr-color-border)] bg-white",
                             )}
                         >
                             <input {...getMaterialsInputProps()} />
                             <div className="w-full max-w-4xl">
                                 <div className="mb-8 flex flex-col items-center text-center">
-                                    <div className="mb-4 h-12 w-12 text-gray-400">
+                                    <div className="mb-4 h-12 w-12 text-slate-400">
                                         <CloudArrowUpIcon className="h-full w-full stroke-1" />
                                     </div>
-                                    <p className="text-lg font-bold text-gray-900">
+                                    <p className="text-xl font-black text-gray-950">
                                         {isMaterialsDragActive ? "Drop your file here" : "Drag your pitch deck or video here"}
                                     </p>
-                                    <p className="mt-2 max-w-md text-sm text-gray-500">
+                                    <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-slate-600">
                                         Choose the format that tells the investor story best. Final upload limit: 50 MB.
                                     </p>
                                 </div>
@@ -3532,10 +3764,10 @@ export default function CreateUpdate() {
                                             Pitch deck
                                         </p>
                                         <h3 className="mt-2 text-xl font-black text-gray-950">Upload the deck</h3>
-                                        <p className="mt-3 text-sm leading-6 text-slate-500">
+                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                                             Best for slides, founder bio, market story, and early traction notes.
                                         </p>
-                                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
                                             PDF, PPT, or PPTX
                                         </p>
                                     </div>
@@ -3547,10 +3779,10 @@ export default function CreateUpdate() {
                                             Walkthrough video
                                         </p>
                                         <h3 className="mt-2 text-xl font-black text-gray-950">Record the founder story</h3>
-                                        <p className="mt-3 text-sm leading-6 text-slate-500">
+                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
                                             Best when metrics are light and investors need to hear the founder thinking.
                                         </p>
-                                        <p className="mt-2 text-xs font-semibold text-slate-400">
+                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
                                             MP4, MOV, WebM and more
                                         </p>
                                     </div>
@@ -4503,19 +4735,34 @@ export default function CreateUpdate() {
     // 3. Create/Edit Form View
     return (
         <div className="mx-auto max-w-6xl space-y-10 pb-32">
-            <div className="space-y-4">
-                <MonthlyUpdateStepper
-                    activeStep="draft"
-                    disableMotion
-                    enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
-                    hideProgressUntilHover
-                    onStepClick={handleDraftStepperClick}
-                    expandOnHover
-                    frameless
-                    className="mt-8"
-                />
+            {monthConfirmed ? (
+                <div className="pt-6">
+                    <button
+                        type="button"
+                        onClick={returnToMonthSelection}
+                        className="inline-flex items-center gap-2 rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm font-black text-[var(--vr-color-text)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary-soft)]"
+                    >
+                        <ArrowLeftIcon className="h-4 w-4" />
+                        Back to month selection
+                    </button>
+                </div>
+            ) : null}
 
-                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+            <div className="space-y-4">
+                <div ref={draftStepperRef}>
+                    <MonthlyUpdateStepper
+                        activeStep="draft"
+                        disableMotion
+                        enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                        hideProgressUntilHover
+                        onStepClick={handleDraftStepperClick}
+                        expandOnHover
+                        frameless
+                        className="mt-8"
+                    />
+                </div>
+
+                <div className="hidden rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm sm:block">
                     <div className="flex min-w-0 items-start gap-4">
                         <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
                             <SparklesIcon className="h-5 w-5" />
@@ -4535,25 +4782,24 @@ export default function CreateUpdate() {
             <section>
                 <div className="space-y-4">
                     {monthConfirmed ? (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setMonthConfirmed(false);
-                                setSelectedDraftStage(null);
-                                setMetricsConfirmed(false);
-                            }}
-                            className="group flex w-full items-center rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.24)] sm:px-6 sm:py-4"
-                            aria-label={`Change selected update month, currently ${selectedMonthLabel}`}
+                        <div
+                            className="w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:px-6 sm:py-4"
+                            aria-label={`Selected update month: ${selectedMonthLabel}`}
                         >
                             <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)] transition group-hover:ring-[rgba(0,255,215,0.28)]" />
-                                <p className="truncate text-base font-black text-gray-950">
-                                    {selectedMonthLabel}
-                                </p>
+                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
+                                <div className="min-w-0">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                                        Selected month
+                                    </p>
+                                    <p className="truncate text-base font-black text-gray-950">
+                                        {selectedMonthLabel}
+                                    </p>
+                                </div>
                             </div>
-                        </button>
+                        </div>
                     ) : (
-                        <div className="space-y-3">
+                        <div ref={monthSelectorRef} className="space-y-3">
                             <p className="px-1 text-sm font-black text-gray-950">Select month</p>
                             <div className="overflow-visible rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm transition-all sm:p-8 lg:p-10">
                                 <div className="grid gap-4 lg:grid-cols-4 lg:items-stretch">
@@ -4688,6 +4934,10 @@ export default function CreateUpdate() {
                                                     )}
                                                     onClick={(event) => {
                                                         if ((event.target as HTMLElement).closest("button")) return;
+                                                        if (isMobileTourViewport && shouldDimMetricsTemplate && isMetricCardAwake) {
+                                                            dismissMetricCard(metric.key);
+                                                            return;
+                                                        }
                                                         wakeMetricCard(metric.key);
                                                         focusMetricInput(`draft-metric-${metric.key}`);
                                                     }}
@@ -4700,7 +4950,7 @@ export default function CreateUpdate() {
                                                                 event.stopPropagation();
                                                                 dismissMetricCard(metric.key);
                                                             }}
-                                                            className="absolute right-2 top-2 rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-700"
+                                                            className="absolute right-2 top-2 hidden rounded-full p-1 text-gray-400 transition hover:bg-white hover:text-gray-700 sm:inline-flex"
                                                             aria-label={`Dismiss ${metric.label}`}
                                                         >
                                                             <XMarkIcon className="h-3.5 w-3.5" />
@@ -4838,6 +5088,7 @@ export default function CreateUpdate() {
                                         </button>
                                     </div>
                                 </div>
+                                <div ref={draftStickyTriggerRef} aria-hidden className="h-1 w-full" />
                                 </div>
                             ) : null}
                             {materialsSection}
@@ -4848,7 +5099,10 @@ export default function CreateUpdate() {
             </section>
 
             <VibeRaisingStickyStepBar
-                className={!monthConfirmed ? "hidden sm:block" : undefined}
+                className={clsx(
+                    !monthConfirmed && "hidden sm:block",
+                    isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && !showDraftStickyOnMobile && "hidden sm:block",
+                )}
                 statusIcon={draftStickyStatusIcon}
                 statusTitle={draftStickyBar.statusTitle}
                 statusDetail={draftStickyBar.statusDetail}
@@ -5232,7 +5486,7 @@ export default function CreateUpdate() {
                                                                 "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-1.5 cursor-pointer transition-all",
                                                                 active
                                                                     ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                                    : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
                                                             )}
 	                                                        >
                                                             <MetricInfoBadge info={m.info} />
@@ -5343,7 +5597,7 @@ export default function CreateUpdate() {
                                                     "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                     active
                                                         ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                        : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                        : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
                                                 )}
 	                                            >
                                                 <MetricInfoBadge info={m.info} />
@@ -5463,7 +5717,7 @@ export default function CreateUpdate() {
                                                 "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                 active
                                                     ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                                                    : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
+                                                    : "border-[3px] border-dashed border-gray-400 bg-gray-50 opacity-80 hover:opacity-100 hover:border-gray-500"
                                             )}
 	                                        >
                                             <MetricInfoBadge info={m.info} />
@@ -5560,6 +5814,14 @@ export default function CreateUpdate() {
                     companyDomain={user.domain}
                 />
             ) : null}
+            <CreateUpdateMobileTour
+                open={mobileTourOpen}
+                stepIndex={mobileTourStepIndex}
+                steps={mobileTourSteps}
+                onBack={goToPreviousMobileTourStep}
+                onClose={closeMobileTour}
+                onNext={goToNextMobileTourStep}
+            />
             </>
             ) : null}
         </div>

@@ -69,6 +69,31 @@
 - [x] Regenerate `public/sitemap.xml`
 - [x] Run `bun run typecheck`
 - [x] Run `bun run build`
+- [x] Shorten company setup mobile instructions and add a first-time quick tour
+- [x] Add the same mobile-only first-time quick tour pattern to the Data Sources page
+- [x] Collapse Data Sources sticky-bar status copy on mobile so the footer stays usable
+- [x] Shorten Data Sources privacy and connector guidance copy for mobile
+- [x] Shorten Data Sources connector card descriptions and trust copy for mobile
+- [x] Move Create Update mobile instruction copy into a one-time tutorial and hide the visible card
+- [x] Let the Create Update mobile step chips wrap instead of clipping in a horizontal strip
+- [x] Align the active Founder Tools top-nav chip text color with the shared primary CTA token
+- [x] Replace the draft-page month change CTA with a top back button and static selected-month summary
+- [x] Flatten the Create Update investor-materials upload section to a single card surface
+- [x] Add dashed borders to inactive Create Update metric cards so they read as selectable
+- [x] Remove the passive hover tint from the Create Update upload surface and unify its typography
+- [x] Make Create Update mobile metric cards dismiss by tapping again instead of showing a close button
+- [x] Add a visible hover state to the Data Sources manual-input card and its Open form row
+- [x] Match the Google Analytics placeholder logo border to the other grey inactive source cards
+- [x] Match the Google Analytics placeholder footer spacing to the other source cards
+- [x] Remove the backend-availability warning line from all Data Sources cards
+- [x] Hide the extra Data Sources trust card on mobile so privacy guidance only appears in the one-time tutorial
+- [x] Rename unavailable Data Sources card labels from "Not available yet" to "Coming soon"
+- [x] Normalize Data Sources footer copy height so bottom actions align responsively across cards
+- [x] Make the top Data Sources privacy card first-time-only on mobile, with no persistent follow-up note
+- [x] Increase desktop stepper hover padding so the highlight fully wraps the numbered circle
+- [x] Remove stepper chip borders and switch non-active pills to white across shared variants
+- [x] Use shared design-token typography for stepper titles across the shared component
+- [x] Simplify Data Sources cards on mobile by hiding capability chips and footer helper copy
 - [x] Curl-check legacy redirects and canonical targets
 - [x] Add cleanup redirects for broken internal article CTA URLs
 - [x] Replace broken article CTA hrefs and copy with live destinations

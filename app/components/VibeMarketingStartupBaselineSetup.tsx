@@ -1,5 +1,5 @@
 import { Form, Link, useFetcher, useLocation, useNavigation } from "react-router";
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
 import {
   AlertTriangle,
   ArrowRight,
@@ -57,6 +57,7 @@ const FLOW_STEPS = [
 const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
 const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
+const MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY = "vibe_marketing_startup_setup_mobile_tour_seen_v1";
 
 const stableDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -106,6 +107,139 @@ type VibeMarketingStartupBaselineSetupProps = {
   showSetupProgress?: boolean;
   collapseCompletedSectionsByDefault?: boolean;
 };
+
+type MobileTutorialStep = {
+  key: string;
+  title: string;
+  body: string;
+  targetRef: RefObject<Element | null>;
+};
+
+function MobileStartupSetupTutorial({
+  open,
+  stepIndex,
+  steps,
+  onClose,
+  onBack,
+  onNext,
+}: {
+  open: boolean;
+  stepIndex: number;
+  steps: MobileTutorialStep[];
+  onClose: () => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  const titleId = useId();
+  const step = steps[stepIndex];
+  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (!open || !step) {
+      setTargetRect(null);
+      return;
+    }
+
+    const updateTargetRect = () => {
+      const node = step.targetRef.current;
+      if (!node) {
+        setTargetRect(null);
+        return;
+      }
+
+      const rect = node.getBoundingClientRect();
+      setTargetRect({
+        top: Math.max(rect.top - 8, 12),
+        left: Math.max(rect.left - 8, 12),
+        width: Math.min(rect.width + 16, window.innerWidth - 24),
+        height: rect.height + 16,
+      });
+    };
+
+    const handleViewportChange = () => {
+      window.requestAnimationFrame(updateTargetRect);
+    };
+
+    handleViewportChange();
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [open, step]);
+
+  if (!open || !step) return null;
+
+  const isLastStep = stepIndex === steps.length - 1;
+
+  return (
+    <div className="fixed inset-0 z-[140] sm:hidden" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-950/55"
+        onClick={onClose}
+        aria-label="Close startup setup tour"
+      />
+
+      {targetRect ? (
+        <>
+          <div
+            className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
+            style={targetRect}
+          />
+          <div
+            className="pointer-events-none absolute rounded-full bg-[var(--vr-color-primary)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg"
+            style={{ left: targetRect.left, top: Math.max(targetRect.top - 34, 10) }}
+          >
+            Step {stepIndex + 1}
+          </div>
+        </>
+      ) : null}
+
+      <section className="absolute inset-x-4 bottom-4 rounded-[28px] bg-white p-5 shadow-2xl shadow-black/20">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vr-color-primary)]">
+          Quick mobile tour
+        </p>
+        <h2 id={titleId} className="mt-2 text-xl font-black text-gray-950">
+          {step.title}
+        </h2>
+        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+          {step.body}
+        </p>
+
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            Skip
+          </button>
+
+          <div className="flex items-center gap-2">
+            {stepIndex > 0 ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onNext}
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
+            >
+              {isLastStep ? "Got it" : "Next"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 function listFromText(value: unknown): string[] {
   return String(value ?? "")
@@ -1505,7 +1639,7 @@ export default function VibeMarketingStartupBaselineSetup({
   includeBaseline = true,
   setupEyebrow = "Step 1 of 5",
   setupTitle = "Tell us about your startup",
-  setupDescription = "This helps us understand your business, audience, and what makes you unique.",
+  setupDescription = "Share the basics so we can tailor research and setup to your business.",
   primaryActionLabel,
   showSecondaryAction,
   setupProgressPercent = 20,
@@ -1531,6 +1665,9 @@ export default function VibeMarketingStartupBaselineSetup({
   const googleAutoRefreshSubmittedRef = useRef(false);
   const startupDefaults = useMemo(() => startupSetupDefaultsFromBootstrap(bootstrap), [bootstrap]);
   const startupDefaultsSignature = useMemo(() => JSON.stringify(startupDefaults), [startupDefaults]);
+  const mobileIntroRef = useRef<HTMLDivElement | null>(null);
+  const mobileResearchButtonRef = useRef<HTMLButtonElement | null>(null);
+  const mobileNextStepsRef = useRef<HTMLElement | null>(null);
   const activeCompanyKey = String(
     bootstrap.company.id ||
       bootstrap.company.organizationId ||
@@ -1554,6 +1691,10 @@ export default function VibeMarketingStartupBaselineSetup({
   const [autofillLastPollAt, setAutofillLastPollAt] = useState<number | null>(null);
   const [autofillProgressSignature, setAutofillProgressSignature] = useState("");
   const [autofillClock, setAutofillClock] = useState(() => Date.now());
+  const [isMobileTutorialViewport, setIsMobileTutorialViewport] = useState(false);
+  const [mobileTutorialOpen, setMobileTutorialOpen] = useState(false);
+  const [mobileTutorialStepIndex, setMobileTutorialStepIndex] = useState(0);
+  const [mobileTutorialChecked, setMobileTutorialChecked] = useState(false);
 
   const autofillStartData = autofillStartFetcher.data;
   const autofillRun = autofillRunFetcher.data as VibeMarketingRunSummary | undefined;
@@ -1661,6 +1802,29 @@ export default function VibeMarketingStartupBaselineSetup({
     typeof setupProgressPercent === "number" && Number.isFinite(setupProgressPercent)
       ? Math.max(0, Math.min(100, setupProgressPercent))
       : null;
+  const mobileTutorialSteps = useMemo<MobileTutorialStep[]>(
+    () => [
+      {
+        key: "profile",
+        title: "Start with the basics",
+        body: "Add your company name and website first. The rest can be refined after the essentials are in.",
+        targetRef: mobileIntroRef,
+      },
+      {
+        key: "research",
+        title: "Let AI prep the heavy lifting",
+        body: "Once the basics are filled in, run AI research to prepare company context from public sources without overwriting your profile.",
+        targetRef: mobileResearchButtonRef,
+      },
+      {
+        key: "next",
+        title: "You stay in control",
+        body: "This panel shows what happens next: we prepare context, then you review and approve the output yourself.",
+        targetRef: mobileNextStepsRef,
+      },
+    ],
+    [],
+  );
 
   const inputClass =
     "w-full rounded-lg border border-gray-200 bg-white py-3 pr-4 text-sm font-medium text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-violet-500 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500";
@@ -1744,9 +1908,63 @@ export default function VibeMarketingStartupBaselineSetup({
   }, [activeCompanyKey, bootstrap.settings.companyContext, collapseCompletedSectionsByDefault, startupDefaults, startupDefaultsSignature]);
 
   useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const syncViewport = () => setIsMobileTutorialViewport(mediaQuery.matches);
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (mobileTutorialChecked || !isMobileTutorialViewport) return;
+    setMobileTutorialChecked(true);
+
+    if (startupProfileComplete) return;
+
+    try {
+      if (window.localStorage.getItem(MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY) === "1") return;
+    } catch {
+      // Fall back to showing the tour if storage is unavailable.
+    }
+
+    const timer = window.setTimeout(() => {
+      setMobileTutorialStepIndex(0);
+      setMobileTutorialOpen(true);
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [isMobileTutorialViewport, mobileTutorialChecked, startupProfileComplete]);
+
+  useEffect(() => {
     if (focusSection !== "baseline") return;
     window.setTimeout(() => baselineRef.current?.scrollIntoView({ block: "start", behavior: "smooth" }), 100);
   }, [focusSection]);
+
+  const closeMobileTutorial = () => {
+    setMobileTutorialOpen(false);
+    try {
+      window.localStorage.setItem(MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage failures; the tour can still be dismissed for this session.
+    }
+  };
+
+  const openMobileTutorial = () => {
+    setMobileTutorialStepIndex(0);
+    setMobileTutorialOpen(true);
+  };
+
+  const goToNextMobileTutorialStep = () => {
+    if (mobileTutorialStepIndex >= mobileTutorialSteps.length - 1) {
+      closeMobileTutorial();
+      return;
+    }
+    setMobileTutorialStepIndex((current) => current + 1);
+  };
+
+  const goToPreviousMobileTutorialStep = () => {
+    setMobileTutorialStepIndex((current) => Math.max(0, current - 1));
+  };
 
   useEffect(() => {
     if (googleAutoRefreshSubmittedRef.current) return;
@@ -1864,10 +2082,18 @@ export default function VibeMarketingStartupBaselineSetup({
 
       <div className="space-y-6 p-5 sm:p-6 lg:p-8">
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,520px)] lg:items-start">
-          <div>
+          <div ref={mobileIntroRef}>
             <p className="text-sm font-black uppercase tracking-wide text-violet-700">{setupEyebrow}</p>
             <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">{setupDescription}</p>
+            <button
+              type="button"
+              onClick={openMobileTutorial}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.08)] px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] text-[var(--vr-color-primary)] sm:hidden"
+            >
+              Quick tour
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           </div>
           {showSetupProgress && normalizedSetupProgress !== null ? (
             <div className="pt-2 lg:pt-10">
@@ -1892,7 +2118,8 @@ export default function VibeMarketingStartupBaselineSetup({
                     {startupProfileComplete ? <CompletePill /> : null}
                   </div>
                   <p className="mt-2 text-base font-semibold leading-7 text-gray-600">
-                    Add your company identity and business details once. AI research uses these answers without overwriting them.
+                    <span className="sm:hidden">Add your core details once. AI uses them as source-of-truth without changing them.</span>
+                    <span className="hidden sm:inline">Add your company identity and business details once. AI research uses these answers without overwriting them.</span>
                   </p>
                 </div>
               </div>
@@ -1919,9 +2146,10 @@ export default function VibeMarketingStartupBaselineSetup({
                       <Sparkles className="h-7 w-7" />
                     </span>
                     <div>
-                      <h3 className="text-xl font-black tracking-normal text-violet-800">Save time - let our AI do the heavy lifting</h3>
+                      <h3 className="text-xl font-black tracking-normal text-violet-800">Let AI do the heavy lifting</h3>
                       <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-700">
-                        Add or review your details below, then AI can scan public sources and prepare article-generation context from your answers.
+                        <span className="sm:hidden">Fill the basics, then let AI prep company context from public sources.</span>
+                        <span className="hidden sm:inline">Add or review your details below, then AI can scan public sources and prepare article-generation context from your answers.</span>
                         <span className="ml-2 inline-flex items-center gap-1 font-black text-violet-700">
                           Learn how it works <ArrowRight className="h-4 w-4" />
                         </span>
@@ -2135,6 +2363,7 @@ export default function VibeMarketingStartupBaselineSetup({
                 type="button"
                 onClick={startAutofill}
                 disabled={!canStartAutofill}
+                ref={mobileResearchButtonRef}
                 className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-[var(--vr-color-primary)] px-6 py-5 text-left text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="flex min-w-0 items-center gap-4">
@@ -2173,7 +2402,7 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           </section>
 
-          <aside className={clsx("self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm", !profileContentExpanded && "hidden")}>
+          <aside ref={mobileNextStepsRef} className={clsx("self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm", !profileContentExpanded && "hidden")}>
             <h3 className="text-base font-black text-gray-950">What happens next?</h3>
             <div className="mt-5 space-y-5">
               <NextStepItem icon={Search} title="We research your company" body="AI reviews your site, LinkedIn page, and trusted public sources using your answers as ground truth." />
@@ -2192,6 +2421,15 @@ export default function VibeMarketingStartupBaselineSetup({
           </aside>
         </div>
       </div>
+
+      <MobileStartupSetupTutorial
+        open={mobileTutorialOpen}
+        stepIndex={mobileTutorialStepIndex}
+        steps={mobileTutorialSteps}
+        onClose={closeMobileTutorial}
+        onBack={goToPreviousMobileTutorialStep}
+        onNext={goToNextMobileTutorialStep}
+      />
 
       {includeBaseline ? (
         <section
