@@ -365,3 +365,8 @@
 - [x] Let Updates metric cards stay highlighted after click
 - [x] Make create-update metric cards activate edit mode from any card click
 - [x] Wrap create-update metric card text responsively and reveal extra mobile rows in 6-card Show more batches
+- [x] Simplify the Manage Companies page on mobile and tighten its company hero layout across breakpoints
+- [x] Remove motion from dashboard metric cards and make metric text wrap cleanly across breakpoints
+- [x] Simplify the expanded update metric summary cards and remove their icon treatment
+- [x] Make the expanded past-update card layout read cleanly on mobile
+- [x] Collapse long expanded-update sections on mobile and let users reveal the full list on demand

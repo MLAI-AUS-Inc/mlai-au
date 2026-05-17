@@ -160,26 +160,20 @@ function UpdateVideoHero({ update }: { update: { videoUrl?: string | null; video
 }
 
 // Reuseable Components
-function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
+function MetricCard({ label, value, icon: _Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+            "flex flex-col items-center justify-center rounded-xl border px-3 py-4 text-center",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                : "border-gray-200 bg-gray-50 opacity-40"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
+                : "border-gray-200 bg-gray-50/80 opacity-45"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             <p className={clsx(
-                "text-base font-extrabold leading-tight",
+                "text-base font-black leading-tight sm:text-[1.75rem]",
                 active ? "text-gray-900" : "text-gray-300"
             )}>{active ? value : "—"}</p>
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -187,34 +181,28 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
 }
 
 // Editable metric input for inline editing
-function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
-    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} />;
+function EditableMetricCard({ label, value, icon: _Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
+    if (!editing) return <MetricCard label={label} value={value} icon={_Icon} active={active} />;
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+            "flex cursor-pointer flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-all",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             {active ? (
                 <input
                     type="text"
                     value={value}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                    className="w-full border-b-2 border-[rgba(0,128,128,0.18)] bg-transparent py-0.5 text-center text-base font-black text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-[1.75rem]"
                 />
             ) : (
                 <p className="text-base font-extrabold text-gray-300">—</p>
             )}
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -656,7 +644,11 @@ function VRUpdateSection({
     label: string;
     items: string[];
 }) {
+    const [mobileExpanded, setMobileExpanded] = useState(false);
     if (items.length === 0) return null;
+    const shouldClampOnMobile = items.length > 2;
+    const visibleItems = mobileExpanded ? items : items.slice(0, 2);
+
     return (
         <div className="vr-us-block">
             <div className="vr-us-heading">
@@ -666,13 +658,22 @@ function VRUpdateSection({
                 <span className="vr-us-heading-text">{label}</span>
             </div>
             <div className="vr-us-list">
-                {items.map((item, i) => (
+                {visibleItems.map((item, i) => (
                     <div className="vr-us-item" key={i}>
                         <span className="vr-us-item-dot">•</span>
                         <span className="vr-us-item-text">{item.trim()}</span>
                     </div>
                 ))}
             </div>
+            {shouldClampOnMobile ? (
+                <button
+                    type="button"
+                    onClick={() => setMobileExpanded((current) => !current)}
+                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
+                >
+                    {mobileExpanded ? "Show less" : `Show all ${items.length}`}
+                </button>
+            ) : null}
         </div>
     );
 }
@@ -858,15 +859,14 @@ function VRPastUpdateRow({
                         <span>{format(new Date(update.date), "MMMM d, yyyy")}</span>
                         <Link
                             to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium"
-                            style={{ color: "var(--vr-color-text-mid)" }}
+                            className="vr-past-edit"
                         >
                             <PencilSquareIcon className="h-4 w-4" />
                             Edit
                         </Link>
                     </div>
 
-                    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                    <div className="vr-past-metrics-grid">
                         {update.metrics?.revenue ? (
                             <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
                         ) : null}

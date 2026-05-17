@@ -12,7 +12,6 @@ import {
     PlusIcon,
     BuildingOffice2Icon,
     CheckCircleIcon,
-    ArrowRightIcon,
     PencilSquareIcon,
     GlobeAltIcon,
     IdentificationIcon,
@@ -78,13 +77,14 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                         className="vr-text-body-small mt-1"
                         style={{ color: "var(--vr-color-text-mid)" }}
                     >
-                        Your active company is front and centre. Add another startup or switch between them any time.
+                        <span className="sm:hidden">Switch companies or add another startup.</span>
+                        <span className="hidden sm:inline">Your active company is front and centre. Add another startup or switch between them any time.</span>
                     </p>
                 </div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                     <Link
                         to="/founder-tools/company-setup?new=true"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
+                        className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-black transition-all sm:min-h-0 sm:w-auto sm:justify-start sm:rounded-lg sm:py-2.5"
                         style={{
                             background: "var(--vr-color-primary)",
                             color: "#fff",
@@ -110,20 +110,21 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                     <div className="vr-company-hero-banner relative">
                         <div className="vr-company-hero-banner-bubble-1" />
                         <div className="vr-company-hero-banner-bubble-2" />
-                        <div className="absolute top-4 right-4">
-                            <span className="vr-badge vr-badge-teal inline-flex items-center gap-1">
-                                <CheckCircleIcon className="w-3.5 h-3.5" />
-                                Active
+                        <div className="absolute right-3 top-3 sm:right-4 sm:top-4">
+                            <span className="vr-badge vr-badge-teal inline-flex items-center gap-1 px-2 py-1 text-[10px] sm:px-[10px] sm:py-[3px] sm:text-xs">
+                                <CheckCircleIcon className="hidden h-3.5 w-3.5 sm:block" />
+                                <span className="sm:hidden">Live</span>
+                                <span className="hidden sm:inline">Active</span>
                             </span>
                         </div>
                     </div>
 
                     {/* Showcase body */}
-                    <div className="p-6 sm:p-8 space-y-6">
+                    <div className="space-y-5 p-5 sm:space-y-6 sm:p-8">
                         {/* Title + logo row */}
-                        <div className="flex items-start gap-4 flex-wrap">
+                        <div className="flex flex-wrap items-start gap-3 sm:gap-4">
                             <div
-                                className="w-14 h-14 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0"
+                                className="flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl sm:h-14 sm:w-14"
                                 style={{
                                     background: "var(--vr-color-surface)",
                                     border: "1px solid var(--vr-color-border)",
@@ -133,11 +134,11 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                     <img
                                         src={`https://www.google.com/s2/favicons?domain=${activeCompany.domain}&sz=128`}
                                         alt={activeCompany.name}
-                                        className="w-10 h-10 rounded"
+                                        className="h-8 w-8 rounded sm:h-10 sm:w-10"
                                     />
                                 ) : (
                                     <BuildingOffice2Icon
-                                        className="w-7 h-7"
+                                        className="h-6 w-6 sm:h-7 sm:w-7"
                                         style={{ color: "var(--vr-color-text-sub)" }}
                                     />
                                 )}
@@ -145,11 +146,11 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                             <div className="flex-1 min-w-0">
                                 <h2
                                     className="vr-text-card-title"
-                                    style={{ fontSize: "28px", lineHeight: 1.15 }}
+                                    style={{ fontSize: "clamp(22px, 4vw, 28px)", lineHeight: 1.15 }}
                                 >
                                     {activeCompany.name}
                                 </h2>
-                                <div className="flex flex-wrap items-center gap-2 mt-1">
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
                                     <StartupRegionBadge location={activeCompany.location} />
                                     {activeCompany.registered && (
                                         <span
@@ -201,34 +202,23 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
 
                         {/* Actions */}
                         <div
-                            className="flex flex-wrap gap-2.5 pt-2"
+                            className="flex flex-col gap-2.5 pt-2 sm:flex-row sm:flex-wrap"
                             style={{ borderTop: "1px solid var(--vr-color-border)" }}
                         >
                             <Link
                                 to={activeCompanyHasUpdates ? "/founder-tools/updates" : "/founder-tools/updates/create"}
-                                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold transition-all mt-5"
-                                style={{
-                                    background: "var(--vr-color-primary)",
-                                    color: "#fff",
-                                    borderRadius: "var(--vr-radius-md)",
-                                    boxShadow: "var(--vr-shadow-sm)",
-                                }}
+                                className="mt-4 inline-flex min-h-12 w-full items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] sm:mt-5 sm:w-auto"
                             >
-                                Go to Updates
-                                <ArrowRightIcon className="w-4 h-4" />
+                                <span className="sm:hidden">Open updates</span>
+                                <span className="hidden sm:inline">Go to Updates</span>
                             </Link>
                             <Link
                                 to="/founder-tools/company-setup?edit=true&next=/founder-tools/companies"
-                                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium transition-colors mt-5"
-                                style={{
-                                    color: "var(--vr-color-text-mid)",
-                                    background: "transparent",
-                                    border: "1px solid var(--vr-color-border-md)",
-                                    borderRadius: "var(--vr-radius-md)",
-                                }}
+                                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-950 sm:mt-5 sm:w-auto"
                             >
                                 <PencilSquareIcon className="w-4 h-4" />
-                                Edit Details
+                                <span className="sm:hidden">Edit company</span>
+                                <span className="hidden sm:inline">Edit Details</span>
                             </Link>
                         </div>
                     </div>
@@ -283,10 +273,12 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                                             </div>
                                         )}
                                     </div>
-                                    <ArrowRightIcon
-                                        className="w-4 h-4 flex-shrink-0"
+                                    <span
+                                        className="text-[11px] font-black uppercase tracking-wide"
                                         style={{ color: "var(--vr-color-text-sub)" }}
-                                    />
+                                    >
+                                        Switch
+                                    </span>
                                 </button>
                             </Form>
                         ))}
@@ -297,7 +289,7 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
             {/* Register new company — subtle dashed card at the bottom */}
             <Link
                 to="/founder-tools/company-setup?new=true"
-                className="vr-company-card-add flex items-center justify-center gap-3 p-5 text-center group"
+                className="vr-company-card-add group flex items-center justify-center gap-3 p-4 text-center sm:p-5"
                 style={{ borderRadius: "var(--vr-radius-lg)" }}
             >
                 <div
@@ -313,7 +305,8 @@ export default function ManageCompanies({ loaderData }: Route.ComponentProps) {
                     />
                 </div>
                 <span className="vr-text-body-small" style={{ color: "var(--vr-color-text-mid)", fontWeight: 500 }}>
-                    Register another company
+                    <span className="sm:hidden">Add another company</span>
+                    <span className="hidden sm:inline">Register another company</span>
                 </span>
             </Link>
         </div>
