@@ -16,6 +16,7 @@ import {
 import { clsx } from "clsx";
 
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
+import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
@@ -291,7 +292,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(
           scanPurpose === "setup"
-            ? "/founder-tools/marketing/create?step=writeCheck"
+            ? `/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`
             : `/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`,
         );
       }
@@ -312,11 +313,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         article_surface_url: articleSurfaceUrl,
         sourceScanRunId: runId,
         source_scan_run_id: runId,
-        autoSetupPreview: true,
-        auto_setup_preview: true,
-      });
-      if (result.runId) throw redirect("/founder-tools/marketing/create?step=writeCheck");
-      return { intent, error: result.error || result.errors?.[0] || "Articles setup could not be started." };
+	        autoSetupPreview: true,
+	        auto_setup_preview: true,
+	      });
+	      if (result.runId) throw redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
+	      return { intent, error: result.error || result.errors?.[0] || "Articles setup could not be started." };
     } else if (intent === "build-article-system-preview") {
       const result = await controlVibeMarketingRun(env, request, runId, "approve", { workflow: "repo_scan" });
       const setupRunId = setupRunIdForRun(result);
@@ -768,6 +769,8 @@ function ArticleSystemSetupPreviewPanel({
     .slice(0, 8);
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
   const setupCompleted = run.status === "completed" || run.approvalState === "approved";
+  const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
+  const previewFailed = isFailedArticlePreview(run.livePreview) || (["blocked", "failed"].includes(run.status) && Boolean(run.livePreview?.error || run.errors.length));
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -804,73 +807,87 @@ function ArticleSystemSetupPreviewPanel({
         </div>
       ) : null}
 
-      <LivePreviewCommentInspectorPanel
-        run={run}
-        targetRunId={setupRunId}
-        selectedComponent={selectedComponent}
-        onSelectComponent={onSelectComponent}
-        previewUrlFallback={previewUrl}
-        previewTitle="Articles setup preview"
-        reviewTitle="Articles setup comments"
-        draftNoun="revision pin"
-        emptyDraftText="0 draft revision pins ready for review."
-        submittedRetryText="Submitted revision comments are ready to retry."
-        waitingBridgeText="Waiting for revision bridge"
-        unavailableSlot={<ArticleSystemSetupPreviewUnavailable run={run} previewUrl={previewUrl} />}
-        actionSlot={(reviewState) => {
-          const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
-          const approveDisabled = isSubmitting || needsCommentSubmitFirst;
-          const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
-          const denyPending = isActionPending?.("deny") ?? isSubmitting;
-          const approvePending = isActionPending?.("approve") ?? isSubmitting;
-          return (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <Form method="POST">
-                <input type="hidden" name="setupRunId" value={setupRunId} />
-                <button
-                  type="submit"
-                  name="intent"
-                  value="submit-article-system-comments"
-                  disabled={isSubmitting || !reviewState.canSendRevisionRequest}
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
-                >
-                  {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
-                  {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry revision comments" : "Send revision comments"}
-                </button>
-              </Form>
-              {canApprove ? (
-                <>
-                  <Form method="POST">
-                    <button
-                      type="submit"
-                      name="intent"
-                      value="deny"
-                      disabled={isSubmitting}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
-                    >
-                      {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
-                      {denyPending ? "Rejecting..." : "Reject setup"}
-                    </button>
-                  </Form>
-                  <Form method="POST">
-                    <button
-                      type="submit"
-                      name="intent"
-                      value="approve"
-                      disabled={approveDisabled}
-                      title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
-                    >
-                      {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                      {approvePending ? "Approving..." : "Approve articles setup"}
-                    </button>
-                  </Form>
-                </>
-              ) : null}
-            </div>
-          );
-        }}
-      />
+      {previewReady ? (
+        <LivePreviewCommentInspectorPanel
+          run={run}
+          targetRunId={setupRunId}
+          selectedComponent={selectedComponent}
+          onSelectComponent={onSelectComponent}
+          previewUrlFallback={previewUrl}
+          previewTitle="Articles setup preview"
+          reviewTitle="Articles setup comments"
+          draftNoun="revision pin"
+          emptyDraftText="0 draft revision pins ready for review."
+          submittedRetryText="Submitted revision comments are ready to retry."
+          waitingBridgeText="Waiting for revision bridge"
+          unavailableSlot={<ArticleSystemSetupPreviewUnavailable run={run} previewUrl={previewUrl} isSubmitting={isSubmitting} isActionPending={isActionPending} />}
+          actionSlot={(reviewState) => {
+            const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
+            const approveDisabled = isSubmitting || needsCommentSubmitFirst;
+            const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
+            const denyPending = isActionPending?.("deny") ?? isSubmitting;
+            const approvePending = isActionPending?.("approve") ?? isSubmitting;
+            return (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Form method="POST">
+                  <input type="hidden" name="setupRunId" value={setupRunId} />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="submit-article-system-comments"
+                    disabled={isSubmitting || !reviewState.canSendRevisionRequest}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-black disabled:opacity-40 sm:w-auto"
+                  >
+                    {submitCommentsPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PaperAirplaneIcon className="h-4 w-4" />}
+                    {submitCommentsPending ? "Sending..." : reviewState.canRetrySubmittedBatch ? "Retry revision comments" : "Send revision comments"}
+                  </button>
+                </Form>
+                {canApprove ? (
+                  <>
+                    <Form method="POST">
+                      <button
+                        type="submit"
+                        name="intent"
+                        value="deny"
+                        disabled={isSubmitting}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-bold text-red-700 shadow-sm transition hover:bg-red-50 disabled:opacity-50 sm:w-auto"
+                      >
+                        {denyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <XCircleIcon className="h-4 w-4" />}
+                        {denyPending ? "Rejecting..." : "Reject setup"}
+                      </button>
+                    </Form>
+                    <Form method="POST">
+                      <button
+                        type="submit"
+                        name="intent"
+                        value="approve"
+                        disabled={approveDisabled}
+                        title={needsCommentSubmitFirst ? "Send or clear draft revision comments before approving." : undefined}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
+                      >
+                        {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                        {approvePending ? "Approving..." : "Approve articles setup"}
+                      </button>
+                    </Form>
+                  </>
+                ) : null}
+              </div>
+            );
+          }}
+        />
+      ) : !setupCompleted ? (
+        <div className="space-y-4">
+          <ArticlesSetupProgressCard run={run} />
+          {previewFailed ? (
+            <ArticleSystemSetupPreviewUnavailable
+              run={run}
+              previewUrl={previewUrl}
+              isSubmitting={isSubmitting}
+              isActionPending={isActionPending}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       {setupCompleted ? (
         <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -895,14 +912,19 @@ function ArticleSystemSetupPreviewPanel({
 function ArticleSystemSetupPreviewUnavailable({
   run,
   previewUrl,
+  isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   previewUrl?: string | null;
+  isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
   const error = String(preview?.error || run.errors?.[0] || "").trim();
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
+  const retryPreviewPending = isActionPending?.("start-live-preview") ?? isSubmitting;
   if (previewUrl) return null;
   return (
     <div className={clsx(
@@ -912,11 +934,33 @@ function ArticleSystemSetupPreviewUnavailable({
       <p className="font-black">{error ? "Articles setup preview could not be prepared" : "Articles setup preview is being built"}</p>
       <p className="mt-1">Preview status: {previewStatus}. Refreshing this page is safe.</p>
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
-      {logsUrl ? (
-        <a href={logsUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex font-black underline">
-          Open preview build logs
-        </a>
-      ) : null}
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        {logsUrl ? (
+          <a
+            href={logsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100"
+          >
+            Open GitHub Actions logs
+          </a>
+        ) : null}
+        {error ? (
+          <Form method="POST">
+            <input type="hidden" name="force" value="true" />
+            <button
+              type="submit"
+              name="intent"
+              value="start-live-preview"
+              disabled={retryPreviewPending}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-800 disabled:opacity-50 sm:w-auto"
+            >
+              {retryPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+              {retryPreviewPending ? "Starting preview..." : "Retry preview build"}
+            </button>
+          </Form>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -2686,13 +2730,26 @@ function isPublishApprovalGate(run: VibeMarketingRunSummary) {
   return isArticleWorkflow(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
 }
 
+function isSetupScanRun(run: VibeMarketingRunSummary) {
+  if (!SCAN_WORKFLOWS.has(run.workflow)) return false;
+  const scanPurpose = stringResultValue(run, "scan_purpose", "scanPurpose");
+  return scanPurpose === "setup" || Boolean(setupRunIdForRun(run)) || Boolean(run.result?.["article_surface_hint"]);
+}
+
+function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
+  if (run.status === "completed" || run.approvalState === "approved") return "publish";
+  if (run.livePreview?.available && run.livePreview.previewUrl) return "review";
+  if (run.previewUrl || run.status === "awaiting_approval" || run.status === "approval_required") return "review";
+  return "generate";
+}
+
 function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   const workflow = String(run.workflow ?? "");
   if (DISCOVERY_WORKFLOWS.has(workflow)) {
     return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
   }
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
-  if (workflow === "article_system_setup") return "article_system";
+  if (workflow === "article_system_setup") return setupWorkflowStepIdForRun(run);
   if (workflow === "website_baseline") return "baseline";
   if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (isArticleWorkflow(workflow)) {
@@ -2710,6 +2767,53 @@ function workflowProgressForRunPage(
   fallbackProgress: VibeMarketingWorkflowProgress | null | undefined,
 ): VibeMarketingWorkflowProgress | null {
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
+  if (progress && run.workflow === "article_system_setup") {
+    const activeStepId = setupWorkflowStepIdForRun(run);
+    const setupFailed = isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed";
+    const setupComplete = run.status === "completed" || run.approvalState === "approved";
+    const reviewReady = activeStepId === "review" || setupComplete;
+    return {
+      ...progress,
+      currentStepId: activeStepId,
+      nextStepId: setupComplete ? null : activeStepId === "generate" ? "review" : "publish",
+      steps: progress.steps.map((step) => {
+        if (["profile", "baseline", "repo", "article_system"].includes(step.id)) {
+          return { ...step, status: "complete" };
+        }
+        if (step.id === "generate") {
+          return {
+            ...step,
+            label: "Build setup page",
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            summary: "Create the setup branch and hosted preview for the articles/blogs directory.",
+            status: setupComplete || reviewReady ? "complete" : setupFailed ? "blocked" : "running",
+          };
+        }
+        if (step.id === "review" || step.id === "revise") {
+          return {
+            ...step,
+            label: step.id === "review" ? "Review setup preview" : "Request setup revisions",
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            summary: "Inspect the setup preview and leave revision comments.",
+            status: setupComplete ? "complete" : reviewReady ? "needs_action" : "locked",
+          };
+        }
+        if (step.id === "package" || step.id === "publish") {
+          return {
+            ...step,
+            label: step.id === "publish" ? "Publish setup PR" : "Setup PR ready",
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            summary: "Approve and merge the setup pull request to main.",
+            status: setupComplete ? "complete" : "locked",
+          };
+        }
+        if (step.id === "research" || step.id === "choose_topic" || step.id === "automation") {
+          return { ...step, status: "locked" };
+        }
+        return step;
+      }),
+    };
+  }
   if (!progress || !isArticleGenerationWorkflow(run.workflow) || !POLLING_STATUSES.has(run.status)) {
     return progress;
   }
@@ -2746,14 +2850,16 @@ export default function FounderToolsMarketingRun() {
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
+  const isSetupScanContext = isScanRun && isSetupScanRun(run);
   const isStaleScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
+  const isArticleSystemSetupRun = workflow === "article_system_setup";
+  const setupPreviewFailed = isArticleSystemSetupRun && isFailedArticlePreview(run.livePreview);
   const shouldPoll =
-    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan) ||
+    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
-  const isArticleSystemSetupRun = workflow === "article_system_setup";
   const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
@@ -2779,7 +2885,7 @@ export default function FounderToolsMarketingRun() {
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
-  const isArticleSetupContext = isScanRun || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
+  const isArticleSetupContext = isSetupScanContext || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
   const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
   const previewFailed = isFailedArticlePreview(run.livePreview);
@@ -2893,9 +2999,9 @@ export default function FounderToolsMarketingRun() {
         progress={workflowProgress}
         viewedStepId={viewedWorkflowStepId}
         workflowMode={isArticleSetupContext ? "article_setup" : "article"}
-        title={isArticleSetupContext ? "Set up articles/blogs location" : directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
+        title={isArticleSetupContext ? "Build articles/blogs directory page" : directPublishMode || isPublishAutomateView ? "Create and publish article" : "Create article"}
         titleAs="h1"
-        subtitle={isArticleSetupContext ? "Prepare the repo location where future articles will be written." : undefined}
+        subtitle={isArticleSetupContext ? "Create and review the repo page where future articles will be listed." : undefined}
         isSubmitting={isSubmitting}
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
@@ -2919,7 +3025,7 @@ export default function FounderToolsMarketingRun() {
 
       {!isCompletedArticleReviewPage ? (
         <main className="space-y-6">
-          {!isArticleGenerationRun && !isScanRun ? <MarketingRunProgressCard run={run} /> : null}
+          {!isArticleGenerationRun && !isScanRun && !isArticleSetupContext ? <MarketingRunProgressCard run={run} /> : null}
 
           {isDiscoveryConfirmation ? (
             <section className="rounded-xl border border-violet-100 bg-white p-5 shadow-sm">

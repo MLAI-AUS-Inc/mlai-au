@@ -1508,6 +1508,12 @@ export async function startVibeMarketingLivePreview(
   return normalizeMarketingRun(response.data);
 }
 
+export async function refreshVibeMarketingLivePreview(env: Env, request: Request, runId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`);
+  return normalizeMarketingRun(response.data);
+}
+
 export async function stopVibeMarketingLivePreview(env: Env, request: Request, runId: string) {
   const client = createApiClient(env, request);
   const response = await client.delete(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`);

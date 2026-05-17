@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -345,6 +345,18 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const url = new URL(request.url);
+  const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
+  if (["writeCheck", "editArticle", "reviewPublish"].includes(requestedStep)) {
+    const latestSetupScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
+    if (scanRunHasPendingArticleSystemSetup(latestSetupScan)) {
+      const setupRunId = latestSetupScan ? setupRunIdForRun(latestSetupScan) : "";
+      if (setupRunId) {
+        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+      }
+      throw redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+  }
   let githubRepos: VibeMarketingGithubReposResponse = {
     status: "unavailable",
     repos: [],
@@ -545,7 +557,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
       if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
-      await startVibeMarketingScan(env, request, {
+      const result = await startVibeMarketingScan(env, request, {
         githubRepo,
         github_repo: githubRepo,
         scanPurpose: "setup",
@@ -559,7 +571,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: true,
         auto_setup_preview: true,
       });
-      return redirect("/founder-tools/marketing/create?step=writeCheck");
+      if (result.runId) {
+        return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
+      }
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "retry-scan" || intent === "cancel-scan") {
@@ -673,7 +688,7 @@ function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (intent === "build-article-system-preview") return "articleSystem";
   if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
   if (intent === "start-scan") return "scan";
-  if (intent === "confirm-article-surface" || intent === "create-article-surface") return "writeCheck";
+  if (intent === "confirm-article-surface" || intent === "create-article-surface") return "articleSystem";
   if (intent === "save-article-system") return "articleSystem";
   if (intent === "start-discovery") return "research";
   if (intent === "start-article") return "chooseArticle";
@@ -754,6 +769,7 @@ function PanelHeader({
 export default function FounderToolsMarketingCreate() {
   const { bootstrap, githubRepos } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
   const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
   const shouldRefreshGoogleBaseline = searchParams.get("googleBaseline") === "refresh";
@@ -943,6 +959,11 @@ export default function FounderToolsMarketingCreate() {
   ]);
 
   useEffect(() => {
+    if (!pendingArticleSystemSetupRunId || activeStep !== "articleSystem") return;
+    navigate(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}`, { replace: true });
+  }, [activeStep, navigate, pendingArticleSystemSetupRunId]);
+
+  useEffect(() => {
     const selectionStillValid =
       selectedTopicCandidateId === "__custom__" ||
       selectableTopicCandidates.some((candidate) => candidate.id === selectedTopicCandidateId);
@@ -1004,7 +1025,7 @@ export default function FounderToolsMarketingCreate() {
         className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60"
       >
         {buildArticleSystemPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-        {buildArticleSystemPreviewPending ? "Generating preview..." : "Generate articles setup preview"}
+        {buildArticleSystemPreviewPending ? "Building setup page..." : "Build articles/blogs directory page"}
       </button>
     </Form>
   ) : setupProgressFailed ? null : setupProgressRun ? (
@@ -1058,39 +1079,49 @@ export default function FounderToolsMarketingCreate() {
           />
         ) : null}
 
-          {activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem" ? (
-            <>
-              <ArticleSystemConnectionPanel
-                bootstrap={bootstrap}
-                githubRepos={githubRepos}
-                isSubmitting={isSubmitting}
-                isActionPending={pendingActions.isPending}
-                repoSelection={repoSelection}
-                onRepoSelectionChange={setRepoSelection}
-                articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
-                connectionError={githubConnectError}
-                scanRun={latestScan}
-                framed={false}
-                autoStartInventoryScan
-              />
+        {activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem" ? (
+          <>
+            <ArticleSystemConnectionPanel
+              bootstrap={bootstrap}
+              githubRepos={githubRepos}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+              repoSelection={repoSelection}
+              onRepoSelectionChange={setRepoSelection}
+              articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
+              connectionError={githubConnectError}
+              scanRun={latestScan}
+              framed={false}
+              autoStartInventoryScan
+            />
 
-              {!githubReadyForPublishing ? (
-                <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-sm font-semibold leading-6 text-gray-700">
-                    Skip repository setup for now and generate article copy and images for manual publishing.
-                  </p>
-                  <Link to="/founder-tools/marketing/create?step=research" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
-                    Continue to topic research
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                </div>
-              ) : null}
-            </>
-          ) : null}
+            {activeStep === "articleSystem" && setupProgressRun ? (
+              <div className="mt-5">
+                <ArticlesSetupProgressCard
+                  run={setupProgressRun}
+                  technicalUrl={setupProgressTechnicalUrl}
+                  actionSlot={setupProgressActionSlot}
+                />
+              </div>
+            ) : null}
 
-          {activeStep === "research" ? (
-            <>
-              <PanelHeader
+            {!githubReadyForPublishing ? (
+              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <p className="text-sm font-semibold leading-6 text-gray-700">
+                  Skip repository setup for now and generate article copy and images for manual publishing.
+                </p>
+                <Link to="/founder-tools/marketing/create?step=research" className="mt-3 inline-flex items-center gap-2 rounded-xl bg-gray-950 px-4 py-2 text-sm font-black text-white transition hover:bg-black">
+                  Continue to topic research
+                  <ArrowRightIcon className="h-4 w-4" />
+                </Link>
+              </div>
+            ) : null}
+          </>
+        ) : null}
+
+        {activeStep === "research" ? (
+          <>
+            <PanelHeader
                 title="Research topics"
                 description="Discovery uses your company context, competitors, and seed keywords to find article candidates."
                 passed={Boolean(bootstrap.checks.research?.passed)}
@@ -1252,9 +1283,8 @@ export default function FounderToolsMarketingCreate() {
                       ? "Approve articles setup"
                       : activeStep === "editArticle"
                         ? "Review articles setup preview"
-                        : "Generate articles setup preview"
-                    :
-                  activeStep === "editArticle"
+                        : "Build articles/blogs directory page"
+                    : activeStep === "editArticle"
                     ? "Edit article"
                     : activeStep === "reviewPublish"
                       ? effectiveDeliveryMode === "publish_code"
