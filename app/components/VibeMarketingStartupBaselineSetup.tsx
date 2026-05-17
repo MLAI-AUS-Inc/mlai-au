@@ -797,7 +797,7 @@ function FormField({
 }
 
 function RequiredPill() {
-  return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-black text-emerald-700">Required</span>;
+  return <span className="text-sm font-black leading-none text-red-500" aria-label="required">*</span>;
 }
 
 function CompletePill() {
@@ -2135,13 +2135,13 @@ export default function VibeMarketingStartupBaselineSetup({
                 type="button"
                 onClick={startAutofill}
                 disabled={!canStartAutofill}
-                className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-violet-700 px-6 py-5 text-left text-white shadow-lg shadow-violet-200 transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-[var(--vr-color-primary)] px-6 py-5 text-left text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="flex min-w-0 items-center gap-4">
                   {autofillPending || autofillPolling ? <Loader2 className="h-7 w-7 shrink-0 animate-spin" /> : <Sparkles className="h-7 w-7 shrink-0" />}
                   <span className="min-w-0">
                     <span className="block text-lg font-black">Research my company context</span>
-                    <span className="mt-1 block text-sm font-semibold text-violet-100">AI will use these answers to prepare article context and SEO inputs</span>
+                    <span className="mt-1 block text-sm font-semibold text-white/80">AI will use these answers to prepare article context and SEO inputs</span>
                   </span>
                 </span>
                 <ArrowRight className="h-6 w-6 shrink-0" />
@@ -2305,7 +2305,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   type="button"
                   onClick={startBaseline}
                   disabled={!canStartBaseline}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-2.5 text-sm font-black text-white shadow-sm shadow-[rgba(0,128,128,0.16)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {baselinePending || baselinePolling ? <Loader2 className="h-4 w-4 animate-spin" /> : <BarChart3 className="h-4 w-4" />}
                   {effectiveBaseline.overallScore === null || effectiveBaseline.status === "missing" ? "Generate baseline" : "Rerun baseline"}
@@ -2546,7 +2546,7 @@ export default function VibeMarketingStartupBaselineSetup({
             name="nextAction"
             value="continue"
             disabled={saveActionPending || researchLocked}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-violet-700 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-800 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-sm shadow-[rgba(0,128,128,0.16)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50 sm:px-7"
           >
             {continuePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             {continuePending ? "Continuing..." : primaryActionLabel ?? defaultPrimaryActionLabel}

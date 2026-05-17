@@ -4848,6 +4848,7 @@ export default function CreateUpdate() {
             </section>
 
             <VibeRaisingStickyStepBar
+                className={!monthConfirmed ? "hidden sm:block" : undefined}
                 statusIcon={draftStickyStatusIcon}
                 statusTitle={draftStickyBar.statusTitle}
                 statusDetail={draftStickyBar.statusDetail}

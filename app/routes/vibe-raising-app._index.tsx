@@ -1,5 +1,5 @@
 import { Link, redirect, useLoaderData, useOutletContext, useNavigate } from "react-router";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
@@ -12,7 +12,6 @@ import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
-    ClockIcon,
     ChartBarIcon,
     PencilSquareIcon,
     SparklesIcon,
@@ -950,9 +949,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const hasUpdates = updates.length > 0;
 
     const latestUpdate = hasUpdates ? updates[0] : null;
-    const daysSinceLast = latestUpdate ? differenceInDays(new Date(), new Date(latestUpdate.date)) : 0;
-    const isOverdue = daysSinceLast > 21;
-    const daysOverdue = daysSinceLast - 21;
 
     const now = new Date();
     const currentUpdate = updates.find((update) => {
@@ -1240,36 +1236,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
                 </button>
             </div>
-
-            {isOverdue && (
-                <div className="relative overflow-hidden rounded-xl border border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] p-6 shadow-sm">
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-full border border-[rgba(0,255,215,0.26)] bg-white p-3 text-[var(--vr-color-primary)] shadow-sm">
-                                <ClockIcon className="w-8 h-8" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="rounded-full bg-[rgba(0,255,215,0.24)] px-2.5 py-0.5 text-xs font-bold text-[var(--vr-color-primary)]">
-                                        {daysOverdue} days overdue
-                                    </span>
-                                </div>
-                                <p className="text-gray-700 mb-4">
-                                    Your last update was on <span className="font-semibold">{format(new Date(latestUpdate!.date), "MMMM d, yyyy")}</span>.
-                                    Keep your investors engaged with your latest progress!
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            to="/founder-tools/data-sources"
-                            className="whitespace-nowrap rounded-lg bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-sm transition-colors hover:bg-[var(--vr-palette-black)]"
-                        >
-                            Create Update Now
-                        </Link>
-                    </div>
-                </div>
-            )}
 
             {/* Tabs + tab content */}
             <div>
