@@ -972,6 +972,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
         currentUpdate ? null : pastUpdates[0]?.id ?? null
     );
+    const [activeMetricCard, setActiveMetricCard] = useState<string | null>(null);
 
     if (!hasUpdates) {
         return (
@@ -1152,7 +1153,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
             {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
             <div className="vr-metrics-row">
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "mrr"}
+                    className={clsx("vr-metric-card", activeMetricCard === "mrr" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "mrr" ? null : "mrr")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
@@ -1165,9 +1171,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "active-users"}
+                    className={clsx("vr-metric-card", activeMetricCard === "active-users" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "active-users" ? null : "active-users")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
@@ -1177,9 +1188,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "runway"}
+                    className={clsx("vr-metric-card", activeMetricCard === "runway" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "runway" ? null : "runway")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "var(--vr-color-brand-orange)" }}
@@ -1192,9 +1208,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "raise-committed"}
+                    className={clsx("vr-metric-card", activeMetricCard === "raise-committed" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "raise-committed" ? null : "raise-committed")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
@@ -1202,9 +1223,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Raise Committed</div>
                     <div className="vr-metric-value">62%</div>
                     <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "burn-rate"}
+                    className={clsx("vr-metric-card", activeMetricCard === "burn-rate" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "burn-rate" ? null : "burn-rate")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
@@ -1212,7 +1238,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Burn Rate</div>
                     <div className="vr-metric-value">$52K/mo</div>
                     <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
-                </div>
+                </button>
             </div>
 
             {isOverdue && (

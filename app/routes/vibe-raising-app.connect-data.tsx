@@ -76,6 +76,12 @@ const DATA_PRIVACY_POINTS = [
   "Private drafts stay hidden until you publish",
   "You can disconnect sources and remove cached data anytime",
 ] as const;
+const CONNECTOR_TRUST_ITEMS = [
+  "Only founders and teammates with access to this workspace can see connected source data.",
+  "We only scan the selected source data needed to draft your monthly update.",
+  "We store synced context, generated metrics, and draft materials inside this workspace.",
+  "You can disconnect a source anytime, and connectors with deletion support let you remove stored data from this screen.",
+];
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
   {
@@ -1343,6 +1349,9 @@ function ConnectorCard({
   const isConnected = source.status === "connected" || source.status === "syncing";
   const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
   const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
+  const trustMessage = isConnected
+    ? `Only this founder workspace can see synced ${source.label} context. You can manage access here anytime.`
+    : `Only this founder workspace can see synced ${source.label} context. We only scan ${sourceScanSummary(source)}.`;
   const connectClassName = clsx(
     "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
     disabled || !canConnect
@@ -1359,22 +1368,23 @@ function ConnectorCard({
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
-      <div className="pointer-events-none flex items-start gap-3 pr-20">
-        <SourceLogo sourceKey={source.key} large />
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <SourceLogo sourceKey={source.key} large />
+          <span className={clsx(
+            "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+            isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
+          )}>
+            {displayedStatusLabel}
+          </span>
+        </div>
         <h3 className={clsx(
-          "pt-2 text-left text-sm font-black sm:text-base",
+          "break-words text-left text-base font-black leading-tight sm:text-lg",
           isConnected ? "text-white" : "text-gray-950",
         )}>
           {source.label}
         </h3>
       </div>
-
-      <span className={clsx(
-        "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
-        isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-      )}>
-        {displayedStatusLabel}
-      </span>
 
       <div className="flex flex-1 flex-col pt-4 sm:pt-5">
         <p className={clsx("mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
@@ -1444,6 +1454,15 @@ function ConnectorCard({
           {source.warning && source.status !== "coming_soon" ? (
             <p className={clsx("mt-2 line-clamp-2 text-[10px] font-medium leading-4 sm:text-[11px]", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
           ) : null}
+
+          <p
+            className={clsx(
+              "mt-2 text-[10px] leading-4 sm:text-[11px]",
+              isConnected ? "text-white/80" : "text-slate-500",
+            )}
+          >
+            {trustMessage}
+          </p>
         </div>
       </div>
     </div>
@@ -1456,22 +1475,23 @@ function GoogleAnalyticsPlaceholderCard() {
       className="relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
       aria-label="Google Analytics source coming soon"
     >
-      <div className="pointer-events-none flex items-start gap-3 pr-20">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-          <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
-            <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
-            <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
-            <circle cx="27" cy="12" r="4" fill="#fb923c" />
-          </svg>
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
+            <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
+              <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
+              <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
+              <circle cx="27" cy="12" r="4" fill="#fb923c" />
+            </svg>
+          </div>
+          <span className="inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 ring-1 ring-gray-200 sm:max-w-[9rem] sm:px-2 sm:text-[10px]">
+            Coming soon
+          </span>
         </div>
-        <h3 className="pt-2 text-left text-sm font-black text-gray-950 sm:text-base">
+        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
           Google Analytics
         </h3>
       </div>
-
-      <span className="absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 ring-1 ring-gray-200 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]">
-        Coming soon
-      </span>
 
       <div className="flex flex-1 flex-col pt-4 sm:pt-5">
         <p className="mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5">
@@ -1529,31 +1549,26 @@ function ManualMaterialsCard({
           : "border-gray-200 bg-white",
       )}
     >
-      <div
-        className="pointer-events-none flex items-start gap-3 pr-20"
-      >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-          <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
+            <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+          </div>
+          <span
+            className={clsx(
+              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+              hasManualMaterials
+                ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
+                : "bg-gray-100 text-slate-500 ring-gray-200",
+            )}
+          >
+            {hasManualMaterials ? "Added" : "Optional"}
+          </span>
         </div>
-        <h3
-          className={clsx(
-            "pt-2 text-left text-sm font-black text-gray-950 sm:text-base",
-          )}
-        >
+        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
           Manual input
         </h3>
       </div>
-
-      <span
-        className={clsx(
-          "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
-          hasManualMaterials
-            ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
-            : "bg-gray-100 text-slate-500 ring-gray-200",
-        )}
-      >
-        {hasManualMaterials ? "Added" : "Optional"}
-      </span>
 
       <div className="flex flex-1 flex-col pt-4 sm:pt-5">
         <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:text-xs sm:leading-5">
@@ -1602,6 +1617,29 @@ function deletionSummaryText(deleted: {
   if (rawCount > 0) parts.push(`${rawCount} Gmail cache item${rawCount === 1 ? "" : "s"}`);
   if (derivedCount > 0) parts.push(`${derivedCount} generated update item${derivedCount === 1 ? "" : "s"}`);
   return parts.length > 0 ? parts.join(" and ") : "local Gmail access";
+}
+
+function sourceScanSummary(source: VibeRaisingInputSourceSummary) {
+  switch (source.key) {
+    case "gmail":
+      return "recent emails, relevant threads, and attachments that match your drafting filters";
+    case "slack":
+      return "selected channels and messages you choose for update drafting";
+    case "linear":
+      return "selected projects, issues, and status updates relevant to this update";
+    case "stripe":
+      return "subscription and revenue metrics relevant to this reporting period";
+    case "xero":
+      return "invoices, revenue records, and accounting context for this update";
+    case "bank_feed":
+      return "transactions and cash-flow activity connected to this reporting period";
+    case "notion":
+      return "the pages and notes you choose to use as drafting context";
+    case "google_drive":
+      return "the files you choose to use as investor-update context";
+    default:
+      return "the selected source data needed for this update";
+  }
 }
 
 function GmailManagementModal({
@@ -2592,7 +2630,9 @@ export default function ConnectData() {
       <div className="space-y-4">
         <MonthlyUpdateStepper
           activeStep="connect"
+          disableMotion
           enabledSteps={["connect", "draft"]}
+          hideProgressUntilHover
           onStepClick={handleStepperClick}
           expandOnHover
           frameless
@@ -2666,7 +2706,25 @@ export default function ConnectData() {
           ) : null}
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
+        <div className="mt-4 rounded-2xl border border-[rgba(0,255,215,0.22)] bg-[rgba(0,255,215,0.08)] p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+              <ShieldCheckIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-extrabold text-[var(--vr-color-primary)]">Before you connect</h3>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {CONNECTOR_TRUST_ITEMS.map((item) => (
+                  <p key={item} className="rounded-xl bg-white/80 px-3 py-2 text-sm leading-5 text-[var(--vr-color-text)] ring-1 ring-[rgba(0,128,128,0.08)]">
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           <GoogleAnalyticsPlaceholderCard />
           {prioritySources.map((source) => (
             <ConnectorCard
@@ -2697,7 +2755,7 @@ export default function ConnectData() {
         ) : null}
 
         {showAllSources && moreOptionSources.length > 0 ? (
-          <div id="more-source-options-panel" className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
+          <div id="more-source-options-panel" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
             {moreOptionSources.map((source) => (
               <ConnectorCard
                 key={source.key}
@@ -2709,13 +2767,12 @@ export default function ConnectData() {
                 onToggle={handleToggle}
               />
             ))}
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
-          <ManualMaterialsCard
-            expanded={manualMaterialsExpanded}
-            hasManualMaterials={hasManualMaterials}
+            </div>
+          ) : null}
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <ManualMaterialsCard
+              expanded={manualMaterialsExpanded}
+              hasManualMaterials={hasManualMaterials}
             summary={manualMaterialsSummary}
             onToggle={() => setManualMaterialsExpanded((value) => !value)}
           />
@@ -2723,7 +2780,7 @@ export default function ConnectData() {
           {manualMaterialsExpanded ? (
             <div
               id="manual-materials-panel"
-              className="col-span-3 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:col-span-3 lg:p-5"
+              className="col-span-1 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2 lg:col-span-4 lg:p-5"
             >
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-bold text-slate-500">
@@ -3034,7 +3091,14 @@ export default function ConnectData() {
                   <h3 className="text-base font-black text-gray-950">Privacy and security</h3>
                 </div>
                 <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
-                  {["Only you can see connected source data and private drafts", "Read-only access where supported", "You control what stays connected", "Disconnecting can remove cached source data"].map((item) => (
+                  {[
+                    "Only founders and teammates with access to this workspace can see connected data.",
+                    `For ${pendingConnectSource.label}, we only scan ${sourceScanSummary(pendingConnectSource)}.`,
+                    "We store synced context, generated metrics, and draft materials in this workspace so you can keep editing.",
+                    pendingConnectSource.key === "gmail"
+                      ? "You can disconnect Gmail anytime, and this screen can also delete Gmail-derived drafts, events, and metrics."
+                      : "You can disconnect this source anytime, and connectors with deletion support let you remove stored data from this screen.",
+                  ].map((item) => (
                     <li key={item} className="flex items-center gap-3">
                       <CheckCircleIcon className="h-5 w-5 text-[var(--vr-color-primary)]" />
                       {item}

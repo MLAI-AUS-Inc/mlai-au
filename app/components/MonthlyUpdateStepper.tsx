@@ -6,9 +6,11 @@ interface MonthlyUpdateStepperProps {
   activeStep: MonthlyUpdateStepKey;
   className?: string;
   compact?: boolean;
+  disableMotion?: boolean;
   enabledSteps?: MonthlyUpdateStepKey[];
   expandOnHover?: boolean;
   frameless?: boolean;
+  hideProgressUntilHover?: boolean;
   onStepClick?: (step: MonthlyUpdateStepKey) => void;
 }
 
@@ -43,9 +45,11 @@ export default function MonthlyUpdateStepper({
   activeStep,
   className,
   compact = false,
+  disableMotion = false,
   enabledSteps,
   expandOnHover = false,
   frameless = false,
+  hideProgressUntilHover = false,
   onStepClick,
 }: MonthlyUpdateStepperProps) {
   const activeIndex = Math.max(0, MONTHLY_UPDATE_STEPS.findIndex((step) => step.key === activeStep));
@@ -114,7 +118,10 @@ export default function MonthlyUpdateStepper({
       >
         <button
           type="button"
-          className="flex w-full items-center justify-between gap-4 rounded-2xl px-1 py-2 text-left outline-none transition hover:bg-[rgba(0,255,215,0.08)] focus-visible:bg-[rgba(0,255,215,0.08)] focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.18)]"
+          className={clsx(
+            "flex w-full items-center justify-between gap-4 rounded-2xl px-1 py-2 text-left outline-none hover:bg-[rgba(0,255,215,0.08)] focus-visible:bg-[rgba(0,255,215,0.08)] focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.18)]",
+            !disableMotion && "transition",
+          )}
           aria-label="Show monthly update workflow"
         >
           <div className="min-w-0">
@@ -126,18 +133,33 @@ export default function MonthlyUpdateStepper({
             </h2>
           </div>
           <span className="hidden rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.24)] sm:inline-flex">
-            Hover for steps
+            {disableMotion ? "Steps" : "Hover for steps"}
           </span>
         </button>
 
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--vr-color-border)]">
+        <div
+          className={clsx(
+            "mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--vr-color-border)]",
+            hideProgressUntilHover && "opacity-0 group-hover/stepper:opacity-100 group-focus-within/stepper:opacity-100",
+            hideProgressUntilHover && !disableMotion && "transition-opacity duration-150",
+          )}
+        >
           <div
-            className="h-full rounded-full bg-[var(--vr-color-primary)] transition-all duration-300"
+            className={clsx(
+              "h-full rounded-full bg-[var(--vr-color-primary)]",
+              !disableMotion && "transition-all duration-300",
+            )}
             style={{ width: `${progressPercent}%` }}
           />
         </div>
 
-        <div className="max-h-0 overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/stepper:max-h-64 group-hover/stepper:opacity-100 group-focus-within/stepper:max-h-64 group-focus-within/stepper:opacity-100">
+        <div
+          className={clsx(
+            disableMotion
+              ? "block"
+              : "max-h-0 overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/stepper:max-h-64 group-hover/stepper:opacity-100 group-focus-within/stepper:max-h-64 group-focus-within/stepper:opacity-100",
+          )}
+        >
           <div className="pt-6">
             <div className="flex gap-2 overflow-x-auto pb-1 sm:hidden">
               {MONTHLY_UPDATE_STEPS.map((step, index) => {
@@ -152,7 +174,8 @@ export default function MonthlyUpdateStepper({
                     disabled={!canSelect}
                     onClick={() => onStepClick?.(step.key)}
                     className={clsx(
-                      "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 transition",
+                      "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1",
+                      !disableMotion && "transition",
                       canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
                       isActive && "bg-[var(--vr-color-primary)] text-white ring-[var(--vr-color-primary)]",
                       isComplete && !isActive && "bg-[rgba(0,255,215,0.16)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
@@ -187,13 +210,15 @@ export default function MonthlyUpdateStepper({
                       disabled={!canSelect}
                       onClick={() => onStepClick?.(step.key)}
                       className={clsx(
-                        "relative flex w-full flex-col items-center rounded-xl px-2 pb-3 text-center transition",
+                        "relative flex w-full flex-col items-center rounded-xl px-2 pb-3 text-center",
+                        !disableMotion && "transition",
                         canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.12)]" : "cursor-default",
                       )}
                     >
                       <div
                         className={clsx(
-                          "z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-base font-black transition",
+                          "z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 bg-white text-base font-black",
+                          !disableMotion && "transition",
                           isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_4px_rgba(0,255,215,0.10)]",
                           isActive && !isComplete && "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)] shadow-[0_0_0_5px_rgba(0,128,128,0.10)]",
                           !isActive && !isComplete && "border-[var(--vr-color-border)] text-[var(--vr-color-text-sub)]",

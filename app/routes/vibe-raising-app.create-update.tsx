@@ -1982,6 +1982,8 @@ export default function CreateUpdate() {
         : isManualOnlyDraftFlow
             ? METRIC_OPTIONS
             : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
+    const mobileDraftMetricBatchSize = 6;
+    const [mobileVisibleDraftMetricCount, setMobileVisibleDraftMetricCount] = useState(mobileDraftMetricBatchSize);
     const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
@@ -2088,6 +2090,12 @@ export default function CreateUpdate() {
             });
         }
     }, [shouldDimMetricsTemplate]);
+
+    const focusMetricInput = useCallback((inputId: string) => {
+        window.requestAnimationFrame(() => {
+            document.getElementById(inputId)?.focus();
+        });
+    }, []);
 
     useEffect(() => {
         if (isEdit) return;
@@ -3313,22 +3321,24 @@ export default function CreateUpdate() {
         }
     };
 
-    const toggleActiveMetric = (key: string) => {
+    const activateActiveMetric = (key: string) => {
         if (isViewingCurrentUpdate) {
-            toggleMetric(key);
+            setSelectedMetrics((previous) => {
+                if (previous.has(key)) return previous;
+                const next = new Set(previous);
+                next.add(key);
+                return next;
+            });
+            focusMetricInput(`active-metric-${key}`);
             return;
         }
 
         if (activePastIndex < 0 || !activePastCard) return;
-        setPastMonthCards(prev => prev.map((card, index) => {
-            if (index !== activePastIndex) return card;
-            const nextMetrics = { ...card.metrics };
-            if (key in nextMetrics) {
-                delete nextMetrics[key];
-                return { ...card, metrics: nextMetrics };
-            }
-            return { ...card, metrics: { ...nextMetrics, [key]: "" } };
+        setPastMonthCards((previous) => previous.map((card, index) => {
+            if (index !== activePastIndex || key in card.metrics) return card;
+            return { ...card, metrics: { ...card.metrics, [key]: "" } };
         }));
+        focusMetricInput(`active-metric-${key}`);
     };
 
     const updateActiveHighlights = (value: string) => {
@@ -3821,7 +3831,9 @@ export default function CreateUpdate() {
             <div className="mx-auto max-w-6xl space-y-10 pb-32">
                 <MonthlyUpdateStepper
                     activeStep={showConfirmPopup ? "publish" : "review"}
+                    disableMotion
                     enabledSteps={["connect", "draft", "review", "publish"]}
+                    hideProgressUntilHover
                     onStepClick={handleReviewStepperClick}
                     expandOnHover
                     frameless
@@ -3836,7 +3848,7 @@ export default function CreateUpdate() {
                         <div className="min-w-0">
                             <h2 className="text-lg font-black text-gray-950">How it works</h2>
                             <p className="mt-1 text-sm leading-6 text-slate-600">
-                                Preview page shows exactly what investors will see before you publish this monthly update.
+                                Review shows exactly what investors will see before you publish this monthly update.
                             </p>
                         </div>
                     </div>
@@ -4205,6 +4217,43 @@ export default function CreateUpdate() {
                                 This update is saved privately in <Link to="/founder-tools/drafts" className="font-black text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]">My Drafts</Link> until you publish it.
                             </p>
                         </div>
+
+                        {/* Your Audience Block */}
+                        {(() => {
+                            const d = data as any;
+                            const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
+                            
+                            const criteria = [];
+                            if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
+                            if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
+                            if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
+                            if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
+                            if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
+                            if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
+                            if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
+                            if (criteria.length === 0) criteria.push("Sector Agnostic", "Early Stage");
+
+                            const count = 18 + (criteria.length * 14);
+
+                            return (
+                                <div className="mt-6 rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm">
+                                    <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--vr-color-text)]">
+                                        <UsersIcon className="h-4 w-4 text-[var(--vr-palette-blue)]" />
+                                        Your Audience
+                                    </h3>
+                                    <p className="mb-3 text-sm text-[var(--vr-color-text-mid)]">
+                                        We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{count} investors</strong> on Vibe Raising actively looking for updates matching your criteria:
+                                    </p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {criteria.map(c => (
+                                            <span key={c} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-white px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)] shadow-sm">
+                                                {c}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                                );
+                            })()}
                     </div>
 
                     {showReviewLinkedInPopup ? (
@@ -4302,7 +4351,9 @@ export default function CreateUpdate() {
                                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
                                     <MonthlyUpdateStepper
                                         activeStep="publish"
+                                        disableMotion
                                         enabledSteps={["connect", "draft", "review", "publish"]}
+                                        hideProgressUntilHover
                                         onStepClick={handleReviewStepperClick}
                                         expandOnHover
                                         frameless
@@ -4311,6 +4362,9 @@ export default function CreateUpdate() {
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                                         Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
+                                    </p>
+                                    <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
+                                        You do not need to send this yet. Save it locally first if you want to come back and keep refining the earlier steps.
                                     </p>
 
                                     <Form 
@@ -4352,7 +4406,7 @@ export default function CreateUpdate() {
                                             onClick={() => setShowConfirmPopup(false)}
                                             className="w-full px-5 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all active:scale-95"
                                         >
-                                            Wait, go back
+                                            Save it locally
                                         </button>
                                     </Form>
                                 </div>
@@ -4434,8 +4488,11 @@ export default function CreateUpdate() {
                         </div>
                     }
                     statusTitle={`Review ${reviewMonth} ${reviewYear} update`}
-                    statusDetail="Preview is ready. Publish when the story feels right."
+                    statusDetail="Review is ready. Publish when the story feels right."
                     onBack={() => setDismissedFeedback(true)}
+                    secondaryLabel={draftSaved ? "Draft saved!" : "Save as draft"}
+                    onSecondary={handlePersistDraft}
+                    secondaryDisabled={saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish and Send"
                     onPrimary={() => setShowConfirmPopup(true)}
                 />
@@ -4449,7 +4506,9 @@ export default function CreateUpdate() {
             <div className="space-y-4">
                 <MonthlyUpdateStepper
                     activeStep="draft"
+                    disableMotion
                     enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                    hideProgressUntilHover
                     onStepClick={handleDraftStepperClick}
                     expandOnHover
                     frameless
@@ -4611,21 +4670,27 @@ export default function CreateUpdate() {
                                                 Click any metric card to start editing.
                                             </p>
                                         ) : null}
-                                        <div className="grid gap-3 transition duration-200 sm:grid-cols-2 lg:grid-cols-4">
-                                        {draftMetricOptions.map((metric) => (
+                                        <div className="grid grid-cols-2 gap-3 transition duration-200 lg:grid-cols-4">
+                                        {draftMetricOptions.map((metric, metricIndex) => (
                                                 (() => {
                                                     const hasMetricValue = String(metricValues[metric.key] || "").trim().length > 0;
                                                     const isMetricCardAwake = !shouldDimMetricsTemplate || awakeMetricCards.has(metric.key) || hasMetricValue;
+                                                    const isHiddenOnMobile = metricIndex >= mobileVisibleDraftMetricCount;
                                                     return (
                                                 <label
                                                     key={metric.key}
                                                     className={clsx(
-                                                        "relative rounded-2xl border p-4 transition duration-200",
+                                                        "relative min-w-0 rounded-2xl border p-3 transition duration-200 sm:p-4",
+                                                        isHiddenOnMobile ? "hidden sm:block" : null,
                                                         isMetricCardAwake
                                                             ? "border-gray-200 bg-[var(--vr-palette-paper)]"
                                                             : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
                                                     )}
-                                                    onClick={() => wakeMetricCard(metric.key)}
+                                                    onClick={(event) => {
+                                                        if ((event.target as HTMLElement).closest("button")) return;
+                                                        wakeMetricCard(metric.key);
+                                                        focusMetricInput(`draft-metric-${metric.key}`);
+                                                    }}
                                                 >
                                                     {shouldDimMetricsTemplate && isMetricCardAwake ? (
                                                         <button
@@ -4648,10 +4713,10 @@ export default function CreateUpdate() {
                                                         )}>
                                                             {metric.icon}
                                                         </span>
-                                                        <div className="min-w-0">
-                                                            <div className="group/metric-heading relative inline-flex max-w-full items-center">
+                                                        <div className="min-w-0 flex-1">
+                                                            <div className="group/metric-heading relative flex max-w-full flex-wrap items-center gap-1">
                                                                 <span className={clsx(
-                                                                    "cursor-help text-xs font-black uppercase tracking-wide transition duration-200",
+                                                                    "min-w-0 cursor-help break-words text-left text-[11px] font-black uppercase leading-tight tracking-wide transition duration-200 sm:text-xs",
                                                                     isMetricCardAwake ? "text-gray-500" : "text-gray-400",
                                                                 )}>
                                                                     {metric.label}
@@ -4666,6 +4731,7 @@ export default function CreateUpdate() {
                                                         </div>
                                                     </div>
                                                     <input
+                                                        id={`draft-metric-${metric.key}`}
                                                         type="text"
                                                         name={metric.key}
                                                         value={metricValues[metric.key] || ""}
@@ -4676,7 +4742,7 @@ export default function CreateUpdate() {
                                                         }}
                                                         placeholder={metric.prefix ? `${metric.prefix}${metric.placeholder}` : metric.placeholder}
                                                         className={clsx(
-                                                            "mt-4 w-full border-b-2 bg-transparent py-1 text-lg font-black outline-none transition",
+                                                            "mt-4 w-full min-w-0 border-b-2 bg-transparent py-1 text-base font-black outline-none transition placeholder:text-sm sm:text-lg",
                                                             isMetricCardAwake
                                                                 ? "border-[rgba(0,128,128,0.26)] text-gray-950 focus:border-[var(--vr-color-primary)]"
                                                                 : "border-gray-300 text-gray-400 focus:border-[var(--vr-color-primary)]",
@@ -4687,6 +4753,19 @@ export default function CreateUpdate() {
                                                 })()
                                         ))}
                                         </div>
+                                        {mobileVisibleDraftMetricCount < draftMetricOptions.length ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setMobileVisibleDraftMetricCount((previous) =>
+                                                        Math.min(previous + mobileDraftMetricBatchSize, draftMetricOptions.length),
+                                                    );
+                                                }}
+                                                className="inline-flex w-full items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wide text-gray-700 transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] sm:hidden"
+                                            >
+                                                Show more
+                                            </button>
+                                        ) : null}
                                     </div>
 
                                     <div className="space-y-5">
@@ -5255,7 +5334,10 @@ export default function CreateUpdate() {
 	                                        return (
 	                                            <div
 	                                                key={m.key}
-	                                                onClick={() => toggleActiveMetric(m.key)}
+	                                                onClick={(event) => {
+	                                                    if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
+	                                                    activateActiveMetric(m.key);
+	                                                }}
                                                 className={clsx(
                                                     "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                     active
@@ -5272,19 +5354,20 @@ export default function CreateUpdate() {
                                                 </div>
                                                 {active ? (
                                                     <input
+	                                                        id={`active-metric-${m.key}`}
 	                                                        type="text"
 	                                                        name={isViewingCurrentUpdate ? m.key : undefined}
 	                                                        value={activeMetricValues[m.key] || ""}
 	                                                        onClick={(e) => e.stopPropagation()}
 	                                                        onChange={(e) => updateActiveMetric(m.key, e.target.value)}
                                                         placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                        className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                                                        className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
                                                     />
                                                 ) : (
                                                     <p className="text-base font-extrabold text-gray-300">—</p>
                                                 )}
                                                 <p className={clsx(
-                                                    "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                    "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
                                                     active ? "text-gray-600" : "text-gray-400"
                                                 )}>{m.label}</p>
                                             </div>
@@ -5365,7 +5448,16 @@ export default function CreateUpdate() {
                                     return (
                                         <div
                                             key={m.key}
-                                            onClick={() => toggleMetric(m.key)}
+                                            onClick={(event) => {
+                                                if ((event.target as HTMLElement).closest("input,button,a,textarea,select")) return;
+                                                setSelectedMetrics((previous) => {
+                                                    if (previous.has(m.key)) return previous;
+                                                    const next = new Set(previous);
+                                                    next.add(m.key);
+                                                    return next;
+                                                });
+                                                focusMetricInput(`default-metric-${m.key}`);
+                                            }}
                                             className={clsx(
                                                 "relative rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
                                                 active
@@ -5382,19 +5474,20 @@ export default function CreateUpdate() {
                                             </div>
                                             {active ? (
                                                 <input
+                                                    id={`default-metric-${m.key}`}
                                                     type="text"
                                                     name={m.key}
                                                     value={metricValues[m.key] || ""}
                                                     onClick={(e) => e.stopPropagation()}
                                                     onChange={(e) => setMetricValues(prev => ({ ...prev, [m.key]: e.target.value }))}
                                                     placeholder={m.prefix ? `${m.prefix}${m.placeholder}` : m.placeholder}
-                                                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                                                    className="w-full min-w-0 border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-sm font-extrabold text-gray-900 placeholder:text-xs focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-base"
                                                 />
                                             ) : (
                                                 <p className="text-base font-extrabold text-gray-300">—</p>
                                             )}
                                             <p className={clsx(
-                                                "text-[10px] font-semibold uppercase tracking-wide mt-1",
+                                                "mt-1 max-w-full break-words text-[10px] font-semibold uppercase leading-tight tracking-wide",
                                                 active ? "text-gray-600" : "text-gray-400"
                                             )}>{m.label}</p>
                                         </div>

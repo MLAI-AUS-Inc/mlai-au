@@ -334,3 +334,9 @@
 - [x] Generate Roo kangaroo base pet art
 - [x] Generate Roo kangaroo animation rows
 - [x] Finalize and package Roo kangaroo pet
+- [x] Update the Connect Data stepper after user interview: hide the progress bar until hover and remove the motion
+- [x] Add visible trust and privacy messaging near Connect Data connector actions
+- [x] Fix Data Sources mobile card badges so they no longer overlap source names
+- [x] Let Updates metric cards stay highlighted after click
+- [x] Make create-update metric cards activate edit mode from any card click
+- [x] Wrap create-update metric card text responsively and reveal extra mobile rows in 6-card Show more batches

@@ -7,6 +7,9 @@ type VibeRaisingStickyStepBarProps = {
     statusDetail?: string;
     backLabel?: string;
     onBack?: () => void;
+    secondaryLabel?: string;
+    onSecondary?: () => void;
+    secondaryDisabled?: boolean;
     primaryLabel: string;
     onPrimary?: () => void;
     primaryDisabled?: boolean;
@@ -20,6 +23,9 @@ export default function VibeRaisingStickyStepBar({
     statusDetail,
     backLabel = "Back",
     onBack,
+    secondaryLabel,
+    onSecondary,
+    secondaryDisabled = false,
     primaryLabel,
     onPrimary,
     primaryDisabled = false,
@@ -51,6 +57,16 @@ export default function VibeRaisingStickyStepBar({
                             className="inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-extrabold text-slate-500 transition hover:bg-gray-50 hover:text-gray-950"
                         >
                             {backLabel}
+                        </button>
+                    ) : null}
+                    {secondaryLabel && onSecondary ? (
+                        <button
+                            type="button"
+                            onClick={onSecondary}
+                            disabled={secondaryDisabled}
+                            className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-extrabold text-slate-700 shadow-sm transition hover:bg-gray-50 hover:text-gray-950 disabled:cursor-not-allowed disabled:opacity-55"
+                        >
+                            {secondaryLabel}
                         </button>
                     ) : null}
                     <button
