@@ -271,6 +271,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const scanPurpose = stringFromForm(formData, "scanPurpose") || "inventory";
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before scanning." };
       if (scanPurpose !== "inventory" && !articleSurfaceUrl) return { intent, error: "Enter the articles or blog URL before scanning." };
+      const autoSetupPreview = scanPurpose === "setup";
       const result = await startVibeMarketingScan(env, request, {
         githubRepo,
         github_repo: githubRepo,
@@ -284,12 +285,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
               articleSurfaceUrl,
               article_surface_url: articleSurfaceUrl,
             }),
-        autoSetupPreview: false,
-        auto_setup_preview: false,
+        autoSetupPreview,
+        auto_setup_preview: autoSetupPreview,
       });
-      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      if (result.runId) {
+        throw redirect(
+          scanPurpose === "setup"
+            ? "/founder-tools/marketing/create?step=writeCheck"
+            : `/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`,
+        );
+      }
       return { intent, error: result.error || result.errors?.[0] || "Repository scan could not be started." };
-    } else if (intent === "confirm-article-surface" || intent === "create-article-surface") {
+  } else if (intent === "confirm-article-surface" || intent === "create-article-surface") {
       const githubRepo = stringFromForm(formData, "githubRepo") || stringFromForm(formData, "github_repo");
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl") || stringFromForm(formData, "article_surface_url");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
@@ -305,10 +312,10 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         article_surface_url: articleSurfaceUrl,
         sourceScanRunId: runId,
         source_scan_run_id: runId,
-        autoSetupPreview: false,
-        auto_setup_preview: false,
+        autoSetupPreview: true,
+        auto_setup_preview: true,
       });
-      if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
+      if (result.runId) throw redirect("/founder-tools/marketing/create?step=writeCheck");
       return { intent, error: result.error || result.errors?.[0] || "Articles setup could not be started." };
     } else if (intent === "build-article-system-preview") {
       const result = await controlVibeMarketingRun(env, request, runId, "approve", { workflow: "repo_scan" });
@@ -1848,7 +1855,8 @@ function PublishAndAutomateDetail({
       (publishChildRunId === run.runId && run.status === "awaiting_confirmation" && !prUrl && !previewUrl),
   );
   const publishChildMissingRemote = Boolean(
-    publishChildRecoverable && /not found in content factory|recorded locally but was not found/i.test(publishChildWaitReason),
+    publishChildRecoverable &&
+      /not found in content factory|recorded locally but was not found|queued but did not start/i.test(publishChildWaitReason),
   );
   const publishChildRunning = Boolean(
     publishChildStatus === "queued" ||
@@ -1895,7 +1903,7 @@ function PublishAndAutomateDetail({
 
   return (
     <div className="space-y-5">
-      <ArticleRunStageProgress run={run} variant="embedded" />
+      {publishChildMissingRemote ? null : <ArticleRunStageProgress run={run} variant="embedded" />}
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
@@ -1959,7 +1967,7 @@ function PublishAndAutomateDetail({
                 {publishSourceRunId ? <input type="hidden" name="sourceRunId" value={publishSourceRunId} /> : null}
                 <p className="text-sm font-semibold text-gray-600">
                   {publishChildMissingRemote
-                    ? "The publish run was recorded locally but is missing in Content Factory. Retry will safely recreate the same publish run."
+                    ? "The publish job was queued but did not start. Retry will safely recreate the same PR job."
                     : "The publish run is waiting for confirmation instead of creating a PR. Resume will safely reuse the existing publish run."}
                 </p>
                 <button
