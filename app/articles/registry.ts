@@ -73,6 +73,16 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/why-are-volunteers-important-to-the-community': {
+        title: "Why Are Volunteers Important to the Community?",
+        date: "2026-05-17",
+        description: "Why are volunteers important to the community? See how they add capacity, care, skills, connection, and resilience to local groups and learning networks.",
+        author: "Dr Sam Donegan",
+        slug: "featured/why-are-volunteers-important-to-the-community",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-a7b77c14-bfb3-42b7-bf75-afccaeba36d1.jpg?alt=media&token=67097595-4f47-4ebf-b071-c5cd86494dcb",
+        imageAlt: "Volunteers sorting community donations together in a close-up candid moment of local care and connection",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
