@@ -370,3 +370,4 @@
 - [x] Simplify the expanded update metric summary cards and remove their icon treatment
 - [x] Make the expanded past-update card layout read cleanly on mobile
 - [x] Collapse long expanded-update sections on mobile and let users reveal the full list on demand
+- [x] Re-sync the Data Sources mobile tour after localStorage resets and tighten the Founder Tools top bar on mobile

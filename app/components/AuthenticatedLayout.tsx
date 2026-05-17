@@ -408,9 +408,9 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
+                        <div className="flex flex-1 items-center justify-between gap-x-2 self-stretch sm:gap-x-4 lg:gap-x-6">
                             {showVibeRaisingTopNavigation ? (
-                                <nav className="flex min-w-0 items-center gap-2 overflow-x-auto py-2" aria-label="Vibe Raising">
+                                <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-2 pr-1 sm:gap-2" aria-label="Vibe Raising">
                                     {VIBE_RAISING_TOP_NAVIGATION.map((item) => {
                                         const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -419,7 +419,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                                 key={item.name}
                                                 to={item.href}
                                                 className={classNames(
-                                                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] transition sm:px-4",
+                                                    "whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.1em] transition sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.12em]",
                                                     current
                                                         ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-primary-contrast)] shadow-sm"
                                                         : "border-[var(--vr-color-border)] bg-[rgba(255,255,255,0.72)] text-[var(--vr-color-text-mid)] hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-text)]"
@@ -433,11 +433,11 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             ) : (
                                 <div />
                             )}
-                            <div className="flex items-center gap-x-4 lg:gap-x-6">
+                            <div className="flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6">
                                 <button
                                     type="button"
                                     className={classNames(
-                                        "-m-2.5 p-2.5",
+                                        "hidden -m-2.5 p-2.5 sm:block",
                                         isFounderToolsApp
                                             ? "text-[var(--vr-color-text-sub)] hover:text-[var(--vr-color-text)]"
                                             : "text-gray-400 hover:text-gray-500"

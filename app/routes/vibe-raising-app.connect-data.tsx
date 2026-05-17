@@ -1636,9 +1636,6 @@ function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView
               <circle cx="27" cy="12" r="4" fill="#fb923c" />
             </svg>
           </div>
-          <span className="inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 ring-1 ring-gray-200 sm:max-w-[9rem] sm:px-2 sm:text-[10px]">
-            Coming soon
-          </span>
         </div>
         <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
           Google Analytics
@@ -2085,6 +2082,41 @@ export default function ConnectData() {
 
     return () => window.clearTimeout(timer);
   }, [isMobileTourViewport, mobileTourChecked]);
+
+  useEffect(() => {
+    if (!isMobileTourViewport) return;
+
+    const syncMobileTourState = () => {
+      let hasSeenTour = false;
+
+      try {
+        hasSeenTour = window.localStorage.getItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY) === "1";
+      } catch {
+        hasSeenTour = false;
+      }
+
+      setMobilePrivacyNoteSeen(hasSeenTour);
+
+      if (!hasSeenTour) {
+        setMobileTourChecked(false);
+        setMobileTourStepIndex(0);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncMobileTourState();
+      }
+    };
+
+    window.addEventListener("focus", syncMobileTourState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", syncMobileTourState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isMobileTourViewport]);
 
   useEffect(() => {
     if (hasManualMaterials) {
