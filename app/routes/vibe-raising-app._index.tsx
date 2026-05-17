@@ -330,7 +330,9 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
                                 <span className="w-px h-3 bg-gray-200" />
                             )}
-                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            {!expanded ? (
+                                <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            ) : null}
                         </div>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
