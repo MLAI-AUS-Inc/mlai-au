@@ -4112,7 +4112,6 @@ export default function CreateUpdate() {
                     activeStep={showConfirmPopup ? "publish" : "review"}
                     disableMotion
                     enabledSteps={["connect", "draft", "review", "publish"]}
-                    hideProgressUntilHover
                     onStepClick={handleReviewStepperClick}
                     expandOnHover
                     frameless
@@ -4408,7 +4407,7 @@ export default function CreateUpdate() {
                             </div>
                         </div>
 
-                        {/* Revenue + Active Users charts + Past month previews */}
+                        {/* Revenue chart + Past month previews */}
                         {!hasReviewPitchDeck && (() => {
                             const d = data as any;
                             const pastMonths: Array<{ month: string; highlights: string; challenges: string; asks: string; learnings: string; next30Days: string; metrics: Record<string, string> }> = [];
@@ -4441,45 +4440,19 @@ export default function CreateUpdate() {
                                 }
                             ];
 
-                            // Build active users chart data
-                            const reviewActiveUsersChartData: ChartData[] = [
-                                ...pastMonths.map(pm => ({
-                                    month: pm.month,
-                                    value: parseUsers(pm.metrics.activeUsers || "0"),
-                                })),
-                                {
-                                    month: d?.month || selectedMonth,
-                                    value: parseUsers(d?.activeUsers || "0"),
-                                    isCurrent: true,
-                                }
-                            ];
-
                             const hasRevenue = reviewChartData.some(r => r.value > 0);
-                            const hasActiveUsers = reviewActiveUsersChartData.some(r => r.value > 0);
-                            const hasAnyChart = hasRevenue || hasActiveUsers;
 
                             return (
                                 <>
-                                    {hasAnyChart && (
-                                        <div className={`mt-4 grid gap-4 ${hasRevenue && hasActiveUsers ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
-                                            {hasRevenue && (
-                                                <GrowthChart
-                                                    data={reviewChartData}
-                                                    onSelect={() => {}}
-                                                    title="Revenue"
-                                                    subtitle="Monthly revenue with MoM growth"
-                                                    formatter={formatCompact}
-                                                />
-                                            )}
-                                            {hasActiveUsers && (
-                                                <GrowthChart
-                                                    data={reviewActiveUsersChartData}
-                                                    onSelect={() => {}}
-                                                    title="Active Users"
-                                                    subtitle="Monthly active users with MoM growth"
-                                                    formatter={formatUsers}
-                                                />
-                                            )}
+                                    {hasRevenue && (
+                                        <div className="mt-4 grid grid-cols-1 gap-4">
+                                            <GrowthChart
+                                                data={reviewChartData}
+                                                onSelect={() => {}}
+                                                title="Revenue"
+                                                subtitle="Monthly revenue with MoM growth"
+                                                formatter={formatCompact}
+                                            />
                                         </div>
                                     )}
                                     {pastMonths.length > 0 && (
@@ -4635,7 +4608,6 @@ export default function CreateUpdate() {
                                         activeStep="publish"
                                         disableMotion
                                         enabledSteps={["connect", "draft", "review", "publish"]}
-                                        hideProgressUntilHover
                                         onStepClick={handleReviewStepperClick}
                                         expandOnHover
                                         frameless
@@ -4794,26 +4766,12 @@ export default function CreateUpdate() {
     // 3. Create/Edit Form View
     return (
         <div className="mx-auto max-w-6xl space-y-10 pb-32">
-            {monthConfirmed ? (
-                <div className="pt-6">
-                    <button
-                        type="button"
-                        onClick={returnToMonthSelection}
-                        className="inline-flex items-center gap-2 rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm font-black text-[var(--vr-color-text)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[var(--vr-color-primary-soft)]"
-                    >
-                        <ArrowLeftIcon className="h-4 w-4" />
-                        Back to month selection
-                    </button>
-                </div>
-            ) : null}
-
             <div className="space-y-4">
                 <div ref={draftStepperRef}>
                     <MonthlyUpdateStepper
                         activeStep="draft"
                         disableMotion
                         enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
-                        hideProgressUntilHover
                         onStepClick={handleDraftStepperClick}
                         expandOnHover
                         frameless

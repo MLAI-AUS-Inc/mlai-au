@@ -28,11 +28,7 @@ interface AuthenticatedLayoutProps {
 
 type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; matchPaths?: string[] };
 
-const VIBE_RAISING_TOP_NAVIGATION = [
-    { name: 'My Update', href: '/founder-tools/updates' },
-    { name: 'Data Sources', href: '/founder-tools/data-sources' },
-    { name: 'My Companies', href: '/founder-tools/companies' },
-];
+const MLAI_LOGO_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84";
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
@@ -45,20 +41,6 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const pathname = location.pathname;
     const isFounderToolsApp = pathname === "/founder-tools" || pathname.startsWith("/founder-tools/");
     const appHomeHref = isFounderToolsApp ? "/founder-tools/updates" : "/esafety/dashboard";
-    const showVibeRaisingTopNavigation =
-        isFounderToolsApp &&
-        (
-            pathname === "/founder-tools/overview" ||
-            pathname.startsWith("/founder-tools/overview/") ||
-            pathname === "/founder-tools/updates" ||
-            pathname.startsWith("/founder-tools/updates/") ||
-            pathname === "/founder-tools/drafts" ||
-            pathname.startsWith("/founder-tools/drafts/") ||
-            pathname === "/founder-tools/data-sources" ||
-            pathname.startsWith("/founder-tools/data-sources/") ||
-            pathname === "/founder-tools/companies" ||
-            pathname.startsWith("/founder-tools/companies/")
-        );
 
     const defaultNavigation: NavigationItem[] = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
@@ -170,7 +152,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             >
                                                 <ImageWithFallback
                                                     className="h-8 w-auto"
-                                                    src="/MLAI-Logo.png"
+                                                    src={MLAI_LOGO_URL}
                                                     alt="MLAI Logo"
                                                     width={160}
                                                     height={48}
@@ -282,7 +264,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             >
                                 <ImageWithFallback
                                     className="h-10 w-10 shrink-0 rounded-md object-contain"
-                                    src="/MLAI-Logo.png"
+                                    src={MLAI_LOGO_URL}
                                     alt="MLAI Logo"
                                     width={40}
                                     height={40}
@@ -407,32 +389,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 items-center justify-between gap-x-2 self-stretch sm:gap-x-4 lg:gap-x-6">
-                            {showVibeRaisingTopNavigation ? (
-                                <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-2 pr-1 sm:gap-2" aria-label="Vibe Raising">
-                                    {VIBE_RAISING_TOP_NAVIGATION.map((item) => {
-                                        const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-                                        return (
-                                            <Link
-                                                key={item.name}
-                                                to={item.href}
-                                                className={classNames(
-                                                    "whitespace-nowrap rounded-full border px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.1em] transition sm:px-4 sm:py-1.5 sm:text-xs sm:tracking-[0.12em]",
-                                                    current
-                                                        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-primary-contrast)] shadow-sm"
-                                                        : "border-[var(--vr-color-border)] bg-[rgba(255,255,255,0.72)] text-[var(--vr-color-text-mid)] hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-text)]"
-                                                )}
-                                            >
-                                                {item.name}
-                                            </Link>
-                                        );
-                                    })}
-                                </nav>
-                            ) : (
-                                <div />
-                            )}
-                            <div className="flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6">
+                        <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
+                            <div className="flex items-center gap-x-4 lg:gap-x-6">
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>

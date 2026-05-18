@@ -377,3 +377,34 @@
 - [x] Make the expanded past-update card layout read cleanly on mobile
 - [x] Collapse long expanded-update sections on mobile and let users reveal the full list on demand
 - [x] Re-sync the Data Sources mobile tour after localStorage resets and tighten the Founder Tools top bar on mobile
+- [x] Disable local backend Customer.io magic-link delivery so localhost shows the local magic link
+- [x] Move Founder Tools Data Sources and My Companies from top nav into the sidebar
+- [x] Restore `/vibe-raising` to the Vibe Raising landing page after the homepage duplicate caused the wrong page to render
+- [x] Overwrite `/vibe-raising-landing` with the `/founder-tools/overview` design
+- [x] Update `/vibe-raising-landing` hero heading to "Turn Your Startup Into a Fundable Business"
+- [x] Make `/vibe-raising-landing` CTA always open the intro video and hide the Founder overview label
+- [x] Fix Vibe Raising landing video Get Started button to continue to update creation step one
+- [x] Hide manual input cards on the Vibe Raising Data Sources page
+- [x] Point the sidebar Vibe Raising link to the updates page instead of overview
+- [x] Add a public landing section clarifying the 3 monthly updates investor connection promise
+- [x] Hide the Founder Tools top nav bar so My Update no longer appears
+- [x] Move the investor connection pathway section between How It Works and the 6-month theory block
+- [x] Restyle public landing sections as 3 Month, 4 Steps, and 6 Month with MLAI homepage display typography
+- [x] Change public landing to 3 Updates and align section captions in a shared right column
+- [x] Replace the public landing 4 Steps bullets and horizontal diagram with cards
+- [x] Align public landing numbered-section captions to the same right column
+- [x] Remove doubled divider lines and prevent numbered-section caption overlap
+- [x] Restyle public landing numbered sections to match the provided reference
+- [x] Tune the 6 Months section to match the provided reference
+- [x] Hide the public landing investor onboard message
+- [x] Add My companies to the founder account dropdown above Sign out
+- [x] Align `/founder-tools/updates` with the preview page grid and card design
+- [x] Prevent local Vibe Raising publish from crashing on dev update stub ids
+- [x] Preserve and display pitch deck materials after publishing Vibe Raising updates
+- [x] Add backend pitch deck upload session and completion endpoints
+- [x] Hide the Active Users growth chart from the Vibe Raising review section
+- [x] Apply Oswald typography to the four-step workflow headings
+- [x] Apply Roboto to Vibe Raising workflow subheadings and body text
+- [x] Hide the extra Before you connect trust box on the Connect Data page
+- [x] Hide the Back to month selection button on the draft update step
+- [x] Make the update progress steps always visible and remove the thin progress bars

@@ -2055,15 +2055,21 @@ export async function publishVibeRaisingMonthlyUpdate(
   request: Request,
   updateId: string,
 ): Promise<VibeRaisingMonthlyUpdate | null> {
+  const buildDevPublishedUpdate = () => normalizeMonthlyUpdate({
+    ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
+    id: updateId,
+    status: "ready",
+    visibility: "published",
+    publishedAt: new Date().toISOString(),
+  });
+
   if (shouldUseDevBackendStub()) {
-    const published = DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId);
-    return normalizeMonthlyUpdate({
-      ...(published || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
-      id: updateId,
-      status: "ready",
-      visibility: "published",
-      publishedAt: new Date().toISOString(),
-    });
+    return buildDevPublishedUpdate();
+  }
+
+  if (import.meta.env.DEV && !/^\d+$/.test(updateId)) {
+    console.warn("Skipping backend publish for local dev update stub.");
+    return buildDevPublishedUpdate();
   }
 
   const client = createApiClient(env, request);
@@ -2071,26 +2077,19 @@ export async function publishVibeRaisingMonthlyUpdate(
     const response = await client.post(`${UPDATES_PATH}${encodeURIComponent(updateId)}/publish/`);
     return normalizeMonthlyUpdate(response.data?.update ?? response.data);
   } catch (error: any) {
+    if (import.meta.env.DEV && error.response?.status === 404) {
+      console.warn("Backend publish endpoint could not find this local update; returning a published update stub.");
+      return buildDevPublishedUpdate();
+    }
+
     if (shouldUseDevAuthBypass() && (error.response?.status === 401 || !error.response)) {
       console.warn("No backend publish session in local dev; returning a published update stub.");
-      return normalizeMonthlyUpdate({
-        ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
-        id: updateId,
-        status: "ready",
-        visibility: "published",
-        publishedAt: new Date().toISOString(),
-      });
+      return buildDevPublishedUpdate();
     }
 
     if (shouldUseDevBackendFallback(error)) {
       console.warn("Backend unavailable in local dev; returning a published update stub.");
-      return normalizeMonthlyUpdate({
-        ...(DEV_MONTHLY_DRAFTS_STUB.find((draft) => draft.id === updateId) || DEV_MONTHLY_DRAFTS_STUB[0] || {}),
-        id: updateId,
-        status: "ready",
-        visibility: "published",
-        publishedAt: new Date().toISOString(),
-      });
+      return buildDevPublishedUpdate();
     }
 
     throw error;
