@@ -649,8 +649,8 @@ function VRUpdateSection({
 }) {
     const [mobileExpanded, setMobileExpanded] = useState(false);
     if (items.length === 0) return null;
-    const shouldClampOnMobile = items.length > 2;
-    const visibleItems = mobileExpanded ? items : items.slice(0, 2);
+    const shouldClampOnMobile = items.length > 1;
+    const visibleItems = mobileExpanded ? items : items.slice(0, 1);
 
     return (
         <div className="vr-us-block">
@@ -1124,35 +1124,20 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="flex items-center gap-2.5 flex-wrap">
                         <Link
                             to="/founder-tools/overview"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                         >
                             View Overview
                         </Link>
                         <Link
                             to="/founder-tools/drafts"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                         >
-                            My Draft
+                            My Drafts
                         </Link>
                         <button
                             type="button"
                             onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
-                            style={{
-                                background: "var(--vr-color-primary)",
-                                color: "#fff",
-                                boxShadow: "var(--vr-shadow-sm)",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                         >
                             <PlusIcon className="w-4 h-4" />
                             Create Update
@@ -1183,19 +1168,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 <button
                                     type="button"
                                     onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
-                                    className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-text-strong)] px-6 py-3 font-bold text-white transition-all hover:opacity-95"
+                                    className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                                 >
                                     Create Your First Update
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </button>
                                 <Link
                                     to="/founder-tools/overview"
-                                    className="inline-flex items-center gap-2 rounded-xl border px-6 py-3 font-semibold"
-                                    style={{
-                                        borderColor: "var(--vr-color-border-md)",
-                                        color: "var(--vr-color-text-strong)",
-                                        background: "rgba(255,255,255,0.9)",
-                                    }}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-[var(--vr-color-text-strong)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white"
                                 >
                                     Revisit Overview
                                 </Link>
@@ -1244,12 +1224,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     {showDiscover ? (
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                             onClick={() => navigate("/founder-tools/discover")}
                         >
                             Discover Investors
@@ -1257,23 +1232,13 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     ) : null}
                     <Link
                         to="/founder-tools/drafts"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                     >
-                        My Draft
+                        My Drafts
                     </Link>
                     <Link
                         to="/founder-tools/data-sources"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
-                        style={{
-                            background: "var(--vr-color-primary)",
-                            color: "#fff",
-                            boxShadow: "var(--vr-shadow-sm)",
-                        }}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                     >
                         <PlusIcon className="w-4 h-4" />
                         Create Update

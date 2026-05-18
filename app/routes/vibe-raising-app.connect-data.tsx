@@ -1483,6 +1483,7 @@ function ConnectorCard({
   const isConnected = source.status === "connected" || source.status === "syncing";
   const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
   const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
+  const shouldShowHeaderStatus = displayedStatus !== "coming_soon" && displayedStatus !== "unavailable";
   const trustMessage = isMobileView
     ? isConnected
       ? `Only this workspace can see synced ${source.label} data.`
@@ -1497,7 +1498,7 @@ function ConnectorCard({
     "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
     disabled || !canConnect
       ? "cursor-not-allowed bg-gray-100 text-gray-400"
-      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)]",
+      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)] hover:ring-1 hover:ring-[rgba(0,128,128,0.18)]",
   );
 
   return (
@@ -1510,14 +1511,16 @@ function ConnectorCard({
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
       <div className="pointer-events-none flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className={clsx("flex items-start gap-3", shouldShowHeaderStatus && "justify-between")}>
           <SourceLogo sourceKey={source.key} large />
-          <span className={clsx(
-            "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
-            isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-          )}>
-            {displayedStatusLabel}
-          </span>
+          {shouldShowHeaderStatus ? (
+            <span className={clsx(
+              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+              isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
+            )}>
+              {displayedStatusLabel}
+            </span>
+          ) : null}
         </div>
         <h3 className={clsx(
           "break-words text-left text-base font-black leading-tight sm:text-lg",
@@ -1677,7 +1680,7 @@ function ManualMaterialsCard({
   hasManualMaterials: boolean;
   summary: string;
 }) {
-  const cardCaption = "Upload private documents or add a short written summary for context outside your connected tools.";
+  const cardCaption = "Upload document or add a short written summary for context outside your connected tools.";
 
   return (
     <div
@@ -1937,6 +1940,7 @@ export default function ConnectData() {
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
   const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
+  const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
   const [mobileTourOpen, setMobileTourOpen] = useState(false);
   const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
   const [mobileTourChecked, setMobileTourChecked] = useState(false);
@@ -1984,7 +1988,7 @@ export default function ConnectData() {
       manualMaterials.manualDocumentIds.length > 0 ? `${manualMaterials.manualDocumentIds.length} document${manualMaterials.manualDocumentIds.length === 1 ? "" : "s"} selected` : null,
       manualMaterials.summary.trim() ? "summary added" : null,
     ].filter((value): value is string => Boolean(value)).join(" and ")
-    : "Upload private documents or add a short written summary when you want extra context in the draft.";
+    : "Upload document or add a short written summary when you want extra context in the draft.";
   const gmailSource = sourceByKey.get("gmail");
   const shouldShowGmailPreview = gmailSource?.status === "connected" || gmailSource?.status === "syncing" || gmailSource?.status === "error";
   const bankFeedSource = sourceByKey.get("bank_feed");
@@ -2082,6 +2086,25 @@ export default function ConnectData() {
     return () => {
       window.removeEventListener("focus", syncMobileTourState);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isMobileTourViewport]);
+
+  useEffect(() => {
+    if (!isMobileTourViewport) {
+      setShowStickyBarOnMobile(false);
+      return;
+    }
+
+    const updateStickyVisibility = () => {
+      setShowStickyBarOnMobile(window.scrollY > 120);
+    };
+
+    updateStickyVisibility();
+    window.addEventListener("scroll", updateStickyVisibility, true);
+    window.addEventListener("resize", updateStickyVisibility);
+    return () => {
+      window.removeEventListener("scroll", updateStickyVisibility, true);
+      window.removeEventListener("resize", updateStickyVisibility);
     };
   }, [isMobileTourViewport]);
 
@@ -2903,7 +2926,7 @@ export default function ConnectData() {
                 {privacyPoints.map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
-                    <p className="text-sm font-semibold leading-6 text-slate-600">{item}</p>
+                    <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-sm sm:leading-6">{item}</p>
                   </li>
                 ))}
               </ul>
@@ -3068,6 +3091,7 @@ export default function ConnectData() {
       </div>
 
       <VibeRaisingStickyStepBar
+        className={clsx(isMobileTourViewport && !showStickyBarOnMobile && "hidden sm:block")}
         hideStatusOnMobile
         statusIcon={stickyStatusIcon}
         statusTitle={stickyStatusTitle}
