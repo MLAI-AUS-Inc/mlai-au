@@ -202,6 +202,13 @@ export interface VibeMarketingCheck {
   connectionState?: string | null;
   repoSet?: boolean;
   articleSystem?: Record<string, unknown>;
+  published?: boolean;
+  setupBlocked?: boolean;
+  setupRunId?: string | null;
+  setupStatus?: string | null;
+  rescanRunId?: string | null;
+  prUrl?: string | null;
+  previewUrl?: string | null;
 }
 
 export interface VibeMarketingTopicCandidate {

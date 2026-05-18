@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -146,17 +146,33 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
   return run.status === "completed" || hasActiveLivePreview(preview);
 }
 
+function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
+  if (run.status === "awaiting_confirmation" || run.status === "awaiting_approval" || run.status === "approval_required") {
+    return true;
+  }
+  if (["completed", "failed", "blocked", "denied", "cancelled"].includes(run.status)) {
+    return true;
+  }
+  if (run.previewUrl || run.prUrl || run.livePreview?.previewUrl || run.livePreview?.error) {
+    return true;
+  }
+  return false;
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const run = await getVibeMarketingRun(env, request, runId);
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
-  try {
-    githubRepos = await getVibeMarketingGithubRepos(env, request);
-  } catch {
-    githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
+  const shouldLoadGithubRepos = ["repo_scan", "content_factory_scan"].includes(run.workflow) && !setupRunIdForRun(run);
+  if (shouldLoadGithubRepos) {
+    try {
+      githubRepos = await getVibeMarketingGithubRepos(env, request);
+    } catch {
+      githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
+    }
   }
   const setupRunId = setupRunIdForRun(run);
   let setupRun: VibeMarketingRunSummary | null = null;
@@ -341,6 +357,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
+      if (bootstrap.checks.scaffold?.setupBlocked) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const selectedCandidate =
         topicCandidateId && topicCandidateId !== "__custom__"
@@ -754,6 +773,16 @@ function ArticleSystemSetupPreviewPanel({
     stringResultValue(run, "preview_url", "previewUrl") ||
     stringResultValue(source, "preview_url", "previewUrl");
   const setupRunId = setupRunIdForRun(run) || setupRunIdForRun(source) || run.runId;
+  const setupStatus = (
+    stringResultValue(run, "status", "setupStatus", "setup_status") ||
+    String(setup.status ?? "") ||
+    run.currentStep ||
+    run.status ||
+    ""
+  ).trim().toLowerCase();
+  const rescanRunId = stringResultValue(run, "rescan_run_id", "rescanRunId") || String(setup.rescan_run_id ?? setup.rescanRunId ?? "");
+  const manualMergeRequired = setupStatus === "manual_merge_required" || run.currentStep === "manual_merge_required";
+  const setupMerged = !manualMergeRequired && run.status === "completed";
   const changedFiles = [
     ...arrayResultValue(run, "changed_files_preview"),
     ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
@@ -762,7 +791,7 @@ function ArticleSystemSetupPreviewPanel({
     .filter(Boolean)
     .slice(0, 8);
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
-  const setupCompleted = run.status === "completed" || run.approvalState === "approved";
+  const setupCompleted = setupMerged;
   const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
   const previewActive = hasActiveLivePreview(run.livePreview);
   const previewFailed =
@@ -862,7 +891,7 @@ function ArticleSystemSetupPreviewPanel({
                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                       >
                         {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {approvePending ? "Approving..." : "Approve articles setup"}
+                        {approvePending ? "Approving..." : "Approve and merge setup PR"}
                       </button>
                     </Form>
                   </>
@@ -885,20 +914,41 @@ function ArticleSystemSetupPreviewPanel({
         </div>
       ) : null}
 
-      {setupCompleted ? (
-        <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+      {manualMergeRequired ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-emerald-950">Articles setup approved</p>
-            <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
-              Future articles can now be generated into this repo location.
+            <p className="text-sm font-black text-amber-950">Manual merge required</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
+              Merge the setup PR in GitHub, then the verification scan can confirm the articles directory before topic research unlocks.
             </p>
           </div>
-          <Link
-            to="/founder-tools/marketing/create?step=research"
-            className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
-          >
-            Continue to topic research
-          </Link>
+          {prUrl ? (
+            <a
+              href={prUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-amber-700"
+            >
+              Open setup PR
+            </a>
+          ) : null}
+        </div>
+      ) : setupCompleted ? (
+        <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black text-emerald-950">Verifying merged articles directory</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
+              The setup PR was merged. Topic research unlocks after the verification scan confirms the directory on the default branch.
+            </p>
+          </div>
+          {rescanRunId ? (
+            <Link
+              to={`/founder-tools/marketing/runs/${encodeURIComponent(rescanRunId)}`}
+              className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
+            >
+              View verification scan
+            </Link>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -921,14 +971,22 @@ function ArticleSystemSetupPreviewUnavailable({
   const previewActive = hasActiveLivePreview(preview);
   const error = previewActive ? "" : String(preview?.error || run.errors?.[0] || "").trim();
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
-  const retryPreviewPending = previewActive || (isActionPending?.("start-live-preview") ?? isSubmitting);
+  const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
+  const retryIntent = setupRetryable ? "resume" : "start-live-preview";
+  const retryPreviewPending = previewActive || (isActionPending?.(retryIntent) ?? isSubmitting);
   if (previewUrl) return null;
   return (
     <div className={clsx(
       "rounded-xl border px-4 py-5 text-sm font-semibold",
       error ? "border-red-200 bg-red-50 text-red-800" : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
-      <p className="font-black">{error ? "Articles setup preview could not be prepared" : "Articles setup preview is being built"}</p>
+      <p className="font-black">
+        {error
+          ? setupRetryable
+            ? "Articles setup build did not advance"
+            : "Articles setup preview could not be prepared"
+          : "Articles setup preview is being built"}
+      </p>
       <p className="mt-1">{previewActive ? "Waiting for GitHub Actions to finish. Refreshing this page is safe." : `Preview status: ${previewStatus}. Refreshing this page is safe.`}</p>
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -944,16 +1002,16 @@ function ArticleSystemSetupPreviewUnavailable({
         ) : null}
         {error ? (
           <Form method="POST">
-            <input type="hidden" name="force" value="true" />
+            {setupRetryable ? null : <input type="hidden" name="force" value="true" />}
             <button
               type="submit"
               name="intent"
-              value="start-live-preview"
+              value={retryIntent}
               disabled={retryPreviewPending}
               className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-700 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-red-800 disabled:opacity-50 sm:w-auto"
             >
               {retryPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-              {retryPreviewPending ? "Starting preview..." : "Retry preview build"}
+              {retryPreviewPending ? "Retrying..." : setupRetryable ? "Retry setup build" : "Retry preview build"}
             </button>
           </Form>
         ) : null}
@@ -2734,7 +2792,8 @@ function isSetupScanRun(run: VibeMarketingRunSummary) {
 }
 
 function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
-  if (run.status === "completed" || run.approvalState === "approved") return "publish";
+  const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
+  if (run.status === "completed" || setupStatus === "manual_merge_required") return "publish";
   if (run.livePreview?.available && run.livePreview.previewUrl) return "review";
   if (run.previewUrl || run.status === "awaiting_approval" || run.status === "approval_required") return "review";
   return "generate";
@@ -2766,9 +2825,11 @@ function workflowProgressForRunPage(
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (progress && run.workflow === "article_system_setup") {
     const activeStepId = setupWorkflowStepIdForRun(run);
+    const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
+    const manualMergeRequired = setupStatus === "manual_merge_required";
     const setupPreviewActive = hasActiveLivePreview(run.livePreview);
     const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed");
-    const setupComplete = run.status === "completed" || run.approvalState === "approved";
+    const setupComplete = run.status === "completed" && !manualMergeRequired;
     const reviewReady = activeStepId === "review" || setupComplete;
     return {
       ...progress,
@@ -2801,8 +2862,10 @@ function workflowProgressForRunPage(
             ...step,
             label: step.id === "publish" ? "Publish setup PR" : "Setup PR ready",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
-            summary: "Approve and merge the setup pull request to main.",
-            status: setupComplete ? "complete" : "locked",
+            summary: setupComplete
+              ? "Merged setup PR is being verified on the default branch."
+              : "Approve and merge the setup pull request to main.",
+            status: manualMergeRequired ? "needs_action" : setupComplete ? "running" : "locked",
           };
         }
         if (step.id === "research" || step.id === "choose_topic" || step.id === "automation") {
@@ -2839,10 +2902,15 @@ export default function FounderToolsMarketingRun() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const previewStartFetcher = useFetcher<typeof action>();
   const previewStartRunRef = useRef("");
+  const statusRefreshRef = useRef("");
+  const lastProgressSignatureRef = useRef("");
+  const lastProgressAtRef = useRef(Date.now());
   const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
+  const [pageVisible, setPageVisible] = useState(true);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
@@ -2851,12 +2919,13 @@ export default function FounderToolsMarketingRun() {
   const isSetupScanContext = isScanRun && isSetupScanRun(run);
   const isStaleScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
+  const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
   const setupPreviewActive = isArticleSystemSetupRun && hasActiveLivePreview(run.livePreview);
   const setupPreviewFailed = isArticleSystemSetupRun && !setupPreviewActive && isFailedArticlePreview(run.livePreview);
   const shouldPoll =
-    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+    (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
     setupPreviewActive ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
@@ -2864,9 +2933,11 @@ export default function FounderToolsMarketingRun() {
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
+  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
-    run.status === "awaiting_confirmation";
+    run.status === "awaiting_confirmation" &&
+    !setupBlocked;
   const isPublishApproval = isPublishApprovalGate(run);
   const effectiveSetupPreviewRun = setupRun?.livePreview?.previewUrl || setupRun?.previewUrl ? setupRun : isScanRun && setupRunIdForRun(run) ? run : setupRun;
   const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status);
@@ -2929,7 +3000,15 @@ export default function FounderToolsMarketingRun() {
 
   useEffect(() => {
     setPolledRun(null);
-  }, [loaderRun.runId]);
+  }, [loaderRun.currentStep, loaderRun.runId, loaderRun.status, loaderRun.updatedAt]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
 
   useEffect(() => {
     if (
@@ -2939,8 +3018,17 @@ export default function FounderToolsMarketingRun() {
     ) {
       return;
     }
+    if (statusPollNeedsFullRefresh(runStatusFetcher.data)) {
+      const refreshKey = `${runStatusFetcher.data.runId}:${runStatusFetcher.data.status}:${runStatusFetcher.data.updatedAt ?? ""}:${runStatusFetcher.data.currentStep ?? ""}`;
+      if (statusRefreshRef.current !== refreshKey) {
+        statusRefreshRef.current = refreshKey;
+        setPolledRun(null);
+        revalidator.revalidate();
+      }
+      return;
+    }
     setPolledRun(runStatusFetcher.data);
-  }, [loaderRun.runId, runStatusFetcher.data, runStatusFetcher.state]);
+  }, [loaderRun.runId, revalidator, runStatusFetcher.data, runStatusFetcher.state]);
 
   useEffect(() => {
     const data = previewStartFetcher.data;
@@ -2968,16 +3056,37 @@ export default function FounderToolsMarketingRun() {
   }, [previewStartFetcher, run.runId, shouldAutoStartPreview]);
 
   useEffect(() => {
+    const signature = [
+      run.runId,
+      run.status,
+      run.currentStep,
+      run.updatedAt,
+      run.steps.map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}`).join(","),
+      run.livePreview?.status,
+      run.livePreview?.previewUrl,
+      run.previewUrl,
+      run.prUrl,
+    ].join("|");
+    if (lastProgressSignatureRef.current !== signature) {
+      lastProgressSignatureRef.current = signature;
+      lastProgressAtRef.current = Date.now();
+    }
+  }, [run]);
+
+  useEffect(() => {
     if (!shouldPoll || !loaderRun.runId || runStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === loaderRun.runId;
+    const idleMs = Date.now() - lastProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         void runStatusFetcher.load(statusUrl);
       },
-      hasLoadedCurrentRun ? 5000 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
-  }, [loaderRun.runId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
+  }, [loaderRun.runId, pageVisible, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
