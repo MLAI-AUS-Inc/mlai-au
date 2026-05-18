@@ -200,7 +200,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
             "GitHub is connected, but we could not open the GitHub access settings. Use the repository dropdown if the repo is already listed.",
         };
       }
-      throw redirect("/founder-tools/marketing/create?step=scan");
+      throw redirect("/founder-tools/marketing/create?step=articleSystem");
     } else if (intent === "add-component-comment") {
       const targetRunId = stringFromForm(formData, "targetRunId") || runId;
       const comment = await addVibeMarketingComponentComment(env, request, targetRunId, componentCommentPayloadFromForm(formData));
@@ -255,7 +255,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       throw redirect("/founder-tools/marketing/create?step=chooseArticle");
     } else if (intent === "cancel-scan") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true, workflow: "repo_scan" });
-      throw redirect("/founder-tools/marketing/create?step=scan");
+      throw redirect("/founder-tools/marketing/create?step=articleSystem");
     } else if (intent === "retry-scan") {
       const result = await controlVibeMarketingRun(env, request, runId, "resume", { workflow: "repo_scan" });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);

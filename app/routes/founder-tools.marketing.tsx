@@ -300,7 +300,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return redirect("/founder-tools/marketing");
       }
 
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-autofill") {
@@ -384,7 +384,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await skipVibeMarketingBaseline(env, request, {
         reason: stringFromForm(formData, "reason") || "Skipped during marketing setup",
       });
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "scan") {

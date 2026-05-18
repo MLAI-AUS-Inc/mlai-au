@@ -903,7 +903,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
         label: "Repository",
         phase: "Setup",
         status: "complete",
-        href: "/founder-tools/marketing/create?step=github",
+        href: "/founder-tools/marketing/create?step=articleSystem",
         summary: "Connect the repository used for exact article previews and publishing.",
         primaryAction: null,
         order: 3,

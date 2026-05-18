@@ -344,8 +344,14 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
   const url = new URL(request.url);
+  const rawStep = url.searchParams.get("step");
+  if (rawStep === "github" || rawStep === "scan") {
+    url.searchParams.set("step", "articleSystem");
+    throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
+  }
+
+  const bootstrap = await getVibeMarketingBootstrap(env, request);
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
   if (["writeCheck", "editArticle", "reviewPublish"].includes(requestedStep)) {
     const latestSetupScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
@@ -425,7 +431,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (stringFromForm(formData, "nextAction") === "save-exit") {
         return redirect("/founder-tools/marketing");
       }
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-autofill") {
@@ -493,7 +499,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await skipVibeMarketingBaseline(env, request, {
         reason: stringFromForm(formData, "reason") || "Skipped during onboarding",
       });
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "connect-github") {
@@ -520,7 +526,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
       const connectionState = response.connection_state ?? response.connectionState;
       if (response.status === "already_connected" || response.status === "connected" || connectionState === "connected") {
-        return redirect("/founder-tools/marketing/create?step=scan");
+        return redirect("/founder-tools/marketing/create?step=articleSystem");
       }
       return {
         intent,
@@ -547,9 +553,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         auto_setup_preview: false,
       });
       if (result.runId) {
-        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+        return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
-      return redirect("/founder-tools/marketing/create?step=scan");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "confirm-article-surface" || intent === "create-article-surface") {
@@ -587,9 +593,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         workflow: "repo_scan",
       });
       if (intent === "retry-scan" && result.runId) {
-        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+        return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
-      return redirect("/founder-tools/marketing/create?step=scan");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "build-article-system-preview") {
@@ -684,10 +690,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (!intent) return null;
-  if (intent === "connect-github") return "github";
+  if (intent === "connect-github") return "articleSystem";
   if (intent === "build-article-system-preview") return "articleSystem";
   if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
-  if (intent === "start-scan") return "scan";
+  if (intent === "start-scan") return "articleSystem";
   if (intent === "confirm-article-surface" || intent === "create-article-surface") return "articleSystem";
   if (intent === "save-article-system") return "articleSystem";
   if (intent === "start-discovery") return "research";
@@ -778,7 +784,11 @@ export default function FounderToolsMarketingCreate() {
   const latestActionError = actionDataError(actionData);
   const actionErrorStep = actionIntentStep(latestActionIntent);
   const isRepoArticleStep = activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem";
-  const githubConnectError = isRepoArticleStep && latestActionIntent === "connect-github" ? latestActionError : null;
+  const githubAuthError = searchParams.get("githubAuthError");
+  const githubConnectError =
+    isRepoArticleStep && (githubAuthError || latestActionIntent === "connect-github")
+      ? githubAuthError || latestActionError
+      : null;
   const topActionError =
     latestActionError && latestActionIntent !== "connect-github" && (!actionErrorStep || actionErrorStep === activeStep)
       ? latestActionError

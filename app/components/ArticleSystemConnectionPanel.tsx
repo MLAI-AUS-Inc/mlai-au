@@ -386,6 +386,15 @@ function CreateNewChoiceCard({
   );
 }
 
+function githubConnectHref({ forceReconnect = false, githubRepo = "" }: { forceReconnect?: boolean; githubRepo?: string } = {}) {
+  const params = new URLSearchParams({
+    returnTo: "/founder-tools/marketing/create?step=articleSystem",
+  });
+  if (forceReconnect) params.set("forceReconnect", "true");
+  if (githubRepo && !forceReconnect) params.set("githubRepo", githubRepo);
+  return `/founder-tools/marketing/github-connect?${params.toString()}`;
+}
+
 export default function ArticleSystemConnectionPanel({
   bootstrap,
   githubRepos,
@@ -612,17 +621,16 @@ export default function ArticleSystemConnectionPanel({
               <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
                 GitHub opens in a new tab. This page will refresh when the connection is ready.
               </p>
-              <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
-                <input type="hidden" name="intent" value="connect-github" />
-                <button
-                  type="submit"
-                  onClick={markGithubAuthOpen}
-                  className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
-                >
-                  <GitHubMark className="h-5 w-5" />
-                  {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
-                </button>
-              </Form>
+              <a
+                href={githubConnectHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={markGithubAuthOpen}
+                className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              >
+                <GitHubMark className="h-5 w-5" />
+                {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
+              </a>
               <div className="mt-5 flex flex-wrap justify-center gap-4">
                 <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
                 <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
@@ -694,17 +702,15 @@ export default function ArticleSystemConnectionPanel({
                       </a>
                     ) : null}
                   </p>
-                  <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument>
-                    <input type="hidden" name="intent" value="connect-github" />
-                    <input type="hidden" name="forceReconnect" value="true" />
-                    <button
-                      type="submit"
-                      onClick={markGithubAuthOpen}
-                      className="text-sm font-black text-violet-700 transition hover:text-violet-900"
-                    >
-                      Manage GitHub access
-                    </button>
-                  </Form>
+                  <a
+                    href={githubConnectHref({ forceReconnect: true })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={markGithubAuthOpen}
+                    className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                  >
+                    Manage GitHub access
+                  </a>
                 </div>
               </div>
               <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">
