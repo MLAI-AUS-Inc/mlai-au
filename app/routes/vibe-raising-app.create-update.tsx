@@ -4454,12 +4454,12 @@ export default function CreateUpdate() {
                         {(() => {
                             const d = data as any;
                             const text = [(d.highlights || ''), (d.challenges || ''), (d.learnings || ''), (d.next30Days || ''), (d.asks || '')].join(" ").toLowerCase();
-                            
+
                             const criteria = [];
                             if (text.includes("saas") || text.includes("software")) criteria.push("B2B SaaS");
                             if (text.includes("health") || text.includes("medtech") || text.includes("medical")) criteria.push("MedTech");
                             if (text.includes("agri") || text.includes("farm") || text.includes("agriculture")) criteria.push("AgTech");
-                            if (text.includes("ai") || text.includes("machine learning") || text.includes("artificial intelligence")) criteria.push("AI/ML");
+                            if (/\b(?:ai|ml)\b|\bmachine learning\b|\bartificial intelligence\b/.test(text)) criteria.push("AI/ML");
                             if (text.includes("enterprise") || text.includes("b2b") || text.includes("fortune 500")) criteria.push("Enterprise");
                             if (text.includes("fintech") || text.includes("finance") || text.includes("payment")) criteria.push("FinTech");
                             if (text.includes("consumer") || text.includes("b2c")) criteria.push("Consumer Tech");
@@ -4635,10 +4635,14 @@ export default function CreateUpdate() {
                                         
                                         <button
                                             type="button"
-                                            onClick={() => setShowConfirmPopup(false)}
-                                            className="w-full px-5 py-3 text-sm font-bold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 transition-all active:scale-95"
+                                            onClick={() => {
+                                                handlePersistDraft();
+                                                setShowConfirmPopup(false);
+                                            }}
+                                            disabled={saveDraftFetcher.state !== "idle"}
+                                            className="w-full rounded-xl bg-gray-100 px-5 py-3 text-sm font-bold text-gray-600 transition-all hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
                                         >
-                                            Save it locally
+                                            {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
                                         </button>
                                     </Form>
                                 </div>

@@ -136,7 +136,7 @@ export default function MonthlyUpdateStepper({
             </h2>
           </div>
           <span className="hidden rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-bold text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.24)] sm:inline-flex">
-            {disableMotion ? "Steps" : "Hover for steps"}
+            Hover for steps
           </span>
         </button>
 
@@ -158,9 +158,8 @@ export default function MonthlyUpdateStepper({
 
         <div
           className={clsx(
-            disableMotion
-              ? "block"
-              : "max-h-0 overflow-hidden opacity-0 transition-all duration-200 ease-out group-hover/stepper:max-h-64 group-hover/stepper:opacity-100 group-focus-within/stepper:max-h-64 group-focus-within/stepper:opacity-100",
+            "max-h-0 overflow-hidden opacity-0 group-hover/stepper:max-h-64 group-hover/stepper:opacity-100 group-focus-within/stepper:max-h-64 group-focus-within/stepper:opacity-100",
+            !disableMotion && "transition-all duration-200 ease-out",
           )}
         >
           <div className="pt-6">
