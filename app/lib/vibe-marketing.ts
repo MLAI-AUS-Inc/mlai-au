@@ -1330,12 +1330,14 @@ async function startMarketingRun(env: Env, request: Request, path: string, body:
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/${path}`, body);
   const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
+  const setupRunId = asNullableString(response.data?.setupRunId) ?? asNullableString(response.data?.setup_run_id);
   const error =
     asNullableString(response.data?.error) ??
     asNullableString(response.data?.detail) ??
     asNullableString(response.data?.message);
   return {
     runId,
+    setupRunId,
     status: asNullableString(response.data?.status) ?? "queued",
     error,
     errors: asStringList(response.data?.errors ?? (error ? [error] : [])),
@@ -1344,6 +1346,10 @@ async function startMarketingRun(env: Env, request: Request, path: string, body:
 
 export function startVibeMarketingScan(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "scan", body);
+}
+
+export function startVibeMarketingArticleSystemSetup(env: Env, request: Request, body: Record<string, unknown>) {
+  return startMarketingRun(env, request, "article-system-setup", body);
 }
 
 export function startVibeMarketingDiscovery(env: Env, request: Request, body: Record<string, unknown>) {
