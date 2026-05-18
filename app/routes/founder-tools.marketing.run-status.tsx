@@ -6,6 +6,8 @@ import { getVibeMarketingRun, refreshVibeMarketingLivePreview } from "~/lib/vibe
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
+const TERMINAL_ATTENTION_STATUSES = new Set(["blocked", "blocked_verification", "failed", "cancelled", "canceled"]);
+
 function isDocumentNavigation(request: Request) {
   const fetchDest = request.headers.get("Sec-Fetch-Dest")?.toLowerCase();
   const fetchMode = request.headers.get("Sec-Fetch-Mode")?.toLowerCase();
@@ -17,6 +19,7 @@ function isDocumentNavigation(request: Request) {
 function shouldRefreshSetupLivePreview(run: VibeMarketingRunSummary) {
   if (run.workflow !== "article_system_setup") return false;
   if (run.stale || run.retryAvailable) return false;
+  if (TERMINAL_ATTENTION_STATUSES.has(String(run.status || "").trim().toLowerCase())) return false;
   if (run.livePreview?.previewUrl || run.livePreview?.error) return false;
   const status = String(run.livePreview?.status || run.status || "").trim().toLowerCase();
   if (["blocked", "failed", "denied", "cancelled", "canceled"].includes(status)) return false;

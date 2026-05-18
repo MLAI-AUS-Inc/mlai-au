@@ -135,6 +135,10 @@ function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | 
   return LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus);
 }
 
+function isTerminalAttentionStatus(status: string | null | undefined) {
+  return RESUMABLE_ATTENTION_STATUSES.has(String(status ?? "").trim().toLowerCase());
+}
+
 function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow) || !run.componentManifest || hasReadyArticlePreview(run)) {
     return false;
@@ -793,7 +797,7 @@ function ArticleSystemSetupPreviewPanel({
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
   const setupCompleted = setupMerged;
   const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
-  const previewActive = hasActiveLivePreview(run.livePreview);
+  const previewActive = !isTerminalAttentionStatus(run.status) && hasActiveLivePreview(run.livePreview);
   const previewFailed =
     !previewActive && (isFailedArticlePreview(run.livePreview) || (["blocked", "failed"].includes(run.status) && Boolean(run.livePreview?.error || run.errors.length)));
 
@@ -968,7 +972,7 @@ function ArticleSystemSetupPreviewUnavailable({
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
-  const previewActive = hasActiveLivePreview(preview);
+  const previewActive = !isTerminalAttentionStatus(run.status) && hasActiveLivePreview(preview);
   const error = previewActive ? "" : String(preview?.error || run.errors?.[0] || "").trim();
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
   const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
@@ -2827,9 +2831,10 @@ function workflowProgressForRunPage(
     const activeStepId = setupWorkflowStepIdForRun(run);
     const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
     const manualMergeRequired = setupStatus === "manual_merge_required";
-    const setupPreviewActive = hasActiveLivePreview(run.livePreview);
-    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed");
-    const setupComplete = run.status === "completed" && !manualMergeRequired;
+    const setupTerminal = isTerminalAttentionStatus(run.status);
+    const setupPreviewActive = !setupTerminal && hasActiveLivePreview(run.livePreview);
+    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || setupTerminal);
+    const setupComplete = (run.status === "completed" || run.approvalState === "approved") && !manualMergeRequired;
     const reviewReady = activeStepId === "review" || setupComplete;
     return {
       ...progress,
@@ -2922,7 +2927,8 @@ export default function FounderToolsMarketingRun() {
   const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupPreviewActive = isArticleSystemSetupRun && hasActiveLivePreview(run.livePreview);
+  const setupRunTerminal = isArticleSystemSetupRun && isTerminalAttentionStatus(run.status);
+  const setupPreviewActive = isArticleSystemSetupRun && !setupRunTerminal && hasActiveLivePreview(run.livePreview);
   const setupPreviewFailed = isArticleSystemSetupRun && !setupPreviewActive && isFailedArticlePreview(run.livePreview);
   const shouldPoll =
     (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
@@ -2958,7 +2964,7 @@ export default function FounderToolsMarketingRun() {
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
   const isArticleSetupContext = isSetupScanContext || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
-  const previewActive = hasActiveLivePreview(run.livePreview);
+  const previewActive = isArticleSystemSetupRun ? setupPreviewActive : hasActiveLivePreview(run.livePreview);
   const previewFailed = isFailedArticlePreview(run.livePreview);
   const shouldAutoStartPreview = Boolean(
     isArticleGenerationRun &&
