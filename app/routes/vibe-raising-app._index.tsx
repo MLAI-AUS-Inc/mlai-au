@@ -1,5 +1,5 @@
 import { Link, redirect, useLoaderData, useOutletContext, useNavigate } from "react-router";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
@@ -12,7 +12,6 @@ import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
-    ClockIcon,
     ChartBarIcon,
     PencilSquareIcon,
     SparklesIcon,
@@ -161,26 +160,20 @@ function UpdateVideoHero({ update }: { update: { videoUrl?: string | null; video
 }
 
 // Reuseable Components
-function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
+function MetricCard({ label, value, icon: _Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+            "flex flex-col items-center justify-center rounded-xl border px-3 py-4 text-center",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                : "border-gray-200 bg-gray-50 opacity-40"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
+                : "border-gray-200 bg-gray-50/80 opacity-45"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             <p className={clsx(
-                "text-base font-extrabold leading-tight",
+                "text-base font-black leading-tight sm:text-[1.75rem]",
                 active ? "text-gray-900" : "text-gray-300"
             )}>{active ? value : "—"}</p>
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -188,34 +181,28 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
 }
 
 // Editable metric input for inline editing
-function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
-    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} />;
+function EditableMetricCard({ label, value, icon: _Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
+    if (!editing) return <MetricCard label={label} value={value} icon={_Icon} active={active} />;
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+            "flex cursor-pointer flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-all",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             {active ? (
                 <input
                     type="text"
                     value={value}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                    className="w-full border-b-2 border-[rgba(0,128,128,0.18)] bg-transparent py-0.5 text-center text-base font-black text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-[1.75rem]"
                 />
             ) : (
                 <p className="text-base font-extrabold text-gray-300">—</p>
             )}
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -343,7 +330,9 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
                                 <span className="w-px h-3 bg-gray-200" />
                             )}
-                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            {!expanded ? (
+                                <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            ) : null}
                         </div>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
@@ -657,7 +646,11 @@ function VRUpdateSection({
     label: string;
     items: string[];
 }) {
+    const [mobileExpanded, setMobileExpanded] = useState(false);
     if (items.length === 0) return null;
+    const shouldClampOnMobile = items.length > 2;
+    const visibleItems = mobileExpanded ? items : items.slice(0, 2);
+
     return (
         <div className="vr-us-block">
             <div className="vr-us-heading">
@@ -667,13 +660,22 @@ function VRUpdateSection({
                 <span className="vr-us-heading-text">{label}</span>
             </div>
             <div className="vr-us-list">
-                {items.map((item, i) => (
+                {visibleItems.map((item, i) => (
                     <div className="vr-us-item" key={i}>
                         <span className="vr-us-item-dot">•</span>
                         <span className="vr-us-item-text">{item.trim()}</span>
                     </div>
                 ))}
             </div>
+            {shouldClampOnMobile ? (
+                <button
+                    type="button"
+                    onClick={() => setMobileExpanded((current) => !current)}
+                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
+                >
+                    {mobileExpanded ? "Show less" : `Show all ${items.length}`}
+                </button>
+            ) : null}
         </div>
     );
 }
@@ -859,15 +861,14 @@ function VRPastUpdateRow({
                         <span>{format(new Date(update.date), "MMMM d, yyyy")}</span>
                         <Link
                             to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium"
-                            style={{ color: "var(--vr-color-text-mid)" }}
+                            className="vr-past-edit"
                         >
                             <PencilSquareIcon className="h-4 w-4" />
                             Edit
                         </Link>
                     </div>
 
-                    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                    <div className="vr-past-metrics-grid">
                         {update.metrics?.revenue ? (
                             <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
                         ) : null}
@@ -950,9 +951,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const hasUpdates = updates.length > 0;
 
     const latestUpdate = hasUpdates ? updates[0] : null;
-    const daysSinceLast = latestUpdate ? differenceInDays(new Date(), new Date(latestUpdate.date)) : 0;
-    const isOverdue = daysSinceLast > 21;
-    const daysOverdue = daysSinceLast - 21;
 
     const now = new Date();
     const currentUpdate = updates.find((update) => {
@@ -972,6 +970,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
         currentUpdate ? null : pastUpdates[0]?.id ?? null
     );
+    const [activeMetricCard, setActiveMetricCard] = useState<string | null>(null);
 
     if (!hasUpdates) {
         return (
@@ -1152,7 +1151,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
             {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
             <div className="vr-metrics-row">
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "mrr"}
+                    className={clsx("vr-metric-card", activeMetricCard === "mrr" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "mrr" ? null : "mrr")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
@@ -1165,9 +1169,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "active-users"}
+                    className={clsx("vr-metric-card", activeMetricCard === "active-users" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "active-users" ? null : "active-users")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
@@ -1177,9 +1186,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "runway"}
+                    className={clsx("vr-metric-card", activeMetricCard === "runway" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "runway" ? null : "runway")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "var(--vr-color-brand-orange)" }}
@@ -1192,9 +1206,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "raise-committed"}
+                    className={clsx("vr-metric-card", activeMetricCard === "raise-committed" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "raise-committed" ? null : "raise-committed")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
@@ -1202,9 +1221,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Raise Committed</div>
                     <div className="vr-metric-value">62%</div>
                     <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "burn-rate"}
+                    className={clsx("vr-metric-card", activeMetricCard === "burn-rate" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "burn-rate" ? null : "burn-rate")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
@@ -1212,38 +1236,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Burn Rate</div>
                     <div className="vr-metric-value">$52K/mo</div>
                     <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
-                </div>
+                </button>
             </div>
-
-            {isOverdue && (
-                <div className="relative overflow-hidden rounded-xl border border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] p-6 shadow-sm">
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-full border border-[rgba(0,255,215,0.26)] bg-white p-3 text-[var(--vr-color-primary)] shadow-sm">
-                                <ClockIcon className="w-8 h-8" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="rounded-full bg-[rgba(0,255,215,0.24)] px-2.5 py-0.5 text-xs font-bold text-[var(--vr-color-primary)]">
-                                        {daysOverdue} days overdue
-                                    </span>
-                                </div>
-                                <p className="text-gray-700 mb-4">
-                                    Your last update was on <span className="font-semibold">{format(new Date(latestUpdate!.date), "MMMM d, yyyy")}</span>.
-                                    Keep your investors engaged with your latest progress!
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            to="/founder-tools/data-sources"
-                            className="whitespace-nowrap rounded-lg bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-sm transition-colors hover:bg-[var(--vr-palette-black)]"
-                        >
-                            Create Update Now
-                        </Link>
-                    </div>
-                </div>
-            )}
 
             {/* Tabs + tab content */}
             <div>

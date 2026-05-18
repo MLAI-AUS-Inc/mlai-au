@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.connect-data";
 import { Link, redirect, useLoaderData, useLocation, useNavigate } from "react-router";
 import { clsx } from "clsx";
@@ -71,10 +71,27 @@ const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["stripe", "notion", "
 const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["gmail", "slack", "linear", "bank_feed", "xero"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
+const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
 const DATA_PRIVACY_POINTS = [
   "Only you can see connected source data in your workspace",
   "Private drafts stay hidden until you publish",
   "You can disconnect sources and remove cached data anytime",
+] as const;
+const MOBILE_DATA_PRIVACY_POINTS = [
+  "Only you can see connected data here",
+  "Drafts stay private until you publish",
+  "Disconnect or remove data anytime",
+] as const;
+const CONNECTOR_TRUST_ITEMS = [
+  "Only founders and teammates with access to this workspace can see connected source data.",
+  "We only scan the selected source data needed to draft your monthly update.",
+  "We store synced context, generated metrics, and draft materials inside this workspace.",
+  "You can disconnect a source anytime, and connectors with deletion support let you remove stored data from this screen.",
+];
+const MOBILE_CONNECTOR_TRUST_ITEMS = [
+  "Only your workspace can see connected source data.",
+  "We only scan the data needed for this draft.",
+  "Disconnect a source or remove stored data anytime.",
 ] as const;
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
@@ -142,6 +159,129 @@ type ManualMaterialsState = {
   documents: VibeRaisingManualDocument[];
 };
 
+type MobileTourStep = {
+  key: string;
+  title: string;
+  body: string;
+  targetRef: RefObject<Element | null>;
+};
+
+function MobileDataSourcesTour({
+  open,
+  stepIndex,
+  steps,
+  onBack,
+  onClose,
+  onNext,
+}: {
+  open: boolean;
+  stepIndex: number;
+  steps: MobileTourStep[];
+  onBack: () => void;
+  onClose: () => void;
+  onNext: () => void;
+}) {
+  const titleId = useId();
+  const step = steps[stepIndex];
+  const [targetRect, setTargetRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (!open || !step) {
+      setTargetRect(null);
+      return;
+    }
+
+    const updateTargetRect = () => {
+      const node = step.targetRef.current;
+      if (!node) {
+        setTargetRect(null);
+        return;
+      }
+
+      const rect = node.getBoundingClientRect();
+      setTargetRect({
+        top: Math.max(rect.top - 8, 12),
+        left: Math.max(rect.left - 8, 12),
+        width: Math.min(rect.width + 16, window.innerWidth - 24),
+        height: rect.height + 16,
+      });
+    };
+
+    const handleViewportChange = () => window.requestAnimationFrame(updateTargetRect);
+
+    handleViewportChange();
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [open, step]);
+
+  if (!open || !step) return null;
+
+  return (
+    <div className="fixed inset-0 z-[140] sm:hidden" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <button
+        type="button"
+        className="absolute inset-0 bg-slate-950/55"
+        onClick={onClose}
+        aria-label="Close data sources tour"
+      />
+
+      {targetRect ? (
+        <>
+          <div
+            className="pointer-events-none absolute rounded-[28px] border-2 border-[var(--vr-color-primary)] bg-transparent shadow-[0_0_0_9999px_rgba(15,23,42,0.58)] transition-all duration-200"
+            style={targetRect}
+          />
+          <div
+            className="pointer-events-none absolute rounded-full bg-[var(--vr-color-primary)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-white shadow-lg"
+            style={{ left: targetRect.left, top: Math.max(targetRect.top - 34, 10) }}
+          >
+            Step {stepIndex + 1}
+          </div>
+        </>
+      ) : null}
+
+      <section className="absolute inset-x-4 bottom-4 rounded-[28px] bg-white p-5 shadow-2xl shadow-black/20">
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-[var(--vr-color-primary)]">Quick mobile tour</p>
+        <h2 id={titleId} className="mt-2 text-xl font-black text-gray-950">{step.title}</h2>
+        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">{step.body}</p>
+
+        <div className="mt-5 flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-black text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            Skip
+          </button>
+
+          <div className="flex items-center gap-2">
+            {stepIndex > 0 ? (
+              <button
+                type="button"
+                onClick={onBack}
+                className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+              >
+                Back
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={onNext}
+              className="inline-flex items-center justify-center rounded-xl bg-[var(--vr-color-primary)] px-4 py-2 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
+            >
+              {stepIndex === steps.length - 1 ? "Got it" : "Next"}
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
 
 function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
@@ -188,41 +328,50 @@ function writeStoredManualMaterials(materials: ManualMaterialsState) {
   window.localStorage.setItem(MANUAL_MATERIALS_STORAGE_KEY, JSON.stringify({ summary, manualDocumentIds, documents }));
 }
 
-const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; connectedUse: string }> = {
+const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobileDescription: string; connectedUse: string }> = {
   gmail: {
     description: "Scan emails for key updates, investor feedback, and important threads.",
+    mobileDescription: "Scan key emails and investor threads.",
     connectedUse: "Emails, investor threads",
   },
   stripe: {
     description: "Pull revenue, subscriptions, and financial metrics automatically.",
+    mobileDescription: "Pull revenue and subscription metrics.",
     connectedUse: "Revenue, subscriptions",
   },
   xero: {
     description: "Use invoices and recurring revenue records from your accounting workspace.",
+    mobileDescription: "Use invoices and recurring revenue data.",
     connectedUse: "Invoices, accounting",
   },
   bank_feed: {
     description: "Import transactions and cash flow data from your business accounts.",
+    mobileDescription: "Import transactions and cash flow.",
     connectedUse: "Transactions, cash flow",
   },
   notion: {
     description: "Sync notes, docs, and internal updates from your workspace.",
+    mobileDescription: "Sync notes, docs, and updates.",
     connectedUse: "Docs, notes, updates",
   },
   google_drive: {
     description: "Add files, reports, and presentations for deeper context.",
+    mobileDescription: "Add files, reports, and decks.",
     connectedUse: "Files, reports, decks",
   },
   slack: {
     description: "Bring in important team updates and customer conversations.",
+    mobileDescription: "Bring in team updates and conversations.",
     connectedUse: "Team updates, conversations",
   },
   linear: {
     description: "Pull project updates, active workstreams, and key tasks from Linear.",
+    mobileDescription: "Pull project updates and key tasks.",
     connectedUse: "Projects, tasks, updates",
   },
   manual_documents: {
     description: "Use uploaded founder documents as deterministic context.",
+    mobileDescription: "Use uploaded documents as context.",
     connectedUse: "Documents, summary",
   },
 };
@@ -274,7 +423,7 @@ function statusLabel(status: VibeRaisingInputSourceStatus) {
     case "coming_soon":
       return "Coming soon";
     case "unavailable":
-      return "Not available yet";
+      return "Coming soon";
     default:
       return "Not connected";
   }
@@ -1320,6 +1469,7 @@ function ConnectorCard({
   source,
   selected,
   busy,
+  isMobileView = false,
   onConnect,
   onManageGmail,
   onToggle,
@@ -1327,6 +1477,7 @@ function ConnectorCard({
   source: VibeRaisingInputSourceSummary;
   selected: boolean;
   busy: boolean;
+  isMobileView?: boolean;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
   onManageGmail: (source: VibeRaisingInputSourceSummary) => void;
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
@@ -1343,6 +1494,16 @@ function ConnectorCard({
   const isConnected = source.status === "connected" || source.status === "syncing";
   const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
   const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
+  const trustMessage = isMobileView
+    ? isConnected
+      ? `Only this workspace can see synced ${source.label} data.`
+      : `Only this workspace can see synced ${source.label} data.`
+    : isConnected
+      ? `Only this founder workspace can see synced ${source.label} context. You can manage access here anytime.`
+      : `Only this founder workspace can see synced ${source.label} context. We only scan ${sourceScanSummary(source)}.`;
+  const description = isMobileView ? SOURCE_COPY[source.key].mobileDescription : SOURCE_COPY[source.key].description;
+  const shouldShowCapabilities = !isMobileView;
+  const shouldShowTrustMessage = !isMobileView;
   const connectClassName = clsx(
     "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
     disabled || !canConnect
@@ -1359,43 +1520,46 @@ function ConnectorCard({
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
-      <div className="pointer-events-none flex items-start gap-3 pr-20">
-        <SourceLogo sourceKey={source.key} large />
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <SourceLogo sourceKey={source.key} large />
+          <span className={clsx(
+            "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+            isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
+          )}>
+            {displayedStatusLabel}
+          </span>
+        </div>
         <h3 className={clsx(
-          "pt-2 text-left text-sm font-black sm:text-base",
+          "break-words text-left text-base font-black leading-tight sm:text-lg",
           isConnected ? "text-white" : "text-gray-950",
         )}>
           {source.label}
         </h3>
       </div>
 
-      <span className={clsx(
-        "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
-        isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-      )}>
-        {displayedStatusLabel}
-      </span>
-
-      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
-        <p className={clsx("mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5", isConnected ? "text-white/80" : "text-slate-500")}>
-          {SOURCE_COPY[source.key].description}
+      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-3" : "pt-4 sm:pt-5")}>
+        <p className={clsx("mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4", isConnected ? "text-white/80" : "text-slate-500")}>
+          {description}
         </p>
 
-        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-          {source.capabilities.map((capability) => (
-            <span
-              key={capability}
-              className={clsx(
-                "rounded-full px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px]",
-                isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
-              )}
-            >
-              {capabilityLabel(capability)}
-            </span>
-          ))}
-        </div>
+        {shouldShowCapabilities ? (
+          <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
+            {source.capabilities.map((capability) => (
+              <span
+                key={capability}
+                className={clsx(
+                  "rounded-full px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px]",
+                  isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
+                )}
+              >
+                {capabilityLabel(capability)}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
-        <div className="mt-auto pt-3 sm:pt-4">
+        <div className={clsx("mt-auto", isMobileView ? "pt-2" : "pt-3 sm:pt-4")}>
           {selectable ? (
             <button
               type="button"
@@ -1439,10 +1603,17 @@ function ConnectorCard({
               <ShieldCheckIcon className="h-4 w-4" />
               Manage Gmail access
             </button>
-          ) : null}
+              ) : null}
 
-          {source.warning && source.status !== "coming_soon" ? (
-            <p className={clsx("mt-2 line-clamp-2 text-[10px] font-medium leading-4 sm:text-[11px]", isConnected ? "text-white/80" : "text-[var(--vr-color-text)]")}>{source.warning}</p>
+          {shouldShowTrustMessage ? (
+            <p
+              className={clsx(
+                "mt-2 min-h-8 line-clamp-2 text-[10px] leading-4 sm:min-h-[2.75rem] sm:text-[11px] sm:line-clamp-none",
+                isConnected ? "text-white/80" : "text-slate-500",
+              )}
+            >
+              {trustMessage}
+            </p>
           ) : null}
         </div>
       </div>
@@ -1450,46 +1621,48 @@ function ConnectorCard({
   );
 }
 
-function GoogleAnalyticsPlaceholderCard() {
+function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView?: boolean }) {
   return (
     <div
       className="relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
       aria-label="Google Analytics source coming soon"
     >
-      <div className="pointer-events-none flex items-start gap-3 pr-20">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-          <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
-            <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
-            <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
-            <circle cx="27" cy="12" r="4" fill="#fb923c" />
-          </svg>
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-200 sm:h-16 sm:w-16 sm:rounded-2xl">
+            <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
+              <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
+              <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
+              <circle cx="27" cy="12" r="4" fill="#fb923c" />
+            </svg>
+          </div>
         </div>
-        <h3 className="pt-2 text-left text-sm font-black text-gray-950 sm:text-base">
+        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
           Google Analytics
         </h3>
       </div>
 
-      <span className="absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-bold text-gray-500 ring-1 ring-gray-200 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]">
-        Coming soon
-      </span>
-
-      <div className="flex flex-1 flex-col pt-4 sm:pt-5">
-        <p className="mt-1 line-clamp-4 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5">
-          Pull website traffic, acquisition, and top-page performance into your monthly update workflow.
+      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-3" : "pt-4 sm:pt-5")}>
+        <p className="mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4">
+          {isMobileView
+            ? "Pull traffic and acquisition metrics."
+            : "Pull website traffic, acquisition, and top-page performance into your monthly update workflow."}
         </p>
 
-        <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-          {["Traffic", "Attribution"].map((capability) => (
-            <span
-              key={capability}
-              className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
-            >
-              {capability}
-            </span>
-          ))}
-        </div>
+        {!isMobileView ? (
+          <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
+            {["Traffic", "Attribution"].map((capability) => (
+              <span
+                key={capability}
+                className="rounded-full bg-gray-50 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 sm:text-[10px]"
+              >
+                {capability}
+              </span>
+            ))}
+          </div>
+        ) : null}
 
-        <div className="mt-auto pt-3 sm:pt-4">
+        <div className={clsx("mt-auto", isMobileView ? "pt-2" : "pt-3 sm:pt-4")}>
           <button
             type="button"
             disabled
@@ -1497,6 +1670,11 @@ function GoogleAnalyticsPlaceholderCard() {
           >
             Coming soon
           </button>
+          {!isMobileView ? (
+            <p className="mt-2 min-h-8 line-clamp-2 text-[10px] leading-4 text-slate-500 sm:min-h-[2.75rem] sm:text-[11px] sm:line-clamp-none">
+              Website traffic support is coming soon for founder updates.
+            </p>
+          ) : null}
         </div>
       </div>
     </div>
@@ -1523,37 +1701,32 @@ function ManualMaterialsCard({
       aria-expanded={expanded}
       aria-controls="manual-materials-panel"
       className={clsx(
-        "relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+        "group relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
         expanded || hasManualMaterials
           ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
-          : "border-gray-200 bg-white",
+          : "border-gray-200 bg-white hover:border-[rgba(0,128,128,0.28)] hover:shadow-md",
       )}
     >
-      <div
-        className="pointer-events-none flex items-start gap-3 pr-20"
-      >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
-          <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+      <div className="pointer-events-none flex flex-col gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)] sm:h-16 sm:w-16 sm:rounded-2xl">
+            <DocumentTextIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+          </div>
+          <span
+            className={clsx(
+              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+              hasManualMaterials
+                ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
+                : "bg-gray-100 text-slate-500 ring-gray-200",
+            )}
+          >
+            {hasManualMaterials ? "Added" : "Optional"}
+          </span>
         </div>
-        <h3
-          className={clsx(
-            "pt-2 text-left text-sm font-black text-gray-950 sm:text-base",
-          )}
-        >
+        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
           Manual input
         </h3>
       </div>
-
-      <span
-        className={clsx(
-          "absolute right-3 top-3 inline-flex max-w-[88px] items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:right-4 sm:top-4 sm:max-w-[112px] sm:px-2 sm:text-[10px]",
-          hasManualMaterials
-            ? "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]"
-            : "bg-gray-100 text-slate-500 ring-gray-200",
-        )}
-      >
-        {hasManualMaterials ? "Added" : "Optional"}
-      </span>
 
       <div className="flex flex-1 flex-col pt-4 sm:pt-5">
         <p className="mt-1 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:text-xs sm:leading-5">
@@ -1572,7 +1745,7 @@ function ManualMaterialsCard({
         </div>
 
         <div className="mt-auto pt-3 sm:pt-4">
-          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-2.5 py-2 text-[11px] font-extrabold text-[var(--vr-color-primary)] sm:px-3 sm:text-xs">
+          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-2.5 py-2 text-[11px] font-extrabold text-[var(--vr-color-primary)] transition group-hover:bg-[rgba(0,255,215,0.18)] group-hover:ring-1 group-hover:ring-[rgba(0,128,128,0.18)] sm:px-3 sm:text-xs">
             <span>{expanded ? "Hide form" : "Open form"}</span>
           </div>
 
@@ -1602,6 +1775,29 @@ function deletionSummaryText(deleted: {
   if (rawCount > 0) parts.push(`${rawCount} Gmail cache item${rawCount === 1 ? "" : "s"}`);
   if (derivedCount > 0) parts.push(`${derivedCount} generated update item${derivedCount === 1 ? "" : "s"}`);
   return parts.length > 0 ? parts.join(" and ") : "local Gmail access";
+}
+
+function sourceScanSummary(source: VibeRaisingInputSourceSummary) {
+  switch (source.key) {
+    case "gmail":
+      return "recent emails, relevant threads, and attachments that match your drafting filters";
+    case "slack":
+      return "selected channels and messages you choose for update drafting";
+    case "linear":
+      return "selected projects, issues, and status updates relevant to this update";
+    case "stripe":
+      return "subscription and revenue metrics relevant to this reporting period";
+    case "xero":
+      return "invoices, revenue records, and accounting context for this update";
+    case "bank_feed":
+      return "transactions and cash-flow activity connected to this reporting period";
+    case "notion":
+      return "the pages and notes you choose to use as drafting context";
+    case "google_drive":
+      return "the files you choose to use as investor-update context";
+    default:
+      return "the selected source data needed for this update";
+  }
 }
 
 function GmailManagementModal({
@@ -1760,9 +1956,17 @@ export default function ConnectData() {
   const [manualDocumentError, setManualDocumentError] = useState<string | null>(null);
   const [manualMaterialsExpanded, setManualMaterialsExpanded] = useState(false);
   const manualDocumentInputRef = useRef<HTMLInputElement | null>(null);
+  const privacyCardRef = useRef<HTMLDivElement | null>(null);
+  const sourcesSectionRef = useRef<HTMLElement | null>(null);
+  const manualMaterialsRef = useRef<HTMLDivElement | null>(null);
   const defaultSelectionAppliedRef = useRef(false);
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
+  const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
+  const [mobileTourOpen, setMobileTourOpen] = useState(false);
+  const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
+  const [mobileTourChecked, setMobileTourChecked] = useState(false);
+  const [mobilePrivacyNoteSeen, setMobilePrivacyNoteSeen] = useState(false);
 
   const sourceByKey = useMemo(() => new Map(sources.map((source) => [source.key, source])), [sources]);
   const prioritySources = useMemo(() => {
@@ -1778,6 +1982,31 @@ export default function ConnectData() {
   const selectedSourceList = useMemo(
     () => sources.filter((source) => selectedSources.has(source.key)),
     [selectedSources, sources],
+  );
+  const privacyPoints = isMobileTourViewport ? MOBILE_DATA_PRIVACY_POINTS : DATA_PRIVACY_POINTS;
+  const connectorTrustItems = isMobileTourViewport ? MOBILE_CONNECTOR_TRUST_ITEMS : CONNECTOR_TRUST_ITEMS;
+  const mobileTourSteps = useMemo<MobileTourStep[]>(
+    () => [
+      {
+        key: "privacy",
+        title: "Start with privacy",
+        body: "This card explains what stays private and links to the policy before you connect anything.",
+        targetRef: privacyCardRef,
+      },
+      {
+        key: "sources",
+        title: "Pick the best sources first",
+        body: "Start with the tools you already use. One connector is enough to begin, and you can add more later.",
+        targetRef: sourcesSectionRef,
+      },
+      {
+        key: "manual",
+        title: "Manual input still works",
+        body: "No connector yet? Upload documents or add a short summary and continue with a manual draft.",
+        targetRef: manualMaterialsRef,
+      },
+    ],
+    [],
   );
   const slackChannels = useMemo(() => Object.values(slackChannelsById), [slackChannelsById]);
   const linearProjects = useMemo(() => Object.values(linearProjectsById), [linearProjectsById]);
@@ -1824,6 +2053,70 @@ export default function ConnectData() {
   useEffect(() => {
     void refreshStatuses();
   }, [backendBaseUrl]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 639px)");
+    const syncViewport = () => setIsMobileTourViewport(mediaQuery.matches);
+    syncViewport();
+    mediaQuery.addEventListener("change", syncViewport);
+    return () => mediaQuery.removeEventListener("change", syncViewport);
+  }, []);
+
+  useEffect(() => {
+    if (mobileTourChecked || !isMobileTourViewport) return;
+    setMobileTourChecked(true);
+
+    try {
+      if (window.localStorage.getItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY) === "1") {
+        setMobilePrivacyNoteSeen(true);
+        return;
+      }
+    } catch {
+      // Ignore storage failures and still show the tour for this session.
+    }
+
+    const timer = window.setTimeout(() => {
+      setMobileTourStepIndex(0);
+      setMobileTourOpen(true);
+    }, 450);
+
+    return () => window.clearTimeout(timer);
+  }, [isMobileTourViewport, mobileTourChecked]);
+
+  useEffect(() => {
+    if (!isMobileTourViewport) return;
+
+    const syncMobileTourState = () => {
+      let hasSeenTour = false;
+
+      try {
+        hasSeenTour = window.localStorage.getItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY) === "1";
+      } catch {
+        hasSeenTour = false;
+      }
+
+      setMobilePrivacyNoteSeen(hasSeenTour);
+
+      if (!hasSeenTour) {
+        setMobileTourChecked(false);
+        setMobileTourStepIndex(0);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        syncMobileTourState();
+      }
+    };
+
+    window.addEventListener("focus", syncMobileTourState);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", syncMobileTourState);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isMobileTourViewport]);
 
   useEffect(() => {
     if (hasManualMaterials) {
@@ -2587,63 +2880,91 @@ export default function ConnectData() {
     </div>
   );
 
+  const closeMobileTour = () => {
+    setMobileTourOpen(false);
+    setMobilePrivacyNoteSeen(true);
+    try {
+      window.localStorage.setItem(DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage failures.
+    }
+  };
+
+  const goToPreviousMobileTourStep = () => {
+    setMobileTourStepIndex((current) => Math.max(0, current - 1));
+  };
+
+  const goToNextMobileTourStep = () => {
+    if (mobileTourStepIndex >= mobileTourSteps.length - 1) {
+      closeMobileTour();
+      return;
+    }
+    setMobileTourStepIndex((current) => current + 1);
+  };
+
   return (
     <div className="mx-auto max-w-6xl space-y-10 pb-32">
       <div className="space-y-4">
         <MonthlyUpdateStepper
           activeStep="connect"
+          disableMotion
           enabledSteps={["connect", "draft"]}
+          hideProgressUntilHover
           onStepClick={handleStepperClick}
           expandOnHover
           frameless
           className="mt-8"
         />
 
-        <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                <ShieldCheckIcon className="h-5 w-5" />
+        {!(isMobileTourViewport && mobilePrivacyNoteSeen) ? (
+          <div ref={privacyCardRef} className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
+                    <ShieldCheckIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h2 className="text-lg font-black text-gray-950">Your data stays private</h2>
+                  </div>
+                </div>
+                <div className="lg:flex lg:justify-end">
+                  <Link
+                    to="/privacy"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-2 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
+                  >
+                    Privacy Policy
+                  </Link>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h2 className="text-lg font-black text-gray-950">Your data stays private</h2>
-              </div>
-            </div>
-            <div className="lg:flex lg:justify-end">
-              <Link
-                to="/privacy"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-2 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
-              >
-                Privacy Policy
-              </Link>
-            </div>
-          </div>
 
-          <ul className="mt-5 space-y-3">
-            {DATA_PRIVACY_POINTS.map((item) => (
-              <li key={item} className="flex items-start gap-3">
-                <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
-                <p className="text-sm font-semibold leading-6 text-slate-600">{item}</p>
-              </li>
-            ))}
-          </ul>
+              <ul className="mt-5 space-y-3">
+                {privacyPoints.map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
+                    <p className="text-sm font-semibold leading-6 text-slate-600">{item}</p>
+                  </li>
+                ))}
+              </ul>
 
-          <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
-            <div className="flex min-w-0 items-start gap-4">
-              <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
-                <SparklesIcon className="h-5 w-5" />
+              <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
+                <div className="flex min-w-0 items-start gap-4">
+                  <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
+                    <SparklesIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="text-lg font-black text-gray-950">How it works</h3>
+                    <p className="mt-1 text-sm leading-6 text-slate-600">
+                      {isMobileTourViewport
+                        ? "Connect a tool or continue with manual input."
+                        : "Connect your tools below. We only use the authorized data needed to help draft your monthly update."}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="text-lg font-black text-gray-950">How it works</h3>
-                <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Connect your tools below. We only use the authorized data needed to help draft your monthly update.
-                </p>
-              </div>
-            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       {statusMessage ? (
@@ -2652,7 +2973,7 @@ export default function ConnectData() {
         </div>
       ) : null}
 
-      <section>
+      <section ref={sourcesSectionRef}>
         <div className="flex items-end justify-between gap-4">
           <div>
             <h2 className="text-xl font-black text-gray-950">Popular sources</h2>
@@ -2666,14 +2987,33 @@ export default function ConnectData() {
           ) : null}
         </div>
 
-        <div className="mt-6 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
-          <GoogleAnalyticsPlaceholderCard />
+        <div className="mt-4 hidden rounded-2xl border border-[rgba(0,255,215,0.22)] bg-[rgba(0,255,215,0.08)] p-4 sm:block sm:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
+              <ShieldCheckIcon className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-sm font-extrabold text-[var(--vr-color-primary)]">{isMobileTourViewport ? "Before connecting" : "Before you connect"}</h3>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {connectorTrustItems.map((item) => (
+                  <p key={item} className="rounded-xl bg-white/80 px-3 py-2 text-sm leading-5 text-[var(--vr-color-text)] ring-1 ring-[rgba(0,128,128,0.08)]">
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+          <GoogleAnalyticsPlaceholderCard isMobileView={isMobileTourViewport} />
           {prioritySources.map((source) => (
             <ConnectorCard
               key={source.key}
               source={source}
               selected={selectedSources.has(source.key)}
               busy={busyProvider === source.key}
+              isMobileView={isMobileTourViewport}
               onConnect={requestConnectSource}
               onManageGmail={handleOpenGmailManagement}
               onToggle={handleToggle}
@@ -2697,25 +3037,25 @@ export default function ConnectData() {
         ) : null}
 
         {showAllSources && moreOptionSources.length > 0 ? (
-          <div id="more-source-options-panel" className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
+          <div id="more-source-options-panel" className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
             {moreOptionSources.map((source) => (
               <ConnectorCard
                 key={source.key}
                 source={source}
                 selected={selectedSources.has(source.key)}
                 busy={busyProvider === source.key}
+                isMobileView={isMobileTourViewport}
                 onConnect={requestConnectSource}
                 onManageGmail={handleOpenGmailManagement}
                 onToggle={handleToggle}
               />
             ))}
-          </div>
-        ) : null}
-
-        <div className="mt-4 grid grid-cols-3 gap-3 lg:grid-cols-4 lg:gap-4">
-          <ManualMaterialsCard
-            expanded={manualMaterialsExpanded}
-            hasManualMaterials={hasManualMaterials}
+            </div>
+          ) : null}
+          <div ref={manualMaterialsRef} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <ManualMaterialsCard
+              expanded={manualMaterialsExpanded}
+              hasManualMaterials={hasManualMaterials}
             summary={manualMaterialsSummary}
             onToggle={() => setManualMaterialsExpanded((value) => !value)}
           />
@@ -2723,7 +3063,7 @@ export default function ConnectData() {
           {manualMaterialsExpanded ? (
             <div
               id="manual-materials-panel"
-              className="col-span-3 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm lg:col-span-3 lg:p-5"
+              className="col-span-1 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2 lg:col-span-4 lg:p-5"
             >
               <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-bold text-slate-500">
@@ -2915,12 +3255,22 @@ export default function ConnectData() {
       </div>
 
       <VibeRaisingStickyStepBar
+        hideStatusOnMobile
         statusIcon={stickyStatusIcon}
         statusTitle={stickyStatusTitle}
         statusDetail={stickyStatusDetail}
         onBack={() => navigate("/founder-tools/companies")}
         primaryLabel="Continue to draft"
         onPrimary={handleManualMaterialsContinue}
+      />
+
+      <MobileDataSourcesTour
+        open={mobileTourOpen}
+        stepIndex={mobileTourStepIndex}
+        steps={mobileTourSteps}
+        onBack={goToPreviousMobileTourStep}
+        onClose={closeMobileTour}
+        onNext={goToNextMobileTourStep}
       />
 
       {showNoSourcesModal ? (
@@ -3034,7 +3384,14 @@ export default function ConnectData() {
                   <h3 className="text-base font-black text-gray-950">Privacy and security</h3>
                 </div>
                 <ul className="mt-5 space-y-3 text-sm font-semibold text-slate-600">
-                  {["Only you can see connected source data and private drafts", "Read-only access where supported", "You control what stays connected", "Disconnecting can remove cached source data"].map((item) => (
+                  {[
+                    "Only founders and teammates with access to this workspace can see connected data.",
+                    `For ${pendingConnectSource.label}, we only scan ${sourceScanSummary(pendingConnectSource)}.`,
+                    "We store synced context, generated metrics, and draft materials in this workspace so you can keep editing.",
+                    pendingConnectSource.key === "gmail"
+                      ? "You can disconnect Gmail anytime, and this screen can also delete Gmail-derived drafts, events, and metrics."
+                      : "You can disconnect this source anytime, and connectors with deletion support let you remove stored data from this screen.",
+                  ].map((item) => (
                     <li key={item} className="flex items-center gap-3">
                       <CheckCircleIcon className="h-5 w-5 text-[var(--vr-color-primary)]" />
                       {item}
