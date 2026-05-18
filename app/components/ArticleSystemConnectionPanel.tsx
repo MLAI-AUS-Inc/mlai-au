@@ -1,6 +1,6 @@
 import { Form, Link, useFetcher, useLocation, useRevalidator } from "react-router";
 import { clsx } from "clsx";
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -444,6 +444,9 @@ export default function ArticleSystemConnectionPanel({
   const [manualArticleRoute, setManualArticleRoute] = useState("");
   const [manualRouteError, setManualRouteError] = useState("");
   const [createNewPath, setCreateNewPath] = useState(articleSurfaceDefault || "/articles");
+  const lastScanProgressSignatureRef = useRef("");
+  const lastScanProgressAtRef = useRef(Date.now());
+  const [pageVisible, setPageVisible] = useState(true);
   const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
     typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
   );
@@ -498,6 +501,22 @@ export default function ArticleSystemConnectionPanel({
   }, [currentScanRunId]);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    if (!githubAuthWaiting || (!connected && !connectionError && !githubRepos.error)) return;
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
+    }
+    setGithubAuthWaiting(false);
+  }, [connected, connectionError, githubAuthWaiting, githubRepos.error]);
+
+  useEffect(() => {
     if (
       runStatusFetcher.state !== "idle" ||
       !runStatusFetcher.data?.runId ||
@@ -510,6 +529,7 @@ export default function ArticleSystemConnectionPanel({
 
   useEffect(() => {
     if (!currentScanRunId || runStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     const shouldPollScan =
       !effectiveScanRun ||
       (SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
@@ -517,16 +537,30 @@ export default function ArticleSystemConnectionPanel({
         !scanStale);
     if (!shouldPollScan) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === currentScanRunId;
+    const signature = [
+      effectiveScanRun?.runId,
+      effectiveScanRun?.status,
+      effectiveScanRun?.currentStep,
+      effectiveScanRun?.updatedAt,
+      effectiveScanRun?.steps.map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}`).join(","),
+    ].join("|");
+    if (lastScanProgressSignatureRef.current !== signature) {
+      lastScanProgressSignatureRef.current = signature;
+      lastScanProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - lastScanProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         void runStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(currentScanRunId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     currentScanRunId,
     effectiveScanRun,
+    pageVisible,
     runStatusFetcher,
     runStatusFetcher.data?.runId,
     runStatusFetcher.state,
@@ -619,12 +653,10 @@ export default function ArticleSystemConnectionPanel({
               </div>
               <h4 className="mt-4 text-lg font-black text-slate-950">Connect your GitHub repository</h4>
               <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                GitHub opens in a new tab. This page will refresh when the connection is ready.
+                GitHub will open securely, then return you here when the connection is ready.
               </p>
               <a
                 href={githubConnectHref()}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={markGithubAuthOpen}
                 className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
               >
@@ -638,7 +670,7 @@ export default function ArticleSystemConnectionPanel({
               </div>
               {githubAuthWaiting ? (
                 <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-800">
-                  Finish authorising in the GitHub tab, then return here.
+                  Finish authorising in GitHub, then you will return here.
                 </div>
               ) : null}
               {connectionError ? (

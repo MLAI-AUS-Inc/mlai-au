@@ -1165,11 +1165,19 @@ function devAutofillResultFromSnapshot(runId: string, snapshot: Record<string, u
   });
 }
 
-export async function getVibeMarketingBootstrap(env: Env, request: Request, companyId?: string | null) {
+export async function getVibeMarketingBootstrap(
+  env: Env,
+  request: Request,
+  companyId?: string | null,
+  view?: "summary" | "full",
+) {
   if (shouldUseDevBackendStub()) return DEV_BOOTSTRAP;
   try {
     const client = createApiClient(env, request);
-    const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+    const params = new URLSearchParams();
+    if (companyId) params.set("company_id", companyId);
+    if (view && view !== "full") params.set("view", view);
+    const query = params.toString() ? `?${params.toString()}` : "";
     const response = await client.get(`${BASE_PATH}/bootstrap/${query}`);
     return normalizeBootstrap(response.data);
   } catch (error) {
@@ -1454,7 +1462,13 @@ export function replayVibeMarketingDaily(env: Env, request: Request, body: Recor
   return startMarketingRun(env, request, "daily/replay", body);
 }
 
-export async function getVibeMarketingRun(env: Env, request: Request, runId: string, companyId?: string | null) {
+export async function getVibeMarketingRun(
+  env: Env,
+  request: Request,
+  runId: string,
+  companyId?: string | null,
+  view?: "status" | "full",
+) {
   if (shouldUseDevBackendStub()) {
     if (runId.includes("autofill")) {
       return devAutofillResultFromSnapshot(runId, DEV_RUN_SNAPSHOTS.get(runId));
@@ -1480,7 +1494,10 @@ export async function getVibeMarketingRun(env: Env, request: Request, runId: str
     });
   }
   const client = createApiClient(env, request);
-  const query = companyId ? `?company_id=${encodeURIComponent(companyId)}` : "";
+  const params = new URLSearchParams();
+  if (companyId) params.set("company_id", companyId);
+  if (view && view !== "full") params.set("view", view);
+  const query = params.toString() ? `?${params.toString()}` : "";
   const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}${query}`);
   return normalizeMarketingRun(response.data);
 }

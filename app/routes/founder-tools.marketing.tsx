@@ -228,7 +228,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { bootstrap: emptyBootstrapFromProfile(vibeContext.profile), hasFounderCompany: false };
   }
 
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   return { bootstrap, hasFounderCompany: true };
 }
 
