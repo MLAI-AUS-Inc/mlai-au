@@ -20,6 +20,7 @@ import {
   ShieldCheck,
   Sparkles,
   ThumbsDown,
+  Trash2,
   Undo2,
   UserRound,
 } from "lucide-react";
@@ -299,7 +300,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return redirect("/founder-tools/marketing");
       }
 
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-autofill") {
@@ -383,7 +384,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await skipVibeMarketingBaseline(env, request, {
         reason: stringFromForm(formData, "reason") || "Skipped during marketing setup",
       });
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "scan") {
@@ -409,6 +410,15 @@ export async function action({ request, context }: Route.ActionArgs) {
       );
       const nextRunId = run.runId || runId;
       throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
+    }
+
+    if (intent === "delete-draft") {
+      const runId = stringFromForm(formData, "runId");
+      if (!runId) {
+        return { intent, error: "Choose a draft article to delete." };
+      }
+      await controlVibeMarketingRun(env, request, runId, "cancel");
+      return { intent, runId };
     }
 
     if (intent === "start-article") {
@@ -2221,6 +2231,7 @@ function DraftArticleRow({
   const canPostAction = draft.actionKind === "resume" || draft.actionKind === "restart";
   const actionIntent = draft.actionKind === "resume" ? "resume-draft" : "restart-draft";
   const actionLabel = draft.actionLabel || (draft.actionKind === "restart" ? "Restart" : "Resume");
+  const title = draft.title || draft.targetKeyword || "Untitled article draft";
 
   return (
     <div className="grid gap-3 border-t border-slate-100 py-4 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -2232,40 +2243,60 @@ function DraftArticleRow({
           </span>
           <span className="text-xs font-black uppercase tracking-normal text-slate-400">{draft.stageLabel}</span>
         </span>
-        <p className="mt-2 truncate text-sm font-black text-slate-950">{draft.title || draft.targetKeyword || "Untitled article draft"}</p>
+        <p className="mt-2 truncate text-sm font-black text-slate-950">{title}</p>
         <p className="mt-1 truncate text-xs font-bold text-slate-500">
           {draft.targetKeyword ? `${draft.targetKeyword} · ` : ""}
           Updated {formatArticleDate(draft.updatedAt ?? draft.createdAt)}
         </p>
       </Link>
-      {canPostAction ? (
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
         <Form method="POST">
-          <input type="hidden" name="intent" value={actionIntent} />
+          <input type="hidden" name="intent" value="delete-draft" />
           <input type="hidden" name="runId" value={draft.runId} />
           <button
             type="submit"
             disabled={submitting}
+            onClick={(event) => {
+              if (!confirm(`Delete "${title}"? This cancels the article run and removes generated content for this draft.`)) {
+                event.preventDefault();
+              }
+            }}
+            title={`Delete draft: ${title}`}
+            aria-label={`Delete draft: ${title}`}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </Form>
+        {canPostAction ? (
+          <Form method="POST" className="flex-1 sm:flex-none">
+            <input type="hidden" name="intent" value={actionIntent} />
+            <input type="hidden" name="runId" value={draft.runId} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className={clsx(
+                "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+                draftActionVariant(draft.actionKind),
+              )}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              {actionLabel}
+            </button>
+          </Form>
+        ) : (
+          <Link
+            to={href}
             className={clsx(
-              "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:flex-none",
               draftActionVariant(draft.actionKind),
             )}
           >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {actionLabel}
-          </button>
-        </Form>
-      ) : (
-        <Link
-          to={href}
-          className={clsx(
-            "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:w-auto",
-            draftActionVariant(draft.actionKind),
-          )}
-        >
-          <ArrowRight className="h-4 w-4" />
-          {draft.actionLabel || "Continue"}
-        </Link>
-      )}
+            <ArrowRight className="h-4 w-4" />
+            {draft.actionLabel || "Continue"}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
@@ -2403,10 +2434,14 @@ function ReturningTopicPickerPage({
     bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article", "article_revision"].includes(run.workflow))?.runId ?? "";
   const latestDiscoveryRunId =
     bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow))?.runId ?? "";
+  const draftArticlesSignature = useMemo(
+    () => (bootstrap.draftArticles ?? []).map((draft) => `${draft.runId}:${draft.status}:${draft.updatedAt ?? ""}`).join("|"),
+    [bootstrap.draftArticles],
+  );
   const pendingActions = useMarketingActionPending({
     navigationState: navigation.state,
     navigationFormData: navigation.formData,
-    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}`,
+    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}:${draftArticlesSignature}`,
     errorKey: error ? errorIntent : null,
   });
   const isSubmitting = pendingActions.isAnyPending;

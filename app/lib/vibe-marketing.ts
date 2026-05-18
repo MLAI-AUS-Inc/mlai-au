@@ -903,7 +903,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
         label: "Repository",
         phase: "Setup",
         status: "complete",
-        href: "/founder-tools/marketing/create?step=github",
+        href: "/founder-tools/marketing/create?step=articleSystem",
         summary: "Connect the repository used for exact article previews and publishing.",
         primaryAction: null,
         order: 3,
@@ -1505,6 +1505,12 @@ export async function startVibeMarketingLivePreview(
 ) {
   const client = createApiClient(env, request);
   const response = await client.post(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`, body);
+  return normalizeMarketingRun(response.data);
+}
+
+export async function refreshVibeMarketingLivePreview(env: Env, request: Request, runId: string) {
+  const client = createApiClient(env, request);
+  const response = await client.get(`${BASE_PATH}/runs/${encodeURIComponent(runId)}/live-preview`);
   return normalizeMarketingRun(response.data);
 }
 

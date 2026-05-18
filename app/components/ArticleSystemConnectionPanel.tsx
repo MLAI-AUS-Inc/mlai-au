@@ -386,6 +386,15 @@ function CreateNewChoiceCard({
   );
 }
 
+function githubConnectHref({ forceReconnect = false, githubRepo = "" }: { forceReconnect?: boolean; githubRepo?: string } = {}) {
+  const params = new URLSearchParams({
+    returnTo: "/founder-tools/marketing/create?step=articleSystem",
+  });
+  if (forceReconnect) params.set("forceReconnect", "true");
+  if (githubRepo && !forceReconnect) params.set("githubRepo", githubRepo);
+  return `/founder-tools/marketing/github-connect?${params.toString()}`;
+}
+
 export default function ArticleSystemConnectionPanel({
   bootstrap,
   githubRepos,
@@ -612,17 +621,16 @@ export default function ArticleSystemConnectionPanel({
               <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
                 GitHub opens in a new tab. This page will refresh when the connection is ready.
               </p>
-              <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
-                <input type="hidden" name="intent" value="connect-github" />
-                <button
-                  type="submit"
-                  onClick={markGithubAuthOpen}
-                  className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
-                >
-                  <GitHubMark className="h-5 w-5" />
-                  {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
-                </button>
-              </Form>
+              <a
+                href={githubConnectHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={markGithubAuthOpen}
+                className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              >
+                <GitHubMark className="h-5 w-5" />
+                {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
+              </a>
               <div className="mt-5 flex flex-wrap justify-center gap-4">
                 <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
                 <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
@@ -694,17 +702,15 @@ export default function ArticleSystemConnectionPanel({
                       </a>
                     ) : null}
                   </p>
-                  <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument>
-                    <input type="hidden" name="intent" value="connect-github" />
-                    <input type="hidden" name="forceReconnect" value="true" />
-                    <button
-                      type="submit"
-                      onClick={markGithubAuthOpen}
-                      className="text-sm font-black text-violet-700 transition hover:text-violet-900"
-                    >
-                      Manage GitHub access
-                    </button>
-                  </Form>
+                  <a
+                    href={githubConnectHref({ forceReconnect: true })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={markGithubAuthOpen}
+                    className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                  >
+                    Manage GitHub access
+                  </a>
                 </div>
               </div>
               <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">
@@ -874,7 +880,7 @@ export default function ArticleSystemConnectionPanel({
                     <div>
                       <p className="text-sm font-black text-slate-950">Articles/blogs location saved</p>
                       <p className="mt-1 text-sm font-semibold text-slate-500">
-                        Continue to setup review to build and inspect the articles setup preview.
+                        Build the articles/blogs directory page and inspect the setup preview.
                       </p>
                     </div>
                   </div>
@@ -884,13 +890,29 @@ export default function ArticleSystemConnectionPanel({
                     <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
                     Content Factory will use this location when preparing article drafts and previews.
                   </p>
-                  <Link
-                    to="/founder-tools/marketing/create?step=writeCheck"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-                  >
-                    Generate articles setup preview
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  {setupRunId ? (
+                    <Link
+                      to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
+                    >
+                      Open articles setup build
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <Form method="POST">
+                      <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
+                      <button
+                        type="submit"
+                        name="intent"
+                        value="build-article-system-preview"
+                        disabled={isSubmitting || !effectiveScanRun?.runId}
+                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                      >
+                        Build articles/blogs directory page
+                        <ArrowRight className="h-4 w-4" />
+                      </button>
+                    </Form>
+                  )}
                 </div>
               </div>
             ) : (
@@ -942,7 +964,7 @@ export default function ArticleSystemConnectionPanel({
                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                       >
                         {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        {savePending ? "Saving..." : "Save and continue"}
+                        {savePending ? "Starting setup..." : "Build articles/blogs directory page"}
                         {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
                       </button>
                     </Form>
