@@ -35,6 +35,7 @@ import {
     LinkIcon,
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
+    DocumentArrowUpIcon,
 } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
@@ -680,142 +681,282 @@ function VRUpdateSection({
     );
 }
 
-function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
-    const highlights = splitItems(update.highlights || "");
-    const challenges = splitItems(update.challenges || "");
-    const asks = splitItems(update.asks || "");
-    const learnings = splitItems(update.learnings || "");
-    const next30Days = splitItems(update.next30Days || "");
-    const initials = (user.fullName || user.companyName || "U")
-        .split(" ")
-        .map((p: string) => p[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
+function VRPreviewUpdateSection({
+    icon: Icon,
+    iconClassName,
+    label,
+    text,
+}: {
+    icon: any;
+    iconClassName: string;
+    label: string;
+    text?: string | null;
+}) {
+    if (!text) return null;
 
     return (
-        <div className="vr-update-card">
-            {/* Header with teal gradient + bubbles + hover-triggered purple flash */}
-            <div className="vr-uch">
-                <div className="vr-uch-bubble-1" />
-                <div className="vr-uch-bubble-2" />
-                <div className="vr-uch-glow" aria-hidden="true" />
-                <div className="vr-uch-date">{format(new Date(update.date), "MMMM d, yyyy")}</div>
-                <div className="vr-uch-main">
-                    <div className="vr-uch-emoji" aria-hidden="true">🦘</div>
-                    <div>
-                        <div className="vr-uch-title-row">
-                            <span className="vr-uch-title">{update.month}</span>
-                            <span className="vr-current-chip">Current</span>
+        <div>
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
+                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+                {label}
+            </h4>
+            <BulletList text={text} />
+        </div>
+    );
+}
+
+function getUpdateFileExtension(fileName?: string | null) {
+    const clean = String(fileName || "").split("?")[0]?.split("#")[0] || "";
+    const lastDot = clean.lastIndexOf(".");
+    return lastDot >= 0 ? clean.slice(lastDot).toLowerCase() : "";
+}
+
+function formatUpdateFileSize(bytes?: number | null) {
+    if (!bytes || !Number.isFinite(bytes)) return "";
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+function isUpdatePdfPitchDeck(contentType?: string | null, fileName?: string | null, src?: string | null) {
+    return (
+        String(contentType || "").split(";")[0].trim().toLowerCase() === "application/pdf" ||
+        getUpdateFileExtension(fileName || src || "") === ".pdf"
+    );
+}
+
+function VRPitchDeckPreview({
+    src,
+    contentType,
+    fileName,
+    fileSizeBytes,
+}: {
+    src: string;
+    contentType?: string | null;
+    fileName?: string | null;
+    fileSizeBytes?: number | null;
+}) {
+    const isPdf = isUpdatePdfPitchDeck(contentType, fileName, src);
+    const previewSrc = isPdf ? `${src}#page=1&toolbar=0&navpanes=0&scrollbar=0` : src;
+    const fileSize = formatUpdateFileSize(fileSizeBytes);
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-left">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--vr-color-border)] px-4 py-3">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-gray-950">
+                        {fileName || (isPdf ? "Pitch deck PDF" : "Pitch deck")}
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                        {isPdf ? "First page preview" : "Pitch deck attached"}
+                        {fileSize ? ` · ${fileSize}` : ""}
+                    </p>
+                </div>
+                <a
+                    href={src}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="flex-shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 ring-1 ring-[var(--vr-color-border)] transition hover:text-[var(--vr-color-primary)]"
+                >
+                    Open
+                </a>
+            </div>
+            {isPdf ? (
+                <iframe
+                    src={previewSrc}
+                    title="Pitch deck first page preview"
+                    className="h-80 w-full bg-white"
+                />
+            ) : (
+                <div className="flex min-h-48 flex-col items-center justify-center px-6 py-8 text-center">
+                    <DocumentArrowUpIcon className="h-10 w-10 text-slate-300" />
+                    <p className="mt-3 text-sm font-black text-gray-950">Deck uploaded</p>
+                    <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                        The file is attached and ready for investors to open.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function VRPreviewUpdateCard({
+    update,
+    user,
+    statusLabel,
+}: {
+    update: any;
+    user: any;
+    statusLabel?: string;
+}) {
+    const updatePeriod = update.year
+        ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
+        : parseVibeRaisingMonthYear(update.month);
+    const updateSummary = update.summary || "";
+    const updateSourceUrl = update.sourceUrl || "";
+    const updateDate = new Date(update.date);
+    const formattedDate = Number.isNaN(updateDate.getTime())
+        ? ""
+        : format(updateDate, "MMMM d, yyyy");
+    const metrics = METRIC_OPTIONS.filter((metric) => update.metrics?.[metric.key]);
+    const companyName = user.companyName || "Company";
+    const pitchDeckUrl = String(update.pitchDeckUrl || "").trim();
+    const pitchDeckSummary = String(update.pitchDeckSummary || "").trim();
+
+    return (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="relative h-32 w-full overflow-hidden">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
+                <svg className="absolute inset-0 h-full w-full opacity-[0.12]" viewBox="0 0 800 200">
+                    <circle cx="120" cy="80" r="100" fill="white" />
+                    <circle cx="650" cy="140" r="70" fill="white" />
+                    <circle cx="400" cy="30" r="50" fill="white" />
+                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                </svg>
+                <div className="absolute inset-0 flex items-end px-6 pb-4">
+                    <div className="flex items-center gap-3">
+                        {user.domain ? (
+                            <img
+                                src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                alt=""
+                                className="h-10 w-10 rounded-lg border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
+                            />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm">
+                                <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
+                            </div>
+                        )}
+                        <div>
+                            <p className="text-sm font-bold text-white drop-shadow-sm">{companyName}</p>
+                            <p className="text-xs text-white/70">Investor Update</p>
                         </div>
-                        <div className="vr-uch-company">{user.companyName}</div>
                     </div>
                 </div>
             </div>
 
-            {/* Body */}
-            <div className="vr-ucb">
-                <div className="vr-ucb-actions">
-                    <Link
-                        to={`/founder-tools/updates/create?edit=${update.id}`}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium"
-                        style={{ color: "var(--vr-color-text-mid)" }}
-                    >
-                        <PencilSquareIcon className="w-4 h-4" />
-                        Edit
-                    </Link>
-                </div>
-
-                {/* Per-update KPI grid — uses existing MetricCard, untouched */}
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
-                    {update.metrics?.revenue && (
-                        <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
-                    )}
-                    {update.metrics?.users && (
-                        <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
-                    )}
-                    {update.metrics?.runway && (
-                        <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
-                    )}
-                    {update.metrics?.mrr && (
-                        <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
-                    )}
-                    {update.metrics?.burnRate && (
-                        <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
-                    )}
-                    {update.metrics?.monthlyCosts && (
-                        <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
-                    )}
-                </div>
-
-                {/* Sections */}
-                <VRUpdateSection
-                    icon={SparklesIcon}
-                    iconColorVar="--vr-color-warning"
-                    label="Key Highlights"
-                    items={highlights}
-                />
-                <VRUpdateSection
-                    icon={ExclamationCircleIcon}
-                    iconColorVar="--vr-color-brand-orange"
-                    label="Challenges"
-                    items={challenges}
-                />
-                <VRUpdateSection
-                    icon={LightBulbIcon}
-                    iconColorVar="--vr-color-warning"
-                    label="Learnings"
-                    items={learnings}
-                />
-                <VRUpdateSection
-                    icon={CalendarIcon}
-                    iconColorVar="--vr-color-primary"
-                    label="Next 30 Days"
-                    items={next30Days}
-                />
-                <VRUpdateSection
-                    icon={QuestionMarkCircleIcon}
-                    iconColorVar="--vr-color-primary"
-                    label="Ask from Investors"
-                    items={asks}
-                />
-            </div>
-
-            {/* Footer */}
-            <div className="vr-ucf">
-                <div className="vr-ucf-left">
-                    <div className="vr-ucf-avatar">{initials}</div>
+            <div className="border-b border-gray-100 px-6 pb-4 pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <div className="vr-ucf-name">{user.companyName}</div>
-                        <div className="vr-ucf-company">Sent to 14 investors · 78% open rate</div>
+                        <h3 className="text-lg font-bold text-gray-900">
+                            {updatePeriod.month} {updatePeriod.year} Update
+                        </h3>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
+                            <StartupRegionBadge location={user.location} />
+                            {statusLabel ? (
+                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                                    {statusLabel}
+                                </span>
+                            ) : null}
+                            <Link
+                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                            >
+                                Edit
+                                <PencilSquareIcon className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+                    </div>
+                    {formattedDate ? (
+                        <span className="text-xs text-gray-400">{formattedDate}</span>
+                    ) : null}
+                </div>
+            </div>
+
+            {metrics.length > 0 ? (
+                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                        {metrics.map((metric) => (
+                            <MetricCard
+                                key={metric.key}
+                                label={metric.label}
+                                value={update.metrics[metric.key]}
+                                icon={metric.icon}
+                            />
+                        ))}
                     </div>
                 </div>
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
-                    >
-                        Share Link
-                    </button>
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg"
-                        style={{
-                            background: "var(--vr-color-primary)",
-                            color: "#fff",
-                        }}
-                    >
-                        Resend to Unopened
-                    </button>
+            ) : null}
+
+            {pitchDeckUrl ? (
+                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                Pitch deck
+                            </p>
+                            {pitchDeckSummary ? (
+                                <p className="mt-2 text-sm leading-6 text-slate-500">{pitchDeckSummary}</p>
+                            ) : null}
+                        </div>
+                        <VRPitchDeckPreview
+                            src={pitchDeckUrl}
+                            contentType={update.pitchDeckContentType}
+                            fileName={update.pitchDeckOriginalFilename}
+                            fileSizeBytes={update.pitchDeckFileSizeBytes}
+                        />
+                    </div>
                 </div>
+            ) : null}
+
+            <div className="space-y-5 px-6 py-5">
+                {(updateSummary || updateSourceUrl) ? (
+                    <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                        {updateSummary ? (
+                            <p className="text-sm font-medium leading-relaxed text-gray-700">{updateSummary}</p>
+                        ) : null}
+                        {updateSourceUrl ? (
+                            <a
+                                href={updateSourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 text-xs font-bold text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]"
+                            >
+                                <LinkIcon className="h-3.5 w-3.5" />
+                                Source materials
+                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                            </a>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                <VRPreviewUpdateSection
+                    icon={SparklesIcon}
+                    iconClassName="text-[var(--vr-palette-purple)]"
+                    label="Key Highlights"
+                    text={update.highlights}
+                />
+                <VRPreviewUpdateSection
+                    icon={ExclamationCircleIcon}
+                    iconClassName="text-[var(--vr-palette-orange)]"
+                    label="Challenges"
+                    text={update.challenges}
+                />
+                <VRPreviewUpdateSection
+                    icon={LightBulbIcon}
+                    iconClassName="text-[var(--vr-palette-yellow)]"
+                    label="Learnings"
+                    text={update.learnings}
+                />
+                <VRPreviewUpdateSection
+                    icon={ArrowRightIcon}
+                    iconClassName="text-[var(--vr-palette-blue)]"
+                    label="Next 30 Days"
+                    text={update.next30Days}
+                />
+                <VRPreviewUpdateSection
+                    icon={QuestionMarkCircleIcon}
+                    iconClassName="text-[var(--vr-palette-lavender)]"
+                    label="Ask from Investors"
+                    text={update.asks}
+                />
             </div>
         </div>
     );
+}
+
+function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
+    return <VRPreviewUpdateCard update={update} user={user} statusLabel="Current" />;
 }
 
 function VRPastUpdateRow({
@@ -967,14 +1108,11 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const [activeTab, setActiveTab] = useState<"current" | "past">(
         currentUpdate ? "current" : "past"
     );
-    const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
-        currentUpdate ? null : pastUpdates[0]?.id ?? null
-    );
     const [activeMetricCard, setActiveMetricCard] = useState<string | null>(null);
 
     if (!hasUpdates) {
         return (
-            <div className="vr-scope space-y-8 pb-12">
+            <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                         <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
@@ -1093,7 +1231,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     }
 
     return (
-        <div className="vr-scope space-y-8 pb-12">
+        <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                     <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
@@ -1261,24 +1399,29 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 <div className="mt-6">
                     {activeTab === "current" ? (
                         currentUpdate ? (
-                            <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                                <div className="min-w-0 flex-1">
+                                    <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                                </div>
+                            </div>
                         ) : (
                             <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
                                 No current update yet — create your first one above.
                             </p>
                         )
                     ) : (
-                        <div className="space-y-2">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                             {pastUpdates.length > 0 ? (
-                                pastUpdates.map((u) => (
-                                    <VRPastUpdateRow
-                                        key={`${user.activeCompanyId || "default"}-${u.id}`}
-                                        update={u}
-                                        user={user}
-                                        expanded={expandedPastUpdateId === u.id}
-                                        onToggle={() => setExpandedPastUpdateId((current) => current === u.id ? null : u.id)}
-                                    />
-                                ))
+                                <div className="min-w-0 flex-1 space-y-4">
+                                    {pastUpdates.map((u) => (
+                                        <VRPreviewUpdateCard
+                                            key={`${user.activeCompanyId || "default"}-${u.id}`}
+                                            update={u}
+                                            user={user}
+                                            statusLabel="Sent"
+                                        />
+                                    ))}
+                                </div>
                             ) : (
                                 <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
                                     No past updates yet. Once you send one, it'll show up here.

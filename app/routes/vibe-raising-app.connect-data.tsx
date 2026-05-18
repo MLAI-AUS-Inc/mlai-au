@@ -67,8 +67,8 @@ const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
-const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["stripe", "notion", "google_drive"];
-const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["gmail", "slack", "linear", "bank_feed", "xero"];
+const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["linear", "stripe", "notion"];
+const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
 const DATA_SOURCES_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_data_sources_mobile_tour_seen_v1";
@@ -81,17 +81,6 @@ const MOBILE_DATA_PRIVACY_POINTS = [
   "Only you can see connected data here",
   "Drafts stay private until you publish",
   "Disconnect or remove data anytime",
-] as const;
-const CONNECTOR_TRUST_ITEMS = [
-  "Only founders and teammates with access to this workspace can see connected source data.",
-  "We only scan the selected source data needed to draft your monthly update.",
-  "We store synced context, generated metrics, and draft materials inside this workspace.",
-  "You can disconnect a source anytime, and connectors with deletion support let you remove stored data from this screen.",
-];
-const MOBILE_CONNECTOR_TRUST_ITEMS = [
-  "Only your workspace can see connected source data.",
-  "We only scan the data needed for this draft.",
-  "Disconnect a source or remove stored data anytime.",
 ] as const;
 
 const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
@@ -1682,29 +1671,19 @@ function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView
 }
 
 function ManualMaterialsCard({
-  expanded,
   hasManualMaterials,
   summary,
-  onToggle,
 }: {
-  expanded: boolean;
   hasManualMaterials: boolean;
   summary: string;
-  onToggle: () => void;
 }) {
   const cardCaption = "Upload private documents or add a short written summary for context outside your connected tools.";
 
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={expanded}
-      aria-controls="manual-materials-panel"
+    <div
       className={clsx(
-        "group relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none transition focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
-        expanded || hasManualMaterials
-          ? "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]"
-          : "border-gray-200 bg-white hover:border-[rgba(0,128,128,0.28)] hover:shadow-md",
+        "relative flex min-h-[152px] w-full flex-col overflow-hidden rounded-xl border p-3 text-left shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+        "border-[rgba(0,255,215,0.42)] bg-white ring-1 ring-[rgba(0,128,128,0.12)]",
       )}
     >
       <div className="pointer-events-none flex flex-col gap-3">
@@ -1745,10 +1724,6 @@ function ManualMaterialsCard({
         </div>
 
         <div className="mt-auto pt-3 sm:pt-4">
-          <div className="flex w-full items-center justify-center rounded-lg bg-[rgba(0,255,215,0.12)] px-2.5 py-2 text-[11px] font-extrabold text-[var(--vr-color-primary)] transition group-hover:bg-[rgba(0,255,215,0.18)] group-hover:ring-1 group-hover:ring-[rgba(0,128,128,0.18)] sm:px-3 sm:text-xs">
-            <span>{expanded ? "Hide form" : "Open form"}</span>
-          </div>
-
           {hasManualMaterials ? (
             <p className="mt-2 text-[10px] font-medium leading-4 text-[var(--vr-color-text)] sm:text-[11px]">
               {summary}
@@ -1756,7 +1731,7 @@ function ManualMaterialsCard({
           ) : null}
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
@@ -1954,7 +1929,6 @@ export default function ConnectData() {
   const [loadingManualDocuments, setLoadingManualDocuments] = useState(false);
   const [manualDocumentUploadStatus, setManualDocumentUploadStatus] = useState<"idle" | "creating_session" | "uploading" | "finalizing">("idle");
   const [manualDocumentError, setManualDocumentError] = useState<string | null>(null);
-  const [manualMaterialsExpanded, setManualMaterialsExpanded] = useState(false);
   const manualDocumentInputRef = useRef<HTMLInputElement | null>(null);
   const privacyCardRef = useRef<HTMLDivElement | null>(null);
   const sourcesSectionRef = useRef<HTMLElement | null>(null);
@@ -1984,7 +1958,6 @@ export default function ConnectData() {
     [selectedSources, sources],
   );
   const privacyPoints = isMobileTourViewport ? MOBILE_DATA_PRIVACY_POINTS : DATA_PRIVACY_POINTS;
-  const connectorTrustItems = isMobileTourViewport ? MOBILE_CONNECTOR_TRUST_ITEMS : CONNECTOR_TRUST_ITEMS;
   const mobileTourSteps = useMemo<MobileTourStep[]>(
     () => [
       {
@@ -1998,12 +1971,6 @@ export default function ConnectData() {
         title: "Pick the best sources first",
         body: "Start with the tools you already use. One connector is enough to begin, and you can add more later.",
         targetRef: sourcesSectionRef,
-      },
-      {
-        key: "manual",
-        title: "Manual input still works",
-        body: "No connector yet? Upload documents or add a short summary and continue with a manual draft.",
-        targetRef: manualMaterialsRef,
       },
     ],
     [],
@@ -2117,12 +2084,6 @@ export default function ConnectData() {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [isMobileTourViewport]);
-
-  useEffect(() => {
-    if (hasManualMaterials) {
-      setManualMaterialsExpanded(true);
-    }
-  }, [hasManualMaterials]);
 
   useEffect(() => {
     let cancelled = false;
@@ -2909,7 +2870,6 @@ export default function ConnectData() {
           activeStep="connect"
           disableMotion
           enabledSteps={["connect", "draft"]}
-          hideProgressUntilHover
           onStepClick={handleStepperClick}
           expandOnHover
           frameless
@@ -2987,24 +2947,6 @@ export default function ConnectData() {
           ) : null}
         </div>
 
-        <div className="mt-4 hidden rounded-2xl border border-[rgba(0,255,215,0.22)] bg-[rgba(0,255,215,0.08)] p-4 sm:block sm:p-5">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[var(--vr-color-border)]">
-              <ShieldCheckIcon className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-extrabold text-[var(--vr-color-primary)]">{isMobileTourViewport ? "Before connecting" : "Before you connect"}</h3>
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {connectorTrustItems.map((item) => (
-                  <p key={item} className="rounded-xl bg-white/80 px-3 py-2 text-sm leading-5 text-[var(--vr-color-text)] ring-1 ring-[rgba(0,128,128,0.08)]">
-                    {item}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
           <GoogleAnalyticsPlaceholderCard isMobileView={isMobileTourViewport} />
           {prioritySources.map((source) => (
@@ -3050,137 +2992,8 @@ export default function ConnectData() {
                 onToggle={handleToggle}
               />
             ))}
-            </div>
-          ) : null}
-          <div ref={manualMaterialsRef} className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-            <ManualMaterialsCard
-              expanded={manualMaterialsExpanded}
-              hasManualMaterials={hasManualMaterials}
-            summary={manualMaterialsSummary}
-            onToggle={() => setManualMaterialsExpanded((value) => !value)}
-          />
-
-          {manualMaterialsExpanded ? (
-            <div
-              id="manual-materials-panel"
-              className="col-span-1 space-y-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:col-span-2 lg:col-span-4 lg:p-5"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-bold text-slate-500">
-                  Upload documents or add a short written summary for extra context.
-                </p>
-                {hasManualMaterials ? (
-                  <button
-                    type="button"
-                    onClick={clearManualMaterials}
-                    className="inline-flex w-fit items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-xs font-extrabold text-gray-500 transition hover:bg-gray-50 hover:text-gray-800"
-                  >
-                    Clear materials
-                  </button>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-                <div>
-                <span className="mb-1.5 flex items-center gap-2 text-sm font-bold text-gray-700">
-                    <DocumentTextIcon className="h-4 w-4 text-gray-400" />
-                    Documents
-                </span>
-                  <input
-                    ref={manualDocumentInputRef}
-                    type="file"
-                    className="sr-only"
-                    accept=".pdf,.docx,.pptx,.xlsx,.xlsm,.csv,.txt,.md,.html,.htm,.rtf,.odt"
-                    onChange={(event) => void handleManualDocumentFile(event.target.files?.[0])}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => manualDocumentInputRef.current?.click()}
-                    onDragOver={(event) => {
-                      event.preventDefault();
-                      event.dataTransfer.dropEffect = "copy";
-                    }}
-                    onDrop={(event) => {
-                      event.preventDefault();
-                      void handleManualDocumentFile(event.dataTransfer.files?.[0]);
-                    }}
-                    disabled={manualDocumentUploadStatus !== "idle"}
-                    className="flex min-h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] disabled:cursor-wait disabled:opacity-70"
-                  >
-                    <CloudArrowUpIcon className="h-8 w-8 text-[var(--vr-color-primary)]" />
-                    <span className="mt-3 text-sm font-extrabold text-gray-900">
-                      {manualDocumentUploadStatus === "idle" ? "Upload a document" : "Uploading document..."}
-                    </span>
-                    <span className="mt-1 text-xs font-medium text-slate-500">
-                      PDF, DOCX, PPTX, XLSX, CSV, TXT, MD, HTML, RTF, or ODT up to 25 MB.
-                    </span>
-                  </button>
-                  {manualDocumentError ? (
-                    <p className="mt-2 text-sm font-semibold text-red-600">{manualDocumentError}</p>
-                  ) : null}
-                  <div className="mt-3 space-y-2">
-                    {loadingManualDocuments ? (
-                      <p className="text-sm font-semibold text-slate-500">Loading uploaded documents...</p>
-                    ) : manualDocuments.length > 0 ? (
-                      manualDocuments.map((document) => {
-                        const selected = selectedManualDocumentIds.has(document.id);
-                        return (
-                          <div
-                            key={document.id}
-                            className={clsx(
-                              "flex items-center justify-between gap-3 rounded-xl border px-3 py-2",
-                              selected ? "border-[rgba(0,255,215,0.34)] bg-[rgba(0,255,215,0.08)]" : "border-gray-200 bg-white",
-                            )}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => updateManualDocumentSelection(document, !selected)}
-                              className="min-w-0 flex-1 text-left"
-                            >
-                              <p className="truncate text-sm font-extrabold text-gray-900">{document.originalFilename}</p>
-                              <p className="mt-0.5 text-xs font-medium text-slate-500">
-                                {document.extractionStatus === "processed" ? "Ready for AI context" : document.extractionStatus}
-                              </p>
-                            </button>
-                            <div className="flex shrink-0 items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => void handleOpenManualDocument(document)}
-                                className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-bold text-gray-600 transition hover:bg-gray-50"
-                              >
-                                Open
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => void handleDeleteManualDocument(document)}
-                                className="rounded-lg border border-red-100 px-2 py-1 text-xs font-bold text-red-600 transition hover:bg-red-50"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })
-                    ) : (
-                      <p className="text-sm font-semibold text-slate-500">No uploaded documents yet.</p>
-                    )}
-                  </div>
-                </div>
-
-                <label className="block">
-                  <span className="mb-1.5 block text-sm font-bold text-gray-700">Short summary</span>
-                  <textarea
-                    value={manualMaterials.summary}
-                    onChange={(event) => updateManualMaterials({ summary: event.target.value })}
-                    rows={4}
-                    placeholder="Topline context investors should read before the detailed sections..."
-                    className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm leading-relaxed text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,128,128,0.10)]"
-                  />
-                </label>
-              </div>
-            </div>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </section>
 
       {shouldShowSlackPreview ? (

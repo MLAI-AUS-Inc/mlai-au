@@ -7,7 +7,7 @@
    Do NOT apply .text-*, .color-* utility classes or
    vibe-raising design tokens on other routes.
 
-   Font loading note: Oswald + DM Sans are loaded via a
+   Font loading note: Oswald + Roboto are loaded via a
    <link rel="stylesheet"> in app/root.tsx (not via @import
    here, since Tailwind's bundle hoists later @imports and
    breaks the spec requirement that @import precede all
@@ -92,7 +92,7 @@
 
   /* ── Typography ──────────────────────────────────────── */
   --vr-font-title: 'Oswald', sans-serif;           /* Headings & titles ONLY */
-  --vr-font-body:  'DM Sans', system-ui, sans-serif; /* All UI text */
+  --vr-font-body:  'Roboto', system-ui, sans-serif; /* All UI text */
 
   /* ── Font Weights ────────────────────────────────────── */
   --vr-font-weight-light:    300;
@@ -150,6 +150,10 @@
    Scoped under .vr-scope so they only apply where we opt in
    (e.g. on /vibe-raising). Put the class on a page wrapper.
    ──────────────────────────────────────────────────────── */
+
+.vr-scope {
+  font-family: var(--vr-font-body);
+}
 
 .vr-scope .vr-text-page-title {
   font-family: var(--vr-font-title);
