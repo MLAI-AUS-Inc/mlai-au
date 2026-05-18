@@ -97,7 +97,7 @@ export default function MonthlyUpdateStepper({
                 onClick={() => onStepClick?.(step.key)}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset transition",
-                  canSelect ? "cursor-pointer hover:bg-white" : "cursor-default",
+                  canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
                   isActive && "bg-[var(--vr-color-primary)] text-white shadow-sm ring-[var(--vr-color-primary)]",
                   isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(0,128,128,0.18)]",
                   !isActive && !isComplete && !isLocked && "bg-white text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",
@@ -179,7 +179,7 @@ export default function MonthlyUpdateStepper({
                     className={clsx(
                       "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset",
                       !disableMotion && "transition",
-                      canSelect ? "cursor-pointer hover:bg-white" : "cursor-default",
+                      canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
                       isActive && "bg-[var(--vr-color-primary)] text-white shadow-sm ring-[var(--vr-color-primary)]",
                       isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(0,128,128,0.18)]",
                       !isActive && !isComplete && !isLocked && "bg-white text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",
@@ -302,7 +302,7 @@ export default function MonthlyUpdateStepper({
                 onClick={() => onStepClick?.(step.key)}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset transition",
-                  canSelect ? "cursor-pointer hover:bg-white" : "cursor-default",
+                  canSelect ? "cursor-pointer hover:bg-[rgba(0,255,215,0.16)]" : "cursor-default",
                   isActive && "bg-[var(--vr-color-primary)] text-white shadow-sm ring-[var(--vr-color-primary)]",
                   isComplete && !isActive && "bg-[var(--vr-color-primary-soft)] text-[var(--vr-color-primary)] ring-[rgba(0,128,128,0.18)]",
                   !isActive && !isComplete && !isLocked && "bg-white text-[var(--vr-color-text-sub)] ring-[var(--vr-color-border)]",

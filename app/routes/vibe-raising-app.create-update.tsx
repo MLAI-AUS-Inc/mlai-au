@@ -2113,6 +2113,7 @@ export default function CreateUpdate() {
     const [mobileTourOpen, setMobileTourOpen] = useState(false);
     const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
     const [mobileTourChecked, setMobileTourChecked] = useState(false);
+    const [mobileReviewHowItWorksSeen, setMobileReviewHowItWorksSeen] = useState(false);
     const showLegacyDraftFlow = false;
     const selectedInputSourceLabels = selectedInputSources.map((key) => INPUT_SOURCE_LABELS[key]);
     const selectedInputSourceDescription = selectedInputSourceLabels.length > 0
@@ -2209,6 +2210,7 @@ export default function CreateUpdate() {
     const draftStepperRef = useRef<HTMLDivElement | null>(null);
     const monthSelectorRef = useRef<HTMLDivElement | null>(null);
     const draftStickyTriggerRef = useRef<HTMLDivElement | null>(null);
+    const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
     const shouldDimMetricsTemplate = isManualOnlyDraftFlow && draftMetricOptions.length >= 12;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
     const [showDraftStickyOnMobile, setShowDraftStickyOnMobile] = useState(false);
@@ -2607,6 +2609,29 @@ export default function CreateUpdate() {
     }, []);
 
     useEffect(() => {
+        if (!isMobileTourViewport) {
+            setMobileReviewHowItWorksSeen(false);
+            return;
+        }
+
+        const syncMobileReviewIntro = () => {
+            try {
+                setMobileReviewHowItWorksSeen(window.localStorage.getItem(CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY) === "1");
+            } catch {
+                setMobileReviewHowItWorksSeen(false);
+            }
+        };
+
+        syncMobileReviewIntro();
+        window.addEventListener("focus", syncMobileReviewIntro);
+        document.addEventListener("visibilitychange", syncMobileReviewIntro);
+        return () => {
+            window.removeEventListener("focus", syncMobileReviewIntro);
+            document.removeEventListener("visibilitychange", syncMobileReviewIntro);
+        };
+    }, [isMobileTourViewport]);
+
+    useEffect(() => {
         if (mobileTourChecked || !isMobileTourViewport || monthConfirmed || selectedDraftStage === "reporting") return;
         setMobileTourChecked(true);
 
@@ -2872,6 +2897,25 @@ export default function CreateUpdate() {
     const handleGenerateDraftFromEmailClick = useCallback(() => {
         handleGenerateSelectedMonthUpdate();
     }, [handleGenerateSelectedMonthUpdate]);
+    const handleGenerateDraftCardTouchStart = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
+        const touch = event.touches[0];
+        if (!touch) return;
+        generateDraftSwipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+    }, []);
+    const handleGenerateDraftCardTouchEnd = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
+        const start = generateDraftSwipeStartRef.current;
+        generateDraftSwipeStartRef.current = null;
+        if (!start || !isMobileTourViewport || isSelectedMonthInFuture || emailDraftActionBusy) return;
+
+        const touch = event.changedTouches[0];
+        if (!touch) return;
+
+        const deltaX = touch.clientX - start.x;
+        const deltaY = Math.abs(touch.clientY - start.y);
+        if (deltaX >= 72 && deltaY <= 40) {
+            void handleGenerateDraftFromEmailClick();
+        }
+    }, [emailDraftActionBusy, handleGenerateDraftFromEmailClick, isMobileTourViewport, isSelectedMonthInFuture]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -3124,6 +3168,9 @@ export default function CreateUpdate() {
     const emailDraftButtonTitle = emailDraftActionBusy
         ? `Generating ${selectedMonthLabel} update`
         : `${selectedMonthGenerationVerb} ${selectedMonthLabel} update`;
+    const emailDraftButtonAriaLabel = isMobileTourViewport
+        ? `${emailDraftButtonTitle}. Swipe right on mobile to ${selectedMonthGenerationVerb.toLowerCase()} this update.`
+        : emailDraftButtonTitle;
     const emailDraftButtonDescription = emailDraftActionBusy
         ? "Contacting the MLAI backend and preparing the selected sources for drafting."
         : isSelectedMonthInFuture
@@ -3304,7 +3351,7 @@ export default function CreateUpdate() {
             statusDetail: selectedMetricOptions.length > 0
                 ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedMonthLabel}.`
                 : isManualOnlyDraftFlow
-                    ? `Start with the full 16-metric template for ${selectedMonthLabel}, then trim or fill what matters.`
+                    ? `Use the full 16-metric template for ${selectedMonthLabel}.`
                     : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
             primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
             primaryType: "submit" as const,
@@ -4072,7 +4119,10 @@ export default function CreateUpdate() {
                     className="mt-8"
                 />
 
-                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+                <div className={clsx(
+                    "rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm",
+                    isMobileTourViewport && mobileReviewHowItWorksSeen && "hidden sm:block",
+                )}>
                     <div className="flex min-w-0 items-start gap-4">
                         <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
                             <SparklesIcon className="h-5 w-5" />
@@ -4718,6 +4768,9 @@ export default function CreateUpdate() {
                 </div>
 
                 <VibeRaisingStickyStepBar
+                    hideStatusOnMobile
+                    hideBackOnMobile
+                    compactOnMobile
                     statusIcon={
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
                             <CheckCircleIcon className="h-5 w-5" />
@@ -4727,9 +4780,11 @@ export default function CreateUpdate() {
                     statusDetail="Review is ready. Publish when the story feels right."
                     onBack={() => setDismissedFeedback(true)}
                     secondaryLabel={draftSaved ? "Draft saved!" : "Save as draft"}
+                    mobileSecondaryLabel={draftSaved ? "Draft saved" : "Save draft"}
                     onSecondary={handlePersistDraft}
                     secondaryDisabled={saveDraftFetcher.state !== "idle"}
                     primaryLabel="Publish and Send"
+                    mobilePrimaryLabel="Publish"
                     onPrimary={() => setShowConfirmPopup(true)}
                 />
             </div>
@@ -4836,12 +4891,15 @@ export default function CreateUpdate() {
                                         onClick={() => {
                                             void handleGenerateDraftFromEmailClick();
                                         }}
+                                        onTouchStart={handleGenerateDraftCardTouchStart}
+                                        onTouchEnd={handleGenerateDraftCardTouchEnd}
                                         className={clsx(
-                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
+                                            "group flex w-full flex-col justify-between rounded-3xl border px-5 py-5 text-left shadow-sm transition [touch-action:pan-y] focus:outline-none focus:ring-4 lg:col-span-1 lg:min-h-[132px]",
                                             isSelectedMonthInFuture || emailDraftActionBusy
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
-                                                : "cursor-pointer border-[var(--vr-palette-black)] bg-[var(--vr-palette-black)] text-white hover:-translate-y-0.5 hover:bg-[var(--vr-palette-purple)] focus:ring-[rgba(150,73,210,0.24)]",
+                                                : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
+                                        aria-label={emailDraftButtonAriaLabel}
                                     >
                                         <div>
                                             <p
@@ -4861,7 +4919,7 @@ export default function CreateUpdate() {
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
-                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                                                <ArrowRightIcon className="h-4 w-4" />
                                             )}
                                         </div>
                                     </button>

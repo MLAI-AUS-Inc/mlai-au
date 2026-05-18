@@ -1,3 +1,9 @@
+- [x] Simplify the mobile review sticky footer on Founder Tools create-update
+- [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
+- [x] Improve Create Update AI draft card touch/mobile affordance
+- [x] Reduce Founder Tools mobile chrome clutter and card status density
+- [x] Run `bun run typecheck`
+- [x] Verify Founder Tools dashboard, create-update, and data-sources flows in the local browser
 - [x] Fix GA4 Measurement ID and SPA page-view tracking
 - [x] Update the main-page Slack invite link
 - [x] Update the Vibe Raising relationship callout heading to mention building investor relationships 6 months in advance
