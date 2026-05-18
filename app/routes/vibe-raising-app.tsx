@@ -16,7 +16,9 @@ import {
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
   ChartBarIcon,
+  CircleStackIcon,
   DocumentTextIcon,
+  BuildingOffice2Icon,
   MegaphoneIcon,
 } from "@heroicons/react/24/outline";
 
@@ -24,18 +26,21 @@ const BASE_FOUNDER_NAVIGATION = [
   { name: "Dashboard", href: "/founder-tools", icon: ChartBarIcon, exact: true },
   {
     name: "Vibe Raising",
-    href: "/founder-tools/overview",
+    href: "/founder-tools/updates",
     icon: DocumentTextIcon,
     matchPaths: [
-      "/founder-tools/overview",
       "/founder-tools/updates",
       "/founder-tools/drafts",
-      "/founder-tools/data-sources",
-      "/founder-tools/companies",
       "/founder-tools/discover",
     ],
   },
   { name: "Vibe Marketing", href: "/founder-tools/marketing", icon: MegaphoneIcon },
+  { name: "Data Sources", href: "/founder-tools/data-sources", icon: CircleStackIcon },
+  { name: "My Companies", href: "/founder-tools/companies", icon: BuildingOffice2Icon },
+];
+
+const FOUNDER_USER_NAVIGATION = [
+  { name: "My companies", href: "/founder-tools/companies" },
 ];
 
 function canAccessDuringCompanySetup(pathname: string) {
@@ -100,7 +105,7 @@ export default function VibeRaisingApp() {
     <AuthenticatedLayout
       user={user}
       navigation={BASE_FOUNDER_NAVIGATION}
-      userNavigation={[]}
+      userNavigation={FOUNDER_USER_NAVIGATION}
       logoutAction="/founder-tools/logout"
     >
       {showAnnouncement ? (
@@ -111,7 +116,9 @@ export default function VibeRaisingApp() {
         />
       ) : null}
 
-      <Outlet context={{ triggerAnnouncement }} />
+      <div className="vr-scope">
+        <Outlet context={{ triggerAnnouncement }} />
+      </div>
     </AuthenticatedLayout>
   );
 }

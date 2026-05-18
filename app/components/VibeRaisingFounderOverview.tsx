@@ -219,11 +219,59 @@ function VibeRaisingHeroExampleUpdatePreview() {
   );
 }
 
+function LandingDisplayHeading({
+  number,
+  label,
+  accent = "var(--vr-color-primary)",
+}: {
+  number: string;
+  label: string;
+  accent?: string;
+}) {
+  return (
+    <div className="leading-none tracking-tight" style={{ color: accent, fontFamily: "'Oswald', sans-serif" }}>
+      <div
+        style={{
+          fontSize: "clamp(9rem, 25vw, 24rem)",
+          fontWeight: 700,
+          lineHeight: 0.78,
+        }}
+      >
+        {number}
+      </div>
+      <div
+        className="mt-4"
+        style={{
+          fontSize: "clamp(3.4rem, 8vw, 7rem)",
+          fontWeight: 700,
+          lineHeight: 0.86,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
+const landingNumberSectionClassName =
+  "mx-auto grid max-w-6xl gap-10 border-b border-[rgba(15,23,42,0.12)] py-12 lg:grid-cols-[minmax(0,0.78fr)_minmax(0,1.22fr)] lg:items-start lg:gap-16";
+
+const landingNumberContentClassName =
+  "w-full max-w-3xl space-y-5 lg:col-start-2 lg:justify-self-start";
+
 export default function VibeRaisingFounderOverview({
   firstName,
+  heading,
+  showEyebrow = true,
+  showInvestorConnectionSection = false,
+  useNumberedSectionHeadings = false,
   onCreateFirstUpdate,
 }: {
   firstName: string;
+  heading?: string;
+  showEyebrow?: boolean;
+  showInvestorConnectionSection?: boolean;
+  useNumberedSectionHeadings?: boolean;
   onCreateFirstUpdate: () => void;
 }) {
   return (
@@ -239,11 +287,13 @@ export default function VibeRaisingFounderOverview({
         <div className="relative z-10 mx-auto flex min-h-[60vh] max-w-7xl items-center px-6 py-14 sm:min-h-[calc(100vh-64px)] sm:py-16 lg:px-8 lg:py-20">
           <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,460px)] lg:gap-12">
             <div className="max-w-2xl text-center lg:text-left">
-              <div className="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/78 backdrop-blur-sm">
-                Founder overview
-              </div>
+              {showEyebrow ? (
+                <div className="mb-4 inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-white/78 backdrop-blur-sm">
+                  Founder overview
+                </div>
+              ) : null}
               <h1 className="mb-4 text-4xl font-extrabold tracking-tight text-white drop-shadow-lg sm:text-5xl lg:text-6xl">
-                Let&apos;s get you ready to raise, {firstName}.
+                {heading ?? <>Let&apos;s get you ready to raise, {firstName}.</>}
               </h1>
               <p className="mx-auto mb-4 max-w-xl text-base leading-snug text-white/84 sm:text-lg lg:mx-0">
                 Use monthly updates to build investor relationships before you raise.
@@ -288,44 +338,133 @@ export default function VibeRaisingFounderOverview({
         <ResponsibleInvestorsSection />
       </section>
 
-      <div className="px-6 py-14">
-        <h2 className="mb-12 text-center text-2xl font-bold text-gray-900">
-          How It Works
-        </h2>
-        <div className="mx-auto max-w-5xl border-y border-[rgba(15,23,42,0.12)]">
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-[rgba(15,23,42,0.12)]">
-            {MONTHLY_UPDATE_STEPS.map((item, index) => (
-              <div
-                key={item.key}
-                className={clsx(
-                  "px-5 py-8 text-center",
-                  index < MONTHLY_UPDATE_STEPS.length - 1 && "border-b border-[rgba(15,23,42,0.12)] lg:border-b-0",
-                )}
-              >
-                <span className="text-3xl font-extrabold text-[var(--vr-color-primary)]">
-                  {index + 1}
-                </span>
-                <p className="mt-3 text-sm font-bold text-gray-900">
-                  {item.title}
+      {showInvestorConnectionSection ? (
+        <section className="px-6 pt-14">
+          <div className={landingNumberSectionClassName}>
+            <LandingDisplayHeading number="3" label="Updates" />
+            <div className={landingNumberContentClassName}>
+              <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                Investor connection pathway
+              </p>
+              <h3 className="text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">
+                Share 3 monthly updates, and we'll connect you with investors.
+              </h3>
+              <div className="space-y-5 text-lg leading-8 text-gray-600">
+                <p>
+                  Vibe Raising helps you build a visible track record before you ask for capital.
                 </p>
-                <p className="mt-2 text-xs text-gray-500">{item.helper}</p>
+                <p>
+                  After three monthly updates, MLAI can use that momentum to connect you with
+                  relevant investors.
+                </p>
               </div>
-            ))}
+              <p className="border-l-4 border-[var(--vr-color-primary)] pl-6 text-lg font-extrabold leading-8 text-[var(--vr-color-primary)]">
+                The goal is simple: show consistency, make your progress easy to understand,
+                and meet investors when there is already trust in the room.
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
+      ) : null}
+
+      <div className="px-6">
+        {useNumberedSectionHeadings ? (
+          <div className={landingNumberSectionClassName}>
+            <LandingDisplayHeading number="4" label="Steps" accent="var(--brutalist-orange)" />
+            <div className={landingNumberContentClassName}>
+              <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--brutalist-orange)]">
+                How it works
+              </p>
+              <div className="relative mt-8 space-y-8">
+                <div className="absolute bottom-10 left-7 top-7 w-px border-l border-dashed border-[rgba(255,61,0,0.45)]" aria-hidden />
+                {MONTHLY_UPDATE_STEPS.map((item, index) => (
+                  <div
+                    key={item.key}
+                    className="relative grid grid-cols-[3.5rem_1fr] items-start gap-5"
+                  >
+                    <span className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--brutalist-orange)] text-2xl font-black text-white shadow-[0_10px_22px_rgba(255,61,0,0.22)]">
+                      {index + 1}
+                    </span>
+                    <div className="pt-1">
+                      <h3 className="text-2xl font-black tracking-tight text-gray-950">{item.title}</h3>
+                      <p className="mt-1 text-lg leading-7 text-gray-600">{item.helper}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : (
+          <h2 className="mb-12 text-center text-2xl font-bold text-gray-900">
+            How It Works
+          </h2>
+        )}
+        {!useNumberedSectionHeadings ? (
+          <div className="mx-auto max-w-5xl border-y border-[rgba(15,23,42,0.12)]">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 lg:divide-x lg:divide-[rgba(15,23,42,0.12)]">
+              {MONTHLY_UPDATE_STEPS.map((item, index) => (
+                <div
+                  key={item.key}
+                  className={clsx(
+                    "px-5 py-8 text-center",
+                    index < MONTHLY_UPDATE_STEPS.length - 1 && "border-b border-[rgba(15,23,42,0.12)] lg:border-b-0",
+                  )}
+                >
+                  <span className="text-3xl font-extrabold text-[var(--vr-color-primary)]">
+                    {index + 1}
+                  </span>
+                  <p className="mt-3 text-sm font-bold text-gray-900">
+                    {item.title}
+                  </p>
+                  <p className="mt-2 text-xs text-gray-500">{item.helper}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 pb-14">
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold text-gray-900">Build Investor Relationships 6 Months in Advance</h2>
-          <p className="text-lg leading-relaxed text-gray-600">
-            If you&apos;re reaching out to investors only when you need capital, it&apos;s already too late.
-            Investors can smell desperation - and when that moment comes, you&apos;ve already messed up.
-            The best founders plan ahead. Start building relationships at least 6 months before you
-            need funding. Send regular updates, share your progress and challenges honestly.
-            We will match you with the proper investors based on your updates, so when the time comes
-            to raise, the trust is already there.
-          </p>
+      <div className="mx-auto max-w-6xl px-6 pb-14">
+        <div className={landingNumberSectionClassName}>
+          {useNumberedSectionHeadings ? (
+            <LandingDisplayHeading number="6" label="Months" accent="var(--brutalist-blue)" />
+          ) : (
+            <h2 className="text-2xl font-bold text-gray-900">Build Investor Relationships 6 Months in Advance</h2>
+          )}
+          {useNumberedSectionHeadings ? (
+            <div className={landingNumberContentClassName}>
+              <p className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--brutalist-blue)]">
+                Build relationships early
+              </p>
+              <h3 className="text-4xl font-black tracking-tight text-gray-950 sm:text-5xl">
+                Start building investor relationships at least 6 months before you raise.
+              </h3>
+              <div className="space-y-5 text-lg leading-8 text-gray-600">
+                <p>
+                  Reaching out to investors only when you need capital is already too late.
+                  Investors can smell desperation, and by then, you've already missed the window.
+                </p>
+                <p>
+                  Share regular updates, progress, and challenges honestly. We'll match you with the
+                  right investors based on your updates, so when the time comes to raise, the trust
+                  is already there.
+                </p>
+              </div>
+              <p className="border-l-4 border-[var(--brutalist-blue)] pl-6 text-lg font-extrabold leading-8 text-[var(--brutalist-blue)]">
+                The best founders plan ahead. Six months of consistent updates today can make all
+                the difference tomorrow.
+              </p>
+            </div>
+          ) : (
+            <p className={`${landingNumberContentClassName} text-lg leading-relaxed text-gray-600`}>
+              If you&apos;re reaching out to investors only when you need capital, it&apos;s already too late.
+              Investors can smell desperation - and when that moment comes, you&apos;ve already messed up.
+              The best founders plan ahead. Start building relationships at least 6 months before you
+              need funding. Send regular updates, share your progress and challenges honestly.
+              We will match you with the proper investors based on your updates, so when the time comes
+              to raise, the trust is already there.
+            </p>
+          )}
         </div>
       </div>
     </div>
