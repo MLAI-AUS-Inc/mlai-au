@@ -2,7 +2,6 @@ import { useState, Fragment } from 'react';
 import { Menu, Dialog, Transition } from '@headlessui/react';
 import {
     Bars3Icon,
-    BellIcon,
     ChartBarSquareIcon,
     ChevronDownIcon,
     HomeIcon,
@@ -29,11 +28,7 @@ interface AuthenticatedLayoutProps {
 
 type NavigationItem = { name: string; href: string; icon: any; exact?: boolean; matchPaths?: string[] };
 
-const VIBE_RAISING_TOP_NAVIGATION = [
-    { name: 'My Update', href: '/founder-tools/updates' },
-    { name: 'Data Sources', href: '/founder-tools/data-sources' },
-    { name: 'My Companies', href: '/founder-tools/companies' },
-];
+const MLAI_LOGO_URL = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI-Logo.png?alt=media&token=9d844530-e3b5-4944-a1c7-5be3112d5d84";
 
 function classNames(...classes: (string | undefined | boolean)[]) {
     return classes.filter(Boolean).join(' ');
@@ -46,20 +41,6 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
     const pathname = location.pathname;
     const isFounderToolsApp = pathname === "/founder-tools" || pathname.startsWith("/founder-tools/");
     const appHomeHref = isFounderToolsApp ? "/founder-tools/updates" : "/esafety/dashboard";
-    const showVibeRaisingTopNavigation =
-        isFounderToolsApp &&
-        (
-            pathname === "/founder-tools/overview" ||
-            pathname.startsWith("/founder-tools/overview/") ||
-            pathname === "/founder-tools/updates" ||
-            pathname.startsWith("/founder-tools/updates/") ||
-            pathname === "/founder-tools/drafts" ||
-            pathname.startsWith("/founder-tools/drafts/") ||
-            pathname === "/founder-tools/data-sources" ||
-            pathname.startsWith("/founder-tools/data-sources/") ||
-            pathname === "/founder-tools/companies" ||
-            pathname.startsWith("/founder-tools/companies/")
-        );
 
     const defaultNavigation: NavigationItem[] = [
         { name: 'Dashboard', href: '/esafety/dashboard', icon: HomeIcon },
@@ -171,7 +152,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                                             >
                                                 <ImageWithFallback
                                                     className="h-8 w-auto"
-                                                    src="/MLAI-Logo.png"
+                                                    src={MLAI_LOGO_URL}
                                                     alt="MLAI Logo"
                                                     width={160}
                                                     height={48}
@@ -283,7 +264,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             >
                                 <ImageWithFallback
                                     className="h-10 w-10 shrink-0 rounded-md object-contain"
-                                    src="/MLAI-Logo.png"
+                                    src={MLAI_LOGO_URL}
                                     alt="MLAI Logo"
                                     width={40}
                                     height={40}
@@ -408,53 +389,8 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             )}
                         />
 
-                        <div className="flex flex-1 items-center justify-between gap-x-4 self-stretch lg:gap-x-6">
-                            {showVibeRaisingTopNavigation ? (
-                                <nav className="flex min-w-0 items-center gap-2 overflow-x-auto py-2" aria-label="Vibe Raising">
-                                    {VIBE_RAISING_TOP_NAVIGATION.map((item) => {
-                                        const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-                                        return (
-                                            <Link
-                                                key={item.name}
-                                                to={item.href}
-                                                className={classNames(
-                                                    "whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-black uppercase tracking-[0.12em] transition sm:px-4",
-                                                    current
-                                                        ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-[var(--vr-color-shell-active-text)] shadow-sm"
-                                                        : "border-[var(--vr-color-border)] bg-[rgba(255,255,255,0.72)] text-[var(--vr-color-text-mid)] hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-text)]"
-                                                )}
-                                            >
-                                                {item.name}
-                                            </Link>
-                                        );
-                                    })}
-                                </nav>
-                            ) : (
-                                <div />
-                            )}
+                        <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
-                                <button
-                                    type="button"
-                                    className={classNames(
-                                        "-m-2.5 p-2.5",
-                                        isFounderToolsApp
-                                            ? "text-[var(--vr-color-text-sub)] hover:text-[var(--vr-color-text)]"
-                                            : "text-gray-400 hover:text-gray-500"
-                                    )}
-                                >
-                                    <span className="sr-only">View notifications</span>
-                                    <BellIcon aria-hidden="true" className="h-6 w-6" />
-                                </button>
-
-                                <div
-                                    aria-hidden="true"
-                                    className={classNames(
-                                        "hidden lg:block lg:h-6 lg:w-px",
-                                        isFounderToolsApp ? "lg:bg-[var(--vr-color-border)]" : "lg:bg-gray-900/10"
-                                    )}
-                                />
-
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>

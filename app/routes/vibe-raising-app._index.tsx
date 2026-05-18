@@ -1,5 +1,5 @@
 import { Link, redirect, useLoaderData, useOutletContext, useNavigate } from "react-router";
-import { format, differenceInDays } from "date-fns";
+import { format } from "date-fns";
 import { useState, useRef, useEffect } from "react";
 import type { Route } from "./+types/vibe-raising-app._index";
 import {
@@ -12,7 +12,6 @@ import { clsx } from "clsx";
 import { getEnv } from "~/lib/env.server";
 import {
     ArrowRightIcon,
-    ClockIcon,
     ChartBarIcon,
     PencilSquareIcon,
     SparklesIcon,
@@ -36,6 +35,7 @@ import {
     LinkIcon,
     ArrowTopRightOnSquareIcon,
     InformationCircleIcon,
+    DocumentArrowUpIcon,
 } from "@heroicons/react/24/outline";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import { parseVibeRaisingMonthYear, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
@@ -161,26 +161,20 @@ function UpdateVideoHero({ update }: { update: { videoUrl?: string | null; video
 }
 
 // Reuseable Components
-function MetricCard({ label, value, icon: Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
+function MetricCard({ label, value, icon: _Icon, active = true }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean }) {
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 transition-all",
+            "flex flex-col items-center justify-center rounded-xl border px-3 py-4 text-center",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
-                : "border-gray-200 bg-gray-50 opacity-40"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
+                : "border-gray-200 bg-gray-50/80 opacity-45"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             <p className={clsx(
-                "text-base font-extrabold leading-tight",
+                "text-base font-black leading-tight sm:text-[1.75rem]",
                 active ? "text-gray-900" : "text-gray-300"
             )}>{active ? value : "—"}</p>
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -188,34 +182,28 @@ function MetricCard({ label, value, icon: Icon, active = true }: { label: string
 }
 
 // Editable metric input for inline editing
-function EditableMetricCard({ label, value, icon: Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
-    if (!editing) return <MetricCard label={label} value={value} icon={Icon} active={active} />;
+function EditableMetricCard({ label, value, icon: _Icon, active = true, editing, onChange }: { label: string, value: string, icon: any, colorClass?: string, active?: boolean, editing: boolean, onChange: (v: string) => void }) {
+    if (!editing) return <MetricCard label={label} value={value} icon={_Icon} active={active} />;
     return (
         <div className={clsx(
-            "rounded-xl border-2 flex flex-col items-center justify-center text-center py-3 px-2 cursor-pointer transition-all",
+            "flex cursor-pointer flex-col items-center justify-center rounded-xl border px-3 py-4 text-center transition-all",
             active
-                ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)] shadow-sm"
+                ? "border-[var(--vr-color-border-md)] bg-white shadow-sm"
                 : "border-gray-200 bg-gray-50 opacity-50 hover:opacity-75 hover:border-gray-300"
         )}>
-            <div className={clsx(
-                "w-7 h-7 rounded-full flex items-center justify-center mb-1.5",
-                active ? "bg-[rgba(0,255,215,0.18)]" : "bg-white"
-            )}>
-                <Icon className="w-4 h-4 text-gray-400" />
-            </div>
             {active ? (
                 <input
                     type="text"
                     value={value}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full border-b-2 border-[rgba(0,128,128,0.26)] bg-transparent py-0.5 text-center text-base font-extrabold text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none"
+                    className="w-full border-b-2 border-[rgba(0,128,128,0.18)] bg-transparent py-0.5 text-center text-base font-black text-gray-900 focus:border-[var(--vr-color-primary)] focus:outline-none sm:text-[1.75rem]"
                 />
             ) : (
                 <p className="text-base font-extrabold text-gray-300">—</p>
             )}
             <p className={clsx(
-                "text-xs sm:text-[10px] font-semibold uppercase tracking-wide mt-1",
+                "mt-2 text-[11px] font-bold uppercase tracking-[0.12em]",
                 active ? "text-gray-600" : "text-gray-400"
             )}>{label}</p>
         </div>
@@ -343,7 +331,9 @@ function UpdateCard({ update, isCurrent, user }: { update: any; isCurrent: boole
                             {(update.investorsSentTo > 0 || update.investorsViewed > 0) && (
                                 <span className="w-px h-3 bg-gray-200" />
                             )}
-                            <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            {!expanded ? (
+                                <span className="text-xs text-gray-600 max-w-[200px] truncate">{cardExcerpt.slice(0, 60)}...</span>
+                            ) : null}
                         </div>
                         <ChevronDownIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     </div>
@@ -657,7 +647,11 @@ function VRUpdateSection({
     label: string;
     items: string[];
 }) {
+    const [mobileExpanded, setMobileExpanded] = useState(false);
     if (items.length === 0) return null;
+    const shouldClampOnMobile = items.length > 1;
+    const visibleItems = mobileExpanded ? items : items.slice(0, 1);
+
     return (
         <div className="vr-us-block">
             <div className="vr-us-heading">
@@ -667,153 +661,302 @@ function VRUpdateSection({
                 <span className="vr-us-heading-text">{label}</span>
             </div>
             <div className="vr-us-list">
-                {items.map((item, i) => (
+                {visibleItems.map((item, i) => (
                     <div className="vr-us-item" key={i}>
                         <span className="vr-us-item-dot">•</span>
                         <span className="vr-us-item-text">{item.trim()}</span>
                     </div>
                 ))}
             </div>
+            {shouldClampOnMobile ? (
+                <button
+                    type="button"
+                    onClick={() => setMobileExpanded((current) => !current)}
+                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
+                >
+                    {mobileExpanded ? "Show less" : `Show all ${items.length}`}
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
+function VRPreviewUpdateSection({
+    icon: Icon,
+    iconClassName,
+    label,
+    text,
+}: {
+    icon: any;
+    iconClassName: string;
+    label: string;
+    text?: string | null;
+}) {
+    if (!text) return null;
+
+    return (
+        <div>
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
+                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+                {label}
+            </h4>
+            <BulletList text={text} />
+        </div>
+    );
+}
+
+function getUpdateFileExtension(fileName?: string | null) {
+    const clean = String(fileName || "").split("?")[0]?.split("#")[0] || "";
+    const lastDot = clean.lastIndexOf(".");
+    return lastDot >= 0 ? clean.slice(lastDot).toLowerCase() : "";
+}
+
+function formatUpdateFileSize(bytes?: number | null) {
+    if (!bytes || !Number.isFinite(bytes)) return "";
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(bytes < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+function isUpdatePdfPitchDeck(contentType?: string | null, fileName?: string | null, src?: string | null) {
+    return (
+        String(contentType || "").split(";")[0].trim().toLowerCase() === "application/pdf" ||
+        getUpdateFileExtension(fileName || src || "") === ".pdf"
+    );
+}
+
+function VRPitchDeckPreview({
+    src,
+    contentType,
+    fileName,
+    fileSizeBytes,
+}: {
+    src: string;
+    contentType?: string | null;
+    fileName?: string | null;
+    fileSizeBytes?: number | null;
+}) {
+    const isPdf = isUpdatePdfPitchDeck(contentType, fileName, src);
+    const previewSrc = isPdf ? `${src}#page=1&toolbar=0&navpanes=0&scrollbar=0` : src;
+    const fileSize = formatUpdateFileSize(fileSizeBytes);
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-left">
+            <div className="flex items-center justify-between gap-3 border-b border-[var(--vr-color-border)] px-4 py-3">
+                <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-gray-950">
+                        {fileName || (isPdf ? "Pitch deck PDF" : "Pitch deck")}
+                    </p>
+                    <p className="mt-0.5 text-xs font-semibold text-slate-500">
+                        {isPdf ? "First page preview" : "Pitch deck attached"}
+                        {fileSize ? ` · ${fileSize}` : ""}
+                    </p>
+                </div>
+                <a
+                    href={src}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(event) => event.stopPropagation()}
+                    className="flex-shrink-0 rounded-lg bg-white px-3 py-2 text-xs font-bold text-gray-950 ring-1 ring-[var(--vr-color-border)] transition hover:text-[var(--vr-color-primary)]"
+                >
+                    Open
+                </a>
+            </div>
+            {isPdf ? (
+                <iframe
+                    src={previewSrc}
+                    title="Pitch deck first page preview"
+                    className="h-80 w-full bg-white"
+                />
+            ) : (
+                <div className="flex min-h-48 flex-col items-center justify-center px-6 py-8 text-center">
+                    <DocumentArrowUpIcon className="h-10 w-10 text-slate-300" />
+                    <p className="mt-3 text-sm font-black text-gray-950">Deck uploaded</p>
+                    <p className="mt-2 max-w-sm text-sm leading-6 text-slate-500">
+                        The file is attached and ready for investors to open.
+                    </p>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function VRPreviewUpdateCard({
+    update,
+    user,
+    statusLabel,
+}: {
+    update: any;
+    user: any;
+    statusLabel?: string;
+}) {
+    const updatePeriod = update.year
+        ? { month: update.monthName || parseVibeRaisingMonthYear(update.month).month, year: update.year }
+        : parseVibeRaisingMonthYear(update.month);
+    const updateSummary = update.summary || "";
+    const updateSourceUrl = update.sourceUrl || "";
+    const updateDate = new Date(update.date);
+    const formattedDate = Number.isNaN(updateDate.getTime())
+        ? ""
+        : format(updateDate, "MMMM d, yyyy");
+    const metrics = METRIC_OPTIONS.filter((metric) => update.metrics?.[metric.key]);
+    const companyName = user.companyName || "Company";
+    const pitchDeckUrl = String(update.pitchDeckUrl || "").trim();
+    const pitchDeckSummary = String(update.pitchDeckSummary || "").trim();
+
+    return (
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+            <div className="relative h-32 w-full overflow-hidden">
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
+                <svg className="absolute inset-0 h-full w-full opacity-[0.12]" viewBox="0 0 800 200">
+                    <circle cx="120" cy="80" r="100" fill="white" />
+                    <circle cx="650" cy="140" r="70" fill="white" />
+                    <circle cx="400" cy="30" r="50" fill="white" />
+                    <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
+                </svg>
+                <div className="absolute inset-0 flex items-end px-6 pb-4">
+                    <div className="flex items-center gap-3">
+                        {user.domain ? (
+                            <img
+                                src={`https://www.google.com/s2/favicons?domain=${user.domain}&sz=64`}
+                                alt=""
+                                className="h-10 w-10 rounded-lg border border-white/30 bg-white/20 object-cover shadow-sm backdrop-blur-sm"
+                            />
+                        ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/30 bg-white/20 backdrop-blur-sm">
+                                <span className="text-sm font-bold text-white">{companyName.charAt(0)}</span>
+                            </div>
+                        )}
+                        <div>
+                            <p className="text-sm font-bold text-white drop-shadow-sm">{companyName}</p>
+                            <p className="text-xs text-white/70">Investor Update</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-b border-gray-100 px-6 pb-4 pt-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-900">
+                            {updatePeriod.month} {updatePeriod.year} Update
+                        </h3>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                            <VibeRaisingDateTabs month={updatePeriod.month} year={updatePeriod.year} size="compact" />
+                            <StartupRegionBadge location={user.location} />
+                            {statusLabel ? (
+                                <span className="rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 ring-1 ring-gray-200">
+                                    {statusLabel}
+                                </span>
+                            ) : null}
+                            <Link
+                                to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
+                                className="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 text-xs font-black text-gray-500 shadow-sm ring-1 ring-gray-200 transition hover:bg-gray-200 hover:text-gray-700"
+                            >
+                                Edit
+                                <PencilSquareIcon className="h-3.5 w-3.5" />
+                            </Link>
+                        </div>
+                    </div>
+                    {formattedDate ? (
+                        <span className="text-xs text-gray-400">{formattedDate}</span>
+                    ) : null}
+                </div>
+            </div>
+
+            {metrics.length > 0 ? (
+                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                        {metrics.map((metric) => (
+                            <MetricCard
+                                key={metric.key}
+                                label={metric.label}
+                                value={update.metrics[metric.key]}
+                                icon={metric.icon}
+                            />
+                        ))}
+                    </div>
+                </div>
+            ) : null}
+
+            {pitchDeckUrl ? (
+                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                    <div className="space-y-4">
+                        <div>
+                            <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                Pitch deck
+                            </p>
+                            {pitchDeckSummary ? (
+                                <p className="mt-2 text-sm leading-6 text-slate-500">{pitchDeckSummary}</p>
+                            ) : null}
+                        </div>
+                        <VRPitchDeckPreview
+                            src={pitchDeckUrl}
+                            contentType={update.pitchDeckContentType}
+                            fileName={update.pitchDeckOriginalFilename}
+                            fileSizeBytes={update.pitchDeckFileSizeBytes}
+                        />
+                    </div>
+                </div>
+            ) : null}
+
+            <div className="space-y-5 px-6 py-5">
+                {(updateSummary || updateSourceUrl) ? (
+                    <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
+                        {updateSummary ? (
+                            <p className="text-sm font-medium leading-relaxed text-gray-700">{updateSummary}</p>
+                        ) : null}
+                        {updateSourceUrl ? (
+                            <a
+                                href={updateSourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-2 text-xs font-bold text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]"
+                            >
+                                <LinkIcon className="h-3.5 w-3.5" />
+                                Source materials
+                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                            </a>
+                        ) : null}
+                    </div>
+                ) : null}
+
+                <VRPreviewUpdateSection
+                    icon={SparklesIcon}
+                    iconClassName="text-[var(--vr-palette-purple)]"
+                    label="Key Highlights"
+                    text={update.highlights}
+                />
+                <VRPreviewUpdateSection
+                    icon={ExclamationCircleIcon}
+                    iconClassName="text-[var(--vr-palette-orange)]"
+                    label="Challenges"
+                    text={update.challenges}
+                />
+                <VRPreviewUpdateSection
+                    icon={LightBulbIcon}
+                    iconClassName="text-[var(--vr-palette-yellow)]"
+                    label="Learnings"
+                    text={update.learnings}
+                />
+                <VRPreviewUpdateSection
+                    icon={ArrowRightIcon}
+                    iconClassName="text-[var(--vr-palette-blue)]"
+                    label="Next 30 Days"
+                    text={update.next30Days}
+                />
+                <VRPreviewUpdateSection
+                    icon={QuestionMarkCircleIcon}
+                    iconClassName="text-[var(--vr-palette-lavender)]"
+                    label="Ask from Investors"
+                    text={update.asks}
+                />
+            </div>
         </div>
     );
 }
 
 function VRCurrentUpdateCard({ update, user }: { update: any; user: any }) {
-    const highlights = splitItems(update.highlights || "");
-    const challenges = splitItems(update.challenges || "");
-    const asks = splitItems(update.asks || "");
-    const learnings = splitItems(update.learnings || "");
-    const next30Days = splitItems(update.next30Days || "");
-    const initials = (user.fullName || user.companyName || "U")
-        .split(" ")
-        .map((p: string) => p[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase();
-
-    return (
-        <div className="vr-update-card">
-            {/* Header with teal gradient + bubbles + hover-triggered purple flash */}
-            <div className="vr-uch">
-                <div className="vr-uch-bubble-1" />
-                <div className="vr-uch-bubble-2" />
-                <div className="vr-uch-glow" aria-hidden="true" />
-                <div className="vr-uch-date">{format(new Date(update.date), "MMMM d, yyyy")}</div>
-                <div className="vr-uch-main">
-                    <div className="vr-uch-emoji" aria-hidden="true">🦘</div>
-                    <div>
-                        <div className="vr-uch-title-row">
-                            <span className="vr-uch-title">{update.month}</span>
-                            <span className="vr-current-chip">Current</span>
-                        </div>
-                        <div className="vr-uch-company">{user.companyName}</div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Body */}
-            <div className="vr-ucb">
-                <div className="vr-ucb-actions">
-                    <Link
-                        to={`/founder-tools/updates/create?edit=${update.id}`}
-                        className="inline-flex items-center gap-1.5 text-sm font-medium"
-                        style={{ color: "var(--vr-color-text-mid)" }}
-                    >
-                        <PencilSquareIcon className="w-4 h-4" />
-                        Edit
-                    </Link>
-                </div>
-
-                {/* Per-update KPI grid — uses existing MetricCard, untouched */}
-                <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5 mb-6">
-                    {update.metrics?.revenue && (
-                        <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
-                    )}
-                    {update.metrics?.users && (
-                        <MetricCard label="Users" value={update.metrics.users} icon={UserGroupIcon} />
-                    )}
-                    {update.metrics?.runway && (
-                        <MetricCard label="Runway" value={update.metrics.runway} icon={ChartBarIcon} />
-                    )}
-                    {update.metrics?.mrr && (
-                        <MetricCard label="MRR" value={update.metrics.mrr} icon={CurrencyDollarIcon} />
-                    )}
-                    {update.metrics?.burnRate && (
-                        <MetricCard label="Burn Rate" value={update.metrics.burnRate} icon={FireIcon} />
-                    )}
-                    {update.metrics?.monthlyCosts && (
-                        <MetricCard label="Costs" value={update.metrics.monthlyCosts} icon={CurrencyDollarIcon} />
-                    )}
-                </div>
-
-                {/* Sections */}
-                <VRUpdateSection
-                    icon={SparklesIcon}
-                    iconColorVar="--vr-color-warning"
-                    label="Key Highlights"
-                    items={highlights}
-                />
-                <VRUpdateSection
-                    icon={ExclamationCircleIcon}
-                    iconColorVar="--vr-color-brand-orange"
-                    label="Challenges"
-                    items={challenges}
-                />
-                <VRUpdateSection
-                    icon={LightBulbIcon}
-                    iconColorVar="--vr-color-warning"
-                    label="Learnings"
-                    items={learnings}
-                />
-                <VRUpdateSection
-                    icon={CalendarIcon}
-                    iconColorVar="--vr-color-primary"
-                    label="Next 30 Days"
-                    items={next30Days}
-                />
-                <VRUpdateSection
-                    icon={QuestionMarkCircleIcon}
-                    iconColorVar="--vr-color-primary"
-                    label="Ask from Investors"
-                    items={asks}
-                />
-            </div>
-
-            {/* Footer */}
-            <div className="vr-ucf">
-                <div className="vr-ucf-left">
-                    <div className="vr-ucf-avatar">{initials}</div>
-                    <div>
-                        <div className="vr-ucf-name">{user.companyName}</div>
-                        <div className="vr-ucf-company">Sent to 14 investors · 78% open rate</div>
-                    </div>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg border"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
-                    >
-                        Share Link
-                    </button>
-                    <button
-                        type="button"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg"
-                        style={{
-                            background: "var(--vr-color-primary)",
-                            color: "#fff",
-                        }}
-                    >
-                        Resend to Unopened
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
+    return <VRPreviewUpdateCard update={update} user={user} statusLabel="Current" />;
 }
 
 function VRPastUpdateRow({
@@ -859,15 +1002,14 @@ function VRPastUpdateRow({
                         <span>{format(new Date(update.date), "MMMM d, yyyy")}</span>
                         <Link
                             to={`/founder-tools/updates/create?edit=${encodeURIComponent(update.id)}`}
-                            className="inline-flex items-center gap-1.5 text-sm font-medium"
-                            style={{ color: "var(--vr-color-text-mid)" }}
+                            className="vr-past-edit"
                         >
                             <PencilSquareIcon className="h-4 w-4" />
                             Edit
                         </Link>
                     </div>
 
-                    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
+                    <div className="vr-past-metrics-grid">
                         {update.metrics?.revenue ? (
                             <MetricCard label="Revenue" value={update.metrics.revenue} icon={CurrencyDollarIcon} />
                         ) : null}
@@ -950,9 +1092,6 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const hasUpdates = updates.length > 0;
 
     const latestUpdate = hasUpdates ? updates[0] : null;
-    const daysSinceLast = latestUpdate ? differenceInDays(new Date(), new Date(latestUpdate.date)) : 0;
-    const isOverdue = daysSinceLast > 21;
-    const daysOverdue = daysSinceLast - 21;
 
     const now = new Date();
     const currentUpdate = updates.find((update) => {
@@ -969,13 +1108,11 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     const [activeTab, setActiveTab] = useState<"current" | "past">(
         currentUpdate ? "current" : "past"
     );
-    const [expandedPastUpdateId, setExpandedPastUpdateId] = useState<string | null>(
-        currentUpdate ? null : pastUpdates[0]?.id ?? null
-    );
+    const [activeMetricCard, setActiveMetricCard] = useState<string | null>(null);
 
     if (!hasUpdates) {
         return (
-            <div className="vr-scope space-y-8 pb-12">
+            <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
                 <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div>
                         <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
@@ -987,35 +1124,20 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="flex items-center gap-2.5 flex-wrap">
                         <Link
                             to="/founder-tools/overview"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                         >
                             View Overview
                         </Link>
                         <Link
                             to="/founder-tools/drafts"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                         >
-                            My Draft
+                            My Drafts
                         </Link>
                         <button
                             type="button"
                             onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
-                            style={{
-                                background: "var(--vr-color-primary)",
-                                color: "#fff",
-                                boxShadow: "var(--vr-shadow-sm)",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                         >
                             <PlusIcon className="w-4 h-4" />
                             Create Update
@@ -1046,19 +1168,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 <button
                                     type="button"
                                     onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
-                                    className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-text-strong)] px-6 py-3 font-bold text-white transition-all hover:opacity-95"
+                                    className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                                 >
                                     Create Your First Update
                                     <ArrowRightIcon className="h-5 w-5" />
                                 </button>
                                 <Link
                                     to="/founder-tools/overview"
-                                    className="inline-flex items-center gap-2 rounded-xl border px-6 py-3 font-semibold"
-                                    style={{
-                                        borderColor: "var(--vr-color-border-md)",
-                                        color: "var(--vr-color-text-strong)",
-                                        background: "rgba(255,255,255,0.9)",
-                                    }}
+                                    className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 py-3 font-semibold text-[var(--vr-color-text-strong)] shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white"
                                 >
                                     Revisit Overview
                                 </Link>
@@ -1094,7 +1211,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
     }
 
     return (
-        <div className="vr-scope space-y-8 pb-12">
+        <div className="vr-scope mx-auto max-w-6xl space-y-8 pb-12">
             <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div>
                     <div className="vr-text-eyebrow mb-1.5">MLAI Vibe Raising</div>
@@ -1107,12 +1224,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     {showDiscover ? (
                         <button
                             type="button"
-                            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                            style={{
-                                color: "var(--vr-color-text-mid)",
-                                borderColor: "var(--vr-color-border-md)",
-                                background: "transparent",
-                            }}
+                            className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                             onClick={() => navigate("/founder-tools/discover")}
                         >
                             Discover Investors
@@ -1120,23 +1232,13 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     ) : null}
                     <Link
                         to="/founder-tools/drafts"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg border transition-colors"
-                        style={{
-                            color: "var(--vr-color-text-mid)",
-                            borderColor: "var(--vr-color-border-md)",
-                            background: "transparent",
-                        }}
+                        className="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-white hover:text-gray-950"
                     >
-                        My Draft
+                        My Drafts
                     </Link>
                     <Link
                         to="/founder-tools/data-sources"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all"
-                        style={{
-                            background: "var(--vr-color-primary)",
-                            color: "#fff",
-                            boxShadow: "var(--vr-shadow-sm)",
-                        }}
+                        className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                     >
                         <PlusIcon className="w-4 h-4" />
                         Create Update
@@ -1152,7 +1254,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
 
             {/* Dashboard metrics row — prototype .metric-card design, scoped under vr- */}
             <div className="vr-metrics-row">
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "mrr"}
+                    className={clsx("vr-metric-card", activeMetricCard === "mrr" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "mrr" ? null : "mrr")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-primary), var(--vr-color-secondary))" }}
@@ -1165,9 +1272,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.revenue?.replace(/\s*MRR$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 18% month-on-month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "active-users"}
+                    className={clsx("vr-metric-card", activeMetricCard === "active-users" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "active-users" ? null : "active-users")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-secondary), var(--vr-color-featured))" }}
@@ -1177,9 +1289,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.users?.replace(/\s*active$/i, "") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-up">↑ 220 new this month</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "runway"}
+                    className={clsx("vr-metric-card", activeMetricCard === "runway" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "runway" ? null : "runway")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "var(--vr-color-brand-orange)" }}
@@ -1192,9 +1309,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         {latestUpdate?.metrics?.runway?.replace(/\s*months?$/i, " mo") || "—"}
                     </div>
                     <div className="vr-metric-delta vr-delta-down">↓ 2 months vs forecast</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "raise-committed"}
+                    className={clsx("vr-metric-card", activeMetricCard === "raise-committed" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "raise-committed" ? null : "raise-committed")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-featured), var(--vr-color-brand-teal-light))" }}
@@ -1202,9 +1324,14 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Raise Committed</div>
                     <div className="vr-metric-value">62%</div>
                     <div className="vr-metric-delta vr-delta-neutral">$750K of $1.2M</div>
-                </div>
+                </button>
 
-                <div className="vr-metric-card">
+                <button
+                    type="button"
+                    aria-pressed={activeMetricCard === "burn-rate"}
+                    className={clsx("vr-metric-card", activeMetricCard === "burn-rate" && "vr-metric-card-active")}
+                    onClick={() => setActiveMetricCard((current) => current === "burn-rate" ? null : "burn-rate")}
+                >
                     <div
                         className="vr-metric-card-bar"
                         style={{ background: "linear-gradient(90deg, var(--vr-color-brand-orange), var(--vr-color-warning))" }}
@@ -1212,38 +1339,8 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                     <div className="vr-metric-eyebrow">Burn Rate</div>
                     <div className="vr-metric-value">$52K/mo</div>
                     <div className="vr-metric-delta vr-delta-down">↑ 8% vs last month</div>
-                </div>
+                </button>
             </div>
-
-            {isOverdue && (
-                <div className="relative overflow-hidden rounded-xl border border-[rgba(0,255,215,0.26)] bg-[rgba(0,255,215,0.12)] p-6 shadow-sm">
-                    <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div className="flex items-start gap-4">
-                            <div className="rounded-full border border-[rgba(0,255,215,0.26)] bg-white p-3 text-[var(--vr-color-primary)] shadow-sm">
-                                <ClockIcon className="w-8 h-8" />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-3 mb-1">
-                                    <h2 className="text-lg font-bold text-gray-900">Time for Your Monthly Update!</h2>
-                                    <span className="rounded-full bg-[rgba(0,255,215,0.24)] px-2.5 py-0.5 text-xs font-bold text-[var(--vr-color-primary)]">
-                                        {daysOverdue} days overdue
-                                    </span>
-                                </div>
-                                <p className="text-gray-700 mb-4">
-                                    Your last update was on <span className="font-semibold">{format(new Date(latestUpdate!.date), "MMMM d, yyyy")}</span>.
-                                    Keep your investors engaged with your latest progress!
-                                </p>
-                            </div>
-                        </div>
-                        <Link
-                            to="/founder-tools/data-sources"
-                            className="whitespace-nowrap rounded-lg bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-sm transition-colors hover:bg-[var(--vr-palette-black)]"
-                        >
-                            Create Update Now
-                        </Link>
-                    </div>
-                </div>
-            )}
 
             {/* Tabs + tab content */}
             <div>
@@ -1267,24 +1364,29 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                 <div className="mt-6">
                     {activeTab === "current" ? (
                         currentUpdate ? (
-                            <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                            <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+                                <div className="min-w-0 flex-1">
+                                    <VRCurrentUpdateCard update={currentUpdate} user={user} />
+                                </div>
+                            </div>
                         ) : (
                             <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
                                 No current update yet — create your first one above.
                             </p>
                         )
                     ) : (
-                        <div className="space-y-2">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
                             {pastUpdates.length > 0 ? (
-                                pastUpdates.map((u) => (
-                                    <VRPastUpdateRow
-                                        key={`${user.activeCompanyId || "default"}-${u.id}`}
-                                        update={u}
-                                        user={user}
-                                        expanded={expandedPastUpdateId === u.id}
-                                        onToggle={() => setExpandedPastUpdateId((current) => current === u.id ? null : u.id)}
-                                    />
-                                ))
+                                <div className="min-w-0 flex-1 space-y-4">
+                                    {pastUpdates.map((u) => (
+                                        <VRPreviewUpdateCard
+                                            key={`${user.activeCompanyId || "default"}-${u.id}`}
+                                            update={u}
+                                            user={user}
+                                            statusLabel="Sent"
+                                        />
+                                    ))}
+                                </div>
                             ) : (
                                 <p className="vr-text-body-small" style={{ color: "var(--vr-color-text-sub)" }}>
                                     No past updates yet. Once you send one, it'll show up here.

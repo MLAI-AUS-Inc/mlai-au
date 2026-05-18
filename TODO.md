@@ -1,3 +1,9 @@
+- [x] Simplify the mobile review sticky footer on Founder Tools create-update
+- [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
+- [x] Improve Create Update AI draft card touch/mobile affordance
+- [x] Reduce Founder Tools mobile chrome clutter and card status density
+- [x] Run `bun run typecheck`
+- [x] Verify Founder Tools dashboard, create-update, and data-sources flows in the local browser
 - [x] Fix GA4 Measurement ID and SPA page-view tracking
 - [x] Update the main-page Slack invite link
 - [x] Update the Vibe Raising relationship callout heading to mention building investor relationships 6 months in advance
@@ -69,6 +75,31 @@
 - [x] Regenerate `public/sitemap.xml`
 - [x] Run `bun run typecheck`
 - [x] Run `bun run build`
+- [x] Shorten company setup mobile instructions and add a first-time quick tour
+- [x] Add the same mobile-only first-time quick tour pattern to the Data Sources page
+- [x] Collapse Data Sources sticky-bar status copy on mobile so the footer stays usable
+- [x] Shorten Data Sources privacy and connector guidance copy for mobile
+- [x] Shorten Data Sources connector card descriptions and trust copy for mobile
+- [x] Move Create Update mobile instruction copy into a one-time tutorial and hide the visible card
+- [x] Let the Create Update mobile step chips wrap instead of clipping in a horizontal strip
+- [x] Align the active Founder Tools top-nav chip text color with the shared primary CTA token
+- [x] Replace the draft-page month change CTA with a top back button and static selected-month summary
+- [x] Flatten the Create Update investor-materials upload section to a single card surface
+- [x] Add dashed borders to inactive Create Update metric cards so they read as selectable
+- [x] Remove the passive hover tint from the Create Update upload surface and unify its typography
+- [x] Make Create Update mobile metric cards dismiss by tapping again instead of showing a close button
+- [x] Add a visible hover state to the Data Sources manual-input card and its Open form row
+- [x] Match the Google Analytics placeholder logo border to the other grey inactive source cards
+- [x] Match the Google Analytics placeholder footer spacing to the other source cards
+- [x] Remove the backend-availability warning line from all Data Sources cards
+- [x] Hide the extra Data Sources trust card on mobile so privacy guidance only appears in the one-time tutorial
+- [x] Rename unavailable Data Sources card labels from "Not available yet" to "Coming soon"
+- [x] Normalize Data Sources footer copy height so bottom actions align responsively across cards
+- [x] Make the top Data Sources privacy card first-time-only on mobile, with no persistent follow-up note
+- [x] Increase desktop stepper hover padding so the highlight fully wraps the numbered circle
+- [x] Remove stepper chip borders and switch non-active pills to white across shared variants
+- [x] Use shared design-token typography for stepper titles across the shared component
+- [x] Simplify Data Sources cards on mobile by hiding capability chips and footer helper copy
 - [x] Curl-check legacy redirects and canonical targets
 - [x] Add cleanup redirects for broken internal article CTA URLs
 - [x] Replace broken article CTA hrefs and copy with live destinations
@@ -334,3 +365,46 @@
 - [x] Generate Roo kangaroo base pet art
 - [x] Generate Roo kangaroo animation rows
 - [x] Finalize and package Roo kangaroo pet
+- [x] Update the Connect Data stepper after user interview: hide the progress bar until hover and remove the motion
+- [x] Add visible trust and privacy messaging near Connect Data connector actions
+- [x] Fix Data Sources mobile card badges so they no longer overlap source names
+- [x] Let Updates metric cards stay highlighted after click
+- [x] Make create-update metric cards activate edit mode from any card click
+- [x] Wrap create-update metric card text responsively and reveal extra mobile rows in 6-card Show more batches
+- [x] Simplify the Manage Companies page on mobile and tighten its company hero layout across breakpoints
+- [x] Remove motion from dashboard metric cards and make metric text wrap cleanly across breakpoints
+- [x] Simplify the expanded update metric summary cards and remove their icon treatment
+- [x] Make the expanded past-update card layout read cleanly on mobile
+- [x] Collapse long expanded-update sections on mobile and let users reveal the full list on demand
+- [x] Re-sync the Data Sources mobile tour after localStorage resets and tighten the Founder Tools top bar on mobile
+- [x] Disable local backend Customer.io magic-link delivery so localhost shows the local magic link
+- [x] Move Founder Tools Data Sources and My Companies from top nav into the sidebar
+- [x] Restore `/vibe-raising` to the Vibe Raising landing page after the homepage duplicate caused the wrong page to render
+- [x] Overwrite `/vibe-raising-landing` with the `/founder-tools/overview` design
+- [x] Update `/vibe-raising-landing` hero heading to "Turn Your Startup Into a Fundable Business"
+- [x] Make `/vibe-raising-landing` CTA always open the intro video and hide the Founder overview label
+- [x] Fix Vibe Raising landing video Get Started button to continue to update creation step one
+- [x] Hide manual input cards on the Vibe Raising Data Sources page
+- [x] Point the sidebar Vibe Raising link to the updates page instead of overview
+- [x] Add a public landing section clarifying the 3 monthly updates investor connection promise
+- [x] Hide the Founder Tools top nav bar so My Update no longer appears
+- [x] Move the investor connection pathway section between How It Works and the 6-month theory block
+- [x] Restyle public landing sections as 3 Month, 4 Steps, and 6 Month with MLAI homepage display typography
+- [x] Change public landing to 3 Updates and align section captions in a shared right column
+- [x] Replace the public landing 4 Steps bullets and horizontal diagram with cards
+- [x] Align public landing numbered-section captions to the same right column
+- [x] Remove doubled divider lines and prevent numbered-section caption overlap
+- [x] Restyle public landing numbered sections to match the provided reference
+- [x] Tune the 6 Months section to match the provided reference
+- [x] Hide the public landing investor onboard message
+- [x] Add My companies to the founder account dropdown above Sign out
+- [x] Align `/founder-tools/updates` with the preview page grid and card design
+- [x] Prevent local Vibe Raising publish from crashing on dev update stub ids
+- [x] Preserve and display pitch deck materials after publishing Vibe Raising updates
+- [x] Add backend pitch deck upload session and completion endpoints
+- [x] Hide the Active Users growth chart from the Vibe Raising review section
+- [x] Apply Oswald typography to the four-step workflow headings
+- [x] Apply Roboto to Vibe Raising workflow subheadings and body text
+- [x] Hide the extra Before you connect trust box on the Connect Data page
+- [x] Hide the Back to month selection button on the draft update step
+- [x] Make the update progress steps always visible and remove the thin progress bars

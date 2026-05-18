@@ -48,9 +48,9 @@ export const links: Route.LinksFunction = () => [
     href: "https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@200..700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap",
   },
   {
-    // DM Sans — used by the Vibe Raising design system (scoped via .vr-scope).
+    // Roboto — used by the Vibe Raising user flow body/subheading text.
     rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap",
+    href: "https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;800;900&display=swap",
   },
 ];
 
