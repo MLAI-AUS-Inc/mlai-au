@@ -62,6 +62,8 @@ const POLLING_STATUSES = new Set([
   "awaiting_approval",
   "approval_required",
 ]);
+const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running"]);
+const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "cancelled", "canceled", "timeout", "timed_out"]);
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
@@ -123,13 +125,14 @@ function hasReadyArticlePreview(run: VibeMarketingRunSummary) {
 function isFailedArticlePreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
   const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
-  return Boolean(
-    preview?.error ||
-      previewStatus === "failed" ||
-      previewStatus === "blocked" ||
-      platformStatus === "failed" ||
-      platformStatus === "blocked",
-  );
+  if (LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus)) return false;
+  return Boolean(preview?.error || LIVE_PREVIEW_FAILURE_STATUSES.has(previewStatus) || LIVE_PREVIEW_FAILURE_STATUSES.has(platformStatus));
+}
+
+function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
+  const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
+  return LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus);
 }
 
 function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
@@ -137,19 +140,10 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
     return false;
   }
   const preview = run.livePreview;
-  const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
-  const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
   if (isFailedArticlePreview(preview)) {
     return false;
   }
-  return (
-    run.status === "completed" ||
-    previewStatus === "running" ||
-    previewStatus === "starting" ||
-    platformStatus === "queued" ||
-    platformStatus === "building" ||
-    platformStatus === "running"
-  );
+  return run.status === "completed" || hasActiveLivePreview(preview);
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -770,7 +764,9 @@ function ArticleSystemSetupPreviewPanel({
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
   const setupCompleted = run.status === "completed" || run.approvalState === "approved";
   const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
-  const previewFailed = isFailedArticlePreview(run.livePreview) || (["blocked", "failed"].includes(run.status) && Boolean(run.livePreview?.error || run.errors.length));
+  const previewActive = hasActiveLivePreview(run.livePreview);
+  const previewFailed =
+    !previewActive && (isFailedArticlePreview(run.livePreview) || (["blocked", "failed"].includes(run.status) && Boolean(run.livePreview?.error || run.errors.length)));
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -922,9 +918,10 @@ function ArticleSystemSetupPreviewUnavailable({
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
-  const error = String(preview?.error || run.errors?.[0] || "").trim();
+  const previewActive = hasActiveLivePreview(preview);
+  const error = previewActive ? "" : String(preview?.error || run.errors?.[0] || "").trim();
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
-  const retryPreviewPending = isActionPending?.("start-live-preview") ?? isSubmitting;
+  const retryPreviewPending = previewActive || (isActionPending?.("start-live-preview") ?? isSubmitting);
   if (previewUrl) return null;
   return (
     <div className={clsx(
@@ -932,7 +929,7 @@ function ArticleSystemSetupPreviewUnavailable({
       error ? "border-red-200 bg-red-50 text-red-800" : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
       <p className="font-black">{error ? "Articles setup preview could not be prepared" : "Articles setup preview is being built"}</p>
-      <p className="mt-1">Preview status: {previewStatus}. Refreshing this page is safe.</p>
+      <p className="mt-1">{previewActive ? "Waiting for GitHub Actions to finish. Refreshing this page is safe." : `Preview status: ${previewStatus}. Refreshing this page is safe.`}</p>
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         {logsUrl ? (
@@ -2769,7 +2766,8 @@ function workflowProgressForRunPage(
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (progress && run.workflow === "article_system_setup") {
     const activeStepId = setupWorkflowStepIdForRun(run);
-    const setupFailed = isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed";
+    const setupPreviewActive = hasActiveLivePreview(run.livePreview);
+    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed");
     const setupComplete = run.status === "completed" || run.approvalState === "approved";
     const reviewReady = activeStepId === "review" || setupComplete;
     return {
@@ -2855,9 +2853,11 @@ export default function FounderToolsMarketingRun() {
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupPreviewFailed = isArticleSystemSetupRun && isFailedArticlePreview(run.livePreview);
+  const setupPreviewActive = isArticleSystemSetupRun && hasActiveLivePreview(run.livePreview);
+  const setupPreviewFailed = isArticleSystemSetupRun && !setupPreviewActive && isFailedArticlePreview(run.livePreview);
   const shouldPoll =
     (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+    setupPreviewActive ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
   const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
@@ -2887,7 +2887,7 @@ export default function FounderToolsMarketingRun() {
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
   const isArticleSetupContext = isSetupScanContext || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
-  const previewStatus = String(run.livePreview?.status ?? "").trim().toLowerCase();
+  const previewActive = hasActiveLivePreview(run.livePreview);
   const previewFailed = isFailedArticlePreview(run.livePreview);
   const shouldAutoStartPreview = Boolean(
     isArticleGenerationRun &&
@@ -2895,8 +2895,7 @@ export default function FounderToolsMarketingRun() {
       run.componentManifest &&
       !hasArticlePreview &&
       !previewFailed &&
-      previewStatus !== "running" &&
-      previewStatus !== "starting" &&
+      !previewActive &&
       previewStartFetcher.state === "idle",
   );
   const pendingActions = useMarketingActionPending({
