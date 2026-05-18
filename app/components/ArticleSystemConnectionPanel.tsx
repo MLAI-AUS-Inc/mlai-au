@@ -421,6 +421,7 @@ export default function ArticleSystemConnectionPanel({
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
+  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
   const requestedScanRunId = new URLSearchParams(location.search).get("scanRunId")?.trim() ?? "";
   const currentScanRunId = requestedScanRunId || scanRun?.runId || "";
   const scanRunForCurrentId = !requestedScanRunId || scanRun?.runId === requestedScanRunId ? scanRun : null;
@@ -433,7 +434,8 @@ export default function ArticleSystemConnectionPanel({
   const setupRunId = effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "";
   const inventoryScan = isInventoryScan(effectiveScanRun);
   const setupTargetScan = isSetupTargetScan(effectiveScanRun);
-  const inventoryReady = Boolean(effectiveScanRun && inventoryScan && effectiveScanRun.status === "completed");
+  const inventoryProgressRun = effectiveScanRun && inventoryScan && !setupTargetScan ? effectiveScanRun : null;
+  const inventoryReady = Boolean(inventoryProgressRun?.status === "completed");
   const setupTargetReady = Boolean(effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
   const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
   const retryScanPending = actionPending("retry-scan");
@@ -532,7 +534,8 @@ export default function ArticleSystemConnectionPanel({
     if (!pageVisible) return;
     const shouldPollScan =
       !effectiveScanRun ||
-      (SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
+      (!setupTargetScan &&
+        SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
         !SCAN_ACTION_NEEDED_STATUSES.has(effectiveScanRun.status) &&
         !scanStale);
     if (!shouldPollScan) return;
@@ -769,20 +772,20 @@ export default function ArticleSystemConnectionPanel({
           </FlowStep>
         ) : null}
 
-        {effectiveScanRun && inventoryScan ? (
+        {inventoryProgressRun ? (
           <FlowStep number={2} title="Scanning repository" description="Looking for article pages and content locations">
-            <MarketingRunProgressCard run={effectiveScanRun} />
+            <MarketingRunProgressCard run={inventoryProgressRun} />
             {scanRunning || scanFailed || scanStale ? (
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Link
-                  to={`/founder-tools/marketing/runs/${encodeURIComponent(effectiveScanRun.runId)}`}
+                  to={`/founder-tools/marketing/runs/${encodeURIComponent(inventoryProgressRun.runId)}`}
                   className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
                 >
                   View scan run
                 </Link>
                 <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-                  <input type="hidden" name="scanRunId" value={effectiveScanRun.runId} />
-                  {effectiveScanRun.retryAvailable || effectiveScanRun.stale ? (
+                  <input type="hidden" name="scanRunId" value={inventoryProgressRun.runId} />
+                  {inventoryProgressRun.retryAvailable || inventoryProgressRun.stale ? (
                     <button
                       type="submit"
                       name="intent"
@@ -1013,7 +1016,7 @@ export default function ArticleSystemConnectionPanel({
           </div>
         ) : null}
 
-        {connected && scaffoldReady && !setupTargetReady && !inventoryReady ? (
+        {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
           <Link
             to="/founder-tools/marketing/create?step=research"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"

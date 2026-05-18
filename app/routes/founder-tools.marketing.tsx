@@ -73,6 +73,7 @@ const FLOW_STEPS = [
   { label: "You review & publish", icon: Send },
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
+const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -99,6 +100,10 @@ function founderNamesFromForm(formData: FormData) {
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -393,6 +398,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-discovery" || intent === "discovery") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+      }
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
@@ -423,6 +432,9 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const selectedCandidate =
         topicCandidateId && topicCandidateId !== "__custom__"
@@ -2222,9 +2234,15 @@ function draftActionVariant(actionKind: string) {
 function DraftArticleRow({
   draft,
   submitting,
+  deleting,
+  skipDeleteConfirmation,
+  onDeleteRequest,
 }: {
   draft: VibeMarketingDraftArticle;
   submitting: boolean;
+  deleting: boolean;
+  skipDeleteConfirmation: boolean;
+  onDeleteRequest: (draft: { runId: string; title: string }) => void;
 }) {
   const tone = draftStatusTone(draft);
   const href = `/founder-tools/marketing/runs/${encodeURIComponent(draft.runId)}`;
@@ -2257,15 +2275,15 @@ function DraftArticleRow({
             type="submit"
             disabled={submitting}
             onClick={(event) => {
-              if (!confirm(`Delete "${title}"? This cancels the article run and removes generated content for this draft.`)) {
-                event.preventDefault();
-              }
+              if (skipDeleteConfirmation) return;
+              event.preventDefault();
+              onDeleteRequest({ runId: draft.runId, title });
             }}
             title={`Delete draft: ${title}`}
             aria-label={`Delete draft: ${title}`}
             className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Trash2 className="h-4 w-4" />
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
           </button>
         </Form>
         {canPostAction ? (
@@ -2304,9 +2322,15 @@ function DraftArticleRow({
 function DraftArticlesCard({
   drafts,
   submitting,
+  deletingRunId,
+  skipDeleteConfirmation,
+  onDeleteRequest,
 }: {
   drafts: VibeMarketingDraftArticle[];
   submitting: boolean;
+  deletingRunId: string | null;
+  skipDeleteConfirmation: boolean;
+  onDeleteRequest: (draft: { runId: string; title: string }) => void;
 }) {
   if (!drafts.length) return null;
   return (
@@ -2320,10 +2344,78 @@ function DraftArticlesCard({
       </div>
       <div className="mt-5">
         {drafts.slice(0, 5).map((draft) => (
-          <DraftArticleRow key={draft.runId} draft={draft} submitting={submitting} />
+          <DraftArticleRow
+            key={draft.runId}
+            draft={draft}
+            submitting={submitting}
+            deleting={deletingRunId === draft.runId}
+            skipDeleteConfirmation={skipDeleteConfirmation}
+            onDeleteRequest={onDeleteRequest}
+          />
         ))}
       </div>
     </section>
+  );
+}
+
+function DraftDeleteConfirmationModal({
+  draft,
+  submitting,
+  onClose,
+  onRememberSkip,
+}: {
+  draft: { runId: string; title: string };
+  submitting: boolean;
+  onClose: () => void;
+  onRememberSkip: () => void;
+}) {
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="draft-delete-confirmation-title">
+      <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
+        <h2 id="draft-delete-confirmation-title" className="text-lg font-black text-slate-950">Delete draft article?</h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+          This cancels the article run and removes generated content for &quot;{draft.title}&quot;.
+        </p>
+        <label className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
+          <input
+            type="checkbox"
+            checked={dontAskAgain}
+            onChange={(event) => setDontAskAgain(event.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-200"
+          />
+          Don&apos;t ask me again
+        </label>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onClose}
+            className="inline-flex justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Keep draft
+          </button>
+          <Form
+            method="POST"
+            onSubmit={() => {
+              if (dontAskAgain) onRememberSkip();
+            }}
+          >
+            <input type="hidden" name="intent" value="delete-draft" />
+            <input type="hidden" name="runId" value={draft.runId} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50 sm:w-auto"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {submitting ? "Deleting..." : "Delete draft"}
+            </button>
+          </Form>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2447,9 +2539,13 @@ function ReturningTopicPickerPage({
   const isSubmitting = pendingActions.isAnyPending;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
+  const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
   const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
+  const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
+  const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
+  const [deletingDraftRunId, setDeletingDraftRunId] = useState<string | null>(null);
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -2462,6 +2558,15 @@ function ReturningTopicPickerPage({
     formData.set("feedbackId", feedbackId);
     restoreFetcher.submit(formData, { method: "POST" });
   }, [restoreFetcher]);
+
+  const rememberSkipDeleteConfirmation = useCallback(() => {
+    setSkipDeleteConfirmation(true);
+    try {
+      window.localStorage.setItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage failures. The current delete should still submit normally.
+    }
+  }, []);
 
   function handleDeclineTopic(topic: VibeMarketingTopicCandidate) {
     setPendingDeclines((current) => ({ ...current, [topic.id]: topic }));
@@ -2491,6 +2596,32 @@ function ReturningTopicPickerPage({
   function handleRestoreFeedback(feedback: VibeMarketingTopicFeedback) {
     submitRestoreFeedback(feedback.id);
   }
+
+  useEffect(() => {
+    try {
+      setSkipDeleteConfirmation(window.localStorage.getItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY) === "1");
+    } catch {
+      setSkipDeleteConfirmation(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (navigation.state === "idle") return;
+    if (String(navigation.formData?.get("intent") ?? "") !== "delete-draft") return;
+    const runId = String(navigation.formData?.get("runId") ?? "").trim();
+    setDeletingDraftRunId(runId || null);
+  }, [navigation.formData, navigation.state]);
+
+  useEffect(() => {
+    if (deleteDraftSubmitting) return;
+    setDeletingDraftRunId(null);
+  }, [deleteDraftSubmitting]);
+
+  useEffect(() => {
+    if (!draftDeleteRequest) return;
+    const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
+    if (!stillPresent) setDraftDeleteRequest(null);
+  }, [bootstrap.draftArticles, draftDeleteRequest]);
 
   useEffect(() => {
     if (!topics.length) {
@@ -2793,7 +2924,13 @@ function ReturningTopicPickerPage({
             </div>
           </section>
 
-          <DraftArticlesCard drafts={bootstrap.draftArticles ?? []} submitting={isSubmitting} />
+          <DraftArticlesCard
+            drafts={bootstrap.draftArticles ?? []}
+            submitting={isSubmitting}
+            deletingRunId={deleteDraftSubmitting ? deletingDraftRunId : null}
+            skipDeleteConfirmation={skipDeleteConfirmation}
+            onDeleteRequest={setDraftDeleteRequest}
+          />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
@@ -2850,6 +2987,14 @@ function ReturningTopicPickerPage({
           </section>
         </aside>
       </div>
+      {draftDeleteRequest ? (
+        <DraftDeleteConfirmationModal
+          draft={draftDeleteRequest}
+          submitting={deleteDraftSubmitting}
+          onClose={() => setDraftDeleteRequest(null)}
+          onRememberSkip={rememberSkipDeleteConfirmation}
+        />
+      ) : null}
     </div>
   );
 }
@@ -2859,7 +3004,8 @@ export default function FounderToolsMarketing() {
   const actionData = useActionData<typeof action>();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
-  const shouldShowTopicPicker = bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow);
+  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  const shouldShowTopicPicker = !setupBlocked && (bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow));
 
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
