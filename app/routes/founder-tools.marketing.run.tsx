@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -150,17 +150,34 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
   return run.status === "completed" || hasActiveLivePreview(preview);
 }
 
+function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
+  if (run.status === "awaiting_confirmation" || run.status === "awaiting_approval" || run.status === "approval_required") {
+    return true;
+  }
+  if (["completed", "failed", "blocked", "denied", "cancelled"].includes(run.status)) {
+    return true;
+  }
+  if (run.previewUrl || run.prUrl || run.livePreview?.previewUrl || run.livePreview?.error) {
+    return true;
+  }
+  return false;
+}
+
 export async function loader({ request, params, context }: Route.LoaderArgs) {
   const env = getEnv(context);
   await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const run = await getVibeMarketingRun(env, request, runId);
   let githubRepos: VibeMarketingGithubReposResponse = { status: "unavailable", repos: [], repositories: [] };
-  try {
-    githubRepos = await getVibeMarketingGithubRepos(env, request);
-  } catch {
-    githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
+  const shouldLoadGithubRepos =
+    ["repo_scan", "content_factory_scan", "article_system_setup"].includes(run.workflow) || Boolean(setupRunIdForRun(run));
+  if (shouldLoadGithubRepos) {
+    try {
+      githubRepos = await getVibeMarketingGithubRepos(env, request);
+    } catch {
+      githubRepos = { status: "unavailable", repos: [], repositories: [], error: "Repository list is unavailable." };
+    }
   }
   const setupRunId = setupRunIdForRun(run);
   let setupRun: VibeMarketingRunSummary | null = null;
@@ -2844,10 +2861,15 @@ export default function FounderToolsMarketingRun() {
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const previewStartFetcher = useFetcher<typeof action>();
   const previewStartRunRef = useRef("");
+  const statusRefreshRef = useRef("");
+  const lastProgressSignatureRef = useRef("");
+  const lastProgressAtRef = useRef(Date.now());
   const [polledRun, setPolledRun] = useState<VibeMarketingRunSummary | null>(null);
+  const [pageVisible, setPageVisible] = useState(true);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
   const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
@@ -2856,13 +2878,14 @@ export default function FounderToolsMarketingRun() {
   const isSetupScanContext = isScanRun && isSetupScanRun(run);
   const isStaleScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
+  const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
   const setupRunTerminal = isArticleSystemSetupRun && isTerminalAttentionStatus(run.status);
   const setupPreviewActive = isArticleSystemSetupRun && !setupRunTerminal && hasActiveLivePreview(run.livePreview);
   const setupPreviewFailed = isArticleSystemSetupRun && !setupPreviewActive && isFailedArticlePreview(run.livePreview);
   const shouldPoll =
-    (POLLING_STATUSES.has(run.status) && !isScanActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+    (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
     setupPreviewActive ||
     hasPendingArticlePreview(run) ||
     hasPublishHandoffEvidence(run);
@@ -2935,7 +2958,15 @@ export default function FounderToolsMarketingRun() {
 
   useEffect(() => {
     setPolledRun(null);
-  }, [loaderRun.runId]);
+  }, [loaderRun.currentStep, loaderRun.runId, loaderRun.status, loaderRun.updatedAt]);
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
 
   useEffect(() => {
     if (
@@ -2945,8 +2976,17 @@ export default function FounderToolsMarketingRun() {
     ) {
       return;
     }
+    if (statusPollNeedsFullRefresh(runStatusFetcher.data)) {
+      const refreshKey = `${runStatusFetcher.data.runId}:${runStatusFetcher.data.status}:${runStatusFetcher.data.updatedAt ?? ""}:${runStatusFetcher.data.currentStep ?? ""}`;
+      if (statusRefreshRef.current !== refreshKey) {
+        statusRefreshRef.current = refreshKey;
+        setPolledRun(null);
+        revalidator.revalidate();
+      }
+      return;
+    }
     setPolledRun(runStatusFetcher.data);
-  }, [loaderRun.runId, runStatusFetcher.data, runStatusFetcher.state]);
+  }, [loaderRun.runId, revalidator, runStatusFetcher.data, runStatusFetcher.state]);
 
   useEffect(() => {
     const data = previewStartFetcher.data;
@@ -2974,16 +3014,37 @@ export default function FounderToolsMarketingRun() {
   }, [previewStartFetcher, run.runId, shouldAutoStartPreview]);
 
   useEffect(() => {
+    const signature = [
+      run.runId,
+      run.status,
+      run.currentStep,
+      run.updatedAt,
+      run.steps.map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}`).join(","),
+      run.livePreview?.status,
+      run.livePreview?.previewUrl,
+      run.previewUrl,
+      run.prUrl,
+    ].join("|");
+    if (lastProgressSignatureRef.current !== signature) {
+      lastProgressSignatureRef.current = signature;
+      lastProgressAtRef.current = Date.now();
+    }
+  }, [run]);
+
+  useEffect(() => {
     if (!shouldPoll || !loaderRun.runId || runStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === loaderRun.runId;
+    const idleMs = Date.now() - lastProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         void runStatusFetcher.load(statusUrl);
       },
-      hasLoadedCurrentRun ? 5000 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
-  }, [loaderRun.runId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
+  }, [loaderRun.runId, pageVisible, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">

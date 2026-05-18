@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -351,7 +351,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
   }
 
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
   if (["writeCheck", "editArticle", "reviewPublish"].includes(requestedStep)) {
     const latestSetupScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
@@ -368,15 +368,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     repos: [],
     repositories: [],
   };
-  try {
-    githubRepos = await getVibeMarketingGithubRepos(env, request);
-  } catch (error) {
-    githubRepos = {
-      status: "unavailable",
-      repos: [],
-      repositories: [],
-      error: error instanceof Error ? error.message : "Unable to load repositories.",
-    };
+  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
+  if (activeStep === "articleSystem" || requestedStep === "articleSystem") {
+    try {
+      githubRepos = await getVibeMarketingGithubRepos(env, request);
+    } catch (error) {
+      githubRepos = {
+        status: "unavailable",
+        repos: [],
+        repositories: [],
+        error: error instanceof Error ? error.message : "Unable to load repositories.",
+      };
+    }
   }
   return { bootstrap, githubRepos };
 }
@@ -797,6 +800,11 @@ export default function FounderToolsMarketingCreate() {
   const location = useLocation();
   const setupScanStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const setupChildStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const setupParentProgressAtRef = useRef(Date.now());
+  const setupParentProgressSignatureRef = useRef("");
+  const setupChildProgressAtRef = useRef(Date.now());
+  const setupChildProgressSignatureRef = useRef("");
+  const [pageVisible, setPageVisible] = useState(true);
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const bootstrapPendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
   const [polledSetupScan, setPolledSetupScan] = useState<VibeMarketingRunSummary | null>(null);
@@ -905,6 +913,14 @@ export default function FounderToolsMarketingCreate() {
   }, [bootstrapPendingArticleSystemScan?.runId]);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
     if (setupScanStatusFetcher.state !== "idle") return;
     if (!setupScanStatusFetcher.data?.runId || setupScanStatusFetcher.data.runId !== bootstrapPendingArticleSystemScan?.runId) {
       return;
@@ -914,22 +930,31 @@ export default function FounderToolsMarketingCreate() {
 
   useEffect(() => {
     if (!pendingArticleSystemScan?.runId || setupScanStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     const shouldPollParent =
       SETUP_POLLING_STATUSES.has(pendingArticleSystemScan.status) ||
       (!pendingArticleSystemSetupRunId && !isSetupProgressTerminal(pendingArticleSystemScan));
     if (!shouldPollParent) return;
     const hasLoadedCurrentRun = setupScanStatusFetcher.data?.runId === pendingArticleSystemScan.runId;
+    const signature = `${pendingArticleSystemScan.runId}:${pendingArticleSystemScan.status}:${pendingArticleSystemScan.currentStep ?? ""}:${pendingArticleSystemScan.updatedAt ?? ""}`;
+    if (setupParentProgressSignatureRef.current !== signature) {
+      setupParentProgressSignatureRef.current = signature;
+      setupParentProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - setupParentProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         setupScanStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemScan.runId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     pendingArticleSystemScan?.runId,
     pendingArticleSystemScan?.status,
     pendingArticleSystemSetupRunId,
+    pageVisible,
     setupScanStatusFetcher,
     setupScanStatusFetcher.data?.runId,
     setupScanStatusFetcher.state,
@@ -949,17 +974,26 @@ export default function FounderToolsMarketingCreate() {
 
   useEffect(() => {
     if (!pendingArticleSystemSetupRunId || setupChildStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     if (setupChildRun && isSetupProgressTerminal(setupChildRun)) return;
     const hasLoadedCurrentRun = setupChildStatusFetcher.data?.runId === pendingArticleSystemSetupRunId;
+    const signature = `${setupChildRun?.runId ?? pendingArticleSystemSetupRunId}:${setupChildRun?.status ?? ""}:${setupChildRun?.currentStep ?? ""}:${setupChildRun?.updatedAt ?? ""}`;
+    if (setupChildProgressSignatureRef.current !== signature) {
+      setupChildProgressSignatureRef.current = signature;
+      setupChildProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - setupChildProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         setupChildStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     pendingArticleSystemSetupRunId,
+    pageVisible,
     setupChildRun?.runId,
     setupChildRun?.status,
     setupChildRun?.approvalState,

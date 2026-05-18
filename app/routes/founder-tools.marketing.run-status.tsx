@@ -35,7 +35,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   }
 
   await requireVibeRaisingFounder(env, request);
-  let run = await getVibeMarketingRun(env, request, runId);
+  let run = await getVibeMarketingRun(env, request, runId, null, "status");
   if (shouldRefreshSetupLivePreview(run)) {
     try {
       run = await refreshVibeMarketingLivePreview(env, request, runId);
