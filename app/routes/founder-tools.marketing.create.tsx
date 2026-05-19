@@ -248,17 +248,55 @@ function runResultValue(run: VibeMarketingRunSummary | null | undefined, key: st
   if (!run) return undefined;
   if (run.result?.[key] !== undefined) return run.result[key];
   const nested = resultObject(run.result?.result);
-  return nested[key];
+  if (nested[key] !== undefined) return nested[key];
+  const latestControl = resultObject(run.result?.latest_control_response);
+  return latestControl[key];
+}
+
+function hasMeaningfulPayload(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+  return Boolean(value);
+}
+
+function hasConcreteArticleSurfaceHint(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  const hint = resultObject(value);
+  return [
+    "route",
+    "route_path",
+    "routePath",
+    "path",
+    "public_url",
+    "publicUrl",
+    "listing_url",
+    "listingUrl",
+    "article_surface_url",
+    "articleSurfaceUrl",
+    "url",
+  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
+}
+
+function scanRunHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
+  return Boolean(
+    run &&
+      (hasConcreteArticleSurfaceHint(runResultValue(run, "article_surface_hint")) ||
+        hasConcreteArticleSurfaceHint(runResultValue(run, "articleSurfaceHint"))),
+  );
 }
 
 function scanRunHasPendingArticleSystemSetup(run: VibeMarketingRunSummary | null | undefined) {
   if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
-  const purpose = String(runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? "").trim();
+  const request = resultObject(run.result?.run_request ?? run.result?.request);
+  const purpose = String(
+    runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? request.scan_purpose ?? request.scanPurpose ?? "",
+  ).trim();
   const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
   return (
     purpose === "setup" ||
-    Boolean(runResultValue(run, "pending_article_system_setup")) ||
-    Boolean(runResultValue(run, "article_surface_hint")) ||
+    hasMeaningfulPayload(runResultValue(run, "pending_article_system_setup")) ||
+    scanRunHasArticleSurfaceHint(run) ||
     requestedAction === "article_system_setup" ||
     requestedAction === "scaffold_publish_route"
   );

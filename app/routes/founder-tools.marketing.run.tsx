@@ -2777,6 +2777,40 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
   return "";
 }
 
+function resultObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function resultValue(run: VibeMarketingRunSummary, key: string): unknown {
+  if (run.result?.[key] !== undefined) return run.result[key];
+  const nestedResult = resultObject(run.result?.result);
+  if (nestedResult[key] !== undefined) return nestedResult[key];
+  const latestControl = resultObject(run.result?.latest_control_response);
+  return latestControl[key];
+}
+
+function hasConcreteArticleSurfaceHint(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  const hint = resultObject(value);
+  return [
+    "route",
+    "route_path",
+    "routePath",
+    "path",
+    "public_url",
+    "publicUrl",
+    "listing_url",
+    "listingUrl",
+    "article_surface_url",
+    "articleSurfaceUrl",
+    "url",
+  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
+}
+
+function scanHasArticleSurfaceHint(run: VibeMarketingRunSummary) {
+  return hasConcreteArticleSurfaceHint(resultValue(run, "article_surface_hint")) || hasConcreteArticleSurfaceHint(resultValue(run, "articleSurfaceHint"));
+}
+
 function setupRunIdForRun(run: VibeMarketingRunSummary) {
   const direct = stringResultValue(run, "setup_run_id", "setupRunId", "scaffold_job_id", "scaffoldJobId");
   if (direct) return direct;
@@ -2833,7 +2867,7 @@ function isPublishApprovalGate(run: VibeMarketingRunSummary) {
 function isSetupScanRun(run: VibeMarketingRunSummary) {
   if (!SCAN_WORKFLOWS.has(run.workflow)) return false;
   const scanPurpose = stringResultValue(run, "scan_purpose", "scanPurpose");
-  return scanPurpose === "setup" || Boolean(setupRunIdForRun(run)) || Boolean(run.result?.["article_surface_hint"]);
+  return scanPurpose === "setup" || Boolean(setupRunIdForRun(run)) || scanHasArticleSurfaceHint(run);
 }
 
 function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
