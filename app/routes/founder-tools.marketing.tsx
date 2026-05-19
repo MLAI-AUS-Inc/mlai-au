@@ -1,18 +1,23 @@
 import type { Route } from "./+types/founder-tools.marketing";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  BookOpen,
+  Brain,
   CheckCircle2,
   ChevronDown,
+  CircleHelp,
   ExternalLink,
   FileText,
   Flame,
   Loader2,
+  MoreHorizontal,
   PenLine,
+  Plus,
   Rocket,
   Save,
   Search,
@@ -20,8 +25,11 @@ import {
   ShieldCheck,
   Sparkles,
   ThumbsDown,
+  Trash2,
   Undo2,
   UserRound,
+  UsersRound,
+  Wrench,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -59,6 +67,7 @@ import type {
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
+  VibeMarketingTopicPillar,
   VibeMarketingWebsiteBaseline,
   VibeMarketingWebsiteBaselineMetric,
   VibeMarketingWrittenTopic,
@@ -72,6 +81,7 @@ const FLOW_STEPS = [
   { label: "You review & publish", icon: Send },
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
+const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -98,6 +108,10 @@ function founderNamesFromForm(formData: FormData) {
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
+}
+
+function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -197,6 +211,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     latestRuns: [],
     latestRunsByWorkflow: {},
     topicCandidates: [],
+    topicPillars: [],
     hiddenTopicCandidates: [],
     declinedTopicFeedback: [],
     draftArticles: [],
@@ -227,7 +242,7 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     return { bootstrap: emptyBootstrapFromProfile(vibeContext.profile), hasFounderCompany: false };
   }
 
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   return { bootstrap, hasFounderCompany: true };
 }
 
@@ -299,7 +314,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return redirect("/founder-tools/marketing");
       }
 
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-autofill") {
@@ -383,7 +398,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await skipVibeMarketingBaseline(env, request, {
         reason: stringFromForm(formData, "reason") || "Skipped during marketing setup",
       });
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "scan") {
@@ -392,6 +407,10 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-discovery" || intent === "discovery") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+      }
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
@@ -411,12 +430,28 @@ export async function action({ request, context }: Route.ActionArgs) {
       throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(nextRunId)}`);
     }
 
+    if (intent === "delete-draft") {
+      const runId = stringFromForm(formData, "runId");
+      if (!runId) {
+        return { intent, error: "Choose a draft article to delete." };
+      }
+      await controlVibeMarketingRun(env, request, runId, "cancel");
+      return { intent, runId };
+    }
+
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const candidatePool = [
+        ...bootstrap.topicCandidates,
+        ...bootstrap.topicPillars.flatMap((pillar) => pillar.topicCandidates),
+      ];
       const selectedCandidate =
         topicCandidateId && topicCandidateId !== "__custom__"
-          ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
+          ? candidatePool.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
 
       if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
@@ -2212,15 +2247,22 @@ function draftActionVariant(actionKind: string) {
 function DraftArticleRow({
   draft,
   submitting,
+  deleting,
+  skipDeleteConfirmation,
+  onDeleteRequest,
 }: {
   draft: VibeMarketingDraftArticle;
   submitting: boolean;
+  deleting: boolean;
+  skipDeleteConfirmation: boolean;
+  onDeleteRequest: (draft: { runId: string; title: string }) => void;
 }) {
   const tone = draftStatusTone(draft);
   const href = `/founder-tools/marketing/runs/${encodeURIComponent(draft.runId)}`;
   const canPostAction = draft.actionKind === "resume" || draft.actionKind === "restart";
   const actionIntent = draft.actionKind === "resume" ? "resume-draft" : "restart-draft";
   const actionLabel = draft.actionLabel || (draft.actionKind === "restart" ? "Restart" : "Resume");
+  const title = draft.title || draft.targetKeyword || "Untitled article draft";
 
   return (
     <div className="grid gap-3 border-t border-slate-100 py-4 first:border-t-0 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
@@ -2232,40 +2274,60 @@ function DraftArticleRow({
           </span>
           <span className="text-xs font-black uppercase tracking-normal text-slate-400">{draft.stageLabel}</span>
         </span>
-        <p className="mt-2 truncate text-sm font-black text-slate-950">{draft.title || draft.targetKeyword || "Untitled article draft"}</p>
+        <p className="mt-2 truncate text-sm font-black text-slate-950">{title}</p>
         <p className="mt-1 truncate text-xs font-bold text-slate-500">
           {draft.targetKeyword ? `${draft.targetKeyword} · ` : ""}
           Updated {formatArticleDate(draft.updatedAt ?? draft.createdAt)}
         </p>
       </Link>
-      {canPostAction ? (
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:justify-end">
         <Form method="POST">
-          <input type="hidden" name="intent" value={actionIntent} />
+          <input type="hidden" name="intent" value="delete-draft" />
           <input type="hidden" name="runId" value={draft.runId} />
           <button
             type="submit"
             disabled={submitting}
+            onClick={(event) => {
+              if (skipDeleteConfirmation) return;
+              event.preventDefault();
+              onDeleteRequest({ runId: draft.runId, title });
+            }}
+            title={`Delete draft: ${title}`}
+            aria-label={`Delete draft: ${title}`}
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-rose-50 hover:text-rose-600 focus:outline-none focus:ring-4 focus:ring-rose-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+          </button>
+        </Form>
+        {canPostAction ? (
+          <Form method="POST" className="flex-1 sm:flex-none">
+            <input type="hidden" name="intent" value={actionIntent} />
+            <input type="hidden" name="runId" value={draft.runId} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className={clsx(
+                "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+                draftActionVariant(draft.actionKind),
+              )}
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+              {actionLabel}
+            </button>
+          </Form>
+        ) : (
+          <Link
+            to={href}
             className={clsx(
-              "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto",
+              "inline-flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:flex-none",
               draftActionVariant(draft.actionKind),
             )}
           >
-            {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-            {actionLabel}
-          </button>
-        </Form>
-      ) : (
-        <Link
-          to={href}
-          className={clsx(
-            "inline-flex w-full items-center justify-center gap-2 rounded-lg border px-3 py-2 text-xs font-black shadow-sm transition sm:w-auto",
-            draftActionVariant(draft.actionKind),
-          )}
-        >
-          <ArrowRight className="h-4 w-4" />
-          {draft.actionLabel || "Continue"}
-        </Link>
-      )}
+            <ArrowRight className="h-4 w-4" />
+            {draft.actionLabel || "Continue"}
+          </Link>
+        )}
+      </div>
     </div>
   );
 }
@@ -2273,9 +2335,15 @@ function DraftArticleRow({
 function DraftArticlesCard({
   drafts,
   submitting,
+  deletingRunId,
+  skipDeleteConfirmation,
+  onDeleteRequest,
 }: {
   drafts: VibeMarketingDraftArticle[];
   submitting: boolean;
+  deletingRunId: string | null;
+  skipDeleteConfirmation: boolean;
+  onDeleteRequest: (draft: { runId: string; title: string }) => void;
 }) {
   if (!drafts.length) return null;
   return (
@@ -2289,10 +2357,78 @@ function DraftArticlesCard({
       </div>
       <div className="mt-5">
         {drafts.slice(0, 5).map((draft) => (
-          <DraftArticleRow key={draft.runId} draft={draft} submitting={submitting} />
+          <DraftArticleRow
+            key={draft.runId}
+            draft={draft}
+            submitting={submitting}
+            deleting={deletingRunId === draft.runId}
+            skipDeleteConfirmation={skipDeleteConfirmation}
+            onDeleteRequest={onDeleteRequest}
+          />
         ))}
       </div>
     </section>
+  );
+}
+
+function DraftDeleteConfirmationModal({
+  draft,
+  submitting,
+  onClose,
+  onRememberSkip,
+}: {
+  draft: { runId: string; title: string };
+  submitting: boolean;
+  onClose: () => void;
+  onRememberSkip: () => void;
+}) {
+  const [dontAskAgain, setDontAskAgain] = useState(false);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-8 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="draft-delete-confirmation-title">
+      <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
+        <h2 id="draft-delete-confirmation-title" className="text-lg font-black text-slate-950">Delete draft article?</h2>
+        <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
+          This cancels the article run and removes generated content for &quot;{draft.title}&quot;.
+        </p>
+        <label className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
+          <input
+            type="checkbox"
+            checked={dontAskAgain}
+            onChange={(event) => setDontAskAgain(event.target.checked)}
+            className="h-4 w-4 rounded border-slate-300 text-violet-700 focus:ring-violet-200"
+          />
+          Don&apos;t ask me again
+        </label>
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            disabled={submitting}
+            onClick={onClose}
+            className="inline-flex justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+          >
+            Keep draft
+          </button>
+          <Form
+            method="POST"
+            onSubmit={() => {
+              if (dontAskAgain) onRememberSkip();
+            }}
+          >
+            <input type="hidden" name="intent" value="delete-draft" />
+            <input type="hidden" name="runId" value={draft.runId} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-rose-700 disabled:opacity-50 sm:w-auto"
+            >
+              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              {submitting ? "Deleting..." : "Delete draft"}
+            </button>
+          </Form>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -2350,6 +2486,185 @@ function TopicDeclineRequest({
   return null;
 }
 
+const PILLAR_THEMES = {
+  green: {
+    iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
+    button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
+    arrow: "text-emerald-500",
+  },
+  purple: {
+    iconWrap: "bg-violet-700 text-white shadow-violet-100",
+    button: "border-violet-200 text-violet-700 hover:bg-violet-50",
+    arrow: "text-violet-600",
+  },
+  blue: {
+    iconWrap: "bg-blue-600 text-white shadow-blue-100",
+    button: "border-blue-200 text-blue-600 hover:bg-blue-50",
+    arrow: "text-blue-500",
+  },
+  orange: {
+    iconWrap: "bg-orange-500 text-white shadow-orange-100",
+    button: "border-orange-200 text-orange-600 hover:bg-orange-50",
+    arrow: "text-orange-500",
+  },
+} as const;
+
+function pillarTheme(colorKey: string | null | undefined) {
+  if (colorKey === "green" || colorKey === "purple" || colorKey === "blue" || colorKey === "orange") {
+    return PILLAR_THEMES[colorKey];
+  }
+  return PILLAR_THEMES.purple;
+}
+
+function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
+  const Icon =
+    iconKey === "brain"
+      ? Brain
+      : iconKey === "community"
+        ? UsersRound
+        : iconKey === "rocket"
+          ? Rocket
+          : iconKey === "tools"
+            ? Wrench
+            : Sparkles;
+  return <Icon className={className} />;
+}
+
+function TopicPillarsSection({
+  pillars,
+  submitting,
+  discoverySubmitting,
+  activePillarSlug,
+  customNotice,
+  helpOpen,
+  helpRef,
+  onViewIdeas,
+  onAddCustomPillar,
+  onLearnMore,
+}: {
+  pillars: VibeMarketingTopicPillar[];
+  submitting: boolean;
+  discoverySubmitting: boolean;
+  activePillarSlug: string | null;
+  customNotice: boolean;
+  helpOpen: boolean;
+  helpRef: RefObject<HTMLDivElement | null>;
+  onViewIdeas: (pillar: VibeMarketingTopicPillar) => void;
+  onAddCustomPillar: () => void;
+  onLearnMore: () => void;
+}) {
+  const visiblePillars = pillars.slice(0, 4);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black tracking-normal text-slate-950">
+              Your content islands
+            </h2>
+            <CircleHelp className="h-5 w-5 text-slate-400" />
+          </div>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+            These are broad content themes based on your business and seed keywords.
+            <br />
+            Click a content island to see topic ideas that live under it.
+          </p>
+        </div>
+        <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
+          <Form method="POST">
+            <button
+              type="submit"
+              name="intent"
+              value="start-discovery"
+              disabled={submitting}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Suggest more content islands
+            </button>
+          </Form>
+          <button
+            type="button"
+            onClick={onLearnMore}
+            aria-expanded={helpOpen}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+          >
+            <BookOpen className="h-4 w-4" />
+            Learn more
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {visiblePillars.map((pillar) => {
+          const theme = pillarTheme(pillar.colorKey);
+          const active = pillar.slug === activePillarSlug;
+          return (
+            <article
+              key={pillar.id || pillar.slug}
+              className={clsx(
+                "relative flex min-h-[220px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
+                active ? "border-violet-300 ring-4 ring-violet-50" : "border-slate-200 hover:border-violet-200",
+              )}
+            >
+              <MoreHorizontal className="absolute right-4 top-4 h-4 w-4 text-slate-400" />
+              <div className={clsx("flex h-12 w-12 items-center justify-center rounded-full shadow-lg", theme.iconWrap)}>
+                <PillarIcon iconKey={pillar.iconKey} className="h-6 w-6" />
+              </div>
+              <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
+                {pillar.name}
+              </h3>
+              <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
+              <button
+                type="button"
+                onClick={() => onViewIdeas(pillar)}
+                className={clsx(
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition",
+                  theme.button,
+                )}
+              >
+                View ideas
+                <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+              </button>
+            </article>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={onAddCustomPillar}
+          className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
+            <Plus className="h-6 w-6" />
+          </span>
+          <span className="mt-5 text-sm font-black text-slate-700">Add custom content island</span>
+        </button>
+      </div>
+
+      <div
+        ref={helpRef}
+        tabIndex={-1}
+        className={clsx(
+          "mt-5 rounded-lg bg-violet-50 px-4 py-3 text-sm font-black text-violet-700 outline-none transition focus:ring-4 focus:ring-violet-100",
+          helpOpen ? "ring-1 ring-violet-100" : "",
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 shrink-0 text-violet-500" />
+          <p>Content islands organize broad themes. Each content island contains many specific article ideas.</p>
+        </div>
+        {customNotice ? (
+          <p className="mt-3 pl-8 text-sm font-bold text-violet-600">
+            Custom content island creation is not available yet. Use the Custom topic tab above for one-off article ideas.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function ReturningTopicPickerPage({
   bootstrap,
   error,
@@ -2362,6 +2677,8 @@ function ReturningTopicPickerPage({
   const navigation = useNavigation();
   const location = useLocation();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const topicListRef = useRef<HTMLDivElement | null>(null);
+  const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
@@ -2370,20 +2687,31 @@ function ReturningTopicPickerPage({
   const [declinedFeedback, setDeclinedFeedback] = useState<VibeMarketingTopicFeedback[]>(bootstrap.declinedTopicFeedback ?? []);
   const [visibleCount, setVisibleCount] = useState(5);
   const [toast, setToast] = useState<TopicToast | null>(null);
+  const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
+  const [customPillarNotice, setCustomPillarNotice] = useState(false);
+  const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
   const articleFormRef = useRef<HTMLFormElement>(null);
+  const activePillar = useMemo(
+    () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
+    [activePillarSlug, bootstrap.topicPillars],
+  );
+  const topicSource = useMemo(
+    () => (activePillar ? activePillar.topicCandidates.filter((topic) => !topic.alreadyWritten) : baseTopics),
+    [activePillar, baseTopics],
+  );
   const declinedTopicKeys = useMemo(
     () => new Set(declinedFeedback.filter((item) => item.active).map((item) => topicMemoryKey(item.keyword))),
     [declinedFeedback],
   );
   const topics = useMemo(
     () =>
-      baseTopics.filter(
+      topicSource.filter(
         (topic) =>
           !pendingDeclines[topic.id] &&
           !declinedTopicKeys.has(topicMemoryKey(topic.keyword)),
       ),
-    [baseTopics, declinedTopicKeys, pendingDeclines],
+    [declinedTopicKeys, pendingDeclines, topicSource],
   );
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
@@ -2403,18 +2731,26 @@ function ReturningTopicPickerPage({
     bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article", "article_revision"].includes(run.workflow))?.runId ?? "";
   const latestDiscoveryRunId =
     bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow))?.runId ?? "";
+  const draftArticlesSignature = useMemo(
+    () => (bootstrap.draftArticles ?? []).map((draft) => `${draft.runId}:${draft.status}:${draft.updatedAt ?? ""}`).join("|"),
+    [bootstrap.draftArticles],
+  );
   const pendingActions = useMarketingActionPending({
     navigationState: navigation.state,
     navigationFormData: navigation.formData,
-    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}`,
+    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}:${bootstrap.topicPillars.length}:${draftArticlesSignature}`,
     errorKey: error ? errorIntent : null,
   });
   const isSubmitting = pendingActions.isAnyPending;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
+  const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
   const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
+  const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
+  const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
+  const [deletingDraftRunId, setDeletingDraftRunId] = useState<string | null>(null);
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -2427,6 +2763,15 @@ function ReturningTopicPickerPage({
     formData.set("feedbackId", feedbackId);
     restoreFetcher.submit(formData, { method: "POST" });
   }, [restoreFetcher]);
+
+  const rememberSkipDeleteConfirmation = useCallback(() => {
+    setSkipDeleteConfirmation(true);
+    try {
+      window.localStorage.setItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY, "1");
+    } catch {
+      // Ignore storage failures. The current delete should still submit normally.
+    }
+  }, []);
 
   function handleDeclineTopic(topic: VibeMarketingTopicCandidate) {
     setPendingDeclines((current) => ({ ...current, [topic.id]: topic }));
@@ -2456,6 +2801,64 @@ function ReturningTopicPickerPage({
   function handleRestoreFeedback(feedback: VibeMarketingTopicFeedback) {
     submitRestoreFeedback(feedback.id);
   }
+
+  function handleViewPillarIdeas(pillar: VibeMarketingTopicPillar) {
+    setActivePillarSlug(pillar.slug);
+    setActiveTab("choose");
+    setVisibleCount(Math.max(5, Math.min(pillar.topicCandidates.length || 5, 8)));
+    window.setTimeout(() => {
+      topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      topicListRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  function handleAddCustomPillar() {
+    setCustomPillarNotice(true);
+    window.setTimeout(() => {
+      pillarHelpRef.current?.focus({ preventScroll: false });
+    }, 0);
+  }
+
+  function handleLearnMorePillars() {
+    setPillarHelpOpen((open) => !open);
+    window.setTimeout(() => {
+      pillarHelpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      pillarHelpRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  useEffect(() => {
+    try {
+      setSkipDeleteConfirmation(window.localStorage.getItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY) === "1");
+    } catch {
+      setSkipDeleteConfirmation(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (navigation.state === "idle") return;
+    if (String(navigation.formData?.get("intent") ?? "") !== "delete-draft") return;
+    const runId = String(navigation.formData?.get("runId") ?? "").trim();
+    setDeletingDraftRunId(runId || null);
+  }, [navigation.formData, navigation.state]);
+
+  useEffect(() => {
+    if (deleteDraftSubmitting) return;
+    setDeletingDraftRunId(null);
+  }, [deleteDraftSubmitting]);
+
+  useEffect(() => {
+    if (!draftDeleteRequest) return;
+    const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
+    if (!stillPresent) setDraftDeleteRequest(null);
+  }, [bootstrap.draftArticles, draftDeleteRequest]);
+
+  useEffect(() => {
+    if (!activePillarSlug) return;
+    if (!bootstrap.topicPillars.some((pillar) => pillar.slug === activePillarSlug)) {
+      setActivePillarSlug(null);
+    }
+  }, [activePillarSlug, bootstrap.topicPillars]);
 
   useEffect(() => {
     if (!topics.length) {
@@ -2528,18 +2931,19 @@ function ReturningTopicPickerPage({
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form ref={articleFormRef} method="POST" className="space-y-5">
-          <input type="hidden" name="intent" value="start-article" />
-          <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-          <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
-          <input type="hidden" name="deliveryModeExplicit" value="false" />
-          <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
-          {activeTab === "choose" ? (
-            <>
-              <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />
-              <input type="hidden" name="customTitle" value={selectedTopic?.title ?? ""} />
-            </>
-          ) : null}
+        <div className="space-y-5">
+          <Form ref={articleFormRef} method="POST" className="space-y-5">
+            <input type="hidden" name="intent" value="start-article" />
+            <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
+            <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
+            <input type="hidden" name="deliveryModeExplicit" value="false" />
+            <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
+            {activeTab === "choose" ? (
+              <>
+                <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />
+                <input type="hidden" name="customTitle" value={selectedTopic?.title ?? ""} />
+              </>
+            ) : null}
 
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Create new article</p>
@@ -2587,13 +2991,31 @@ function ReturningTopicPickerPage({
             </div>
           </div>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section ref={topicListRef} tabIndex={-1} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm outline-none">
             {activeTab === "choose" ? (
               <>
-                <h2 className="text-xl font-black tracking-normal text-slate-950">Popular topics for startups like yours</h2>
-                <p className="mt-2 text-sm font-semibold text-slate-500">
-                  These topics are stored from your research history and filtered against written, in-progress, and cooldown topics.
-                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-black tracking-normal text-slate-950">Popular topics for startups like yours</h2>
+                    <p className="mt-2 text-sm font-semibold text-slate-500">
+                      {activePillar
+                        ? `Showing topic ideas under ${activePillar.name}.`
+                        : "These topics are stored from your research history and filtered against written, in-progress, and cooldown topics."}
+                    </p>
+                  </div>
+                  {activePillar ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivePillarSlug(null);
+                        setVisibleCount(5);
+                      }}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-50"
+                    >
+                      Show all topics
+                    </button>
+                  ) : null}
+                </div>
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
                     visibleTopics.map((topic) => (
@@ -2722,7 +3144,21 @@ function ReturningTopicPickerPage({
             )}
           </section>
 
-        </Form>
+          </Form>
+
+          <TopicPillarsSection
+            pillars={bootstrap.topicPillars}
+            submitting={isSubmitting}
+            discoverySubmitting={discoverySubmitting}
+            activePillarSlug={activePillarSlug}
+            customNotice={customPillarNotice}
+            helpOpen={pillarHelpOpen}
+            helpRef={pillarHelpRef}
+            onViewIdeas={handleViewPillarIdeas}
+            onAddCustomPillar={handleAddCustomPillar}
+            onLearnMore={handleLearnMorePillars}
+          />
+        </div>
 
         <aside className="space-y-5">
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -2758,7 +3194,13 @@ function ReturningTopicPickerPage({
             </div>
           </section>
 
-          <DraftArticlesCard drafts={bootstrap.draftArticles ?? []} submitting={isSubmitting} />
+          <DraftArticlesCard
+            drafts={bootstrap.draftArticles ?? []}
+            submitting={isSubmitting}
+            deletingRunId={deleteDraftSubmitting ? deletingDraftRunId : null}
+            skipDeleteConfirmation={skipDeleteConfirmation}
+            onDeleteRequest={setDraftDeleteRequest}
+          />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
@@ -2815,6 +3257,14 @@ function ReturningTopicPickerPage({
           </section>
         </aside>
       </div>
+      {draftDeleteRequest ? (
+        <DraftDeleteConfirmationModal
+          draft={draftDeleteRequest}
+          submitting={deleteDraftSubmitting}
+          onClose={() => setDraftDeleteRequest(null)}
+          onRememberSkip={rememberSkipDeleteConfirmation}
+        />
+      ) : null}
     </div>
   );
 }
@@ -2824,7 +3274,8 @@ export default function FounderToolsMarketing() {
   const actionData = useActionData<typeof action>();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
-  const shouldShowTopicPicker = bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow);
+  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  const shouldShowTopicPicker = !setupBlocked && (bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow));
 
   return (
     <div className="min-h-screen bg-[#fbfaf8]">

@@ -1483,6 +1483,7 @@ function ConnectorCard({
   const isConnected = source.status === "connected" || source.status === "syncing";
   const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
   const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
+  const shouldShowHeaderStatus = !isMobileView && displayedStatus !== "coming_soon" && displayedStatus !== "unavailable";
   const trustMessage = isMobileView
     ? isConnected
       ? `Only this workspace can see synced ${source.label} data.`
@@ -1490,19 +1491,19 @@ function ConnectorCard({
     : isConnected
       ? `Only this founder workspace can see synced ${source.label} context. You can manage access here anytime.`
       : `Only this founder workspace can see synced ${source.label} context. We only scan ${sourceScanSummary(source)}.`;
-  const description = isMobileView ? SOURCE_COPY[source.key].mobileDescription : SOURCE_COPY[source.key].description;
+  const description = isMobileView ? "" : SOURCE_COPY[source.key].description;
   const shouldShowCapabilities = !isMobileView;
   const shouldShowTrustMessage = !isMobileView;
   const connectClassName = clsx(
     "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
     disabled || !canConnect
       ? "cursor-not-allowed bg-gray-100 text-gray-400"
-      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)]",
+      : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)] hover:ring-1 hover:ring-[rgba(0,128,128,0.18)]",
   );
 
   return (
     <div className={clsx(
-      "relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+      "relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
       isConnected
         ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
         : selected
@@ -1510,27 +1511,38 @@ function ConnectorCard({
           : "border-gray-200 bg-white",
     )} tabIndex={0}>
       <div className="pointer-events-none flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <SourceLogo sourceKey={source.key} large />
-          <span className={clsx(
-            "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
-            isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-          )}>
-            {displayedStatusLabel}
-          </span>
+        <div
+          className={clsx(
+            "flex gap-3",
+            isMobileView ? "items-center justify-center" : "items-start",
+            shouldShowHeaderStatus && "justify-between",
+          )}
+        >
+          <SourceLogo sourceKey={source.key} large={!isMobileView} />
+          {shouldShowHeaderStatus ? (
+            <span className={clsx(
+              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
+              isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
+            )}>
+              {displayedStatusLabel}
+            </span>
+          ) : null}
         </div>
         <h3 className={clsx(
-          "break-words text-left text-base font-black leading-tight sm:text-lg",
+          "break-words text-base font-black leading-tight sm:text-left sm:text-lg",
+          isMobileView && "text-center",
           isConnected ? "text-white" : "text-gray-950",
         )}>
           {source.label}
         </h3>
       </div>
 
-      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-3" : "pt-4 sm:pt-5")}>
-        <p className={clsx("mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4", isConnected ? "text-white/80" : "text-slate-500")}>
-          {description}
-        </p>
+      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-2" : "pt-4 sm:pt-5")}>
+        {description ? (
+          <p className={clsx("mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4", isConnected ? "text-white/80" : "text-slate-500")}>
+            {description}
+          </p>
+        ) : null}
 
         {shouldShowCapabilities ? (
           <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
@@ -1613,11 +1625,11 @@ function ConnectorCard({
 function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView?: boolean }) {
   return (
     <div
-      className="relative flex min-h-[152px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
+      className="relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white p-3 shadow-sm outline-none sm:min-h-[220px] sm:rounded-2xl sm:p-4"
       aria-label="Google Analytics source coming soon"
     >
       <div className="pointer-events-none flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
+        <div className={clsx("flex gap-3", isMobileView ? "justify-center" : "items-start justify-between")}>
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-200 sm:h-16 sm:w-16 sm:rounded-2xl">
             <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
               <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
@@ -1626,17 +1638,17 @@ function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView
             </svg>
           </div>
         </div>
-        <h3 className="break-words text-left text-base font-black leading-tight text-gray-950 sm:text-lg">
+        <h3 className={clsx("break-words text-base font-black leading-tight text-gray-950 sm:text-left sm:text-lg", isMobileView && "text-center")}>
           Google Analytics
         </h3>
       </div>
 
-      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-3" : "pt-4 sm:pt-5")}>
-        <p className="mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4">
-          {isMobileView
-            ? "Pull traffic and acquisition metrics."
-            : "Pull website traffic, acquisition, and top-page performance into your monthly update workflow."}
-        </p>
+      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-2" : "pt-4 sm:pt-5")}>
+        {!isMobileView ? (
+          <p className="mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 text-slate-500 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4">
+            Pull website traffic, acquisition, and top-page performance into your monthly update workflow.
+          </p>
+        ) : null}
 
         {!isMobileView ? (
           <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
@@ -1677,7 +1689,7 @@ function ManualMaterialsCard({
   hasManualMaterials: boolean;
   summary: string;
 }) {
-  const cardCaption = "Upload private documents or add a short written summary for context outside your connected tools.";
+  const cardCaption = "Upload document or add a short written summary for context outside your connected tools.";
 
   return (
     <div
@@ -1937,6 +1949,7 @@ export default function ConnectData() {
   const slackSelectionTouchedRef = useRef(false);
   const linearSelectionTouchedRef = useRef(false);
   const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
+  const [showStickyBarOnMobile, setShowStickyBarOnMobile] = useState(false);
   const [mobileTourOpen, setMobileTourOpen] = useState(false);
   const [mobileTourStepIndex, setMobileTourStepIndex] = useState(0);
   const [mobileTourChecked, setMobileTourChecked] = useState(false);
@@ -1984,7 +1997,7 @@ export default function ConnectData() {
       manualMaterials.manualDocumentIds.length > 0 ? `${manualMaterials.manualDocumentIds.length} document${manualMaterials.manualDocumentIds.length === 1 ? "" : "s"} selected` : null,
       manualMaterials.summary.trim() ? "summary added" : null,
     ].filter((value): value is string => Boolean(value)).join(" and ")
-    : "Upload private documents or add a short written summary when you want extra context in the draft.";
+    : "Upload document or add a short written summary when you want extra context in the draft.";
   const gmailSource = sourceByKey.get("gmail");
   const shouldShowGmailPreview = gmailSource?.status === "connected" || gmailSource?.status === "syncing" || gmailSource?.status === "error";
   const bankFeedSource = sourceByKey.get("bank_feed");
@@ -2082,6 +2095,25 @@ export default function ConnectData() {
     return () => {
       window.removeEventListener("focus", syncMobileTourState);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isMobileTourViewport]);
+
+  useEffect(() => {
+    if (!isMobileTourViewport) {
+      setShowStickyBarOnMobile(false);
+      return;
+    }
+
+    const updateStickyVisibility = () => {
+      setShowStickyBarOnMobile(window.scrollY > 120);
+    };
+
+    updateStickyVisibility();
+    window.addEventListener("scroll", updateStickyVisibility, true);
+    window.addEventListener("resize", updateStickyVisibility);
+    return () => {
+      window.removeEventListener("scroll", updateStickyVisibility, true);
+      window.removeEventListener("resize", updateStickyVisibility);
     };
   }, [isMobileTourViewport]);
 
@@ -2877,7 +2909,7 @@ export default function ConnectData() {
         />
 
         {!(isMobileTourViewport && mobilePrivacyNoteSeen) ? (
-          <div ref={privacyCardRef} className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm">
+          <div ref={privacyCardRef} className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
               <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex min-w-0 items-center gap-4">
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
@@ -2885,9 +2917,20 @@ export default function ConnectData() {
                   </div>
                   <div className="min-w-0">
                     <h2 className="text-lg font-black text-gray-950">Your data stays private</h2>
+                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-600 sm:hidden">
+                      Only you can see connected data and private drafts until you publish.{" "}
+                      <Link
+                        to="/privacy"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-black text-[var(--vr-color-primary)] underline underline-offset-2"
+                      >
+                        Privacy Policy
+                      </Link>
+                    </p>
                   </div>
                 </div>
-                <div className="lg:flex lg:justify-end">
+                <div className="hidden lg:flex lg:justify-end">
                   <Link
                     to="/privacy"
                     target="_blank"
@@ -2899,16 +2942,16 @@ export default function ConnectData() {
                 </div>
               </div>
 
-              <ul className="mt-5 space-y-3">
+              <ul className="mt-5 hidden space-y-3 sm:block">
                 {privacyPoints.map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <CheckCircleIcon className="mt-0.5 h-5 w-5 flex-shrink-0 text-[var(--vr-color-primary)]" />
-                    <p className="text-sm font-semibold leading-6 text-slate-600">{item}</p>
+                    <p className="text-[11px] font-semibold leading-4 text-slate-600 sm:text-sm sm:leading-6">{item}</p>
                   </li>
                 ))}
               </ul>
 
-              <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
+              <div className="mt-6 hidden border-t border-[var(--vr-color-border)] pt-6 sm:block">
                 <div className="flex min-w-0 items-start gap-4">
                   <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] shadow-sm ring-1 ring-[rgba(0,255,215,0.24)]">
                     <SparklesIcon className="h-5 w-5" />
@@ -3068,7 +3111,9 @@ export default function ConnectData() {
       </div>
 
       <VibeRaisingStickyStepBar
+        className={clsx(isMobileTourViewport && !showStickyBarOnMobile && "hidden sm:block")}
         hideStatusOnMobile
+        hideBackOnMobile
         statusIcon={stickyStatusIcon}
         statusTitle={stickyStatusTitle}
         statusDetail={stickyStatusDetail}

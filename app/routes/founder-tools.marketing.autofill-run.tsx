@@ -53,7 +53,7 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   await requireVibeRaisingFounder(env, request);
   const runId = params.runId ?? "";
   try {
-    return await getVibeMarketingRun(env, request, runId);
+    return await getVibeMarketingRun(env, request, runId, null, "status");
   } catch (error) {
     return blockedRunPayload(runId, error);
   }

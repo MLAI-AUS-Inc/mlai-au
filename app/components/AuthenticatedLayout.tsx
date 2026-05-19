@@ -2,7 +2,6 @@ import { useState, Fragment } from 'react';
 import { Menu, Dialog, Transition } from '@headlessui/react';
 import {
     Bars3Icon,
-    BellIcon,
     ChartBarSquareIcon,
     ChevronDownIcon,
     HomeIcon,
@@ -392,27 +391,6 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
                         <div className="flex flex-1 items-center justify-end gap-x-4 self-stretch lg:gap-x-6">
                             <div className="flex items-center gap-x-4 lg:gap-x-6">
-                                <button
-                                    type="button"
-                                    className={classNames(
-                                        "hidden -m-2.5 p-2.5 sm:block",
-                                        isFounderToolsApp
-                                            ? "text-[var(--vr-color-text-sub)] hover:text-[var(--vr-color-text)]"
-                                            : "text-gray-400 hover:text-gray-500"
-                                    )}
-                                >
-                                    <span className="sr-only">View notifications</span>
-                                    <BellIcon aria-hidden="true" className="h-6 w-6" />
-                                </button>
-
-                                <div
-                                    aria-hidden="true"
-                                    className={classNames(
-                                        "hidden lg:block lg:h-6 lg:w-px",
-                                        isFounderToolsApp ? "lg:bg-[var(--vr-color-border)]" : "lg:bg-gray-900/10"
-                                    )}
-                                />
-
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>
