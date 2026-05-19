@@ -48,7 +48,7 @@ import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
 import MonthlyUpdateStepper, { type MonthlyUpdateStepKey } from "~/components/MonthlyUpdateStepper";
 import StartupRegionBadge from "~/components/StartupRegionBadge";
 import VibeRaisingStickyStepBar from "~/components/VibeRaisingStickyStepBar";
-import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS, VibeRaisingDateTabs } from "~/components/VibeRaisingDateTabs";
+import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH_OPTIONS } from "~/components/VibeRaisingDateTabs";
 import type {
     VibeRaisingInputSourceKey,
     VibeRaisingFounderProfile,
@@ -457,8 +457,27 @@ const METRIC_OPTIONS: MetricOption[] = [
 const METRIC_OPTION_MAP = new Map(METRIC_OPTIONS.map((option) => [option.key, option]));
 const METRIC_FORM_KEYS = METRIC_OPTIONS.map((option) => option.key);
 
+function hasDisplayableMetricValue(value: unknown) {
+    if (value === null || value === undefined) return false;
+
+    const rawValue = String(value).trim();
+    if (!rawValue) return false;
+
+    const lowerValue = rawValue.toLowerCase();
+    if (["0", "0.0", "0.00", "null", "undefined", "-", "—"].includes(lowerValue)) return false;
+
+    const numericText = rawValue
+        .replace(/[$,%\s,]/g, "")
+        .replace(/[a-z]+/gi, "");
+    if (numericText && /^-?\d+(\.\d+)?$/.test(numericText)) {
+        return Number(numericText) !== 0;
+    }
+
+    return true;
+}
+
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
-    const keys = Object.keys(metrics || {}).filter((key) => String(metrics?.[key] || "").trim());
+    const keys = Object.keys(metrics || {}).filter((key) => hasDisplayableMetricValue(metrics?.[key]));
     return METRIC_OPTIONS.filter((option) => keys.includes(option.key));
 }
 
@@ -713,9 +732,10 @@ type MissingFounderLinkedInDraft = {
     linkedinUrl: string;
 };
 
-const MAX_VIDEO_UPLOAD_BYTES = 50 * 1024 * 1024;
-const MAX_SOURCE_VIDEO_BYTES = 50 * 1024 * 1024;
-const MAX_PITCH_DECK_UPLOAD_BYTES = 50 * 1024 * 1024;
+const MAX_UPLOAD_SIZE_MB = 25;
+const MAX_VIDEO_UPLOAD_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const MAX_SOURCE_VIDEO_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const MAX_PITCH_DECK_UPLOAD_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
 const STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD = 4;
@@ -856,7 +876,7 @@ function isSupportedVideoFile(file: File) {
 function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
     const firstError = fileRejections[0]?.errors[0];
     if (!firstError) return "We couldn't use that file. Add a PDF, PPT, PPTX, or a supported video walkthrough.";
-    if (firstError.code === "file-too-large") return "File is too large. Use a file under 50 MB.";
+    if (firstError.code === "file-too-large") return `File is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`;
     if (firstError.code === "file-invalid-type") {
         return "Use a PDF, PPT, PPTX, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
     }
@@ -893,7 +913,7 @@ function getPitchDeckUploadErrorMessage(error: unknown) {
         return "Pitch deck uploads are not available on the backend yet. Deploy the latest backend release and try again.";
     }
     if (statusCode === 413) {
-        return "This deck is too large. Use a file under 50 MB.";
+        return `This deck is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`;
     }
     if (statusCode === 403 && requestPath === "signed-storage-upload") {
         return "The pitch deck upload session expired. Please select the file again.";
@@ -1681,6 +1701,94 @@ function BulletList({ text, className = "text-sm text-gray-700" }: { text: strin
     );
 }
 
+function ReviewSummaryBlock({ summary, sourceUrl }: { summary?: string; sourceUrl?: string }) {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const canExpand = String(summary || "").trim().length > 180;
+
+    if (!summary && !sourceUrl) return null;
+
+    return (
+        <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 px-4 py-3 sm:p-4">
+            {summary ? (
+                <div className="space-y-2">
+                    <p
+                        className={clsx(
+                            "text-sm font-medium leading-6 text-gray-700",
+                            !isExpanded && "line-clamp-4 sm:line-clamp-none",
+                        )}
+                    >
+                        {summary}
+                    </p>
+                    {canExpand ? (
+                        <button
+                            type="button"
+                            onClick={() => setIsExpanded((current) => !current)}
+                            className="inline-flex text-xs font-black uppercase tracking-[0.14em] text-[var(--vr-color-primary)] transition hover:text-[var(--vr-palette-black)] sm:hidden"
+                            aria-expanded={isExpanded}
+                        >
+                            {isExpanded ? "Show less" : "Show more"}
+                        </button>
+                    ) : null}
+                </div>
+            ) : null}
+            {sourceUrl ? (
+                <a
+                    href={sourceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]"
+                >
+                    <LinkIcon className="h-3.5 w-3.5" />
+                    Source materials
+                    <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
+                </a>
+            ) : null}
+        </div>
+    );
+}
+
+function ReviewPreviewSection({
+    icon: Icon,
+    iconClassName,
+    label,
+    text,
+}: {
+    icon: any;
+    iconClassName: string;
+    label: string;
+    text?: string | null;
+}) {
+    if (!text) return null;
+
+    const items = text.split(/(?<=\.)\s+/).filter((item) => item.trim());
+    const [mobileExpanded, setMobileExpanded] = useState(false);
+    const shouldClampOnMobile = items.length > 1;
+    const visibleItems = mobileExpanded ? items : items.slice(0, 1);
+
+    return (
+        <div>
+            <h4 className="mb-1.5 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-gray-900">
+                <Icon className={clsx("h-3.5 w-3.5", iconClassName)} />
+                {label}
+            </h4>
+            <ul className="space-y-1 list-disc list-inside text-sm text-gray-700">
+                {visibleItems.map((item, index) => (
+                    <li key={`${label}-${index}`}>{item.trim()}</li>
+                ))}
+            </ul>
+            {shouldClampOnMobile ? (
+                <button
+                    type="button"
+                    onClick={() => setMobileExpanded((current) => !current)}
+                    className="mt-2 inline-flex text-xs font-bold text-[var(--vr-color-primary)] sm:hidden"
+                >
+                    {mobileExpanded ? "Show less" : `Show all ${items.length}`}
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
 // ─── Revenue Chart Component ────────────────────────────────────────
 interface ChartData {
     month: string;
@@ -2422,7 +2530,7 @@ export default function CreateUpdate() {
 
         if (file.size > MAX_SOURCE_VIDEO_BYTES) {
             setVideoUploadStatus("error");
-            setVideoUploadError("File is too large. Use a file under 50 MB.");
+            setVideoUploadError(`File is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`);
             return;
         }
 
@@ -2445,13 +2553,13 @@ export default function CreateUpdate() {
                 } catch (compressionError) {
                     if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
                     if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
-                        throw new Error("File exceeds the 50 MB upload limit after compression. Try a shorter clip.");
+                        throw new Error(`File exceeds the ${MAX_UPLOAD_SIZE_MB} MB upload limit after compression. Try a shorter clip.`);
                     }
                 }
             }
 
             if (uploadCandidate.size > MAX_VIDEO_UPLOAD_BYTES) {
-                throw new Error("File exceeds the 50 MB upload limit.");
+                throw new Error(`File exceeds the ${MAX_UPLOAD_SIZE_MB} MB upload limit.`);
             }
 
             setVideoContentType(uploadCandidate.type || inferVideoContentType(null, uploadCandidate.name));
@@ -2512,7 +2620,7 @@ export default function CreateUpdate() {
 
         if (file.size > MAX_PITCH_DECK_UPLOAD_BYTES) {
             setPitchDeckUploadStatus("error");
-            setPitchDeckUploadError("Pitch deck is too large. Use a file under 50 MB.");
+            setPitchDeckUploadError(`Pitch deck is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`);
             return;
         }
 
@@ -3801,7 +3909,7 @@ export default function CreateUpdate() {
                                         {isMaterialsDragActive ? "Drop your file here" : "Drag your pitch deck or video here"}
                                     </p>
                                     <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-slate-600">
-                                        Choose the format that tells the investor story best. Final upload limit: 50 MB.
+                                        Choose the format that tells the investor story best. Final upload limit: {MAX_UPLOAD_SIZE_MB} MB.
                                     </p>
                                 </div>
 
@@ -4063,6 +4171,8 @@ export default function CreateUpdate() {
         const reviewVideoOriginalFilename = String(reviewData?.videoOriginalFilename || videoOriginalFilename || "").trim();
         const reviewVideoFileSizeBytes = Number(reviewData?.videoFileSizeBytes || videoFileSizeBytes || 0) || null;
         const reviewMediaIsAudio = isAudioMedia(reviewVideoContentType, reviewVideoOriginalFilename || reviewVideoUrl);
+        const reviewPitchDeckLabel = reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename || "Pitch deck file";
+        const reviewVideoLabel = reviewVideoOriginalFilename || (reviewMediaIsAudio ? "Founder voice note" : "Founder walkthrough");
         const reviewAudienceText = [
             String(reviewData?.highlights || ""),
             String(reviewData?.challenges || ""),
@@ -4100,18 +4210,14 @@ export default function CreateUpdate() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
-
-            if (step === "publish") {
-                setShowConfirmPopup(true);
-            }
         };
 
         return (
             <div className="mx-auto max-w-6xl space-y-10 pb-32">
                 <MonthlyUpdateStepper
-                    activeStep={showConfirmPopup ? "publish" : "review"}
+                    activeStep="review"
                     disableMotion
-                    enabledSteps={["connect", "draft", "review", "publish"]}
+                    enabledSteps={["connect", "draft", "review"]}
                     onStepClick={handleReviewStepperClick}
                     expandOnHover
                     frameless
@@ -4119,7 +4225,7 @@ export default function CreateUpdate() {
                 />
 
                 <div className={clsx(
-                    "rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-5 shadow-sm",
+                    "rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5",
                     isMobileTourViewport && mobileReviewHowItWorksSeen && "hidden sm:block",
                 )}>
                     <div className="flex min-w-0 items-start gap-4">
@@ -4134,7 +4240,7 @@ export default function CreateUpdate() {
                         </div>
                     </div>
 
-                    <div className="mt-6 border-t border-[var(--vr-color-border)] pt-6">
+                    <div className="mt-4 border-t border-[var(--vr-color-border)] pt-4 sm:mt-6 sm:pt-6">
                         <div className="flex min-w-0 items-start gap-4">
                             <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-[rgba(76,110,245,0.10)] text-[var(--vr-palette-blue)] shadow-sm ring-1 ring-[rgba(76,110,245,0.22)]">
                                 <UsersIcon className="h-5 w-5" />
@@ -4144,7 +4250,7 @@ export default function CreateUpdate() {
                                 <p className="mt-1 text-sm leading-6 text-slate-600">
                                     We found <strong className="font-extrabold text-[var(--vr-palette-blue)]">{reviewAudienceCount} investors</strong> on Vibe Raising actively looking for updates matching your criteria.
                                 </p>
-                                <div className="mt-3 flex flex-wrap gap-2">
+                                <div className="mt-3 hidden flex-wrap gap-2 sm:flex">
                                     {reviewAudienceCriteria.map((criteria) => (
                                         <span key={criteria} className="rounded-lg border border-[rgba(76,110,245,0.24)] bg-[rgba(76,110,245,0.08)] px-2.5 py-1 text-xs font-semibold text-[var(--vr-palette-blue)]">
                                             {criteria}
@@ -4163,7 +4269,7 @@ export default function CreateUpdate() {
                     <div className="flex-1 min-w-0">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                             {/* Hero banner */}
-                            <div className="relative w-full h-32 overflow-hidden">
+                            <div className="relative w-full h-24 overflow-hidden sm:h-32">
                                 <div className="absolute inset-0 bg-[linear-gradient(135deg,var(--vr-palette-teal)_0%,var(--vr-palette-mint)_100%)]" />
                                 <svg className="absolute inset-0 w-full h-full opacity-[0.12]" viewBox="0 0 800 200">
                                     <circle cx="120" cy="80" r="100" fill="white" />
@@ -4171,7 +4277,7 @@ export default function CreateUpdate() {
                                     <circle cx="400" cy="30" r="50" fill="white" />
                                     <rect x="250" y="100" width="180" height="180" rx="40" fill="white" transform="rotate(-15 340 190)" />
                                 </svg>
-                                <div className="absolute inset-0 flex items-end px-6 pb-4">
+                                <div className="absolute inset-0 flex items-end px-4 pb-3 sm:px-6 sm:pb-4">
                                     <div className="flex items-center gap-3">
                                         {user.domain ? (
                                             <img
@@ -4193,14 +4299,13 @@ export default function CreateUpdate() {
                             </div>
 
                             {/* Preview header */}
-                            <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+                            <div className="border-b border-gray-100 px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
                                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                                    <div>
+                                    <div className="min-w-0">
                                         <h3 className="text-lg font-bold text-gray-900">
                                             {reviewMonth} {reviewYear} Update
                                         </h3>
                                         <div className="mt-2 flex flex-wrap items-center gap-2">
-                                            <VibeRaisingDateTabs month={reviewMonth} year={reviewYear} size="compact" />
                                             <StartupRegionBadge location={user.location} />
                                             <button
                                                 type="button"
@@ -4220,12 +4325,12 @@ export default function CreateUpdate() {
                                             </button>
                                         </div>
                                     </div>
-                                    <span className="text-xs text-gray-400">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                    <span className="hidden text-xs text-gray-400 sm:block">{new Date().toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" })}</span>
                                 </div>
                             </div>
 
                             {hasReviewPitchDeck ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="space-y-4">
                                         <div>
                                             <div className="mb-3">
@@ -4233,13 +4338,28 @@ export default function CreateUpdate() {
                                                     Pitch deck
                                                 </p>
                                             </div>
-                                            <PitchDeckAssetPreview
-                                                src={reviewPitchDeckPreviewUrl}
-                                                openUrl={reviewPitchDeckOpenUrl}
-                                                contentType={reviewPitchDeckContentType || pitchDeckContentType}
-                                                fileName={reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename}
-                                                fileSizeBytes={reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes}
-                                            />
+                                            <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)]">
+                                                        <CloudArrowUpIcon className="h-5 w-5" />
+                                                    </div>
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-sm font-black text-gray-950">Pitch deck attached</p>
+                                                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                            {reviewPitchDeckLabel}{formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes) ? ` · ${formatFileSize(reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes)}` : ""}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="hidden sm:block">
+                                                <PitchDeckAssetPreview
+                                                    src={reviewPitchDeckPreviewUrl}
+                                                    openUrl={reviewPitchDeckOpenUrl}
+                                                    contentType={reviewPitchDeckContentType || pitchDeckContentType}
+                                                    fileName={reviewPitchDeckOriginalFilename || pitchDeckOriginalFilename}
+                                                    fileSizeBytes={reviewPitchDeckFileSizeBytes || pitchDeckFileSizeBytes}
+                                                />
+                                            </div>
                                         </div>
                                         {reviewVideoUrl ? (
                                             <div>
@@ -4254,7 +4374,20 @@ export default function CreateUpdate() {
                                                         This {reviewMediaIsAudio ? "voice note" : "video"} will appear with the deck so investors can hear the story directly.
                                                     </p>
                                                 </div>
-                                                <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
+                                                <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
+                                                            <CloudArrowUpIcon className="h-5 w-5" />
+                                                        </div>
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
+                                                            <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                                {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
                                                     <VideoAssetPreview
                                                         src={reviewVideoUrl}
                                                         contentType={reviewVideoContentType}
@@ -4268,19 +4401,20 @@ export default function CreateUpdate() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-4">
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6">
                                     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
                                         {(() => {
                                             const metricRecord = (((data as any)?.metrics || data) as Record<string, string>) || {};
                                             const selectedReviewKeys = String((data as any)?.metricKeys || "")
                                                 .split(",")
                                                 .map((key) => key.trim())
-                                                .filter(Boolean);
+                                                .filter((key) => hasDisplayableMetricValue(metricRecord[key] ?? (data as any)?.[key]));
                                             const options = selectedReviewKeys.length > 0
                                                 ? metricOptionsFromKeys(selectedReviewKeys)
                                                 : getMetricOptionsForDisplay(metricRecord);
                                             return options.map(m => {
                                             const val = (data as any)?.[m.key] || (data as any)?.metrics?.[m.key];
+                                            if (!hasDisplayableMetricValue(val)) return null;
                                             return (
                                                 <div
                                                     key={m.key}
@@ -4317,7 +4451,7 @@ export default function CreateUpdate() {
                             )}
 
                             {!hasReviewPitchDeck && reviewVideoUrl ? (
-                                <div className="border-b border-gray-100 bg-gray-50/50 px-6 py-5">
+                                <div className="border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:px-6 sm:py-5">
                                     <div className="mb-3">
                                         <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
                                             {reviewMediaIsAudio ? "Voice note" : "Walkthrough video"}
@@ -4326,7 +4460,20 @@ export default function CreateUpdate() {
                                             Founder {reviewMediaIsAudio ? "audio" : "video"} preview
                                         </h4>
                                     </div>
-                                    <div className="overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
+                                    <div className="rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 py-4 sm:hidden">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)]">
+                                                <CloudArrowUpIcon className="h-5 w-5" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-black text-gray-950">{reviewMediaIsAudio ? "Voice note attached" : "Walkthrough video attached"}</p>
+                                                <p className="mt-1 text-sm leading-6 text-slate-500">
+                                                    {reviewVideoLabel}{formatFileSize(reviewVideoFileSizeBytes) ? ` · ${formatFileSize(reviewVideoFileSizeBytes)}` : ""}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="hidden sm:block overflow-hidden rounded-2xl border border-[var(--vr-color-border)] bg-black">
                                         <VideoAssetPreview
                                             src={reviewVideoUrl}
                                             contentType={reviewVideoContentType}
@@ -4339,71 +4486,38 @@ export default function CreateUpdate() {
                             ) : null}
 
                             {/* Content sections */}
-                            <div className="px-6 py-5 space-y-5">
-                                {(reviewSummary || reviewSourceUrl) && (
-                                    <div className="space-y-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4">
-                                        {reviewSummary && (
-                                            <p className="text-sm font-medium leading-relaxed text-gray-700">{reviewSummary}</p>
-                                        )}
-                                        {reviewSourceUrl && (
-                                            <a
-                                                href={reviewSourceUrl}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                className="inline-flex items-center gap-2 text-xs font-bold text-[var(--vr-color-primary)] hover:text-[var(--vr-palette-black)]"
-                                            >
-                                                <LinkIcon className="h-3.5 w-3.5" />
-                                                Source materials
-                                                <ArrowTopRightOnSquareIcon className="h-3.5 w-3.5" />
-                                            </a>
-                                        )}
-                                    </div>
-                                )}
-                                {(data as any)?.highlights && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <SparklesIcon className="h-3.5 w-3.5 text-[var(--vr-palette-purple)]" />
-                                            Key Highlights
-                                        </h4>
-                                        <BulletList text={(data as any).highlights} />
-                                    </div>
-                                )}
-                                {(data as any)?.challenges && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <ExclamationCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-orange)]" />
-                                            Challenges
-                                        </h4>
-                                        <BulletList text={(data as any).challenges} />
-                                    </div>
-                                )}
-                                {(data as any)?.learnings && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <LightBulbIcon className="h-3.5 w-3.5 text-[var(--vr-palette-yellow)]" />
-                                            Learnings
-                                        </h4>
-                                        <BulletList text={(data as any).learnings} />
-                                    </div>
-                                )}
-                                {(data as any)?.next30Days && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <ArrowRightIcon className="h-3.5 w-3.5 text-[var(--vr-palette-blue)]" />
-                                            Next 30 Days
-                                        </h4>
-                                        <BulletList text={(data as any).next30Days} />
-                                    </div>
-                                )}
-                                {(data as any)?.asks && (
-                                    <div>
-                                        <h4 className="text-xs font-bold text-gray-900 uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-                                            <QuestionMarkCircleIcon className="h-3.5 w-3.5 text-[var(--vr-palette-lavender)]" />
-                                            Ask from Investors
-                                        </h4>
-                                        <BulletList text={(data as any).asks} />
-                                    </div>
-                                )}
+                            <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
+                                <ReviewSummaryBlock summary={reviewSummary} sourceUrl={reviewSourceUrl} />
+                                <ReviewPreviewSection
+                                    icon={SparklesIcon}
+                                    iconClassName="text-[var(--vr-palette-purple)]"
+                                    label="Key Highlights"
+                                    text={(data as any)?.highlights}
+                                />
+                                <ReviewPreviewSection
+                                    icon={ExclamationCircleIcon}
+                                    iconClassName="text-[var(--vr-palette-orange)]"
+                                    label="Challenges"
+                                    text={(data as any)?.challenges}
+                                />
+                                <ReviewPreviewSection
+                                    icon={LightBulbIcon}
+                                    iconClassName="text-[var(--vr-palette-yellow)]"
+                                    label="Learnings"
+                                    text={(data as any)?.learnings}
+                                />
+                                <ReviewPreviewSection
+                                    icon={ArrowRightIcon}
+                                    iconClassName="text-[var(--vr-palette-blue)]"
+                                    label="Next 30 Days"
+                                    text={(data as any)?.next30Days}
+                                />
+                                <ReviewPreviewSection
+                                    icon={QuestionMarkCircleIcon}
+                                    iconClassName="text-[var(--vr-palette-lavender)]"
+                                    label="Ask from Investors"
+                                    text={(data as any)?.asks}
+                                />
                             </div>
                         </div>
 
@@ -4445,7 +4559,7 @@ export default function CreateUpdate() {
                             return (
                                 <>
                                     {hasRevenue && (
-                                        <div className="mt-4 grid grid-cols-1 gap-4">
+                                        <div className="mt-4 hidden grid-cols-1 gap-4 sm:grid">
                                             <GrowthChart
                                                 data={reviewChartData}
                                                 onSelect={() => {}}
@@ -4456,7 +4570,7 @@ export default function CreateUpdate() {
                                         </div>
                                     )}
                                     {pastMonths.length > 0 && (
-                                        <div className="mt-4 space-y-2">
+                                        <div className="mt-4 hidden space-y-2 sm:block">
                                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Previous Updates</p>
                                             {pastMonths.map((pm, i) => (
                                                 <PastMonthPreviewCard key={i} pm={pm} />
@@ -4491,7 +4605,7 @@ export default function CreateUpdate() {
                             const count = 18 + (criteria.length * 14);
 
                             return (
-                                <div className="mt-6 rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm">
+                                <div className="mt-6 hidden rounded-xl border border-[rgba(76,110,245,0.22)] bg-[rgba(76,110,245,0.08)] p-5 shadow-sm sm:block">
                                     <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-[var(--vr-color-text)]">
                                         <UsersIcon className="h-4 w-4 text-[var(--vr-palette-blue)]" />
                                         Your Audience
@@ -4604,15 +4718,11 @@ export default function CreateUpdate() {
                     {showConfirmPopup && (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
                                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
-                                    <MonthlyUpdateStepper
-                                        activeStep="publish"
-                                        disableMotion
-                                        enabledSteps={["connect", "draft", "review", "publish"]}
-                                        onStepClick={handleReviewStepperClick}
-                                        expandOnHover
-                                        frameless
-                                        className="mb-6 text-left"
-                                    />
+                                    <div className="mb-6 text-left">
+                                        <p className="inline-flex rounded-full border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
+                                            Coming soon
+                                        </p>
+                                    </div>
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                                         Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
@@ -4648,12 +4758,21 @@ export default function CreateUpdate() {
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
                                         
-                                        <button
-                                            type="submit"
-                                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-[var(--vr-palette-black)] active:scale-95"
-                                        >
-                                            Yes, Publish and Send
-                                        </button>
+                                        <div className="group relative">
+                                            <button
+                                                type="submit"
+                                                disabled
+                                                aria-disabled="true"
+                                                className="w-full rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm transition-all cursor-not-allowed"
+                                            >
+                                                Yes, Publish and Send
+                                            </button>
+                                            <div className="pointer-events-none absolute inset-x-0 -top-11 flex justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                                                <span className="rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg">
+                                                    Coming soon
+                                                </span>
+                                            </div>
+                                        </div>
                                         
                                         <button
                                             type="button"
@@ -4662,7 +4781,7 @@ export default function CreateUpdate() {
                                                 setShowConfirmPopup(false);
                                             }}
                                             disabled={saveDraftFetcher.state !== "idle"}
-                                            className="w-full rounded-xl bg-gray-100 px-5 py-3 text-sm font-bold text-gray-600 transition-all hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
+                                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
                                         >
                                             {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
                                         </button>
@@ -5123,6 +5242,7 @@ export default function CreateUpdate() {
                     !monthConfirmed && "hidden sm:block",
                     isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && !showDraftStickyOnMobile && "hidden sm:block",
                 )}
+                hideBackOnMobile
                 statusIcon={draftStickyStatusIcon}
                 statusTitle={draftStickyBar.statusTitle}
                 statusDetail={draftStickyBar.statusDetail}
