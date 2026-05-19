@@ -797,9 +797,9 @@ function ArticleSystemSetupPreviewPanel({
   const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
   const setupCompleted = setupMerged;
   const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
-  const previewActive = hasActiveLivePreview(run.livePreview);
-  const previewFailed =
-    !previewActive && (isFailedArticlePreview(run.livePreview) || (["blocked", "failed"].includes(run.status) && Boolean(run.livePreview?.error || run.errors.length)));
+  const setupTerminalFailure = ["blocked", "failed"].includes(run.status);
+  const previewActive = !setupTerminalFailure && hasActiveLivePreview(run.livePreview);
+  const previewFailed = setupTerminalFailure || isFailedArticlePreview(run.livePreview);
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -906,7 +906,6 @@ function ArticleSystemSetupPreviewPanel({
         />
       ) : !setupCompleted ? (
         <div className="space-y-4">
-          <ArticlesSetupProgressCard run={run} />
           {previewFailed ? (
             <ArticleSystemSetupPreviewUnavailable
               run={run}
@@ -914,7 +913,9 @@ function ArticleSystemSetupPreviewPanel({
               isSubmitting={isSubmitting}
               isActionPending={isActionPending}
             />
-          ) : null}
+          ) : (
+            <ArticlesSetupProgressCard run={run} />
+          )}
         </div>
       ) : null}
 
@@ -972,12 +973,21 @@ function ArticleSystemSetupPreviewUnavailable({
 }) {
   const preview = run.livePreview;
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
-  const previewActive = hasActiveLivePreview(preview);
-  const error = previewActive ? "" : String(preview?.error || run.errors?.[0] || "").trim();
+  const terminalFailure = isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status);
+  const previewActive = !terminalFailure && hasActiveLivePreview(preview);
+  const rawError = String(preview?.error || run.errors?.[0] || "").trim();
+  const isGithubAppWriteAccessError =
+    /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError);
+  const error = previewActive
+    ? ""
+    : isGithubAppWriteAccessError
+      ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
+      : rawError || (terminalFailure ? "The articles setup build did not advance." : "");
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
   const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
   const retryIntent = setupRetryable ? "resume" : "start-live-preview";
   const retryPreviewPending = previewActive || (isActionPending?.(retryIntent) ?? isSubmitting);
+  const githubAccessHref = `/founder-tools/marketing/github-connect?forceReconnect=true&returnTo=${encodeURIComponent(`/founder-tools/marketing/runs/${run.runId}`)}`;
   if (previewUrl) return null;
   return (
     <div className={clsx(
@@ -1003,6 +1013,16 @@ function ArticleSystemSetupPreviewUnavailable({
           >
             Open GitHub Actions logs
           </a>
+        ) : null}
+        {isGithubAppWriteAccessError ? (
+          <Link
+            to={githubAccessHref}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100"
+          >
+            Update GitHub App access
+          </Link>
         ) : null}
         {error ? (
           <Form method="POST">
@@ -2927,8 +2947,9 @@ export default function FounderToolsMarketingRun() {
   const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupPreviewActive = isArticleSystemSetupRun && hasActiveLivePreview(run.livePreview);
-  const setupPreviewFailed = isArticleSystemSetupRun && !setupPreviewActive && isFailedArticlePreview(run.livePreview);
+  const setupTerminal = ["blocked", "failed", "cancelled", "canceled"].includes(run.status);
+  const setupPreviewActive = isArticleSystemSetupRun && !setupTerminal && hasActiveLivePreview(run.livePreview);
+  const setupPreviewFailed = isArticleSystemSetupRun && (setupTerminal || isFailedArticlePreview(run.livePreview));
   const shouldPoll =
     (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
     setupPreviewActive ||
