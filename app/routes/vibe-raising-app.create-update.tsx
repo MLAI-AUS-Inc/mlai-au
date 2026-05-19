@@ -464,7 +464,16 @@ function hasDisplayableMetricValue(value: unknown) {
     if (!rawValue) return false;
 
     const lowerValue = rawValue.toLowerCase();
-    return !["null", "undefined", "-", "—"].includes(lowerValue);
+    if (["0", "0.0", "0.00", "null", "undefined", "-", "—", "�"].includes(lowerValue)) return false;
+
+    const numericText = rawValue
+        .replace(/[$,%\s,]/g, "")
+        .replace(/[a-z]+/gi, "");
+    if (numericText && /^-?\d+(\.\d+)?$/.test(numericText)) {
+        return Number(numericText) !== 0;
+    }
+
+    return true;
 }
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
@@ -5959,3 +5968,4 @@ export default function CreateUpdate() {
         </div>
     );
 }
+
