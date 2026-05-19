@@ -2561,17 +2561,17 @@ function TopicPillarsSection({
         <div>
           <div className="flex items-center gap-2">
             <h2 className="text-xl font-black tracking-normal text-slate-950">
-              Your topic pillars <span className="text-slate-500">(content islands)</span>
+              Your content islands
             </h2>
             <CircleHelp className="h-5 w-5 text-slate-400" />
           </div>
           <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
-            These are broad topics (pillars) based on your business and seed keywords.
+            These are broad content themes based on your business and seed keywords.
             <br />
-            Click a pillar to see topic ideas that live under it.
+            Click a content island to see topic ideas that live under it.
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap justify-start gap-3 lg:ml-auto lg:justify-end lg:self-start">
           <Form method="POST">
             <button
               type="submit"
@@ -2581,7 +2581,7 @@ function TopicPillarsSection({
               className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-              Suggest more pillars
+              Suggest more content islands
             </button>
           </Form>
           <button
@@ -2604,7 +2604,7 @@ function TopicPillarsSection({
             <article
               key={pillar.id || pillar.slug}
               className={clsx(
-                "relative flex min-h-[280px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
+                "relative flex min-h-[220px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
                 active ? "border-violet-300 ring-4 ring-violet-50" : "border-slate-200 hover:border-violet-200",
               )}
             >
@@ -2616,9 +2616,6 @@ function TopicPillarsSection({
                 {pillar.name}
               </h3>
               <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
-              <p className="mt-5 min-h-[54px] text-balance text-xs font-bold leading-5 text-slate-500">
-                {pillar.description}
-              </p>
               <button
                 type="button"
                 onClick={() => onViewIdeas(pillar)}
@@ -2637,15 +2634,12 @@ function TopicPillarsSection({
         <button
           type="button"
           onClick={onAddCustomPillar}
-          className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
+          className="flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
         >
           <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
             <Plus className="h-6 w-6" />
           </span>
-          <span className="mt-5 text-sm font-black text-slate-700">Add custom pillar</span>
-          <span className="mt-4 text-sm font-bold leading-6 text-slate-500">
-            Add a topic area that matters to your business
-          </span>
+          <span className="mt-5 text-sm font-black text-slate-700">Add custom content island</span>
         </button>
       </div>
 
@@ -2659,11 +2653,11 @@ function TopicPillarsSection({
       >
         <div className="flex items-center gap-3">
           <Sparkles className="h-5 w-5 shrink-0 text-violet-500" />
-          <p>Pillars help organize content into broad themes. Each pillar contains many specific article ideas.</p>
+          <p>Content islands organize broad themes. Each content island contains many specific article ideas.</p>
         </div>
         {customNotice ? (
           <p className="mt-3 pl-8 text-sm font-bold text-violet-600">
-            Custom pillar creation is not available yet. Use the Custom topic tab above for one-off article ideas.
+            Custom content island creation is not available yet. Use the Custom topic tab above for one-off article ideas.
           </p>
         ) : null}
       </div>
