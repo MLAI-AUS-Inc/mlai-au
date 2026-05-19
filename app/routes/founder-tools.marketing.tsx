@@ -1,18 +1,23 @@
 import type { Route } from "./+types/founder-tools.marketing";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
-import type { KeyboardEvent, ReactNode } from "react";
+import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  BookOpen,
+  Brain,
   CheckCircle2,
   ChevronDown,
+  CircleHelp,
   ExternalLink,
   FileText,
   Flame,
   Loader2,
+  MoreHorizontal,
   PenLine,
+  Plus,
   Rocket,
   Save,
   Search,
@@ -23,6 +28,8 @@ import {
   Trash2,
   Undo2,
   UserRound,
+  UsersRound,
+  Wrench,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -60,6 +67,7 @@ import type {
   VibeMarketingRunSummary,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
+  VibeMarketingTopicPillar,
   VibeMarketingWebsiteBaseline,
   VibeMarketingWebsiteBaselineMetric,
   VibeMarketingWrittenTopic,
@@ -203,6 +211,7 @@ function emptyBootstrapFromProfile(profile: VibeRaisingProfile | null): VibeMark
     latestRuns: [],
     latestRunsByWorkflow: {},
     topicCandidates: [],
+    topicPillars: [],
     hiddenTopicCandidates: [],
     declinedTopicFeedback: [],
     draftArticles: [],
@@ -436,9 +445,13 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const candidatePool = [
+        ...bootstrap.topicCandidates,
+        ...bootstrap.topicPillars.flatMap((pillar) => pillar.topicCandidates),
+      ];
       const selectedCandidate =
         topicCandidateId && topicCandidateId !== "__custom__"
-          ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
+          ? candidatePool.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
 
       if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
@@ -2473,6 +2486,191 @@ function TopicDeclineRequest({
   return null;
 }
 
+const PILLAR_THEMES = {
+  green: {
+    iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
+    button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
+    arrow: "text-emerald-500",
+  },
+  purple: {
+    iconWrap: "bg-violet-700 text-white shadow-violet-100",
+    button: "border-violet-200 text-violet-700 hover:bg-violet-50",
+    arrow: "text-violet-600",
+  },
+  blue: {
+    iconWrap: "bg-blue-600 text-white shadow-blue-100",
+    button: "border-blue-200 text-blue-600 hover:bg-blue-50",
+    arrow: "text-blue-500",
+  },
+  orange: {
+    iconWrap: "bg-orange-500 text-white shadow-orange-100",
+    button: "border-orange-200 text-orange-600 hover:bg-orange-50",
+    arrow: "text-orange-500",
+  },
+} as const;
+
+function pillarTheme(colorKey: string | null | undefined) {
+  if (colorKey === "green" || colorKey === "purple" || colorKey === "blue" || colorKey === "orange") {
+    return PILLAR_THEMES[colorKey];
+  }
+  return PILLAR_THEMES.purple;
+}
+
+function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
+  const Icon =
+    iconKey === "brain"
+      ? Brain
+      : iconKey === "community"
+        ? UsersRound
+        : iconKey === "rocket"
+          ? Rocket
+          : iconKey === "tools"
+            ? Wrench
+            : Sparkles;
+  return <Icon className={className} />;
+}
+
+function TopicPillarsSection({
+  pillars,
+  submitting,
+  discoverySubmitting,
+  activePillarSlug,
+  customNotice,
+  helpOpen,
+  helpRef,
+  onViewIdeas,
+  onAddCustomPillar,
+  onLearnMore,
+}: {
+  pillars: VibeMarketingTopicPillar[];
+  submitting: boolean;
+  discoverySubmitting: boolean;
+  activePillarSlug: string | null;
+  customNotice: boolean;
+  helpOpen: boolean;
+  helpRef: RefObject<HTMLDivElement | null>;
+  onViewIdeas: (pillar: VibeMarketingTopicPillar) => void;
+  onAddCustomPillar: () => void;
+  onLearnMore: () => void;
+}) {
+  const visiblePillars = pillars.slice(0, 4);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-black tracking-normal text-slate-950">
+              Your topic pillars <span className="text-slate-500">(content islands)</span>
+            </h2>
+            <CircleHelp className="h-5 w-5 text-slate-400" />
+          </div>
+          <p className="mt-2 text-sm font-bold leading-6 text-slate-500">
+            These are broad topics (pillars) based on your business and seed keywords.
+            <br />
+            Click a pillar to see topic ideas that live under it.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Form method="POST">
+            <button
+              type="submit"
+              name="intent"
+              value="start-discovery"
+              disabled={submitting}
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {discoverySubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+              Suggest more pillars
+            </button>
+          </Form>
+          <button
+            type="button"
+            onClick={onLearnMore}
+            aria-expanded={helpOpen}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 text-sm font-black text-violet-700 transition hover:bg-violet-50"
+          >
+            <BookOpen className="h-4 w-4" />
+            Learn more
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {visiblePillars.map((pillar) => {
+          const theme = pillarTheme(pillar.colorKey);
+          const active = pillar.slug === activePillarSlug;
+          return (
+            <article
+              key={pillar.id || pillar.slug}
+              className={clsx(
+                "relative flex min-h-[280px] flex-col items-center rounded-xl border bg-white px-3 py-5 text-center shadow-sm transition",
+                active ? "border-violet-300 ring-4 ring-violet-50" : "border-slate-200 hover:border-violet-200",
+              )}
+            >
+              <MoreHorizontal className="absolute right-4 top-4 h-4 w-4 text-slate-400" />
+              <div className={clsx("flex h-12 w-12 items-center justify-center rounded-full shadow-lg", theme.iconWrap)}>
+                <PillarIcon iconKey={pillar.iconKey} className="h-6 w-6" />
+              </div>
+              <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
+                {pillar.name}
+              </h3>
+              <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
+              <p className="mt-5 min-h-[54px] text-balance text-xs font-bold leading-5 text-slate-500">
+                {pillar.description}
+              </p>
+              <button
+                type="button"
+                onClick={() => onViewIdeas(pillar)}
+                className={clsx(
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition",
+                  theme.button,
+                )}
+              >
+                View ideas
+                <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+              </button>
+            </article>
+          );
+        })}
+
+        <button
+          type="button"
+          onClick={onAddCustomPillar}
+          className="flex min-h-[280px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white px-4 py-5 text-center transition hover:border-violet-300 hover:bg-violet-50/30"
+        >
+          <span className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-violet-300 text-violet-600">
+            <Plus className="h-6 w-6" />
+          </span>
+          <span className="mt-5 text-sm font-black text-slate-700">Add custom pillar</span>
+          <span className="mt-4 text-sm font-bold leading-6 text-slate-500">
+            Add a topic area that matters to your business
+          </span>
+        </button>
+      </div>
+
+      <div
+        ref={helpRef}
+        tabIndex={-1}
+        className={clsx(
+          "mt-5 rounded-lg bg-violet-50 px-4 py-3 text-sm font-black text-violet-700 outline-none transition focus:ring-4 focus:ring-violet-100",
+          helpOpen ? "ring-1 ring-violet-100" : "",
+        )}
+      >
+        <div className="flex items-center gap-3">
+          <Sparkles className="h-5 w-5 shrink-0 text-violet-500" />
+          <p>Pillars help organize content into broad themes. Each pillar contains many specific article ideas.</p>
+        </div>
+        {customNotice ? (
+          <p className="mt-3 pl-8 text-sm font-bold text-violet-600">
+            Custom pillar creation is not available yet. Use the Custom topic tab above for one-off article ideas.
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+
 function ReturningTopicPickerPage({
   bootstrap,
   error,
@@ -2485,6 +2683,8 @@ function ReturningTopicPickerPage({
   const navigation = useNavigation();
   const location = useLocation();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const topicListRef = useRef<HTMLDivElement | null>(null);
+  const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
     () => bootstrap.topicCandidates.filter((topic) => !topic.alreadyWritten).slice(0, 8),
     [bootstrap.topicCandidates],
@@ -2493,20 +2693,31 @@ function ReturningTopicPickerPage({
   const [declinedFeedback, setDeclinedFeedback] = useState<VibeMarketingTopicFeedback[]>(bootstrap.declinedTopicFeedback ?? []);
   const [visibleCount, setVisibleCount] = useState(5);
   const [toast, setToast] = useState<TopicToast | null>(null);
+  const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
+  const [customPillarNotice, setCustomPillarNotice] = useState(false);
+  const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
   const articleFormRef = useRef<HTMLFormElement>(null);
+  const activePillar = useMemo(
+    () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
+    [activePillarSlug, bootstrap.topicPillars],
+  );
+  const topicSource = useMemo(
+    () => (activePillar ? activePillar.topicCandidates.filter((topic) => !topic.alreadyWritten) : baseTopics),
+    [activePillar, baseTopics],
+  );
   const declinedTopicKeys = useMemo(
     () => new Set(declinedFeedback.filter((item) => item.active).map((item) => topicMemoryKey(item.keyword))),
     [declinedFeedback],
   );
   const topics = useMemo(
     () =>
-      baseTopics.filter(
+      topicSource.filter(
         (topic) =>
           !pendingDeclines[topic.id] &&
           !declinedTopicKeys.has(topicMemoryKey(topic.keyword)),
       ),
-    [baseTopics, declinedTopicKeys, pendingDeclines],
+    [declinedTopicKeys, pendingDeclines, topicSource],
   );
   const [activeTab, setActiveTab] = useState<"choose" | "custom">(topics.length ? "choose" : "custom");
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
@@ -2533,7 +2744,7 @@ function ReturningTopicPickerPage({
   const pendingActions = useMarketingActionPending({
     navigationState: navigation.state,
     navigationFormData: navigation.formData,
-    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}:${draftArticlesSignature}`,
+    clearSignal: `${location.pathname}${location.search}:${latestArticleRunId}:${latestDiscoveryRunId}:${bootstrap.topicCandidates.length}:${bootstrap.topicPillars.length}:${draftArticlesSignature}`,
     errorKey: error ? errorIntent : null,
   });
   const isSubmitting = pendingActions.isAnyPending;
@@ -2597,6 +2808,31 @@ function ReturningTopicPickerPage({
     submitRestoreFeedback(feedback.id);
   }
 
+  function handleViewPillarIdeas(pillar: VibeMarketingTopicPillar) {
+    setActivePillarSlug(pillar.slug);
+    setActiveTab("choose");
+    setVisibleCount(Math.max(5, Math.min(pillar.topicCandidates.length || 5, 8)));
+    window.setTimeout(() => {
+      topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      topicListRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  function handleAddCustomPillar() {
+    setCustomPillarNotice(true);
+    window.setTimeout(() => {
+      pillarHelpRef.current?.focus({ preventScroll: false });
+    }, 0);
+  }
+
+  function handleLearnMorePillars() {
+    setPillarHelpOpen((open) => !open);
+    window.setTimeout(() => {
+      pillarHelpRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      pillarHelpRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
   useEffect(() => {
     try {
       setSkipDeleteConfirmation(window.localStorage.getItem(DRAFT_DELETE_CONFIRMATION_STORAGE_KEY) === "1");
@@ -2622,6 +2858,13 @@ function ReturningTopicPickerPage({
     const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
   }, [bootstrap.draftArticles, draftDeleteRequest]);
+
+  useEffect(() => {
+    if (!activePillarSlug) return;
+    if (!bootstrap.topicPillars.some((pillar) => pillar.slug === activePillarSlug)) {
+      setActivePillarSlug(null);
+    }
+  }, [activePillarSlug, bootstrap.topicPillars]);
 
   useEffect(() => {
     if (!topics.length) {
@@ -2694,18 +2937,19 @@ function ReturningTopicPickerPage({
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
-        <Form ref={articleFormRef} method="POST" className="space-y-5">
-          <input type="hidden" name="intent" value="start-article" />
-          <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-          <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
-          <input type="hidden" name="deliveryModeExplicit" value="false" />
-          <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
-          {activeTab === "choose" ? (
-            <>
-              <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />
-              <input type="hidden" name="customTitle" value={selectedTopic?.title ?? ""} />
-            </>
-          ) : null}
+        <div className="space-y-5">
+          <Form ref={articleFormRef} method="POST" className="space-y-5">
+            <input type="hidden" name="intent" value="start-article" />
+            <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
+            <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
+            <input type="hidden" name="deliveryModeExplicit" value="false" />
+            <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
+            {activeTab === "choose" ? (
+              <>
+                <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />
+                <input type="hidden" name="customTitle" value={selectedTopic?.title ?? ""} />
+              </>
+            ) : null}
 
           <div>
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Create new article</p>
@@ -2753,13 +2997,31 @@ function ReturningTopicPickerPage({
             </div>
           </div>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section ref={topicListRef} tabIndex={-1} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm outline-none">
             {activeTab === "choose" ? (
               <>
-                <h2 className="text-xl font-black tracking-normal text-slate-950">Popular topics for startups like yours</h2>
-                <p className="mt-2 text-sm font-semibold text-slate-500">
-                  These topics are stored from your research history and filtered against written, in-progress, and cooldown topics.
-                </p>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 className="text-xl font-black tracking-normal text-slate-950">Popular topics for startups like yours</h2>
+                    <p className="mt-2 text-sm font-semibold text-slate-500">
+                      {activePillar
+                        ? `Showing topic ideas under ${activePillar.name}.`
+                        : "These topics are stored from your research history and filtered against written, in-progress, and cooldown topics."}
+                    </p>
+                  </div>
+                  {activePillar ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActivePillarSlug(null);
+                        setVisibleCount(5);
+                      }}
+                      className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-black text-slate-600 shadow-sm transition hover:bg-slate-50"
+                    >
+                      Show all topics
+                    </button>
+                  ) : null}
+                </div>
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
                     visibleTopics.map((topic) => (
@@ -2888,7 +3150,21 @@ function ReturningTopicPickerPage({
             )}
           </section>
 
-        </Form>
+          </Form>
+
+          <TopicPillarsSection
+            pillars={bootstrap.topicPillars}
+            submitting={isSubmitting}
+            discoverySubmitting={discoverySubmitting}
+            activePillarSlug={activePillarSlug}
+            customNotice={customPillarNotice}
+            helpOpen={pillarHelpOpen}
+            helpRef={pillarHelpRef}
+            onViewIdeas={handleViewPillarIdeas}
+            onAddCustomPillar={handleAddCustomPillar}
+            onLearnMore={handleLearnMorePillars}
+          />
+        </div>
 
         <aside className="space-y-5">
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
