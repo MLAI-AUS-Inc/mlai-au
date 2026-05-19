@@ -49,6 +49,18 @@ const SCAN_RUNNING_STATUSES = new Set(["queued", "running", "pending", "starting
 const SCAN_POLLING_STATUSES = SCAN_RUNNING_STATUSES;
 const SCAN_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied"]);
 const SCAN_ACTION_NEEDED_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
+const SCAN_TERMINAL_REVALIDATE_STATUSES = new Set([
+  "completed",
+  "awaiting_confirmation",
+  "awaiting_approval",
+  "approval_required",
+  "failed",
+  "blocked",
+  "blocked_verification",
+  "denied",
+  "cancelled",
+  "canceled",
+]);
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
@@ -165,9 +177,27 @@ function scanPurposeForRun(run: VibeMarketingRunSummary | null | undefined) {
   ).trim();
 }
 
+function hasConcreteArticleSurfaceHint(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  const hint = resultObject(value);
+  return [
+    "route",
+    "route_path",
+    "routePath",
+    "path",
+    "public_url",
+    "publicUrl",
+    "listing_url",
+    "listingUrl",
+    "article_surface_url",
+    "articleSurfaceUrl",
+    "url",
+  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
+}
+
 function scanHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
   if (!run) return false;
-  return Boolean(resultValue(run, "article_surface_hint") || run.result?.["articleSurfaceHint"]);
+  return hasConcreteArticleSurfaceHint(resultValue(run, "article_surface_hint")) || hasConcreteArticleSurfaceHint(run.result?.["articleSurfaceHint"]);
 }
 
 function isInventoryScan(run: VibeMarketingRunSummary | null | undefined) {
@@ -448,6 +478,7 @@ export default function ArticleSystemConnectionPanel({
   const [createNewPath, setCreateNewPath] = useState(articleSurfaceDefault || "/articles");
   const lastScanProgressSignatureRef = useRef("");
   const lastScanProgressAtRef = useRef(Date.now());
+  const lastTerminalRevalidationRef = useRef("");
   const [pageVisible, setPageVisible] = useState(true);
   const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
     typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
@@ -534,8 +565,7 @@ export default function ArticleSystemConnectionPanel({
     if (!pageVisible) return;
     const shouldPollScan =
       !effectiveScanRun ||
-      (!setupTargetScan &&
-        SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
+      (SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
         !SCAN_ACTION_NEEDED_STATUSES.has(effectiveScanRun.status) &&
         !scanStale);
     if (!shouldPollScan) return;
@@ -569,6 +599,16 @@ export default function ArticleSystemConnectionPanel({
     runStatusFetcher.state,
     scanStale,
   ]);
+
+  useEffect(() => {
+    if (!effectiveScanRun?.runId) return;
+    const terminalStatus = scanStale ? "stale" : effectiveScanRun.status;
+    if (!scanStale && !SCAN_TERMINAL_REVALIDATE_STATUSES.has(effectiveScanRun.status)) return;
+    const key = [effectiveScanRun.runId, terminalStatus, effectiveScanRun.updatedAt ?? ""].join("|");
+    if (lastTerminalRevalidationRef.current === key) return;
+    lastTerminalRevalidationRef.current = key;
+    revalidator.revalidate();
+  }, [effectiveScanRun?.runId, effectiveScanRun?.status, effectiveScanRun?.updatedAt, revalidator, scanStale]);
 
   useEffect(() => {
     if (!autoStartInventoryScan || !connected || !selectedRepo || currentScanRunId || inventoryFetcher.state !== "idle") return;
