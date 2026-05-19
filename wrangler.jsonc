@@ -30,9 +30,6 @@
   "observability": {
     "enabled": true
   },
-  "limits": {
-    "cpu_ms": 30000
-  },
   /**
    * Smart Placement
    * Docs: https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
