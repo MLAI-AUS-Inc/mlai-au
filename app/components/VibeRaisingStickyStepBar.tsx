@@ -79,12 +79,13 @@ export default function VibeRaisingStickyStepBar({
                             : "flex flex-col gap-3 sm:flex-shrink-0 sm:flex-row sm:items-center sm:justify-end",
                     ].join(" ")}
                 >
-                    {onBack && !hideBackOnMobile ? (
+                    {onBack ? (
                         <button
                             type="button"
                             onClick={onBack}
                             className={[
-                                "inline-flex items-center justify-center rounded-xl px-4 py-3 text-sm font-extrabold text-slate-500 transition hover:bg-gray-50 hover:text-gray-950",
+                                hideBackOnMobile ? "hidden sm:inline-flex" : "inline-flex",
+                                "items-center justify-center rounded-xl px-4 py-3 text-sm font-extrabold text-slate-500 transition hover:bg-gray-50 hover:text-gray-950",
                                 compactOnMobile ? "w-full sm:w-auto" : "w-full sm:w-auto",
                             ].join(" ")}
                         >

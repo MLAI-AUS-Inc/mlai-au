@@ -1,6 +1,7 @@
 import { clsx } from "clsx";
 
 export type MonthlyUpdateStepKey = "connect" | "draft" | "review" | "publish";
+type MobileStepChipKey = MonthlyUpdateStepKey;
 
 interface MonthlyUpdateStepperProps {
   activeStep: MonthlyUpdateStepKey;
@@ -58,6 +59,47 @@ export default function MonthlyUpdateStepper({
   const enabledStepSet = new Set(enabledSteps ?? MONTHLY_UPDATE_STEPS.map((step) => step.key));
   const canSelectStep = (step: MonthlyUpdateStepKey) => Boolean(onStepClick) && enabledStepSet.has(step);
   const isLockedStep = (step: MonthlyUpdateStepKey, index: number) => !canSelectStep(step) && index > activeIndex;
+  const mobileStepChips: Array<{
+    key: MobileStepChipKey;
+    title: string;
+    isActive: boolean;
+    isComplete: boolean;
+    canSelect: boolean;
+    isLocked: boolean;
+  }> = (() => {
+    const activeChip = MONTHLY_UPDATE_STEPS[activeIndex] ?? MONTHLY_UPDATE_STEPS[0];
+    const hasLockedFutureSteps = MONTHLY_UPDATE_STEPS.some((step, index) => isLockedStep(step.key, index));
+
+    if (!hasLockedFutureSteps) {
+      return MONTHLY_UPDATE_STEPS.map((step, index) => ({
+        key: step.key,
+        title: step.title,
+        isActive: index === activeIndex,
+        isComplete: index < activeIndex,
+        canSelect: canSelectStep(step.key),
+        isLocked: isLockedStep(step.key, index),
+      }));
+    }
+
+    return [
+      {
+        key: activeChip.key,
+        title: activeChip.title,
+        isActive: true,
+        isComplete: false,
+        canSelect: canSelectStep(activeChip.key),
+        isLocked: false,
+      },
+      {
+        key: "publish",
+        title: "Publish",
+        isActive: false,
+        isComplete: false,
+        canSelect: false,
+        isLocked: true,
+      },
+    ];
+  })();
 
   if (compact) {
     return (
@@ -77,18 +119,20 @@ export default function MonthlyUpdateStepper({
           </span>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {MONTHLY_UPDATE_STEPS.map((step, index) => {
-            const isActive = index === activeIndex;
-            const isComplete = index < activeIndex;
-            const canSelect = canSelectStep(step.key);
-            const isLocked = isLockedStep(step.key, index);
+          {mobileStepChips.map((step) => {
+            const isActive = step.isActive;
+            const isComplete = step.isComplete;
+            const canSelect = step.canSelect;
+            const isLocked = step.isLocked;
             return (
               <button
                 key={step.key}
                 type="button"
                 data-stepper-step={step.key}
                 disabled={!canSelect}
-                onClick={() => onStepClick?.(step.key)}
+                onClick={() => {
+                  if (step.canSelect) onStepClick?.(step.key);
+                }}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset",
                   stepperBodyClassName,
@@ -134,18 +178,20 @@ export default function MonthlyUpdateStepper({
         <div>
           <div className="pt-4">
             <div className="flex flex-wrap gap-2 sm:hidden">
-              {MONTHLY_UPDATE_STEPS.map((step, index) => {
-                const isActive = index === activeIndex;
-                const isComplete = index < activeIndex;
-                const canSelect = canSelectStep(step.key);
-                const isLocked = isLockedStep(step.key, index);
+              {mobileStepChips.map((step) => {
+                const isActive = step.isActive;
+                const isComplete = step.isComplete;
+                const canSelect = step.canSelect;
+                const isLocked = step.isLocked;
                 return (
                   <button
                     key={step.key}
                     type="button"
                     data-stepper-step={step.key}
                     disabled={!canSelect}
-                    onClick={() => onStepClick?.(step.key)}
+                    onClick={() => {
+                      if (step.canSelect) onStepClick?.(step.key);
+                    }}
                     className={clsx(
                       "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset",
                       stepperBodyClassName,
@@ -246,18 +292,20 @@ export default function MonthlyUpdateStepper({
           </span>
         </div>
         <div className="mt-4 flex flex-wrap gap-2">
-          {MONTHLY_UPDATE_STEPS.map((step, index) => {
-            const isActive = index === activeIndex;
-            const isComplete = index < activeIndex;
-            const canSelect = canSelectStep(step.key);
-            const isLocked = isLockedStep(step.key, index);
+          {mobileStepChips.map((step) => {
+            const isActive = step.isActive;
+            const isComplete = step.isComplete;
+            const canSelect = step.canSelect;
+            const isLocked = step.isLocked;
             return (
               <button
                 key={step.key}
                 type="button"
                 data-stepper-step={step.key}
                 disabled={!canSelect}
-                onClick={() => onStepClick?.(step.key)}
+                onClick={() => {
+                  if (step.canSelect) onStepClick?.(step.key);
+                }}
                 className={clsx(
                   "whitespace-nowrap rounded-full px-3 py-1 text-xs font-bold ring-1 ring-inset transition",
                   stepperBodyClassName,
