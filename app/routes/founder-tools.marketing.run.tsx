@@ -975,13 +975,34 @@ function ArticleSystemSetupPreviewUnavailable({
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
   const terminalFailure = isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status);
   const previewActive = !terminalFailure && hasActiveLivePreview(preview);
-  const rawError = String(preview?.error || run.errors?.[0] || "").trim();
+  const setup = articleSystemSetupPayload(run);
+  const currentErrorCode = String(
+    run.errorCode ||
+      stringResultValue(run, "error_code", "errorCode") ||
+      setup.error_code ||
+      setup.errorCode ||
+      "",
+  ).trim();
+  const previewErrorCode = String(preview?.errorCode || "").trim();
+  const currentRunError = String(
+    run.errors?.[0] ||
+      stringResultValue(run, "error", "message") ||
+      setup.error ||
+      setup.message ||
+      "",
+  ).trim();
+  const previewError = String(preview?.error || "").trim();
+  const rawError = terminalFailure ? currentRunError || previewError : previewError || currentRunError;
   const isGithubAppWriteAccessError =
-    /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError);
+    currentErrorCode === "GITHUB_APP_WRITE_ACCESS_REQUIRED" ||
+    (!currentErrorCode && /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError));
+  const isNextAppRootLayoutMissing = currentErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING" || previewErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING";
   const error = previewActive
     ? ""
     : isGithubAppWriteAccessError
       ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
+      : isNextAppRootLayoutMissing
+        ? "Content Factory found a Next.js App Router project but could not confirm a root app/layout.* file from the latest repository context. Re-run the repository scan, then retry setup."
       : rawError || (terminalFailure ? "The articles setup build did not advance." : "");
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
   const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
