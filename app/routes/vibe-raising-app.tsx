@@ -112,7 +112,6 @@ export default function VibeRaisingApp() {
         <VibeRaisingIntroPopup
           onDismiss={() => setShowAnnouncement(false)}
           onComplete={onCompleteCallback}
-          onSkip={onCompleteCallback}
         />
       ) : null}
 

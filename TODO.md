@@ -408,3 +408,17 @@
 - [x] Hide the extra Before you connect trust box on the Connect Data page
 - [x] Hide the Back to month selection button on the draft update step
 - [x] Make the update progress steps always visible and remove the thin progress bars
+- [x] Re-enable local backend Customer.io magic-link delivery for localhost Founder Tools login
+- [x] Clear broken local proxy env vars for backend Customer.io delivery and prevent provider failures from crashing login
+- [x] Troubleshoot Vibe Raising publishing so saved monthly update input appears on the Updates page
+- [x] Make the Vibe Raising review publish step submit the saved draft directly instead of only opening the confirmation modal
+- [x] Disable the local Vibe Raising dev-auth fallback so localhost uses the real backend session and no fake update data
+- [x] Replace the create-update month bar with a mobile-only dropdown while keeping desktop tabs
+- [x] Extend the Founder Tools app shell background to full viewport height so no white floor appears
+- [x] Split the mobile create-update date picker into separate month and year dropdowns
+- [x] Add a publish fallback that resolves and publishes the latest real backend draft when the UI carries a local stub id
+- [x] Let the selected month summary on the draft update page reopen month selection
+- [x] Fix the draft template so manual metric cards remain clickable after month selection
+- [x] Consolidate Vibe Raising publish handling so publish errors stay on-page instead of crashing
+- [x] Restore the publish confirmation popup before sending the reviewed update
+- [x] Disable publish-send in the popup and make local save the primary action

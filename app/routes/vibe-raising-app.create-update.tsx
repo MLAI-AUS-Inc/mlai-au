@@ -1,4 +1,4 @@
-import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
+import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
@@ -6,6 +6,7 @@ import {
     cancelVibeRaisingStartupUpdate,
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
+    getVibeRaisingDrafts,
     getVibeRaisingMonthlyUpdates,
     getVibeRaisingMonthlyUpdateById,
     getVibeRaisingStartupUpdateActiveRun,
@@ -88,6 +89,7 @@ const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
+const PUBLISH_REVIEW_FORM_ID = "vibe-raising-publish-review-form";
 
 type CreateUpdateMobileTourStep = {
     key: string;
@@ -329,6 +331,25 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 }
 
+function extractVibeRaisingActionError(error: unknown, fallback: string) {
+    const responseData = (error as any)?.response?.data;
+    if (typeof responseData?.detail === "string" && responseData.detail.trim()) {
+        return responseData.detail.trim();
+    }
+
+    if (responseData && typeof responseData === "object") {
+        const firstValue = Object.values(responseData)[0];
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+            return String(firstValue[0]);
+        }
+        if (typeof firstValue === "string" && firstValue.trim()) {
+            return firstValue.trim();
+        }
+    }
+
+    return fallback;
+}
+
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const { appUser } = await requireVibeRaisingFounder(env, request);
@@ -336,6 +357,60 @@ export async function action({ request, context }: Route.ActionArgs) {
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
     const savePayload = buildMonthlyUpdateSavePayload(formData);
+
+    if (intent === "publish") {
+        const draftId = String(formData.get("draftId") || "").trim();
+        try {
+            if (/^\d+$/.test(draftId)) {
+                await publishVibeRaisingMonthlyUpdate(env, request, draftId);
+                return redirect("/founder-tools/updates");
+            }
+
+            const drafts = await getVibeRaisingDrafts(env, request);
+            const formMonth = savePayload.month;
+            const formYear = savePayload.year;
+            const matchingDraft = drafts.find((draft) => (
+                (!formMonth || draft.monthName === formMonth || draft.month === `${formMonth} ${formYear}`) &&
+                (!Number.isFinite(formYear) || !formYear || draft.year === formYear) &&
+                draft.status === "ready" &&
+                draft.visibility !== "published" &&
+                /^\d+$/.test(draft.id)
+            ));
+            const fallbackDraft = matchingDraft ?? drafts.find((draft) => (
+                draft.status === "ready" &&
+                draft.visibility !== "published" &&
+                /^\d+$/.test(draft.id)
+            ));
+
+            if (fallbackDraft) {
+                await publishVibeRaisingMonthlyUpdate(env, request, fallbackDraft.id);
+                return redirect("/founder-tools/updates");
+            }
+
+            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
+                ...savePayload,
+                saveMode: "ready",
+            });
+            if (savedUpdate?.id) {
+                await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
+                return redirect("/founder-tools/updates");
+            }
+        } catch (error) {
+            console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
+            return {
+                step: "publish-error",
+                data: updates,
+                error: extractVibeRaisingActionError(error, "We could not publish this update yet. Please check the draft content and try again."),
+            };
+        }
+
+        return {
+            step: "publish-error",
+            data: updates,
+            error: "We could not find a saved draft to publish. Review the draft once, then publish again.",
+        };
+    }
+
     const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
     const activeCompany =
         appUser.companies.find((company) => company.id === appUser.activeCompanyId) ??
@@ -369,7 +444,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "review") {
-        await saveVibeRaisingMonthlyUpdate(env, request, {
+        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
             ...savePayload,
             saveMode: "ready",
         });
@@ -377,7 +452,11 @@ export async function action({ request, context }: Route.ActionArgs) {
         // Mock AI analysis
         return {
             step: "feedback",
-            data: updates,
+            data: {
+                ...updates,
+                draftId: savedUpdate?.id ?? updates.draftId,
+            },
+            update: savedUpdate,
             feedback: {
                 grade: "A+",
                 strengths: [
@@ -404,18 +483,6 @@ export async function action({ request, context }: Route.ActionArgs) {
             step: "draft-saved",
             update,
         };
-    }
-
-    if (intent === "publish") {
-        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-            ...savePayload,
-            saveMode: "ready",
-        });
-        if (savedUpdate?.id) {
-            await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
-        }
-
-        return redirect("/founder-tools/updates");
     }
 
     return null;
@@ -550,6 +617,14 @@ function MonthYearTabs({
         : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
     const useCompactCreateTimeline = Boolean(monthChoices?.length);
     const showYearInMonthLabel = new Set(visibleMonthChoices.map((option) => option.year)).size > 1;
+    const mobileMonthOptions = monthChoices?.length
+        ? visibleMonthChoices.filter((option, index, options) => (
+            options.findIndex((candidate) => candidate.month === option.month) === index
+        ))
+        : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
+    const mobileYearOptions = monthChoices?.length
+        ? Array.from(new Set(visibleMonthChoices.map((option) => option.year))).sort((a, b) => b - a)
+        : yearOptions;
 
     useEffect(() => {
         if (!isYearMenuOpen) return;
@@ -578,8 +653,86 @@ function MonthYearTabs({
 
     return (
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
-            <div className="min-w-0 flex-1">
-                {submitDateFields && <input type="hidden" name="month" value={month} />}
+            {submitDateFields && (
+                <>
+                    <input type="hidden" name="month" value={month} />
+                    <input type="hidden" name="year" value={year} />
+                </>
+            )}
+
+            <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2 sm:hidden">
+                <div>
+                    <label className="sr-only" htmlFor="vibe-raising-mobile-month-select">
+                        Select update month
+                    </label>
+                    <select
+                        id="vibe-raising-mobile-month-select"
+                        value={month}
+                        disabled={!isDateEditable}
+                        onChange={(event) => {
+                            if (!isDateEditable) return;
+                            const nextMonth = event.target.value;
+                            const matchingChoice =
+                                visibleMonthChoices.find((option) => option.month === nextMonth && option.year === year) ??
+                                visibleMonthChoices.find((option) => option.month === nextMonth);
+                            onMonthChange(nextMonth);
+                            if (matchingChoice) {
+                                onYearChange(matchingChoice.year);
+                            }
+                            onPeriodChange?.("current");
+                            setIsYearMenuOpen(false);
+                        }}
+                        className={clsx(
+                            "h-12 w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 text-sm font-black text-gray-950 shadow-sm outline-none ring-1 ring-white/60 transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]",
+                            isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
+                        )}
+                    >
+                        {mobileMonthOptions.map((option) => (
+                            <option key={option.month} value={option.month}>
+                                {option.month}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="sr-only" htmlFor="vibe-raising-mobile-year-select">
+                        Select update year
+                    </label>
+                    <select
+                        id="vibe-raising-mobile-year-select"
+                        value={year}
+                        disabled={!isDateEditable}
+                        onChange={(event) => {
+                            if (!isDateEditable) return;
+                            const nextYear = Number(event.target.value);
+                            if (!Number.isFinite(nextYear)) return;
+                            const matchingChoice = visibleMonthChoices.find(
+                                (option) => option.year === nextYear && option.month === month,
+                            );
+                            const fallbackChoice = visibleMonthChoices.find((option) => option.year === nextYear);
+                            onYearChange(nextYear);
+                            if (!matchingChoice && fallbackChoice) {
+                                onMonthChange(fallbackChoice.month);
+                            }
+                            onPeriodChange?.("current");
+                            setIsYearMenuOpen(false);
+                        }}
+                        className={clsx(
+                            "h-12 w-full rounded-2xl border border-gray-950 bg-gray-950 px-3 text-center text-sm font-black tracking-[0.08em] text-white shadow-lg shadow-black/15 outline-none ring-1 ring-white/10 transition focus:ring-4 focus:ring-[rgba(11,11,11,0.16)]",
+                            isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
+                        )}
+                    >
+                        {mobileYearOptions.map((optionYear) => (
+                            <option key={optionYear} value={optionYear}>
+                                {optionYear}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <div className="hidden min-w-0 flex-1 sm:block">
                 <div className="overflow-hidden rounded-t-2xl rounded-b-lg border border-[var(--vr-color-border)] bg-white shadow-xl ring-1 ring-white/40">
                     <div
                         role="listbox"
@@ -626,10 +779,9 @@ function MonthYearTabs({
                 </div>
             </div>
 
-            <div ref={yearMenuRef} className="relative sm:min-w-[108px]">
+            <div ref={yearMenuRef} className="relative hidden sm:block sm:min-w-[108px]">
                 {useCompactCreateTimeline ? (
                     <div className="relative z-10 flex h-full items-center justify-center overflow-hidden rounded-t-2xl rounded-b-lg bg-gray-950 px-4 py-3 text-sm font-black tracking-[0.12em] text-white shadow-lg shadow-black/20 ring-1 ring-white/10">
-                        {submitDateFields && <input type="hidden" name="year" value={year} />}
                         <span>{year}</span>
                     </div>
                 ) : (
@@ -640,7 +792,6 @@ function MonthYearTabs({
                                 isYearMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
                             )}
                         >
-                            {submitDateFields && <input type="hidden" name="year" value={year} />}
                             <button
                                 type="button"
                                 disabled={!isDateEditable}
@@ -2069,6 +2220,7 @@ export default function CreateUpdate() {
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const saveDraftFetcher = useFetcher<typeof action>();
+    const submit = useSubmit();
     const navigate = useNavigate();
     const location = useLocation();
     const navigation = useNavigation();
@@ -2087,7 +2239,7 @@ export default function CreateUpdate() {
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     }, [goToConnectDataStep]);
-    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
+    const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -2130,7 +2282,7 @@ export default function CreateUpdate() {
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
-        if (actionData?.step === "feedback") setDismissedFeedback(false);
+        if (actionData?.step === "feedback" || actionData?.step === "publish-error") setDismissedFeedback(false);
     }, [actionData]);
 
     useEffect(() => {
@@ -4107,9 +4259,11 @@ export default function CreateUpdate() {
     }, [saveDraftFetcher]);
 
     // 1. Feedback View — preview-dominant with rating sidebar
-    if (actionData?.step === "feedback" && !dismissedFeedback) {
+    if ((actionData?.step === "feedback" || actionData?.step === "publish-error") && !dismissedFeedback) {
         const { feedback, data } = actionData;
+        const publishError = actionData.step === "publish-error" ? String((actionData as any).error || "") : "";
         const reviewData = data as any;
+        const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
         const reviewSummary = String(reviewData?.summary || "").trim();
@@ -4202,14 +4356,79 @@ export default function CreateUpdate() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 return;
             }
+
+            if (step === "publish") {
+                setShowConfirmPopup(true);
+            }
+        };
+
+        const handlePublishReviewedUpdate = () => {
+            const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
+            if (publishForm instanceof HTMLFormElement && reviewDraftId) {
+                submit(publishForm, { method: "post" });
+                return;
+            }
+
+            setShowConfirmPopup(true);
         };
 
         return (
             <div className="mx-auto max-w-6xl space-y-10 pb-32">
+                <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
+                    <input type="hidden" name="intent" value="publish" />
+                    {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
+                    <input type="hidden" name="month" value={reviewMonth} />
+                    <input type="hidden" name="year" value={reviewYear} />
+                </Form>
+
+                {showConfirmPopup ? (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm">
+                        <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl">
+                            <MonthlyUpdateStepper
+                                activeStep="publish"
+                                disableMotion
+                                enabledSteps={["connect", "draft", "review", "publish"]}
+                                onStepClick={handleReviewStepperClick}
+                                expandOnHover
+                                frameless
+                                className="mb-6 text-left"
+                            />
+                            <h2 className="mb-2 text-2xl font-black tracking-tight text-gray-900">Ready to send?</h2>
+                            <p className="mb-6 text-sm leading-relaxed text-gray-600">
+                                Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
+                            </p>
+                            <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
+                                You do not need to send this yet. Save it locally first if you want to come back and keep refining the earlier steps.
+                            </p>
+                            <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    disabled
+                                    aria-disabled="true"
+                                    className="w-full cursor-not-allowed rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm"
+                                >
+                                    Publish and Send coming soon
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handlePersistDraft();
+                                        setShowConfirmPopup(false);
+                                    }}
+                                    disabled={saveDraftFetcher.state !== "idle"}
+                                    className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
+                                >
+                                    {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
                 <MonthlyUpdateStepper
-                    activeStep="review"
+                    activeStep={showConfirmPopup ? "publish" : "review"}
                     disableMotion
-                    enabledSteps={["connect", "draft", "review"]}
+                    enabledSteps={["connect", "draft", "review", "publish"]}
                     onStepClick={handleReviewStepperClick}
                     expandOnHover
                     frameless
@@ -4707,15 +4926,19 @@ export default function CreateUpdate() {
                     ) : null}
 
                     {/* Pre-Publish Confirmation Popup */}
-                    {showConfirmPopup && (
+                    {false && showConfirmPopup && (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
                                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
-                                    <div className="mb-6 text-left">
-                                        <p className="inline-flex rounded-full border border-gray-200 bg-gray-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-gray-500">
-                                            Coming soon
-                                        </p>
-                                    </div>
-                                    <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
+                                    <MonthlyUpdateStepper
+                                        activeStep="publish"
+                                        disableMotion
+                                        enabledSteps={["connect", "draft", "review", "publish"]}
+                                        onStepClick={handleReviewStepperClick}
+                                        expandOnHover
+                                        frameless
+                                        className="mb-6 text-left"
+                                    />
+                                    <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send?</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
                                         Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
                                     </p>
@@ -4728,6 +4951,7 @@ export default function CreateUpdate() {
                                         className="space-y-3"
                                     >
                                         <input type="hidden" name="intent" value="publish" />
+                                        {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
                                         <input type="hidden" name="summary" value={reviewSummary} />
                                         <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
                                         <input type="hidden" name="pitchDeckUrl" value={reviewPitchDeckUrl} />
@@ -4750,21 +4974,12 @@ export default function CreateUpdate() {
                                                 <input key={key} type="hidden" name={key} value={value as any} />
                                             ))}
                                         
-                                        <div className="group relative">
-                                            <button
-                                                type="submit"
-                                                disabled
-                                                aria-disabled="true"
-                                                className="w-full rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm transition-all cursor-not-allowed"
-                                            >
-                                                Yes, Publish and Send
-                                            </button>
-                                            <div className="pointer-events-none absolute inset-x-0 -top-11 flex justify-center opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-                                                <span className="rounded-lg bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-lg">
-                                                    Coming soon
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <button
+                                            type="submit"
+                                            className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-md transition-all hover:bg-[var(--vr-palette-black)] active:scale-95"
+                                        >
+                                            Yes, Publish and Send
+                                        </button>
                                         
                                         <button
                                             type="button"
@@ -4870,6 +5085,12 @@ export default function CreateUpdate() {
                     mobilePrimaryLabel="Publish"
                     onPrimary={() => setShowConfirmPopup(true)}
                 />
+
+                {publishError ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
+                        {publishError}
+                    </div>
+                ) : null}
             </div>
         );
     }
@@ -4910,22 +5131,29 @@ export default function CreateUpdate() {
             <section>
                 <div className="space-y-4">
                     {monthConfirmed ? (
-                        <div
-                            className="w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:px-6 sm:py-4"
+                        <button
+                            type="button"
+                            onClick={returnToMonthSelection}
+                            className="group w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] sm:px-6 sm:py-4"
                             aria-label={`Selected update month: ${selectedMonthLabel}`}
                         >
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
-                                <div className="min-w-0">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                                        Selected month
-                                    </p>
-                                    <p className="truncate text-base font-black text-gray-950">
-                                        {selectedMonthLabel}
-                                    </p>
+                            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                                            Selected month
+                                        </p>
+                                        <p className="truncate text-base font-black text-gray-950">
+                                            {selectedMonthLabel}
+                                        </p>
+                                    </div>
                                 </div>
+                                <span className="flex-shrink-0 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition group-hover:bg-[var(--vr-color-primary)] group-hover:text-white">
+                                    Edit
+                                </span>
                             </div>
-                        </div>
+                        </button>
                     ) : (
                         <div ref={monthSelectorRef} className="space-y-3">
                             <p className="px-1 text-sm font-black text-gray-950">Select month</p>
@@ -4971,33 +5199,36 @@ export default function CreateUpdate() {
                                         aria-label={emailDraftButtonAriaLabel}
                                     >
                                         <div>
-                                            <p
-                                                className={clsx(
-                                                    "text-xs font-black uppercase tracking-[0.16em]",
-                                                    isSelectedMonthInFuture || emailDraftActionBusy ? "text-slate-400" : "text-white/65",
-                                                )}
-                                            >
+                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
                                                 AI drafting
                                             </p>
-                                            <p className="mt-3 text-lg font-black leading-tight">
+                                            <p className="mt-3 text-lg font-black">
                                                 {selectedMonthGenerationVerb} update
                                             </p>
                                         </div>
-                                        <div className="mt-5 flex items-center justify-between gap-3 text-sm font-semibold">
+                                        <span className="mt-5 flex items-center justify-between text-sm font-black">
                                             <span>{selectedMonthLabel}</span>
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
-                                                <ArrowRightIcon className="h-4 w-4" />
+                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                                             )}
-                                        </div>
+                                        </span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
+                </div>
+            </section>
 
-                    {selectedDraftStage === "reporting" ? (
+            <section
+                className={clsx(
+                    "transition-opacity",
+                    !monthConfirmed && "hidden sm:block",
+                )}
+            >
+                {selectedDraftStage === "reporting" ? (
                         <>
                             {shouldShowEmailDraftProgress ? (
                                 <EmailDraftInProgressCard
@@ -5226,7 +5457,6 @@ export default function CreateUpdate() {
                         </>
                     ) : null}
 
-                </div>
             </section>
 
             <VibeRaisingStickyStepBar
