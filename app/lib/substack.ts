@@ -1,4 +1,5 @@
 import { parseFeed } from "@rowanmanning/feed-parser";
+import { getCachedValue } from "~/lib/server-cache";
 
 export interface SubstackPost {
   title: string;
@@ -7,6 +8,8 @@ export interface SubstackPost {
   contentSnippet: string;
   image?: string;
 }
+
+const SUBSTACK_POSTS_CACHE_TTL_MS = 30 * 60 * 1000;
 
 export function extractImageFromContent(content: string): string | undefined {
   // Try multiple approaches to extract images from Substack content
@@ -48,44 +51,49 @@ export function extractImageFromContent(content: string): string | undefined {
 export async function fetchSubstackPosts(
   count: number = 3,
 ): Promise<SubstackPost[]> {
-  try {
-    const content = await fetch("https://mlaiaus.substack.com/feed");
-    const feed = parseFeed(await content.text());
+  return getCachedValue(
+    `substack-posts:${count}`,
+    SUBSTACK_POSTS_CACHE_TTL_MS,
+    async () => {
+      const content = await fetch("https://mlaiaus.substack.com/feed");
+      if (!content.ok) {
+        throw new Error(`Substack feed request failed: ${content.status} ${content.statusText}`);
+      }
 
-    const posts: SubstackPost[] = feed.items
-      .slice(0, count)
-      .map((item) => {
-        // Try the full HTML content first, preferring content:encoded if provided
-        const html =
-          // (item["content:encoded"] as string | undefined) ||
-          item.content || "";
+      const feed = parseFeed(await content.text());
 
-        return {
-          title: item.title || "",
-          link: item.url || "",
-          pubDate: item.published
-            ? new Date(item.published).toLocaleString("en-AU", {
-                timeZone: "Australia/Melbourne",
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit",
-              })
-            : "",
-          contentSnippet: item.description || "",
-          // Try to extract image from enclosure or content
-          image: item.image?.url || extractImageFromContent(html),
-        };
-      })
-      .sort(
-        (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime(),
-      );
+      const posts: SubstackPost[] = feed.items
+        .slice(0, count)
+        .map((item) => {
+          // Try the full HTML content first, preferring content:encoded if provided
+          const html =
+            // (item["content:encoded"] as string | undefined) ||
+            item.content || "";
 
-    return posts;
-  } catch (error) {
-    console.error("Error fetching Substack feed:", error);
-    return [];
-  }
+          return {
+            title: item.title || "",
+            link: item.url || "",
+            pubDate: item.published
+              ? new Date(item.published).toLocaleString("en-AU", {
+                  timeZone: "Australia/Melbourne",
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })
+              : "",
+            contentSnippet: item.description || "",
+            // Try to extract image from enclosure or content
+            image: item.image?.url || extractImageFromContent(html),
+          };
+        })
+        .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime());
+
+      return posts;
+    },
+    [],
+    (error) => console.error("Error fetching Substack feed:", error),
+  );
 }

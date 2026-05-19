@@ -135,6 +135,10 @@ function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | 
   return LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus);
 }
 
+function isTerminalAttentionStatus(status: string | null | undefined) {
+  return RESUMABLE_ATTENTION_STATUSES.has(String(status ?? "").trim().toLowerCase());
+}
+
 function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
   if (!isArticleWorkflow(run.workflow) || !run.componentManifest || hasReadyArticlePreview(run)) {
     return false;
@@ -2827,9 +2831,10 @@ function workflowProgressForRunPage(
     const activeStepId = setupWorkflowStepIdForRun(run);
     const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
     const manualMergeRequired = setupStatus === "manual_merge_required";
-    const setupPreviewActive = hasActiveLivePreview(run.livePreview);
-    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || run.status === "blocked" || run.status === "failed");
-    const setupComplete = run.status === "completed" && !manualMergeRequired;
+    const setupTerminal = isTerminalAttentionStatus(run.status);
+    const setupPreviewActive = !setupTerminal && hasActiveLivePreview(run.livePreview);
+    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || setupTerminal);
+    const setupComplete = (run.status === "completed" || run.approvalState === "approved") && !manualMergeRequired;
     const reviewReady = activeStepId === "review" || setupComplete;
     return {
       ...progress,

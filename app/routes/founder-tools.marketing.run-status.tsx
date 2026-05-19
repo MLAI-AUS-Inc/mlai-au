@@ -18,9 +18,11 @@ function isDocumentNavigation(request: Request) {
 
 function shouldRefreshSetupLivePreview(run: VibeMarketingRunSummary) {
   if (run.workflow !== "article_system_setup") return false;
+  if (run.stale || run.retryAvailable) return false;
   if (TERMINAL_ATTENTION_STATUSES.has(String(run.status || "").trim().toLowerCase())) return false;
   if (run.livePreview?.previewUrl || run.livePreview?.error) return false;
   const status = String(run.livePreview?.status || run.status || "").trim().toLowerCase();
+  if (["blocked", "failed", "denied", "cancelled", "canceled"].includes(status)) return false;
   const platformStatus = String(run.livePreview?.platformStatus || "").trim().toLowerCase();
   return ["queued", "pending", "starting", "building", "running", "awaiting_approval", "approval_required"].includes(status) ||
     ["queued", "pending", "starting", "building", "running"].includes(platformStatus);
