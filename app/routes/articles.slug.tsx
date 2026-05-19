@@ -69,7 +69,6 @@ export async function loader({ params, context }: Route.LoaderArgs) {
     try {
         const env = getEnv(context) as unknown as Record<string, any>;
         upcomingEvents = await fetchEvents({
-            humanitixApiKey: env.PRIVATE_HUMANITIX_API_KEY,
             lumaApiKey: env.LUMA_API_KEY,
         });
     } catch (e) {

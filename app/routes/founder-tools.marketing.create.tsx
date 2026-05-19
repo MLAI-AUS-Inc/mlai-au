@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -39,6 +39,7 @@ import {
   saveVibeMarketingSettings,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
+  startVibeMarketingArticleSystemSetup,
   startVibeMarketingAutofill,
   startVibeMarketingBaseline,
   startVibeMarketingDiscovery,
@@ -247,17 +248,55 @@ function runResultValue(run: VibeMarketingRunSummary | null | undefined, key: st
   if (!run) return undefined;
   if (run.result?.[key] !== undefined) return run.result[key];
   const nested = resultObject(run.result?.result);
-  return nested[key];
+  if (nested[key] !== undefined) return nested[key];
+  const latestControl = resultObject(run.result?.latest_control_response);
+  return latestControl[key];
+}
+
+function hasMeaningfulPayload(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  if (Array.isArray(value)) return value.length > 0;
+  if (value && typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
+  return Boolean(value);
+}
+
+function hasConcreteArticleSurfaceHint(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  const hint = resultObject(value);
+  return [
+    "route",
+    "route_path",
+    "routePath",
+    "path",
+    "public_url",
+    "publicUrl",
+    "listing_url",
+    "listingUrl",
+    "article_surface_url",
+    "articleSurfaceUrl",
+    "url",
+  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
+}
+
+function scanRunHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
+  return Boolean(
+    run &&
+      (hasConcreteArticleSurfaceHint(runResultValue(run, "article_surface_hint")) ||
+        hasConcreteArticleSurfaceHint(runResultValue(run, "articleSurfaceHint"))),
+  );
 }
 
 function scanRunHasPendingArticleSystemSetup(run: VibeMarketingRunSummary | null | undefined) {
   if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
-  const purpose = String(runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? "").trim();
+  const request = resultObject(run.result?.run_request ?? run.result?.request);
+  const purpose = String(
+    runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? request.scan_purpose ?? request.scanPurpose ?? "",
+  ).trim();
   const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
   return (
     purpose === "setup" ||
-    Boolean(runResultValue(run, "pending_article_system_setup")) ||
-    Boolean(runResultValue(run, "article_surface_hint")) ||
+    hasMeaningfulPayload(runResultValue(run, "pending_article_system_setup")) ||
+    scanRunHasArticleSurfaceHint(run) ||
     requestedAction === "article_system_setup" ||
     requestedAction === "scaffold_publish_route"
   );
@@ -318,11 +357,23 @@ function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): Articl
   return isGithubPublishingReady(bootstrap) ? "review_draft" : "content_only";
 }
 
+function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
+}
+
+function isArticleSystemPublished(bootstrap: VibeMarketingBootstrap) {
+  const scaffold = bootstrap.checks.scaffold;
+  return Boolean(scaffold?.published || (scaffold?.passed && !scaffold?.setupBlocked));
+}
+
 function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
   const requiredStep =
     createStepForWorkflowStep(bootstrap.workflowProgress?.currentStepId) ??
     normalizeStep(bootstrap.currentGuidedStep, "startupDetails");
   const requested = normalizeStep(value, requiredStep);
+  if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requested)) {
+    return "articleSystem";
+  }
   const requestedWorkflowStepId = WORKFLOW_STEP_ID_BY_CREATE_STEP[requested];
   const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
   const contentOnlyAllowedStep = ["research", "chooseArticle"].includes(requested);
@@ -344,9 +395,19 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
-  const bootstrap = await getVibeMarketingBootstrap(env, request);
   const url = new URL(request.url);
+  const rawStep = url.searchParams.get("step");
+  if (rawStep === "github" || rawStep === "scan") {
+    url.searchParams.set("step", "articleSystem");
+    throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
+  }
+
+  const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
   const requestedStep = normalizeStep(url.searchParams.get("step"), "startupDetails");
+  if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requestedStep)) {
+    url.searchParams.set("step", "articleSystem");
+    throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
+  }
   if (["writeCheck", "editArticle", "reviewPublish"].includes(requestedStep)) {
     const latestSetupScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
     if (scanRunHasPendingArticleSystemSetup(latestSetupScan)) {
@@ -362,15 +423,18 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     repos: [],
     repositories: [],
   };
-  try {
-    githubRepos = await getVibeMarketingGithubRepos(env, request);
-  } catch (error) {
-    githubRepos = {
-      status: "unavailable",
-      repos: [],
-      repositories: [],
-      error: error instanceof Error ? error.message : "Unable to load repositories.",
-    };
+  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
+  if (activeStep === "articleSystem" || requestedStep === "articleSystem") {
+    try {
+      githubRepos = await getVibeMarketingGithubRepos(env, request);
+    } catch (error) {
+      githubRepos = {
+        status: "unavailable",
+        repos: [],
+        repositories: [],
+        error: error instanceof Error ? error.message : "Unable to load repositories.",
+      };
+    }
   }
   return { bootstrap, githubRepos };
 }
@@ -425,7 +489,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (stringFromForm(formData, "nextAction") === "save-exit") {
         return redirect("/founder-tools/marketing");
       }
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "start-autofill") {
@@ -493,7 +557,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       await skipVibeMarketingBaseline(env, request, {
         reason: stringFromForm(formData, "reason") || "Skipped during onboarding",
       });
-      return redirect("/founder-tools/marketing/create?step=github");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "connect-github") {
@@ -520,7 +584,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
       const connectionState = response.connection_state ?? response.connectionState;
       if (response.status === "already_connected" || response.status === "connected" || connectionState === "connected") {
-        return redirect("/founder-tools/marketing/create?step=scan");
+        return redirect("/founder-tools/marketing/create?step=articleSystem");
       }
       return {
         intent,
@@ -547,9 +611,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         auto_setup_preview: false,
       });
       if (result.runId) {
-        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+        return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
-      return redirect("/founder-tools/marketing/create?step=scan");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "confirm-article-surface" || intent === "create-article-surface") {
@@ -557,7 +621,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       const articleSurfaceUrl = stringFromForm(formData, "articleSurfaceUrl");
       if (!githubRepo) return { intent, error: "Choose a GitHub repository before continuing." };
       if (!articleSurfaceUrl) return { intent, error: "Choose or enter an article/blog route before continuing." };
-      const result = await startVibeMarketingScan(env, request, {
+      const result = await startVibeMarketingArticleSystemSetup(env, request, {
         githubRepo,
         github_repo: githubRepo,
         scanPurpose: "setup",
@@ -571,6 +635,10 @@ export async function action({ request, context }: Route.ActionArgs) {
         autoSetupPreview: true,
         auto_setup_preview: true,
       });
+      const setupRunId = result.setupRunId || result.runId;
+      if (setupRunId) {
+        return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+      }
       if (result.runId) {
         return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
@@ -587,9 +655,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         workflow: "repo_scan",
       });
       if (intent === "retry-scan" && result.runId) {
-        return redirect(`/founder-tools/marketing/create?step=scan&scanRunId=${encodeURIComponent(result.runId)}`);
+        return redirect(`/founder-tools/marketing/create?step=articleSystem&scanRunId=${encodeURIComponent(result.runId)}`);
       }
-      return redirect("/founder-tools/marketing/create?step=scan");
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
     if (intent === "build-article-system-preview") {
@@ -604,6 +672,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "start-discovery") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return {
+          intent,
+          error: "Finish approving, merging, and verifying the articles directory setup before researching topics.",
+        };
+      }
       const result = await startVibeMarketingDiscovery(env, request, {});
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=research");
@@ -611,6 +686,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return {
+          intent,
+          error: "Finish approving, merging, and verifying the articles directory setup before generating articles.",
+        };
+      }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const selectedCandidate =
         topicCandidateId && topicCandidateId !== "__custom__"
@@ -684,10 +765,10 @@ export async function action({ request, context }: Route.ActionArgs) {
 
 function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (!intent) return null;
-  if (intent === "connect-github") return "github";
+  if (intent === "connect-github") return "articleSystem";
   if (intent === "build-article-system-preview") return "articleSystem";
   if (intent === "save-daily" || intent === "daily-replay") return "dailyAutomation";
-  if (intent === "start-scan") return "scan";
+  if (intent === "start-scan") return "articleSystem";
   if (intent === "confirm-article-surface" || intent === "create-article-surface") return "articleSystem";
   if (intent === "save-article-system") return "articleSystem";
   if (intent === "start-discovery") return "research";
@@ -778,7 +859,11 @@ export default function FounderToolsMarketingCreate() {
   const latestActionError = actionDataError(actionData);
   const actionErrorStep = actionIntentStep(latestActionIntent);
   const isRepoArticleStep = activeStep === "github" || activeStep === "scan" || activeStep === "articleSystem";
-  const githubConnectError = isRepoArticleStep && latestActionIntent === "connect-github" ? latestActionError : null;
+  const githubAuthError = searchParams.get("githubAuthError");
+  const githubConnectError =
+    isRepoArticleStep && (githubAuthError || latestActionIntent === "connect-github")
+      ? githubAuthError || latestActionError
+      : null;
   const topActionError =
     latestActionError && latestActionIntent !== "connect-github" && (!actionErrorStep || actionErrorStep === activeStep)
       ? latestActionError
@@ -787,6 +872,11 @@ export default function FounderToolsMarketingCreate() {
   const location = useLocation();
   const setupScanStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const setupChildStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const setupParentProgressAtRef = useRef(Date.now());
+  const setupParentProgressSignatureRef = useRef("");
+  const setupChildProgressAtRef = useRef(Date.now());
+  const setupChildProgressSignatureRef = useRef("");
+  const [pageVisible, setPageVisible] = useState(true);
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
   const bootstrapPendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
   const [polledSetupScan, setPolledSetupScan] = useState<VibeMarketingRunSummary | null>(null);
@@ -895,6 +985,14 @@ export default function FounderToolsMarketingCreate() {
   }, [bootstrapPendingArticleSystemScan?.runId]);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
     if (setupScanStatusFetcher.state !== "idle") return;
     if (!setupScanStatusFetcher.data?.runId || setupScanStatusFetcher.data.runId !== bootstrapPendingArticleSystemScan?.runId) {
       return;
@@ -904,22 +1002,32 @@ export default function FounderToolsMarketingCreate() {
 
   useEffect(() => {
     if (!pendingArticleSystemScan?.runId || setupScanStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
+    if (pendingArticleSystemSetupRunId) return;
     const shouldPollParent =
       SETUP_POLLING_STATUSES.has(pendingArticleSystemScan.status) ||
       (!pendingArticleSystemSetupRunId && !isSetupProgressTerminal(pendingArticleSystemScan));
     if (!shouldPollParent) return;
     const hasLoadedCurrentRun = setupScanStatusFetcher.data?.runId === pendingArticleSystemScan.runId;
+    const signature = `${pendingArticleSystemScan.runId}:${pendingArticleSystemScan.status}:${pendingArticleSystemScan.currentStep ?? ""}:${pendingArticleSystemScan.updatedAt ?? ""}`;
+    if (setupParentProgressSignatureRef.current !== signature) {
+      setupParentProgressSignatureRef.current = signature;
+      setupParentProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - setupParentProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         setupScanStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemScan.runId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     pendingArticleSystemScan?.runId,
     pendingArticleSystemScan?.status,
     pendingArticleSystemSetupRunId,
+    pageVisible,
     setupScanStatusFetcher,
     setupScanStatusFetcher.data?.runId,
     setupScanStatusFetcher.state,
@@ -939,17 +1047,26 @@ export default function FounderToolsMarketingCreate() {
 
   useEffect(() => {
     if (!pendingArticleSystemSetupRunId || setupChildStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     if (setupChildRun && isSetupProgressTerminal(setupChildRun)) return;
     const hasLoadedCurrentRun = setupChildStatusFetcher.data?.runId === pendingArticleSystemSetupRunId;
+    const signature = `${setupChildRun?.runId ?? pendingArticleSystemSetupRunId}:${setupChildRun?.status ?? ""}:${setupChildRun?.currentStep ?? ""}:${setupChildRun?.updatedAt ?? ""}`;
+    if (setupChildProgressSignatureRef.current !== signature) {
+      setupChildProgressSignatureRef.current = signature;
+      setupChildProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - setupChildProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         setupChildStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     pendingArticleSystemSetupRunId,
+    pageVisible,
     setupChildRun?.runId,
     setupChildRun?.status,
     setupChildRun?.approvalState,
@@ -981,30 +1098,57 @@ export default function FounderToolsMarketingCreate() {
     ? `/founder-tools/marketing/runs/${encodeURIComponent(setupProgressRun.runId)}`
     : "";
   const setupPreviewRunId = setupChildRun?.runId || pendingArticleSystemSetupRunId;
+  const setupBlocked = isArticleSystemSetupBlocked(bootstrap);
+  const setupPublished = isArticleSystemPublished(bootstrap);
+  const setupChildStatus = setupChildRun
+    ? stringResultValue(setupChildRun, "status", "setupStatus", "setup_status") || setupChildRun.currentStep || setupChildRun.status
+    : "";
+  const setupManualMergeRequired = Boolean(setupBlocked && setupChildStatus === "manual_merge_required");
+  const setupVerifying = Boolean(
+    setupBlocked &&
+      (bootstrap.checks.scaffold?.rescanRunId ||
+        ["completed", "merged", "merged_verifying", "verifying"].includes(setupChildStatus)),
+  );
   const setupReadyWithoutPreview = Boolean(
     pendingArticleSystemScan &&
       !setupChildRun &&
       !pendingArticleSystemSetupRunId &&
       pendingArticleSystemScan.status === "completed",
   );
-  const setupApproved = Boolean(
-    setupReadyWithoutPreview || (setupChildRun && (setupChildRun.status === "completed" || setupChildRun.approvalState === "approved")),
-  );
   const setupPreviewReady = Boolean(
     setupChildRun &&
-      !setupApproved &&
+      !setupPublished &&
+      !setupVerifying &&
+      !setupManualMergeRequired &&
       (SETUP_READY_STATUSES.has(setupChildRun.status) || setupChildRun.livePreview?.previewUrl || setupChildRun.previewUrl),
   );
   const setupLegacyNeedsPreview = Boolean(
     pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),
   );
   const setupProgressFailed = Boolean(setupProgressRun && SETUP_FAILED_STATUSES.has(setupProgressRun.status));
-  const setupProgressActionSlot = setupApproved ? (
+  const setupProgressActionSlot = setupPublished ? (
     <Link
       to="/founder-tools/marketing/create?step=research"
       className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
     >
       Continue to topic research
+    </Link>
+  ) : setupVerifying ? (
+    <button
+      type="button"
+      disabled
+      className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white opacity-60 shadow-sm"
+    >
+      <ArrowPathIcon className="h-4 w-4 animate-spin" />
+      Verifying merged articles directory...
+    </button>
+  ) : setupManualMergeRequired ? (
+    <Link
+      to={setupPreviewRunId ? `/founder-tools/marketing/runs/${encodeURIComponent(setupPreviewRunId)}` : "/founder-tools/marketing/create?step=articleSystem"}
+      className="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-800 shadow-sm transition hover:bg-amber-100"
+    >
+      Manual merge required
+      <ArrowRightIcon className="h-4 w-4" />
     </Link>
   ) : setupPreviewReady && setupPreviewRunId ? (
     <Link
@@ -1301,7 +1445,7 @@ export default function FounderToolsMarketingCreate() {
                 }
                 passed={
                   pendingArticleSystemScan
-                    ? Boolean(setupPreviewReady || setupApproved)
+                    ? Boolean(setupPreviewReady || setupPublished)
                     : activeStep === "reviewPublish"
                     ? Boolean(bootstrap.checks.publish?.passed || bootstrap.checks.contentPackage?.passed || contentPackageReady)
                     : Boolean(bootstrap.checks.write?.passed)

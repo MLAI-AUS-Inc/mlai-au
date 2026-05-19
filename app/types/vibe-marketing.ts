@@ -41,6 +41,7 @@ export interface VibeMarketingRunSummary {
   steps: VibeMarketingStepState[];
   warnings: string[];
   errors: string[];
+  errorCode?: string | null;
   artifacts: unknown[];
   previewUrl?: string | null;
   prUrl?: string | null;
@@ -202,6 +203,13 @@ export interface VibeMarketingCheck {
   connectionState?: string | null;
   repoSet?: boolean;
   articleSystem?: Record<string, unknown>;
+  published?: boolean;
+  setupBlocked?: boolean;
+  setupRunId?: string | null;
+  setupStatus?: string | null;
+  rescanRunId?: string | null;
+  prUrl?: string | null;
+  previewUrl?: string | null;
 }
 
 export interface VibeMarketingTopicCandidate {
@@ -238,12 +246,27 @@ export interface VibeMarketingTopicCandidate {
   recommendationReason?: string | null;
   aiVolumeDisplay?: string | null;
   relatedKeywords?: string[];
+  pillarSlug?: string | null;
+  pillarName?: string | null;
+  pillarKeyword?: string | null;
   paaQuestions?: Array<{
     question: string;
     answerSnippet?: string | null;
     depth?: unknown;
     hasAiOverview?: boolean;
   }>;
+}
+
+export interface VibeMarketingTopicPillar {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  ideaCount: number;
+  iconKey: "brain" | "community" | "rocket" | "tools" | "default" | string;
+  colorKey: "green" | "purple" | "blue" | "orange" | string;
+  source: "semantic_cluster" | "pillar_strategy" | string;
+  topicCandidates: VibeMarketingTopicCandidate[];
 }
 
 export interface VibeMarketingTopicFeedback {
@@ -567,6 +590,7 @@ export interface VibeMarketingBootstrap {
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
+  topicPillars: VibeMarketingTopicPillar[];
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
   declinedTopicFeedback: VibeMarketingTopicFeedback[];
   draftArticles: VibeMarketingDraftArticle[];

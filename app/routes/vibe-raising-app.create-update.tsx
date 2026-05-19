@@ -464,16 +464,7 @@ function hasDisplayableMetricValue(value: unknown) {
     if (!rawValue) return false;
 
     const lowerValue = rawValue.toLowerCase();
-    if (["0", "0.0", "0.00", "null", "undefined", "-", "—"].includes(lowerValue)) return false;
-
-    const numericText = rawValue
-        .replace(/[$,%\s,]/g, "")
-        .replace(/[a-z]+/gi, "");
-    if (numericText && /^-?\d+(\.\d+)?$/.test(numericText)) {
-        return Number(numericText) !== 0;
-    }
-
-    return true;
+    return !["null", "undefined", "-", "—"].includes(lowerValue);
 }
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
@@ -1758,12 +1749,13 @@ function ReviewPreviewSection({
     label: string;
     text?: string | null;
 }) {
-    if (!text) return null;
-
-    const items = text.split(/(?<=\.)\s+/).filter((item) => item.trim());
+    const normalizedText = String(text || "").trim();
+    const items = normalizedText.split(/(?<=\.)\s+/).filter((item) => item.trim());
     const [mobileExpanded, setMobileExpanded] = useState(false);
     const shouldClampOnMobile = items.length > 1;
     const visibleItems = mobileExpanded ? items : items.slice(0, 1);
+
+    if (!normalizedText) return null;
 
     return (
         <div>

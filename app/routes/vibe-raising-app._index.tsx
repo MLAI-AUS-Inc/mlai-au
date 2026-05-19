@@ -692,11 +692,13 @@ function VRPreviewUpdateSection({
     label: string;
     text?: string | null;
 }) {
-    if (!text) return null;
-    const items = splitItems(text);
+    const normalizedText = String(text || "").trim();
+    const items = splitItems(normalizedText);
     const [mobileExpanded, setMobileExpanded] = useState(false);
     const shouldClampOnMobile = items.length > 1;
     const visibleItems = mobileExpanded ? items : items.slice(0, 1);
+
+    if (!normalizedText) return null;
 
     return (
         <div>

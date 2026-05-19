@@ -65,9 +65,17 @@ function activeStepLabel(run: VibeMarketingRunSummary, steps: VibeMarketingStepS
 function setupPhase(run: VibeMarketingRunSummary) {
   const isSetupPreviewRun = run.workflow === "article_system_setup";
   const failed = FAILED_STATUSES.has(run.status);
+  const stale = Boolean(run.stale || run.staleReason);
   const approved = run.status === "completed" || run.approvalState === "approved";
   const ready = READY_STATUSES.has(run.status);
 
+  if (stale) {
+    return {
+      title: "Articles setup build did not advance",
+      description: "The setup worker stopped moving through the build steps. Retry the setup build or review the technical details.",
+      tone: "error" as const,
+    };
+  }
   if (failed) {
     return {
       title: "Articles setup needs attention",

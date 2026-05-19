@@ -17,17 +17,15 @@ interface LoaderData {
 
 export async function loader({ context }: Route.LoaderArgs) {
   const env = getEnv(context) as unknown as Record<string, any>;
-  const humanitixApiKey = env.PRIVATE_HUMANITIX_API_KEY;
   const lumaApiKey = env.LUMA_API_KEY;
 
-  if (!humanitixApiKey && !lumaApiKey) {
-    console.error("No event API keys are configured (PRIVATE_HUMANITIX_API_KEY or LUMA_API_KEY)");
+  if (!lumaApiKey) {
+    console.error("No Luma API key is configured");
     return { events: Promise.resolve([]) };
   }
 
   // Return promise WITHOUT awaiting - this enables streaming
   const eventsPromise = fetchEvents({
-    humanitixApiKey,
     lumaApiKey,
   });
 
@@ -68,7 +66,7 @@ function EventsError() {
           Unable to load events
         </h3>
         <p className="text-red-700 text-sm mb-4">
-          We're having trouble fetching events from Humanitix. Please try again later.
+          We're having trouble fetching events from Luma. Please try again later.
         </p>
         <button
           onClick={() => window.location.reload()}

@@ -1,6 +1,6 @@
 import { Form, Link, useFetcher, useLocation, useRevalidator } from "react-router";
 import { clsx } from "clsx";
-import { useEffect, useMemo, useState, type ChangeEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -49,6 +49,18 @@ const SCAN_RUNNING_STATUSES = new Set(["queued", "running", "pending", "starting
 const SCAN_POLLING_STATUSES = SCAN_RUNNING_STATUSES;
 const SCAN_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied"]);
 const SCAN_ACTION_NEEDED_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
+const SCAN_TERMINAL_REVALIDATE_STATUSES = new Set([
+  "completed",
+  "awaiting_confirmation",
+  "awaiting_approval",
+  "approval_required",
+  "failed",
+  "blocked",
+  "blocked_verification",
+  "denied",
+  "cancelled",
+  "canceled",
+]);
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
@@ -165,9 +177,27 @@ function scanPurposeForRun(run: VibeMarketingRunSummary | null | undefined) {
   ).trim();
 }
 
+function hasConcreteArticleSurfaceHint(value: unknown) {
+  if (typeof value === "string") return Boolean(value.trim());
+  const hint = resultObject(value);
+  return [
+    "route",
+    "route_path",
+    "routePath",
+    "path",
+    "public_url",
+    "publicUrl",
+    "listing_url",
+    "listingUrl",
+    "article_surface_url",
+    "articleSurfaceUrl",
+    "url",
+  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
+}
+
 function scanHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
   if (!run) return false;
-  return Boolean(resultValue(run, "article_surface_hint") || run.result?.["articleSurfaceHint"]);
+  return hasConcreteArticleSurfaceHint(resultValue(run, "article_surface_hint")) || hasConcreteArticleSurfaceHint(run.result?.["articleSurfaceHint"]);
 }
 
 function isInventoryScan(run: VibeMarketingRunSummary | null | undefined) {
@@ -386,6 +416,15 @@ function CreateNewChoiceCard({
   );
 }
 
+function githubConnectHref({ forceReconnect = false, githubRepo = "" }: { forceReconnect?: boolean; githubRepo?: string } = {}) {
+  const params = new URLSearchParams({
+    returnTo: "/founder-tools/marketing/create?step=articleSystem",
+  });
+  if (forceReconnect) params.set("forceReconnect", "true");
+  if (githubRepo && !forceReconnect) params.set("githubRepo", githubRepo);
+  return `/founder-tools/marketing/github-connect?${params.toString()}`;
+}
+
 export default function ArticleSystemConnectionPanel({
   bootstrap,
   githubRepos,
@@ -412,6 +451,7 @@ export default function ArticleSystemConnectionPanel({
   const selectedRepo = selectedRepoName({ bootstrap, githubRepos, repos, repoSelection });
   const repoUrl = selectedRepo.includes("/") ? `https://github.com/${selectedRepo}` : "";
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
+  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
   const requestedScanRunId = new URLSearchParams(location.search).get("scanRunId")?.trim() ?? "";
   const currentScanRunId = requestedScanRunId || scanRun?.runId || "";
   const scanRunForCurrentId = !requestedScanRunId || scanRun?.runId === requestedScanRunId ? scanRun : null;
@@ -424,7 +464,8 @@ export default function ArticleSystemConnectionPanel({
   const setupRunId = effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "";
   const inventoryScan = isInventoryScan(effectiveScanRun);
   const setupTargetScan = isSetupTargetScan(effectiveScanRun);
-  const inventoryReady = Boolean(effectiveScanRun && inventoryScan && effectiveScanRun.status === "completed");
+  const inventoryProgressRun = effectiveScanRun && inventoryScan && !setupTargetScan ? effectiveScanRun : null;
+  const inventoryReady = Boolean(inventoryProgressRun?.status === "completed");
   const setupTargetReady = Boolean(effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
   const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
   const retryScanPending = actionPending("retry-scan");
@@ -435,6 +476,10 @@ export default function ArticleSystemConnectionPanel({
   const [manualArticleRoute, setManualArticleRoute] = useState("");
   const [manualRouteError, setManualRouteError] = useState("");
   const [createNewPath, setCreateNewPath] = useState(articleSurfaceDefault || "/articles");
+  const lastScanProgressSignatureRef = useRef("");
+  const lastScanProgressAtRef = useRef(Date.now());
+  const lastTerminalRevalidationRef = useRef("");
+  const [pageVisible, setPageVisible] = useState(true);
   const [githubAuthWaiting, setGithubAuthWaiting] = useState(() =>
     typeof window !== "undefined" && window.sessionStorage.getItem("vibe-marketing:github-auth-open") === "true",
   );
@@ -489,6 +534,22 @@ export default function ArticleSystemConnectionPanel({
   }, [currentScanRunId]);
 
   useEffect(() => {
+    if (typeof document === "undefined") return;
+    const updateVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    updateVisibility();
+    document.addEventListener("visibilitychange", updateVisibility);
+    return () => document.removeEventListener("visibilitychange", updateVisibility);
+  }, []);
+
+  useEffect(() => {
+    if (!githubAuthWaiting || (!connected && !connectionError && !githubRepos.error)) return;
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("vibe-marketing:github-auth-open");
+    }
+    setGithubAuthWaiting(false);
+  }, [connected, connectionError, githubAuthWaiting, githubRepos.error]);
+
+  useEffect(() => {
     if (
       runStatusFetcher.state !== "idle" ||
       !runStatusFetcher.data?.runId ||
@@ -501,6 +562,7 @@ export default function ArticleSystemConnectionPanel({
 
   useEffect(() => {
     if (!currentScanRunId || runStatusFetcher.state !== "idle") return;
+    if (!pageVisible) return;
     const shouldPollScan =
       !effectiveScanRun ||
       (SCAN_POLLING_STATUSES.has(effectiveScanRun.status) &&
@@ -508,21 +570,45 @@ export default function ArticleSystemConnectionPanel({
         !scanStale);
     if (!shouldPollScan) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === currentScanRunId;
+    const signature = [
+      effectiveScanRun?.runId,
+      effectiveScanRun?.status,
+      effectiveScanRun?.currentStep,
+      effectiveScanRun?.updatedAt,
+      effectiveScanRun?.steps.map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}`).join(","),
+    ].join("|");
+    if (lastScanProgressSignatureRef.current !== signature) {
+      lastScanProgressSignatureRef.current = signature;
+      lastScanProgressAtRef.current = Date.now();
+    }
+    const idleMs = Date.now() - lastScanProgressAtRef.current;
+    const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
       () => {
         void runStatusFetcher.load(`/founder-tools/marketing/runs/${encodeURIComponent(currentScanRunId)}/status`);
       },
-      hasLoadedCurrentRun ? 2500 : 0,
+      pollDelay,
     );
     return () => window.clearTimeout(timer);
   }, [
     currentScanRunId,
     effectiveScanRun,
+    pageVisible,
     runStatusFetcher,
     runStatusFetcher.data?.runId,
     runStatusFetcher.state,
     scanStale,
   ]);
+
+  useEffect(() => {
+    if (!effectiveScanRun?.runId) return;
+    const terminalStatus = scanStale ? "stale" : effectiveScanRun.status;
+    if (!scanStale && !SCAN_TERMINAL_REVALIDATE_STATUSES.has(effectiveScanRun.status)) return;
+    const key = [effectiveScanRun.runId, terminalStatus, effectiveScanRun.updatedAt ?? ""].join("|");
+    if (lastTerminalRevalidationRef.current === key) return;
+    lastTerminalRevalidationRef.current = key;
+    revalidator.revalidate();
+  }, [effectiveScanRun?.runId, effectiveScanRun?.status, effectiveScanRun?.updatedAt, revalidator, scanStale]);
 
   useEffect(() => {
     if (!autoStartInventoryScan || !connected || !selectedRepo || currentScanRunId || inventoryFetcher.state !== "idle") return;
@@ -610,19 +696,16 @@ export default function ArticleSystemConnectionPanel({
               </div>
               <h4 className="mt-4 text-lg font-black text-slate-950">Connect your GitHub repository</h4>
               <p className="mx-auto mt-2 max-w-2xl text-sm font-semibold leading-6 text-slate-500">
-                GitHub opens in a new tab. This page will refresh when the connection is ready.
+                GitHub will open securely, then return you here when the connection is ready.
               </p>
-              <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument className="mt-5">
-                <input type="hidden" name="intent" value="connect-github" />
-                <button
-                  type="submit"
-                  onClick={markGithubAuthOpen}
-                  className="inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black disabled:opacity-50"
-                >
-                  <GitHubMark className="h-5 w-5" />
-                  {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
-                </button>
-              </Form>
+              <a
+                href={githubConnectHref()}
+                onClick={markGithubAuthOpen}
+                className="mt-5 inline-flex items-center justify-center gap-3 rounded-xl bg-slate-950 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              >
+                <GitHubMark className="h-5 w-5" />
+                {githubAuthWaiting ? "Open GitHub again" : "Connect GitHub"}
+              </a>
               <div className="mt-5 flex flex-wrap justify-center gap-4">
                 <SmallProof icon={<LockKeyhole className="h-4 w-4" />} label="Secure OAuth" />
                 <SmallProof icon={<ShieldCheck className="h-4 w-4" />} label="Granular permissions" />
@@ -630,7 +713,7 @@ export default function ArticleSystemConnectionPanel({
               </div>
               {githubAuthWaiting ? (
                 <div className="mx-auto mt-4 max-w-3xl rounded-xl border border-violet-100 bg-violet-50 px-4 py-3 text-left text-sm font-semibold text-violet-800">
-                  Finish authorising in the GitHub tab, then return here.
+                  Finish authorising in GitHub, then you will return here.
                 </div>
               ) : null}
               {connectionError ? (
@@ -694,17 +777,15 @@ export default function ArticleSystemConnectionPanel({
                       </a>
                     ) : null}
                   </p>
-                  <Form method="POST" target="_blank" rel="noopener noreferrer" reloadDocument>
-                    <input type="hidden" name="intent" value="connect-github" />
-                    <input type="hidden" name="forceReconnect" value="true" />
-                    <button
-                      type="submit"
-                      onClick={markGithubAuthOpen}
-                      className="text-sm font-black text-violet-700 transition hover:text-violet-900"
-                    >
-                      Manage GitHub access
-                    </button>
-                  </Form>
+                  <a
+                    href={githubConnectHref({ forceReconnect: true })}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={markGithubAuthOpen}
+                    className="text-sm font-black text-violet-700 transition hover:text-violet-900"
+                  >
+                    Manage GitHub access
+                  </a>
                 </div>
               </div>
               <div className="flex gap-4 rounded-2xl bg-slate-50 p-4">
@@ -731,20 +812,20 @@ export default function ArticleSystemConnectionPanel({
           </FlowStep>
         ) : null}
 
-        {effectiveScanRun && inventoryScan ? (
+        {inventoryProgressRun ? (
           <FlowStep number={2} title="Scanning repository" description="Looking for article pages and content locations">
-            <MarketingRunProgressCard run={effectiveScanRun} />
+            <MarketingRunProgressCard run={inventoryProgressRun} />
             {scanRunning || scanFailed || scanStale ? (
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <Link
-                  to={`/founder-tools/marketing/runs/${encodeURIComponent(effectiveScanRun.runId)}`}
+                  to={`/founder-tools/marketing/runs/${encodeURIComponent(inventoryProgressRun.runId)}`}
                   className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
                 >
                   View scan run
                 </Link>
                 <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-                  <input type="hidden" name="scanRunId" value={effectiveScanRun.runId} />
-                  {effectiveScanRun.retryAvailable || effectiveScanRun.stale ? (
+                  <input type="hidden" name="scanRunId" value={inventoryProgressRun.runId} />
+                  {inventoryProgressRun.retryAvailable || inventoryProgressRun.stale ? (
                     <button
                       type="submit"
                       name="intent"
@@ -975,7 +1056,7 @@ export default function ArticleSystemConnectionPanel({
           </div>
         ) : null}
 
-        {connected && scaffoldReady && !setupTargetReady && !inventoryReady ? (
+        {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
           <Link
             to="/founder-tools/marketing/create?step=research"
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
