@@ -246,12 +246,27 @@ export interface VibeMarketingTopicCandidate {
   recommendationReason?: string | null;
   aiVolumeDisplay?: string | null;
   relatedKeywords?: string[];
+  pillarSlug?: string | null;
+  pillarName?: string | null;
+  pillarKeyword?: string | null;
   paaQuestions?: Array<{
     question: string;
     answerSnippet?: string | null;
     depth?: unknown;
     hasAiOverview?: boolean;
   }>;
+}
+
+export interface VibeMarketingTopicPillar {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  ideaCount: number;
+  iconKey: "brain" | "community" | "rocket" | "tools" | "default" | string;
+  colorKey: "green" | "purple" | "blue" | "orange" | string;
+  source: "semantic_cluster" | "pillar_strategy" | string;
+  topicCandidates: VibeMarketingTopicCandidate[];
 }
 
 export interface VibeMarketingTopicFeedback {
@@ -575,6 +590,7 @@ export interface VibeMarketingBootstrap {
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];
+  topicPillars: VibeMarketingTopicPillar[];
   hiddenTopicCandidates: VibeMarketingTopicCandidate[];
   declinedTopicFeedback: VibeMarketingTopicFeedback[];
   draftArticles: VibeMarketingDraftArticle[];

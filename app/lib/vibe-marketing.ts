@@ -22,6 +22,7 @@ import type {
   VibeMarketingGoogleBaselineConnection,
   VibeMarketingTopicCandidate,
   VibeMarketingTopicFeedback,
+  VibeMarketingTopicPillar,
   VibeMarketingWrittenTopic,
   VibeMarketingWorkflowAction,
   VibeMarketingWorkflowProgress,
@@ -250,6 +251,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
   }
   const rawDeclinedTopicFeedback = payload.declinedTopicFeedback ?? payload.declined_topic_feedback;
   const rawDraftArticles = payload.draftArticles ?? payload.draft_articles;
+  const rawTopicPillars = payload.topicPillars ?? payload.topic_pillars;
 
   return {
     company: {
@@ -311,6 +313,9 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     latestRunsByWorkflow,
     topicCandidates: Array.isArray(payload.topicCandidates)
       ? payload.topicCandidates.map(normalizeTopicCandidate)
+      : [],
+    topicPillars: Array.isArray(rawTopicPillars)
+      ? rawTopicPillars.map(normalizeTopicPillar).filter((pillar): pillar is VibeMarketingTopicPillar => Boolean(pillar))
       : [],
     hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
       ? payload.hiddenTopicCandidates.map(normalizeTopicCandidate)
@@ -421,7 +426,32 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     recommendationReason: asNullableString(payload.recommendationReason) ?? asNullableString(payload.recommendation_reason),
     aiVolumeDisplay: asNullableString(payload.aiVolumeDisplay) ?? asNullableString(payload.ai_volume_display),
     relatedKeywords: asStringList(payload.relatedKeywords ?? payload.related_keywords),
+    pillarSlug: asNullableString(payload.pillarSlug) ?? asNullableString(payload.pillar_slug),
+    pillarName: asNullableString(payload.pillarName) ?? asNullableString(payload.pillar_name),
+    pillarKeyword: asNullableString(payload.pillarKeyword) ?? asNullableString(payload.pillar_keyword),
     paaQuestions: normalizePaaQuestions(payload.paaQuestions ?? payload.paa_questions),
+  };
+}
+
+function normalizeTopicPillar(raw: unknown): VibeMarketingTopicPillar | null {
+  const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const name = asNullableString(payload.name) ?? asNullableString(payload.title);
+  const slug = asNullableString(payload.slug);
+  if (!name || !slug) return null;
+  const rawCandidates = payload.topicCandidates ?? payload.topic_candidates;
+  return {
+    id: asNullableString(payload.id) ?? slug,
+    slug,
+    name,
+    description: asNullableString(payload.description) ?? "",
+    ideaCount: asNumber(payload.ideaCount ?? payload.idea_count) ?? 0,
+    iconKey: asNullableString(payload.iconKey) ?? asNullableString(payload.icon_key) ?? "default",
+    colorKey: asNullableString(payload.colorKey) ?? asNullableString(payload.color_key) ?? "purple",
+    source: asNullableString(payload.source) ?? "semantic_cluster",
+    topicCandidates: Array.isArray(rawCandidates)
+      ? rawCandidates.map(normalizeTopicCandidate)
+      : [],
   };
 }
 
@@ -864,6 +894,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
   latestRuns: [],
   latestRunsByWorkflow: {},
   topicCandidates: [],
+  topicPillars: [],
   hiddenTopicCandidates: [],
   declinedTopicFeedback: [],
   draftArticles: [],
