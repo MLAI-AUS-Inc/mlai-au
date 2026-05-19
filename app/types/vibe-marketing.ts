@@ -41,6 +41,7 @@ export interface VibeMarketingRunSummary {
   steps: VibeMarketingStepState[];
   warnings: string[];
   errors: string[];
+  errorCode?: string | null;
   artifacts: unknown[];
   previewUrl?: string | null;
   prUrl?: string | null;
