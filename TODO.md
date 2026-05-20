@@ -1,3 +1,4 @@
+- [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text
 - [x] Restyle `/terms` and `/privacy` to match the main MLAI brutalist page shell
 - [x] Verify styled legal pages in the local browser
 - [x] Rewrite `/terms` as MLAI-wide Terms of Service with product schedules
