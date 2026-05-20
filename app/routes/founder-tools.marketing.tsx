@@ -2926,7 +2926,7 @@ function TopicPillarsSection({
               <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
                 {pillar.name}
               </h3>
-              <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
+              <div className="mt-2 h-4" aria-hidden="true" />
               <button
                 type="button"
                 onClick={() => onGenerate(pillar)}
@@ -2936,11 +2936,16 @@ function TopicPillarsSection({
                   theme.button,
                 )}
               >
-                {generatingPillarSlug === pillar.slug ? "Generating..." : "Generate"}
                 {generatingPillarSlug === pillar.slug ? (
-                  <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                  <>
+                    <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                    loading
+                  </>
                 ) : (
-                  <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                  <>
+                    Generate
+                    <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                  </>
                 )}
               </button>
             </article>
