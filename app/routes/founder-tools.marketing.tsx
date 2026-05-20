@@ -1,4 +1,5 @@
 import type { Route } from "./+types/founder-tools.marketing";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
 import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -575,18 +576,31 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const responseData = error?.data ?? error?.response?.data;
+    const responseErrors = Array.isArray(responseData?.errors)
+      ? responseData.errors.map((item: unknown) => String(item)).filter(Boolean)
+      : [];
     return {
       intent,
       error:
-        error?.data?.detail ??
-        error?.data?.error ??
-        error?.response?.data?.detail ??
+        responseErrors[0] ??
+        responseData?.detail ??
+        responseData?.error ??
+        responseData?.message ??
         error?.message ??
         "That action could not be completed.",
+      errors: responseErrors,
     };
   }
 
   return null;
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (actionIntent(args.actionResult) === "start-content-island-discovery") {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 function actionError(data: unknown): string | null {
