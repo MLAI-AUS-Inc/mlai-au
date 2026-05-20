@@ -1,3 +1,8 @@
+- [x] Restyle `/terms` and `/privacy` to match the main MLAI brutalist page shell
+- [x] Verify styled legal pages in the local browser
+- [x] Rewrite `/terms` as MLAI-wide Terms of Service with product schedules
+- [x] Rewrite `/privacy` as MLAI-wide Privacy Policy with Google and product-specific sections
+- [x] Run `bun run typecheck`
 - [x] Simplify the mobile review sticky footer on Founder Tools create-update
 - [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
 - [x] Improve Create Update AI draft card touch/mobile affordance
