@@ -2213,6 +2213,7 @@ function TopicRow({
   const score = opportunityLabel(topic.opportunityScore);
   const title = topic.title || topic.keyword;
   const islandTheme = islandVisual ? pillarTheme(islandVisual.colorKey) : null;
+  const rowTheme = islandTheme?.row;
   const selectOrContinue = () => {
     if (selected) {
       onContinue();
@@ -2235,8 +2236,11 @@ function TopicRow({
       onClick={selectOrContinue}
       onKeyDown={handleKeyDown}
       className={clsx(
-        "grid w-full cursor-pointer grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
-        selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+        "grid w-full cursor-pointer grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4",
+        rowTheme?.focus ?? "focus:ring-violet-100",
+        selected
+          ? rowTheme?.selected ?? "border-violet-300 bg-violet-50/60"
+          : rowTheme?.idle ?? "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
       aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
       aria-pressed={selected}
@@ -2280,14 +2284,16 @@ function TopicRow({
           disabled={selected && submitting}
           className={clsx(
             "inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60",
-            selected ? "bg-white text-violet-700 hover:bg-violet-50" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+            selected
+              ? rowTheme?.selectedButton ?? "bg-white text-violet-700 hover:bg-violet-50"
+              : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
           {selected ? "Continue" : "Select"}
           {selected && submitting ? (
-            <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+            <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
-            <ArrowRight className="h-4 w-4 text-violet-500" />
+            <ArrowRight className={clsx("h-4 w-4", rowTheme?.arrow ?? "text-violet-500")} />
           )}
         </button>
       </span>
@@ -2604,6 +2610,14 @@ const PILLAR_THEMES = {
     iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
     button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
     arrow: "text-emerald-500",
+    row: {
+      focus: "focus:ring-emerald-100",
+      selected: "border-emerald-300 bg-emerald-50/60",
+      idle: "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/30",
+      selectedButton: "bg-white text-emerald-700 hover:bg-emerald-50",
+      idleButton: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+      arrow: "text-emerald-500",
+    },
     progress: {
       containerClassName: "border-emerald-100 bg-emerald-50/80",
       iconClassName: "bg-emerald-500 text-white shadow-emerald-100",
@@ -2617,6 +2631,14 @@ const PILLAR_THEMES = {
     iconWrap: "bg-violet-700 text-white shadow-violet-100",
     button: "border-violet-200 text-violet-700 hover:bg-violet-50",
     arrow: "text-violet-600",
+    row: {
+      focus: "focus:ring-violet-100",
+      selected: "border-violet-300 bg-violet-50/60",
+      idle: "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+      selectedButton: "bg-white text-violet-700 hover:bg-violet-50",
+      idleButton: "bg-violet-50 text-violet-700 hover:bg-violet-100",
+      arrow: "text-violet-500",
+    },
     progress: {
       containerClassName: "border-violet-100 bg-violet-50/80",
       iconClassName: "bg-violet-700 text-white shadow-violet-100",
@@ -2630,6 +2652,14 @@ const PILLAR_THEMES = {
     iconWrap: "bg-blue-600 text-white shadow-blue-100",
     button: "border-blue-200 text-blue-600 hover:bg-blue-50",
     arrow: "text-blue-500",
+    row: {
+      focus: "focus:ring-blue-100",
+      selected: "border-blue-300 bg-blue-50/60",
+      idle: "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30",
+      selectedButton: "bg-white text-blue-700 hover:bg-blue-50",
+      idleButton: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+      arrow: "text-blue-500",
+    },
     progress: {
       containerClassName: "border-blue-100 bg-blue-50/80",
       iconClassName: "bg-blue-600 text-white shadow-blue-100",
@@ -2643,6 +2673,14 @@ const PILLAR_THEMES = {
     iconWrap: "bg-orange-500 text-white shadow-orange-100",
     button: "border-orange-200 text-orange-600 hover:bg-orange-50",
     arrow: "text-orange-500",
+    row: {
+      focus: "focus:ring-orange-100",
+      selected: "border-orange-300 bg-orange-50/60",
+      idle: "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/30",
+      selectedButton: "bg-white text-orange-700 hover:bg-orange-50",
+      idleButton: "bg-orange-50 text-orange-700 hover:bg-orange-100",
+      arrow: "text-orange-500",
+    },
     progress: {
       containerClassName: "border-orange-100 bg-orange-50/80",
       iconClassName: "bg-orange-500 text-white shadow-orange-100",
@@ -3269,11 +3307,34 @@ function ReturningTopicPickerPage({
       bootstrap.topicCandidates.some((topic) => topic.sourceRunId === contentIslandRefreshRunId) ||
       bootstrap.topicCandidates.length !== contentIslandRefreshStartCount.current;
     if (!refreshedFromRun) return;
+    const refreshedTopic =
+      bootstrap.topicCandidates.find((topic) => topic.sourceRunId === contentIslandRefreshRunId && !topic.alreadyWritten) ??
+      (contentIslandDiscoveryRun?.islandSlug
+        ? bootstrap.topicCandidates.find(
+            (topic) => topic.pillarSlug === contentIslandDiscoveryRun.islandSlug && !topic.alreadyWritten,
+          )
+        : null);
+    if (refreshedTopic) {
+      const refreshedTopicIndex = bootstrap.topicCandidates
+        .filter((topic) => !topic.alreadyWritten)
+        .findIndex((topic) => topic.id === refreshedTopic.id);
+      setSelectedTopicId(refreshedTopic.id);
+      if (refreshedTopicIndex >= 0) {
+        setVisibleCount((current) => Math.max(current, Math.min(Math.max(refreshedTopicIndex + 1, 5), 8)));
+      }
+    }
     setContentIslandDiscoveryRun((current) =>
       current?.runId === contentIslandRefreshRunId ? null : current,
     );
     setContentIslandRefreshRunId(null);
-  }, [bootstrap.topicCandidates, bootstrap.topicCandidates.length, contentIslandRefreshRunId, latestDiscoveryRunId, revalidator.state]);
+  }, [
+    bootstrap.topicCandidates,
+    bootstrap.topicCandidates.length,
+    contentIslandDiscoveryRun?.islandSlug,
+    contentIslandRefreshRunId,
+    latestDiscoveryRunId,
+    revalidator.state,
+  ]);
 
   useEffect(() => {
     if (!activePillarSlug) return;
