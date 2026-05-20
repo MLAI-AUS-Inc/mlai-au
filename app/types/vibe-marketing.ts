@@ -249,6 +249,8 @@ export interface VibeMarketingTopicCandidate {
   pillarSlug?: string | null;
   pillarName?: string | null;
   pillarKeyword?: string | null;
+  pillarIconKey?: string | null;
+  pillarColorKey?: string | null;
   paaQuestions?: Array<{
     question: string;
     answerSnippet?: string | null;

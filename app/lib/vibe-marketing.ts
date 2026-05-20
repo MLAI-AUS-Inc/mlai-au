@@ -395,7 +395,12 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   return {
     id: String(payload.id ?? keyword),
     keyword,
-    title: asNullableString(payload.title) ?? asNullableString(payload.angle) ?? keyword,
+    title:
+      asNullableString(payload.title) ??
+      asNullableString(payload.displayTitle) ??
+      asNullableString(payload.display_title) ??
+      asNullableString(payload.angle) ??
+      keyword,
     reason: asNullableString(payload.reason),
     audience: asNullableString(payload.audience) ?? asNullableString(payload.target_audience) ?? asNullableString(payload.targetAudience),
     confidence: asNullableString(payload.confidence),
@@ -429,6 +434,8 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     pillarSlug: asNullableString(payload.pillarSlug) ?? asNullableString(payload.pillar_slug),
     pillarName: asNullableString(payload.pillarName) ?? asNullableString(payload.pillar_name),
     pillarKeyword: asNullableString(payload.pillarKeyword) ?? asNullableString(payload.pillar_keyword),
+    pillarIconKey: asNullableString(payload.pillarIconKey) ?? asNullableString(payload.pillar_icon_key),
+    pillarColorKey: asNullableString(payload.pillarColorKey) ?? asNullableString(payload.pillar_color_key),
     paaQuestions: normalizePaaQuestions(payload.paaQuestions ?? payload.paa_questions),
   };
 }

@@ -1,5 +1,5 @@
 import type { Route } from "./+types/founder-tools.marketing";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -82,6 +82,8 @@ const FLOW_STEPS = [
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
 const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
+const CONTENT_ISLAND_DISCOVERY_DONE_STATUSES = new Set(["awaiting_confirmation", "completed"]);
+const CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES = new Set(["failed", "blocked", "denied", "cancelled", "canceled"]);
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -404,6 +406,44 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "scan") {
       const run = await startVibeMarketingScan(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
+    }
+
+    if (intent === "start-content-island-discovery") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+      }
+      const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
+      const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
+      if (!pillar) {
+        return { intent, error: "Choose a content island before generating article ideas." };
+      }
+      const contentIslandKeyword =
+        stringFromForm(formData, "contentIslandKeyword") ||
+        pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
+        pillar.name;
+      const run = await startVibeMarketingDiscovery(env, request, {
+        contentIslandSlug: pillar.slug,
+        content_island_slug: pillar.slug,
+        contentIslandName: pillar.name,
+        content_island_name: pillar.name,
+        contentIslandKeyword: contentIslandKeyword,
+        content_island_keyword: contentIslandKeyword,
+        contentIslandIconKey: pillar.iconKey,
+        content_island_icon_key: pillar.iconKey,
+        contentIslandColorKey: pillar.colorKey,
+        content_island_color_key: pillar.colorKey,
+        requestedTopicCount: 4,
+        requested_topic_count: 4,
+      });
+      return {
+        intent,
+        runId: run.runId,
+        status: run.status,
+        islandSlug: pillar.slug,
+        error: run.error,
+        errors: run.errors,
+      };
     }
 
     if (intent === "start-discovery" || intent === "discovery") {
@@ -2112,10 +2152,17 @@ function FirstArticleSetupPage({
   );
 }
 
+type TopicIslandVisual = {
+  iconKey: string | null | undefined;
+  colorKey: string | null | undefined;
+  name?: string | null;
+};
+
 function TopicRow({
   topic,
   selected,
   submitting,
+  islandVisual,
   onSelect,
   onContinue,
   onDecline,
@@ -2123,12 +2170,14 @@ function TopicRow({
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
   submitting?: boolean;
+  islandVisual?: TopicIslandVisual | null;
   onSelect: () => void;
   onContinue: () => void;
   onDecline: () => void;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
   const title = topic.title || topic.keyword;
+  const islandTheme = islandVisual ? pillarTheme(islandVisual.colorKey) : null;
   const selectOrContinue = () => {
     if (selected) {
       onContinue();
@@ -2151,13 +2200,22 @@ function TopicRow({
       onClick={selectOrContinue}
       onKeyDown={handleKeyDown}
       className={clsx(
-        "grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
+        "grid w-full cursor-pointer grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
         selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
       aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
       aria-pressed={selected}
     >
-      <Flame className="h-5 w-5 text-violet-600" />
+      {islandTheme ? (
+        <span
+          className={clsx("inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm", islandTheme.iconWrap)}
+          title={islandVisual?.name ?? undefined}
+        >
+          <PillarIcon iconKey={islandVisual?.iconKey} className="h-4 w-4" />
+        </span>
+      ) : (
+        <Flame className="h-5 w-5 text-violet-600" />
+      )}
       <span className="min-w-0">
         <span className="block truncate text-sm font-black text-slate-950">{title}</span>
         <span className="mt-1 block text-sm font-semibold text-slate-500">
@@ -2439,6 +2497,15 @@ type TopicFeedbackActionData = {
   topicFeedback?: VibeMarketingTopicFeedback | null;
 };
 
+type ContentIslandDiscoveryActionData = {
+  intent?: string;
+  runId?: string | null;
+  status?: string | null;
+  islandSlug?: string | null;
+  error?: string | null;
+  errors?: string[];
+};
+
 type TopicToast =
   | {
       kind: "declined";
@@ -2534,26 +2601,29 @@ function TopicPillarsSection({
   pillars,
   submitting,
   discoverySubmitting,
+  generatingPillarSlug,
   activePillarSlug,
   customNotice,
   helpOpen,
   helpRef,
-  onViewIdeas,
+  onGenerate,
   onAddCustomPillar,
   onLearnMore,
 }: {
   pillars: VibeMarketingTopicPillar[];
   submitting: boolean;
   discoverySubmitting: boolean;
+  generatingPillarSlug?: string | null;
   activePillarSlug: string | null;
   customNotice: boolean;
   helpOpen: boolean;
   helpRef: RefObject<HTMLDivElement | null>;
-  onViewIdeas: (pillar: VibeMarketingTopicPillar) => void;
+  onGenerate: (pillar: VibeMarketingTopicPillar) => void;
   onAddCustomPillar: () => void;
   onLearnMore: () => void;
 }) {
   const visiblePillars = pillars.slice(0, 4);
+  const generating = Boolean(generatingPillarSlug);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -2618,14 +2688,19 @@ function TopicPillarsSection({
               <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
               <button
                 type="button"
-                onClick={() => onViewIdeas(pillar)}
+                onClick={() => onGenerate(pillar)}
+                disabled={submitting || generating}
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition",
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
                   theme.button,
                 )}
               >
-                View ideas
-                <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                {generatingPillarSlug === pillar.slug ? "Generating..." : "Generate"}
+                {generatingPillarSlug === pillar.slug ? (
+                  <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                ) : (
+                  <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                )}
               </button>
             </article>
           );
@@ -2676,7 +2751,10 @@ function ReturningTopicPickerPage({
 }) {
   const navigation = useNavigation();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
+  const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
   const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
@@ -2690,11 +2768,34 @@ function ReturningTopicPickerPage({
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
   const [customPillarNotice, setCustomPillarNotice] = useState(false);
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
+  const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<{ runId: string; islandSlug: string } | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
+  const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
     [activePillarSlug, bootstrap.topicPillars],
+  );
+  const pillarVisualsBySlug = useMemo(() => {
+    const map = new Map<string, TopicIslandVisual>();
+    for (const pillar of bootstrap.topicPillars) {
+      map.set(pillar.slug, { iconKey: pillar.iconKey, colorKey: pillar.colorKey, name: pillar.name });
+    }
+    return map;
+  }, [bootstrap.topicPillars]);
+  const topicIslandVisual = useCallback(
+    (topic: VibeMarketingTopicCandidate): TopicIslandVisual | null => {
+      const fromPillar = topic.pillarSlug ? pillarVisualsBySlug.get(topic.pillarSlug) : null;
+      const iconKey = topic.pillarIconKey ?? fromPillar?.iconKey ?? null;
+      const colorKey = topic.pillarColorKey ?? fromPillar?.colorKey ?? null;
+      if (!iconKey && !colorKey) return null;
+      return {
+        iconKey: iconKey ?? "default",
+        colorKey: colorKey ?? "purple",
+        name: topic.pillarName ?? fromPillar?.name ?? null,
+      };
+    },
+    [pillarVisualsBySlug],
   );
   const topicSource = useMemo(
     () => (activePillar ? activePillar.topicCandidates.filter((topic) => !topic.alreadyWritten) : baseTopics),
@@ -2742,6 +2843,12 @@ function ReturningTopicPickerPage({
     errorKey: error ? errorIntent : null,
   });
   const isSubmitting = pendingActions.isAnyPending;
+  const submittedContentIslandSlug =
+    contentIslandDiscoveryFetcher.state !== "idle"
+      ? String(contentIslandDiscoveryFetcher.formData?.get("contentIslandSlug") ?? "").trim()
+      : "";
+  const generatingPillarSlug = submittedContentIslandSlug || contentIslandDiscoveryRun?.islandSlug || null;
+  const contentIslandDiscoveryBusy = contentIslandDiscoveryFetcher.state !== "idle" || Boolean(contentIslandDiscoveryRun);
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
@@ -2802,14 +2909,20 @@ function ReturningTopicPickerPage({
     submitRestoreFeedback(feedback.id);
   }
 
-  function handleViewPillarIdeas(pillar: VibeMarketingTopicPillar) {
-    setActivePillarSlug(pillar.slug);
+  function handleGenerateContentIslandIdeas(pillar: VibeMarketingTopicPillar) {
+    if (contentIslandDiscoveryBusy) return;
+    setActivePillarSlug(null);
     setActiveTab("choose");
-    setVisibleCount(Math.max(5, Math.min(pillar.topicCandidates.length || 5, 8)));
-    window.setTimeout(() => {
-      topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      topicListRef.current?.focus({ preventScroll: true });
-    }, 0);
+    setVisibleCount(5);
+    setToast(null);
+    const formData = new FormData();
+    formData.set("intent", "start-content-island-discovery");
+    formData.set("contentIslandSlug", pillar.slug);
+    formData.set("contentIslandName", pillar.name);
+    formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
+    formData.set("contentIslandIconKey", pillar.iconKey);
+    formData.set("contentIslandColorKey", pillar.colorKey);
+    contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
   }
 
   function handleAddCustomPillar() {
@@ -2852,6 +2965,55 @@ function ReturningTopicPickerPage({
     const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
   }, [bootstrap.draftArticles, draftDeleteRequest]);
+
+  useEffect(() => {
+    const data = contentIslandDiscoveryFetcher.data;
+    if (contentIslandDiscoveryFetcher.state !== "idle" || !data || data.intent !== "start-content-island-discovery") return;
+    if (data.error || !data.runId) {
+      setContentIslandDiscoveryRun(null);
+      setToast({ kind: "error", message: data.error || "Could not start article idea research for that content island." });
+      return;
+    }
+    setContentIslandDiscoveryRun({ runId: data.runId, islandSlug: data.islandSlug || "" });
+  }, [contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+
+  useEffect(() => {
+    if (!contentIslandDiscoveryRun?.runId) return;
+    const runId = contentIslandDiscoveryRun.runId;
+    const statusPath = `/founder-tools/marketing/runs/${encodeURIComponent(runId)}/status`;
+    contentIslandRunStatusFetcher.load(statusPath);
+    const intervalId = window.setInterval(() => {
+      if (contentIslandRunStatusFetcher.state === "idle") {
+        contentIslandRunStatusFetcher.load(statusPath);
+      }
+    }, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [contentIslandDiscoveryRun?.runId]);
+
+  useEffect(() => {
+    const run = contentIslandRunStatusFetcher.data;
+    if (!run || !contentIslandDiscoveryRun || run.runId !== contentIslandDiscoveryRun.runId) return;
+    const status = String(run.status || "").trim().toLowerCase();
+    if (CONTENT_ISLAND_DISCOVERY_DONE_STATUSES.has(status)) {
+      if (!completedContentIslandDiscoveryRuns.current.has(run.runId)) {
+        completedContentIslandDiscoveryRuns.current.add(run.runId);
+        setActivePillarSlug(null);
+        setActiveTab("choose");
+        setVisibleCount(5);
+        revalidator.revalidate();
+        window.setTimeout(() => {
+          topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          topicListRef.current?.focus({ preventScroll: true });
+        }, 0);
+      }
+      setContentIslandDiscoveryRun(null);
+      return;
+    }
+    if (CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES.has(status)) {
+      setContentIslandDiscoveryRun(null);
+      setToast({ kind: "error", message: run.errors[0] || "Article idea research did not complete. Try generating again." });
+    }
+  }, [contentIslandDiscoveryRun, contentIslandRunStatusFetcher.data, revalidator]);
 
   useEffect(() => {
     if (!activePillarSlug) return;
@@ -3024,6 +3186,7 @@ function ReturningTopicPickerPage({
                         topic={topic}
                         selected={topic.id === selectedTopicId}
                         submitting={articleSubmitting}
+                        islandVisual={topicIslandVisual(topic)}
                         onSelect={() => setSelectedTopicId(topic.id)}
                         onContinue={submitSelectedTopic}
                         onDecline={() => handleDeclineTopic(topic)}
@@ -3034,7 +3197,7 @@ function ReturningTopicPickerPage({
                       <Sparkles className="mx-auto h-8 w-8 text-violet-500" />
                       <p className="mt-3 text-sm font-black text-slate-950">No stored topic ideas are ready yet.</p>
                       <p className="mt-2 text-sm font-semibold text-slate-500">
-                        Generate ideas or enter a custom topic to start the next article.
+                        Choose a content island below and click Generate to research article ideas for this section.
                       </p>
                     </div>
                   )}
@@ -3148,13 +3311,14 @@ function ReturningTopicPickerPage({
 
           <TopicPillarsSection
             pillars={bootstrap.topicPillars}
-            submitting={isSubmitting}
+            submitting={isSubmitting || contentIslandDiscoveryBusy}
             discoverySubmitting={discoverySubmitting}
+            generatingPillarSlug={generatingPillarSlug}
             activePillarSlug={activePillarSlug}
             customNotice={customPillarNotice}
             helpOpen={pillarHelpOpen}
             helpRef={pillarHelpRef}
-            onViewIdeas={handleViewPillarIdeas}
+            onGenerate={handleGenerateContentIslandIdeas}
             onAddCustomPillar={handleAddCustomPillar}
             onLearnMore={handleLearnMorePillars}
           />
