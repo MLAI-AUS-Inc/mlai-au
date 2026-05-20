@@ -455,6 +455,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         requestedTopicCount: 4,
         requested_topic_count: 4,
       });
+      const runStatus = normalizeContentIslandDiscoveryStatus(run.status);
+      const runQueuedSuccessfully = Boolean(run.runId) && !isContentIslandDiscoveryFailedStatus(runStatus);
       return {
         intent,
         runId: run.runId,
@@ -463,8 +465,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         islandName: pillar.name,
         islandIconKey: pillar.iconKey,
         islandColorKey: pillar.colorKey,
-        error: run.error,
-        errors: run.errors,
+        error: runQueuedSuccessfully ? null : run.error,
+        errors: runQueuedSuccessfully ? [] : run.errors,
       };
     }
 
@@ -3250,7 +3252,8 @@ function ReturningTopicPickerPage({
   useEffect(() => {
     const data = contentIslandDiscoveryFetcher.data;
     if (contentIslandDiscoveryFetcher.state !== "idle" || !data || data.intent !== "start-content-island-discovery") return;
-    if (data.error || !data.runId) {
+    const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
+    if (!data.runId || (data.error && startStatusFailed)) {
       setContentIslandDiscoveryRun(null);
       setToast({ kind: "error", message: data.error || "Could not start article idea research for that content island." });
       return;
