@@ -34,6 +34,8 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 
+import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
@@ -85,6 +87,22 @@ const FLOW_STEPS = [
 const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
 const CONTENT_ISLAND_DISCOVERY_DONE_STATUSES = new Set(["awaiting_confirmation", "completed"]);
 const CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES = new Set(["failed", "blocked", "denied", "cancelled", "canceled"]);
+
+function normalizeContentIslandDiscoveryStatus(status: string | null | undefined) {
+  return String(status || "").trim().toLowerCase();
+}
+
+function isContentIslandDiscoveryDoneStatus(status: string | null | undefined) {
+  return CONTENT_ISLAND_DISCOVERY_DONE_STATUSES.has(normalizeContentIslandDiscoveryStatus(status));
+}
+
+function isContentIslandDiscoveryFailedStatus(status: string | null | undefined) {
+  return CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES.has(normalizeContentIslandDiscoveryStatus(status));
+}
+
+function isContentIslandDiscoveryTerminalStatus(status: string | null | undefined) {
+  return isContentIslandDiscoveryDoneStatus(status) || isContentIslandDiscoveryFailedStatus(status);
+}
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -442,6 +460,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         runId: run.runId,
         status: run.status,
         islandSlug: pillar.slug,
+        islandName: pillar.name,
+        islandIconKey: pillar.iconKey,
+        islandColorKey: pillar.colorKey,
         error: run.error,
         errors: run.errors,
       };
@@ -2516,8 +2537,19 @@ type ContentIslandDiscoveryActionData = {
   runId?: string | null;
   status?: string | null;
   islandSlug?: string | null;
+  islandName?: string | null;
+  islandIconKey?: string | null;
+  islandColorKey?: string | null;
   error?: string | null;
   errors?: string[];
+};
+
+type ContentIslandDiscoveryRunState = {
+  runId: string;
+  islandSlug: string;
+  islandName: string;
+  iconKey: string;
+  colorKey: string;
 };
 
 type TopicToast =
@@ -2572,21 +2604,53 @@ const PILLAR_THEMES = {
     iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
     button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
     arrow: "text-emerald-500",
+    progress: {
+      containerClassName: "border-emerald-100 bg-emerald-50/80",
+      iconClassName: "bg-emerald-500 text-white shadow-emerald-100",
+      badgeClassName: "bg-white text-emerald-700",
+      completedSegmentClassName: "bg-emerald-600",
+      activeSegmentClassName: "animate-pulse bg-emerald-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   purple: {
     iconWrap: "bg-violet-700 text-white shadow-violet-100",
     button: "border-violet-200 text-violet-700 hover:bg-violet-50",
     arrow: "text-violet-600",
+    progress: {
+      containerClassName: "border-violet-100 bg-violet-50/80",
+      iconClassName: "bg-violet-700 text-white shadow-violet-100",
+      badgeClassName: "bg-white text-violet-700",
+      completedSegmentClassName: "bg-violet-700",
+      activeSegmentClassName: "animate-pulse bg-violet-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   blue: {
     iconWrap: "bg-blue-600 text-white shadow-blue-100",
     button: "border-blue-200 text-blue-600 hover:bg-blue-50",
     arrow: "text-blue-500",
+    progress: {
+      containerClassName: "border-blue-100 bg-blue-50/80",
+      iconClassName: "bg-blue-600 text-white shadow-blue-100",
+      badgeClassName: "bg-white text-blue-700",
+      completedSegmentClassName: "bg-blue-600",
+      activeSegmentClassName: "animate-pulse bg-blue-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   orange: {
     iconWrap: "bg-orange-500 text-white shadow-orange-100",
     button: "border-orange-200 text-orange-600 hover:bg-orange-50",
     arrow: "text-orange-500",
+    progress: {
+      containerClassName: "border-orange-100 bg-orange-50/80",
+      iconClassName: "bg-orange-500 text-white shadow-orange-100",
+      badgeClassName: "bg-white text-orange-700",
+      completedSegmentClassName: "bg-orange-500",
+      activeSegmentClassName: "animate-pulse bg-orange-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
 } as const;
 
@@ -2595,6 +2659,10 @@ function pillarTheme(colorKey: string | null | undefined) {
     return PILLAR_THEMES[colorKey];
   }
   return PILLAR_THEMES.purple;
+}
+
+function pillarProgressTheme(colorKey: string | null | undefined): MarketingRunProgressTheme {
+  return pillarTheme(colorKey).progress;
 }
 
 function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
@@ -2609,6 +2677,127 @@ function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined
             ? Wrench
             : Sparkles;
   return <Icon className={className} />;
+}
+
+const CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS = [
+  { key: "queue_research", name: "Queue research run" },
+  { key: "load_context", name: "Load startup context" },
+  { key: "research_keywords", name: "Research keyword ideas" },
+  { key: "score_opportunities", name: "Score opportunities" },
+  { key: "select_topics", name: "Select article ideas" },
+  { key: "refresh_topics", name: "Update topic picker" },
+] as const;
+
+function dateMs(value: string | null | undefined) {
+  const parsed = value ? Date.parse(value) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function contentIslandResearchElapsedSeconds(run?: VibeMarketingRunSummary | null) {
+  const researchStep = run?.steps.find((step) => step.key === "research_sources");
+  const startedAt = dateMs(researchStep?.startedAt) ?? dateMs(run?.updatedAt) ?? dateMs(run?.createdAt);
+  if (!startedAt) return 0;
+  return Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+}
+
+function contentIslandDiscoveryStepIndex(run?: VibeMarketingRunSummary | null) {
+  if (!run) return 0;
+  const status = normalizeContentIslandDiscoveryStatus(run.status);
+  if (isContentIslandDiscoveryDoneStatus(status)) return CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length;
+  const currentStep = String(run.currentStep || "").trim().toLowerCase();
+  if (currentStep.includes("final")) return 5;
+  if (currentStep.includes("research")) {
+    const elapsed = contentIslandResearchElapsedSeconds(run);
+    if (elapsed > 150) return 4;
+    if (elapsed > 60) return 3;
+    return 2;
+  }
+  if (currentStep.includes("load") || currentStep.includes("context")) return 1;
+  if (status === "queued" || status === "") return 0;
+  return 2;
+}
+
+function buildContentIslandDiscoveryRunSummary({
+  run,
+  activeRun,
+  submitting,
+  domain,
+}: {
+  run?: VibeMarketingRunSummary | null;
+  activeRun?: ContentIslandDiscoveryRunState | null;
+  submitting?: boolean;
+  domain?: string | null;
+}): VibeMarketingRunSummary | null {
+  if (!run && !activeRun && !submitting) return null;
+  const status = run?.status ?? (submitting ? "queued" : "running");
+  const failed = isContentIslandDiscoveryFailedStatus(status);
+  const activeIndex = failed
+    ? Math.max(0, Math.min(contentIslandDiscoveryStepIndex(run), CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length - 1))
+    : Math.min(contentIslandDiscoveryStepIndex(run), CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length);
+  const steps = CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.map((step, index) => ({
+    key: step.key,
+    name: step.name,
+    required: true,
+    status:
+      index < activeIndex
+        ? "completed"
+        : failed && index === activeIndex
+          ? "failed"
+          : index === activeIndex && !isContentIslandDiscoveryDoneStatus(status)
+            ? "running"
+            : "pending",
+    attempts: index <= activeIndex ? 1 : 0,
+    artifacts: [],
+  }));
+
+  return {
+    runId: run?.runId || activeRun?.runId || "content-island-discovery-starting",
+    workflow: run?.workflow || "auto_discovery",
+    domain: run?.domain || domain || "",
+    githubRepo: run?.githubRepo ?? null,
+    sourceRunId: run?.sourceRunId ?? null,
+    status,
+    currentStep: CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS[Math.min(activeIndex, CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length - 1)]?.key ?? run?.currentStep ?? "queue_research",
+    approvalState: run?.approvalState ?? null,
+    resumeAvailable: run?.resumeAvailable ?? false,
+    createdAt: run?.createdAt,
+    updatedAt: run?.updatedAt,
+    stepOrder: CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.map((step) => step.key),
+    steps,
+    warnings: run?.warnings ?? [],
+    errors: run?.errors ?? [],
+    artifacts: run?.artifacts ?? [],
+    previewUrl: run?.previewUrl ?? null,
+    prUrl: run?.prUrl ?? null,
+    routePath: run?.routePath ?? null,
+    diagnostics: run?.diagnostics ?? {},
+    contentPackage: run?.contentPackage ?? null,
+    componentManifest: run?.componentManifest ?? null,
+    livePreview: run?.livePreview ?? null,
+    componentFeedback: run?.componentFeedback ?? null,
+    workflowProgress: run?.workflowProgress ?? null,
+    publishChildStatus: run?.publishChildStatus ?? null,
+    publishChildRecoverable: run?.publishChildRecoverable ?? false,
+    publishChildWaitReason: run?.publishChildWaitReason ?? null,
+    stale: run?.stale ?? false,
+    staleReason: run?.staleReason ?? null,
+    retryAvailable: run?.retryAvailable ?? false,
+    queueName: run?.queueName ?? null,
+    queuedAt: run?.queuedAt ?? null,
+    result: run?.result ?? {},
+  };
+}
+
+function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, activeRun: ContentIslandDiscoveryRunState | null) {
+  const islandName = activeRun?.islandName || "this content island";
+  if (!run) return `Starting article idea research for ${islandName}.`;
+  if (isContentIslandDiscoveryFailedStatus(run.status)) return `Article idea research needs attention for ${islandName}.`;
+  if (isContentIslandDiscoveryDoneStatus(run.status)) return `New article ideas for ${islandName} are ready. Updating the topic picker.`;
+  const currentStep = String(run.currentStep || "").trim().toLowerCase();
+  if (currentStep.includes("research")) return `Researching and scoring article ideas for ${islandName}.`;
+  if (currentStep.includes("final")) return `Preparing the highest-value ideas for ${islandName}.`;
+  if (currentStep.includes("load") || currentStep.includes("context")) return `Loading startup context for ${islandName}.`;
+  return `Researching article ideas for ${islandName}.`;
 }
 
 function TopicPillarsSection({
@@ -2782,9 +2971,11 @@ function ReturningTopicPickerPage({
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
   const [customPillarNotice, setCustomPillarNotice] = useState(false);
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
-  const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<{ runId: string; islandSlug: string } | null>(null);
+  const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
+  const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
   const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
+  const contentIslandRefreshStartCount = useRef(0);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
@@ -2861,13 +3052,44 @@ function ReturningTopicPickerPage({
     contentIslandDiscoveryFetcher.state !== "idle"
       ? String(contentIslandDiscoveryFetcher.formData?.get("contentIslandSlug") ?? "").trim()
       : "";
-  const generatingPillarSlug = submittedContentIslandSlug || contentIslandDiscoveryRun?.islandSlug || null;
-  const contentIslandDiscoveryBusy = contentIslandDiscoveryFetcher.state !== "idle" || Boolean(contentIslandDiscoveryRun);
+  const submittedContentIslandPillar = submittedContentIslandSlug
+    ? bootstrap.topicPillars.find((pillar) => pillar.slug === submittedContentIslandSlug) ?? null
+    : null;
+  const submittedContentIslandRun: ContentIslandDiscoveryRunState | null =
+    contentIslandDiscoveryFetcher.state !== "idle" && submittedContentIslandPillar
+      ? {
+          runId: "content-island-discovery-starting",
+          islandSlug: submittedContentIslandPillar.slug,
+          islandName: submittedContentIslandPillar.name,
+          iconKey: submittedContentIslandPillar.iconKey,
+          colorKey: submittedContentIslandPillar.colorKey,
+        }
+      : null;
+  const contentIslandPolledRun =
+    contentIslandRunStatusFetcher.data && contentIslandDiscoveryRun?.runId && contentIslandRunStatusFetcher.data.runId === contentIslandDiscoveryRun.runId
+      ? contentIslandRunStatusFetcher.data
+      : null;
+  const contentIslandPolledStatus = normalizeContentIslandDiscoveryStatus(contentIslandPolledRun?.status);
+  const contentIslandRunTerminal = Boolean(contentIslandPolledRun && isContentIslandDiscoveryTerminalStatus(contentIslandPolledStatus));
+  const contentIslandDiscoveryBusy =
+    contentIslandDiscoveryFetcher.state !== "idle" || Boolean(contentIslandDiscoveryRun && !contentIslandRunTerminal);
+  const generatingPillarSlug = contentIslandDiscoveryBusy
+    ? submittedContentIslandSlug || contentIslandDiscoveryRun?.islandSlug || null
+    : submittedContentIslandSlug || null;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
+  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun;
+  const contentIslandProgressRun = buildContentIslandDiscoveryRunSummary({
+    run: contentIslandPolledRun,
+    activeRun: contentIslandProgressState,
+    submitting: contentIslandDiscoveryFetcher.state !== "idle",
+    domain,
+  });
+  const contentIslandProgressLabel = contentIslandDiscoveryStepLabel(contentIslandPolledRun, contentIslandProgressState);
+  const contentIslandProgressTheme = pillarProgressTheme(contentIslandProgressState?.colorKey);
   const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
   const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
   const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
@@ -2929,6 +3151,8 @@ function ReturningTopicPickerPage({
     setActiveTab("choose");
     setVisibleCount(5);
     setToast(null);
+    setContentIslandDiscoveryRun(null);
+    setContentIslandRefreshRunId(null);
     const formData = new FormData();
     formData.set("intent", "start-content-island-discovery");
     formData.set("contentIslandSlug", pillar.slug);
@@ -2988,11 +3212,19 @@ function ReturningTopicPickerPage({
       setToast({ kind: "error", message: data.error || "Could not start article idea research for that content island." });
       return;
     }
-    setContentIslandDiscoveryRun({ runId: data.runId, islandSlug: data.islandSlug || "" });
-  }, [contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+    const pillar = bootstrap.topicPillars.find((item) => item.slug === data.islandSlug);
+    setContentIslandDiscoveryRun({
+      runId: data.runId,
+      islandSlug: data.islandSlug || pillar?.slug || "",
+      islandName: data.islandName || pillar?.name || "this content island",
+      iconKey: data.islandIconKey || pillar?.iconKey || "default",
+      colorKey: data.islandColorKey || pillar?.colorKey || "purple",
+    });
+  }, [bootstrap.topicPillars, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
 
   useEffect(() => {
     if (!contentIslandDiscoveryRun?.runId) return;
+    if (contentIslandRunTerminal) return;
     const runId = contentIslandDiscoveryRun.runId;
     const statusPath = `/founder-tools/marketing/runs/${encodeURIComponent(runId)}/status`;
     contentIslandRunStatusFetcher.load(statusPath);
@@ -3002,15 +3234,17 @@ function ReturningTopicPickerPage({
       }
     }, 3000);
     return () => window.clearInterval(intervalId);
-  }, [contentIslandDiscoveryRun?.runId]);
+  }, [contentIslandDiscoveryRun?.runId, contentIslandRunTerminal]);
 
   useEffect(() => {
-    const run = contentIslandRunStatusFetcher.data;
+    const run = contentIslandPolledRun;
     if (!run || !contentIslandDiscoveryRun || run.runId !== contentIslandDiscoveryRun.runId) return;
     const status = String(run.status || "").trim().toLowerCase();
-    if (CONTENT_ISLAND_DISCOVERY_DONE_STATUSES.has(status)) {
+    if (isContentIslandDiscoveryDoneStatus(status)) {
       if (!completedContentIslandDiscoveryRuns.current.has(run.runId)) {
         completedContentIslandDiscoveryRuns.current.add(run.runId);
+        contentIslandRefreshStartCount.current = bootstrap.topicCandidates.length;
+        setContentIslandRefreshRunId(run.runId);
         setActivePillarSlug(null);
         setActiveTab("choose");
         setVisibleCount(5);
@@ -3020,14 +3254,26 @@ function ReturningTopicPickerPage({
           topicListRef.current?.focus({ preventScroll: true });
         }, 0);
       }
-      setContentIslandDiscoveryRun(null);
       return;
     }
-    if (CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES.has(status)) {
-      setContentIslandDiscoveryRun(null);
-      setToast({ kind: "error", message: run.errors[0] || "Article idea research did not complete. Try generating again." });
+    if (isContentIslandDiscoveryFailedStatus(status)) {
+      setContentIslandRefreshRunId(null);
+      setToast(null);
     }
-  }, [contentIslandDiscoveryRun, contentIslandRunStatusFetcher.data, revalidator]);
+  }, [bootstrap.topicCandidates.length, contentIslandDiscoveryRun, contentIslandPolledRun, revalidator]);
+
+  useEffect(() => {
+    if (!contentIslandRefreshRunId || revalidator.state !== "idle") return;
+    const refreshedFromRun =
+      latestDiscoveryRunId === contentIslandRefreshRunId ||
+      bootstrap.topicCandidates.some((topic) => topic.sourceRunId === contentIslandRefreshRunId) ||
+      bootstrap.topicCandidates.length !== contentIslandRefreshStartCount.current;
+    if (!refreshedFromRun) return;
+    setContentIslandDiscoveryRun((current) =>
+      current?.runId === contentIslandRefreshRunId ? null : current,
+    );
+    setContentIslandRefreshRunId(null);
+  }, [bootstrap.topicCandidates, bootstrap.topicCandidates.length, contentIslandRefreshRunId, latestDiscoveryRunId, revalidator.state]);
 
   useEffect(() => {
     if (!activePillarSlug) return;
@@ -3192,6 +3438,17 @@ function ReturningTopicPickerPage({
                     </button>
                   ) : null}
                 </div>
+                {contentIslandProgressRun && contentIslandProgressState ? (
+                  <div className="mt-5">
+                    <MarketingRunProgressCard
+                      run={contentIslandProgressRun}
+                      title="Researching article ideas"
+                      currentStepLabel={contentIslandProgressLabel}
+                      icon={<PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />}
+                      theme={contentIslandProgressTheme}
+                    />
+                  </div>
+                ) : null}
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
                     visibleTopics.map((topic) => (
