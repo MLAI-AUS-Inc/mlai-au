@@ -136,6 +136,55 @@ function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | 
   return LIVE_PREVIEW_ACTIVE_STATUSES.has(previewStatus) || LIVE_PREVIEW_ACTIVE_STATUSES.has(platformStatus);
 }
 
+function exactLivePreviewUrl(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const previewUrl = String(preview?.previewUrl ?? "").trim();
+  return preview?.available && preview.exactRender === true && previewUrl ? previewUrl : "";
+}
+
+function fallbackLivePreviewUrl(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const explicitFallbackUrl = String(preview?.fallbackPreviewUrl ?? "").trim();
+  if (explicitFallbackUrl) return explicitFallbackUrl;
+
+  const previewUrl = String(preview?.previewUrl ?? "").trim();
+  if (!previewUrl || preview?.exactRender === true) return "";
+  const previewMode = String(preview?.previewMode ?? "").trim().toLowerCase();
+  const renderConfidence = String(preview?.renderConfidence ?? "").trim().toLowerCase();
+  return preview?.fullSiteBuildSkipped ||
+    previewMode === "route_scoped_next_preview" ||
+    renderConfidence === "fallback" ||
+    Boolean(preview?.fallbackReason)
+    ? previewUrl
+    : "";
+}
+
+function articleSystemSetupExactPreviewUrl(
+  run: VibeMarketingRunSummary,
+  sourceRun?: VibeMarketingRunSummary | null,
+) {
+  const livePreviewUrl = exactLivePreviewUrl(run.livePreview);
+  if (livePreviewUrl) return livePreviewUrl;
+
+  const runPreviewUrl =
+    run.previewUrl ||
+    stringResultValue(run, "preview_url", "previewUrl") ||
+    (sourceRun ? stringResultValue(sourceRun, "preview_url", "previewUrl") : "");
+  return runPreviewUrl && (!run.livePreview || run.livePreview.exactRender === true) ? runPreviewUrl : "";
+}
+
+function articleSystemSetupFallbackPreviewUrl(
+  run: VibeMarketingRunSummary,
+  sourceRun?: VibeMarketingRunSummary | null,
+) {
+  const setup = articleSystemSetupPayload(run);
+  const sourceSetup = sourceRun ? articleSystemSetupPayload(sourceRun) : {};
+  return (
+    fallbackLivePreviewUrl(run.livePreview) ||
+    String(setup.fallback_preview_url ?? setup.fallbackPreviewUrl ?? "").trim() ||
+    (sourceRun ? fallbackLivePreviewUrl(sourceRun.livePreview) : "") ||
+    String(sourceSetup.fallback_preview_url ?? sourceSetup.fallbackPreviewUrl ?? "").trim()
+  );
+}
+
 function isTerminalAttentionStatus(status: string | null | undefined) {
   return RESUMABLE_ATTENTION_STATUSES.has(String(status ?? "").trim().toLowerCase());
 }
@@ -772,11 +821,8 @@ function ArticleSystemSetupPreviewPanel({
       return hint && typeof hint === "object" ? String((hint as Record<string, unknown>).route_path ?? "") : "";
     })();
   const prUrl = run.prUrl || stringResultValue(run, "pr_url", "prUrl") || stringResultValue(source, "pr_url", "prUrl");
-  const previewUrl =
-    run.livePreview?.previewUrl ||
-    run.previewUrl ||
-    stringResultValue(run, "preview_url", "previewUrl") ||
-    stringResultValue(source, "preview_url", "previewUrl");
+  const previewUrl = articleSystemSetupExactPreviewUrl(run, source);
+  const fallbackPreviewUrl = articleSystemSetupFallbackPreviewUrl(run, source);
   const setupRunId = setupRunIdForRun(run) || setupRunIdForRun(source) || run.runId;
   const setupStatus = (
     stringResultValue(run, "status", "setupStatus", "setup_status") ||
@@ -795,12 +841,12 @@ function ArticleSystemSetupPreviewPanel({
     .map((item) => String(item ?? "").trim())
     .filter(Boolean)
     .slice(0, 8);
-  const canApprove = run.status === "awaiting_approval" || run.status === "approval_required";
+  const canApprove = Boolean(previewUrl && (run.status === "awaiting_approval" || run.status === "approval_required"));
   const setupCompleted = setupMerged;
-  const previewReady = Boolean(previewUrl || (run.livePreview?.available && run.livePreview.previewUrl));
+  const previewReady = Boolean(previewUrl);
   const setupTerminalFailure = ["blocked", "failed"].includes(run.status);
   const previewActive = !setupTerminalFailure && hasActiveLivePreview(run.livePreview);
-  const previewFailed = setupTerminalFailure || isFailedArticlePreview(run.livePreview);
+  const previewFailed = setupTerminalFailure || Boolean(fallbackPreviewUrl) || isFailedArticlePreview(run.livePreview);
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -850,10 +896,19 @@ function ArticleSystemSetupPreviewPanel({
           emptyDraftText="0 draft revision pins ready for review."
           submittedRetryText="Submitted revision comments are ready to retry."
           waitingBridgeText="Waiting for revision bridge"
-          unavailableSlot={<ArticleSystemSetupPreviewUnavailable run={run} previewUrl={previewUrl} isSubmitting={isSubmitting} isActionPending={isActionPending} />}
+          requiresExactPreview
+          unavailableSlot={
+            <ArticleSystemSetupPreviewUnavailable
+              run={run}
+              previewUrl={previewUrl}
+              fallbackPreviewUrl={fallbackPreviewUrl}
+              isSubmitting={isSubmitting}
+              isActionPending={isActionPending}
+            />
+          }
           actionSlot={(reviewState) => {
             const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
-            const approveDisabled = isSubmitting || needsCommentSubmitFirst;
+            const approveDisabled = isSubmitting || needsCommentSubmitFirst || !previewUrl;
             const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
             const denyPending = isActionPending?.("deny") ?? isSubmitting;
             const approvePending = isActionPending?.("approve") ?? isSubmitting;
@@ -911,6 +966,7 @@ function ArticleSystemSetupPreviewPanel({
             <ArticleSystemSetupPreviewUnavailable
               run={run}
               previewUrl={previewUrl}
+              fallbackPreviewUrl={fallbackPreviewUrl}
               isSubmitting={isSubmitting}
               isActionPending={isActionPending}
             />
@@ -964,15 +1020,18 @@ function ArticleSystemSetupPreviewPanel({
 function ArticleSystemSetupPreviewUnavailable({
   run,
   previewUrl,
+  fallbackPreviewUrl,
   isSubmitting,
   isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   previewUrl?: string | null;
+  fallbackPreviewUrl?: string | null;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
 }) {
   const preview = run.livePreview;
+  const diagnosticFallbackUrl = String(fallbackPreviewUrl || fallbackLivePreviewUrl(preview) || "").trim();
   const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
   const terminalFailure = isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status);
   const previewActive = !terminalFailure && hasActiveLivePreview(preview);
@@ -998,13 +1057,17 @@ function ArticleSystemSetupPreviewUnavailable({
     currentErrorCode === "GITHUB_APP_WRITE_ACCESS_REQUIRED" ||
     (!currentErrorCode && /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError));
   const isNextAppRootLayoutMissing = currentErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING" || previewErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING";
-  const error = previewActive
+  const fallbackMessage = diagnosticFallbackUrl
+    ? "A diagnostic fallback preview is available, but it is not the real deployed Next.js page and cannot be approved."
+    : "";
+  const error = fallbackMessage ||
+    (previewActive
     ? ""
     : isGithubAppWriteAccessError
       ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
       : isNextAppRootLayoutMissing
         ? "Content Factory found a Next.js App Router project but could not confirm a root app/layout.* file from the latest repository context. Re-run the repository scan, then retry setup."
-      : rawError || (terminalFailure ? "The articles setup build did not advance." : "");
+      : rawError || (terminalFailure ? "The articles setup build did not advance." : ""));
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
   const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
   const retryIntent = setupRetryable ? "resume" : "start-live-preview";
@@ -1014,10 +1077,16 @@ function ArticleSystemSetupPreviewUnavailable({
   return (
     <div className={clsx(
       "rounded-xl border px-4 py-5 text-sm font-semibold",
-      error ? "border-red-200 bg-red-50 text-red-800" : "border-violet-100 bg-violet-50 text-violet-800",
+      diagnosticFallbackUrl
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : error
+          ? "border-red-200 bg-red-50 text-red-800"
+          : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
       <p className="font-black">
-        {error
+        {diagnosticFallbackUrl
+          ? "Exact articles preview is not ready"
+          : error
           ? setupRetryable
             ? "Articles setup build did not advance"
             : "Articles setup preview could not be prepared"
@@ -1026,6 +1095,16 @@ function ArticleSystemSetupPreviewUnavailable({
       <p className="mt-1">{previewActive ? "Waiting for GitHub Actions to finish. Refreshing this page is safe." : `Preview status: ${previewStatus}. Refreshing this page is safe.`}</p>
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        {diagnosticFallbackUrl ? (
+          <a
+            href={diagnosticFallbackUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-100"
+          >
+            Open diagnostic fallback
+          </a>
+        ) : null}
         {logsUrl ? (
           <a
             href={logsUrl}
@@ -1400,6 +1479,7 @@ function LivePreviewCommentInspectorPanel({
   waitingBridgeText = "Waiting for comment bridge",
   actionSlot,
   unavailableSlot,
+  requiresExactPreview = false,
 }: {
   run: VibeMarketingRunSummary;
   targetRunId?: string | null;
@@ -1414,16 +1494,19 @@ function LivePreviewCommentInspectorPanel({
   waitingBridgeText?: string;
   actionSlot: (state: LivePreviewCommentInspectorState) => ReactNode;
   unavailableSlot?: ReactNode;
+  requiresExactPreview?: boolean;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
   const preview = useMemo(() => {
-    const fallbackUrl = String(previewUrlFallback || "").trim();
+    const fallbackUrl = requiresExactPreview ? "" : String(previewUrlFallback || "").trim();
     if (run.livePreview) {
-      const previewUrl = run.livePreview.previewUrl || fallbackUrl;
+      const previewUrl = requiresExactPreview && run.livePreview.exactRender !== true
+        ? ""
+        : run.livePreview.previewUrl || fallbackUrl;
       return {
         ...run.livePreview,
-        available: Boolean(run.livePreview.available || previewUrl),
+        available: Boolean((!requiresExactPreview && run.livePreview.available) || previewUrl),
         previewUrl,
       };
     }
@@ -1436,7 +1519,7 @@ function LivePreviewCommentInspectorPanel({
       inspectorProtocolVersion: null,
       inspectorMode: null,
     } as NonNullable<VibeMarketingRunSummary["livePreview"]>;
-  }, [previewUrlFallback, run.livePreview]);
+  }, [previewUrlFallback, requiresExactPreview, run.livePreview]);
   const canRenderPreview = Boolean(preview?.available && preview.previewUrl);
   const [componentMeasurements, setComponentMeasurements] = useState<Record<string, InspectorComponentMeasurement>>({});
   const [pendingPin, setPendingPin] = useState<PendingCommentPin | null>(null);
@@ -2901,8 +2984,8 @@ function isSetupScanRun(run: VibeMarketingRunSummary) {
 function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
   if (run.status === "completed" || setupStatus === "manual_merge_required") return "publish";
-  if (run.livePreview?.available && run.livePreview.previewUrl) return "review";
-  if (run.previewUrl || run.status === "awaiting_approval" || run.status === "approval_required") return "review";
+  if (exactLivePreviewUrl(run.livePreview) || articleSystemSetupExactPreviewUrl(run)) return "review";
+  if ((run.status === "awaiting_approval" || run.status === "approval_required") && articleSystemSetupExactPreviewUrl(run)) return "review";
   return "generate";
 }
 
