@@ -272,6 +272,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       companyLinkedInUrl: asNullableString(company.companyLinkedInUrl) ?? asNullableString(company.company_linkedin_url),
       location: asNullableString(company.location),
       abn: asNullableString(company.abn),
+      avatarUrl: asNullableString(company.avatarUrl) ?? asNullableString(company.avatar_url),
       organizationId: Number(company.organizationId ?? company.organization_id ?? 0) || null,
     },
     organization: {
@@ -1241,6 +1242,14 @@ export async function getVibeMarketingBootstrap(
 export async function saveVibeMarketingSettings(env: Env, request: Request, body: Record<string, unknown>) {
   const client = createApiClient(env, request);
   const response = await client.put(`${BASE_PATH}/settings`, body);
+  return normalizeBootstrap(response.data);
+}
+
+export async function uploadVibeMarketingCompanyAvatar(env: Env, request: Request, file: File) {
+  const client = createApiClient(env, request);
+  const formData = new FormData();
+  formData.set("avatar", file);
+  const response = await client.post(`${BASE_PATH}/company/avatar/`, formData);
   return normalizeBootstrap(response.data);
 }
 

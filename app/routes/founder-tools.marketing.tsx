@@ -9,6 +9,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Camera,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
@@ -36,6 +37,7 @@ import { clsx } from "clsx";
 
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
+import AvatarModal from "~/components/AvatarModal";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
@@ -53,6 +55,7 @@ import {
   startVibeMarketingBaseline,
   startVibeMarketingDiscovery,
   startVibeMarketingScan,
+  uploadVibeMarketingCompanyAvatar,
 } from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
@@ -283,6 +286,18 @@ export async function action({ request, context }: Route.ActionArgs) {
   const intent = stringFromForm(formData, "intent");
 
   try {
+    if (intent === "save-company-avatar") {
+      if (!vibeContext.appUser) {
+        return { intent, error: "Create your startup profile before adding an avatar." };
+      }
+      const avatar = formData.get("avatar");
+      if (!(avatar instanceof File) || avatar.size === 0) {
+        return { intent, error: "Choose an avatar image before saving." };
+      }
+      const bootstrap = await uploadVibeMarketingCompanyAvatar(env, request, avatar);
+      return { intent, avatarUrl: bootstrap.company.avatarUrl ?? null };
+    }
+
     if (intent === "save-startup-details") {
       const { founderProfiles, founderNames } = founderNamesFromForm(formData);
       const name = stringFromForm(formData, "companyName");
@@ -2552,6 +2567,12 @@ type ContentIslandDiscoveryActionData = {
   errors?: string[];
 };
 
+type CompanyAvatarActionData = {
+  intent?: string;
+  avatarUrl?: string | null;
+  error?: string | null;
+};
+
 type ContentIslandDiscoveryRunState = {
   runId: string;
   islandSlug: string;
@@ -3003,6 +3024,7 @@ function ReturningTopicPickerPage({
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
   const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
   const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
+  const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
   const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
@@ -3018,9 +3040,12 @@ function ReturningTopicPickerPage({
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
   const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
+  const [companyAvatarModalOpen, setCompanyAvatarModalOpen] = useState(false);
+  const [companyAvatarPreviewUrl, setCompanyAvatarPreviewUrl] = useState<string | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
   const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
   const contentIslandRefreshStartCount = useRef(0);
+  const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
@@ -3078,6 +3103,13 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
+  const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
+  const companyAvatarSaving = companyAvatarFetcher.state !== "idle";
+  const companyAvatarError =
+    companyAvatarFetcher.data?.intent === "save-company-avatar"
+      ? companyAvatarFetcher.data.error ?? null
+      : null;
   const latestArticleRunId =
     bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article", "article_revision"].includes(run.workflow))?.runId ?? "";
   const latestDiscoveryRunId =
@@ -3222,6 +3254,56 @@ function ReturningTopicPickerPage({
       pillarHelpRef.current?.focus({ preventScroll: true });
     }, 0);
   }
+
+  const handleCompanyAvatarSave = useCallback(
+    (file: File) => {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+      }
+      const previewUrl = window.URL.createObjectURL(file);
+      companyAvatarPreviewObjectUrl.current = previewUrl;
+      setCompanyAvatarPreviewUrl(previewUrl);
+      setToast(null);
+
+      const formData = new FormData();
+      formData.set("intent", "save-company-avatar");
+      formData.set("avatar", file);
+      companyAvatarFetcher.submit(formData, {
+        method: "POST",
+        encType: "multipart/form-data",
+      });
+    },
+    [companyAvatarFetcher],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+        companyAvatarPreviewObjectUrl.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const data = companyAvatarFetcher.data;
+    if (companyAvatarFetcher.state !== "idle" || data?.intent !== "save-company-avatar") return;
+    if (data.error) {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+        companyAvatarPreviewObjectUrl.current = null;
+      }
+      setCompanyAvatarPreviewUrl(null);
+      setToast({ kind: "error", message: data.error });
+      return;
+    }
+    if (companyAvatarPreviewObjectUrl.current) {
+      window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+      companyAvatarPreviewObjectUrl.current = null;
+    }
+    setCompanyAvatarPreviewUrl(data.avatarUrl ?? null);
+    revalidator.revalidate();
+  }, [companyAvatarFetcher.data, companyAvatarFetcher.state, revalidator]);
 
   useEffect(() => {
     try {
@@ -3674,14 +3756,34 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
             <div className="mt-6 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-xl font-black text-white">
-                {companyInitials(companyName)}
+              <div className="group relative h-14 w-14 shrink-0">
+                {companyAvatarUrl ? (
+                  <img
+                    src={companyAvatarUrl}
+                    alt={`${companyName} avatar`}
+                    className="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-xl font-black text-white">
+                    {companyInitials(companyName)}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setCompanyAvatarModalOpen(true)}
+                  disabled={companyAvatarSaving}
+                  aria-label="Edit company avatar"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {companyAvatarSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+                </button>
               </div>
               <div className="min-w-0">
                 <p className="truncate text-lg font-black text-slate-950">{companyName}</p>
                 <p className="mt-1 text-sm font-bold text-slate-500">
                   {tags.length ? tags.join(" · ") : "Startup · SEO · Growth"}
                 </p>
+                {companyAvatarError ? <p className="mt-1 text-xs font-bold text-red-600">{companyAvatarError}</p> : null}
               </div>
             </div>
             <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4">
@@ -3761,6 +3863,14 @@ function ReturningTopicPickerPage({
           </section>
         </aside>
       </div>
+      <AvatarModal
+        isOpen={companyAvatarModalOpen}
+        onClose={() => setCompanyAvatarModalOpen(false)}
+        onSave={handleCompanyAvatarSave}
+        initialImage={savedCompanyAvatarUrl ?? undefined}
+        seedInitialImage={Boolean(savedCompanyAvatarUrl)}
+        title="Update company avatar"
+      />
       {draftDeleteRequest ? (
         <DraftDeleteConfirmationModal
           draft={draftDeleteRequest}

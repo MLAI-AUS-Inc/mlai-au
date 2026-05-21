@@ -157,6 +157,7 @@ export interface VibeMarketingCompany {
   companyLinkedInUrl?: string | null;
   location?: string | null;
   abn?: string | null;
+  avatarUrl?: string | null;
   organizationId?: number | null;
 }
 
