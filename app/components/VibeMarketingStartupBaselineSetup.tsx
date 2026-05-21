@@ -36,6 +36,11 @@ import {
   type StartupSetupField,
   type StartupSetupValues,
 } from "~/lib/vibe-marketing-startup-setup";
+import {
+  autofillProgressState,
+  autofillStartErrorsForDisplay,
+  isAutofillStatusPollFailure,
+} from "~/lib/vibe-marketing-autofill-state";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import type {
   VibeMarketingAutofillCompetitor,
@@ -54,8 +59,8 @@ const FLOW_STEPS = [
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
 
-const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
-const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
+const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running", "processing", "in_progress"]);
+const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "precondition_failed", "cancelled", "canceled", "denied", "error"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 const MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY = "vibe_marketing_startup_setup_mobile_tour_seen_v1";
 
@@ -1518,7 +1523,7 @@ function ProfileResearchProgressCard({
         run?.errors?.[0] ||
         (failed ? "AI research is unavailable. Check the Content Factory backend and try again." : null);
   const notice = unavailable
-    ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
+    ? "We have not received a fresh status update for more than 10 minutes. You can retry now, or keep this page open while polling continues."
     : stalled
       ? "This is taking longer than expected. We will keep checking for progress in the background."
       : null;
@@ -1583,7 +1588,7 @@ function ProfileResearchProgressCard({
                 {pending ? "Contacting the AI research service" : partial ? "AI prepared partial article context without changing your profile." : autofillStepLabel(run?.currentStep)}
               </p>
               <p className="mt-1 text-sm font-medium text-gray-500">
-                {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? "The form is unlocked so you can edit your details or retry." : "Article context is ready for future article generation."}
+                {active ? "Deep research can take several minutes. Refreshing the page is safe." : failed ? "The form is unlocked so you can edit your details or retry." : "Article context is ready for future article generation."}
               </p>
             </>
           ) : null}
@@ -1702,10 +1707,17 @@ export default function VibeMarketingStartupBaselineSetup({
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
       ? autofillStartData.status
       : null;
-  const autofillStartError =
+  const autofillStartDisplayErrors =
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
-      ? autofillStartData.error ?? autofillStartData.errors?.[0] ?? null
-      : null;
+      ? autofillStartErrorsForDisplay({
+          runId: autofillStartData.autofillRunId,
+          status: autofillStartStatus,
+          error: autofillStartData.error,
+          errors: autofillStartData.errors,
+        })
+      : [];
+  const autofillStartError =
+    autofillStartDisplayErrors[0] ?? null;
   const baselineStartData = baselineStartFetcher.data;
   const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
@@ -1730,8 +1742,11 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
   const autofillStatusAgeMs = autofillStartedAt ? autofillClock - (autofillLastPollAt ?? autofillStartedAt) : 0;
   const autofillProgressAgeMs = autofillStartedAt ? autofillClock - (autofillLastProgressAt ?? autofillStartedAt) : 0;
-  const autofillStalled = Boolean(autofillPolling && autofillProgressAgeMs > 60_000);
-  const autofillUnavailable = Boolean(autofillPolling && (autofillStatusAgeMs > 120_000 || autofillProgressAgeMs > 120_000));
+  const { stalled: autofillStalled, unavailable: autofillUnavailable } = autofillProgressState({
+    polling: autofillPolling,
+    statusAgeMs: autofillStatusAgeMs,
+    progressAgeMs: autofillProgressAgeMs,
+  });
   const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
   const canStartAutofill =
     Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
@@ -2019,6 +2034,7 @@ export default function VibeMarketingStartupBaselineSetup({
 
   useEffect(() => {
     if (!autofillRunId || !autofillRun) return;
+    if (isAutofillStatusPollFailure(autofillRun)) return;
     const now = Date.now();
     const signature = researchProgressSignature(autofillRun);
     setAutofillLastPollAt(now);

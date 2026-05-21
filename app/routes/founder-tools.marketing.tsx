@@ -39,8 +39,14 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
+import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import {
+  autofillProgressState,
+  autofillStartErrorsForDisplay,
+  isAutofillStatusPollFailure,
+} from "~/lib/vibe-marketing-autofill-state";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -614,19 +620,14 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
-    const responseData = error?.data ?? error?.response?.data;
-    const responseErrors = Array.isArray(responseData?.errors)
-      ? responseData.errors.map((item: unknown) => String(item)).filter(Boolean)
-      : [];
+    const fallback =
+      intent === "start-autofill"
+        ? "AI research could not start. Check the backend logs and try again."
+        : "That action could not be completed.";
+    const responseErrors = readableBackendErrors(error, { fallback });
     return {
       intent,
-      error:
-        responseErrors[0] ??
-        responseData?.detail ??
-        responseData?.error ??
-        responseData?.message ??
-        error?.message ??
-        "That action could not be completed.",
+      error: readableBackendError(error, { fallback }),
       errors: responseErrors,
     };
   }
@@ -1080,8 +1081,8 @@ function competitorStringsFromAutofill(autofill: VibeMarketingAutofillResult) {
     });
 }
 
-const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
-const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
+const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running", "processing", "in_progress"]);
+const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "precondition_failed", "cancelled", "canceled", "denied", "error"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 
 const PROFILE_RESEARCH_STEPS = [
@@ -1259,7 +1260,7 @@ function ProfileResearchProgressCard({
     run?.errors?.[0] ||
     (failed ? "AI fill is unavailable. Check the Content Factory backend and try again." : null);
   const notice = unavailable
-    ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
+    ? "We have not received a fresh status update for more than 10 minutes. You can retry now, or keep this page open while polling continues."
     : stalled
       ? "This is taking longer than expected. We will keep checking for progress in the background."
       : null;
@@ -1306,7 +1307,7 @@ function ProfileResearchProgressCard({
           </p>
           <p className="mt-1 text-sm font-medium text-slate-500">
             {active
-              ? "Usually takes 1-3 minutes. Refreshing the page is safe."
+              ? "Deep research can take several minutes. Refreshing the page is safe."
               : failed
                 ? "The form is unlocked so you can retry or fill the fields manually."
                 : "Review the populated fields before continuing."}
@@ -1525,10 +1526,17 @@ function FirstArticleSetupPage({
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
       ? autofillStartData.status
       : null;
-  const autofillStartError =
+  const autofillStartDisplayErrors =
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
-      ? autofillStartData.error ?? autofillStartData.errors?.[0] ?? null
-      : null;
+      ? autofillStartErrorsForDisplay({
+          runId: autofillStartData.autofillRunId,
+          status: autofillStartStatus,
+          error: autofillStartData.error,
+          errors: autofillStartData.errors,
+        })
+      : [];
+  const autofillStartError =
+    autofillStartDisplayErrors[0] ?? null;
   const baselineStartData = baselineStartFetcher.data;
   const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
@@ -1550,8 +1558,11 @@ function FirstArticleSetupPage({
   const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
   const autofillStatusAgeMs = autofillStartedAt ? autofillClock - (autofillLastPollAt ?? autofillStartedAt) : 0;
   const autofillProgressAgeMs = autofillStartedAt ? autofillClock - (autofillLastProgressAt ?? autofillStartedAt) : 0;
-  const autofillStalled = Boolean(autofillPolling && autofillProgressAgeMs > 60_000);
-  const autofillUnavailable = Boolean(autofillPolling && (autofillStatusAgeMs > 120_000 || autofillProgressAgeMs > 120_000));
+  const { stalled: autofillStalled, unavailable: autofillUnavailable } = autofillProgressState({
+    polling: autofillPolling,
+    statusAgeMs: autofillStatusAgeMs,
+    progressAgeMs: autofillProgressAgeMs,
+  });
   const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
   const canStartAutofill =
     Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
@@ -1664,6 +1675,7 @@ function FirstArticleSetupPage({
 
   useEffect(() => {
     if (!autofillRunId || !autofillRun) return;
+    if (isAutofillStatusPollFailure(autofillRun)) return;
     const now = Date.now();
     const signature = researchProgressSignature(autofillRun);
     setAutofillLastPollAt(now);

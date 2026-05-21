@@ -1,4 +1,6 @@
 import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
+import { readableBackendErrors } from "~/lib/backend-error";
+import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
 import type {
   VibeMarketingBootstrap,
   VibeMarketingComponentFeedback,
@@ -1392,16 +1394,37 @@ async function startMarketingRun(env: Env, request: Request, path: string, body:
   const response = await client.post(`${BASE_PATH}/${path}`, body);
   const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
   const setupRunId = asNullableString(response.data?.setupRunId) ?? asNullableString(response.data?.setup_run_id);
-  const error =
-    asNullableString(response.data?.error) ??
-    asNullableString(response.data?.detail) ??
-    asNullableString(response.data?.message);
+  const rawErrorPayload = {
+    errors: response.data?.errors,
+    detail: response.data?.detail,
+    error: response.data?.error,
+    message: response.data?.message,
+  };
+  const hasErrorPayload = Object.values(rawErrorPayload).some((value) =>
+    Array.isArray(value) ? value.length > 0 : Boolean(value),
+  );
+  const status = asNullableString(response.data?.status) ?? "queued";
+  const errors =
+    path === "autofill" && hasAcceptedAutofillRun(runId, status)
+      ? []
+      : hasErrorPayload
+        ? readableBackendErrors(
+            { data: rawErrorPayload },
+            {
+              fallback:
+                path === "autofill"
+                  ? "AI research could not start. Check the backend logs and try again."
+                  : "That action could not be completed.",
+            },
+          )
+        : [];
+  const error = errors[0] ?? null;
   return {
     runId,
     setupRunId,
-    status: asNullableString(response.data?.status) ?? "queued",
+    status,
     error,
-    errors: asStringList(response.data?.errors ?? (error ? [error] : [])),
+    errors,
   };
 }
 

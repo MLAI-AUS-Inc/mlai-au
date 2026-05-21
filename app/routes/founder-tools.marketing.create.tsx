@@ -24,6 +24,7 @@ import {
 } from "~/components/TopicDecisionCard";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { type VibeMarketingStepKey } from "~/components/VibeMarketingStepper";
+import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
@@ -756,14 +757,13 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const fallback =
+      intent === "start-autofill"
+        ? "AI research could not start. Check the backend logs and try again."
+        : "That action could not be completed.";
     return {
       intent,
-      error:
-        error?.data?.detail ??
-        error?.data?.error ??
-        error?.response?.data?.detail ??
-        error?.message ??
-        "That action could not be completed.",
+      error: readableBackendError(error, { fallback }),
     };
   }
 
