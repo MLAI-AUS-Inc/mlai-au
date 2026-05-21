@@ -306,6 +306,13 @@ function isArticleSystemSetupRun(run: VibeMarketingRunSummary | null | undefined
   return run?.workflow === "article_system_setup";
 }
 
+function hasExactArticleSystemSetupPreview(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return false;
+  const livePreviewUrl = String(run.livePreview?.previewUrl ?? "").trim();
+  if (run.livePreview && run.livePreview.exactRender === true && livePreviewUrl) return true;
+  return Boolean(run.previewUrl && (!run.livePreview || run.livePreview.exactRender === true));
+}
+
 function isSetupProgressTerminal(run: VibeMarketingRunSummary | null | undefined) {
   if (!run) return true;
   return (
@@ -1120,7 +1127,7 @@ export default function FounderToolsMarketingCreate() {
       !setupPublished &&
       !setupVerifying &&
       !setupManualMergeRequired &&
-      (SETUP_READY_STATUSES.has(setupChildRun.status) || setupChildRun.livePreview?.previewUrl || setupChildRun.previewUrl),
+      hasExactArticleSystemSetupPreview(setupChildRun),
   );
   const setupLegacyNeedsPreview = Boolean(
     pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),

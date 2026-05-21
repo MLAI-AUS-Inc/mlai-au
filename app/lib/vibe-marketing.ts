@@ -59,6 +59,17 @@ function asNumber(value: unknown): number | null {
   return null;
 }
 
+function asBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off", ""].includes(normalized)) return false;
+  }
+  return Boolean(value);
+}
+
 function asNumberOrString(value: unknown): number | string | null {
   return asNumber(value) ?? asNullableString(value);
 }
@@ -617,10 +628,11 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     available: Boolean(payload.available),
     status,
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    fallbackPreviewUrl: asNullableString(payload.fallbackPreviewUrl) ?? asNullableString(payload.fallback_preview_url),
     internalPreviewUrl: asNullableString(payload.internalPreviewUrl) ?? asNullableString(payload.internal_preview_url),
     proxyPath: asNullableString(payload.proxyPath) ?? asNullableString(payload.proxy_path),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
-    exactRender: Boolean(payload.exactRender ?? payload.exact_render),
+    exactRender: asBoolean(payload.exactRender ?? payload.exact_render),
     inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
     inspectorMode: asNullableString(payload.inspectorMode) ?? asNullableString(payload.inspector_mode),
     error: asNullableString(payload.error),
@@ -637,9 +649,11 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     proofAttempts: Array.isArray(payload.proofAttempts ?? payload.proof_attempts)
       ? ((payload.proofAttempts ?? payload.proof_attempts) as Record<string, unknown>[])
       : [],
-    proofAcceptedWithWarnings: Boolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
-    verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
+    proofAcceptedWithWarnings: asBoolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
+    verificationSkippedForPreview: asBoolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
     previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
+    previewBuildMode: asNullableString(payload.previewBuildMode) ?? asNullableString(payload.preview_build_mode),
+    fullSiteBuildSkipped: asBoolean(payload.fullSiteBuildSkipped ?? payload.full_site_build_skipped),
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
     fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),

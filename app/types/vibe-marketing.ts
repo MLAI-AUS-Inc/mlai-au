@@ -346,6 +346,7 @@ export interface VibeMarketingLivePreview {
   available: boolean;
   status: string;
   previewUrl?: string | null;
+  fallbackPreviewUrl?: string | null;
   internalPreviewUrl?: string | null;
   proxyPath?: string | null;
   routePath?: string | null;
@@ -367,6 +368,8 @@ export interface VibeMarketingLivePreview {
   proofAcceptedWithWarnings?: boolean;
   verificationSkippedForPreview?: boolean;
   previewMode?: string | null;
+  previewBuildMode?: string | null;
+  fullSiteBuildSkipped?: boolean;
   renderMode?: string | null;
   renderConfidence?: string | null;
   fallbackReason?: string | null;
