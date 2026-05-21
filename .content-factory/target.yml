@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "runtime_family": "node",
+  "publish_capability": "hook",
+  "worker_queue": "verify-node",
+  "input_format": "content_bundle_v1",
+  "materialize_command": [],
+  "verify_command": [],
+  "publish_command": [],
+  "preview_command": [],
+  "metadata": {
+    "notes": "Fill in runtime-specific commands to materialize and verify .content-factory/article_bundle.json.",
+    "managed_by": "content_factory",
+    "scaffold_strategy": "hook_config_only"
+  }
+}
