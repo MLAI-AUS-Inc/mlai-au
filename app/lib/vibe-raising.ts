@@ -232,6 +232,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
   const companyLinkedInUrl =
     asNullableString(payload.companyLinkedInUrl) ??
     asNullableString(payload.company_linkedin_url);
+  const avatarUrl =
+    asNullableString(payload.avatarUrl) ??
+    asNullableString(payload.avatar_url);
   const location =
     asNullableString(payload.location) ??
     asNullableString(payload.companyLocation) ??
@@ -282,6 +285,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     companyLinkedInUrl,
     abn,
     location,
+    avatarUrl,
     founderProfiles,
     founderNames,
     stage,

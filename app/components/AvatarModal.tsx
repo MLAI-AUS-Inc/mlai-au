@@ -1,4 +1,4 @@
-import React, { useCallback, useState, Fragment } from 'react';
+import React, { useCallback, useEffect, useState, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import Cropper from 'react-easy-crop';
 import { useDropzone } from 'react-dropzone';
@@ -10,14 +10,23 @@ interface AvatarModalProps {
     onClose: () => void;
     onSave: (file: File) => void;
     initialImage?: string;
+    seedInitialImage?: boolean;
     title?: string;
 }
 
-export default function AvatarModal({ isOpen, onClose, onSave, initialImage, title }: AvatarModalProps) {
+export default function AvatarModal({ isOpen, onClose, onSave, initialImage, seedInitialImage = false, title }: AvatarModalProps) {
     const [imageSrc, setImageSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1);
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+
+    useEffect(() => {
+        if (!isOpen) return;
+        setCrop({ x: 0, y: 0 });
+        setZoom(1);
+        setCroppedAreaPixels(null);
+        setImageSrc(seedInitialImage && initialImage ? initialImage : null);
+    }, [initialImage, isOpen, seedInitialImage]);
 
     const onCropComplete = useCallback((_: any, croppedAreaPixels: any) => {
         setCroppedAreaPixels(croppedAreaPixels);
@@ -161,7 +170,7 @@ export default function AvatarModal({ isOpen, onClose, onSave, initialImage, tit
                                     </button>
                                     <button
                                         onClick={handleSave}
-                                        disabled={!imageSrc}
+                                        disabled={!imageSrc || !croppedAreaPixels}
                                         className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50"
                                     >
                                         Save
