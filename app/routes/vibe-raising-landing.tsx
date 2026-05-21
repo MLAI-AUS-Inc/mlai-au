@@ -38,6 +38,7 @@ export default function VibeRaisingLandingPage({}: Route.ComponentProps) {
         showEyebrow={false}
         showInvestorConnectionSection
         useNumberedSectionHeadings
+        bleedToShell={false}
         onCreateFirstUpdate={() => setShowIntroVideo(true)}
       />
 
@@ -45,7 +46,6 @@ export default function VibeRaisingLandingPage({}: Route.ComponentProps) {
         <VibeRaisingIntroPopup
           onDismiss={() => setShowIntroVideo(false)}
           onComplete={continueToUpdateCreation}
-          onSkip={() => setShowIntroVideo(false)}
         />
       ) : null}
     </>

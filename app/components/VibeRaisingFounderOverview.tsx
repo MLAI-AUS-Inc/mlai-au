@@ -123,7 +123,7 @@ function VibeRaisingHeroExampleUpdatePreview() {
 
   return (
     <div className="vr-hero-preview-shell">
-      <div className="vr-hero-preview-window">
+      <div className="vr-hero-preview-window vr-hero-preview-mobile">
         <div className="vr-hero-preview-topbar">
           <div className="vr-hero-preview-dots" aria-hidden="true">
             <span />
@@ -132,7 +132,76 @@ function VibeRaisingHeroExampleUpdatePreview() {
           </div>
           <div>
             <div className="vr-hero-preview-kicker">Example update</div>
-            <div className="vr-hero-preview-title">What your update can look like</div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden bg-[var(--vr-color-card)]">
+          <div className="vr-uch">
+            <div className="vr-uch-bubble-1" />
+            <div className="vr-uch-bubble-2" />
+            <div className="vr-uch-main">
+              <div className="vr-uch-emoji vr-uch-logo" aria-hidden="true">
+                <img src="/vibe-raising/mlai-avatar.png" alt="" />
+              </div>
+              <div className="min-w-0">
+                <div className="vr-uch-title-row">
+                  <span className="vr-uch-title">{HERO_EXAMPLE_UPDATE.month}</span>
+                  <span className="vr-current-chip">Current</span>
+                </div>
+                <div className="vr-uch-company">{HERO_EXAMPLE_USER.companyName}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3 p-4">
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-[var(--vr-color-border-md)] bg-white p-3">
+                <p className="text-base font-black leading-tight text-[var(--vr-color-text)]">
+                  {HERO_EXAMPLE_UPDATE.metrics.revenue}
+                </p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[var(--vr-color-text-sub)]">
+                  Revenue
+                </p>
+              </div>
+              <div className="rounded-lg border border-[var(--vr-color-border-md)] bg-white p-3">
+                <p className="text-base font-black leading-tight text-[var(--vr-color-text)]">
+                  {HERO_EXAMPLE_UPDATE.metrics.monthlyCosts}
+                </p>
+                <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[var(--vr-color-text-sub)]">
+                  Costs
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-[var(--vr-color-border)] bg-white p-3">
+              <div className="mb-2 flex items-center gap-2">
+                <SparklesIcon className="h-4 w-4 text-[var(--vr-color-warning)]" />
+                <span className="text-xs font-extrabold uppercase tracking-[0.08em] text-[var(--vr-color-text)]">
+                  Key Highlights
+                </span>
+              </div>
+              <ul className="space-y-1 text-sm leading-snug text-[var(--vr-color-text-mid)]">
+                {highlights.map((highlight) => (
+                  <li key={highlight} className="flex gap-2">
+                    <span className="text-[var(--vr-color-text-sub)]">•</span>
+                    <span>{highlight}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="vr-hero-preview-window vr-hero-preview-desktop">
+        <div className="vr-hero-preview-topbar">
+          <div className="vr-hero-preview-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          <div>
+            <div className="vr-hero-preview-kicker">Example update</div>
           </div>
         </div>
 
@@ -145,8 +214,8 @@ function VibeRaisingHeroExampleUpdatePreview() {
               {format(new Date(HERO_EXAMPLE_UPDATE.date), "MMMM d, yyyy")}
             </div>
             <div className="vr-uch-main">
-              <div className="vr-uch-emoji" aria-hidden="true">
-                🦘
+              <div className="vr-uch-emoji vr-uch-logo" aria-hidden="true">
+                <img src="/vibe-raising/mlai-avatar.png" alt="" />
               </div>
               <div>
                 <div className="vr-uch-title-row">
@@ -265,6 +334,7 @@ export default function VibeRaisingFounderOverview({
   showEyebrow = true,
   showInvestorConnectionSection = false,
   useNumberedSectionHeadings = false,
+  bleedToShell = true,
   onCreateFirstUpdate,
 }: {
   firstName: string;
@@ -272,10 +342,11 @@ export default function VibeRaisingFounderOverview({
   showEyebrow?: boolean;
   showInvestorConnectionSection?: boolean;
   useNumberedSectionHeadings?: boolean;
+  bleedToShell?: boolean;
   onCreateFirstUpdate: () => void;
 }) {
   return (
-    <div className="vr-scope -m-6 sm:-m-8 lg:-m-10">
+    <div className={clsx("vr-scope", bleedToShell && "-m-6 sm:-m-8 lg:-m-10")}>
       <div className="relative overflow-hidden">
         <img
           src="/hero-bg.jpg"
@@ -284,7 +355,7 @@ export default function VibeRaisingFounderOverview({
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/70" />
 
-        <div className="relative z-10 mx-auto flex min-h-[60vh] max-w-7xl items-center px-6 py-14 sm:min-h-[calc(100vh-64px)] sm:py-16 lg:px-8 lg:py-20">
+        <div className="relative z-10 mx-auto flex min-h-[60vh] max-w-7xl items-center px-6 pb-14 pt-24 sm:min-h-[calc(100vh-64px)] sm:py-16 lg:px-8 lg:py-20">
           <div className="grid w-full items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,460px)] lg:gap-12">
             <div className="max-w-2xl text-center lg:text-left">
               {showEyebrow ? (
@@ -300,7 +371,7 @@ export default function VibeRaisingFounderOverview({
               </p>
               <button
                 onClick={onCreateFirstUpdate}
-                className="inline-flex items-center gap-3 rounded-xl bg-white px-8 py-4 font-bold text-gray-900 shadow-lg transition-all hover:bg-gray-100 hover:shadow-xl active:scale-[0.98]"
+                className="hidden items-center gap-3 rounded-xl bg-[var(--vr-palette-mint)] px-8 py-4 font-bold text-[var(--vr-palette-black)] shadow-lg shadow-[rgba(0,255,215,0.18)] transition-all hover:bg-[var(--color-teal-500)] hover:shadow-xl active:scale-[0.98] lg:inline-flex"
               >
                 Create Your First Update
                 <ArrowRightIcon className="h-5 w-5" />
@@ -310,6 +381,16 @@ export default function VibeRaisingFounderOverview({
             <div className="lg:translate-y-20 lg:justify-self-end">
               <VibeRaisingHeroExampleUpdatePreview />
             </div>
+
+            <div className="flex justify-center lg:hidden">
+              <button
+                onClick={onCreateFirstUpdate}
+                className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-palette-mint)] px-8 py-4 font-bold text-[var(--vr-palette-black)] shadow-lg shadow-[rgba(0,255,215,0.18)] transition-all hover:bg-[var(--color-teal-500)] hover:shadow-xl active:scale-[0.98]"
+              >
+                Create Your First Update
+                <ArrowRightIcon className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           <a
@@ -317,9 +398,6 @@ export default function VibeRaisingFounderOverview({
             aria-label="Scroll down to explore the founder overview"
             className="group absolute bottom-6 left-1/2 inline-flex -translate-x-1/2 flex-col items-center gap-2 text-center text-white transition-opacity hover:opacity-80"
           >
-            <span className="text-sm font-medium text-white/84 sm:text-base">
-              Don&apos;t Wait Until You Need Money
-            </span>
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
@@ -347,20 +425,14 @@ export default function VibeRaisingFounderOverview({
                 Investor connection pathway
               </p>
               <h3 className="text-3xl font-black tracking-tight text-gray-950 sm:text-4xl">
-                Share 3 monthly updates, and we'll connect you with investors.
+                After 3 updates, MLAI connects you with momentum-ready investors.
               </h3>
-              <div className="space-y-5 text-lg leading-8 text-gray-600">
-                <p>
-                  Vibe Raising helps you build a visible track record before you ask for capital.
-                </p>
-                <p>
-                  After three monthly updates, MLAI can use that momentum to connect you with
-                  relevant investors.
-                </p>
-              </div>
-              <p className="border-l-4 border-[var(--vr-color-primary)] pl-6 text-lg font-extrabold leading-8 text-[var(--vr-color-primary)]">
+              <p className="text-lg leading-8 text-gray-600">
                 The goal is simple: show consistency, make your progress easy to understand,
                 and meet investors when there is already trust in the room.
+              </p>
+              <p className="border-l-4 border-[var(--vr-color-primary)] pl-6 text-lg font-extrabold leading-8 text-[var(--vr-color-primary)]">
+                Consistency is how trust gets built
               </p>
             </div>
           </div>
@@ -444,25 +516,15 @@ export default function VibeRaisingFounderOverview({
                   Reaching out to investors only when you need capital is already too late.
                   Investors can smell desperation, and by then, you've already missed the window.
                 </p>
-                <p>
-                  Share regular updates, progress, and challenges honestly. We'll match you with the
-                  right investors based on your updates, so when the time comes to raise, the trust
-                  is already there.
-                </p>
               </div>
               <p className="border-l-4 border-[var(--brutalist-blue)] pl-6 text-lg font-extrabold leading-8 text-[var(--brutalist-blue)]">
-                The best founders plan ahead. Six months of consistent updates today can make all
-                the difference tomorrow.
+                Start Investor Conversations Early
               </p>
             </div>
           ) : (
             <p className={`${landingNumberContentClassName} text-lg leading-relaxed text-gray-600`}>
               If you&apos;re reaching out to investors only when you need capital, it&apos;s already too late.
               Investors can smell desperation - and when that moment comes, you&apos;ve already messed up.
-              The best founders plan ahead. Start building relationships at least 6 months before you
-              need funding. Send regular updates, share your progress and challenges honestly.
-              We will match you with the proper investors based on your updates, so when the time comes
-              to raise, the trust is already there.
             </p>
           )}
         </div>
