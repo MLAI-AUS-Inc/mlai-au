@@ -8,6 +8,7 @@ import {
   CheckCircleIcon,
   EllipsisHorizontalIcon,
   ExclamationTriangleIcon,
+  LockClosedIcon,
   PaperAirplaneIcon,
   PlayIcon,
   TrashIcon,
@@ -1139,6 +1140,21 @@ function previewOriginFromUrl(previewUrl: string | null | undefined) {
   }
 }
 
+function previewDisplayUrl(previewUrl: string | null | undefined) {
+  const rawUrl = String(previewUrl || "").trim();
+  if (!rawUrl) return "";
+  try {
+    const hasExplicitOrigin = /^[a-z][a-z\d+.-]*:\/\//i.test(rawUrl) || rawUrl.startsWith("//");
+    const parsed = new URL(rawUrl, typeof window === "undefined" ? "https://mlai.au" : window.location.href);
+    parsed.searchParams.delete("cfInspector");
+    parsed.searchParams.delete("cfPreviewMode");
+    if (!hasExplicitOrigin) return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    return parsed.toString();
+  } catch {
+    return rawUrl;
+  }
+}
+
 function numberMapFromPayload(value: unknown, keys: string[]) {
   const payload = value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -1593,6 +1609,8 @@ function LivePreviewCommentInspectorPanel({
     sendInspectorCommand({ type: "setSelectedComponent", componentId: selectedComponent.id });
   }, [selectedComponent, sendInspectorCommand]);
 
+  const displayPreviewUrl = previewDisplayUrl(preview?.previewUrl);
+
   return (
     <div className="space-y-4">
       <div className="space-y-4">
@@ -1626,38 +1644,48 @@ function LivePreviewCommentInspectorPanel({
         </div>
 
         <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
-          {legacyInspectorWarning ? (
-            <div className="absolute left-4 right-4 top-4 z-30 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 shadow-sm">
-              {legacyInspectorWarning}
-            </div>
-          ) : null}
           {canRenderPreview ? (
             <>
-              <iframe
-                ref={iframeRef}
-                title={previewTitle}
-                src={preview?.previewUrl ?? ""}
-                className="h-[820px] w-full bg-white"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                onLoad={() => {
-                  window.setTimeout(() => {
-                    sendInspectorCommand({ type: "setMode", mode: "comment" });
-                    sendInspectorCommand({ type: "measureComponents" });
-                  }, 120);
-                }}
-              />
-              <ArticleCommentCanvas
-                comments={comments}
-                components={components}
-                measurements={componentMeasurements}
-                pendingPin={pendingPin}
-                targetRunId={targetRunId}
-                openCommentId={openCommentId}
-                onOpenComment={setOpenCommentId}
-                onClearPending={() => setPendingPin(null)}
-                onCommentsChange={setComments}
-                onSelectComponent={onSelectComponent}
-              />
+              <div className="border-b border-gray-200 bg-white px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 shadow-inner">
+                  <LockClosedIcon className="h-4 w-4 flex-shrink-0 text-emerald-600" aria-hidden="true" />
+                  <span className="min-w-0 truncate" aria-label={`Preview URL: ${displayPreviewUrl}`}>
+                    {displayPreviewUrl}
+                  </span>
+                </div>
+              </div>
+              <div className="relative">
+                {legacyInspectorWarning ? (
+                  <div className="absolute left-4 right-4 top-4 z-30 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 shadow-sm">
+                    {legacyInspectorWarning}
+                  </div>
+                ) : null}
+                <iframe
+                  ref={iframeRef}
+                  title={previewTitle}
+                  src={preview?.previewUrl ?? ""}
+                  className="h-[820px] w-full bg-white"
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  onLoad={() => {
+                    window.setTimeout(() => {
+                      sendInspectorCommand({ type: "setMode", mode: "comment" });
+                      sendInspectorCommand({ type: "measureComponents" });
+                    }, 120);
+                  }}
+                />
+                <ArticleCommentCanvas
+                  comments={comments}
+                  components={components}
+                  measurements={componentMeasurements}
+                  pendingPin={pendingPin}
+                  targetRunId={targetRunId}
+                  openCommentId={openCommentId}
+                  onOpenComment={setOpenCommentId}
+                  onClearPending={() => setPendingPin(null)}
+                  onCommentsChange={setComments}
+                  onSelectComponent={onSelectComponent}
+                />
+              </div>
             </>
           ) : (
             unavailableSlot ?? (
