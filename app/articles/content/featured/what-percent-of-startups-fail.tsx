@@ -201,7 +201,7 @@ export default function ArticlePage() {
             title={`Download the startup risk checklist`}
             description='A one‑page worksheet to define success, kill criteria, and your first learning milestones.'
             buttonLabel='Get the checklist'
-            buttonHref='/resources'
+            buttonHref='/articles'
             accent='purple'
           />
 

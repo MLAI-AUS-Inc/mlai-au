@@ -104,17 +104,6 @@ export default function UpcomingEvents({ events: rawEvents }: { events: Event[] 
                     </div>
                   </div>
 
-                  {/* Thumbnail - Hidden on very small screens, shows on sm+ */}
-                  {event.bannerImage?.url && (
-                    <div className="hidden sm:block flex-shrink-0 w-32 lg:w-40 h-20 lg:h-24 rounded-lg lg:rounded-xl overflow-hidden order-last lg:order-none border border-white/10 shadow-sm group-hover:shadow-md transition-shadow">
-                      <img
-                        src={event.bannerImage.url}
-                        alt=""
-                        className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                  )}
-
                   {/* Register Button */}
                   <a
                     href={getEventUrl(event)}

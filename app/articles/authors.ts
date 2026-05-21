@@ -82,7 +82,7 @@ const authorRegistry = {
         sameAs: [
             { label: 'LinkedIn', href: 'https://www.linkedin.com/in/shivang-s-466458191' },
         ],
-        avatarUrl: 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/shivang%20profile%20pic%20(1).png?alt=media&token=0e31c4ae-9e56-48db-9779-065753982748',
+        avatarUrl: '/authors/shivang-shekhar.jpg',
         avatarAlt: 'Shivang Shekhar',
         knowsAbout: ['AI Trends', 'Machine Learning', 'Mechanical Engineering', 'Chemistry'],
     },

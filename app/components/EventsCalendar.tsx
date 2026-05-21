@@ -209,13 +209,6 @@ export default function EventsCalendar({ events, initialServerDate }: EventsCale
             className="block bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
           >
             <div className="flex flex-col sm:flex-row gap-4">
-              {event.bannerImage?.url && (
-                <img
-                  src={event.bannerImage.url}
-                  alt={event.name}
-                  className="w-full sm:w-48 h-32 object-cover rounded-lg"
-                />
-              )}
               <div className="flex-1">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   {event.name}
