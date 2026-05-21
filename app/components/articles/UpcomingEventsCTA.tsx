@@ -94,17 +94,6 @@ export default function UpcomingEventsCTA({
                         rel="noopener noreferrer"
                         className={`group relative flex flex-col rounded-[28px] overflow-hidden shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1.5 border ${style.border} ${style.bg}`}
                     >
-                        {/* Event Image */}
-                        {event.bannerImage?.url && (
-                            <div className="relative h-40 overflow-hidden">
-                                <img
-                                    src={event.bannerImage.url}
-                                    alt={event.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                            </div>
-                        )}
-
                         {/* Event Details */}
                         <div className="flex flex-col flex-grow p-5 sm:p-6">
                             <h4 className={`font-semibold text-lg sm:text-xl mb-3 line-clamp-2 transition-colors ${style.text}`}>

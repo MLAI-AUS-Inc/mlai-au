@@ -360,7 +360,7 @@ function buildRelatedArticleSlugs(
 const DEFAULT_CITATIONS = [
   {
     title: "Australia's AI Ethics Principles",
-    href: 'https://www.industry.gov.au/publications/australias-artificial-intelligence-ethics-framework/australias-ai-ethics-principles',
+    href: 'https://www.industry.gov.au/publications/australias-ai-ethics-principles',
     description: 'Eight voluntary principles designed to ensure AI is safe, secure and reliable.',
   },
   {
@@ -370,7 +370,7 @@ const DEFAULT_CITATIONS = [
   },
   {
     title: 'National AI Centre (DISR)',
-    href: 'https://www.industry.gov.au/science-technology-and-innovation/technology/national-artificial-intelligence-centre',
+    href: 'https://www.ai.gov.au/',
     description: 'Coordinating Australia’s AI expertise and capabilities to build a responsible AI ecosystem.',
   },
 ]
