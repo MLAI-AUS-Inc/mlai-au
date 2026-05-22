@@ -1548,25 +1548,26 @@ function ProfileResearchProgressCard({
   const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
   const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
   const failed = isResearchFailedStatus(effectiveStatus) || unavailable;
-  const completed = run?.status === "completed" && !failed;
+  const needsReview = failed || partial;
+  const completed = run?.status === "completed" && !needsReview;
   const completedSteps = completedResearchStepCount(run, pending);
   const totalSteps = PROFILE_RESEARCH_STEPS.length;
   const progressLabel = `${Math.min(completedSteps, totalSteps)} of ${totalSteps} steps`;
   const label = pending
     ? "Starting AI research"
-    : run?.status === "completed"
-      ? "Article context ready"
-      : failed
-        ? partial
-          ? "AI context partially ready"
-          : "AI research needs attention"
-        : autofillStepLabel(run?.currentStep);
+    : partial
+      ? "AI context partially ready"
+      : completed
+        ? "Startup profile suggestions ready"
+        : failed
+          ? "AI research needs attention"
+          : autofillStepLabel(run?.currentStep);
   const sourceCount = autofill?.sourceCount ?? autofill?.sources?.length ?? 0;
   const competitorCount = autofill?.competitorCount ?? autofill?.competitorSuggestions?.length ?? autofill?.competitors?.length ?? 0;
   const seedKeywordCount = autofill?.seedKeywordCount ?? autofill?.seedKeywords?.length ?? 0;
   const errorMessage =
     partial
-      ? "AI prepared partial article context. Your visible startup profile was not changed."
+      ? "AI prepared partial suggestions. Review the filled fields and retry if you need a stronger result."
       : startError ||
         run?.errors?.[0] ||
         (failed ? "AI research is unavailable. Check the Content Factory backend and try again." : null);
@@ -1580,7 +1581,7 @@ function ProfileResearchProgressCard({
     <div
       className={clsx(
         "relative overflow-hidden rounded-2xl border p-5 text-sm shadow-sm",
-        failed
+        needsReview
           ? partial
             ? "border-amber-200 bg-amber-50 text-amber-950"
             : "border-rose-200 bg-rose-50 text-rose-900"
@@ -1592,17 +1593,17 @@ function ProfileResearchProgressCard({
       <div
         className={clsx(
           "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
-          failed ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : completed ? "bg-emerald-200/40" : "bg-purple-200/30",
+          needsReview ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : completed ? "bg-emerald-200/40" : "bg-purple-200/30",
         )}
       />
       <div className="relative z-10 flex gap-4">
         <div
           className={clsx(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            failed ? (partial ? "bg-amber-100" : "bg-rose-100") : completed ? "bg-emerald-100" : "bg-purple-100",
+            needsReview ? (partial ? "bg-amber-100" : "bg-rose-100") : completed ? "bg-emerald-100" : "bg-purple-100",
           )}
         >
-          {failed ? (
+          {needsReview ? (
             <AlertTriangle className={clsx("h-6 w-6", partial ? "text-amber-600" : "text-rose-600")} />
           ) : completed ? (
             <CheckCircle2 className="h-6 w-6 text-emerald-600" />
@@ -1617,7 +1618,7 @@ function ProfileResearchProgressCard({
             <span
               className={clsx(
                 "rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
-                failed
+                needsReview
                   ? partial
                     ? "bg-white/80 text-amber-700"
                     : "bg-white/80 text-rose-700"
@@ -1626,25 +1627,32 @@ function ProfileResearchProgressCard({
                     : "bg-white/80 text-purple-700",
               )}
             >
-              {failed ? (partial ? "Review needed" : "Retry available") : completed ? "Complete" : progressLabel}
+              {needsReview ? (partial ? "Review needed" : "Retry available") : completed ? "Complete" : progressLabel}
             </span>
           </div>
 
           {!completed ? (
             <>
               <p className="mt-1 text-sm font-semibold text-gray-700">
-                {pending ? "Contacting the AI research service" : partial ? "AI prepared partial article context without changing your profile." : autofillStepLabel(run?.currentStep)}
+                {pending ? "Contacting the AI research service" : partial ? "AI prepared partial startup profile suggestions." : autofillStepLabel(run?.currentStep)}
               </p>
               <p className="mt-1 text-sm font-medium text-gray-500">
-                {active ? "Deep research can take several minutes. Refreshing the page is safe." : failed ? "The form is unlocked so you can edit your details or retry." : "Article context is ready for future article generation."}
+                {active ? "Deep research can take several minutes. Refreshing the page is safe." : needsReview ? "The form is unlocked so you can edit your details or retry." : "Startup profile suggestions are ready."}
               </p>
             </>
           ) : null}
 
-          {!failed && !completed ? (
+          {!needsReview && !completed ? (
             <div className="mt-4 space-y-2">
               <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
-              <p className="text-xs font-semibold text-gray-500">We will keep checking until hidden article context is ready.</p>
+              <p className="text-xs font-semibold text-gray-500">We will keep checking until startup profile suggestions are ready.</p>
+            </div>
+          ) : completed ? (
+            <div className="mt-4 space-y-3">
+              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
+              <p className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm font-semibold text-emerald-700">
+                AI filled empty startup profile fields where it found confident suggestions. Details you already entered were preserved.
+              </p>
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -1665,12 +1673,12 @@ function ProfileResearchProgressCard({
             </div>
           )}
 
-          {notice && !failed ? (
+          {notice && !needsReview ? (
             <p className="mt-3 rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-700">{notice}</p>
           ) : null}
 
           {autofill ? (
-            <div className={clsx("mt-4 flex flex-wrap gap-2 text-xs font-black", completed ? "text-emerald-800" : "text-violet-800")}>
+            <div className={clsx("mt-4 flex flex-wrap gap-2 text-xs font-black", needsReview ? (partial ? "text-amber-800" : "text-rose-800") : completed ? "text-emerald-800" : "text-violet-800")}>
               <span>{sourceCount} sources reviewed</span>
               <span>{competitorCount} competitors found</span>
               <span>{seedKeywordCount} high-fit keywords selected</span>
