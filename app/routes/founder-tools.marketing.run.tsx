@@ -841,9 +841,14 @@ function ArticleSystemSetupPreviewPanel({
     .map((item) => String(item ?? "").trim())
     .filter(Boolean)
     .slice(0, 8);
-  const canApprove = Boolean(previewUrl && (run.status === "awaiting_approval" || run.status === "approval_required"));
+  const setupExactPreviewReady = Boolean(
+    setupStatus === "preview_ready" &&
+      previewUrl &&
+      (run.livePreview?.exactRender === true || source.livePreview?.exactRender === true),
+  );
+  const canApprove = Boolean(setupExactPreviewReady && (run.status === "awaiting_approval" || run.status === "approval_required"));
   const setupCompleted = setupMerged;
-  const previewReady = Boolean(previewUrl);
+  const previewReady = setupExactPreviewReady;
   const setupTerminalFailure = ["blocked", "failed"].includes(run.status);
   const previewActive = !setupTerminalFailure && hasActiveLivePreview(run.livePreview);
   const previewFailed = setupTerminalFailure || Boolean(fallbackPreviewUrl) || isFailedArticlePreview(run.livePreview);
@@ -854,7 +859,7 @@ function ArticleSystemSetupPreviewPanel({
         <div>
           <h2 className="text-lg font-black text-gray-950">Articles setup preview</h2>
           <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-            Review the drafted articles/blogs setup before it is merged into the website repo.
+            Review the drafted articles/blogs setup before a setup PR is created for the website repo.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-black">
             {repo ? <span className="rounded-full bg-gray-100 px-3 py-1 text-gray-700">{repo}</span> : null}
@@ -951,7 +956,7 @@ function ArticleSystemSetupPreviewPanel({
                         className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                       >
                         {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {approvePending ? "Approving..." : "Approve and merge setup PR"}
+                        {approvePending ? "Approving..." : "Approve setup and create PR"}
                       </button>
                     </Form>
                   </>
@@ -3035,7 +3040,7 @@ function workflowProgressForRunPage(
             ...step,
             label: "Build setup page",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
-            summary: "Create the setup branch and hosted preview for the articles/blogs directory.",
+            summary: "Create the setup branch and exact hosted preview for the articles/blogs directory.",
             status: setupComplete || reviewReady ? "complete" : setupFailed ? "blocked" : "running",
           };
         }
@@ -3055,7 +3060,7 @@ function workflowProgressForRunPage(
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
             summary: setupComplete
               ? "Merged setup PR is being verified on the default branch."
-              : "Approve and merge the setup pull request to main.",
+              : "Approve the exact setup preview to create the setup pull request.",
             status: manualMergeRequired ? "needs_action" : setupComplete ? "running" : "locked",
           };
         }
