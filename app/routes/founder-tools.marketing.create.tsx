@@ -168,7 +168,7 @@ const ARTICLE_SETUP_STEP_EXPLAINERS: Partial<Record<VibeMarketingStepKey, StepEx
     next: "Leave revision comments if needed, then continue once the setup preview is acceptable.",
   },
   reviewPublish: {
-    why: "Approval merges the reviewed setup PR so future articles have a known publishing location.",
+    why: "Approval creates the reviewed setup PR so future articles have a known publishing location.",
     next: "After setup is approved, continue to topic research and generate the first SEO article.",
     safety: "Nothing is merged or published until you approve the articles setup.",
   },
@@ -1447,7 +1447,7 @@ export default function FounderToolsMarketingCreate() {
                 }
                 description={
                   pendingArticleSystemScan
-                    ? "Build the articles/blogs location setup, inspect the Cloudflare preview, then approve the setup PR."
+                    ? "Build the articles/blogs location setup, inspect the Cloudflare preview, then approve setup PR creation."
                     : reviewDescription
                 }
                 passed={

@@ -98,7 +98,7 @@ function setupPhase(run: VibeMarketingRunSummary) {
     return {
       title: isSetupPreviewRun ? "Articles setup preview ready" : "Articles setup ready to build",
       description: isSetupPreviewRun
-        ? "Review the Cloudflare preview, leave revision comments if needed, then approve the setup PR."
+        ? "Review the Cloudflare preview, leave revision comments if needed, then approve setup PR creation."
         : "The articles/blogs location is ready. The setup preview can be generated next.",
       tone: "ready" as const,
     };
