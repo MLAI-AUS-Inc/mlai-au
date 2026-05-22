@@ -368,10 +368,26 @@ function autofillProfileFields(value: unknown) {
   };
 }
 
+function resultLooksLikeAutofillPayload(payload: Record<string, unknown>) {
+  return Boolean(
+    payload.profileFields ||
+      payload.profile_fields ||
+      payload.companyContext ||
+      payload.company_context ||
+      payload.companyLinkedInUrl ||
+      payload.company_linkedin_url ||
+      payload.directCompetitors ||
+      payload.direct_competitors ||
+      payload.competitors ||
+      payload.seedKeywords ||
+      payload.seed_keywords,
+  );
+}
+
 function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeMarketingAutofillResult | null {
-  const raw = run?.result?.autofill;
-  if (!raw || typeof raw !== "object") return null;
-  const payload = raw as Record<string, unknown>;
+  const resultPayload = plainObject(run?.result);
+  const payload = plainObject(resultPayload?.autofill) ?? (resultPayload && resultLooksLikeAutofillPayload(resultPayload) ? resultPayload : undefined);
+  if (!payload) return null;
   const groupsPayload = plainObject(payload.competitorGroups) ?? {};
   const directCompetitors = competitorList(payload.directCompetitors ?? payload.direct_competitors ?? groupsPayload.directCompetitors);
   const seoCompetitors = competitorList(payload.seoCompetitors ?? payload.seo_competitors ?? groupsPayload.seoCompetitors);
@@ -469,6 +485,27 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     stepDurations: researchDepth(payload.stepDurations ?? payload.step_durations),
     warnings: listFromUnknown(payload.warnings),
   };
+}
+
+function hasAutofillSuggestions(autofill: VibeMarketingAutofillResult | null | undefined) {
+  if (!autofill) return false;
+  const fields = autofill.profileFields;
+  const profileFieldValues = [
+    fields?.shortDescription,
+    fields?.problemSolved,
+    fields?.targetAudience,
+    fields?.location,
+    fields?.organizationKind,
+    fields?.stage,
+    fields?.founderNames,
+    fields?.abn,
+  ];
+  return Boolean(
+    profileFieldValues.some((value) => String(value ?? "").trim()) ||
+      String(autofill.companyLinkedInUrl ?? "").trim() ||
+      (autofill.competitors?.length ?? 0) > 0 ||
+      (autofill.seedKeywords?.length ?? 0) > 0,
+  );
 }
 
 function normalizeResearchStepKey(step?: string | null) {
@@ -1544,6 +1581,7 @@ function ProfileResearchProgressCard({
 }) {
   if (!runId && !pending) return null;
   const autofill = extractAutofill(run);
+  const hasSuggestions = hasAutofillSuggestions(autofill);
   const partial = Boolean(autofill?.partial);
   const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
   const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
@@ -1558,7 +1596,9 @@ function ProfileResearchProgressCard({
     : partial
       ? "AI context partially ready"
       : completed
-        ? "Startup profile suggestions ready"
+        ? hasSuggestions
+          ? "Startup profile suggestions ready"
+          : "Research complete"
         : failed
           ? "AI research needs attention"
           : autofillStepLabel(run?.currentStep);
@@ -1586,27 +1626,45 @@ function ProfileResearchProgressCard({
             ? "border-amber-200 bg-amber-50 text-amber-950"
             : "border-rose-200 bg-rose-50 text-rose-900"
           : completed
-            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            ? hasSuggestions
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : "border-amber-200 bg-amber-50 text-amber-950"
             : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
       )}
     >
       <div
         className={clsx(
           "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
-          needsReview ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : completed ? "bg-emerald-200/40" : "bg-purple-200/30",
+          needsReview
+            ? partial
+              ? "bg-amber-200/30"
+              : "bg-rose-200/30"
+            : completed
+              ? hasSuggestions
+                ? "bg-emerald-200/40"
+                : "bg-amber-200/30"
+              : "bg-purple-200/30",
         )}
       />
       <div className="relative z-10 flex gap-4">
         <div
           className={clsx(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            needsReview ? (partial ? "bg-amber-100" : "bg-rose-100") : completed ? "bg-emerald-100" : "bg-purple-100",
+            needsReview
+              ? partial
+                ? "bg-amber-100"
+                : "bg-rose-100"
+              : completed
+                ? hasSuggestions
+                  ? "bg-emerald-100"
+                  : "bg-amber-100"
+                : "bg-purple-100",
           )}
         >
           {needsReview ? (
             <AlertTriangle className={clsx("h-6 w-6", partial ? "text-amber-600" : "text-rose-600")} />
           ) : completed ? (
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+            <CheckCircle2 className={clsx("h-6 w-6", hasSuggestions ? "text-emerald-600" : "text-amber-600")} />
           ) : (
             <Sparkles className="h-6 w-6 text-purple-600" />
           )}
@@ -1623,11 +1681,13 @@ function ProfileResearchProgressCard({
                     ? "bg-white/80 text-amber-700"
                     : "bg-white/80 text-rose-700"
                   : completed
-                    ? "bg-white/80 text-emerald-700"
+                    ? hasSuggestions
+                      ? "bg-white/80 text-emerald-700"
+                      : "bg-white/80 text-amber-700"
                     : "bg-white/80 text-purple-700",
               )}
             >
-              {needsReview ? (partial ? "Review needed" : "Retry available") : completed ? "Complete" : progressLabel}
+              {needsReview ? (partial ? "Review needed" : "Retry available") : completed ? (hasSuggestions ? "Complete" : "Suggestions unavailable") : progressLabel}
             </span>
           </div>
 
@@ -1650,9 +1710,15 @@ function ProfileResearchProgressCard({
           ) : completed ? (
             <div className="mt-4 space-y-3">
               <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
-              <p className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm font-semibold text-emerald-700">
-                AI filled empty startup profile fields where it found confident suggestions. Details you already entered were preserved.
-              </p>
+              {hasSuggestions ? (
+                <p className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  AI filled empty startup profile fields where it found confident suggestions. Details you already entered were preserved.
+                </p>
+              ) : (
+                <p className="rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-700">
+                  Research finished, but profile suggestions were not included in this status update. Refresh in a moment, or run research again if fields stay empty.
+                </p>
+              )}
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -2132,7 +2198,7 @@ export default function VibeMarketingStartupBaselineSetup({
   useEffect(() => {
     if (!autofillRunId || appliedAutofillRunId === autofillRunId) return;
     const autofill = extractAutofill(autofillRun);
-    if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial)) return;
+    if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial) || !hasAutofillSuggestions(autofill)) return;
     const profileFields = autofill.profileFields;
     setGeneratedCompanyContext(String(profileFields?.companyContext || autofill.companyContext || "").trim());
     setStartupValues((current) => applyAutofillToEmptyStartupFields(current, autofill));
