@@ -12,11 +12,21 @@ type RunLike = {
   updatedAt?: string | null;
   error?: string | null;
   livePreview?: LivePreviewLike | null;
+  result?: Record<string, unknown> | null;
 };
 
 const ACTIVE_PREVIEW_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running"]);
 const FAILED_PREVIEW_STATUSES = new Set(["failed", "blocked", "expired", "cancelled", "canceled", "timeout", "timed_out"]);
-const TERMINAL_ARTICLE_SETUP_STATUSES = new Set(["blocked", "blocked_verification", "failed", "denied", "cancelled", "canceled"]);
+const TERMINAL_ARTICLE_SETUP_STATUSES = new Set([
+  "blocked",
+  "blocked_verification",
+  "failed",
+  "denied",
+  "cancelled",
+  "canceled",
+  "preview_failed",
+  "fallback_ready",
+]);
 
 function normalized(value: string | null | undefined) {
   return String(value ?? "").trim().toLowerCase();
@@ -33,10 +43,30 @@ export function isLivePreviewFailedForPolling(preview: LivePreviewLike | null | 
   return Boolean(preview?.error || FAILED_PREVIEW_STATUSES.has(previewStatus) || FAILED_PREVIEW_STATUSES.has(platformStatus));
 }
 
+function recordValue(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function setupStatusForPolling(run: RunLike) {
+  const result = recordValue(run.result);
+  const nestedResult = recordValue(result?.result);
+  const setup = recordValue(result?.article_system_setup) ?? recordValue(nestedResult?.article_system_setup);
+  return normalized(setup?.status as string | null | undefined);
+}
+
+export function isArticleSystemSetupTerminalRun(run: RunLike) {
+  if (run.workflow !== "article_system_setup") return false;
+  return (
+    isArticleSystemSetupTerminalStatus(run.status) ||
+    isArticleSystemSetupTerminalStatus(run.currentStep) ||
+    isArticleSystemSetupTerminalStatus(setupStatusForPolling(run)) ||
+    isLivePreviewFailedForPolling(run.livePreview)
+  );
+}
+
 export function shouldPollArticleSystemSetupRun(run: RunLike) {
   if (run.workflow !== "article_system_setup") return true;
-  if (isArticleSystemSetupTerminalStatus(run.status)) return false;
-  if (isLivePreviewFailedForPolling(run.livePreview)) return false;
+  if (isArticleSystemSetupTerminalRun(run)) return false;
   return true;
 }
 
@@ -46,6 +76,7 @@ export function statusPollRefreshKey(run: RunLike) {
       run.runId,
       normalized(run.status),
       run.currentStep ?? "",
+      setupStatusForPolling(run),
       normalized(run.livePreview?.status),
       normalized(run.livePreview?.platformStatus),
       run.error ?? run.livePreview?.error ?? "",

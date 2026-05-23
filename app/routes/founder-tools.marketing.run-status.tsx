@@ -3,6 +3,7 @@ import { redirect } from "react-router";
 
 import { getEnv } from "~/lib/env.server";
 import { getVibeMarketingRun, refreshVibeMarketingLivePreview } from "~/lib/vibe-marketing";
+import { shouldPollArticleSystemSetupRun } from "~/lib/vibe-marketing-run-polling";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
@@ -18,6 +19,7 @@ function isDocumentNavigation(request: Request) {
 
 function shouldRefreshSetupLivePreview(run: VibeMarketingRunSummary) {
   if (run.workflow !== "article_system_setup") return false;
+  if (!shouldPollArticleSystemSetupRun(run)) return false;
   if (run.stale || run.retryAvailable) return false;
   if (TERMINAL_ATTENTION_STATUSES.has(String(run.status || "").trim().toLowerCase())) return false;
   if (run.livePreview?.previewUrl || run.livePreview?.error) return false;
