@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  isArticleSystemSetupTerminalRun,
   isArticleSystemSetupTerminalStatus,
   shouldPollArticleSystemSetupRun,
   statusPollRefreshKey,
@@ -16,6 +17,8 @@ describe("vibe marketing run polling", () => {
       }),
     ).toBe(false);
     expect(isArticleSystemSetupTerminalStatus("blocked_verification")).toBe(true);
+    expect(isArticleSystemSetupTerminalStatus("preview_failed")).toBe(true);
+    expect(isArticleSystemSetupTerminalStatus("fallback_ready")).toBe(true);
     expect(isArticleSystemSetupTerminalStatus("running")).toBe(false);
   });
 
@@ -48,6 +51,28 @@ describe("vibe marketing run polling", () => {
     });
 
     expect(second).toBe(first);
+  });
+
+  test("treats setup preview failures in current step and nested result as terminal", () => {
+    expect(
+      isArticleSystemSetupTerminalRun({
+        workflow: "article_system_setup",
+        status: "running",
+        currentStep: "preview_failed",
+      }),
+    ).toBe(true);
+    expect(
+      shouldPollArticleSystemSetupRun({
+        workflow: "article_system_setup",
+        status: "running",
+        result: {
+          article_system_setup: {
+            status: "preview_failed",
+            error: "Directory browser verification failed before setup approval.",
+          },
+        },
+      }),
+    ).toBe(false);
   });
 
   test("still polls active article setup runs", () => {

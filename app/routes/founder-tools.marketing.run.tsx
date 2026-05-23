@@ -43,7 +43,7 @@ import {
   updateVibeMarketingComponentComment,
 } from "~/lib/vibe-marketing";
 import {
-  isArticleSystemSetupTerminalStatus,
+  isArticleSystemSetupTerminalRun,
   shouldPollArticleSystemSetupRun,
   statusPollRefreshKey,
 } from "~/lib/vibe-marketing-run-polling";
@@ -219,6 +219,9 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
 }
 
 function shouldUseStatusPollResult(run: VibeMarketingRunSummary) {
+  if (isArticleSystemSetupTerminalRun(run)) {
+    return true;
+  }
   return !statusPollNeedsFullRefresh(run);
 }
 
@@ -3128,7 +3131,7 @@ export default function FounderToolsMarketingRun() {
   const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupTerminal = isArticleSystemSetupRun && isArticleSystemSetupTerminalStatus(run.status);
+  const setupTerminal = isArticleSystemSetupRun && isArticleSystemSetupTerminalRun(run);
   const setupPreviewActive = isArticleSystemSetupRun && !setupTerminal && hasActiveLivePreview(run.livePreview);
   const setupPreviewFailed = isArticleSystemSetupRun && (setupTerminal || isFailedArticlePreview(run.livePreview));
   const shouldPoll =
