@@ -42,6 +42,11 @@ import {
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
 } from "~/lib/vibe-marketing";
+import {
+  isArticleSystemSetupTerminalStatus,
+  shouldPollArticleSystemSetupRun,
+  statusPollRefreshKey,
+} from "~/lib/vibe-marketing-run-polling";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type {
   VibeMarketingComponentManifestItem,
@@ -211,6 +216,10 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
     return true;
   }
   return false;
+}
+
+function shouldUseStatusPollResult(run: VibeMarketingRunSummary) {
+  return !statusPollNeedsFullRefresh(run);
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -2949,6 +2958,7 @@ function prNumberFromPullUrl(url: string) {
 }
 
 function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
+  if (run.workflow === "article_system_setup") return false;
   return Boolean(
     publishPrUrlForRun(run) ||
       publishPreviewUrlForRun(run) ||
@@ -3118,14 +3128,15 @@ export default function FounderToolsMarketingRun() {
   const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupTerminal = ["blocked", "failed", "cancelled", "canceled"].includes(run.status);
+  const setupTerminal = isArticleSystemSetupRun && isArticleSystemSetupTerminalStatus(run.status);
   const setupPreviewActive = isArticleSystemSetupRun && !setupTerminal && hasActiveLivePreview(run.livePreview);
   const setupPreviewFailed = isArticleSystemSetupRun && (setupTerminal || isFailedArticlePreview(run.livePreview));
   const shouldPoll =
-    (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
-    setupPreviewActive ||
-    hasPendingArticlePreview(run) ||
-    hasPublishHandoffEvidence(run);
+    shouldPollArticleSystemSetupRun(run) &&
+    ((POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+      setupPreviewActive ||
+      hasPendingArticlePreview(run) ||
+      hasPublishHandoffEvidence(run));
   const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
@@ -3215,8 +3226,8 @@ export default function FounderToolsMarketingRun() {
     ) {
       return;
     }
-    if (statusPollNeedsFullRefresh(runStatusFetcher.data)) {
-      const refreshKey = `${runStatusFetcher.data.runId}:${runStatusFetcher.data.status}:${runStatusFetcher.data.updatedAt ?? ""}:${runStatusFetcher.data.currentStep ?? ""}`;
+    if (!shouldUseStatusPollResult(runStatusFetcher.data)) {
+      const refreshKey = statusPollRefreshKey(runStatusFetcher.data);
       if (statusRefreshRef.current !== refreshKey) {
         statusRefreshRef.current = refreshKey;
         setPolledRun(null);
