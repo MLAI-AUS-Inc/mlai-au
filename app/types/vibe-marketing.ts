@@ -385,6 +385,7 @@ export interface VibeMarketingLivePreview {
   status: string;
   previewUrl?: string | null;
   fallbackPreviewUrl?: string | null;
+  failedPreviewUrl?: string | null;
   internalPreviewUrl?: string | null;
   proxyPath?: string | null;
   routePath?: string | null;
@@ -397,6 +398,7 @@ export interface VibeMarketingLivePreview {
   workspacePath?: string | null;
   logPath?: string | null;
   failedPhase?: string | null;
+  failureKind?: string | null;
   failedCommand?: string | null;
   logExcerpt?: string | null;
   proofWarnings?: string[];
