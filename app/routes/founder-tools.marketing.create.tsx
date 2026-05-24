@@ -97,7 +97,7 @@ const CREATE_STEP_BY_WORKFLOW_STEP_ID: Record<string, VibeMarketingStepKey> = {
   automation: "dailyAutomation",
 };
 
-const SETUP_POLLING_STATUSES = new Set(["queued", "pending", "starting", "running"]);
+const SETUP_POLLING_STATUSES = new Set(["queued", "pending", "starting", "processing", "running", "in_progress", "preview_building"]);
 const SETUP_READY_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
 const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "preview_failed", "denied", "cancelled"]);
 
@@ -366,7 +366,12 @@ function runFromArticleSetupState(
   const scanRunId = state.scanRunId?.trim();
   const runId = setupRunId || scanRunId;
   if (!runId) return null;
-  const setupStatus = state.setupStatus || state.setupRunStatus;
+  const setupRunStatus = state.setupRunStatus?.trim();
+  const rawSetupStatus = state.setupStatus?.trim();
+  const setupStatus =
+    setupRunStatus && SETUP_POLLING_STATUSES.has(setupRunStatus)
+      ? setupRunStatus
+      : rawSetupStatus || setupRunStatus;
   const isSetupRun = Boolean(setupRunId);
   const status = String(isSetupRun ? setupStatus || "queued" : state.scanStatus || "completed");
   const currentStep = isSetupRun ? state.setupCurrentStep || setupStatus || status : state.scanStatus || status;

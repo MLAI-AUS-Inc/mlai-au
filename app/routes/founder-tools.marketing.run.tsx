@@ -57,7 +57,12 @@ import type {
 
 const POLLING_STATUSES = new Set([
   "queued",
+  "pending",
+  "starting",
+  "processing",
   "running",
+  "in_progress",
+  "preview_building",
   "awaiting_confirmation",
   "awaiting_delivery_mode",
   "awaiting_approval",
@@ -772,7 +777,25 @@ function articleSystemSetupStatus(run: VibeMarketingRunSummary) {
 function isActiveArticleSystemSetupRun(run: VibeMarketingRunSummary) {
   if (run.workflow !== "article_system_setup") return false;
   const setupStatus = articleSystemSetupStatus(run);
-  return ARTICLE_SETUP_ACTIVE_STATUSES.has(setupStatus) || POLLING_STATUSES.has(run.status);
+  const setupStep = articleSystemSetupCurrentStep(run).toLowerCase();
+  return (
+    ARTICLE_SETUP_ACTIVE_STATUSES.has(run.status) ||
+    ARTICLE_SETUP_ACTIVE_STATUSES.has(setupStatus) ||
+    ARTICLE_SETUP_ACTIVE_STATUSES.has(setupStep) ||
+    POLLING_STATUSES.has(run.status)
+  );
+}
+
+function articleSystemSetupCurrentStep(run: VibeMarketingRunSummary) {
+  const setup = articleSystemSetupPayload(run);
+  return String(
+    setup.current_step ??
+      setup.currentStep ??
+      run.result?.["current_step"] ??
+      run.result?.["currentStep"] ??
+      run.currentStep ??
+      "",
+  ).trim();
 }
 
 function articleSystemSetupFailureStep(run: VibeMarketingRunSummary) {
@@ -1072,7 +1095,12 @@ function ArticleSystemSetupPreviewUnavailable({
   const setup = articleSystemSetupPayload(run);
   const setupStatus = articleSystemSetupStatus(run);
   const setupActive = isActiveArticleSystemSetupRun(run);
-  const previewStatus = String(setupStatus || preview?.status || run.status || "building").replace(/_/g, " ");
+  const setupCurrentStep = articleSystemSetupCurrentStep(run);
+  const previewStatus = String(
+    setupActive
+      ? setupCurrentStep || run.currentStep || run.status || "running"
+      : setupStatus || preview?.status || run.status || "building",
+  ).replace(/_/g, " ");
   const terminalFailure = !setupActive && (isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus));
   const previewActive = setupActive || (!terminalFailure && hasActiveLivePreview(preview));
   const currentErrorCode = String(
