@@ -3074,6 +3074,16 @@ function compactStringList(value: unknown, limit = 5) {
       if (typeof item === "string") return item.trim();
       if (item && typeof item === "object") {
         const record = item as Record<string, unknown>;
+        const category = compactString(record.category);
+        const field = compactString(record.field) || compactString(record.mismatch_id) || compactString(record.mismatchId);
+        const summary = compactString(record.summary) || compactString(record.reason);
+        const expected = compactString(record.expected);
+        const actual = compactString(record.actual);
+        if (summary || category || field) {
+          const label = [category, field].filter(Boolean).join(" / ");
+          const comparison = expected || actual ? `expected ${expected || "n/a"}, actual ${actual || "n/a"}` : "";
+          return [label ? `${label}: ${summary || "mismatch"}` : summary, comparison].filter(Boolean).join(" ");
+        }
         return compactString(record.url) || compactString(record.path) || compactString(record.message) || compactString(record.error);
       }
       return "";
@@ -3118,6 +3128,23 @@ function formatPreviewFailureDetails(
 
   const reasons = compactStringList(details.reasons, 5);
   if (reasons.length && !/reasons:/i.test(summary)) pushLine(`Reasons: ${reasons.map((reason) => reason.replace(/_/g, " ")).join(", ")}`);
+
+  const score = typeof details.score === "number" ? details.score : Number.NaN;
+  if (Number.isFinite(score) && !/style score:/i.test(summary)) pushLine(`Style score: ${score.toFixed(2)}`);
+
+  const mismatchSummaries = compactStringList(details.mismatch_summaries ?? details.mismatchSummaries, 5);
+  const mismatches = mismatchSummaries.length ? mismatchSummaries : compactStringList(details.mismatches, 5);
+  if (mismatches.length && !/mismatches:/i.test(summary)) pushLine(`Style mismatches: ${mismatches.join(" | ")}`);
+
+  const advisorySummaries = compactStringList(details.advisory_mismatch_summaries ?? details.advisoryMismatchSummaries, 3);
+  const advisory = advisorySummaries.length ? advisorySummaries : compactStringList(details.advisory_mismatches ?? details.advisoryMismatches, 3);
+  if (advisory.length && !/advisory differences:/i.test(summary)) pushLine(`Advisory differences: ${advisory.join(" | ")}`);
+
+  const findings = compactStringList(details.deterministic_findings ?? details.deterministicFindings, 5);
+  if (findings.length && !/findings:/i.test(summary)) pushLine(`Findings: ${findings.join(" | ")}`);
+
+  const repairInstructions = compactStringList(details.repair_instructions ?? details.repairInstructions, 3);
+  if (repairInstructions.length && !/repair:/i.test(summary) && !/repair guidance:/i.test(summary)) pushLine(`Repair guidance: ${repairInstructions.join(" | ")}`);
 
   return lines.join(" ").trim();
 }
