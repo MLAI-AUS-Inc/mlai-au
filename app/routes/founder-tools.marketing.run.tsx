@@ -1178,13 +1178,13 @@ function ArticleSystemSetupPreviewUnavailable({
   const previewError = String(preview?.error || "").trim();
   const failureStep = articleSystemSetupFailureStep(run);
   const failureKind = articleSystemSetupFailureKind(run);
-  const previewFailureDetails = String(
+  const previewFailureDetails = formatPreviewFailureDetails(
     setup.preview_failure_details ??
       setup.previewFailureDetails ??
       run.result?.["preview_failure_details"] ??
       run.result?.["previewFailureDetails"] ??
       "",
-  ).trim();
+  );
   const rawError = terminalFailure
     ? previewFailureDetails ||
       currentRunError ||
@@ -3060,6 +3060,56 @@ function stringResultValue(run: VibeMarketingRunSummary, ...keys: string[]) {
 
 function resultObject(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function compactString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function compactStringList(value: unknown, limit = 5) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (typeof item === "string") return item.trim();
+      if (item && typeof item === "object") {
+        const record = item as Record<string, unknown>;
+        return compactString(record.url) || compactString(record.path) || compactString(record.message) || compactString(record.error);
+      }
+      return "";
+    })
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function formatPreviewFailureDetails(value: unknown) {
+  if (typeof value === "string") return value.trim();
+  const details = resultObject(value);
+  if (!Object.keys(details).length) return "";
+
+  const lines: string[] = [];
+  const summary = compactString(details.summary) || compactString(details.message) || compactString(details.error);
+  if (summary) lines.push(summary);
+
+  const failedStep = compactString(details.failed_step) || compactString(details.failedStep);
+  const failureKind = compactString(details.failure_kind) || compactString(details.failureKind);
+  if (failedStep) lines.push(`Failed step: ${failedStep.replace(/_/g, " ")}`);
+  if (failureKind) lines.push(`Failure kind: ${failureKind.replace(/_/g, " ")}`);
+
+  const failedRequestPaths = compactStringList(details.failed_request_paths ?? details.failedRequestPaths);
+  const failedRequests = failedRequestPaths.length ? failedRequestPaths : compactStringList(details.failed_requests ?? details.failedRequests);
+  if (failedRequests.length) {
+    const total = Array.isArray(details.failed_requests) ? details.failed_requests.length : failedRequests.length;
+    const remaining = Math.max(total - failedRequests.length, 0);
+    lines.push(`Failed requests: ${failedRequests.join(", ")}${remaining ? ` (+${remaining} more)` : ""}`);
+  }
+
+  const consoleErrors = compactStringList(details.console_errors ?? details.consoleErrors, 3);
+  if (consoleErrors.length) lines.push(`Console errors: ${consoleErrors.join(" | ")}`);
+
+  const reasons = compactStringList(details.reasons, 5);
+  if (reasons.length) lines.push(`Reasons: ${reasons.map((reason) => reason.replace(/_/g, " ")).join(", ")}`);
+
+  return lines.join(" ").trim();
 }
 
 function resultValue(run: VibeMarketingRunSummary, key: string): unknown {
