@@ -63,15 +63,18 @@ const POLLING_STATUSES = new Set([
   "running",
   "in_progress",
   "preview_building",
+  "preview_verifying",
+  "repair_preview_building",
   "awaiting_confirmation",
   "awaiting_delivery_mode",
   "awaiting_approval",
   "approval_required",
 ]);
-const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running"]);
+const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running", "preview_verifying", "repair_preview_building"]);
 const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "cancelled", "canceled", "timeout", "timed_out"]);
-const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building"]);
-const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed", "fallback_ready"]);
+const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building"]);
+const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed"]);
+const ARTICLE_SETUP_FALLBACK_STATUSES = new Set(["fallback_ready"]);
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
@@ -189,6 +192,22 @@ function articleSystemSetupFallbackPreviewUrl(
     String(setup.fallback_preview_url ?? setup.fallbackPreviewUrl ?? "").trim() ||
     (sourceRun ? fallbackLivePreviewUrl(sourceRun.livePreview) : "") ||
     String(sourceSetup.fallback_preview_url ?? sourceSetup.fallbackPreviewUrl ?? "").trim()
+  );
+}
+
+function articleSystemSetupFailedPreviewUrl(
+  run: VibeMarketingRunSummary,
+  sourceRun?: VibeMarketingRunSummary | null,
+) {
+  const setup = articleSystemSetupPayload(run);
+  const sourceSetup = sourceRun ? articleSystemSetupPayload(sourceRun) : {};
+  return (
+    String(run.livePreview?.failedPreviewUrl ?? "").trim() ||
+    String(setup.failed_preview_url ?? setup.failedPreviewUrl ?? "").trim() ||
+    stringResultValue(run, "failed_preview_url", "failedPreviewUrl") ||
+    (sourceRun ? String(sourceRun.livePreview?.failedPreviewUrl ?? "").trim() : "") ||
+    String(sourceSetup.failed_preview_url ?? sourceSetup.failedPreviewUrl ?? "").trim() ||
+    (sourceRun ? stringResultValue(sourceRun, "failed_preview_url", "failedPreviewUrl") : "")
   );
 }
 
@@ -800,7 +819,34 @@ function articleSystemSetupCurrentStep(run: VibeMarketingRunSummary) {
 
 function articleSystemSetupFailureStep(run: VibeMarketingRunSummary) {
   const setup = articleSystemSetupPayload(run);
-  return String(setup.failure_step ?? setup.failureStep ?? run.result?.["failure_step"] ?? run.result?.["failureStep"] ?? "").trim();
+  return String(
+    setup.failed_step ??
+      setup.failedStep ??
+      setup.failed_phase ??
+      setup.failedPhase ??
+      setup.failure_step ??
+      setup.failureStep ??
+      run.result?.["failed_step"] ??
+      run.result?.["failedStep"] ??
+      run.result?.["failed_phase"] ??
+      run.result?.["failedPhase"] ??
+      run.result?.["failure_step"] ??
+      run.result?.["failureStep"] ??
+      run.livePreview?.failedPhase ??
+      "",
+  ).trim();
+}
+
+function articleSystemSetupFailureKind(run: VibeMarketingRunSummary) {
+  const setup = articleSystemSetupPayload(run);
+  return String(
+    setup.failure_kind ??
+      setup.failureKind ??
+      run.result?.["failure_kind"] ??
+      run.result?.["failureKind"] ??
+      run.livePreview?.failureKind ??
+      "",
+  ).trim();
 }
 
 function articleSurfaceRouteFromRun(run: VibeMarketingRunSummary) {
@@ -904,9 +950,13 @@ function ArticleSystemSetupPreviewPanel({
   const canApprove = Boolean(setupExactPreviewReady && (run.status === "awaiting_approval" || run.status === "approval_required"));
   const setupCompleted = setupMerged;
   const previewReady = setupExactPreviewReady;
-  const setupTerminalFailure = ["blocked", "failed"].includes(run.status);
+  const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
   const previewActive = !setupTerminalFailure && hasActiveLivePreview(run.livePreview);
-  const previewFailed = setupTerminalFailure || Boolean(fallbackPreviewUrl) || isFailedArticlePreview(run.livePreview);
+  const previewFailed =
+    setupTerminalFailure ||
+    Boolean(fallbackPreviewUrl) ||
+    ARTICLE_SETUP_FALLBACK_STATUSES.has(setupStatus) ||
+    isFailedArticlePreview(run.livePreview);
 
   return (
     <section className="space-y-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -1092,16 +1142,23 @@ function ArticleSystemSetupPreviewUnavailable({
 }) {
   const preview = run.livePreview;
   const diagnosticFallbackUrl = String(fallbackPreviewUrl || fallbackLivePreviewUrl(preview) || "").trim();
+  const failedPreviewUrl = articleSystemSetupFailedPreviewUrl(run);
   const setup = articleSystemSetupPayload(run);
   const setupStatus = articleSystemSetupStatus(run);
   const setupActive = isActiveArticleSystemSetupRun(run);
   const setupCurrentStep = articleSystemSetupCurrentStep(run);
+  const fallbackStatus = ARTICLE_SETUP_FALLBACK_STATUSES.has(setupStatus);
   const previewStatus = String(
     setupActive
       ? setupCurrentStep || run.currentStep || run.status || "running"
       : setupStatus || preview?.status || run.status || "building",
   ).replace(/_/g, " ");
-  const terminalFailure = !setupActive && (isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus));
+  const terminalFailure =
+    !setupActive &&
+    (isFailedArticlePreview(preview) ||
+      ["blocked", "failed"].includes(run.status) ||
+      ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus) ||
+      Boolean(failedPreviewUrl));
   const previewActive = setupActive || (!terminalFailure && hasActiveLivePreview(preview));
   const currentErrorCode = String(
     run.errorCode ||
@@ -1120,12 +1177,26 @@ function ArticleSystemSetupPreviewUnavailable({
   ).trim();
   const previewError = String(preview?.error || "").trim();
   const failureStep = articleSystemSetupFailureStep(run);
-  const rawError = terminalFailure ? currentRunError || previewError || currentErrorCode : previewError || currentRunError;
+  const failureKind = articleSystemSetupFailureKind(run);
+  const previewFailureDetails = String(
+    setup.preview_failure_details ??
+      setup.previewFailureDetails ??
+      run.result?.["preview_failure_details"] ??
+      run.result?.["previewFailureDetails"] ??
+      "",
+  ).trim();
+  const rawError = terminalFailure
+    ? previewFailureDetails ||
+      currentRunError ||
+      previewError ||
+      currentErrorCode ||
+      (setupStatus === "preview_failed" ? "Directory browser verification failed before setup approval." : "")
+    : previewError || currentRunError;
   const isGithubAppWriteAccessError =
     currentErrorCode === "GITHUB_APP_WRITE_ACCESS_REQUIRED" ||
-    (!currentErrorCode && /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError));
+      (!currentErrorCode && /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError));
   const isNextAppRootLayoutMissing = currentErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING" || previewErrorCode === "NEXT_APP_ROOT_LAYOUT_MISSING";
-  const fallbackMessage = diagnosticFallbackUrl
+  const fallbackMessage = diagnosticFallbackUrl || fallbackStatus
     ? "A diagnostic fallback preview is available, but it is not the real deployed Next.js page and cannot be approved."
     : "";
   const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
@@ -1142,28 +1213,37 @@ function ArticleSystemSetupPreviewUnavailable({
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
   const retryPreviewPending = previewActive || actionRetryPending;
   const setupRunning = retryPreviewPending || setupActive;
+  const setupVerifying =
+    setupStatus === "preview_verifying" ||
+    setupStatus === "repair_preview_building" ||
+    setupCurrentStep === "verify_directory_browser" ||
+    setupCurrentStep === "browser_repair";
+  const hasDiagnosticFallback = Boolean(diagnosticFallbackUrl) || fallbackStatus;
+  const title = hasDiagnosticFallback
+    ? "Exact articles preview is not ready"
+    : setupRunning
+      ? setupVerifying
+        ? "Verifying articles setup preview"
+        : "Articles setup is running"
+      : error
+        ? setupStatus === "preview_failed" || failedPreviewUrl
+          ? "Articles setup preview failed verification"
+          : setupRetryable
+            ? "Articles setup build did not advance"
+            : "Articles setup preview could not be prepared"
+        : "Articles setup preview is being built";
   const githubAccessHref = `/founder-tools/marketing/github-connect?forceReconnect=true&returnTo=${encodeURIComponent(`/founder-tools/marketing/runs/${run.runId}`)}`;
   if (previewUrl) return null;
   return (
     <div className={clsx(
       "rounded-xl border px-4 py-5 text-sm font-semibold",
-      diagnosticFallbackUrl
+      hasDiagnosticFallback
         ? "border-amber-200 bg-amber-50 text-amber-900"
           : error
           ? "border-red-200 bg-red-50 text-red-800"
           : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
-      <p className="font-black">
-        {diagnosticFallbackUrl
-          ? "Exact articles preview is not ready"
-          : setupRunning
-            ? "Articles setup is running"
-          : error
-          ? setupRetryable
-            ? "Articles setup build did not advance"
-            : "Articles setup preview could not be prepared"
-          : "Articles setup preview is being built"}
-      </p>
+      <p className="font-black">{title}</p>
       <p className="mt-1">
         {setupRunning
           ? `Current setup step: ${previewStatus || "running"}. Refreshing this page is safe.`
@@ -1172,6 +1252,7 @@ function ArticleSystemSetupPreviewUnavailable({
             : `Preview status: ${previewStatus}. Refreshing this page is safe.`}
       </p>
       {failureStep && error ? <p className="mt-2 text-xs font-black uppercase">Failed step: {failureStep.replace(/_/g, " ")}</p> : null}
+      {failureKind && error ? <p className="mt-1 text-xs font-black uppercase">Failure kind: {failureKind.replace(/_/g, " ")}</p> : null}
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         {diagnosticFallbackUrl ? (
@@ -1182,6 +1263,16 @@ function ArticleSystemSetupPreviewUnavailable({
             className="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm font-black text-amber-900 shadow-sm transition hover:bg-amber-100"
           >
             Open diagnostic fallback
+          </a>
+        ) : null}
+        {failedPreviewUrl ? (
+          <a
+            href={failedPreviewUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100"
+          >
+            Open failed preview
           </a>
         ) : null}
         {logsUrl ? (
