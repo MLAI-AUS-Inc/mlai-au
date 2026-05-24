@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigate, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -46,7 +46,7 @@ import {
   startVibeMarketingDiscovery,
   startVibeMarketingScan,
 } from "~/lib/vibe-marketing";
-import type { VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
+import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
   requireVibeRaisingFounder,
@@ -99,7 +99,7 @@ const CREATE_STEP_BY_WORKFLOW_STEP_ID: Record<string, VibeMarketingStepKey> = {
 
 const SETUP_POLLING_STATUSES = new Set(["queued", "pending", "starting", "running"]);
 const SETUP_READY_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
-const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied", "cancelled"]);
+const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "preview_failed", "denied", "cancelled"]);
 
 type StepExplainer = {
   why: string;
@@ -348,6 +348,84 @@ function activeSetupProgressRun(
   return findSetupChildRun(setupRunId, parentScan.runId, latestRuns, polledChildRun) ?? parentScan;
 }
 
+function findRunById(runs: VibeMarketingRunSummary[], runId: string | null | undefined) {
+  const id = runId?.trim();
+  return id ? runs.find((run) => run.runId === id) ?? null : null;
+}
+
+function articleSetupStateHasSetupWork(state: VibeMarketingArticleSetupState | null | undefined) {
+  return Boolean(state?.setupRunId || state?.setupStatus || state?.setupBlocked || state?.routePath);
+}
+
+function runFromArticleSetupState(
+  state: VibeMarketingArticleSetupState | null | undefined,
+  bootstrap: VibeMarketingBootstrap,
+): VibeMarketingRunSummary | null {
+  if (!state) return null;
+  const setupRunId = state.setupRunId?.trim();
+  const scanRunId = state.scanRunId?.trim();
+  const runId = setupRunId || scanRunId;
+  if (!runId) return null;
+  const setupStatus = state.setupStatus || state.setupRunStatus;
+  const isSetupRun = Boolean(setupRunId);
+  const status = String(isSetupRun ? setupStatus || "queued" : state.scanStatus || "completed");
+  const currentStep = isSetupRun ? state.setupCurrentStep || setupStatus || status : state.scanStatus || status;
+  return {
+    runId,
+    workflow: isSetupRun ? "article_system_setup" : "repo_scan",
+    domain: bootstrap.organization.domain,
+    githubRepo: state.githubRepo || state.repo || bootstrap.settings.githubRepo,
+    sourceRunId: isSetupRun ? scanRunId || null : null,
+    status,
+    currentStep,
+    approvalState: null,
+    resumeAvailable: Boolean(state.retryAvailable),
+    createdAt: state.scanCompletedAt || state.updatedAt || undefined,
+    updatedAt: state.updatedAt || state.scanUpdatedAt || state.scanCompletedAt || undefined,
+    stepOrder: [],
+    steps: [],
+    warnings: [],
+    errors: state.error ? [state.error] : [],
+    artifacts: [],
+    previewUrl: state.previewUrl,
+    prUrl: state.prUrl,
+    routePath: state.routePath,
+    diagnostics: {},
+    contentPackage: null,
+    componentManifest: null,
+    livePreview: state.livePreview ?? null,
+    componentFeedback: null,
+    workflowProgress: null,
+    publishChildStatus: null,
+    publishChildRecoverable: false,
+    publishChildWaitReason: null,
+    stale: Boolean(state.scanStale),
+    staleReason: state.staleReason,
+    retryAvailable: Boolean(state.retryAvailable),
+    result: {
+      status,
+      setup_run_id: setupRunId || undefined,
+      setupRunId: setupRunId || undefined,
+      scan_purpose: isSetupRun ? "setup" : undefined,
+      route_path: state.routePath || undefined,
+      article_surface_hint: state.articleSurfaceHint || undefined,
+      article_system_setup: isSetupRun
+        ? {
+            setup_run_id: setupRunId,
+            status: setupStatus || status,
+            current_step: state.setupCurrentStep || undefined,
+            preview_url: state.previewUrl || undefined,
+            fallback_preview_url: state.fallbackPreviewUrl || undefined,
+            live_preview_url: state.livePreviewUrl || undefined,
+            pr_url: state.prUrl || undefined,
+            error: state.error || undefined,
+          }
+        : undefined,
+    },
+    articleSetupState: state,
+  };
+}
+
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
@@ -387,7 +465,9 @@ function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMark
   const contentOnlyAllowedStep = ["research", "chooseArticle"].includes(requested);
   const repoArticleAllowedStep = ["github", "scan", "articleSystem"].includes(requested);
   const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
-  const articleSystemSetupAllowedStep = scanRunHasPendingArticleSystemSetup(latestScan) && ["writeCheck", "editArticle", "reviewPublish"].includes(requested);
+  const articleSystemSetupAllowedStep =
+    (articleSetupStateHasSetupWork(bootstrap.articleSetupState) || scanRunHasPendingArticleSystemSetup(latestScan)) &&
+    ["writeCheck", "editArticle", "reviewPublish"].includes(requested);
 
   if (
     requestedWorkflowStep?.status === "locked" &&
@@ -415,16 +495,6 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requestedStep)) {
     url.searchParams.set("step", "articleSystem");
     throw redirect(`${url.pathname}?${url.searchParams.toString()}`);
-  }
-  if (["writeCheck", "editArticle", "reviewPublish"].includes(requestedStep)) {
-    const latestSetupScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
-    if (scanRunHasPendingArticleSystemSetup(latestSetupScan)) {
-      const setupRunId = latestSetupScan ? setupRunIdForRun(latestSetupScan) : "";
-      if (setupRunId) {
-        throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
-      }
-      throw redirect("/founder-tools/marketing/create?step=articleSystem");
-    }
   }
   let githubRepos: VibeMarketingGithubReposResponse = {
     status: "unavailable",
@@ -857,7 +927,6 @@ function PanelHeader({
 export default function FounderToolsMarketingCreate() {
   const { bootstrap, githubRepos } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
   const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
   const shouldRefreshGoogleBaseline = searchParams.get("googleBaseline") === "refresh";
@@ -884,13 +953,24 @@ export default function FounderToolsMarketingCreate() {
   const setupChildProgressAtRef = useRef(Date.now());
   const setupChildProgressSignatureRef = useRef("");
   const [pageVisible, setPageVisible] = useState(true);
-  const latestScan = bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
-  const bootstrapPendingArticleSystemScan = scanRunHasPendingArticleSystemSetup(latestScan) ? latestScan : null;
+  const articleSetupState = bootstrap.articleSetupState ?? null;
+  const canonicalScanRun =
+    findRunById(bootstrap.latestRuns, articleSetupState?.scanRunId) ??
+    runFromArticleSetupState(
+      articleSetupState?.scanRunId && !articleSetupState?.setupRunId ? articleSetupState : null,
+      bootstrap,
+    );
+  const latestScan = canonicalScanRun ?? bootstrap.latestRuns.find((run) => ["repo_scan", "content_factory_scan"].includes(run.workflow));
+  const bootstrapPendingArticleSystemScan =
+    scanRunHasPendingArticleSystemSetup(latestScan) || articleSetupStateHasSetupWork(articleSetupState)
+      ? latestScan ?? runFromArticleSetupState(articleSetupState, bootstrap)
+      : null;
   const [polledSetupScan, setPolledSetupScan] = useState<VibeMarketingRunSummary | null>(null);
   const [polledSetupChildRun, setPolledSetupChildRun] = useState<VibeMarketingRunSummary | null>(null);
   const pendingArticleSystemScan =
     polledSetupScan?.runId === bootstrapPendingArticleSystemScan?.runId ? polledSetupScan : bootstrapPendingArticleSystemScan;
-  const pendingArticleSystemSetupRunId = pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "";
+  const pendingArticleSystemSetupRunId =
+    articleSetupState?.setupRunId?.trim() || (pendingArticleSystemScan ? setupRunIdForRun(pendingArticleSystemScan) : "");
   const setupChildRun = pendingArticleSystemScan
     ? findSetupChildRun(
         pendingArticleSystemSetupRunId,
@@ -899,7 +979,12 @@ export default function FounderToolsMarketingCreate() {
         polledSetupChildRun?.runId === pendingArticleSystemSetupRunId ? polledSetupChildRun : null,
       )
     : null;
-  const setupProgressRun = activeSetupProgressRun(pendingArticleSystemScan, bootstrap.latestRuns, setupChildRun);
+  const canonicalSetupRun =
+    findRunById(bootstrap.latestRuns, pendingArticleSystemSetupRunId) ??
+    (polledSetupChildRun?.runId === pendingArticleSystemSetupRunId ? polledSetupChildRun : null) ??
+    runFromArticleSetupState(articleSetupStateHasSetupWork(articleSetupState) ? articleSetupState : null, bootstrap);
+  const setupProgressRun =
+    canonicalSetupRun ?? activeSetupProgressRun(pendingArticleSystemScan, bootstrap.latestRuns, setupChildRun);
   const pendingSetupStepActive = Boolean(setupProgressRun && ["writeCheck", "editArticle", "reviewPublish"].includes(activeStep));
   const articleSetupFlowActive = isRepoArticleStep || pendingSetupStepActive;
   const latestDiscovery = bootstrap.latestRuns.find((run) => ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(run.workflow));
@@ -1083,11 +1168,6 @@ export default function FounderToolsMarketingCreate() {
   ]);
 
   useEffect(() => {
-    if (!pendingArticleSystemSetupRunId || activeStep !== "articleSystem") return;
-    navigate(`/founder-tools/marketing/runs/${encodeURIComponent(pendingArticleSystemSetupRunId)}`, { replace: true });
-  }, [activeStep, navigate, pendingArticleSystemSetupRunId]);
-
-  useEffect(() => {
     const selectionStillValid =
       selectedTopicCandidateId === "__custom__" ||
       selectableTopicCandidates.some((candidate) => candidate.id === selectedTopicCandidateId);
@@ -1107,8 +1187,9 @@ export default function FounderToolsMarketingCreate() {
   const setupPreviewRunId = setupChildRun?.runId || pendingArticleSystemSetupRunId;
   const setupBlocked = isArticleSystemSetupBlocked(bootstrap);
   const setupPublished = isArticleSystemPublished(bootstrap);
-  const setupChildStatus = setupChildRun
-    ? stringResultValue(setupChildRun, "status", "setupStatus", "setup_status") || setupChildRun.currentStep || setupChildRun.status
+  const setupStatusRun = setupChildRun ?? (setupProgressRun?.workflow === "article_system_setup" ? setupProgressRun : null);
+  const setupChildStatus = setupStatusRun
+    ? stringResultValue(setupStatusRun, "status", "setupStatus", "setup_status") || setupStatusRun.currentStep || setupStatusRun.status
     : "";
   const setupManualMergeRequired = Boolean(setupBlocked && setupChildStatus === "manual_merge_required");
   const setupVerifying = Boolean(
@@ -1123,11 +1204,11 @@ export default function FounderToolsMarketingCreate() {
       pendingArticleSystemScan.status === "completed",
   );
   const setupPreviewReady = Boolean(
-    setupChildRun &&
+    setupStatusRun &&
       !setupPublished &&
       !setupVerifying &&
       !setupManualMergeRequired &&
-      hasExactArticleSystemSetupPreview(setupChildRun),
+      hasExactArticleSystemSetupPreview(setupStatusRun),
   );
   const setupLegacyNeedsPreview = Boolean(
     pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),
@@ -1242,8 +1323,8 @@ export default function FounderToolsMarketingCreate() {
               articleSurfacePlaceholder="https://www.mlai.au/articles or /articles"
               connectionError={githubConnectError}
               scanRun={latestScan}
+              articleSetupState={articleSetupState}
               framed={false}
-              autoStartInventoryScan
             />
 
             {activeStep === "articleSystem" && setupProgressRun ? (

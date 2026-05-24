@@ -42,11 +42,6 @@ import {
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
 } from "~/lib/vibe-marketing";
-import {
-  isArticleSystemSetupTerminalRun,
-  shouldPollArticleSystemSetupRun,
-  statusPollRefreshKey,
-} from "~/lib/vibe-marketing-run-polling";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type {
   VibeMarketingComponentManifestItem,
@@ -70,6 +65,8 @@ const POLLING_STATUSES = new Set([
 ]);
 const LIVE_PREVIEW_ACTIVE_STATUSES = new Set(["queued", "pending", "preparing", "starting", "building", "running"]);
 const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "cancelled", "canceled", "timeout", "timed_out"]);
+const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building"]);
+const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed", "fallback_ready"]);
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
@@ -206,6 +203,9 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
 }
 
 function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
+  if (run.workflow === "article_system_setup" && isActiveArticleSystemSetupRun(run)) {
+    return false;
+  }
   if (run.status === "awaiting_confirmation" || run.status === "awaiting_approval" || run.status === "approval_required") {
     return true;
   }
@@ -216,13 +216,6 @@ function statusPollNeedsFullRefresh(run: VibeMarketingRunSummary) {
     return true;
   }
   return false;
-}
-
-function shouldUseStatusPollResult(run: VibeMarketingRunSummary) {
-  if (isArticleSystemSetupTerminalRun(run)) {
-    return true;
-  }
-  return !statusPollNeedsFullRefresh(run);
 }
 
 export async function loader({ request, params, context }: Route.LoaderArgs) {
@@ -761,6 +754,32 @@ function articleSystemSetupPayload(run: VibeMarketingRunSummary) {
   return {};
 }
 
+function articleSystemSetupStatus(run: VibeMarketingRunSummary) {
+  const setup = articleSystemSetupPayload(run);
+  return String(
+    setup.status ??
+      run.result?.["setup_status"] ??
+      run.result?.["setupStatus"] ??
+      run.result?.["status"] ??
+      run.currentStep ??
+      run.status ??
+      "",
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function isActiveArticleSystemSetupRun(run: VibeMarketingRunSummary) {
+  if (run.workflow !== "article_system_setup") return false;
+  const setupStatus = articleSystemSetupStatus(run);
+  return ARTICLE_SETUP_ACTIVE_STATUSES.has(setupStatus) || POLLING_STATUSES.has(run.status);
+}
+
+function articleSystemSetupFailureStep(run: VibeMarketingRunSummary) {
+  const setup = articleSystemSetupPayload(run);
+  return String(setup.failure_step ?? setup.failureStep ?? run.result?.["failure_step"] ?? run.result?.["failureStep"] ?? "").trim();
+}
+
 function articleSurfaceRouteFromRun(run: VibeMarketingRunSummary) {
   const direct = run.routePath?.trim() || stringResultValue(run, "route_path", "routePath");
   if (direct) return direct;
@@ -800,6 +819,7 @@ function ArticleSystemScanFormPanel({
       articleSurfaceDefault={articleSurfaceRouteFromRun(run) || "/articles"}
       articleSurfacePlaceholder="/articles"
       scanRun={run}
+      articleSetupState={bootstrap.articleSetupState}
       showDenySetupAction
     />
   );
@@ -1049,10 +1069,12 @@ function ArticleSystemSetupPreviewUnavailable({
 }) {
   const preview = run.livePreview;
   const diagnosticFallbackUrl = String(fallbackPreviewUrl || fallbackLivePreviewUrl(preview) || "").trim();
-  const previewStatus = String(preview?.status || run.status || "building").replace(/_/g, " ");
-  const terminalFailure = isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status);
-  const previewActive = !terminalFailure && hasActiveLivePreview(preview);
   const setup = articleSystemSetupPayload(run);
+  const setupStatus = articleSystemSetupStatus(run);
+  const setupActive = isActiveArticleSystemSetupRun(run);
+  const previewStatus = String(setupStatus || preview?.status || run.status || "building").replace(/_/g, " ");
+  const terminalFailure = !setupActive && (isFailedArticlePreview(preview) || ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus));
+  const previewActive = setupActive || (!terminalFailure && hasActiveLivePreview(preview));
   const currentErrorCode = String(
     run.errorCode ||
       stringResultValue(run, "error_code", "errorCode") ||
@@ -1069,7 +1091,8 @@ function ArticleSystemSetupPreviewUnavailable({
       "",
   ).trim();
   const previewError = String(preview?.error || "").trim();
-  const rawError = terminalFailure ? currentRunError || previewError : previewError || currentRunError;
+  const failureStep = articleSystemSetupFailureStep(run);
+  const rawError = terminalFailure ? currentRunError || previewError || currentErrorCode : previewError || currentRunError;
   const isGithubAppWriteAccessError =
     currentErrorCode === "GITHUB_APP_WRITE_ACCESS_REQUIRED" ||
     (!currentErrorCode && /GITHUB_APP_WRITE_ACCESS_REQUIRED|Write access denied|Contents:\s*Read\/Write|Pull requests:\s*Read\/Write/i.test(rawError));
@@ -1077,8 +1100,11 @@ function ArticleSystemSetupPreviewUnavailable({
   const fallbackMessage = diagnosticFallbackUrl
     ? "A diagnostic fallback preview is available, but it is not the real deployed Next.js page and cannot be approved."
     : "";
+  const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
+  const retryIntent = setupRetryable ? "resume" : "start-live-preview";
+  const actionRetryPending = isActionPending?.(retryIntent) ?? isSubmitting;
   const error = fallbackMessage ||
-    (previewActive
+    (previewActive || actionRetryPending
     ? ""
     : isGithubAppWriteAccessError
       ? "MLAI Tools can read this repository, but needs Contents: Read/Write and Pull requests: Read/Write to create the setup PR."
@@ -1086,9 +1112,8 @@ function ArticleSystemSetupPreviewUnavailable({
         ? "Content Factory found a Next.js App Router project but could not confirm a root app/layout.* file from the latest repository context. Re-run the repository scan, then retry setup."
       : rawError || (terminalFailure ? "The articles setup build did not advance." : ""));
   const logsUrl = preview?.logsUrl || preview?.builderRunUrl;
-  const setupRetryable = Boolean(run.stale || run.retryAvailable || run.resumeAvailable);
-  const retryIntent = setupRetryable ? "resume" : "start-live-preview";
-  const retryPreviewPending = previewActive || (isActionPending?.(retryIntent) ?? isSubmitting);
+  const retryPreviewPending = previewActive || actionRetryPending;
+  const setupRunning = retryPreviewPending || setupActive;
   const githubAccessHref = `/founder-tools/marketing/github-connect?forceReconnect=true&returnTo=${encodeURIComponent(`/founder-tools/marketing/runs/${run.runId}`)}`;
   if (previewUrl) return null;
   return (
@@ -1096,20 +1121,29 @@ function ArticleSystemSetupPreviewUnavailable({
       "rounded-xl border px-4 py-5 text-sm font-semibold",
       diagnosticFallbackUrl
         ? "border-amber-200 bg-amber-50 text-amber-900"
-        : error
+          : error
           ? "border-red-200 bg-red-50 text-red-800"
           : "border-violet-100 bg-violet-50 text-violet-800",
     )}>
       <p className="font-black">
         {diagnosticFallbackUrl
           ? "Exact articles preview is not ready"
+          : setupRunning
+            ? "Articles setup is running"
           : error
           ? setupRetryable
             ? "Articles setup build did not advance"
             : "Articles setup preview could not be prepared"
           : "Articles setup preview is being built"}
       </p>
-      <p className="mt-1">{previewActive ? "Waiting for GitHub Actions to finish. Refreshing this page is safe." : `Preview status: ${previewStatus}. Refreshing this page is safe.`}</p>
+      <p className="mt-1">
+        {setupRunning
+          ? `Current setup step: ${previewStatus || "running"}. Refreshing this page is safe.`
+          : previewActive
+            ? "Waiting for GitHub Actions to finish. Refreshing this page is safe."
+            : `Preview status: ${previewStatus}. Refreshing this page is safe.`}
+      </p>
+      {failureStep && error ? <p className="mt-2 text-xs font-black uppercase">Failed step: {failureStep.replace(/_/g, " ")}</p> : null}
       {error ? <p className="mt-2 break-words font-mono text-xs">{error}</p> : null}
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         {diagnosticFallbackUrl ? (
@@ -2961,7 +2995,6 @@ function prNumberFromPullUrl(url: string) {
 }
 
 function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
-  if (run.workflow === "article_system_setup") return false;
   return Boolean(
     publishPrUrlForRun(run) ||
       publishPreviewUrlForRun(run) ||
@@ -3035,9 +3068,10 @@ function workflowProgressForRunPage(
     const activeStepId = setupWorkflowStepIdForRun(run);
     const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
     const manualMergeRequired = setupStatus === "manual_merge_required";
-    const setupTerminal = isTerminalAttentionStatus(run.status);
+    const setupActive = isActiveArticleSystemSetupRun(run);
+    const setupTerminal = !setupActive && isTerminalAttentionStatus(run.status);
     const setupPreviewActive = !setupTerminal && hasActiveLivePreview(run.livePreview);
-    const setupFailed = !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || setupTerminal);
+    const setupFailed = !setupActive && !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || setupTerminal || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus));
     const setupComplete = (run.status === "completed" || run.approvalState === "approved") && !manualMergeRequired;
     const reviewReady = activeStepId === "review" || setupComplete;
     return {
@@ -3122,7 +3156,6 @@ export default function FounderToolsMarketingRun() {
   const [pageVisible, setPageVisible] = useState(true);
   const run = polledRun ?? loaderRun;
   const [selectedComponent, setSelectedComponent] = useState<VibeMarketingComponentManifestItem | null>(null);
-  const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(loaderRun.runId)}/status`;
   const workflow = String(run.workflow ?? "");
   const isScanRun = SCAN_WORKFLOWS.has(workflow);
   const isSetupScanContext = isScanRun && isSetupScanRun(run);
@@ -3131,16 +3164,20 @@ export default function FounderToolsMarketingRun() {
   const isRunActionNeeded = ["awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status);
   const isScanCompleted = isScanRun && run.status === "completed";
   const isArticleSystemSetupRun = workflow === "article_system_setup";
-  const setupTerminal = isArticleSystemSetupRun && isArticleSystemSetupTerminalRun(run);
-  const setupPreviewActive = isArticleSystemSetupRun && !setupTerminal && hasActiveLivePreview(run.livePreview);
-  const setupPreviewFailed = isArticleSystemSetupRun && (setupTerminal || isFailedArticlePreview(run.livePreview));
-  const shouldPoll =
-    shouldPollArticleSystemSetupRun(run) &&
-    ((POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
-      setupPreviewActive ||
-      hasPendingArticlePreview(run) ||
-      hasPublishHandoffEvidence(run));
   const setupRun = isArticleSystemSetupRun ? run : loaderSetupRun;
+  const activeSetupRun = setupRun && isActiveArticleSystemSetupRun(setupRun) ? setupRun : null;
+  const setupRunActive = isArticleSystemSetupRun ? isActiveArticleSystemSetupRun(run) : Boolean(activeSetupRun);
+  const pollRunId = activeSetupRun?.runId ?? loaderRun.runId;
+  const statusUrl = `/founder-tools/marketing/runs/${encodeURIComponent(pollRunId)}/status`;
+  const setupTerminal = ["blocked", "failed", "cancelled", "canceled"].includes(run.status);
+  const setupPreviewActive = isArticleSystemSetupRun && !setupTerminal && hasActiveLivePreview(run.livePreview);
+  const setupPreviewFailed = isArticleSystemSetupRun && !setupRunActive && (setupTerminal || isFailedArticlePreview(run.livePreview));
+  const shouldPoll =
+    setupRunActive ||
+    (POLLING_STATUSES.has(run.status) && !isRunActionNeeded && !isScanCompleted && !isStaleScan && !setupPreviewFailed) ||
+    setupPreviewActive ||
+    hasPendingArticlePreview(run) ||
+    hasPublishHandoffEvidence(run);
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
@@ -3150,7 +3187,7 @@ export default function FounderToolsMarketingRun() {
     run.status === "awaiting_confirmation" &&
     !setupBlocked;
   const isPublishApproval = isPublishApprovalGate(run);
-  const effectiveSetupPreviewRun = setupRun?.livePreview?.previewUrl || setupRun?.previewUrl ? setupRun : isScanRun && setupRunIdForRun(run) ? run : setupRun;
+  const effectiveSetupPreviewRun = setupRun ?? (isScanRun && setupRunIdForRun(run) ? run : null);
   const showRunAttentionBanner = RESUMABLE_ATTENTION_STATUSES.has(run.status);
   const canResume = Boolean(run.resumeAvailable && RESUMABLE_ATTENTION_STATUSES.has(run.status));
   const discoveryCandidates = useMemo(
@@ -3211,7 +3248,7 @@ export default function FounderToolsMarketingRun() {
 
   useEffect(() => {
     setPolledRun(null);
-  }, [loaderRun.currentStep, loaderRun.runId, loaderRun.status, loaderRun.updatedAt]);
+  }, [loaderRun.currentStep, loaderRun.runId, loaderRun.status, loaderRun.updatedAt, loaderSetupRun?.runId, loaderSetupRun?.status, loaderSetupRun?.updatedAt]);
 
   useEffect(() => {
     if (typeof document === "undefined") return;
@@ -3225,12 +3262,12 @@ export default function FounderToolsMarketingRun() {
     if (
       runStatusFetcher.state !== "idle" ||
       !runStatusFetcher.data?.runId ||
-      runStatusFetcher.data.runId !== loaderRun.runId
+      runStatusFetcher.data.runId !== pollRunId
     ) {
       return;
     }
-    if (!shouldUseStatusPollResult(runStatusFetcher.data)) {
-      const refreshKey = statusPollRefreshKey(runStatusFetcher.data);
+    if (statusPollNeedsFullRefresh(runStatusFetcher.data)) {
+      const refreshKey = `${runStatusFetcher.data.runId}:${runStatusFetcher.data.status}:${runStatusFetcher.data.updatedAt ?? ""}:${runStatusFetcher.data.currentStep ?? ""}`;
       if (statusRefreshRef.current !== refreshKey) {
         statusRefreshRef.current = refreshKey;
         setPolledRun(null);
@@ -3239,7 +3276,7 @@ export default function FounderToolsMarketingRun() {
       return;
     }
     setPolledRun(runStatusFetcher.data);
-  }, [loaderRun.runId, revalidator, runStatusFetcher.data, runStatusFetcher.state]);
+  }, [pollRunId, revalidator, runStatusFetcher.data, runStatusFetcher.state]);
 
   useEffect(() => {
     const data = previewStartFetcher.data;
@@ -3285,9 +3322,9 @@ export default function FounderToolsMarketingRun() {
   }, [run]);
 
   useEffect(() => {
-    if (!shouldPoll || !loaderRun.runId || runStatusFetcher.state !== "idle") return;
+    if (!shouldPoll || !pollRunId || runStatusFetcher.state !== "idle") return;
     if (!pageVisible) return;
-    const hasLoadedCurrentRun = runStatusFetcher.data?.runId === loaderRun.runId;
+    const hasLoadedCurrentRun = runStatusFetcher.data?.runId === pollRunId;
     const idleMs = Date.now() - lastProgressAtRef.current;
     const pollDelay = !hasLoadedCurrentRun ? 0 : idleMs > 60_000 ? 15_000 : idleMs > 10_000 ? 5_000 : 2_500;
     const timer = window.setTimeout(
@@ -3297,7 +3334,7 @@ export default function FounderToolsMarketingRun() {
       pollDelay,
     );
     return () => window.clearTimeout(timer);
-  }, [loaderRun.runId, pageVisible, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
+  }, [pageVisible, pollRunId, runStatusFetcher, runStatusFetcher.data?.runId, runStatusFetcher.state, shouldPoll, statusUrl]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">

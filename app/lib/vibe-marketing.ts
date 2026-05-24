@@ -3,6 +3,7 @@ import { readableBackendErrors } from "~/lib/backend-error";
 import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
 import type {
   VibeMarketingBootstrap,
+  VibeMarketingArticleSetupState,
   VibeMarketingComponentFeedback,
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentCommentContext,
@@ -190,6 +191,57 @@ function normalizeStep(raw: unknown): VibeMarketingStepState {
   };
 }
 
+function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupState | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const repo = asNullableString(payload.repo) ?? asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo);
+  const scanRunId = asNullableString(payload.scanRunId) ?? asNullableString(payload.scan_run_id);
+  const setupRunId = asNullableString(payload.setupRunId) ?? asNullableString(payload.setup_run_id);
+  const source = asNullableString(payload.source);
+  if (!repo && !scanRunId && !setupRunId && source !== "none") return null;
+  return {
+    repo,
+    githubRepo: asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo) ?? repo,
+    defaultBranch: asNullableString(payload.defaultBranch) ?? asNullableString(payload.default_branch),
+    defaultBranchSha:
+      asNullableString(payload.defaultBranchSha) ??
+      asNullableString(payload.default_branch_sha) ??
+      asNullableString(payload.repoHeadSha) ??
+      asNullableString(payload.repo_head_sha),
+    lastScannedSha: asNullableString(payload.lastScannedSha) ?? asNullableString(payload.last_scanned_sha),
+    scanRunId,
+    scanStatus: asNullableString(payload.scanStatus) ?? asNullableString(payload.scan_status),
+    scanCompletedAt: asNullableString(payload.scanCompletedAt) ?? asNullableString(payload.scan_completed_at),
+    scanUpdatedAt: asNullableString(payload.scanUpdatedAt) ?? asNullableString(payload.scan_updated_at),
+    scanStale: asBoolean(payload.scanStale ?? payload.scan_stale),
+    scanNeedsRescan: asBoolean(payload.scanNeedsRescan ?? payload.scan_needs_rescan),
+    staleReason: asNullableString(payload.staleReason) ?? asNullableString(payload.stale_reason),
+    setupRunId,
+    setupStatus: asNullableString(payload.setupStatus) ?? asNullableString(payload.setup_status),
+    setupRunStatus: asNullableString(payload.setupRunStatus) ?? asNullableString(payload.setup_run_status),
+    setupCurrentStep: asNullableString(payload.setupCurrentStep) ?? asNullableString(payload.setup_current_step),
+    setupBlocked: asBoolean(payload.setupBlocked ?? payload.setup_blocked),
+    published: asBoolean(payload.published),
+    routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
+    previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    fallbackPreviewUrl: asNullableString(payload.fallbackPreviewUrl) ?? asNullableString(payload.fallback_preview_url),
+    livePreviewUrl: asNullableString(payload.livePreviewUrl) ?? asNullableString(payload.live_preview_url),
+    prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
+    retryAvailable: asBoolean(payload.retryAvailable ?? payload.retry_available),
+    error: asNullableString(payload.error),
+    source: source ?? undefined,
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    articleSurfaceMode: asNullableString(payload.articleSurfaceMode) ?? asNullableString(payload.article_surface_mode),
+    articleSurfaceHint:
+      payload.articleSurfaceHint && typeof payload.articleSurfaceHint === "object"
+        ? (payload.articleSurfaceHint as Record<string, unknown>)
+        : payload.article_surface_hint && typeof payload.article_surface_hint === "object"
+          ? (payload.article_surface_hint as Record<string, unknown>)
+          : null,
+  };
+}
+
 export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
@@ -232,6 +284,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)
         : {},
+    articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
   };
 }
 
@@ -272,9 +325,9 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       name: asNullableString(company.name) ?? "Company",
       domain: asNullableString(company.domain),
       companyLinkedInUrl: asNullableString(company.companyLinkedInUrl) ?? asNullableString(company.company_linkedin_url),
+      avatarUrl: asNullableString(company.avatarUrl) ?? asNullableString(company.avatar_url),
       location: asNullableString(company.location),
       abn: asNullableString(company.abn),
-      avatarUrl: asNullableString(company.avatarUrl) ?? asNullableString(company.avatar_url),
       organizationId: Number(company.organizationId ?? company.organization_id ?? 0) || null,
     },
     organization: {
@@ -323,6 +376,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       payload.checks && typeof payload.checks === "object"
         ? (payload.checks as VibeMarketingBootstrap["checks"])
         : {},
+    articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
     latestRuns,
     latestRunsByWorkflow,
     topicCandidates: Array.isArray(payload.topicCandidates)
@@ -915,6 +969,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
     connectUrl: "http://localhost:8000/integrations/connect/google?scope=website_baseline&next=/founder-tools/marketing/create?step=baseline%26googleBaseline=refresh",
   },
   checks: {},
+  articleSetupState: null,
   latestRuns: [],
   latestRunsByWorkflow: {},
   topicCandidates: [],
