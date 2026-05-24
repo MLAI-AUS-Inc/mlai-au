@@ -1184,6 +1184,7 @@ function ArticleSystemSetupPreviewUnavailable({
       run.result?.["preview_failure_details"] ??
       run.result?.["previewFailureDetails"] ??
       "",
+    { includeStepKind: false },
   );
   const rawError = terminalFailure
     ? previewFailureDetails ||
@@ -3081,33 +3082,42 @@ function compactStringList(value: unknown, limit = 5) {
     .slice(0, limit);
 }
 
-function formatPreviewFailureDetails(value: unknown) {
+function formatPreviewFailureDetails(
+  value: unknown,
+  options: { includeStepKind?: boolean } = {},
+) {
   if (typeof value === "string") return value.trim();
   const details = resultObject(value);
   if (!Object.keys(details).length) return "";
 
+  const includeStepKind = options.includeStepKind ?? true;
   const lines: string[] = [];
+  const pushLine = (line: string) => {
+    const normalized = line.replace(/\s+/g, " ").trim().toLowerCase();
+    if (!normalized || lines.some((existing) => existing.replace(/\s+/g, " ").trim().toLowerCase() === normalized)) return;
+    lines.push(line);
+  };
   const summary = compactString(details.summary) || compactString(details.message) || compactString(details.error);
-  if (summary) lines.push(summary);
+  if (summary) pushLine(summary);
 
   const failedStep = compactString(details.failed_step) || compactString(details.failedStep);
   const failureKind = compactString(details.failure_kind) || compactString(details.failureKind);
-  if (failedStep) lines.push(`Failed step: ${failedStep.replace(/_/g, " ")}`);
-  if (failureKind) lines.push(`Failure kind: ${failureKind.replace(/_/g, " ")}`);
+  if (includeStepKind && failedStep) pushLine(`Failed step: ${failedStep.replace(/_/g, " ")}`);
+  if (includeStepKind && failureKind) pushLine(`Failure kind: ${failureKind.replace(/_/g, " ")}`);
 
   const failedRequestPaths = compactStringList(details.failed_request_paths ?? details.failedRequestPaths);
   const failedRequests = failedRequestPaths.length ? failedRequestPaths : compactStringList(details.failed_requests ?? details.failedRequests);
-  if (failedRequests.length) {
+  if (failedRequests.length && !/failed requests:/i.test(summary)) {
     const total = Array.isArray(details.failed_requests) ? details.failed_requests.length : failedRequests.length;
     const remaining = Math.max(total - failedRequests.length, 0);
-    lines.push(`Failed requests: ${failedRequests.join(", ")}${remaining ? ` (+${remaining} more)` : ""}`);
+    pushLine(`Failed requests: ${failedRequests.join(", ")}${remaining ? ` (+${remaining} more)` : ""}`);
   }
 
   const consoleErrors = compactStringList(details.console_errors ?? details.consoleErrors, 3);
-  if (consoleErrors.length) lines.push(`Console errors: ${consoleErrors.join(" | ")}`);
+  if (consoleErrors.length && !/console errors:/i.test(summary)) pushLine(`Console errors: ${consoleErrors.join(" | ")}`);
 
   const reasons = compactStringList(details.reasons, 5);
-  if (reasons.length) lines.push(`Reasons: ${reasons.map((reason) => reason.replace(/_/g, " ")).join(", ")}`);
+  if (reasons.length && !/reasons:/i.test(summary)) pushLine(`Reasons: ${reasons.map((reason) => reason.replace(/_/g, " ")).join(", ")}`);
 
   return lines.join(" ").trim();
 }
