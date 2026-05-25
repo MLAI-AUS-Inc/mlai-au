@@ -1,3 +1,6 @@
+- [x] Add QR-friendly DisplayLink setup tutorial page
+- [x] Register the DisplayLink tutorial route without adding a main-nav entry point
+- [x] Run `bun run typecheck`
 - [x] Simplify the mobile review sticky footer on Founder Tools create-update
 - [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
 - [x] Improve Create Update AI draft card touch/mobile affordance
