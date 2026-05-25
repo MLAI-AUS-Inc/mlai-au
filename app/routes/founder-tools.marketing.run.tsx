@@ -77,6 +77,9 @@ const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_fai
 const ARTICLE_SETUP_FALLBACK_STATUSES = new Set(["fallback_ready"]);
 const ARTICLE_SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required", "merged", "merged_verifying", "verifying"]);
 const ARTICLE_SETUP_MERGED_STATUSES = new Set(["merged", "merged_verifying", "verifying", "published", "verified"]);
+const SETUP_STEP_VIEW_VALUES = new Set(["generate", "review", "publish"]);
+
+type ArticleSetupStepView = "generate" | "review" | "publish";
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
@@ -433,6 +436,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
+      if (intent === "merge-setup-pr" && isArticleSystemSetupMerged(result)) {
+        throw redirect("/founder-tools/marketing?setupMerged=1");
+      }
       if (result.runId && result.runId !== runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
@@ -977,7 +983,8 @@ function ArticleSystemSetupPreviewPanel({
   ).trim().toLowerCase();
   const rescanRunId = stringResultValue(run, "rescan_run_id", "rescanRunId") || String(setup.rescan_run_id ?? setup.rescanRunId ?? "");
   const manualMergeRequired = setupStatus === "manual_merge_required" || run.currentStep === "manual_merge_required";
-  const setupMerged = !manualMergeRequired && run.status === "completed";
+  const setupMerged = !manualMergeRequired && isArticleSystemSetupMerged(run);
+  const setupAlreadyApproved = Boolean(isArticleSystemSetupPublishState(run) || isArticleSystemSetupMerged(run) || run.approvalState === "approved");
   const changedFiles = [
     ...arrayResultValue(run, "changed_files_preview"),
     ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
@@ -986,11 +993,15 @@ function ArticleSystemSetupPreviewPanel({
     .filter(Boolean)
     .slice(0, 8);
   const setupExactPreviewReady = Boolean(
-    setupStatus === "preview_ready" &&
-      previewUrl &&
-      (run.livePreview?.exactRender === true || source.livePreview?.exactRender === true),
+    previewUrl &&
+      (
+        setupStatus === "preview_ready" ||
+        setupAlreadyApproved ||
+        run.livePreview?.exactRender === true ||
+        source.livePreview?.exactRender === true
+      ),
   );
-  const canApprove = Boolean(setupExactPreviewReady && (run.status === "awaiting_approval" || run.status === "approval_required"));
+  const canApprove = Boolean(!setupAlreadyApproved && setupExactPreviewReady && (run.status === "awaiting_approval" || run.status === "approval_required"));
   const setupCompleted = setupMerged;
   const previewReady = setupExactPreviewReady;
   const setupTerminalFailure = ["blocked", "failed"].includes(run.status) || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus);
@@ -1050,6 +1061,7 @@ function ArticleSystemSetupPreviewPanel({
           submittedRetryText="Submitted revision comments are ready to retry."
           waitingBridgeText="Waiting for revision bridge"
           requiresExactPreview
+          readOnly={setupAlreadyApproved}
           unavailableSlot={
             <ArticleSystemSetupPreviewUnavailable
               run={run}
@@ -1060,6 +1072,7 @@ function ArticleSystemSetupPreviewPanel({
             />
           }
           actionSlot={(reviewState) => {
+            if (setupAlreadyApproved) return null;
             const needsCommentSubmitFirst = reviewState.draftComments.length > 0 || reviewState.hasPendingRevisionBatch;
             const approveDisabled = isSubmitting || needsCommentSubmitFirst || !previewUrl;
             const submitCommentsPending = isActionPending?.("submit-article-system-comments") ?? isSubmitting;
@@ -1153,7 +1166,7 @@ function ArticleSystemSetupPreviewPanel({
           <div>
             <p className="text-sm font-black text-emerald-950">Verifying merged articles directory</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
-              The setup PR was merged. Topic research unlocks after the verification scan confirms the directory on the default branch.
+              The setup PR was merged. Article generation is available now while verification confirms the directory on the default branch.
             </p>
           </div>
           {rescanRunId ? (
@@ -1167,6 +1180,76 @@ function ArticleSystemSetupPreviewPanel({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function ArticleSetupGenerateDetail({
+  run,
+  sourceRun,
+}: {
+  run: VibeMarketingRunSummary;
+  sourceRun?: VibeMarketingRunSummary | null;
+}) {
+  const setup = articleSystemSetupPayload(run);
+  const source = sourceRun ?? run;
+  const repo = run.githubRepo || source.githubRepo || stringResultValue(run, "github_repo", "githubRepo") || stringResultValue(source, "github_repo", "githubRepo");
+  const route =
+    run.routePath ||
+    source.routePath ||
+    stringResultValue(run, "route_path", "routePath") ||
+    stringResultValue(source, "route_path", "routePath") ||
+    (() => {
+      const hint = source.result?.["article_surface_hint"];
+      return hint && typeof hint === "object" ? String((hint as Record<string, unknown>).route_path ?? "") : "";
+    })();
+  const changedFiles = [
+    ...arrayResultValue(run, "changed_files_preview"),
+    ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
+  ]
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 12);
+  const metadata = [
+    { label: "Setup run", value: run.runId },
+    { label: "Status", value: articleSystemSetupStatus(run) || run.status },
+    { label: "Current step", value: articleSystemSetupCurrentStep(run) || run.currentStep || run.status },
+    { label: "Repository", value: repo },
+    { label: "Articles route", value: route },
+  ].filter((item) => item.value);
+
+  return (
+    <div className="space-y-5">
+      <ArticlesSetupProgressCard run={run} />
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-black text-gray-950">Setup build details</h2>
+        <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
+          The setup branch, planned files, and repository target captured during the setup build.
+        </p>
+        <div className="mt-4">
+          <ArticleSystemSurfaceSummary run={source} />
+        </div>
+        {changedFiles.length ? (
+          <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
+            <p className="text-sm font-black text-gray-950">Planned setup files</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {changedFiles.map((file) => (
+                <span key={file} className="rounded-lg bg-white px-3 py-2 font-mono text-xs font-semibold text-gray-600 shadow-sm">
+                  {file}
+                </span>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {metadata.map((item) => (
+            <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+              <dt className="text-[11px] font-black uppercase tracking-wide text-gray-500">{item.label}</dt>
+              <dd className="mt-1 break-words text-sm font-bold text-gray-800">{String(item.value).replace(/_/g, " ")}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+    </div>
   );
 }
 
@@ -1694,6 +1777,7 @@ function LivePreviewCommentInspectorPanel({
   actionSlot,
   unavailableSlot,
   requiresExactPreview = false,
+  readOnly = false,
 }: {
   run: VibeMarketingRunSummary;
   targetRunId?: string | null;
@@ -1709,6 +1793,7 @@ function LivePreviewCommentInspectorPanel({
   actionSlot: (state: LivePreviewCommentInspectorState) => ReactNode;
   unavailableSlot?: ReactNode;
   requiresExactPreview?: boolean;
+  readOnly?: boolean;
 }) {
   const manifest = run.componentManifest;
   const components = useMemo(() => manifest?.components ?? [], [manifest]);
@@ -1878,7 +1963,7 @@ function LivePreviewCommentInspectorPanel({
         const context = commentContextFromPayload(payload, preview?.previewMode ?? null);
         onSelectComponent(component);
         setOpenCommentId(null);
-        if (anchor) {
+        if (!readOnly && anchor) {
           setPendingPin({ component, anchor, context });
         }
         return;
@@ -1888,7 +1973,7 @@ function LivePreviewCommentInspectorPanel({
         const context = commentContextFromPayload(payload, preview?.previewMode ?? null);
         onSelectComponent(component);
         setOpenCommentId(null);
-        if (anchor) {
+        if (!readOnly && anchor) {
           setPendingPin({ component, anchor, context });
           return;
         }
@@ -1899,7 +1984,7 @@ function LivePreviewCommentInspectorPanel({
     }
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [components, mergeMeasurement, onSelectComponent, preview?.previewMode, previewMessageOrigin, sendInspectorCommand]);
+  }, [components, mergeMeasurement, onSelectComponent, preview?.previewMode, previewMessageOrigin, readOnly, sendInspectorCommand]);
 
   useEffect(() => {
     if (!selectedComponent) return;
@@ -1981,6 +2066,7 @@ function LivePreviewCommentInspectorPanel({
                   onClearPending={() => setPendingPin(null)}
                   onCommentsChange={setComments}
                   onSelectComponent={onSelectComponent}
+                  readOnly={readOnly}
                 />
               </div>
             </>
@@ -2331,7 +2417,7 @@ function ArticleSetupPublishDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Review the setup PR, merge it after checks pass, then enable daily article prompts.
+              Review the setup PR, merge it after checks pass, then return to article generation while verification continues.
             </p>
           </div>
           <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
@@ -2376,7 +2462,7 @@ function ArticleSetupPublishDetail({
 
           <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
             {setupMerged ? (
-              <p className="text-sm font-semibold text-gray-600">The setup PR has been merged. Verification can continue in the background.</p>
+              <p className="text-sm font-semibold text-gray-600">The setup PR has been merged. You can generate articles while verification continues in the background.</p>
             ) : prUrl ? (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
@@ -2802,6 +2888,7 @@ function ArticleCommentCanvas({
   onClearPending,
   onCommentsChange,
   onSelectComponent,
+  readOnly = false,
 }: {
   comments: VibeMarketingComponentFeedbackComment[];
   components: VibeMarketingComponentManifestItem[];
@@ -2813,6 +2900,7 @@ function ArticleCommentCanvas({
   onClearPending: () => void;
   onCommentsChange: (updater: (comments: VibeMarketingComponentFeedbackComment[]) => VibeMarketingComponentFeedbackComment[]) => void;
   onSelectComponent: (component: VibeMarketingComponentManifestItem | null) => void;
+  readOnly?: boolean;
 }) {
   const fetcher = useFetcher();
   const isSaving = fetcher.state !== "idle";
@@ -2925,7 +3013,7 @@ function ArticleCommentCanvas({
                 title={comment.componentLabel || component.label || comment.componentId}
                 status={comment.status}
                 initialBody={comment.body}
-                readOnly={comment.status !== "draft"}
+                readOnly={readOnly || comment.status !== "draft"}
                 isSaving={isSaving}
                 onSave={(body) => {
                   submitComment("update-component-comment", {
@@ -2939,7 +3027,7 @@ function ArticleCommentCanvas({
                 }}
                 onCancel={() => onOpenComment(null)}
                 onDelete={
-                  comment.status === "draft"
+                  !readOnly && comment.status === "draft"
                     ? () => {
                         deleteComment(comment.id);
                         onOpenComment(null);
@@ -2952,7 +3040,7 @@ function ArticleCommentCanvas({
         );
       })}
 
-      {pendingPin && measurements[pendingPin.component.id] ? (
+      {!readOnly && pendingPin && measurements[pendingPin.component.id] ? (
         <div
           className="pointer-events-auto absolute"
           style={positionForAnchor(measurements[pendingPin.component.id].rect, pendingPin.anchor)}
@@ -3442,13 +3530,18 @@ function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
   return "generate";
 }
 
-function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
+function setupStepViewFromSearch(search: string): ArticleSetupStepView | null {
+  const value = new URLSearchParams(search).get("setupStep");
+  return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as ArticleSetupStepView) : null;
+}
+
+function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary, requestedSetupStep?: ArticleSetupStepView | null) {
   const workflow = String(run.workflow ?? "");
   if (DISCOVERY_WORKFLOWS.has(workflow)) {
     return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
   }
   if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
-  if (workflow === "article_system_setup") return setupWorkflowStepIdForRun(run);
+  if (workflow === "article_system_setup") return requestedSetupStep ?? setupWorkflowStepIdForRun(run);
   if (workflow === "website_baseline") return "baseline";
   if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
   if (isArticleWorkflow(workflow)) {
@@ -3491,7 +3584,7 @@ function workflowProgressForRunPage(
           return {
             ...step,
             label: "Build setup page",
-            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=generate`,
             summary: "Create the setup branch and exact hosted preview for the articles/blogs directory.",
             status: reviewComplete || reviewReady ? "complete" : setupFailed ? "blocked" : "running",
           };
@@ -3500,7 +3593,7 @@ function workflowProgressForRunPage(
           return {
             ...step,
             label: step.id === "review" ? "Review setup preview" : "Request setup revisions",
-            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=review`,
             summary: "Inspect the setup preview and leave revision comments.",
             status: reviewComplete ? "complete" : reviewReady ? "needs_action" : "locked",
           };
@@ -3509,7 +3602,7 @@ function workflowProgressForRunPage(
           return {
             ...step,
             label: step.id === "publish" ? "Publish setup PR" : "Setup PR ready",
-            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
+            href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}?setupStep=publish`,
             summary: setupComplete
               ? "Merged setup PR is being verified on the default branch."
               : setupPrCreated
@@ -3606,12 +3699,15 @@ export default function FounderToolsMarketingRun() {
     () => discoveryCandidates.find((candidate) => candidate.id === selectedDiscoveryCandidateId) ?? discoveryCandidates[0] ?? null,
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
-  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run);
+  const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep);
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
   const isSetupPublishView = Boolean(isArticleSystemSetupRun && viewedWorkflowStepId === "publish");
+  const isSetupGenerateView = Boolean(isArticleSystemSetupRun && viewedWorkflowStepId === "generate");
+  const isSetupReviewView = Boolean(isArticleSystemSetupRun && viewedWorkflowStepId === "review");
   const isArticleSetupContext = isSetupScanContext || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
   const previewActive = hasActiveLivePreview(run.livePreview);
@@ -3772,6 +3868,16 @@ export default function FounderToolsMarketingRun() {
         activeDetailSlot={
           isSetupPublishView ? (
             <ArticleSetupPublishDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+          ) : isSetupGenerateView ? (
+            <ArticleSetupGenerateDetail run={run} />
+          ) : isSetupReviewView ? (
+            <ArticleSystemSetupPreviewPanel
+              run={run}
+              selectedComponent={selectedComponent}
+              onSelectComponent={setSelectedComponent}
+              isSubmitting={isSubmitting}
+              isActionPending={pendingActions.isPending}
+            />
           ) : isArticleGenerationRun && isPublishAutomateView ? (
             <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isArticleGenerationRun ? (
@@ -3784,7 +3890,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isSetupGenerateView ? "Setup build details" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}
@@ -3836,7 +3942,7 @@ export default function FounderToolsMarketingRun() {
             </section>
           ) : null}
 
-          {effectiveSetupPreviewRun && !isSetupPublishView ? (
+          {effectiveSetupPreviewRun && !isArticleSystemSetupRun ? (
             <ArticleSystemSetupPreviewPanel
               run={effectiveSetupPreviewRun}
               sourceRun={isScanRun ? run : null}
