@@ -16,6 +16,7 @@ import { clsx } from "clsx";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
+import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import {
   CustomTopicDecisionCard,
   TopicDecisionCard,
@@ -754,6 +755,16 @@ export async function action({ request, context }: Route.ActionArgs) {
       return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(scanRunId)}`);
     }
 
+    if (intent === CANCEL_SETUP_BUILD_INTENT) {
+      const setupRunId = stringFromForm(formData, "setupRunId");
+      if (!setupRunId) return { intent, error: "No setup build was available to cancel." };
+      await controlVibeMarketingRun(env, request, setupRunId, "cancel", {
+        cleanup: true,
+        workflow: "article_system_setup",
+      });
+      return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
+    }
+
     if (intent === "start-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
@@ -1219,7 +1230,16 @@ export default function FounderToolsMarketingCreate() {
     pendingArticleSystemScan && !pendingArticleSystemSetupRunId && SETUP_READY_STATUSES.has(pendingArticleSystemScan.status),
   );
   const setupProgressFailed = Boolean(setupProgressRun && SETUP_FAILED_STATUSES.has(setupProgressRun.status));
-  const setupProgressActionSlot = setupPublished ? (
+  const setupCancelRun = setupStatusRun ?? setupProgressRun;
+  const setupCancelButton =
+    setupCancelRun && canCancelSetupBuild(setupCancelRun) ? (
+      <CancelSetupBuildButton
+        run={setupCancelRun}
+        pending={pendingActions.isPending(CANCEL_SETUP_BUILD_INTENT)}
+        disabled={isSubmitting}
+      />
+    ) : null;
+  const setupProgressPrimaryActionSlot = setupPublished ? (
     <Link
       to="/founder-tools/marketing/create?step=research"
       className="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700"
@@ -1276,6 +1296,12 @@ export default function FounderToolsMarketingCreate() {
         ? "Building preview..."
         : "Preparing setup..."}
     </button>
+  ) : null;
+  const setupProgressActionSlot = setupProgressPrimaryActionSlot || setupCancelButton ? (
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+      {setupProgressPrimaryActionSlot}
+      {setupCancelButton}
+    </div>
   ) : null;
 
   return (
