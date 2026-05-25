@@ -246,62 +246,11 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   return typeof value === "string" && value.trim() ? value.trim() : "";
 }
 
-function runResultValue(run: VibeMarketingRunSummary | null | undefined, key: string): unknown {
-  if (!run) return undefined;
-  if (run.result?.[key] !== undefined) return run.result[key];
-  const nested = resultObject(run.result?.result);
-  if (nested[key] !== undefined) return nested[key];
-  const latestControl = resultObject(run.result?.latest_control_response);
-  return latestControl[key];
-}
-
-function hasMeaningfulPayload(value: unknown) {
-  if (typeof value === "string") return Boolean(value.trim());
-  if (Array.isArray(value)) return value.length > 0;
-  if (value && typeof value === "object") return Object.keys(value as Record<string, unknown>).length > 0;
-  return Boolean(value);
-}
-
-function hasConcreteArticleSurfaceHint(value: unknown) {
-  if (typeof value === "string") return Boolean(value.trim());
-  const hint = resultObject(value);
-  return [
-    "route",
-    "route_path",
-    "routePath",
-    "path",
-    "public_url",
-    "publicUrl",
-    "listing_url",
-    "listingUrl",
-    "article_surface_url",
-    "articleSurfaceUrl",
-    "url",
-  ].some((key) => typeof hint[key] === "string" && Boolean((hint[key] as string).trim()));
-}
-
-function scanRunHasArticleSurfaceHint(run: VibeMarketingRunSummary | null | undefined) {
-  return Boolean(
-    run &&
-      (hasConcreteArticleSurfaceHint(runResultValue(run, "article_surface_hint")) ||
-        hasConcreteArticleSurfaceHint(runResultValue(run, "articleSurfaceHint"))),
-  );
-}
-
 function scanRunHasPendingArticleSystemSetup(run: VibeMarketingRunSummary | null | undefined) {
   if (!run || !["repo_scan", "content_factory_scan"].includes(run.workflow)) return false;
-  const request = resultObject(run.result?.run_request ?? run.result?.request);
-  const purpose = String(
-    runResultValue(run, "scan_purpose") ?? runResultValue(run, "scanPurpose") ?? request.scan_purpose ?? request.scanPurpose ?? "",
-  ).trim();
+  if (setupRunIdForRun(run)) return true;
   const requestedAction = stringResultValue(run, "requested_action", "setup_requested_action");
-  return (
-    purpose === "setup" ||
-    hasMeaningfulPayload(runResultValue(run, "pending_article_system_setup")) ||
-    scanRunHasArticleSurfaceHint(run) ||
-    requestedAction === "article_system_setup" ||
-    requestedAction === "scaffold_publish_route"
-  );
+  return requestedAction === "article_system_setup" || requestedAction === "scaffold_publish_route";
 }
 
 function isArticleSystemSetupRun(run: VibeMarketingRunSummary | null | undefined) {
@@ -346,7 +295,7 @@ function activeSetupProgressRun(
 ) {
   if (!parentScan) return null;
   const setupRunId = setupRunIdForRun(parentScan);
-  return findSetupChildRun(setupRunId, parentScan.runId, latestRuns, polledChildRun) ?? parentScan;
+  return findSetupChildRun(setupRunId, parentScan.runId, latestRuns, polledChildRun);
 }
 
 function findRunById(runs: VibeMarketingRunSummary[], runId: string | null | undefined) {
@@ -355,7 +304,12 @@ function findRunById(runs: VibeMarketingRunSummary[], runId: string | null | und
 }
 
 function articleSetupStateHasSetupWork(state: VibeMarketingArticleSetupState | null | undefined) {
-  return Boolean(state?.setupRunId || state?.setupStatus || state?.setupBlocked || state?.routePath);
+  const setupRunStatus = state?.setupRunStatus?.trim();
+  return Boolean(
+    (state?.setupRunId?.trim() && setupRunStatus) ||
+      setupRunStatus ||
+      state?.setupBlocked,
+  );
 }
 
 function runFromArticleSetupState(
@@ -374,6 +328,7 @@ function runFromArticleSetupState(
       ? setupRunStatus
       : rawSetupStatus || setupRunStatus;
   const isSetupRun = Boolean(setupRunId);
+  if (isSetupRun && !setupRunStatus) return null;
   const status = String(isSetupRun ? setupStatus || "queued" : state.scanStatus || "completed");
   const currentStep = isSetupRun ? state.setupCurrentStep || setupStatus || status : state.scanStatus || status;
   return {
@@ -1357,16 +1312,6 @@ export default function FounderToolsMarketingCreate() {
               articleSetupState={articleSetupState}
               framed={false}
             />
-
-            {activeStep === "articleSystem" && setupProgressRun ? (
-              <div className="mt-5">
-                <ArticlesSetupProgressCard
-                  run={setupProgressRun}
-                  technicalUrl={setupProgressTechnicalUrl}
-                  actionSlot={setupProgressActionSlot}
-                />
-              </div>
-            ) : null}
 
             {!githubReadyForPublishing ? (
               <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
