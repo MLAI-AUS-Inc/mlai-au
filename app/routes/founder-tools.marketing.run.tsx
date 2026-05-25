@@ -1216,78 +1216,18 @@ function ArticleSystemSetupPreviewPanel({
 
 function ArticleSetupGenerateDetail({
   run,
-  sourceRun,
   isSubmitting,
   isActionPending,
 }: {
   run: VibeMarketingRunSummary;
-  sourceRun?: VibeMarketingRunSummary | null;
   isSubmitting: boolean;
   isActionPending?: (...keys: string[]) => boolean;
 }) {
-  const setup = articleSystemSetupPayload(run);
-  const source = sourceRun ?? run;
-  const repo = run.githubRepo || source.githubRepo || stringResultValue(run, "github_repo", "githubRepo") || stringResultValue(source, "github_repo", "githubRepo");
-  const route =
-    run.routePath ||
-    source.routePath ||
-    stringResultValue(run, "route_path", "routePath") ||
-    stringResultValue(source, "route_path", "routePath") ||
-    (() => {
-      const hint = source.result?.["article_surface_hint"];
-      return hint && typeof hint === "object" ? String((hint as Record<string, unknown>).route_path ?? "") : "";
-    })();
-  const changedFiles = [
-    ...arrayResultValue(run, "changed_files_preview"),
-    ...(Array.isArray(setup.changed_files_preview) ? setup.changed_files_preview : []),
-  ]
-    .map((item) => String(item ?? "").trim())
-    .filter(Boolean)
-    .slice(0, 12);
-  const metadata = [
-    { label: "Setup run", value: run.runId },
-    { label: "Status", value: articleSystemSetupStatus(run) || run.status },
-    { label: "Current step", value: articleSystemSetupCurrentStep(run) || run.currentStep || run.status },
-    { label: "Repository", value: repo },
-    { label: "Articles route", value: route },
-  ].filter((item) => item.value);
-
   return (
-    <div className="space-y-5">
-      <ArticlesSetupProgressCard
-        run={run}
-        actionSlot={setupBuildCancelActionSlot(run, isSubmitting, isActionPending)}
-      />
-      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-black text-gray-950">Setup build details</h2>
-        <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
-          The setup branch, planned files, and repository target captured during the setup build.
-        </p>
-        <div className="mt-4">
-          <ArticleSystemSurfaceSummary run={source} />
-        </div>
-        {changedFiles.length ? (
-          <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-4">
-            <p className="text-sm font-black text-gray-950">Planned setup files</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {changedFiles.map((file) => (
-                <span key={file} className="rounded-lg bg-white px-3 py-2 font-mono text-xs font-semibold text-gray-600 shadow-sm">
-                  {file}
-                </span>
-              ))}
-            </div>
-          </div>
-        ) : null}
-        <dl className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {metadata.map((item) => (
-            <div key={item.label} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-              <dt className="text-[11px] font-black uppercase tracking-wide text-gray-500">{item.label}</dt>
-              <dd className="mt-1 break-words text-sm font-bold text-gray-800">{String(item.value).replace(/_/g, " ")}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
-    </div>
+    <ArticlesSetupProgressCard
+      run={run}
+      actionSlot={setupBuildCancelActionSlot(run, isSubmitting, isActionPending)}
+    />
   );
 }
 
@@ -3929,7 +3869,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isSetupGenerateView ? "Setup build details" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isSetupGenerateView ? "Build setup page" : isSetupReviewView ? "Review setup preview" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}
