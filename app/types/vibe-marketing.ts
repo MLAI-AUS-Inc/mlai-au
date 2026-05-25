@@ -85,12 +85,15 @@ export interface VibeMarketingArticleSetupState {
   setupRunStatus?: VibeMarketingRunStatus | string | null;
   setupCurrentStep?: string | null;
   setupBlocked?: boolean;
+  setupMerged?: boolean;
   published?: boolean;
   routePath?: string | null;
   previewUrl?: string | null;
   fallbackPreviewUrl?: string | null;
   livePreviewUrl?: string | null;
   prUrl?: string | null;
+  prNumber?: string | number | null;
+  mergeStatus?: string | null;
   livePreview?: VibeMarketingLivePreview | null;
   retryAvailable?: boolean;
   error?: string | null;

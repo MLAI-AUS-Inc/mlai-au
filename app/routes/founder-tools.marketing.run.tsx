@@ -75,6 +75,8 @@ const LIVE_PREVIEW_FAILURE_STATUSES = new Set(["failed", "blocked", "expired", "
 const ARTICLE_SETUP_ACTIVE_STATUSES = new Set(["queued", "pending", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building"]);
 const ARTICLE_SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "preview_failed"]);
 const ARTICLE_SETUP_FALLBACK_STATUSES = new Set(["fallback_ready"]);
+const ARTICLE_SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required", "merged", "merged_verifying", "verifying"]);
+const ARTICLE_SETUP_MERGED_STATUSES = new Set(["merged", "merged_verifying", "verifying", "published", "verified"]);
 
 const DISCOVERY_WORKFLOWS = new Set(["auto_discovery", "content_factory_discovery", "daily_discovery"]);
 const SCAN_WORKFLOWS = new Set(["repo_scan", "content_factory_scan"]);
@@ -427,7 +429,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
-    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr"].includes(intent)) {
+    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
@@ -791,6 +793,47 @@ function articleSystemSetupStatus(run: VibeMarketingRunSummary) {
   )
     .trim()
     .toLowerCase();
+}
+
+function articleSystemSetupString(run: VibeMarketingRunSummary, ...keys: string[]) {
+  const setup = articleSystemSetupPayload(run);
+  for (const key of keys) {
+    const setupValue = setup[key];
+    if (typeof setupValue === "string" && setupValue.trim()) return setupValue.trim();
+    if (typeof setupValue === "number" && Number.isFinite(setupValue)) return String(setupValue);
+  }
+  return stringResultValue(run, ...keys);
+}
+
+function articleSystemSetupPrUrl(run: VibeMarketingRunSummary) {
+  return (
+    run.prUrl?.trim() ||
+    articleSystemSetupString(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl")
+  );
+}
+
+function articleSystemSetupPrNumber(run: VibeMarketingRunSummary) {
+  const direct = articleSystemSetupString(run, "pr_number", "prNumber", "pull_request_number", "pullRequestNumber", "draft_pr_number", "draftPrNumber");
+  return direct || prNumberFromPullUrl(articleSystemSetupPrUrl(run));
+}
+
+function articleSystemSetupMergeStatus(run: VibeMarketingRunSummary) {
+  return articleSystemSetupString(run, "merge_status", "mergeStatus", "checks_status", "checksStatus").toLowerCase();
+}
+
+function isArticleSystemSetupMerged(run: VibeMarketingRunSummary) {
+  const setupStatus = articleSystemSetupStatus(run);
+  const mergeStatus = articleSystemSetupMergeStatus(run);
+  return mergeStatus === "merged" || ARTICLE_SETUP_MERGED_STATUSES.has(setupStatus);
+}
+
+function isArticleSystemSetupPublishState(run: VibeMarketingRunSummary) {
+  const setupStatus = articleSystemSetupStatus(run);
+  return Boolean(
+    ARTICLE_SETUP_PUBLISH_STATUSES.has(setupStatus) ||
+      articleSystemSetupPrUrl(run) ||
+      articleSystemSetupMergeStatus(run) === "merged",
+  );
 }
 
 function isActiveArticleSystemSetupRun(run: VibeMarketingRunSummary) {
@@ -2250,6 +2293,158 @@ function ArticleGenerationReviewDetail({
   );
 }
 
+function ArticleSetupPublishDetail({
+  run,
+  bootstrap,
+  isSubmitting,
+  isActionPending,
+}: {
+  run: VibeMarketingRunSummary;
+  bootstrap: VibeMarketingBootstrap;
+  isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
+}) {
+  const prUrl = articleSystemSetupPrUrl(run);
+  const prNumber = articleSystemSetupPrNumber(run);
+  const setupStatus = articleSystemSetupStatus(run);
+  const mergeStatus = articleSystemSetupMergeStatus(run);
+  const checksStatus = articleSystemSetupString(run, "checks_status", "checksStatus");
+  const mergeBlockedReason = articleSystemSetupString(run, "merge_blocked_reason", "mergeBlockedReason");
+  const setupMerged = isArticleSystemSetupMerged(run);
+  const prCreateFailed = setupStatus === "setup_pr_create_failed";
+  const approvePending = isActionPending?.("approve") ?? isSubmitting;
+  const mergePending = isActionPending?.("merge-setup-pr") ?? isSubmitting;
+  const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
+  const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
+  const dailyCheck = bootstrap.checks.dailyAutomation as
+    | (VibeMarketingBootstrap["checks"][string] & { ready?: boolean; enabled?: boolean })
+    | undefined;
+  const dailyEnabled = Boolean(bootstrap.settings.dailyDiscoveryEnabled || dailyCheck?.enabled || dailyCheck?.passed);
+  const dailyReady = Boolean(dailyEnabled || setupMerged || dailyCheck?.ready || dailyCheck?.passed);
+  const defaultTimezone = bootstrap.settings.defaultTimezone ?? "Australia/Melbourne";
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
+            <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
+              Review the setup PR, merge it after checks pass, then enable daily article prompts.
+            </p>
+          </div>
+          <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
+        </div>
+
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <PublishFlowCard title="Setup PR" status={prUrl ? "complete" : prCreateFailed ? "needs_action" : "ready"} eyebrow={prUrl ? "PR ready" : prCreateFailed ? "Retry needed" : "Ready"}>
+            {prUrl ? (
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {prNumber ? `Pull request #${prNumber} is ready for final review.` : "The setup pull request is ready for final review."}
+                </p>
+                <a
+                  href={prUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-xl bg-gray-950 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-black"
+                >
+                  Open PR
+                </a>
+              </div>
+            ) : (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {prCreateFailed
+                    ? "Approval succeeded, but PR creation did not complete. Retry will recreate or reuse the setup PR."
+                    : "Create the setup PR from the approved preview."}
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="approve"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50"
+                >
+                  {approvePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                  {approvePending ? "Creating..." : prCreateFailed ? "Retry create PR" : "Create setup PR"}
+                </button>
+              </Form>
+            )}
+          </PublishFlowCard>
+
+          <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
+            {setupMerged ? (
+              <p className="text-sm font-semibold text-gray-600">The setup PR has been merged. Verification can continue in the background.</p>
+            ) : prUrl ? (
+              <Form method="POST" className="space-y-3">
+                <p className="text-sm font-semibold text-gray-600">
+                  {mergeBlockedReason || "Checks must pass before the setup PR can be merged."}
+                </p>
+                <button
+                  type="submit"
+                  name="intent"
+                  value="merge-setup-pr"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                >
+                  {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                  {mergePending ? "Checking..." : "Check and merge"}
+                </button>
+              </Form>
+            ) : (
+              <p className="text-sm font-semibold text-gray-500">Create the setup PR before merging to main.</p>
+            )}
+          </PublishFlowCard>
+
+          <PublishFlowCard title="Daily article reminders" status={dailyEnabled ? "complete" : setupMerged ? "ready" : "locked"} eyebrow={dailyEnabled ? "Enabled" : setupMerged ? "Ready" : "Merge first"}>
+            {setupMerged ? (
+              <div className="space-y-3">
+                <Form method="POST" className="space-y-3">
+                  <label className="block">
+                    <span className="text-xs font-black uppercase tracking-wide text-gray-500">Timezone</span>
+                    <input
+                      type="text"
+                      name="defaultTimezone"
+                      defaultValue={defaultTimezone}
+                      className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+                    />
+                  </label>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="enable-daily-automation"
+                    disabled={isSubmitting || dailyEnabled || !dailyReady}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:bg-gray-100 disabled:text-gray-500"
+                  >
+                    {enableDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : dailyEnabled ? <CheckCircleIcon className="h-4 w-4" /> : <PlayIcon className="h-4 w-4" />}
+                    {enableDailyPending ? "Enabling..." : dailyEnabled ? "Enabled" : "Enable reminder"}
+                  </button>
+                </Form>
+                <Form method="POST">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="run-daily-discovery-now"
+                    disabled={isSubmitting || !dailyEnabled}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 px-4 py-2.5 text-sm font-black text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {runDailyPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : null}
+                    {runDailyPending ? "Starting..." : "Run today now"}
+                  </button>
+                </Form>
+              </div>
+            ) : (
+              <p className="text-sm font-semibold text-gray-500">Daily reminders unlock after the setup PR is merged.</p>
+            )}
+          </PublishFlowCard>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 function PublishAndAutomateDetail({
   run,
   bootstrap,
@@ -3239,7 +3434,8 @@ function isSetupScanRun(run: VibeMarketingRunSummary) {
 }
 
 function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
-  const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
+  const setupStatus = articleSystemSetupStatus(run);
+  if (isArticleSystemSetupPublishState(run) || run.currentStep === "create_pull_request" || run.currentStep === "merged") return "publish";
   if (run.status === "completed" || setupStatus === "manual_merge_required") return "publish";
   if (exactLivePreviewUrl(run.livePreview) || articleSystemSetupExactPreviewUrl(run)) return "review";
   if ((run.status === "awaiting_approval" || run.status === "approval_required") && articleSystemSetupExactPreviewUrl(run)) return "review";
@@ -3272,18 +3468,21 @@ function workflowProgressForRunPage(
   const progress = run.workflowProgress ?? fallbackProgress ?? null;
   if (progress && run.workflow === "article_system_setup") {
     const activeStepId = setupWorkflowStepIdForRun(run);
-    const setupStatus = (stringResultValue(run, "status", "setupStatus", "setup_status") || run.currentStep || run.status || "").toLowerCase();
+    const setupStatus = articleSystemSetupStatus(run);
     const manualMergeRequired = setupStatus === "manual_merge_required";
+    const setupPrCreated = isArticleSystemSetupPublishState(run);
+    const setupMerged = isArticleSystemSetupMerged(run);
     const setupActive = isActiveArticleSystemSetupRun(run);
     const setupTerminal = !setupActive && isTerminalAttentionStatus(run.status);
     const setupPreviewActive = !setupTerminal && hasActiveLivePreview(run.livePreview);
     const setupFailed = !setupActive && !setupPreviewActive && (isFailedArticlePreview(run.livePreview) || setupTerminal || ARTICLE_SETUP_FAILED_STATUSES.has(setupStatus));
-    const setupComplete = (run.status === "completed" || run.approvalState === "approved") && !manualMergeRequired;
-    const reviewReady = activeStepId === "review" || setupComplete;
+    const setupComplete = setupMerged && !manualMergeRequired;
+    const reviewComplete = setupPrCreated || setupComplete;
+    const reviewReady = activeStepId === "review" || reviewComplete;
     return {
       ...progress,
       currentStepId: activeStepId,
-      nextStepId: setupComplete ? null : activeStepId === "generate" ? "review" : "publish",
+      nextStepId: activeStepId === "generate" ? "review" : activeStepId === "review" ? "publish" : null,
       steps: progress.steps.map((step) => {
         if (["profile", "baseline", "repo", "article_system"].includes(step.id)) {
           return { ...step, status: "complete" };
@@ -3294,7 +3493,7 @@ function workflowProgressForRunPage(
             label: "Build setup page",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
             summary: "Create the setup branch and exact hosted preview for the articles/blogs directory.",
-            status: setupComplete || reviewReady ? "complete" : setupFailed ? "blocked" : "running",
+            status: reviewComplete || reviewReady ? "complete" : setupFailed ? "blocked" : "running",
           };
         }
         if (step.id === "review" || step.id === "revise") {
@@ -3303,7 +3502,7 @@ function workflowProgressForRunPage(
             label: step.id === "review" ? "Review setup preview" : "Request setup revisions",
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
             summary: "Inspect the setup preview and leave revision comments.",
-            status: setupComplete ? "complete" : reviewReady ? "needs_action" : "locked",
+            status: reviewComplete ? "complete" : reviewReady ? "needs_action" : "locked",
           };
         }
         if (step.id === "package" || step.id === "publish") {
@@ -3313,8 +3512,10 @@ function workflowProgressForRunPage(
             href: `/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`,
             summary: setupComplete
               ? "Merged setup PR is being verified on the default branch."
-              : "Approve the exact setup preview to create the setup pull request.",
-            status: manualMergeRequired ? "needs_action" : setupComplete ? "running" : "locked",
+              : setupPrCreated
+                ? "Open the setup PR, merge it, then enable daily article reminders."
+                : "Approve the exact setup preview to create the setup pull request.",
+            status: setupComplete ? "complete" : setupPrCreated || manualMergeRequired ? "needs_action" : "locked",
           };
         }
         if (step.id === "research" || step.id === "choose_topic" || step.id === "automation") {
@@ -3410,6 +3611,7 @@ export default function FounderToolsMarketingRun() {
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
   const isPublishAutomateView = Boolean(isArticleGenerationRun && (viewedWorkflowStepId === "publish" || viewedWorkflowStepId === "automation"));
+  const isSetupPublishView = Boolean(isArticleSystemSetupRun && viewedWorkflowStepId === "publish");
   const isArticleSetupContext = isSetupScanContext || isArticleSystemSetupRun || Boolean(effectiveSetupPreviewRun);
   const isCompletedArticleReviewPage = hasArticlePreview && run.status === "completed" && !isPublishAutomateView;
   const previewActive = hasActiveLivePreview(run.livePreview);
@@ -3568,7 +3770,9 @@ export default function FounderToolsMarketingRun() {
         topRightActionSlot={isArticleWorkflowRun ? <ArticleRunActionsMenu run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         primaryActionSlot={isArticleWorkflowRun && directPublishMode && !isPublishAutomateView ? <ArticleWorkflowPrimaryAction run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : undefined}
         activeDetailSlot={
-          isArticleGenerationRun && isPublishAutomateView ? (
+          isSetupPublishView ? (
+            <ArticleSetupPublishDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
+          ) : isArticleGenerationRun && isPublishAutomateView ? (
             <PublishAndAutomateDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isArticleGenerationRun ? (
             <ArticleGenerationReviewDetail
@@ -3580,7 +3784,7 @@ export default function FounderToolsMarketingRun() {
             />
           ) : undefined
         }
-        activeDetailLabel={isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
+        activeDetailLabel={isSetupPublishView ? "Publish setup PR" : isArticleSetupContext ? "Articles setup progress" : isPublishAutomateView ? "Publish & automate progress" : "Generating article progress"}
       />
 
       {isPublishApproval && directPublishMode ? <PublishApprovalPanel run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} /> : null}
@@ -3632,7 +3836,7 @@ export default function FounderToolsMarketingRun() {
             </section>
           ) : null}
 
-          {effectiveSetupPreviewRun ? (
+          {effectiveSetupPreviewRun && !isSetupPublishView ? (
             <ArticleSystemSetupPreviewPanel
               run={effectiveSetupPreviewRun}
               sourceRun={isScanRun ? run : null}
