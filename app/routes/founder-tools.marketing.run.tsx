@@ -20,6 +20,7 @@ import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
+import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
@@ -360,6 +361,18 @@ export async function action({ request, params, context }: Route.ActionArgs) {
     } else if (intent === "cancel-scan") {
       await controlVibeMarketingRun(env, request, runId, "cancel", { cleanup: true, workflow: "repo_scan" });
       throw redirect("/founder-tools/marketing/create?step=articleSystem");
+    } else if (intent === CANCEL_SETUP_BUILD_INTENT) {
+      let setupRunId = stringFromForm(formData, "setupRunId");
+      if (!setupRunId) {
+        const currentRun = await getVibeMarketingRun(env, request, runId);
+        if (currentRun.workflow === "article_system_setup") setupRunId = runId;
+      }
+      if (!setupRunId) return { intent, error: "No setup build was available to cancel." };
+      await controlVibeMarketingRun(env, request, setupRunId, "cancel", {
+        cleanup: true,
+        workflow: "article_system_setup",
+      });
+      throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`);
     } else if (intent === "retry-scan") {
       const result = await controlVibeMarketingRun(env, request, runId, "resume", { workflow: "repo_scan" });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
@@ -943,6 +956,21 @@ function ArticleSystemScanFormPanel({
   );
 }
 
+function setupBuildCancelActionSlot(
+  run: VibeMarketingRunSummary,
+  isSubmitting: boolean,
+  isActionPending?: (...keys: string[]) => boolean,
+): ReactNode {
+  if (!canCancelSetupBuild(run)) return null;
+  return (
+    <CancelSetupBuildButton
+      run={run}
+      pending={isActionPending?.(CANCEL_SETUP_BUILD_INTENT) ?? false}
+      disabled={isSubmitting}
+    />
+  );
+}
+
 function ArticleSystemSetupPreviewPanel({
   run,
   sourceRun,
@@ -1137,7 +1165,10 @@ function ArticleSystemSetupPreviewPanel({
               isActionPending={isActionPending}
             />
           ) : (
-            <ArticlesSetupProgressCard run={run} />
+            <ArticlesSetupProgressCard
+              run={run}
+              actionSlot={setupBuildCancelActionSlot(run, isSubmitting, isActionPending)}
+            />
           )}
         </div>
       ) : null}
@@ -1186,9 +1217,13 @@ function ArticleSystemSetupPreviewPanel({
 function ArticleSetupGenerateDetail({
   run,
   sourceRun,
+  isSubmitting,
+  isActionPending,
 }: {
   run: VibeMarketingRunSummary;
   sourceRun?: VibeMarketingRunSummary | null;
+  isSubmitting: boolean;
+  isActionPending?: (...keys: string[]) => boolean;
 }) {
   const setup = articleSystemSetupPayload(run);
   const source = sourceRun ?? run;
@@ -1219,7 +1254,10 @@ function ArticleSetupGenerateDetail({
 
   return (
     <div className="space-y-5">
-      <ArticlesSetupProgressCard run={run} />
+      <ArticlesSetupProgressCard
+        run={run}
+        actionSlot={setupBuildCancelActionSlot(run, isSubmitting, isActionPending)}
+      />
       <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-black text-gray-950">Setup build details</h2>
         <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">
@@ -1437,6 +1475,7 @@ function ArticleSystemSetupPreviewUnavailable({
             </button>
           </Form>
         ) : null}
+        {setupBuildCancelActionSlot(run, isSubmitting, isActionPending)}
       </div>
     </div>
   );
@@ -3869,7 +3908,7 @@ export default function FounderToolsMarketingRun() {
           isSetupPublishView ? (
             <ArticleSetupPublishDetail run={run} bootstrap={bootstrap} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isSetupGenerateView ? (
-            <ArticleSetupGenerateDetail run={run} />
+            <ArticleSetupGenerateDetail run={run} isSubmitting={isSubmitting} isActionPending={pendingActions.isPending} />
           ) : isSetupReviewView ? (
             <ArticleSystemSetupPreviewPanel
               run={run}
