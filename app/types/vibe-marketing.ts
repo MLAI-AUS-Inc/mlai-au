@@ -246,10 +246,13 @@ export interface VibeMarketingCheck {
   articleSystem?: Record<string, unknown>;
   published?: boolean;
   setupBlocked?: boolean;
+  setupMerged?: boolean;
   setupRunId?: string | null;
   setupStatus?: string | null;
   rescanRunId?: string | null;
+  mergeStatus?: string | null;
   prUrl?: string | null;
+  prNumber?: string | number | null;
   previewUrl?: string | null;
 }
 

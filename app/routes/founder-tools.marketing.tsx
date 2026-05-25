@@ -47,6 +47,7 @@ import {
   autofillStartErrorsForDisplay,
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
+import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -3025,10 +3026,12 @@ function ReturningTopicPickerPage({
   bootstrap,
   error,
   errorIntent,
+  setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
   error: string | null;
   errorIntent?: string | null;
+  setupMergedNotice?: boolean;
 }) {
   const navigation = useNavigation();
   const location = useLocation();
@@ -3515,6 +3518,12 @@ function ReturningTopicPickerPage({
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
+      {setupMergedNotice ? (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>The articles directory was merged. You can generate an article now while verification finishes in the background.</p>
+        </div>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
           <Form ref={articleFormRef} method="POST" className="space-y-5">
@@ -3898,15 +3907,16 @@ function ReturningTopicPickerPage({
 export default function FounderToolsMarketing() {
   const { bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const location = useLocation();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
-  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
-  const shouldShowTopicPicker = !setupBlocked && (bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow));
+  const setupMergedNotice = new URLSearchParams(location.search).get("setupMerged") === "1";
+  const shouldShowTopicPicker = shouldShowVibeMarketingTopicPicker(bootstrap);
 
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
       {shouldShowTopicPicker ? (
-        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} />
+        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} setupMergedNotice={setupMergedNotice} />
       ) : (
         <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}
