@@ -216,7 +216,7 @@ export default function ArticleContent() {
             title="Use a founder-fit checklist before you split equity"
             body="If you are weighing a potential cofounder, use a simple framework to document values, pressure-test alignment, and run better trial projects before making a long-term commitment."
             buttonText="Get the founder alignment template"
-            buttonHref="/resources"
+            buttonHref="/articles"
           />
         </div>
       </div>

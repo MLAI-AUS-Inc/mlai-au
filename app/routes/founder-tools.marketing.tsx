@@ -1,5 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation } from "react-router";
+import type { ShouldRevalidateFunctionArgs } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
 import type { KeyboardEvent, ReactNode, RefObject } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -8,6 +9,7 @@ import {
   BarChart3,
   BookOpen,
   Brain,
+  Camera,
   CheckCircle2,
   ChevronDown,
   CircleHelp,
@@ -33,9 +35,19 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 
+import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
+import AvatarModal from "~/components/AvatarModal";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
+import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
+import {
+  autofillProgressState,
+  autofillStartErrorsForDisplay,
+  isAutofillStatusPollFailure,
+} from "~/lib/vibe-marketing-autofill-state";
+import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -50,6 +62,7 @@ import {
   startVibeMarketingBaseline,
   startVibeMarketingDiscovery,
   startVibeMarketingScan,
+  uploadVibeMarketingCompanyAvatar,
 } from "~/lib/vibe-marketing";
 import {
   getActiveVibeRaisingCompany,
@@ -82,6 +95,24 @@ const FLOW_STEPS = [
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
 const DRAFT_DELETE_CONFIRMATION_STORAGE_KEY = "vibe-marketing:skip-draft-delete-confirmation";
+const CONTENT_ISLAND_DISCOVERY_DONE_STATUSES = new Set(["awaiting_confirmation", "completed"]);
+const CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES = new Set(["failed", "blocked", "denied", "cancelled", "canceled"]);
+
+function normalizeContentIslandDiscoveryStatus(status: string | null | undefined) {
+  return String(status || "").trim().toLowerCase();
+}
+
+function isContentIslandDiscoveryDoneStatus(status: string | null | undefined) {
+  return CONTENT_ISLAND_DISCOVERY_DONE_STATUSES.has(normalizeContentIslandDiscoveryStatus(status));
+}
+
+function isContentIslandDiscoveryFailedStatus(status: string | null | undefined) {
+  return CONTENT_ISLAND_DISCOVERY_FAILED_STATUSES.has(normalizeContentIslandDiscoveryStatus(status));
+}
+
+function isContentIslandDiscoveryTerminalStatus(status: string | null | undefined) {
+  return isContentIslandDiscoveryDoneStatus(status) || isContentIslandDiscoveryFailedStatus(status);
+}
 
 function listFromForm(value: FormDataEntryValue | null) {
   return String(value ?? "")
@@ -262,6 +293,18 @@ export async function action({ request, context }: Route.ActionArgs) {
   const intent = stringFromForm(formData, "intent");
 
   try {
+    if (intent === "save-company-avatar") {
+      if (!vibeContext.appUser) {
+        return { intent, error: "Create your startup profile before adding an avatar." };
+      }
+      const avatar = formData.get("avatar");
+      if (!(avatar instanceof File) || avatar.size === 0) {
+        return { intent, error: "Choose an avatar image before saving." };
+      }
+      const bootstrap = await uploadVibeMarketingCompanyAvatar(env, request, avatar);
+      return { intent, avatarUrl: bootstrap.company.avatarUrl ?? null };
+    }
+
     if (intent === "save-startup-details") {
       const { founderProfiles, founderNames } = founderNamesFromForm(formData);
       const name = stringFromForm(formData, "companyName");
@@ -406,6 +449,49 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
     }
 
+    if (intent === "start-content-island-discovery") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+      }
+      const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
+      const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
+      if (!pillar) {
+        return { intent, error: "Choose a content island before generating article ideas." };
+      }
+      const contentIslandKeyword =
+        stringFromForm(formData, "contentIslandKeyword") ||
+        pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
+        pillar.name;
+      const run = await startVibeMarketingDiscovery(env, request, {
+        contentIslandSlug: pillar.slug,
+        content_island_slug: pillar.slug,
+        contentIslandName: pillar.name,
+        content_island_name: pillar.name,
+        contentIslandKeyword: contentIslandKeyword,
+        content_island_keyword: contentIslandKeyword,
+        contentIslandIconKey: pillar.iconKey,
+        content_island_icon_key: pillar.iconKey,
+        contentIslandColorKey: pillar.colorKey,
+        content_island_color_key: pillar.colorKey,
+        requestedTopicCount: 4,
+        requested_topic_count: 4,
+      });
+      const runStatus = normalizeContentIslandDiscoveryStatus(run.status);
+      const runQueuedSuccessfully = Boolean(run.runId) && !isContentIslandDiscoveryFailedStatus(runStatus);
+      return {
+        intent,
+        runId: run.runId,
+        status: run.status,
+        islandSlug: pillar.slug,
+        islandName: pillar.name,
+        islandIconKey: pillar.iconKey,
+        islandColorKey: pillar.colorKey,
+        error: runQueuedSuccessfully ? null : run.error,
+        errors: runQueuedSuccessfully ? [] : run.errors,
+      };
+    }
+
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
@@ -535,18 +621,26 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
+    const fallback =
+      intent === "start-autofill"
+        ? "AI research could not start. Check the backend logs and try again."
+        : "That action could not be completed.";
+    const responseErrors = readableBackendErrors(error, { fallback });
     return {
       intent,
-      error:
-        error?.data?.detail ??
-        error?.data?.error ??
-        error?.response?.data?.detail ??
-        error?.message ??
-        "That action could not be completed.",
+      error: readableBackendError(error, { fallback }),
+      errors: responseErrors,
     };
   }
 
   return null;
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  if (actionIntent(args.actionResult) === "start-content-island-discovery") {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 function actionError(data: unknown): string | null {
@@ -988,8 +1082,8 @@ function competitorStringsFromAutofill(autofill: VibeMarketingAutofillResult) {
     });
 }
 
-const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
-const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
+const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running", "processing", "in_progress"]);
+const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "precondition_failed", "cancelled", "canceled", "denied", "error"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 
 const PROFILE_RESEARCH_STEPS = [
@@ -1167,7 +1261,7 @@ function ProfileResearchProgressCard({
     run?.errors?.[0] ||
     (failed ? "AI fill is unavailable. Check the Content Factory backend and try again." : null);
   const notice = unavailable
-    ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
+    ? "We have not received a fresh status update for more than 10 minutes. You can retry now, or keep this page open while polling continues."
     : stalled
       ? "This is taking longer than expected. We will keep checking for progress in the background."
       : null;
@@ -1214,7 +1308,7 @@ function ProfileResearchProgressCard({
           </p>
           <p className="mt-1 text-sm font-medium text-slate-500">
             {active
-              ? "Usually takes 1-3 minutes. Refreshing the page is safe."
+              ? "Deep research can take several minutes. Refreshing the page is safe."
               : failed
                 ? "The form is unlocked so you can retry or fill the fields manually."
                 : "Review the populated fields before continuing."}
@@ -1433,10 +1527,17 @@ function FirstArticleSetupPage({
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
       ? autofillStartData.status
       : null;
-  const autofillStartError =
+  const autofillStartDisplayErrors =
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
-      ? autofillStartData.error ?? autofillStartData.errors?.[0] ?? null
-      : null;
+      ? autofillStartErrorsForDisplay({
+          runId: autofillStartData.autofillRunId,
+          status: autofillStartStatus,
+          error: autofillStartData.error,
+          errors: autofillStartData.errors,
+        })
+      : [];
+  const autofillStartError =
+    autofillStartDisplayErrors[0] ?? null;
   const baselineStartData = baselineStartFetcher.data;
   const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
@@ -1458,8 +1559,11 @@ function FirstArticleSetupPage({
   const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
   const autofillStatusAgeMs = autofillStartedAt ? autofillClock - (autofillLastPollAt ?? autofillStartedAt) : 0;
   const autofillProgressAgeMs = autofillStartedAt ? autofillClock - (autofillLastProgressAt ?? autofillStartedAt) : 0;
-  const autofillStalled = Boolean(autofillPolling && autofillProgressAgeMs > 60_000);
-  const autofillUnavailable = Boolean(autofillPolling && (autofillStatusAgeMs > 120_000 || autofillProgressAgeMs > 120_000));
+  const { stalled: autofillStalled, unavailable: autofillUnavailable } = autofillProgressState({
+    polling: autofillPolling,
+    statusAgeMs: autofillStatusAgeMs,
+    progressAgeMs: autofillProgressAgeMs,
+  });
   const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
   const canStartAutofill =
     Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
@@ -1572,6 +1676,7 @@ function FirstArticleSetupPage({
 
   useEffect(() => {
     if (!autofillRunId || !autofillRun) return;
+    if (isAutofillStatusPollFailure(autofillRun)) return;
     const now = Date.now();
     const signature = researchProgressSignature(autofillRun);
     setAutofillLastPollAt(now);
@@ -2112,10 +2217,17 @@ function FirstArticleSetupPage({
   );
 }
 
+type TopicIslandVisual = {
+  iconKey: string | null | undefined;
+  colorKey: string | null | undefined;
+  name?: string | null;
+};
+
 function TopicRow({
   topic,
   selected,
   submitting,
+  islandVisual,
   onSelect,
   onContinue,
   onDecline,
@@ -2123,12 +2235,15 @@ function TopicRow({
   topic: VibeMarketingTopicCandidate;
   selected: boolean;
   submitting?: boolean;
+  islandVisual?: TopicIslandVisual | null;
   onSelect: () => void;
   onContinue: () => void;
   onDecline: () => void;
 }) {
   const score = opportunityLabel(topic.opportunityScore);
   const title = topic.title || topic.keyword;
+  const islandTheme = islandVisual ? pillarTheme(islandVisual.colorKey) : null;
+  const rowTheme = islandTheme?.row;
   const selectOrContinue = () => {
     if (selected) {
       onContinue();
@@ -2151,13 +2266,25 @@ function TopicRow({
       onClick={selectOrContinue}
       onKeyDown={handleKeyDown}
       className={clsx(
-        "grid w-full cursor-pointer grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4 focus:ring-violet-100",
-        selected ? "border-violet-300 bg-violet-50/60" : "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+        "grid w-full cursor-pointer grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-4 rounded-xl border px-4 py-3 text-left transition focus:outline-none focus:ring-4",
+        rowTheme?.focus ?? "focus:ring-violet-100",
+        selected
+          ? rowTheme?.selected ?? "border-violet-300 bg-violet-50/60"
+          : rowTheme?.idle ?? "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
       )}
       aria-label={selected ? `Continue with topic: ${title}` : `Select topic: ${title}`}
       aria-pressed={selected}
     >
-      <Flame className="h-5 w-5 text-violet-600" />
+      {islandTheme ? (
+        <span
+          className={clsx("inline-flex h-9 w-9 items-center justify-center rounded-full shadow-sm", islandTheme.iconWrap)}
+          title={islandVisual?.name ?? undefined}
+        >
+          <PillarIcon iconKey={islandVisual?.iconKey} className="h-4 w-4" />
+        </span>
+      ) : (
+        <Flame className="h-5 w-5 text-violet-600" />
+      )}
       <span className="min-w-0">
         <span className="block truncate text-sm font-black text-slate-950">{title}</span>
         <span className="mt-1 block text-sm font-semibold text-slate-500">
@@ -2187,14 +2314,16 @@ function TopicRow({
           disabled={selected && submitting}
           className={clsx(
             "inline-flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-xs font-black transition disabled:cursor-not-allowed disabled:opacity-60",
-            selected ? "bg-white text-violet-700 hover:bg-violet-50" : "bg-violet-50 text-violet-700 hover:bg-violet-100",
+            selected
+              ? rowTheme?.selectedButton ?? "bg-white text-violet-700 hover:bg-violet-50"
+              : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
           {selected ? "Continue" : "Select"}
           {selected && submitting ? (
-            <Loader2 className="h-4 w-4 animate-spin text-violet-500" />
+            <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
-            <ArrowRight className="h-4 w-4 text-violet-500" />
+            <ArrowRight className={clsx("h-4 w-4", rowTheme?.arrow ?? "text-violet-500")} />
           )}
         </button>
       </span>
@@ -2439,6 +2568,32 @@ type TopicFeedbackActionData = {
   topicFeedback?: VibeMarketingTopicFeedback | null;
 };
 
+type ContentIslandDiscoveryActionData = {
+  intent?: string;
+  runId?: string | null;
+  status?: string | null;
+  islandSlug?: string | null;
+  islandName?: string | null;
+  islandIconKey?: string | null;
+  islandColorKey?: string | null;
+  error?: string | null;
+  errors?: string[];
+};
+
+type CompanyAvatarActionData = {
+  intent?: string;
+  avatarUrl?: string | null;
+  error?: string | null;
+};
+
+type ContentIslandDiscoveryRunState = {
+  runId: string;
+  islandSlug: string;
+  islandName: string;
+  iconKey: string;
+  colorKey: string;
+};
+
 type TopicToast =
   | {
       kind: "declined";
@@ -2491,21 +2646,85 @@ const PILLAR_THEMES = {
     iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
     button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
     arrow: "text-emerald-500",
+    row: {
+      focus: "focus:ring-emerald-100",
+      selected: "border-emerald-300 bg-emerald-50/60",
+      idle: "border-slate-200 bg-white hover:border-emerald-200 hover:bg-emerald-50/30",
+      selectedButton: "bg-white text-emerald-700 hover:bg-emerald-50",
+      idleButton: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+      arrow: "text-emerald-500",
+    },
+    progress: {
+      containerClassName: "border-emerald-100 bg-emerald-50/80",
+      iconClassName: "bg-emerald-500 text-white shadow-emerald-100",
+      badgeClassName: "bg-white text-emerald-700",
+      completedSegmentClassName: "bg-emerald-600",
+      activeSegmentClassName: "animate-pulse bg-emerald-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   purple: {
     iconWrap: "bg-violet-700 text-white shadow-violet-100",
     button: "border-violet-200 text-violet-700 hover:bg-violet-50",
     arrow: "text-violet-600",
+    row: {
+      focus: "focus:ring-violet-100",
+      selected: "border-violet-300 bg-violet-50/60",
+      idle: "border-slate-200 bg-white hover:border-violet-200 hover:bg-violet-50/30",
+      selectedButton: "bg-white text-violet-700 hover:bg-violet-50",
+      idleButton: "bg-violet-50 text-violet-700 hover:bg-violet-100",
+      arrow: "text-violet-500",
+    },
+    progress: {
+      containerClassName: "border-violet-100 bg-violet-50/80",
+      iconClassName: "bg-violet-700 text-white shadow-violet-100",
+      badgeClassName: "bg-white text-violet-700",
+      completedSegmentClassName: "bg-violet-700",
+      activeSegmentClassName: "animate-pulse bg-violet-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   blue: {
     iconWrap: "bg-blue-600 text-white shadow-blue-100",
     button: "border-blue-200 text-blue-600 hover:bg-blue-50",
     arrow: "text-blue-500",
+    row: {
+      focus: "focus:ring-blue-100",
+      selected: "border-blue-300 bg-blue-50/60",
+      idle: "border-slate-200 bg-white hover:border-blue-200 hover:bg-blue-50/30",
+      selectedButton: "bg-white text-blue-700 hover:bg-blue-50",
+      idleButton: "bg-blue-50 text-blue-700 hover:bg-blue-100",
+      arrow: "text-blue-500",
+    },
+    progress: {
+      containerClassName: "border-blue-100 bg-blue-50/80",
+      iconClassName: "bg-blue-600 text-white shadow-blue-100",
+      badgeClassName: "bg-white text-blue-700",
+      completedSegmentClassName: "bg-blue-600",
+      activeSegmentClassName: "animate-pulse bg-blue-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
   orange: {
     iconWrap: "bg-orange-500 text-white shadow-orange-100",
     button: "border-orange-200 text-orange-600 hover:bg-orange-50",
     arrow: "text-orange-500",
+    row: {
+      focus: "focus:ring-orange-100",
+      selected: "border-orange-300 bg-orange-50/60",
+      idle: "border-slate-200 bg-white hover:border-orange-200 hover:bg-orange-50/30",
+      selectedButton: "bg-white text-orange-700 hover:bg-orange-50",
+      idleButton: "bg-orange-50 text-orange-700 hover:bg-orange-100",
+      arrow: "text-orange-500",
+    },
+    progress: {
+      containerClassName: "border-orange-100 bg-orange-50/80",
+      iconClassName: "bg-orange-500 text-white shadow-orange-100",
+      badgeClassName: "bg-white text-orange-700",
+      completedSegmentClassName: "bg-orange-500",
+      activeSegmentClassName: "animate-pulse bg-orange-300",
+      pendingSegmentClassName: "bg-white/80",
+    },
   },
 } as const;
 
@@ -2514,6 +2733,10 @@ function pillarTheme(colorKey: string | null | undefined) {
     return PILLAR_THEMES[colorKey];
   }
   return PILLAR_THEMES.purple;
+}
+
+function pillarProgressTheme(colorKey: string | null | undefined): MarketingRunProgressTheme {
+  return pillarTheme(colorKey).progress;
 }
 
 function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined; className?: string }) {
@@ -2530,30 +2753,154 @@ function PillarIcon({ iconKey, className }: { iconKey: string | null | undefined
   return <Icon className={className} />;
 }
 
+const CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS = [
+  { key: "queue_research", name: "Queue research run" },
+  { key: "load_context", name: "Load startup context" },
+  { key: "research_keywords", name: "Research keyword ideas" },
+  { key: "score_opportunities", name: "Score opportunities" },
+  { key: "select_topics", name: "Select article ideas" },
+  { key: "refresh_topics", name: "Update topic picker" },
+] as const;
+
+function dateMs(value: string | null | undefined) {
+  const parsed = value ? Date.parse(value) : Number.NaN;
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function contentIslandResearchElapsedSeconds(run?: VibeMarketingRunSummary | null) {
+  const researchStep = run?.steps.find((step) => step.key === "research_sources");
+  const startedAt = dateMs(researchStep?.startedAt) ?? dateMs(run?.updatedAt) ?? dateMs(run?.createdAt);
+  if (!startedAt) return 0;
+  return Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+}
+
+function contentIslandDiscoveryStepIndex(run?: VibeMarketingRunSummary | null) {
+  if (!run) return 0;
+  const status = normalizeContentIslandDiscoveryStatus(run.status);
+  if (isContentIslandDiscoveryDoneStatus(status)) return CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length;
+  const currentStep = String(run.currentStep || "").trim().toLowerCase();
+  if (currentStep.includes("final")) return 5;
+  if (currentStep.includes("research")) {
+    const elapsed = contentIslandResearchElapsedSeconds(run);
+    if (elapsed > 150) return 4;
+    if (elapsed > 60) return 3;
+    return 2;
+  }
+  if (currentStep.includes("load") || currentStep.includes("context")) return 1;
+  if (status === "queued" || status === "") return 0;
+  return 2;
+}
+
+function buildContentIslandDiscoveryRunSummary({
+  run,
+  activeRun,
+  submitting,
+  domain,
+}: {
+  run?: VibeMarketingRunSummary | null;
+  activeRun?: ContentIslandDiscoveryRunState | null;
+  submitting?: boolean;
+  domain?: string | null;
+}): VibeMarketingRunSummary | null {
+  if (!run && !activeRun && !submitting) return null;
+  const status = run?.status ?? (submitting ? "queued" : "running");
+  const failed = isContentIslandDiscoveryFailedStatus(status);
+  const activeIndex = failed
+    ? Math.max(0, Math.min(contentIslandDiscoveryStepIndex(run), CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length - 1))
+    : Math.min(contentIslandDiscoveryStepIndex(run), CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length);
+  const steps = CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.map((step, index) => ({
+    key: step.key,
+    name: step.name,
+    required: true,
+    status:
+      index < activeIndex
+        ? "completed"
+        : failed && index === activeIndex
+          ? "failed"
+          : index === activeIndex && !isContentIslandDiscoveryDoneStatus(status)
+            ? "running"
+            : "pending",
+    attempts: index <= activeIndex ? 1 : 0,
+    artifacts: [],
+  }));
+
+  return {
+    runId: run?.runId || activeRun?.runId || "content-island-discovery-starting",
+    workflow: run?.workflow || "auto_discovery",
+    domain: run?.domain || domain || "",
+    githubRepo: run?.githubRepo ?? null,
+    sourceRunId: run?.sourceRunId ?? null,
+    status,
+    currentStep: CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS[Math.min(activeIndex, CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.length - 1)]?.key ?? run?.currentStep ?? "queue_research",
+    approvalState: run?.approvalState ?? null,
+    resumeAvailable: run?.resumeAvailable ?? false,
+    createdAt: run?.createdAt,
+    updatedAt: run?.updatedAt,
+    stepOrder: CONTENT_ISLAND_DISCOVERY_DISPLAY_STEPS.map((step) => step.key),
+    steps,
+    warnings: run?.warnings ?? [],
+    errors: run?.errors ?? [],
+    artifacts: run?.artifacts ?? [],
+    previewUrl: run?.previewUrl ?? null,
+    prUrl: run?.prUrl ?? null,
+    routePath: run?.routePath ?? null,
+    diagnostics: run?.diagnostics ?? {},
+    contentPackage: run?.contentPackage ?? null,
+    componentManifest: run?.componentManifest ?? null,
+    livePreview: run?.livePreview ?? null,
+    componentFeedback: run?.componentFeedback ?? null,
+    workflowProgress: run?.workflowProgress ?? null,
+    publishChildStatus: run?.publishChildStatus ?? null,
+    publishChildRecoverable: run?.publishChildRecoverable ?? false,
+    publishChildWaitReason: run?.publishChildWaitReason ?? null,
+    stale: run?.stale ?? false,
+    staleReason: run?.staleReason ?? null,
+    retryAvailable: run?.retryAvailable ?? false,
+    queueName: run?.queueName ?? null,
+    queuedAt: run?.queuedAt ?? null,
+    result: run?.result ?? {},
+  };
+}
+
+function contentIslandDiscoveryStepLabel(run: VibeMarketingRunSummary | null, activeRun: ContentIslandDiscoveryRunState | null) {
+  const islandName = activeRun?.islandName || "this content island";
+  if (!run) return `Starting article idea research for ${islandName}.`;
+  if (isContentIslandDiscoveryFailedStatus(run.status)) return `Article idea research needs attention for ${islandName}.`;
+  if (isContentIslandDiscoveryDoneStatus(run.status)) return `New article ideas for ${islandName} are ready. Updating the topic picker.`;
+  const currentStep = String(run.currentStep || "").trim().toLowerCase();
+  if (currentStep.includes("research")) return `Researching and scoring article ideas for ${islandName}.`;
+  if (currentStep.includes("final")) return `Preparing the highest-value ideas for ${islandName}.`;
+  if (currentStep.includes("load") || currentStep.includes("context")) return `Loading startup context for ${islandName}.`;
+  return `Researching article ideas for ${islandName}.`;
+}
+
 function TopicPillarsSection({
   pillars,
   submitting,
   discoverySubmitting,
+  generatingPillarSlug,
   activePillarSlug,
   customNotice,
   helpOpen,
   helpRef,
-  onViewIdeas,
+  onGenerate,
   onAddCustomPillar,
   onLearnMore,
 }: {
   pillars: VibeMarketingTopicPillar[];
   submitting: boolean;
   discoverySubmitting: boolean;
+  generatingPillarSlug?: string | null;
   activePillarSlug: string | null;
   customNotice: boolean;
   helpOpen: boolean;
   helpRef: RefObject<HTMLDivElement | null>;
-  onViewIdeas: (pillar: VibeMarketingTopicPillar) => void;
+  onGenerate: (pillar: VibeMarketingTopicPillar) => void;
   onAddCustomPillar: () => void;
   onLearnMore: () => void;
 }) {
   const visiblePillars = pillars.slice(0, 4);
+  const generating = Boolean(generatingPillarSlug);
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -2615,17 +2962,27 @@ function TopicPillarsSection({
               <h3 className="mt-6 min-h-[42px] text-balance text-sm font-black leading-5 text-slate-950">
                 {pillar.name}
               </h3>
-              <p className="mt-2 text-xs font-black text-slate-500">{pillar.ideaCount} topic ideas</p>
+              <div className="mt-2 h-4" aria-hidden="true" />
               <button
                 type="button"
-                onClick={() => onViewIdeas(pillar)}
+                onClick={() => onGenerate(pillar)}
+                disabled={submitting || generating}
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition",
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
                   theme.button,
                 )}
               >
-                View ideas
-                <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                {generatingPillarSlug === pillar.slug ? (
+                  <>
+                    <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                    loading
+                  </>
+                ) : (
+                  <>
+                    Generate
+                    <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                  </>
+                )}
               </button>
             </article>
           );
@@ -2669,14 +3026,20 @@ function ReturningTopicPickerPage({
   bootstrap,
   error,
   errorIntent,
+  setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
   error: string | null;
   errorIntent?: string | null;
+  setupMergedNotice?: boolean;
 }) {
   const navigation = useNavigation();
   const location = useLocation();
+  const revalidator = useRevalidator();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
+  const contentIslandDiscoveryFetcher = useFetcher<ContentIslandDiscoveryActionData>({ key: "content-island-discovery" });
+  const contentIslandRunStatusFetcher = useFetcher<VibeMarketingRunSummary>({ key: "content-island-discovery-status" });
+  const companyAvatarFetcher = useFetcher<CompanyAvatarActionData>({ key: "company-avatar" });
   const topicListRef = useRef<HTMLDivElement | null>(null);
   const pillarHelpRef = useRef<HTMLDivElement | null>(null);
   const baseTopics = useMemo(
@@ -2690,11 +3053,39 @@ function ReturningTopicPickerPage({
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
   const [customPillarNotice, setCustomPillarNotice] = useState(false);
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
+  const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
+  const [contentIslandRefreshRunId, setContentIslandRefreshRunId] = useState<string | null>(null);
+  const [companyAvatarModalOpen, setCompanyAvatarModalOpen] = useState(false);
+  const [companyAvatarPreviewUrl, setCompanyAvatarPreviewUrl] = useState<string | null>(null);
   const undoRequestedTopicIds = useRef<Set<string>>(new Set());
+  const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
+  const contentIslandRefreshStartCount = useRef(0);
+  const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
     [activePillarSlug, bootstrap.topicPillars],
+  );
+  const pillarVisualsBySlug = useMemo(() => {
+    const map = new Map<string, TopicIslandVisual>();
+    for (const pillar of bootstrap.topicPillars) {
+      map.set(pillar.slug, { iconKey: pillar.iconKey, colorKey: pillar.colorKey, name: pillar.name });
+    }
+    return map;
+  }, [bootstrap.topicPillars]);
+  const topicIslandVisual = useCallback(
+    (topic: VibeMarketingTopicCandidate): TopicIslandVisual | null => {
+      const fromPillar = topic.pillarSlug ? pillarVisualsBySlug.get(topic.pillarSlug) : null;
+      const iconKey = topic.pillarIconKey ?? fromPillar?.iconKey ?? null;
+      const colorKey = topic.pillarColorKey ?? fromPillar?.colorKey ?? null;
+      if (!iconKey && !colorKey) return null;
+      return {
+        iconKey: iconKey ?? "default",
+        colorKey: colorKey ?? "purple",
+        name: topic.pillarName ?? fromPillar?.name ?? null,
+      };
+    },
+    [pillarVisualsBySlug],
   );
   const topicSource = useMemo(
     () => (activePillar ? activePillar.topicCandidates.filter((topic) => !topic.alreadyWritten) : baseTopics),
@@ -2727,6 +3118,13 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
+  const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
+  const companyAvatarSaving = companyAvatarFetcher.state !== "idle";
+  const companyAvatarError =
+    companyAvatarFetcher.data?.intent === "save-company-avatar"
+      ? companyAvatarFetcher.data.error ?? null
+      : null;
   const latestArticleRunId =
     bootstrap.latestRuns.find((run) => ["article_generation", "content_factory_article", "article_revision"].includes(run.workflow))?.runId ?? "";
   const latestDiscoveryRunId =
@@ -2742,11 +3140,48 @@ function ReturningTopicPickerPage({
     errorKey: error ? errorIntent : null,
   });
   const isSubmitting = pendingActions.isAnyPending;
+  const submittedContentIslandSlug =
+    contentIslandDiscoveryFetcher.state !== "idle"
+      ? String(contentIslandDiscoveryFetcher.formData?.get("contentIslandSlug") ?? "").trim()
+      : "";
+  const submittedContentIslandPillar = submittedContentIslandSlug
+    ? bootstrap.topicPillars.find((pillar) => pillar.slug === submittedContentIslandSlug) ?? null
+    : null;
+  const submittedContentIslandRun: ContentIslandDiscoveryRunState | null =
+    contentIslandDiscoveryFetcher.state !== "idle" && submittedContentIslandPillar
+      ? {
+          runId: "content-island-discovery-starting",
+          islandSlug: submittedContentIslandPillar.slug,
+          islandName: submittedContentIslandPillar.name,
+          iconKey: submittedContentIslandPillar.iconKey,
+          colorKey: submittedContentIslandPillar.colorKey,
+        }
+      : null;
+  const contentIslandPolledRun =
+    contentIslandRunStatusFetcher.data && contentIslandDiscoveryRun?.runId && contentIslandRunStatusFetcher.data.runId === contentIslandDiscoveryRun.runId
+      ? contentIslandRunStatusFetcher.data
+      : null;
+  const contentIslandPolledStatus = normalizeContentIslandDiscoveryStatus(contentIslandPolledRun?.status);
+  const contentIslandRunTerminal = Boolean(contentIslandPolledRun && isContentIslandDiscoveryTerminalStatus(contentIslandPolledStatus));
+  const contentIslandDiscoveryBusy =
+    contentIslandDiscoveryFetcher.state !== "idle" || Boolean(contentIslandDiscoveryRun && !contentIslandRunTerminal);
+  const generatingPillarSlug = contentIslandDiscoveryBusy
+    ? submittedContentIslandSlug || contentIslandDiscoveryRun?.islandSlug || null
+    : submittedContentIslandSlug || null;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
+  const contentIslandProgressState = contentIslandDiscoveryRun ?? submittedContentIslandRun;
+  const contentIslandProgressRun = buildContentIslandDiscoveryRunSummary({
+    run: contentIslandPolledRun,
+    activeRun: contentIslandProgressState,
+    submitting: contentIslandDiscoveryFetcher.state !== "idle",
+    domain,
+  });
+  const contentIslandProgressLabel = contentIslandDiscoveryStepLabel(contentIslandPolledRun, contentIslandProgressState);
+  const contentIslandProgressTheme = pillarProgressTheme(contentIslandProgressState?.colorKey);
   const [declineRequests, setDeclineRequests] = useState<Record<string, VibeMarketingTopicCandidate>>({});
   const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
   const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
@@ -2802,14 +3237,22 @@ function ReturningTopicPickerPage({
     submitRestoreFeedback(feedback.id);
   }
 
-  function handleViewPillarIdeas(pillar: VibeMarketingTopicPillar) {
-    setActivePillarSlug(pillar.slug);
+  function handleGenerateContentIslandIdeas(pillar: VibeMarketingTopicPillar) {
+    if (contentIslandDiscoveryBusy) return;
+    setActivePillarSlug(null);
     setActiveTab("choose");
-    setVisibleCount(Math.max(5, Math.min(pillar.topicCandidates.length || 5, 8)));
-    window.setTimeout(() => {
-      topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      topicListRef.current?.focus({ preventScroll: true });
-    }, 0);
+    setVisibleCount(5);
+    setToast(null);
+    setContentIslandDiscoveryRun(null);
+    setContentIslandRefreshRunId(null);
+    const formData = new FormData();
+    formData.set("intent", "start-content-island-discovery");
+    formData.set("contentIslandSlug", pillar.slug);
+    formData.set("contentIslandName", pillar.name);
+    formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
+    formData.set("contentIslandIconKey", pillar.iconKey);
+    formData.set("contentIslandColorKey", pillar.colorKey);
+    contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
   }
 
   function handleAddCustomPillar() {
@@ -2826,6 +3269,56 @@ function ReturningTopicPickerPage({
       pillarHelpRef.current?.focus({ preventScroll: true });
     }, 0);
   }
+
+  const handleCompanyAvatarSave = useCallback(
+    (file: File) => {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+      }
+      const previewUrl = window.URL.createObjectURL(file);
+      companyAvatarPreviewObjectUrl.current = previewUrl;
+      setCompanyAvatarPreviewUrl(previewUrl);
+      setToast(null);
+
+      const formData = new FormData();
+      formData.set("intent", "save-company-avatar");
+      formData.set("avatar", file);
+      companyAvatarFetcher.submit(formData, {
+        method: "POST",
+        encType: "multipart/form-data",
+      });
+    },
+    [companyAvatarFetcher],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+        companyAvatarPreviewObjectUrl.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const data = companyAvatarFetcher.data;
+    if (companyAvatarFetcher.state !== "idle" || data?.intent !== "save-company-avatar") return;
+    if (data.error) {
+      if (companyAvatarPreviewObjectUrl.current) {
+        window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+        companyAvatarPreviewObjectUrl.current = null;
+      }
+      setCompanyAvatarPreviewUrl(null);
+      setToast({ kind: "error", message: data.error });
+      return;
+    }
+    if (companyAvatarPreviewObjectUrl.current) {
+      window.URL.revokeObjectURL(companyAvatarPreviewObjectUrl.current);
+      companyAvatarPreviewObjectUrl.current = null;
+    }
+    setCompanyAvatarPreviewUrl(data.avatarUrl ?? null);
+    revalidator.revalidate();
+  }, [companyAvatarFetcher.data, companyAvatarFetcher.state, revalidator]);
 
   useEffect(() => {
     try {
@@ -2852,6 +3345,101 @@ function ReturningTopicPickerPage({
     const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
   }, [bootstrap.draftArticles, draftDeleteRequest]);
+
+  useEffect(() => {
+    const data = contentIslandDiscoveryFetcher.data;
+    if (contentIslandDiscoveryFetcher.state !== "idle" || !data || data.intent !== "start-content-island-discovery") return;
+    const startStatusFailed = isContentIslandDiscoveryFailedStatus(data.status);
+    if (!data.runId || (data.error && startStatusFailed)) {
+      setContentIslandDiscoveryRun(null);
+      setToast({ kind: "error", message: data.error || "Could not start article idea research for that content island." });
+      return;
+    }
+    const pillar = bootstrap.topicPillars.find((item) => item.slug === data.islandSlug);
+    setContentIslandDiscoveryRun({
+      runId: data.runId,
+      islandSlug: data.islandSlug || pillar?.slug || "",
+      islandName: data.islandName || pillar?.name || "this content island",
+      iconKey: data.islandIconKey || pillar?.iconKey || "default",
+      colorKey: data.islandColorKey || pillar?.colorKey || "purple",
+    });
+  }, [bootstrap.topicPillars, contentIslandDiscoveryFetcher.data, contentIslandDiscoveryFetcher.state]);
+
+  useEffect(() => {
+    if (!contentIslandDiscoveryRun?.runId) return;
+    if (contentIslandRunTerminal) return;
+    const runId = contentIslandDiscoveryRun.runId;
+    const statusPath = `/founder-tools/marketing/runs/${encodeURIComponent(runId)}/status`;
+    contentIslandRunStatusFetcher.load(statusPath);
+    const intervalId = window.setInterval(() => {
+      if (contentIslandRunStatusFetcher.state === "idle") {
+        contentIslandRunStatusFetcher.load(statusPath);
+      }
+    }, 3000);
+    return () => window.clearInterval(intervalId);
+  }, [contentIslandDiscoveryRun?.runId, contentIslandRunTerminal]);
+
+  useEffect(() => {
+    const run = contentIslandPolledRun;
+    if (!run || !contentIslandDiscoveryRun || run.runId !== contentIslandDiscoveryRun.runId) return;
+    const status = String(run.status || "").trim().toLowerCase();
+    if (isContentIslandDiscoveryDoneStatus(status)) {
+      if (!completedContentIslandDiscoveryRuns.current.has(run.runId)) {
+        completedContentIslandDiscoveryRuns.current.add(run.runId);
+        contentIslandRefreshStartCount.current = bootstrap.topicCandidates.length;
+        setContentIslandRefreshRunId(run.runId);
+        setActivePillarSlug(null);
+        setActiveTab("choose");
+        setVisibleCount(5);
+        revalidator.revalidate();
+        window.setTimeout(() => {
+          topicListRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+          topicListRef.current?.focus({ preventScroll: true });
+        }, 0);
+      }
+      return;
+    }
+    if (isContentIslandDiscoveryFailedStatus(status)) {
+      setContentIslandRefreshRunId(null);
+      setToast(null);
+    }
+  }, [bootstrap.topicCandidates.length, contentIslandDiscoveryRun, contentIslandPolledRun, revalidator]);
+
+  useEffect(() => {
+    if (!contentIslandRefreshRunId || revalidator.state !== "idle") return;
+    const refreshedFromRun =
+      latestDiscoveryRunId === contentIslandRefreshRunId ||
+      bootstrap.topicCandidates.some((topic) => topic.sourceRunId === contentIslandRefreshRunId) ||
+      bootstrap.topicCandidates.length !== contentIslandRefreshStartCount.current;
+    if (!refreshedFromRun) return;
+    const refreshedTopic =
+      bootstrap.topicCandidates.find((topic) => topic.sourceRunId === contentIslandRefreshRunId && !topic.alreadyWritten) ??
+      (contentIslandDiscoveryRun?.islandSlug
+        ? bootstrap.topicCandidates.find(
+            (topic) => topic.pillarSlug === contentIslandDiscoveryRun.islandSlug && !topic.alreadyWritten,
+          )
+        : null);
+    if (refreshedTopic) {
+      const refreshedTopicIndex = bootstrap.topicCandidates
+        .filter((topic) => !topic.alreadyWritten)
+        .findIndex((topic) => topic.id === refreshedTopic.id);
+      setSelectedTopicId(refreshedTopic.id);
+      if (refreshedTopicIndex >= 0) {
+        setVisibleCount((current) => Math.max(current, Math.min(Math.max(refreshedTopicIndex + 1, 5), 8)));
+      }
+    }
+    setContentIslandDiscoveryRun((current) =>
+      current?.runId === contentIslandRefreshRunId ? null : current,
+    );
+    setContentIslandRefreshRunId(null);
+  }, [
+    bootstrap.topicCandidates,
+    bootstrap.topicCandidates.length,
+    contentIslandDiscoveryRun?.islandSlug,
+    contentIslandRefreshRunId,
+    latestDiscoveryRunId,
+    revalidator.state,
+  ]);
 
   useEffect(() => {
     if (!activePillarSlug) return;
@@ -2930,6 +3518,12 @@ function ReturningTopicPickerPage({
 
   return (
     <div className="mx-auto max-w-[1500px] px-4 py-9 sm:px-6 lg:px-10">
+      {setupMergedNotice ? (
+        <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>The articles directory was merged. You can generate an article now while verification finishes in the background.</p>
+        </div>
+      ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
           <Form ref={articleFormRef} method="POST" className="space-y-5">
@@ -3016,6 +3610,17 @@ function ReturningTopicPickerPage({
                     </button>
                   ) : null}
                 </div>
+                {contentIslandProgressRun && contentIslandProgressState ? (
+                  <div className="mt-5">
+                    <MarketingRunProgressCard
+                      run={contentIslandProgressRun}
+                      title="Researching article ideas"
+                      currentStepLabel={contentIslandProgressLabel}
+                      icon={<PillarIcon iconKey={contentIslandProgressState.iconKey} className="h-5 w-5" />}
+                      theme={contentIslandProgressTheme}
+                    />
+                  </div>
+                ) : null}
                 <div className="mt-5 space-y-3">
                   {topics.length ? (
                     visibleTopics.map((topic) => (
@@ -3024,6 +3629,7 @@ function ReturningTopicPickerPage({
                         topic={topic}
                         selected={topic.id === selectedTopicId}
                         submitting={articleSubmitting}
+                        islandVisual={topicIslandVisual(topic)}
                         onSelect={() => setSelectedTopicId(topic.id)}
                         onContinue={submitSelectedTopic}
                         onDecline={() => handleDeclineTopic(topic)}
@@ -3034,7 +3640,7 @@ function ReturningTopicPickerPage({
                       <Sparkles className="mx-auto h-8 w-8 text-violet-500" />
                       <p className="mt-3 text-sm font-black text-slate-950">No stored topic ideas are ready yet.</p>
                       <p className="mt-2 text-sm font-semibold text-slate-500">
-                        Generate ideas or enter a custom topic to start the next article.
+                        Choose a content island below and click Generate to research article ideas for this section.
                       </p>
                     </div>
                   )}
@@ -3148,13 +3754,14 @@ function ReturningTopicPickerPage({
 
           <TopicPillarsSection
             pillars={bootstrap.topicPillars}
-            submitting={isSubmitting}
+            submitting={isSubmitting || contentIslandDiscoveryBusy}
             discoverySubmitting={discoverySubmitting}
+            generatingPillarSlug={generatingPillarSlug}
             activePillarSlug={activePillarSlug}
             customNotice={customPillarNotice}
             helpOpen={pillarHelpOpen}
             helpRef={pillarHelpRef}
-            onViewIdeas={handleViewPillarIdeas}
+            onGenerate={handleGenerateContentIslandIdeas}
             onAddCustomPillar={handleAddCustomPillar}
             onLearnMore={handleLearnMorePillars}
           />
@@ -3170,14 +3777,34 @@ function ReturningTopicPickerPage({
               </Link>
             </div>
             <div className="mt-6 flex items-center gap-4">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-xl font-black text-white">
-                {companyInitials(companyName)}
+              <div className="group relative h-14 w-14 shrink-0">
+                {companyAvatarUrl ? (
+                  <img
+                    src={companyAvatarUrl}
+                    alt={`${companyName} avatar`}
+                    className="h-14 w-14 rounded-full object-cover ring-1 ring-slate-200"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-black text-xl font-black text-white">
+                    {companyInitials(companyName)}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setCompanyAvatarModalOpen(true)}
+                  disabled={companyAvatarSaving}
+                  aria-label="Edit company avatar"
+                  className="absolute inset-0 flex items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition group-hover:opacity-100 focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {companyAvatarSaving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+                </button>
               </div>
               <div className="min-w-0">
                 <p className="truncate text-lg font-black text-slate-950">{companyName}</p>
                 <p className="mt-1 text-sm font-bold text-slate-500">
                   {tags.length ? tags.join(" · ") : "Startup · SEO · Growth"}
                 </p>
+                {companyAvatarError ? <p className="mt-1 text-xs font-bold text-red-600">{companyAvatarError}</p> : null}
               </div>
             </div>
             <div className="mt-6 flex items-center justify-between gap-4 rounded-xl border border-emerald-100 bg-emerald-50 px-5 py-4">
@@ -3257,6 +3884,14 @@ function ReturningTopicPickerPage({
           </section>
         </aside>
       </div>
+      <AvatarModal
+        isOpen={companyAvatarModalOpen}
+        onClose={() => setCompanyAvatarModalOpen(false)}
+        onSave={handleCompanyAvatarSave}
+        initialImage={savedCompanyAvatarUrl ?? undefined}
+        seedInitialImage={Boolean(savedCompanyAvatarUrl)}
+        title="Update company avatar"
+      />
       {draftDeleteRequest ? (
         <DraftDeleteConfirmationModal
           draft={draftDeleteRequest}
@@ -3272,15 +3907,16 @@ function ReturningTopicPickerPage({
 export default function FounderToolsMarketing() {
   const { bootstrap } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const location = useLocation();
   const error = actionError(actionData);
   const errorIntent = actionIntent(actionData);
-  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
-  const shouldShowTopicPicker = !setupBlocked && (bootstrap.startPageMode === "topic_picker" || Boolean(bootstrap.hasCompletedArticleFlow));
+  const setupMergedNotice = new URLSearchParams(location.search).get("setupMerged") === "1";
+  const shouldShowTopicPicker = shouldShowVibeMarketingTopicPicker(bootstrap);
 
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
       {shouldShowTopicPicker ? (
-        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} />
+        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} setupMergedNotice={setupMergedNotice} />
       ) : (
         <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}

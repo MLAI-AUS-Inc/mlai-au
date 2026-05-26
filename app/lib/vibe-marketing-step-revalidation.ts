@@ -2,6 +2,7 @@ import type { ShouldRevalidateFunctionArgs } from "react-router";
 
 const CREATE_FLOW_PATH = "/founder-tools/marketing/create";
 const VIEW_ONLY_SEARCH_PARAMS = new Set(["step", "googleBaseline"]);
+const IN_PLACE_ACTION_INTENTS = new Set(["start-content-island-discovery"]);
 
 function normalizePathname(pathname: string) {
   return pathname.replace(/\/+$/, "") || "/";
@@ -44,6 +45,13 @@ export function shouldSkipVibeMarketingCreateRevalidation({
   actionResult,
   actionStatus,
 }: ShouldRevalidateFunctionArgs) {
+  const intent =
+    actionResult && typeof actionResult === "object" && "intent" in actionResult
+      ? String((actionResult as { intent?: unknown }).intent ?? "")
+      : "";
+  if (IN_PLACE_ACTION_INTENTS.has(intent)) {
+    return true;
+  }
   if (formMethod || actionResult !== undefined || actionStatus !== undefined) {
     return false;
   }

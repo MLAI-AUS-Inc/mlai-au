@@ -150,7 +150,7 @@ const ARTICLE_SETUP_WORKFLOW_DISPLAY_GROUPS: WorkflowDisplayGroupDefinition[] = 
   {
     id: "publish_automation",
     label: "Publish setup PR",
-    summary: "Approve and merge the setup pull request to main.",
+    summary: "Approve the exact setup preview to create the setup pull request.",
     stepIds: ["package", "publish"],
     completionStepId: "publish",
     icon: RocketLaunchIcon,

@@ -130,7 +130,7 @@ export const summaryHighlights = {
 const references = [
   {
     id: 1,
-    href: 'https://www.industry.gov.au/publications/australias-artificial-intelligence-ethics-framework',
+    href: 'https://www.industry.gov.au/publications/australias-ai-ethics-principles',
     title: 'Australia’s AI Ethics Principles',
     publisher: 'Department of Industry, Science and Resources (Australia)',
     description: 'Official guidance on responsible AI principles expected in Australian organisations.',
@@ -232,7 +232,7 @@ export default function ArticlePage() {
             title={`Get the checklist for ${TOPIC}`}
             description='Practical template to apply the concepts immediately.'
             buttonLabel='Download now'
-            buttonHref='/resources'
+            buttonHref='/articles'
             accent='purple'
           />
 

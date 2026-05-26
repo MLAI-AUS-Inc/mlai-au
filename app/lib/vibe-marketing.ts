@@ -1,6 +1,9 @@
 import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
+import { readableBackendErrors } from "~/lib/backend-error";
+import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
 import type {
   VibeMarketingBootstrap,
+  VibeMarketingArticleSetupState,
   VibeMarketingComponentFeedback,
   VibeMarketingComponentCommentAnchor,
   VibeMarketingComponentCommentContext,
@@ -57,6 +60,17 @@ function asNumber(value: unknown): number | null {
     return Number.isFinite(parsed) ? parsed : null;
   }
   return null;
+}
+
+function asBoolean(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["1", "true", "yes", "on"].includes(normalized)) return true;
+    if (["0", "false", "no", "off", ""].includes(normalized)) return false;
+  }
+  return Boolean(value);
 }
 
 function asNumberOrString(value: unknown): number | string | null {
@@ -177,6 +191,60 @@ function normalizeStep(raw: unknown): VibeMarketingStepState {
   };
 }
 
+function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupState | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const repo = asNullableString(payload.repo) ?? asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo);
+  const scanRunId = asNullableString(payload.scanRunId) ?? asNullableString(payload.scan_run_id);
+  const setupRunId = asNullableString(payload.setupRunId) ?? asNullableString(payload.setup_run_id);
+  const source = asNullableString(payload.source);
+  if (!repo && !scanRunId && !setupRunId && source !== "none") return null;
+  return {
+    repo,
+    githubRepo: asNullableString(payload.githubRepo) ?? asNullableString(payload.github_repo) ?? repo,
+    defaultBranch: asNullableString(payload.defaultBranch) ?? asNullableString(payload.default_branch),
+    defaultBranchSha:
+      asNullableString(payload.defaultBranchSha) ??
+      asNullableString(payload.default_branch_sha) ??
+      asNullableString(payload.repoHeadSha) ??
+      asNullableString(payload.repo_head_sha),
+    lastScannedSha: asNullableString(payload.lastScannedSha) ?? asNullableString(payload.last_scanned_sha),
+    scanRunId,
+    scanStatus: asNullableString(payload.scanStatus) ?? asNullableString(payload.scan_status),
+    scanCompletedAt: asNullableString(payload.scanCompletedAt) ?? asNullableString(payload.scan_completed_at),
+    scanUpdatedAt: asNullableString(payload.scanUpdatedAt) ?? asNullableString(payload.scan_updated_at),
+    scanStale: asBoolean(payload.scanStale ?? payload.scan_stale),
+    scanNeedsRescan: asBoolean(payload.scanNeedsRescan ?? payload.scan_needs_rescan),
+    staleReason: asNullableString(payload.staleReason) ?? asNullableString(payload.stale_reason),
+    setupRunId,
+    setupStatus: asNullableString(payload.setupStatus) ?? asNullableString(payload.setup_status),
+    setupRunStatus: asNullableString(payload.setupRunStatus) ?? asNullableString(payload.setup_run_status),
+    setupCurrentStep: asNullableString(payload.setupCurrentStep) ?? asNullableString(payload.setup_current_step),
+    setupBlocked: asBoolean(payload.setupBlocked ?? payload.setup_blocked),
+    setupMerged: asBoolean(payload.setupMerged ?? payload.setup_merged),
+    published: asBoolean(payload.published),
+    routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
+    previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    fallbackPreviewUrl: asNullableString(payload.fallbackPreviewUrl) ?? asNullableString(payload.fallback_preview_url),
+    livePreviewUrl: asNullableString(payload.livePreviewUrl) ?? asNullableString(payload.live_preview_url),
+    prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
+    prNumber: asNullableString(payload.prNumber) ?? asNullableString(payload.pr_number),
+    mergeStatus: asNullableString(payload.mergeStatus) ?? asNullableString(payload.merge_status),
+    livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
+    retryAvailable: asBoolean(payload.retryAvailable ?? payload.retry_available),
+    error: asNullableString(payload.error),
+    source: source ?? undefined,
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+    articleSurfaceMode: asNullableString(payload.articleSurfaceMode) ?? asNullableString(payload.article_surface_mode),
+    articleSurfaceHint:
+      payload.articleSurfaceHint && typeof payload.articleSurfaceHint === "object"
+        ? (payload.articleSurfaceHint as Record<string, unknown>)
+        : payload.article_surface_hint && typeof payload.article_surface_hint === "object"
+          ? (payload.article_surface_hint as Record<string, unknown>)
+          : null,
+  };
+}
+
 export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   return {
@@ -219,6 +287,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       payload.result && typeof payload.result === "object"
         ? (payload.result as Record<string, unknown>)
         : {},
+    articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
   };
 }
 
@@ -259,6 +328,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       name: asNullableString(company.name) ?? "Company",
       domain: asNullableString(company.domain),
       companyLinkedInUrl: asNullableString(company.companyLinkedInUrl) ?? asNullableString(company.company_linkedin_url),
+      avatarUrl: asNullableString(company.avatarUrl) ?? asNullableString(company.avatar_url),
       location: asNullableString(company.location),
       abn: asNullableString(company.abn),
       organizationId: Number(company.organizationId ?? company.organization_id ?? 0) || null,
@@ -309,6 +379,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       payload.checks && typeof payload.checks === "object"
         ? (payload.checks as VibeMarketingBootstrap["checks"])
         : {},
+    articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
     latestRuns,
     latestRunsByWorkflow,
     topicCandidates: Array.isArray(payload.topicCandidates)
@@ -395,7 +466,12 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   return {
     id: String(payload.id ?? keyword),
     keyword,
-    title: asNullableString(payload.title) ?? asNullableString(payload.angle) ?? keyword,
+    title:
+      asNullableString(payload.title) ??
+      asNullableString(payload.displayTitle) ??
+      asNullableString(payload.display_title) ??
+      asNullableString(payload.angle) ??
+      keyword,
     reason: asNullableString(payload.reason),
     audience: asNullableString(payload.audience) ?? asNullableString(payload.target_audience) ?? asNullableString(payload.targetAudience),
     confidence: asNullableString(payload.confidence),
@@ -429,6 +505,8 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
     pillarSlug: asNullableString(payload.pillarSlug) ?? asNullableString(payload.pillar_slug),
     pillarName: asNullableString(payload.pillarName) ?? asNullableString(payload.pillar_name),
     pillarKeyword: asNullableString(payload.pillarKeyword) ?? asNullableString(payload.pillar_keyword),
+    pillarIconKey: asNullableString(payload.pillarIconKey) ?? asNullableString(payload.pillar_icon_key),
+    pillarColorKey: asNullableString(payload.pillarColorKey) ?? asNullableString(payload.pillar_color_key),
     paaQuestions: normalizePaaQuestions(payload.paaQuestions ?? payload.paa_questions),
   };
 }
@@ -610,10 +688,12 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     available: Boolean(payload.available),
     status,
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
+    fallbackPreviewUrl: asNullableString(payload.fallbackPreviewUrl) ?? asNullableString(payload.fallback_preview_url),
+    failedPreviewUrl: asNullableString(payload.failedPreviewUrl) ?? asNullableString(payload.failed_preview_url),
     internalPreviewUrl: asNullableString(payload.internalPreviewUrl) ?? asNullableString(payload.internal_preview_url),
     proxyPath: asNullableString(payload.proxyPath) ?? asNullableString(payload.proxy_path),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
-    exactRender: Boolean(payload.exactRender ?? payload.exact_render),
+    exactRender: asBoolean(payload.exactRender ?? payload.exact_render),
     inspectorProtocolVersion: asNumber(payload.inspectorProtocolVersion) ?? asNumber(payload.inspector_protocol_version),
     inspectorMode: asNullableString(payload.inspectorMode) ?? asNullableString(payload.inspector_mode),
     error: asNullableString(payload.error),
@@ -622,6 +702,7 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     workspacePath: asNullableString(payload.workspacePath) ?? asNullableString(payload.workspace_path),
     logPath: asNullableString(payload.logPath) ?? asNullableString(payload.log_path),
     failedPhase: asNullableString(payload.failedPhase) ?? asNullableString(payload.failed_phase),
+    failureKind: asNullableString(payload.failureKind) ?? asNullableString(payload.failure_kind),
     failedCommand: asNullableString(payload.failedCommand) ?? asNullableString(payload.failed_command),
     logExcerpt: asNullableString(payload.logExcerpt) ?? asNullableString(payload.log_excerpt),
     proofWarnings: asStringList(payload.proofWarnings ?? payload.proof_warnings),
@@ -630,9 +711,11 @@ function normalizeLivePreview(raw: unknown): VibeMarketingLivePreview | null {
     proofAttempts: Array.isArray(payload.proofAttempts ?? payload.proof_attempts)
       ? ((payload.proofAttempts ?? payload.proof_attempts) as Record<string, unknown>[])
       : [],
-    proofAcceptedWithWarnings: Boolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
-    verificationSkippedForPreview: Boolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
+    proofAcceptedWithWarnings: asBoolean(payload.proofAcceptedWithWarnings ?? payload.proof_accepted_with_warnings),
+    verificationSkippedForPreview: asBoolean(payload.verificationSkippedForPreview ?? payload.verification_skipped_for_preview),
     previewMode: asNullableString(payload.previewMode) ?? asNullableString(payload.preview_mode),
+    previewBuildMode: asNullableString(payload.previewBuildMode) ?? asNullableString(payload.preview_build_mode),
+    fullSiteBuildSkipped: asBoolean(payload.fullSiteBuildSkipped ?? payload.full_site_build_skipped),
     renderMode: asNullableString(payload.renderMode) ?? asNullableString(payload.render_mode),
     renderConfidence: asNullableString(payload.renderConfidence) ?? asNullableString(payload.render_confidence),
     fallbackReason: asNullableString(payload.fallbackReason) ?? asNullableString(payload.fallback_reason),
@@ -891,6 +974,7 @@ const DEV_BOOTSTRAP: VibeMarketingBootstrap = {
     connectUrl: "http://localhost:8000/integrations/connect/google?scope=website_baseline&next=/founder-tools/marketing/create?step=baseline%26googleBaseline=refresh",
   },
   checks: {},
+  articleSetupState: null,
   latestRuns: [],
   latestRunsByWorkflow: {},
   topicCandidates: [],
@@ -1223,6 +1307,14 @@ export async function saveVibeMarketingSettings(env: Env, request: Request, body
   return normalizeBootstrap(response.data);
 }
 
+export async function uploadVibeMarketingCompanyAvatar(env: Env, request: Request, file: File) {
+  const client = createApiClient(env, request);
+  const formData = new FormData();
+  formData.set("avatar", file);
+  const response = await client.post(`${BASE_PATH}/company/avatar/`, formData);
+  return normalizeBootstrap(response.data);
+}
+
 export type VibeMarketingLocationSuggestion = {
   id: string;
   label: string;
@@ -1362,16 +1454,37 @@ async function startMarketingRun(env: Env, request: Request, path: string, body:
   const response = await client.post(`${BASE_PATH}/${path}`, body);
   const runId = asNullableString(response.data?.runId) ?? asNullableString(response.data?.run_id);
   const setupRunId = asNullableString(response.data?.setupRunId) ?? asNullableString(response.data?.setup_run_id);
-  const error =
-    asNullableString(response.data?.error) ??
-    asNullableString(response.data?.detail) ??
-    asNullableString(response.data?.message);
+  const rawErrorPayload = {
+    errors: response.data?.errors,
+    detail: response.data?.detail,
+    error: response.data?.error,
+    message: response.data?.message,
+  };
+  const hasErrorPayload = Object.values(rawErrorPayload).some((value) =>
+    Array.isArray(value) ? value.length > 0 : Boolean(value),
+  );
+  const status = asNullableString(response.data?.status) ?? "queued";
+  const errors =
+    path === "autofill" && hasAcceptedAutofillRun(runId, status)
+      ? []
+      : hasErrorPayload
+        ? readableBackendErrors(
+            { data: rawErrorPayload },
+            {
+              fallback:
+                path === "autofill"
+                  ? "AI research could not start. Check the backend logs and try again."
+                  : "That action could not be completed.",
+            },
+          )
+        : [];
+  const error = errors[0] ?? null;
   return {
     runId,
     setupRunId,
-    status: asNullableString(response.data?.status) ?? "queued",
+    status,
     error,
-    errors: asStringList(response.data?.errors ?? (error ? [error] : [])),
+    errors,
   };
 }
 

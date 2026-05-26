@@ -1,18 +1,9 @@
-import { useState } from "react";
-
 const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
-const AI_HOSPITAL_GIF = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/20251007_1211_01k6y2wqafe0bv634b3m6jkb47-ezgif.com-optimize.gif?alt=media&token=0e011323-1c97-4287-815e-3acc35344d22";
 const ESAFETY_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
-const ESAFETY_GIF = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Hipster_Office_Evil_Grin_Video-ezgif.com-resize%20(1).gif?alt=media&token=02219364-f849-4578-b112-08e18e2f21e3";
 
 export default function Hackathons() {
-    const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-
     return (
         <div className="min-h-screen bg-[linear-gradient(180deg,var(--brutalist-beige)_0%,#f7f2e8_100%)] px-4 py-12 sm:px-6 lg:px-8">
-            {/* Preload GIFs */}
-            <img src={AI_HOSPITAL_GIF} alt="" className="hidden" />
-            <img src={ESAFETY_GIF} alt="" className="hidden" />
             <div className="max-w-7xl mx-auto">
                 <div className="text-center mb-12">
                     <h1 className="text-4xl font-bold tracking-tight text-[var(--brutalist-black)] sm:text-5xl">
@@ -27,11 +18,9 @@ export default function Hackathons() {
                     {/* Medhack: Frontiers Card — Disabled */}
                     <div
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
-                        onMouseEnter={() => setHoveredCard("ai-hospital")}
-                        onMouseLeave={() => setHoveredCard(null)}
                     >
                         <img
-                            src={hoveredCard === "ai-hospital" ? AI_HOSPITAL_GIF : AI_HOSPITAL_STATIC}
+                            src={AI_HOSPITAL_STATIC}
                             alt="Medhack: Frontiers"
                             className="absolute inset-0 h-full w-full object-cover object-top"
                         />
@@ -47,11 +36,9 @@ export default function Hackathons() {
                     {/* eSafety Hackathon Card — Disabled */}
                     <div
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
-                        onMouseEnter={() => setHoveredCard("esafety")}
-                        onMouseLeave={() => setHoveredCard(null)}
                     >
                         <img
-                            src={hoveredCard === "esafety" ? ESAFETY_GIF : ESAFETY_STATIC}
+                            src={ESAFETY_STATIC}
                             alt="eSafety Hackathon"
                             className="absolute inset-0 h-full w-full object-cover object-center"
                         />
@@ -63,6 +50,15 @@ export default function Hackathons() {
                             </p>
                         </div>
                     </div>
+                </div>
+
+                <div className="mt-8 text-center">
+                    <a
+                        href="/medhack"
+                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[var(--brutalist-black)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                        MedHack information pack
+                    </a>
                 </div>
 
                 <div className="mx-auto mt-16 max-w-5xl">

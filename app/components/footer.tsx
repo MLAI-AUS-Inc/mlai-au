@@ -15,7 +15,9 @@ const footerNavigation = {
   About: [
     { name: "Contact", href: "/#about" },
     { name: "Members", href: "/members" },
-    { name: "How to Pitch", href: "/how-to-pitch-your-idea" },
+    { name: "How to Pitch", href: "/articles/featured/how-to-pitch-your-idea" },
+    { name: "Vibe Raising", href: "/vibe-raising" },
+    { name: "Meet Roo", href: "/roo" },
     { name: "LinkedIn", href: "https://www.linkedin.com/company/mlai-aus-inc" },
   ],
   social: [

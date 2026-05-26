@@ -27,7 +27,7 @@ import ArticleSystemSurfaceSummary, {
   type SurfaceCandidate,
 } from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
-import type { VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
+import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 type ArticleSystemConnectionPanelProps = {
   bootstrap: VibeMarketingBootstrap;
@@ -40,9 +40,9 @@ type ArticleSystemConnectionPanelProps = {
   articleSurfacePlaceholder?: string;
   connectionError?: string | null;
   scanRun?: VibeMarketingRunSummary | null;
+  articleSetupState?: VibeMarketingArticleSetupState | null;
   framed?: boolean;
   showDenySetupAction?: boolean;
-  autoStartInventoryScan?: boolean;
 };
 
 const SCAN_RUNNING_STATUSES = new Set(["queued", "running", "pending", "starting"]);
@@ -436,11 +436,10 @@ export default function ArticleSystemConnectionPanel({
   articleSurfacePlaceholder = "https://example.com/articles or /articles",
   connectionError,
   scanRun,
+  articleSetupState,
   framed = true,
   showDenySetupAction = false,
-  autoStartInventoryScan = false,
 }: ArticleSystemConnectionPanelProps) {
-  const inventoryFetcher = useFetcher();
   const runStatusFetcher = useFetcher<VibeMarketingRunSummary>();
   const location = useLocation();
   const revalidator = useRevalidator();
@@ -453,21 +452,26 @@ export default function ArticleSystemConnectionPanel({
   const scaffoldReady = Boolean(bootstrap.checks.scaffold?.passed);
   const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
   const requestedScanRunId = new URLSearchParams(location.search).get("scanRunId")?.trim() ?? "";
-  const currentScanRunId = requestedScanRunId || scanRun?.runId || "";
+  const currentScanRunId = requestedScanRunId || scanRun?.runId || articleSetupState?.scanRunId || "";
   const scanRunForCurrentId = !requestedScanRunId || scanRun?.runId === requestedScanRunId ? scanRun : null;
   const [polledScanRun, setPolledScanRun] = useState<VibeMarketingRunSummary | null>(null);
   const effectiveScanRun = polledScanRun?.runId === currentScanRunId ? polledScanRun : scanRunForCurrentId;
   const scanRunning = Boolean(effectiveScanRun && SCAN_RUNNING_STATUSES.has(effectiveScanRun.status));
   const scanFailed = Boolean(effectiveScanRun && SCAN_FAILED_STATUSES.has(effectiveScanRun.status));
-  const scanStale = Boolean(effectiveScanRun?.stale || effectiveScanRun?.staleReason === "scan_queue_not_started");
+  const canonicalScanComplete = articleSetupState?.scanStatus === "completed" && !articleSetupState.scanStale;
+  const scanStale = Boolean(effectiveScanRun?.stale || effectiveScanRun?.staleReason === "scan_queue_not_started" || articleSetupState?.scanStale);
   const scanNeedsSetupApproval = isScanAwaitingSetupApproval(effectiveScanRun);
-  const setupRunId = effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "";
+  const setupRunId = articleSetupState?.setupRunId || (effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "");
   const inventoryScan = isInventoryScan(effectiveScanRun);
   const setupTargetScan = isSetupTargetScan(effectiveScanRun);
   const inventoryProgressRun = effectiveScanRun && inventoryScan && !setupTargetScan ? effectiveScanRun : null;
-  const inventoryReady = Boolean(inventoryProgressRun?.status === "completed");
-  const setupTargetReady = Boolean(effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId));
-  const scanStartPending = actionPending("start-scan") || inventoryFetcher.state !== "idle";
+  const inventoryReady = Boolean(inventoryProgressRun?.status === "completed" || (canonicalScanComplete && !articleSetupState?.setupRunId));
+  const setupTargetReady = Boolean(
+    articleSetupState?.setupRunId ||
+      articleSetupState?.routePath ||
+      (effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId)),
+  );
+  const scanStartPending = actionPending("start-scan");
   const retryScanPending = actionPending("retry-scan");
   const cancelScanPending = actionPending("cancel-scan");
   const confirmSurfacePending = actionPending("confirm-article-surface");
@@ -609,19 +613,6 @@ export default function ArticleSystemConnectionPanel({
     lastTerminalRevalidationRef.current = key;
     revalidator.revalidate();
   }, [effectiveScanRun?.runId, effectiveScanRun?.status, effectiveScanRun?.updatedAt, revalidator, scanStale]);
-
-  useEffect(() => {
-    if (!autoStartInventoryScan || !connected || !selectedRepo || currentScanRunId || inventoryFetcher.state !== "idle") return;
-    const key = `vibe-marketing:auto-inventory-scan:${bootstrap.organization.id ?? "org"}:${selectedRepo}`;
-    if (typeof window !== "undefined" && window.sessionStorage.getItem(key) === "started") return;
-    if (typeof window !== "undefined") window.sessionStorage.setItem(key, "started");
-    const formData = new FormData();
-    formData.set("intent", "start-scan");
-    formData.set("scanPurpose", "inventory");
-    formData.set("articleSurfaceMode", "not_sure");
-    formData.set("githubRepo", selectedRepo);
-    void inventoryFetcher.submit(formData, { method: "POST" });
-  }, [autoStartInventoryScan, bootstrap.organization.id, connected, currentScanRunId, inventoryFetcher, selectedRepo]);
 
   useEffect(() => {
     if (!githubAuthWaiting || typeof window === "undefined") return;
@@ -1050,7 +1041,7 @@ export default function ArticleSystemConnectionPanel({
           </FlowStep>
         ) : null}
 
-        {connected && !currentScanRunId && !inventoryFetcher.data ? (
+        {connected && !currentScanRunId && !canonicalScanComplete ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
             Run the repository scan first. It is read-only and will not create branches, pull requests, or setup files.
           </div>

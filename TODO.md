@@ -1,5 +1,10 @@
 - [x] Add QR-friendly DisplayLink setup tutorial page
 - [x] Register the DisplayLink tutorial route without adding a main-nav entry point
+- [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text
+- [x] Restyle `/terms` and `/privacy` to match the main MLAI brutalist page shell
+- [x] Verify styled legal pages in the local browser
+- [x] Rewrite `/terms` as MLAI-wide Terms of Service with product schedules
+- [x] Rewrite `/privacy` as MLAI-wide Privacy Policy with Google and product-specific sections
 - [x] Run `bun run typecheck`
 - [x] Simplify the mobile review sticky footer on Founder Tools create-update
 - [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
@@ -215,6 +220,8 @@
 - [x] Move the credibility section from the MLAI homepage to the Vibe Raising landing flow
 - [x] Move the credibility section from the login flow to the founder dashboard hero page
 - [x] Simplify the founder dashboard credibility section and remove the beige frame styling
+- [x] Install Microsoft Clarity on the global app shell
+- [x] Run `bun run typecheck`
 - [x] Add functioning Google sign-in to the Vibe Raising login page
 - [x] Add Google client ID env scaffolding for local and deployed Vibe Raising sign-in
 - [x] Run typecheck after the Google login work

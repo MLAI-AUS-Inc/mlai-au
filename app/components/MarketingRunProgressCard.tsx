@@ -1,9 +1,23 @@
 import { ArrowPathIcon, ExclamationTriangleIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
+import type { ReactNode } from "react";
 import type { VibeMarketingRunSummary } from "~/types/vibe-marketing";
+
+export type MarketingRunProgressTheme = {
+  containerClassName?: string;
+  iconClassName?: string;
+  badgeClassName?: string;
+  completedSegmentClassName?: string;
+  activeSegmentClassName?: string;
+  pendingSegmentClassName?: string;
+};
 
 interface MarketingRunProgressCardProps {
   run: VibeMarketingRunSummary;
+  title?: string;
+  currentStepLabel?: string;
+  icon?: ReactNode;
+  theme?: MarketingRunProgressTheme;
 }
 
 function labelForStatus(status: string) {
@@ -30,12 +44,30 @@ function shortErrorMessage(run: VibeMarketingRunSummary, error: string) {
   return "This run failed. Technical details are available if needed.";
 }
 
-export default function MarketingRunProgressCard({ run }: MarketingRunProgressCardProps) {
-  const isFailed = ["failed", "blocked", "blocked_verification", "denied"].includes(run.status);
+export default function MarketingRunProgressCard({
+  run,
+  title,
+  currentStepLabel: currentStepLabelOverride,
+  icon,
+  theme,
+}: MarketingRunProgressCardProps) {
+  const isFailed = ["failed", "blocked", "blocked_verification", "denied", "cancelled", "canceled"].includes(run.status);
   const isScanRun = ["repo_scan", "content_factory_scan"].includes(run.workflow);
   const isStaleQueuedScan = isScanRun && Boolean(run.stale || run.staleReason === "scan_queue_not_started");
   const isScanActionNeeded = isScanRun && ["awaiting_confirmation", "awaiting_approval", "approval_required"].includes(run.status);
-  const isRunning = ["queued", "running", "awaiting_confirmation", "awaiting_delivery_mode", "awaiting_approval", "approval_required"].includes(run.status) && !isScanActionNeeded && !isStaleQueuedScan;
+  const isRunning = [
+    "queued",
+    "running",
+    "processing",
+    "researching",
+    "loading",
+    "syncing",
+    "selecting",
+    "awaiting_confirmation",
+    "awaiting_delivery_mode",
+    "awaiting_approval",
+    "approval_required",
+  ].includes(run.status) && !isScanActionNeeded && !isStaleQueuedScan;
   const statusLabel = isStaleQueuedScan ? "scan did not start" : isScanActionNeeded ? "scan complete, action needed" : labelForStatus(run.status);
   const currentStepLabel = isStaleQueuedScan
     ? "The scan worker did not pick up this job. Retry the scan or cancel it and start again."
@@ -46,27 +78,34 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
       : "Waiting for next update";
   const totalSteps = Math.max(run.steps.length, run.stepOrder.length, 1);
   const completedSteps = run.steps.filter((step) => step.status === "completed" || step.status === "skipped").length;
+  const attentionState = isFailed || isStaleQueuedScan;
+  const containerClassName = attentionState ? "border-red-200 bg-red-50" : theme?.containerClassName ?? "border-violet-100 bg-violet-50/70";
+  const iconClassName = attentionState ? "bg-red-100 text-red-600" : theme?.iconClassName ?? "bg-white text-violet-600";
+  const badgeClassName = attentionState ? "bg-red-100 text-red-700" : theme?.badgeClassName ?? "bg-white text-violet-700";
+  const completedSegmentClassName = theme?.completedSegmentClassName ?? "bg-violet-600";
+  const activeSegmentClassName = theme?.activeSegmentClassName ?? "animate-pulse bg-violet-300";
+  const pendingSegmentClassName = theme?.pendingSegmentClassName ?? "bg-white";
 
   return (
     <div
       className={clsx(
         "relative overflow-hidden rounded-xl border p-5 shadow-sm",
-        isFailed || isStaleQueuedScan ? "border-red-200 bg-red-50" : "border-violet-100 bg-violet-50/70",
+        containerClassName,
       )}
     >
       <div className="flex items-start gap-4">
-        <div className={clsx("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", isFailed || isStaleQueuedScan ? "bg-red-100 text-red-600" : "bg-white text-violet-600")}>
-          {isFailed || isStaleQueuedScan ? <ExclamationTriangleIcon className="h-6 w-6" /> : isRunning ? <ArrowPathIcon className="h-6 w-6 animate-spin" /> : <SparklesIcon className="h-6 w-6" />}
+        <div className={clsx("flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl", iconClassName)}>
+          {attentionState ? <ExclamationTriangleIcon className="h-6 w-6" /> : icon ?? (isRunning ? <ArrowPathIcon className="h-6 w-6 animate-spin" /> : <SparklesIcon className="h-6 w-6" />)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-black text-gray-950">{labelForWorkflow(run.workflow)}</h2>
-            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", isFailed || isStaleQueuedScan ? "bg-red-100 text-red-700" : "bg-white text-violet-700")}>
+            <h2 className="text-base font-black text-gray-950">{title ?? labelForWorkflow(run.workflow)}</h2>
+            <span className={clsx("rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide", badgeClassName)}>
               {statusLabel}
             </span>
           </div>
           <p className="mt-1 text-sm font-medium text-gray-700">
-            {currentStepLabel}
+            {currentStepLabelOverride ?? currentStepLabel}
           </p>
           <div className="mt-4 grid grid-cols-8 gap-2">
             {Array.from({ length: Math.min(Math.max(totalSteps, 1), 16) }).map((_, index) => {
@@ -77,9 +116,9 @@ export default function MarketingRunProgressCard({ run }: MarketingRunProgressCa
                   key={index}
                   className={clsx(
                     "h-2 rounded-full transition",
-                    isComplete && "bg-violet-600",
-                    isActive && "animate-pulse bg-violet-300",
-                    !isComplete && !isActive && "bg-white",
+                    isComplete && (attentionState ? "bg-red-300" : completedSegmentClassName),
+                    isActive && (attentionState ? "animate-pulse bg-red-200" : activeSegmentClassName),
+                    !isComplete && !isActive && pendingSegmentClassName,
                   )}
                 />
               );
