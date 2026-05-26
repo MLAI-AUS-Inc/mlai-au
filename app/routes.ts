@@ -11,6 +11,7 @@ export default [
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
   route("/resources", "routes/resources.tsx"),
+  route("/displaylink", "routes/displaylink.tsx"),
   route("/roo", "routes/roo.tsx"),
   route("/roo/topup/:purchaseId", "routes/roo.topup.$purchaseId.tsx"),
   route("/&", "routes/article-link-cleanups.tsx", { id: "cleanup-root-ampersand" }),
