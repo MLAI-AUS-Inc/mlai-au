@@ -153,7 +153,8 @@ export default function Events() {
                       </a>
                     </li>
                   ))}
-                </ul>
+                      <li><a href="/articles">Articles</a></li>
+</ul>
               </div>
             </div>
           </div>
