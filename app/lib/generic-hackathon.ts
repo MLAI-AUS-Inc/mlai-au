@@ -75,16 +75,26 @@ function errorMessage(data: unknown, fallback: string) {
   return fallback;
 }
 
+function asGenericTeam(data: unknown): GenericHackathonTeam | null {
+  if (!data || Array.isArray(data) || typeof data !== "object") return null;
+  const record = data as Partial<GenericHackathonTeam>;
+  if (!Array.isArray(record.members)) return null;
+  return record as GenericHackathonTeam;
+}
+
 export async function getGenericHackathon(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<Hackathon> {
   const client = createApiClient(env, request);
   const response = await client.get(`/api/v1/hackathons/${slug}/`);
+  if (!response.data || Array.isArray(response.data) || typeof response.data.name !== "string") {
+    throw new Error("Invalid hackathon response.");
+  }
   return response.data;
 }
 
 export async function getGenericCurrentTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonTeam | null> {
   const client = createApiClient(env, request);
   const response = await client.get(appPath(slug, "team/"));
-  return response.data ?? null;
+  return asGenericTeam(response.data);
 }
 
 export async function getGenericTeams(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonTeam[]> {

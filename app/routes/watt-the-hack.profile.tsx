@@ -1,5 +1,8 @@
 import type { Route } from "./+types/watt-the-hack.profile";
-import { Form, redirect, useActionData, useLoaderData } from "react-router";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Form, redirect, useActionData, useFetcher, useLoaderData } from "react-router";
+import { InformationCircleIcon, PencilIcon, UserGroupIcon } from "@heroicons/react/24/outline";
+import AvatarModal from "~/components/AvatarModal";
 import { getCurrentUser, updateUser } from "~/lib/auth";
 import { getInitials, generateAvatarUrl } from "~/lib/avatar";
 import { getEnv } from "~/lib/env.server";
@@ -9,9 +12,39 @@ import {
   getGenericTeams,
   joinGenericTeam,
   WATT_THE_HACK_SLUG,
+  type GenericHackathonMember,
   type GenericHackathonTeam,
 } from "~/lib/generic-hackathon";
+import { wattClasses } from "~/lib/watt-theme";
 import type { User } from "~/types/user";
+
+interface WattUser extends User {
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  about?: string;
+  personas?: string[];
+}
+
+type ActionResult = {
+  success?: boolean | string;
+  profileUpdated?: boolean;
+  error?: string;
+};
+
+const PERSONA_OPTIONS = [
+  { id: "hacker", label: "I am a Hacker", description: "You build things. You love code and technical challenges." },
+  { id: "hustler", label: "I am a Hustler", description: "You sell things. You focus on business, marketing, and growth." },
+  { id: "hipster", label: "I am a Hipster", description: "You design things. You care about UX, UI, and aesthetics." },
+  { id: "healer", label: "I am a Healer", description: "You heal people. You bring clinical or health domain expertise." },
+] as const;
+
+const PERSONA_CONFIG: Record<string, { label: string; color: string }> = {
+  hacker: { label: "Hacker", color: "border-[#c9dbb8] bg-[#dfead1] text-[#1f5b2c]" },
+  hustler: { label: "Hustler", color: "border-[#f2c34c]/60 bg-[#fff8dc] text-[#6f4b08]" },
+  hipster: { label: "Hipster", color: "border-[#df5047]/25 bg-[#fff1ef] text-[#9f2f28]" },
+  healer: { label: "Healer", color: "border-[#c9dbb8] bg-[#edf5df] text-[#1f5b2c]" },
+};
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context);
@@ -30,229 +63,599 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     getGenericTeams(env, request).catch(() => []),
   ]);
 
-  return { user: user as User, currentTeam, teams };
+  return { user: user as WattUser, currentTeam, teams };
 }
 
-export async function action({ request, context }: Route.ActionArgs) {
+export async function action({ request, context }: Route.ActionArgs): Promise<ActionResult | null> {
   const env = getEnv(context);
   const formData = await request.formData();
   const intent = formData.get("intent")?.toString();
 
   try {
     if (intent === "create_team") {
-      const teamName = String(formData.get("team_name") || "").trim();
+      const teamName = String(formData.get("name") || formData.get("team_name") || "").trim();
       if (!teamName) return { error: "Team name is required." };
       await createGenericTeam(env, request, WATT_THE_HACK_SLUG, teamName);
-      return { success: "Team created." };
+      return { success: true };
     }
 
     if (intent === "join_team") {
       const code = String(formData.get("code") || "").trim();
       if (!code) return { error: "Team code or name is required." };
       await joinGenericTeam(env, request, WATT_THE_HACK_SLUG, code);
-      return { success: "Team joined." };
+      return { success: true };
     }
 
     if (intent === "update_profile") {
       formData.set("app", WATT_THE_HACK_SLUG);
       formData.delete("intent");
       await updateUser(env, formData, request);
-      return { success: "Profile updated." };
+      return { success: true, profileUpdated: true };
     }
   } catch (error: any) {
     const detail = error?.response?.data?.error || error?.response?.data?.detail || error?.message;
     return { error: detail || "Request failed." };
   }
 
-  return { error: "Unsupported action." };
+  return null;
 }
 
-function TeamCard({ team }: { team: GenericHackathonTeam | null }) {
-  if (!team) {
-    return (
-      <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-        You are not on a Watt The Hack team yet.
-      </div>
-    );
-  }
+function personaLabel(persona: string) {
+  return PERSONA_CONFIG[persona.toLowerCase()]?.label || persona;
+}
 
-  return (
-    <div className="rounded-lg border border-black/10 bg-white p-5 shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-950">{team.team_name}</h2>
-          <p className="mt-1 text-sm text-gray-500">Team code: {team.code}</p>
-        </div>
-        <span className="rounded-full bg-[#e6f8d8] px-3 py-1 text-sm font-semibold text-[#24523f]">
-          {team.member_count}/6 members
-        </span>
-      </div>
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        {team.members.map((member) => (
-          <div key={member.id} className="flex items-center gap-3 rounded-md bg-gray-50 p-3">
-            <img
-              alt=""
-              src={member.avatar_url || generateAvatarUrl(getInitials(member.full_name || member.email))}
-              className="h-9 w-9 rounded-full object-cover"
-            />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-gray-950">{member.full_name || member.email}</p>
-              <p className="truncate text-xs text-gray-500">{member.email}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+function personaClass(persona: string) {
+  return PERSONA_CONFIG[persona.toLowerCase()]?.color || "border-[#e7dfcf] bg-[#fffdf7] text-[#6f756c]";
 }
 
 export default function WattTheHackProfile() {
-  const { user, currentTeam, teams } = useLoaderData<typeof loader>();
-  const actionData = useActionData<typeof action>();
-  const avatarUrl = user.avatar_url || generateAvatarUrl(getInitials(user.full_name || user.email));
+  const { user: initialUser, currentTeam, teams } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>() as ActionResult | undefined;
+  const fetcher = useFetcher<ActionResult>();
+
+  const [firstName, setFirstName] = useState(initialUser.first_name || "");
+  const [lastName, setLastName] = useState(initialUser.last_name || "");
+  const [email, setEmail] = useState(initialUser.email || "");
+  const [phone, setPhone] = useState(initialUser.phone || "");
+  const [about, setAbout] = useState(initialUser.about || "");
+  const [personas, setPersonas] = useState<string[]>(initialUser.personas || []);
+
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [isAvatarModalOpen, setIsAvatarModalOpen] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [previewAvatarUrl, setPreviewAvatarUrl] = useState<string | null>(null);
+
+  const [teamAvatarFile, setTeamAvatarFile] = useState<File | null>(null);
+  const [previewTeamAvatarUrl, setPreviewTeamAvatarUrl] = useState<string | null>(null);
+  const [isTeamAvatarModalOpen, setIsTeamAvatarModalOpen] = useState(false);
+
+  const [joinSearch, setJoinSearch] = useState("");
+  const [isJoinDropdownOpen, setIsJoinDropdownOpen] = useState(false);
+  const joinDropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredTeams = teams.filter((team) =>
+    team.team_name.toLowerCase().includes(joinSearch.toLowerCase()),
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (joinDropdownRef.current && !joinDropdownRef.current.contains(event.target as Node)) {
+        setIsJoinDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    setFirstName(initialUser.first_name || "");
+    setLastName(initialUser.last_name || "");
+    setEmail(initialUser.email || "");
+    setPhone(initialUser.phone || "");
+    setAbout(initialUser.about || "");
+    setPersonas(initialUser.personas || []);
+  }, [initialUser]);
+
+  useEffect(() => {
+    return () => {
+      if (previewAvatarUrl) URL.revokeObjectURL(previewAvatarUrl);
+      if (previewTeamAvatarUrl) URL.revokeObjectURL(previewTeamAvatarUrl);
+    };
+  }, [previewAvatarUrl, previewTeamAvatarUrl]);
+
+  useEffect(() => {
+    const data = fetcher.data;
+    if (fetcher.state === "idle" && data) {
+      if (data.success && data.profileUpdated) {
+        setMessage("Profile updated successfully.");
+        setError("");
+        setAvatarFile(null);
+        setTeamAvatarFile(null);
+      } else if (data.error) {
+        setMessage("");
+        setError(data.error);
+      }
+    }
+  }, [fetcher.state, fetcher.data]);
+
+  const teamName = currentTeam?.team_name || "";
+  const memberCount = currentTeam?.member_count ?? currentTeam?.members?.length ?? 0;
+  const isValidTeamSize = memberCount >= 2 && memberCount <= 6;
+  const teamMembers = currentTeam?.members || [];
+
+  const fullName = initialUser.full_name || [initialUser.first_name, initialUser.last_name].filter(Boolean).join(" ") || initialUser.email;
+  const isSaving = fetcher.state !== "idle";
+  const avatarUrl = previewAvatarUrl || initialUser.avatar_url || generateAvatarUrl(getInitials(fullName));
+  const teamAvatarUrl = previewTeamAvatarUrl || currentTeam?.avatar_url || generateAvatarUrl(getInitials(teamName || "Team"));
+  const profileFetcherData = fetcher.data;
+
+  const handleAvatarSave = async (file: File) => {
+    if (previewAvatarUrl) URL.revokeObjectURL(previewAvatarUrl);
+    setAvatarFile(file);
+    setPreviewAvatarUrl(URL.createObjectURL(file));
+    setIsAvatarModalOpen(false);
+  };
+
+  const handleTeamAvatarSave = async (file: File) => {
+    if (previewTeamAvatarUrl) URL.revokeObjectURL(previewTeamAvatarUrl);
+    setTeamAvatarFile(file);
+    setPreviewTeamAvatarUrl(URL.createObjectURL(file));
+    setIsTeamAvatarModalOpen(false);
+  };
+
+  const handleProfileSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (!firstName || !lastName || !email) {
+      setError("First name, last name, and email are required.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("intent", "update_profile");
+    formData.append("app", WATT_THE_HACK_SLUG);
+    formData.append("first_name", firstName);
+    formData.append("last_name", lastName);
+    formData.append("email", email);
+    if (phone) formData.append("phone", phone);
+    if (about) formData.append("about", about);
+    personas.forEach((persona) => formData.append("personas", persona));
+    if (avatarFile) formData.append("avatar", avatarFile);
+    if (teamAvatarFile) formData.append("team_avatar", teamAvatarFile);
+
+    fetcher.submit(formData, {
+      method: "post",
+      encType: "multipart/form-data",
+    });
+  };
 
   return (
-    <div className="px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_420px]">
-        <section className="rounded-lg border border-black/10 bg-white shadow-sm">
-          <div className="border-b border-black/10 px-6 py-5">
-            <div className="flex items-center gap-4">
-              <img alt="" src={avatarUrl} className="h-14 w-14 rounded-full object-cover ring-1 ring-black/10" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-950">Profile</h1>
-                <p className="text-sm text-gray-600">Update your participant details.</p>
+    <div className={wattClasses.page}>
+      <main className="mx-auto max-w-7xl">
+        <div className="md:flex md:items-center md:justify-between md:space-x-5">
+          <div className="flex items-center space-x-5">
+            <div className="shrink-0">
+              <div className="relative">
+                <img
+                  alt=""
+                  src={avatarUrl}
+                  className="size-16 rounded-full object-cover ring-2 ring-[#dfead1]"
+                />
+                <span aria-hidden="true" className="absolute inset-0 rounded-full shadow-inner" />
+                <button
+                  type="button"
+                  className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-[#20231d]/55 opacity-0 transition-opacity hover:opacity-100"
+                  onClick={() => setIsAvatarModalOpen(true)}
+                >
+                  <span className="sr-only">Update profile image</span>
+                  <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                </button>
               </div>
             </div>
+            <div>
+              <p className={wattClasses.eyebrow}>Profile & Team</p>
+              <h1 className="text-2xl font-black text-[#20231d]">{fullName}</h1>
+              <p className="text-sm font-medium text-[#6f756c]">
+                {teamName ? `Member of ${teamName}` : "No team yet"}
+              </p>
+            </div>
           </div>
+        </div>
 
-          <Form method="post" encType="multipart/form-data" className="space-y-6 px-6 py-6">
-            <input type="hidden" name="intent" value="update_profile" />
-            <input type="hidden" name="app" value={WATT_THE_HACK_SLUG} />
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-flow-col-dense lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2 lg:col-start-1">
+            <section aria-labelledby="team-management-title" className={wattClasses.panel}>
+              <div className="px-4 py-5 sm:px-6">
+                <h2 id="team-management-title" className="text-lg font-black leading-6 text-[#20231d]">
+                  {teamName ? "Change Team" : "Create or Join a Team"}
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm text-[#6f756c]">
+                  {teamName
+                    ? "Create a new team or switch to an existing one."
+                    : "You need a team to participate in the hackathon."}
+                </p>
+              </div>
+              <div className="border-t border-[#e7dfcf] px-4 py-5 sm:px-6">
+                {actionData?.error && (
+                  <div className={`mb-4 ${wattClasses.errorAlert}`}>{actionData.error}</div>
+                )}
+                {actionData?.success && !actionData?.profileUpdated && (
+                  <div className={`mb-4 ${wattClasses.successAlert}`}>Team operation successful.</div>
+                )}
 
-            {actionData?.success && (
-              <div className="rounded-md bg-green-50 p-3 text-sm text-green-800">{actionData.success}</div>
-            )}
-            {actionData?.error && (
-              <div className="rounded-md bg-red-50 p-3 text-sm text-red-700">{actionData.error}</div>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">First name</span>
-                <input
-                  name="first_name"
-                  defaultValue={(user as any).first_name || ""}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 shadow-sm focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-                />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Last name</span>
-                <input
-                  name="last_name"
-                  defaultValue={(user as any).last_name || ""}
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 shadow-sm focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-                />
-              </label>
-            </div>
-
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700">Email</span>
-              <input
-                name="email"
-                type="email"
-                defaultValue={user.email}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 shadow-sm focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700">Phone</span>
-              <input
-                name="phone"
-                defaultValue={(user as any).phone || ""}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 shadow-sm focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-              />
-            </label>
-
-            <label className="block">
-              <span className="text-sm font-medium text-gray-700">About</span>
-              <textarea
-                name="about"
-                rows={5}
-                defaultValue={(user as any).about || ""}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-950 shadow-sm focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-              />
-            </label>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Profile image</span>
-                <input name="avatar" type="file" accept="image/*" className="mt-1 block w-full text-sm text-gray-700" />
-              </label>
-              <label className="block">
-                <span className="text-sm font-medium text-gray-700">Team image</span>
-                <input name="team_avatar" type="file" accept="image/*" className="mt-1 block w-full text-sm text-gray-700" />
-              </label>
-            </div>
-
-            <div className="flex justify-end">
-              <button type="submit" className="rounded-md bg-[#10231f] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1d3c35]">
-                Save profile
-              </button>
-            </div>
-          </Form>
-        </section>
-
-        <aside className="space-y-6">
-          <TeamCard team={currentTeam} />
-
-          <div className="rounded-lg border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-950">Create a Team</h2>
-            <Form method="post" className="mt-4 flex gap-2">
-              <input type="hidden" name="intent" value="create_team" />
-              <input
-                name="team_name"
-                placeholder="Team name"
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-950 focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-              />
-              <button type="submit" className="rounded-md bg-[#9fe870] px-3 py-2 text-sm font-semibold text-[#10231f] hover:bg-[#b2f38a]">
-                Create
-              </button>
-            </Form>
-          </div>
-
-          <div className="rounded-lg border border-black/10 bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-950">Join a Team</h2>
-            <Form method="post" className="mt-4 flex gap-2">
-              <input type="hidden" name="intent" value="join_team" />
-              <input
-                name="code"
-                list="watt-team-list"
-                placeholder="TEAM1 or team name"
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-950 focus:border-[#1f6f54] focus:outline-none focus:ring-1 focus:ring-[#1f6f54]"
-              />
-              <datalist id="watt-team-list">
-                {teams.map((team) => (
-                  <option key={team.id} value={team.code}>{team.team_name}</option>
-                ))}
-              </datalist>
-              <button type="submit" className="rounded-md border border-black/10 bg-white px-3 py-2 text-sm font-semibold text-gray-950 hover:bg-gray-50">
-                Join
-              </button>
-            </Form>
-            {teams.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {teams.slice(0, 6).map((team) => (
-                  <div key={team.id} className="flex items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-sm">
-                    <span className="font-medium text-gray-800">{team.team_name}</span>
-                    <span className="text-gray-500">{team.code}</span>
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+                  <div>
+                    <h3 className="mb-4 text-sm font-bold text-[#6f756c]">Create a new team</h3>
+                    <Form method="post">
+                      <div>
+                        <label htmlFor="team-name" className={wattClasses.label}>
+                          Team Name
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          id="team-name"
+                          required
+                          className={wattClasses.input}
+                          placeholder="Enter team name"
+                        />
+                      </div>
+                      <div className="mt-4">
+                        <button type="submit" name="intent" value="create_team" className={wattClasses.buttonPrimary}>
+                          Create Team
+                        </button>
+                      </div>
+                    </Form>
                   </div>
-                ))}
+
+                  <div className="border-t border-[#e7dfcf] pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                    <h3 className="mb-4 text-sm font-bold text-[#6f756c]">Join an existing team</h3>
+                    <Form method="post">
+                      <div>
+                        <label htmlFor="team-code" className={wattClasses.label}>
+                          Team Name
+                        </label>
+                        <div className="mt-2" ref={joinDropdownRef}>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              name="code"
+                              id="team-code"
+                              required
+                              value={joinSearch}
+                              onChange={(event) => {
+                                setJoinSearch(event.target.value);
+                                setIsJoinDropdownOpen(true);
+                              }}
+                              onFocus={() => setIsJoinDropdownOpen(true)}
+                              placeholder="Start typing team name..."
+                              autoComplete="off"
+                              className={wattClasses.inputBare}
+                            />
+                            {isJoinDropdownOpen && filteredTeams.length > 0 && (
+                              <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] py-1 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
+                                {filteredTeams.map((team) => (
+                                  <li
+                                    key={team.team_id ?? team.id ?? team.team_name}
+                                    onMouseDown={(event) => {
+                                      event.preventDefault();
+                                      setJoinSearch(team.team_name);
+                                      setIsJoinDropdownOpen(false);
+                                    }}
+                                    className="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[#dfead1]"
+                                  >
+                                    <img
+                                      src={team.avatar_url || generateAvatarUrl(getInitials(team.team_name))}
+                                      alt=""
+                                      className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-[#c9dbb8]"
+                                    />
+                                    <div className="min-w-0">
+                                      <p className="truncate text-sm font-black text-[#20231d]">{team.team_name}</p>
+                                      <p className="text-xs text-[#6f756c]">
+                                        {team.member_count} member{team.member_count !== 1 ? "s" : ""}
+                                        {team.member_count >= 6 && " (full)"}
+                                      </p>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {isJoinDropdownOpen && joinSearch && filteredTeams.length === 0 && (
+                              <div className="absolute z-20 mt-1 w-full rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] px-3 py-3 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
+                                <p className="text-sm text-[#6f756c]">No teams found matching &ldquo;{joinSearch}&rdquo;</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-4">
+                        <button type="submit" name="intent" value="join_team" className={wattClasses.buttonOutline}>
+                          Join Team
+                        </button>
+                      </div>
+                    </Form>
+                  </div>
+                </div>
               </div>
-            )}
+            </section>
+
+            <section aria-labelledby="applicant-information-title" className={wattClasses.panelStrong}>
+              <div className="px-4 py-5 sm:px-6">
+                <h2 id="applicant-information-title" className="text-lg font-black leading-6 text-[#20231d]">
+                  Profile Information
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm text-[#6f756c]">Personal details and application.</p>
+              </div>
+              <div className="border-t border-[#e7dfcf] px-4 py-5 sm:px-6">
+                <fetcher.Form onSubmit={handleProfileSubmit}>
+                  <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
+                    <div className="sm:col-span-3">
+                      <label htmlFor="first-name" className={wattClasses.label}>
+                        First name
+                      </label>
+                      <input
+                        id="first-name"
+                        name="first-name"
+                        type="text"
+                        value={firstName}
+                        onChange={(event) => setFirstName(event.target.value)}
+                        autoComplete="given-name"
+                        className={wattClasses.input}
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label htmlFor="last-name" className={wattClasses.label}>
+                        Last name
+                      </label>
+                      <input
+                        id="last-name"
+                        name="last-name"
+                        type="text"
+                        value={lastName}
+                        onChange={(event) => setLastName(event.target.value)}
+                        autoComplete="family-name"
+                        className={wattClasses.input}
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label htmlFor="email" className={wattClasses.label}>
+                        Email address
+                      </label>
+                      <input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={email}
+                        onChange={(event) => setEmail(event.target.value)}
+                        autoComplete="email"
+                        className={wattClasses.input}
+                      />
+                    </div>
+
+                    <div className="sm:col-span-3">
+                      <label htmlFor="phone" className={wattClasses.label}>
+                        Phone
+                      </label>
+                      <div className="mt-2 flex rounded-[0.85rem] border border-[#e7dfcf] bg-[#fffdf7] shadow-sm transition focus-within:border-[#3d7339] focus-within:ring-2 focus-within:ring-[#3d7339]/20">
+                        <div className="flex select-none items-center rounded-l-[0.85rem] border-r border-[#e7dfcf] bg-[#fbf7ea] px-3 text-[#6f756c] sm:text-sm">
+                          +61
+                        </div>
+                        <input
+                          id="phone"
+                          name="phone"
+                          type="text"
+                          value={phone}
+                          onChange={(event) => setPhone(event.target.value)}
+                          autoComplete="tel"
+                          className="block min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-[#20231d] outline-none placeholder:text-[#8a8477] focus:ring-0 sm:text-sm sm:leading-6"
+                          placeholder="4XX XXX XXX"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <label htmlFor="about" className={wattClasses.label}>
+                        About
+                      </label>
+                      <textarea
+                        id="about"
+                        name="about"
+                        rows={3}
+                        value={about}
+                        onChange={(event) => setAbout(event.target.value)}
+                        className={wattClasses.input}
+                      />
+                    </div>
+
+                    <div className="sm:col-span-6">
+                      <div className="mb-2 flex items-center gap-2">
+                        <label className={wattClasses.label}>My Persona</label>
+                        <div className="group relative flex items-center">
+                          <InformationCircleIcon className="h-4 w-4 cursor-help text-[#6f756c]" />
+                          <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-64 -translate-x-1/2 rounded-2xl border border-[#e7dfcf] bg-[#20231d] px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                            {PERSONA_OPTIONS.map((option) => (
+                              <p key={option.id} className="mb-1 last:mb-0">
+                                <strong>{personaLabel(option.id)}:</strong> {option.description}
+                              </p>
+                            ))}
+                            <div className="absolute left-1/2 top-full -mt-1 h-2 w-2 -translate-x-1/2 rotate-45 bg-[#20231d]" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {PERSONA_OPTIONS.map((option) => (
+                          <div key={option.id} className="relative flex items-start">
+                            <div className="flex h-6 items-center">
+                              <input
+                                id={option.id}
+                                name="personas"
+                                type="checkbox"
+                                checked={personas.includes(option.id)}
+                                onChange={(event) => {
+                                  if (event.target.checked) {
+                                    setPersonas([...personas, option.id]);
+                                  } else {
+                                    setPersonas(personas.filter((persona) => persona !== option.id));
+                                  }
+                                }}
+                                className="h-4 w-4 rounded border-[#d8cfbd] bg-[#fffdf7] text-[#3d7339] focus:ring-[#3d7339]"
+                              />
+                            </div>
+                            <div className="ml-3 text-sm leading-6">
+                              <label htmlFor={option.id} className="font-bold text-[#20231d]">
+                                {option.label}
+                              </label>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
+                    {message && <p className="text-sm font-bold text-[#1f5b2c]">{message}</p>}
+                    {error && <p className="text-sm font-bold text-[#9f2f28]">{error}</p>}
+                    {profileFetcherData?.error && <p className="text-sm font-bold text-[#9f2f28]">{profileFetcherData.error}</p>}
+                    <button type="submit" disabled={isSaving} className={`${wattClasses.buttonPrimary} disabled:opacity-50`}>
+                      {isSaving ? "Saving..." : "Save Profile"}
+                    </button>
+                  </div>
+                </fetcher.Form>
+              </div>
+            </section>
           </div>
-        </aside>
-      </div>
+
+          <section aria-labelledby="timeline-title" className="lg:col-span-1 lg:col-start-3">
+            <div className={wattClasses.panel}>
+              {teamName ? (
+                <>
+                  <div
+                    className={`flex items-center justify-between rounded-t-[1.25rem] border-b px-4 py-3 sm:px-6 ${
+                      isValidTeamSize ? "border-[#c9dbb8] bg-[#dfead1]" : "border-[#f2c34c]/50 bg-[#fff8dc]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className={`flex h-2 w-2 rounded-full ${isValidTeamSize ? "bg-[#1f5b2c]" : "bg-[#f2c34c]"}`} />
+                      <span className={`text-sm font-black ${isValidTeamSize ? "text-[#1f5b2c]" : "text-[#6f4b08]"}`}>
+                        {isValidTeamSize ? "Team Ready" : "Forming Team"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-bold text-[#6f756c]">
+                      <span>{memberCount}/6</span>
+                      <span className="hidden sm:inline">members</span>
+                      <div className="group relative flex items-center">
+                        <InformationCircleIcon className="h-4 w-4 cursor-help text-[#6f756c]" />
+                        <div className="absolute bottom-full right-0 z-10 mb-2 hidden w-48 rounded-2xl bg-[#20231d] px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                          Teams must have between 2 and 6 members.
+                          <div className="absolute right-1 top-full -mt-1 h-2 w-2 rotate-45 bg-[#20231d]" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-4 py-5 sm:px-6">
+                    <div className="flex flex-col items-center border-b border-[#e7dfcf] pb-6">
+                      <div className="relative inline-block">
+                        <img
+                          className="h-24 w-24 rounded-2xl object-cover ring-1 ring-[#c9dbb8]"
+                          src={teamAvatarUrl}
+                          alt={teamName}
+                        />
+                        <button
+                          type="button"
+                          className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-[#20231d]/55 opacity-0 transition-opacity hover:opacity-100"
+                          onClick={() => setIsTeamAvatarModalOpen(true)}
+                        >
+                          <span className="sr-only">Update team logo</span>
+                          <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
+                        </button>
+                      </div>
+                      <h2 id="timeline-title" className="mt-3 text-center text-xl font-black text-[#20231d]">
+                        {teamName}
+                      </h2>
+                    </div>
+
+                    <h3 className="mt-6 text-sm font-bold text-[#6f756c]">Team Members</h3>
+                    <div className="mt-4 flow-root">
+                      <ul role="list" className="-my-5 divide-y divide-[#e7dfcf]">
+                        {teamMembers.length > 0 ? (
+                          teamMembers.map((member: GenericHackathonMember & { personas?: string[] }, index: number) => {
+                            const memberInitials = getInitials(member.full_name || member.email);
+                            const memberAvatarUrl = member.avatar_url || generateAvatarUrl(memberInitials);
+                            return (
+                              <li key={member.id ?? index} className="py-4">
+                                <div className="flex items-center space-x-4">
+                                  <div className="shrink-0">
+                                    <img
+                                      className="h-10 w-10 rounded-full object-cover ring-1 ring-[#c9dbb8]"
+                                      src={memberAvatarUrl}
+                                      alt={member.full_name || member.email}
+                                    />
+                                  </div>
+                                  <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-black text-[#20231d]">{member.full_name || member.email}</p>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      {member.personas && member.personas.length > 0 ? (
+                                        member.personas.map((persona) => (
+                                          <span
+                                            key={persona}
+                                            className={`inline-flex items-center rounded-full border px-2 py-1 text-xs font-bold ${personaClass(persona)}`}
+                                          >
+                                            {personaLabel(persona)}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span className="text-xs italic text-[#6f756c]">{member.role || "Participant"}</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              </li>
+                            );
+                          })
+                        ) : (
+                          <li className="py-4">
+                            <p className="text-sm text-[#6f756c]">No team members yet.</p>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className="px-4 py-5 text-center sm:px-6">
+                  <div className="mb-3 inline-flex rounded-full bg-[#dfead1] p-3">
+                    <UserGroupIcon className="h-8 w-8 text-[#1f5b2c]" aria-hidden="true" />
+                  </div>
+                  <h2 id="timeline-title" className="text-lg font-black text-[#20231d]">No Team Yet</h2>
+                  <p className="mt-2 text-sm text-[#6f756c]">
+                    Create or join a team using the form on the left to get started.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <AvatarModal
+        isOpen={isAvatarModalOpen}
+        onClose={() => setIsAvatarModalOpen(false)}
+        onSave={handleAvatarSave}
+        initialImage={avatarUrl}
+      />
+      <AvatarModal
+        isOpen={isTeamAvatarModalOpen}
+        onClose={() => setIsTeamAvatarModalOpen(false)}
+        onSave={handleTeamAvatarSave}
+        initialImage={teamAvatarUrl}
+        title="Update Team Logo"
+      />
     </div>
   );
 }
