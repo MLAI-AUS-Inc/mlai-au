@@ -16,7 +16,7 @@ export const meta: Route.MetaFunction = () => [
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "founder-tools"
+    return value === "esafety" || value === "hospital" || value === "founder-tools" || value === "watt-the-hack"
         ? value
         : null;
 }
@@ -267,6 +267,7 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "watt-the-hack") return "Sign in to Watt The Hack";
         if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";
     };
@@ -274,6 +275,9 @@ export default function PlatformLogin() {
     const getSupportText = () => {
         if (app === "founder-tools") {
             return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
+        }
+        if (app === "watt-the-hack") {
+            return "Use your email to sign in. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
         }
 
         return "Provide your email to create your account";

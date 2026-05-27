@@ -53,6 +53,16 @@ export default [
     route("profile", "routes/hospital.app.profile.tsx"),
   ]),
 
+  // Watt The Hack generic hackathon app routes
+  route("/watt-the-hack", "routes/watt-the-hack.tsx", [
+    index("routes/watt-the-hack._index.tsx"),
+    route("dashboard", "routes/watt-the-hack.dashboard.tsx"),
+    route("profile", "routes/watt-the-hack.profile.tsx"),
+    route("team", "routes/watt-the-hack.team.tsx"),
+    route("submissions", "routes/watt-the-hack.submissions.tsx"),
+    route("resources", "routes/watt-the-hack.resources.tsx"),
+  ]),
+
   // Hackathon pages
   route("/hackathon", "routes/article-link-cleanups.tsx", { id: "cleanup-hackathon-singular" }),
   route("/hackathons", "routes/hackathons.tsx"),

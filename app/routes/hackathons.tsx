@@ -1,5 +1,6 @@
 const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
 const ESAFETY_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
+const WATT_THE_HACK_STATIC = "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80";
 
 export default function Hackathons() {
     return (
@@ -14,7 +15,26 @@ export default function Hackathons() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 max-w-6xl mx-auto">
+                    {/* Watt The Hack Card */}
+                    <a
+                        href="/platform/login?app=watt-the-hack&next=/watt-the-hack/dashboard"
+                        className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg transition hover:-translate-y-1 hover:shadow-xl"
+                    >
+                        <img
+                            src={WATT_THE_HACK_STATIC}
+                            alt="Watt The Hack"
+                            className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                        <div className="absolute bottom-0 left-0 right-0 z-10 p-6 text-white">
+                            <h3 className="text-2xl font-bold">Watt The Hack</h3>
+                            <p className="mt-2 text-sm text-gray-200">
+                                Build practical AI and software projects for a cleaner, smarter energy future.
+                            </p>
+                        </div>
+                    </a>
+
                     {/* Medhack: Frontiers Card — Disabled */}
                     <div
                         className="group relative aspect-video overflow-hidden rounded-2xl bg-white shadow-lg grayscale opacity-75 cursor-not-allowed"
