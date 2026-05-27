@@ -1,0 +1,7 @@
+{
+  "attempted": true,
+  "reason": "no_unscaffolded_category_route_links_found",
+  "repaired": false,
+  "replacements": [],
+  "suggested_repair": "Category navigation must use same-page query/hash filters unless the scaffold also creates the target category route."
+}
