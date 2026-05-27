@@ -1,6 +1,6 @@
 const AI_HOSPITAL_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Screenshot%202025-11-25%20at%2011.24.04%E2%80%AFam.png?alt=media&token=b23e69c8-f0c7-4f76-8439-49ae8056c987";
 const ESAFETY_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Gemini_Generated_Image_3lirg63lirg63lir-min.jpg?alt=media&token=714825f8-44bf-4ad3-ad5c-561c9dc0d504";
-const WATT_THE_HACK_STATIC = "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1200&q=80";
+const WATT_THE_HACK_STATIC = "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2021%2C%202026%2C%2010_48_11%20PM%20(1).png?alt=media&token=5e39b6e6-7b02-471c-866f-5d18aae506fe";
 
 export default function Hackathons() {
     return (
@@ -15,7 +15,7 @@ export default function Hackathons() {
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 lg:gap-8 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:gap-12 max-w-5xl mx-auto">
                     {/* Watt The Hack Card */}
                     <a
                         href="/platform/login?app=watt-the-hack&next=/watt-the-hack/dashboard"
@@ -70,15 +70,6 @@ export default function Hackathons() {
                             </p>
                         </div>
                     </div>
-                </div>
-
-                <div className="mt-8 text-center">
-                    <a
-                        href="/medhack"
-                        className="inline-flex min-h-12 items-center justify-center rounded-full border border-black/10 bg-white px-6 py-3 text-sm font-semibold text-[var(--brutalist-black)] shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                    >
-                        MedHack information pack
-                    </a>
                 </div>
 
                 <div className="mx-auto mt-16 max-w-5xl">
