@@ -14,6 +14,7 @@ export interface Team {
 export type UserRole = 'admin' | 'participant' | 'professional';
 
 export interface User {
+    id?: number;
     full_name: string;
     email: string;
     role: UserRole;

@@ -1,7 +1,7 @@
 import { axiosInstance, API_URL, shouldUseDevAuthBypass, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "./api";
 import axios from "axios";
 
-export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising";
+export type AuthAppName = "esafety" | "hospital" | "founder-tools" | "vibe-raising" | "watt-the-hack";
 type GetCurrentUserOptions = {
     allowDevBypass?: boolean;
 };
@@ -17,6 +17,8 @@ function resolveAuthApp(body: {
         body.app ||
         (body.next?.startsWith("/esafety")
             ? "esafety"
+            : body.next?.startsWith("/watt-the-hack")
+              ? "watt-the-hack"
             : body.next?.startsWith("/founder-tools") || body.next?.startsWith("/vibe-raising")
               ? "founder-tools"
               : "hospital")
@@ -110,6 +112,7 @@ export async function verifyMagicLinkWithCookies(
 // logged-in user while keeping backend calls enabled. VITE_STUB_BACKEND=true
 // also uses this user and stubs API responses.
 const DEV_AUTH_STUB: Record<string, unknown> | null = {
+    id: 1,
     full_name: "Dr Sam Donegan",
     email: "sam@supportsorted.com.au",
     role: "participant",
@@ -173,7 +176,8 @@ export async function createUser(env: Env, body: {
     next?: string;
 }) {
     const client = getAxios(env);
-    const response = await client.post("/api/v1/auth/create-user/", body);
+    const app = resolveAuthApp(body);
+    const response = await client.post("/api/v1/auth/create-user/", { ...body, app });
     return response.data;
 }
 
