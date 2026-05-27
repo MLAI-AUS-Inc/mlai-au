@@ -1,0 +1,7 @@
+{
+  "check": "directory_dependency_validation",
+  "findings": [],
+  "manifest_slot_count": 20,
+  "missing_required_slots": [],
+  "success": true
+}
