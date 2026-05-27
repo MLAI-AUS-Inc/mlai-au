@@ -19,6 +19,7 @@ import {
   type GenericHackathonSubmission,
   type GenericHackathonTeam,
 } from "~/lib/generic-hackathon";
+import { wattClasses, wattImages } from "~/lib/watt-theme";
 import type { Hackathon } from "~/services/hackathon";
 
 const FALLBACK_HACKATHON: Hackathon = {
@@ -60,14 +61,14 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
 function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: typeof UserGroupIcon }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white p-5 shadow-sm">
+    <div className={`${wattClasses.panel} p-5`}>
       <div className="flex items-center gap-3">
-        <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#e6f8d8] text-[#24523f]">
+        <span className={wattClasses.iconTile}>
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <p className="text-sm text-gray-500">{label}</p>
-          <p className="text-lg font-semibold text-gray-950">{value}</p>
+          <p className="text-sm font-medium text-[#6f756c]">{label}</p>
+          <p className="text-lg font-black text-[#20231d]">{value}</p>
         </div>
       </div>
     </div>
@@ -76,22 +77,22 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
 
 function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white p-6 shadow-sm">
+    <div className={`${wattClasses.panel} p-6`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-950">Team</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-lg font-black text-[#20231d]">Team</h2>
+          <p className="mt-1 text-sm text-[#6f756c]">
             {team ? `${team.team_name} (${team.code})` : "Create or join a team before submitting."}
           </p>
         </div>
-        <Link to="/watt-the-hack/profile" className="rounded-md bg-[#10231f] px-3 py-2 text-sm font-semibold text-white hover:bg-[#1d3c35]">
+        <Link to="/watt-the-hack/profile" className={wattClasses.buttonPrimary}>
           Manage
         </Link>
       </div>
       {team && (
         <div className="mt-5 flex flex-wrap gap-2">
           {team.members.map((member) => (
-            <span key={member.id} className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+            <span key={member.id} className={wattClasses.chip}>
               {member.full_name || member.email}
             </span>
           ))}
@@ -103,20 +104,20 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
 
 function SubmissionPanel({ submission }: { submission: GenericHackathonSubmission | null }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white p-6 shadow-sm">
+    <div className={`${wattClasses.panel} p-6`}>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-950">Latest Submission</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-lg font-black text-[#20231d]">Latest Submission</h2>
+          <p className="mt-1 text-sm text-[#6f756c]">
             {submission ? submission.title : "No project submitted yet."}
           </p>
         </div>
-        <Link to="/watt-the-hack/submissions" className="rounded-md bg-[#9fe870] px-3 py-2 text-sm font-semibold text-[#10231f] hover:bg-[#b2f38a]">
+        <Link to="/watt-the-hack/submissions" className={wattClasses.buttonYellow}>
           Submit
         </Link>
       </div>
       {submission && (
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-gray-600">{submission.summary}</p>
+        <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#6f756c]">{submission.summary}</p>
       )}
     </div>
   );
@@ -124,26 +125,26 @@ function SubmissionPanel({ submission }: { submission: GenericHackathonSubmissio
 
 function ResourcesPanel({ resources }: { resources: GenericHackathonResource[] }) {
   return (
-    <div className="rounded-lg border border-black/10 bg-white p-6 shadow-sm">
+    <div className={`${wattClasses.panel} p-6`}>
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-950">Resources</h2>
-        <Link to="/watt-the-hack/resources" className="text-sm font-semibold text-[#1f6f54] hover:text-[#10231f]">
+        <h2 className="text-lg font-black text-[#20231d]">Resources</h2>
+        <Link to="/watt-the-hack/resources" className="text-sm font-black text-[#1f5b2c] hover:text-[#3d7339]">
           View all
         </Link>
       </div>
       <div className="mt-4 space-y-3">
         {resources.length > 0 ? resources.map((resource) => (
-          <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-md border border-black/8 p-3 hover:bg-gray-50">
+          <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] p-3 transition hover:border-[#c9dbb8] hover:bg-[#dfead1]/45">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="font-medium text-gray-950">{resource.title}</p>
-                <p className="mt-1 text-sm text-gray-600">{resource.summary}</p>
+                <p className="font-black text-[#20231d]">{resource.title}</p>
+                <p className="mt-1 text-sm text-[#6f756c]">{resource.summary}</p>
               </div>
-              <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-gray-400" aria-hidden="true" />
+              <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-[#1f5b2c]" aria-hidden="true" />
             </div>
           </Link>
         )) : (
-          <p className="text-sm text-gray-600">Resources will appear here when they are published.</p>
+          <p className="text-sm text-[#6f756c]">Resources will appear here when they are published.</p>
         )}
       </div>
     </div>
@@ -154,24 +155,25 @@ export default function WattTheHackDashboard() {
   const { hackathon, announcements, team, latestSubmission, resources } = useLoaderData<typeof loader>();
 
   return (
-    <div className="px-4 py-8 sm:px-6 lg:px-8">
+    <div className={wattClasses.page}>
       <div className="mx-auto max-w-7xl space-y-8">
-        <section className="relative overflow-hidden rounded-lg bg-[#10231f] px-6 py-8 text-white shadow-sm sm:px-8">
+        <section className="relative overflow-hidden rounded-[1.5rem] bg-[#1f5b2c] px-6 py-8 text-white shadow-[0_24px_60px_rgba(31,91,44,0.18)] sm:px-8">
           <img
-            src="https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=1600&q=80"
+            src={wattImages.hero}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            className="absolute inset-0 h-full w-full object-cover opacity-40"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#10231f] via-[#10231f]/90 to-[#10231f]/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1f5b2c] via-[#245f2e]/88 to-[#f2c34c]/25" />
+          <div className="absolute -bottom-28 -right-20 h-64 w-64 rounded-full bg-[#f2c34c]/35 blur-3xl" />
           <div className="relative max-w-3xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-[#9fe870]">Participant Dashboard</p>
+            <p className="text-sm font-black uppercase tracking-[0.3em] text-[#f5d84f]">Participant Dashboard</p>
             <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{hackathon.name}</h1>
             <p className="mt-4 max-w-2xl text-base leading-7 text-white/78">{hackathon.description}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/watt-the-hack/profile" className="rounded-md bg-[#9fe870] px-4 py-2 text-sm font-semibold text-[#10231f] hover:bg-[#b2f38a]">
+              <Link to="/watt-the-hack/profile" className="inline-flex items-center justify-center rounded-full bg-[#f5d84f] px-4 py-2 text-sm font-black text-[#1e321d] shadow-[0_12px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#f2c34c]">
                 Profile & Team
               </Link>
-              <Link to="/watt-the-hack/submissions" className="rounded-md border border-white/30 px-4 py-2 text-sm font-semibold text-white hover:bg-white/10">
+              <Link to="/watt-the-hack/submissions" className="inline-flex items-center justify-center rounded-full border border-white/35 bg-white/10 px-4 py-2 text-sm font-black text-white backdrop-blur transition hover:bg-white/18">
                 Submit Project
               </Link>
             </div>
@@ -186,7 +188,7 @@ export default function WattTheHackDashboard() {
 
         <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-6">
-            <Announcements announcements={announcements} />
+            <Announcements announcements={announcements} variant="watt" />
             <ResourcesPanel resources={resources} />
           </div>
           <div className="space-y-6">

@@ -34,6 +34,7 @@ export default function WattTheHackApp() {
         name: "Watt The Hack",
         slug: WATT_THE_HACK_SLUG,
         basePath: BASE_PATH,
+        theme: "watt",
       }}
     >
       <Outlet />
