@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "runtime_family": "node",
+  "publish_capability": "hook",
+  "worker_queue": "verify-node",
+  "input_format": "content_bundle_v1",
+  "materialize_command": [],
+  "verify_command": [],
+  "publish_command": [],
+  "preview_command": [],
+  "metadata": {
+    "notes": "Fill in runtime-specific commands to materialize and verify .content-factory/article_bundle.json.",
+    "managed_by": "content_factory",
+    "scaffold_strategy": "hook_config_only",
+    "article_surface_plan": {
+      "schema_version": 1,
+      "framework_adapter": {
+        "adapter_id": "react_router",
+        "supported": true,
+        "framework": "react-router",
+        "runtime_family": "node",
+        "language": "typescript",
+        "route_shell_kind": "tsx_route_module",
+        "index_shell_supported": true,
+        "detail_shell_supported": true,
+        "registry_language": "typescript",
+        "manual_block_reason": ""
+      },
+      "directory_name": "articles",
+      "routing": {
+        "directory_route": "/articles",
+        "route_template": "/articles/{category}/{slug}",
+        "route_shell_path": "app/routes/articles.index.tsx",
+        "content_root": "app/articles/content"
+      },
+      "support_modules": {
+        "registry_path": "app/articles/registry.ts",
+        "author_registry_path": "app/articles/authorRegistry.ts",
+        "author_alias_path": "app/articles/authors.ts",
+        "seo_config_path": "app/articles/seo-config.ts",
+        "resources_path": "app/articles/resources.ts"
+      },
+      "record_contract": {
+        "ArticleRecord": [
+          "slug",
+          "title",
+          "description",
+          "date",
+          "dateModified",
+          "authorKey",
+          "authors",
+          "category",
+          "tags",
+          "image",
+          "imageAlt",
+          "featured",
+          "contentPath",
+          "hasContent",
+          "downloads"
+        ],
+        "AuthorRecord": [
+          "key",
+          "name",
+          "role",
+          "bio",
+          "avatarUrl",
+          "avatarAlt",
+          "sameAs"
+        ],
+        "ArticleSeoRecord": [
+          "canonicalPath",
+          "title",
+          "description",
+          "openGraphImage",
+          "structuredData",
+          "citations",
+          "internalLinks"
+        ],
+        "ArticleResourceRecord": [
+          "label",
+          "description",
+          "href",
+          "type"
+        ]
+      },
+      "semantic_slots": {
+        "required": [
+          "directory_container",
+          "seo_metadata",
+          "article_registry",
+          "author_registry",
+          "page_heading",
+          "page_intro",
+          "featured_articles",
+          "article_list",
+          "article_card",
+          "category_navigation",
+          "empty_state",
+          "pagination",
+          "article_link"
+        ],
+        "preferred": [
+          "search_or_filter",
+          "structured_data",
+          "rich_cards"
+        ],
+        "optional": [
+          "structured_data",
+          "search",
+          "date_archive",
+          "newsletter_cta",
+          "rich_image_cards",
+          "downloadable_resources",
+          "author_avatar"
+        ],
+        "component_slot_map": {
+          "hero": [
+            {
+              "name": "ArticleHeroHeader",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleHeroHeader",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleHeroHeader.tsx"
+            }
+          ],
+          "article_card": [
+            {
+              "name": "ArticleCard",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleListCard",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleSummaryCard",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "FeaturedArticleCard",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "PillarCard",
+              "source": "generated",
+              "path": ""
+            }
+          ],
+          "featured_card": [
+            {
+              "name": "FeaturedArticleCard",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "FeaturedArticleCard",
+              "source": "existing_component",
+              "path": "app/components/articles/FeaturedArticleCard.tsx"
+            }
+          ],
+          "search": [
+            {
+              "name": "ArticleSearchBar",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleSearchBar",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleSearchBar.tsx"
+            }
+          ],
+          "calendar": [
+            {
+              "name": "ArticleCalendarSection",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleCalendarSection",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleCalendarSection.tsx"
+            }
+          ],
+          "cta": [
+            {
+              "name": "ArticleCompanyCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleCompanyHighlightCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "MLAITemplateResourceCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleResourceCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "UpcomingEventsCTA",
+              "source": "generated",
+              "path": ""
+            }
+          ],
+          "layout": [
+            {
+              "name": "ArticleLayout",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleLayout",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleLayout.tsx"
+            }
+          ],
+          "author": [
+            {
+              "name": "AuthorBio",
+              "source": "generated",
+              "path": ""
+            }
+          ],
+          "resource": [
+            {
+              "name": "ArticleResourceList",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "MLAITemplateResourceCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleResourceCTA",
+              "source": "generated",
+              "path": ""
+            },
+            {
+              "name": "ArticleResourceCTA",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleResourceCTA.tsx"
+            },
+            {
+              "name": "ArticleResourceList",
+              "source": "existing_component",
+              "path": "app/components/articles/ArticleResourceList.tsx"
+            }
+          ]
+        }
+      },
+      "scale_policy": {
+        "target_article_count": "hundreds",
+        "index_page_size": 24,
+        "index_source": "registry_metadata_only",
+        "avoid_eager_body_imports": true,
+        "prefer_static_params_or_loader_pagination": true
+      },
+      "style_policy": {
+        "mode": "tailwind",
+        "detected_styling": [
+          "tailwind"
+        ],
+        "instruction": "Use existing target-repo styling conventions and tokens. If no safe local convention is available, use minimal semantic markup that inherits the site's global typography."
+      },
+      "generation_policy": {
+        "use_reference_repo_as_structure_only": true,
+        "copy_reference_brand_or_styles": false,
+        "forbidden_reference_terms": "configured internally; do not serialize source-site identities into generated repo files",
+        "fallback_when_unknown": "manual_adapter_required"
+      }
+    }
+  }
+}
