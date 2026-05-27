@@ -1,0 +1,43 @@
+{
+  "complete_existing_route_skips": [
+    "route generation",
+    "support generation",
+    "branch creation",
+    "hosted preview",
+    "browser/style gates",
+    "preview approval",
+    "setup PR creation"
+  ],
+  "existing_route_first": [
+    "Validate the selected route hint against scan resolver output.",
+    "Ensure the selected route is a listing page, not a detail route.",
+    "Read the existing route source from the repo.",
+    "Audit existing semantic slots before generating anything.",
+    "Parse and classify imported route components.",
+    "Optionally use the coding LLM to adjudicate opaque existing components.",
+    "Preserve original route source when patching.",
+    "Mark setup complete with no branch, preview, or PR when all required pieces already exist."
+  ],
+  "from_scratch_only": [
+    "Generate a brand-new article listing route.",
+    "Generate listing layout/card/list/navigation/empty/pagination/link surface.",
+    "Generate all required support modules.",
+    "Generate article content/category placeholders.",
+    "Potentially add a site navigation link to the new route.",
+    "Create and commit a setup branch.",
+    "Start a hosted Cloudflare/GitHub Actions preview.",
+    "Run hosted browser and visual style gates.",
+    "Wait for user preview approval.",
+    "Create the setup PR after approval."
+  ],
+  "shared_when_changes_required": [
+    "Build article surface plan.",
+    "Ensure support modules exist.",
+    "Ensure registry-backed listing behavior exists.",
+    "Produce component audit, manifest, dependency, and static artifacts.",
+    "Validate dependency and static policy.",
+    "Run local build gate.",
+    "Use hosted preview as the approval gate.",
+    "Create PR only after successful preview approval."
+  ]
+}
