@@ -1,0 +1,21 @@
+{
+  "check": "directory_dependency_validation",
+  "findings": [],
+  "manifest_slot_count": 20,
+  "missing_required_slots": [],
+  "success": true,
+  "verified_imports": [
+    {
+      "import_path": "./authorRegistry",
+      "importing_file": "app/articles/authors.ts",
+      "resolved_path": "app/articles/authorRegistry.ts",
+      "verification_source": "generated_files"
+    },
+    {
+      "import_path": "../articles/registry",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/articles/registry.ts",
+      "verification_source": "generated_files"
+    }
+  ]
+}
