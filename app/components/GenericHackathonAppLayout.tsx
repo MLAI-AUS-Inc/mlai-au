@@ -33,6 +33,7 @@ function classNames(...classes: (string | false | undefined)[]) {
 
 export default function GenericHackathonAppLayout({ children, user, config }: GenericHackathonAppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const location = useLocation();
   const fullName = user.full_name || user.email || "User";
   const avatarUrl = user.avatar_url || generateAvatarUrl(getInitials(fullName));
@@ -95,30 +96,51 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
     </div>
   );
 
-  const wattSidebar = (
-    <div className="flex grow flex-col gap-y-6 overflow-y-auto border-r border-[rgba(91,82,56,0.14)] bg-[rgba(255,253,247,0.96)] px-5 pb-5 shadow-[14px_0_36px_rgba(67,54,33,0.06)]">
-      <div className="flex min-h-28 shrink-0 flex-col justify-center border-b border-[#e7dfcf] py-5">
-        <Link to={`${config.basePath}/dashboard`} className="block" onClick={() => setSidebarOpen(false)}>
+  const wattSidebar = (expanded: boolean, mobile = false) => (
+    <div className="relative flex grow flex-col overflow-hidden border-r border-[#e8dfcf] bg-[rgba(255,254,250,0.98)] shadow-[10px_0_28px_rgba(82,67,39,0.06)]">
+      <div
+        className={classNames(
+          "relative z-10 flex shrink-0 items-center",
+          mobile ? "h-28 px-6" : expanded ? "h-[132px] justify-start px-5" : "h-[132px] justify-center px-1",
+        )}
+      >
+        <Link
+          to={`${config.basePath}/dashboard`}
+          className={classNames("relative block overflow-visible", mobile || expanded ? "h-[72px] w-[188px]" : "h-[68px] w-[68px]")}
+          onClick={() => setSidebarOpen(false)}
+        >
           <img
             src={wattImages.logoDesktop}
             alt="Watt The Hack"
-            className="hidden h-16 w-full object-contain object-left sm:block"
+            className={classNames(
+              "absolute inset-0 h-full w-full object-contain object-left transition-all duration-300 ease-in-out",
+              mobile || expanded ? "scale-100 opacity-100" : "scale-90 opacity-0",
+            )}
           />
           <img
             src={wattImages.logoMobile}
             alt="Watt The Hack"
-            className="h-16 w-auto object-contain sm:hidden"
+            className={classNames(
+              "absolute inset-0 h-full w-full object-contain object-center transition-all duration-300 ease-in-out",
+              mobile || expanded ? "scale-95 opacity-0" : "scale-100 opacity-100",
+            )}
           />
         </Link>
-        <div className="mt-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.16em] text-[#6f756c]">
-          <img src={wattImages.mlaiLogo} alt="" className="h-6 w-6 rounded-md object-contain" />
-          <span>MLAI Hackathon</span>
-        </div>
       </div>
-      <nav className="flex flex-1 flex-col">
+
+      <img
+        src={wattImages.sidebarScene}
+        alt=""
+        className={classNames(
+          "pointer-events-none absolute -left-10 bottom-24 z-0 w-[292px] max-w-none transition-all duration-300 ease-in-out",
+          mobile || expanded ? "translate-x-0 opacity-100" : "-translate-x-24 opacity-100",
+        )}
+      />
+
+      <nav className="relative z-10 flex flex-1 flex-col px-3 pb-5">
         <ul className="flex flex-1 flex-col gap-y-7">
           <li>
-            <ul className="-mx-2 space-y-1.5">
+            <ul className="space-y-4">
               {navigation.map((item) => (
                 <li key={item.name}>
                   <Link
@@ -126,13 +148,21 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                     onClick={() => setSidebarOpen(false)}
                     className={classNames(
                       item.current
-                        ? "border-[#c9dbb8] bg-[#dfead1] text-[#1f5b2c] shadow-[0_10px_24px_rgba(31,91,44,0.08)]"
-                        : "border-transparent text-[#394033] hover:border-[#e7dfcf] hover:bg-[#fbf7ea] hover:text-[#1f5b2c]",
-                      "group flex items-center gap-x-3 rounded-2xl border px-3 py-2.5 text-sm font-black leading-6 transition",
+                        ? "bg-[#e6efd7] text-[#155420]"
+                        : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
+                      "group flex h-[52px] items-center rounded-xl px-3 text-sm font-black leading-6 transition-all duration-200",
+                      mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
                     )}
                   >
-                    <item.icon className="h-5 w-5 shrink-0" aria-hidden="true" />
-                    {item.name}
+                    <item.icon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
+                    <span
+                      className={classNames(
+                        "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
+                        mobile || expanded ? "ml-1 w-auto opacity-100" : "ml-0 w-0 opacity-0",
+                      )}
+                    >
+                      {item.name}
+                    </span>
                   </Link>
                 </li>
               ))}
@@ -141,10 +171,21 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
           <li className="mt-auto">
             <Link
               to="/hackathons"
-              className="group -mx-2 flex items-center gap-x-3 rounded-2xl border border-[#e7dfcf] bg-[#fbf7ea] px-3 py-2.5 text-sm font-black leading-6 text-[#394033] transition hover:border-[#3d7339]/35 hover:bg-[#dfead1] hover:text-[#1f5b2c]"
+              onClick={() => setSidebarOpen(false)}
+              className={classNames(
+                "group flex h-[52px] items-center rounded-xl px-3 text-sm font-black leading-6 text-[#354031] transition-all duration-200 hover:bg-[#fbf6e9] hover:text-[#155420]",
+                mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
+              )}
             >
-              <ArrowLeftOnRectangleIcon className="h-5 w-5 shrink-0" aria-hidden="true" />
-              Back to MLAI
+              <ArrowLeftOnRectangleIcon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
+              <span
+                className={classNames(
+                  "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
+                  mobile || expanded ? "ml-1 w-auto opacity-100" : "ml-0 w-0 opacity-0",
+                )}
+              >
+                Back to MLAI
+              </span>
             </Link>
           </li>
         </ul>
@@ -152,7 +193,7 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
     </div>
   );
 
-  const sidebar = isWattTheme ? wattSidebar : defaultSidebar;
+  const mobileSidebar = isWattTheme ? wattSidebar(true, true) : defaultSidebar;
 
   return (
     <div className={isWattTheme ? wattClasses.appShell : "min-h-screen bg-[#f5f1e8]"} style={isWattTheme ? wattBackgroundStyle : undefined}>
@@ -167,7 +208,7 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className={isWattTheme ? "fixed inset-0 bg-[#20231d]/55 backdrop-blur-sm" : "fixed inset-0 bg-black/70"} />
+            <div className={isWattTheme ? "fixed inset-0 bg-[#121e16]/55 backdrop-blur-sm" : "fixed inset-0 bg-black/70"} />
           </Transition.Child>
           <div className="fixed inset-0 flex">
             <Transition.Child
@@ -188,22 +229,40 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                   <span className="sr-only">Close sidebar</span>
                   <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
                 </button>
-                {sidebar}
+                {mobileSidebar}
               </Dialog.Panel>
             </Transition.Child>
           </div>
         </Dialog>
       </Transition.Root>
 
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
-        {sidebar}
-      </aside>
+      {isWattTheme ? (
+        <aside
+          className={classNames(
+            "hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col transition-all duration-300 ease-in-out",
+            isExpanded ? "lg:w-[268px]" : "lg:w-20",
+          )}
+          onMouseEnter={() => setIsExpanded(true)}
+          onMouseLeave={() => setIsExpanded(false)}
+        >
+          {wattSidebar(isExpanded)}
+        </aside>
+      ) : (
+        <aside className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+          {defaultSidebar}
+        </aside>
+      )}
 
-      <div className="lg:pl-72">
+      <div className={classNames(
+        isWattTheme
+          ? "transition-all duration-300 ease-in-out lg:pl-20"
+          : "lg:pl-72",
+        isWattTheme && isExpanded ? "lg:pl-[268px]" : undefined,
+      )}>
         <header
           className={classNames(
             isWattTheme
-              ? "sticky top-0 z-40 flex h-20 shrink-0 items-center gap-x-4 border-b border-[#e7dfcf] bg-[rgba(255,253,247,0.82)] px-4 shadow-[0_12px_28px_rgba(67,54,33,0.06)] backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8"
+              ? "sticky top-0 z-40 flex h-[84px] shrink-0 items-center gap-x-4 border-b border-[#e8dfcf] bg-[rgba(255,254,250,0.86)] px-4 shadow-[0_8px_24px_rgba(82,67,39,0.05)] backdrop-blur-xl sm:gap-x-6 sm:px-6 lg:px-8"
               : "sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-black/10 bg-white/90 px-4 shadow-sm backdrop-blur sm:gap-x-6 sm:px-6 lg:px-8",
           )}
         >
@@ -211,7 +270,7 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
             type="button"
             className={classNames(
               isWattTheme
-                ? "-m-2.5 rounded-full p-2.5 text-[#1f5b2c] transition hover:bg-[#dfead1]"
+                ? "-m-2.5 rounded-full p-2.5 text-[#155420] transition hover:bg-[#e6efd7]"
                 : "-m-2.5 p-2.5 text-gray-700",
               "lg:hidden",
             )}
@@ -222,16 +281,16 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
           </button>
           <div className="flex flex-1 items-center justify-between">
             <div>
-              <p className={isWattTheme ? wattClasses.eyebrow : "text-xs font-semibold uppercase tracking-[0.24em] text-[#1f6f54]"}>
+              <p className={isWattTheme ? "text-xs font-black uppercase tracking-[0.32em] text-[#2f6f2c]" : "text-xs font-semibold uppercase tracking-[0.24em] text-[#1f6f54]"}>
                 Hackathon
               </p>
-              <h1 className={isWattTheme ? "text-base font-black text-[#20231d]" : "text-base font-semibold text-gray-950"}>{config.name}</h1>
+              <h1 className={isWattTheme ? "mt-1 text-lg font-black text-[#121e16]" : "text-base font-semibold text-gray-950"}>{config.name}</h1>
             </div>
             <Menu as="div" className="relative">
               <Menu.Button
                 className={classNames(
                   isWattTheme
-                    ? "-m-1.5 flex items-center rounded-full p-1.5 transition hover:bg-[#fbf7ea]"
+                    ? "-m-1.5 flex items-center rounded-full p-1.5 transition hover:bg-[#fbf6e9]"
                     : "-m-1.5 flex items-center p-1.5",
                 )}
               >
@@ -241,13 +300,13 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                   src={avatarUrl}
                   className={classNames(
                     isWattTheme
-                      ? "h-9 w-9 rounded-full bg-[#fbf7ea] object-cover ring-2 ring-[#dfead1]"
+                      ? "h-10 w-10 rounded-full bg-[#fbf6e9] object-cover ring-2 ring-[#e6efd7]"
                       : "h-8 w-8 rounded-full bg-gray-50 object-cover ring-1 ring-black/10",
                   )}
                 />
                 <span className="hidden lg:flex lg:items-center">
-                  <span className={isWattTheme ? "ml-4 text-sm font-black leading-6 text-[#20231d]" : "ml-4 text-sm font-semibold leading-6 text-gray-900"}>{fullName}</span>
-                  <ChevronDownIcon className={isWattTheme ? "ml-2 h-5 w-5 text-[#6f756c]" : "ml-2 h-5 w-5 text-gray-400"} aria-hidden="true" />
+                  <span className={isWattTheme ? "ml-4 text-sm font-black leading-6 text-[#121e16]" : "ml-4 text-sm font-semibold leading-6 text-gray-900"}>{fullName}</span>
+                  <ChevronDownIcon className={isWattTheme ? "ml-2 h-5 w-5 text-[#64705f]" : "ml-2 h-5 w-5 text-gray-400"} aria-hidden="true" />
                 </span>
               </Menu.Button>
               <Transition
@@ -262,7 +321,7 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                 <Menu.Items
                   className={classNames(
                     isWattTheme
-                      ? "absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] py-2 shadow-[0_18px_42px_rgba(67,54,33,0.12)] focus:outline-none"
+                      ? "absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-2xl border border-[#e8dfcf] bg-[#fffefa] py-2 shadow-[0_18px_42px_rgba(82,67,39,0.12)] focus:outline-none"
                       : "absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-md bg-white py-2 shadow-lg ring-1 ring-black/5 focus:outline-none",
                   )}
                 >
@@ -272,10 +331,10 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                         to={`${config.basePath}/profile`}
                         className={classNames(
                           isWattTheme
-                            ? focus && "bg-[#dfead1] text-[#1f5b2c]"
+                            ? focus && "bg-[#e6efd7] text-[#155420]"
                             : focus && "bg-gray-50",
                           isWattTheme
-                            ? "block px-4 py-2 text-sm font-bold leading-6 text-[#394033]"
+                            ? "block px-4 py-2 text-sm font-bold leading-6 text-[#354031]"
                             : "block px-3 py-1 text-sm leading-6 text-gray-900",
                         )}
                       >
@@ -290,10 +349,10 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                           type="submit"
                           className={classNames(
                             isWattTheme
-                              ? focus && "bg-[#dfead1] text-[#1f5b2c]"
+                              ? focus && "bg-[#e6efd7] text-[#155420]"
                               : focus && "bg-gray-50",
                             isWattTheme
-                              ? "block w-full px-4 py-2 text-left text-sm font-bold leading-6 text-[#394033]"
+                              ? "block w-full px-4 py-2 text-left text-sm font-bold leading-6 text-[#354031]"
                               : "block w-full px-3 py-1 text-left text-sm leading-6 text-gray-900",
                           )}
                         >

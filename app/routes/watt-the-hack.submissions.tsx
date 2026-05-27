@@ -73,8 +73,8 @@ export default function WattTheHackSubmissions() {
             </span>
             <div>
               <p className={wattClasses.eyebrow}>Submissions</p>
-              <h1 className="text-xl font-black text-[#20231d]">Project Submission</h1>
-              <p className="text-sm text-[#6f756c]">Submit your team project.</p>
+              <h1 className="text-xl font-black text-[#121e16]">Project Submission</h1>
+              <p className="text-sm text-[#64705f]">Submit your team project.</p>
             </div>
           </div>
 
@@ -143,7 +143,7 @@ export default function WattTheHackSubmissions() {
               <label className="block">
                 <span className={wattClasses.label}>Attachment</span>
                 <input name="attachment" type="file" className={wattClasses.fileInput} />
-                <span className="mt-1 block text-xs text-[#6f756c]">Optional. PDF, deck, document, image, zip, CSV, or video up to 20MB.</span>
+                <span className="mt-1 block text-xs text-[#64705f]">Optional. PDF, deck, document, image, zip, CSV, or video up to 20MB.</span>
               </label>
               <button type="submit" className={`${wattClasses.buttonPrimary} w-full`}>
                 Submit project
@@ -153,20 +153,20 @@ export default function WattTheHackSubmissions() {
         </section>
 
         <section className={wattClasses.panel}>
-          <div className="border-b border-[#e7dfcf] px-6 py-5">
-            <h2 className="text-xl font-black text-[#20231d]">Submission History</h2>
-            <p className="text-sm text-[#6f756c]">
+          <div className="border-b border-[#e8dfcf] px-6 py-5">
+            <h2 className="text-xl font-black text-[#121e16]">Submission History</h2>
+            <p className="text-sm text-[#64705f]">
               {team ? `Showing submissions for ${team.team_name}.` : "Team submissions will appear here."}
             </p>
           </div>
-          <div className="divide-y divide-[#e7dfcf]">
+          <div className="divide-y divide-[#e8dfcf]">
             {submissions.length > 0 ? submissions.map((submission) => (
               <article key={submission.id} className="p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0">
-                    <h3 className="text-lg font-black text-[#20231d]">{submission.title}</h3>
-                    <p className="mt-1 text-sm text-[#6f756c]">{formatDate(submission.submitted_at)}</p>
-                    <p className="mt-3 max-w-3xl text-sm leading-6 text-[#394033]">{submission.summary}</p>
+                    <h3 className="text-lg font-black text-[#121e16]">{submission.title}</h3>
+                    <p className="mt-1 text-sm text-[#64705f]">{formatDate(submission.submitted_at)}</p>
+                    <p className="mt-3 max-w-3xl text-sm leading-6 text-[#354031]">{submission.summary}</p>
                   </div>
                   {submission.attachment_url && (
                     <a
@@ -187,7 +187,7 @@ export default function WattTheHackSubmissions() {
                 </div>
               </article>
             )) : (
-              <div className="p-6 text-sm text-[#6f756c]">No submissions yet.</div>
+              <div className="p-6 text-sm text-[#64705f]">No submissions yet.</div>
             )}
           </div>
         </section>
@@ -198,7 +198,7 @@ export default function WattTheHackSubmissions() {
 
 function ExternalLink({ href, label }: { href: string; label: string }) {
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-black text-[#1f5b2c] hover:text-[#3d7339]">
+    <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-sm font-black text-[#155420] hover:text-[#2f6f2c]">
       {label}
       <ArrowTopRightOnSquareIcon className="h-4 w-4" aria-hidden="true" />
     </a>

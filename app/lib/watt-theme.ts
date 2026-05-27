@@ -6,62 +6,66 @@ export const wattImages = {
   mlaiLogo:
     "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI_Logo_NoText%20(1).png?alt=media&token=072e5f99-b2c8-42c1-a34a-364651aa711c",
   hero:
-    "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2021%2C%202026%2C%2010_48_11%20PM%20(1).png?alt=media&token=5e39b6e6-7b02-471c-866f-5d18aae506fe",
+    "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FScreenshot%202026-05-28%20at%2012.52.04%20AM.jpg?alt=media&token=f0271bf7-f455-4321-b780-0520f17c5b49",
+  sidebarScene:
+    "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2028%2C%202026%2C%2012_43_15%20AM%20(1).png?alt=media&token=6b695dbd-b2bc-4d5d-9369-dc9c9b1d783b",
+  bottomScene:
+    "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2F2e55e310-c6f3-44c1-baf7-2f97c86bdbc3%20(1).png?alt=media&token=a23d7abb-2e77-48e1-9714-99d3fa87fa52",
 } as const;
 
 export const wattPalette = {
-  background: "#f7f2e8",
-  foreground: "#20231d",
-  paper: "#fffdf7",
-  paperSoft: "#fbf7ea",
-  green: "#3d7339",
-  greenDark: "#1f5b2c",
-  greenSoft: "#dfead1",
-  lime: "#b8d86b",
-  gold: "#f2c34c",
+  background: "#f8f2e6",
+  foreground: "#121e16",
+  paper: "#fffefa",
+  paperSoft: "#fbf6e9",
+  green: "#2f6f2c",
+  greenDark: "#155420",
+  greenSoft: "#e6efd7",
+  lime: "#a8c75b",
+  gold: "#f0c742",
   red: "#df5047",
-  muted: "#6f756c",
-  line: "#e7dfcf",
+  muted: "#64705f",
+  line: "#e8dfcf",
 } as const;
 
 export const wattBackgroundStyle = {
   background:
-    "radial-gradient(circle at 14% 8%, rgba(255, 255, 255, 0.95), transparent 24rem), linear-gradient(180deg, #f8f3e9 0%, #fffdf7 40%, #f7f2e8 100%)",
+    "linear-gradient(180deg, #fbf6e9 0%, #fffefa 48%, #f8f2e6 100%)",
 } as const;
 
 export const wattClasses = {
-  appShell: "min-h-screen text-[#20231d]",
-  page: "px-4 py-8 sm:px-6 lg:px-8",
+  appShell: "min-h-screen text-[#121e16]",
+  page: "px-4 py-6 sm:px-6 lg:px-8 xl:px-10",
   panel:
-    "rounded-[1.25rem] border border-[rgba(91,82,56,0.14)] bg-[rgba(255,253,247,0.94)] shadow-[0_18px_48px_rgba(67,54,33,0.07),0_2px_8px_rgba(67,54,33,0.04)]",
+    "rounded-[1.25rem] border border-[#e8dfcf] bg-[rgba(255,254,250,0.96)] shadow-[0_14px_36px_rgba(82,67,39,0.07),0_1px_4px_rgba(82,67,39,0.04)]",
   panelSoft:
-    "rounded-[1.25rem] border border-[#e7dfcf] bg-[#fbf7ea] shadow-[0_16px_38px_rgba(67,54,33,0.06)]",
+    "rounded-[1.25rem] border border-[#e8dfcf] bg-[#fbf6e9] shadow-[0_12px_30px_rgba(82,67,39,0.06)]",
   panelStrong:
-    "rounded-[1.5rem] border border-[rgba(91,82,56,0.14)] bg-[#fffdf7] shadow-[0_22px_60px_rgba(67,54,33,0.09),0_2px_8px_rgba(67,54,33,0.05)]",
-  divider: "border-[#e7dfcf]",
-  eyebrow: "text-xs font-black uppercase tracking-[0.22em] text-[#52763a]",
-  title: "font-black tracking-tight text-[#20231d]",
-  muted: "text-[#6f756c]",
-  label: "text-sm font-bold text-[#394033]",
+    "rounded-[1.5rem] border border-[#e8dfcf] bg-[rgba(255,254,250,0.98)] shadow-[0_18px_48px_rgba(82,67,39,0.09),0_1px_5px_rgba(82,67,39,0.05)]",
+  divider: "border-[#e8dfcf]",
+  eyebrow: "text-xs font-black uppercase tracking-[0.28em] text-[#2f6f2c]",
+  title: "font-black tracking-tight text-[#121e16]",
+  muted: "text-[#64705f]",
+  label: "text-sm font-bold text-[#354031]",
   input:
-    "mt-1 block w-full rounded-[0.85rem] border border-[#e7dfcf] bg-[#fffdf7] px-3 py-2 text-[#20231d] shadow-sm outline-none transition placeholder:text-[#8a8477] focus:border-[#3d7339] focus:ring-2 focus:ring-[#3d7339]/20",
+    "mt-1 block w-full rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-[#121e16] shadow-sm outline-none transition placeholder:text-[#8a8477] focus:border-[#2f6f2c] focus:ring-2 focus:ring-[#2f6f2c]/20",
   inputBare:
-    "block w-full rounded-[0.85rem] border border-[#e7dfcf] bg-[#fffdf7] px-3 py-2 text-[#20231d] shadow-sm outline-none transition placeholder:text-[#8a8477] focus:border-[#3d7339] focus:ring-2 focus:ring-[#3d7339]/20",
+    "block w-full rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-[#121e16] shadow-sm outline-none transition placeholder:text-[#8a8477] focus:border-[#2f6f2c] focus:ring-2 focus:ring-[#2f6f2c]/20",
   fileInput:
-    "mt-1 block w-full rounded-[0.85rem] border border-[#e7dfcf] bg-[#fffdf7] px-3 py-2 text-sm text-[#394033] file:mr-3 file:rounded-full file:border-0 file:bg-[#dfead1] file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-[#1f5b2c]",
+    "mt-1 block w-full rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-sm text-[#354031] file:mr-3 file:rounded-full file:border-0 file:bg-[#e6efd7] file:px-3 file:py-1.5 file:text-sm file:font-bold file:text-[#155420]",
   buttonPrimary:
-    "inline-flex items-center justify-center rounded-full bg-[#3f783c] px-4 py-2 text-sm font-black text-white shadow-[0_10px_22px_rgba(31,91,44,0.2)] transition hover:bg-[#316b35] focus:outline-none focus:ring-2 focus:ring-[#3d7339]/30",
+    "inline-flex items-center justify-center rounded-[0.65rem] bg-[#2f6f2c] px-4 py-2 text-sm font-black text-white shadow-[0_10px_20px_rgba(21,84,32,0.22)] transition hover:bg-[#155420] focus:outline-none focus:ring-2 focus:ring-[#2f6f2c]/30",
   buttonYellow:
-    "inline-flex items-center justify-center rounded-full bg-[#f5d84f] px-4 py-2 text-sm font-black text-[#1e321d] shadow-[0_10px_22px_rgba(118,91,12,0.16)] transition hover:bg-[#f2c34c] focus:outline-none focus:ring-2 focus:ring-[#f2c34c]/40",
+    "inline-flex items-center justify-center rounded-[0.65rem] bg-[#2f6f2c] px-4 py-2 text-sm font-black text-white shadow-[0_10px_20px_rgba(21,84,32,0.22)] transition hover:bg-[#155420] focus:outline-none focus:ring-2 focus:ring-[#2f6f2c]/30",
   buttonOutline:
-    "inline-flex items-center justify-center rounded-full border border-[#d8cfbd] bg-[rgba(255,253,247,0.9)] px-4 py-2 text-sm font-black text-[#20231d] transition hover:border-[#3d7339]/35 hover:bg-[#fbf7ea] focus:outline-none focus:ring-2 focus:ring-[#3d7339]/20",
+    "inline-flex items-center justify-center rounded-[0.65rem] border border-[#d8cfbd] bg-[rgba(255,254,250,0.94)] px-4 py-2 text-sm font-black text-[#121e16] shadow-[0_8px_16px_rgba(82,67,39,0.06)] transition hover:border-[#2f6f2c]/35 hover:bg-[#fbf6e9] focus:outline-none focus:ring-2 focus:ring-[#2f6f2c]/20",
   iconTile:
-    "flex h-11 w-11 items-center justify-center rounded-2xl border border-[#c9dbb8] bg-[#dfead1] text-[#1f5b2c]",
+    "flex h-12 w-12 items-center justify-center rounded-full bg-[#e6efd7] text-[#155420]",
   chip:
-    "inline-flex items-center rounded-full border border-[#c9dbb8] bg-[#dfead1] px-3 py-1 text-sm font-bold text-[#1f5b2c]",
+    "inline-flex items-center rounded-full border border-[#c9dbb8] bg-[#e6efd7] px-3 py-1 text-sm font-bold text-[#155420]",
   smallChip:
-    "inline-flex items-center rounded-full border border-[#e7dfcf] bg-[#fffdf7] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-[#52763a]",
-  successAlert: "rounded-[0.9rem] border border-[#3d7339]/20 bg-[#edf5df] p-3 text-sm font-medium text-[#1f5b2c]",
+    "inline-flex items-center rounded-full border border-[#e8dfcf] bg-[#fffefa] px-3 py-1 text-xs font-bold uppercase tracking-[0.12em] text-[#2f6f2c]",
+  successAlert: "rounded-[0.9rem] border border-[#2f6f2c]/20 bg-[#edf5df] p-3 text-sm font-medium text-[#155420]",
   errorAlert: "rounded-[0.9rem] border border-[#df5047]/25 bg-[#fff1ef] p-3 text-sm font-medium text-[#9f2f28]",
-  warningAlert: "rounded-[0.9rem] border border-[#f2c34c]/50 bg-[#fff8dc] p-4 text-sm font-medium text-[#6f4b08]",
+  warningAlert: "rounded-[0.9rem] border border-[#f0c742]/50 bg-[#fff8dc] p-4 text-sm font-medium text-[#6f4b08]",
 } as const;

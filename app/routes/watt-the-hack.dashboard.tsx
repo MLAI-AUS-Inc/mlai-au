@@ -1,8 +1,13 @@
 import type { Route } from "./+types/watt-the-hack.dashboard";
 import { Link, redirect, useLoaderData } from "react-router";
 import {
+  ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
+  BookOpenIcon,
   DocumentTextIcon,
+  MegaphoneIcon,
+  PaperAirplaneIcon,
+  TrophyIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
 import Announcements from "~/components/Announcements";
@@ -55,20 +60,36 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     announcements,
     team,
     latestSubmission: submissions[0] ?? null,
-    resources: resources.slice(0, 3),
+    resources: resources.slice(0, 2),
   };
 }
 
-function StatCard({ label, value, icon: Icon }: { label: string; value: string; icon: typeof UserGroupIcon }) {
+function StatCard({
+  label,
+  value,
+  description,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  description: string;
+  icon: typeof UserGroupIcon;
+}) {
   return (
-    <div className={`${wattClasses.panel} p-5`}>
-      <div className="flex items-center gap-3">
+    <div className={`${wattClasses.panel} relative min-h-[112px] overflow-hidden px-6 py-5`}>
+      <img
+        src={wattImages.bottomScene}
+        alt=""
+        className="pointer-events-none absolute -bottom-7 -right-9 w-36 opacity-90"
+      />
+      <div className="relative flex items-center gap-5">
         <span className={wattClasses.iconTile}>
-          <Icon className="h-5 w-5" aria-hidden="true" />
+          <Icon className="h-7 w-7 stroke-[1.8]" aria-hidden="true" />
         </span>
-        <div>
-          <p className="text-sm font-medium text-[#6f756c]">{label}</p>
-          <p className="text-lg font-black text-[#20231d]">{value}</p>
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-[#485244]">{label}</p>
+          <p className="mt-0.5 text-xl font-black leading-tight text-[#121e16]">{value}</p>
+          <p className="mt-1 text-sm font-medium text-[#354031]">{description}</p>
         </div>
       </div>
     </div>
@@ -77,15 +98,20 @@ function StatCard({ label, value, icon: Icon }: { label: string; value: string; 
 
 function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
   return (
-    <div className={`${wattClasses.panel} p-6`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-black text-[#20231d]">Team</h2>
-          <p className="mt-1 text-sm text-[#6f756c]">
-            {team ? `${team.team_name} (${team.code})` : "Create or join a team before submitting."}
-          </p>
+    <div className={`${wattClasses.panel} px-6 py-5`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-5">
+          <span className={wattClasses.iconTile}>
+            <UserGroupIcon className="h-7 w-7 stroke-[1.8]" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-xl font-black leading-tight text-[#121e16]">Team</h2>
+            <p className="mt-1 truncate text-sm font-medium text-[#354031]">
+              {team ? `${team.team_name} (${team.code})` : "Create or join a team before submitting."}
+            </p>
+          </div>
         </div>
-        <Link to="/watt-the-hack/profile" className={wattClasses.buttonPrimary}>
+        <Link to="/watt-the-hack/profile" className={`${wattClasses.buttonOutline} shrink-0 px-6`}>
           Manage
         </Link>
       </div>
@@ -104,20 +130,25 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
 
 function SubmissionPanel({ submission }: { submission: GenericHackathonSubmission | null }) {
   return (
-    <div className={`${wattClasses.panel} p-6`}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-black text-[#20231d]">Latest Submission</h2>
-          <p className="mt-1 text-sm text-[#6f756c]">
-            {submission ? submission.title : "No project submitted yet."}
-          </p>
+    <div className={`${wattClasses.panel} px-6 py-5`}>
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-5">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full text-[#155420]">
+            <TrophyIcon className="h-9 w-9 fill-[#f0c742]/45 stroke-[1.8]" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-xl font-black leading-tight text-[#121e16]">Latest Submission</h2>
+            <p className="mt-1 truncate text-sm font-medium text-[#354031]">
+              {submission ? submission.title : "No project submitted yet."}
+            </p>
+          </div>
         </div>
-        <Link to="/watt-the-hack/submissions" className={wattClasses.buttonYellow}>
+        <Link to="/watt-the-hack/submissions" className={`${wattClasses.buttonPrimary} shrink-0 px-6`}>
           Submit
         </Link>
       </div>
       {submission && (
-        <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#6f756c]">{submission.summary}</p>
+        <p className="mt-4 line-clamp-3 text-sm leading-6 text-[#64705f]">{submission.summary}</p>
       )}
     </div>
   );
@@ -125,26 +156,40 @@ function SubmissionPanel({ submission }: { submission: GenericHackathonSubmissio
 
 function ResourcesPanel({ resources }: { resources: GenericHackathonResource[] }) {
   return (
-    <div className={`${wattClasses.panel} p-6`}>
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-black text-[#20231d]">Resources</h2>
-        <Link to="/watt-the-hack/resources" className="text-sm font-black text-[#1f5b2c] hover:text-[#3d7339]">
+    <div className={`${wattClasses.panel} relative overflow-hidden px-6 py-5 sm:px-7`}>
+      <img
+        src={wattImages.bottomScene}
+        alt=""
+        className="pointer-events-none absolute -bottom-4 right-0 hidden w-[310px] opacity-95 sm:block"
+      />
+      <div className="relative flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <BookOpenIcon className="h-8 w-8 text-[#155420]" aria-hidden="true" />
+          <h2 className="text-xl font-black text-[#121e16]">Resources</h2>
+        </div>
+        <Link to="/watt-the-hack/resources" className="inline-flex items-center gap-2 text-sm font-black text-[#155420] hover:text-[#2f6f2c]">
           View all
+          <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </div>
-      <div className="mt-4 space-y-3">
+      <div className="relative mt-5 grid gap-4 lg:grid-cols-2 lg:pr-44">
         {resources.length > 0 ? resources.map((resource) => (
-          <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] p-3 transition hover:border-[#c9dbb8] hover:bg-[#dfead1]/45">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="font-black text-[#20231d]">{resource.title}</p>
-                <p className="mt-1 text-sm text-[#6f756c]">{resource.summary}</p>
+          <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex min-w-0 items-center gap-4">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e6efd7] text-[#155420]">
+                  <DocumentTextIcon className="h-6 w-6 stroke-[1.8]" aria-hidden="true" />
+                </span>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black text-[#121e16]">{resource.title}</p>
+                  <p className="mt-1 truncate text-xs font-medium text-[#354031]">{resource.summary}</p>
+                </div>
               </div>
-              <ArrowTopRightOnSquareIcon className="mt-1 h-4 w-4 text-[#1f5b2c]" aria-hidden="true" />
+              <ArrowTopRightOnSquareIcon className="h-5 w-5 shrink-0 text-[#64705f]" aria-hidden="true" />
             </div>
           </Link>
         )) : (
-          <p className="text-sm text-[#6f756c]">Resources will appear here when they are published.</p>
+          <p className="text-sm font-medium text-[#64705f]">Resources will appear here when they are published.</p>
         )}
       </div>
     </div>
@@ -156,46 +201,67 @@ export default function WattTheHackDashboard() {
 
   return (
     <div className={wattClasses.page}>
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section className="relative overflow-hidden rounded-[1.5rem] bg-[#1f5b2c] px-6 py-8 text-white shadow-[0_24px_60px_rgba(31,91,44,0.18)] sm:px-8">
+      <div className="mx-auto max-w-[1324px] space-y-5">
+        <section className={`${wattClasses.panelStrong} relative min-h-[300px] overflow-hidden px-6 py-8 sm:px-10 lg:px-16`}>
           <img
             src={wattImages.hero}
             alt=""
-            className="absolute inset-0 h-full w-full object-cover opacity-40"
+            className="absolute inset-y-0 right-0 h-full w-[68%] object-cover object-right opacity-100"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#1f5b2c] via-[#245f2e]/88 to-[#f2c34c]/25" />
-          <div className="absolute -bottom-28 -right-20 h-64 w-64 rounded-full bg-[#f2c34c]/35 blur-3xl" />
-          <div className="relative max-w-3xl">
-            <p className="text-sm font-black uppercase tracking-[0.3em] text-[#f5d84f]">Participant Dashboard</p>
-            <h1 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">{hackathon.name}</h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/78">{hackathon.description}</p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Link to="/watt-the-hack/profile" className="inline-flex items-center justify-center rounded-full bg-[#f5d84f] px-4 py-2 text-sm font-black text-[#1e321d] shadow-[0_12px_26px_rgba(0,0,0,0.18)] transition hover:bg-[#f2c34c]">
+          <div
+            className="absolute inset-0"
+            style={{
+              background:
+                "linear-gradient(90deg, #fffefa 0%, rgba(255,254,250,0.98) 34%, rgba(255,254,250,0.62) 53%, rgba(255,254,250,0) 74%)",
+            }}
+          />
+          <div className="relative flex min-h-[236px] max-w-[560px] flex-col justify-center">
+            <p className="text-sm font-black uppercase tracking-[0.32em] text-[#2f6f2c]">Participant Dashboard</p>
+            <h1 className="mt-4 text-5xl font-black leading-[0.95] tracking-tight text-[#122016] sm:text-6xl">{hackathon.name}</h1>
+            <p className="mt-5 max-w-[430px] text-lg font-medium leading-7 text-[#243129]">{hackathon.description}</p>
+            <div className="mt-7 flex flex-wrap gap-4">
+              <Link to="/watt-the-hack/profile" className={`${wattClasses.buttonPrimary} gap-3 px-6 py-3`}>
+                <UserGroupIcon className="h-5 w-5 stroke-[2.1]" aria-hidden="true" />
                 Profile & Team
               </Link>
-              <Link to="/watt-the-hack/submissions" className="inline-flex items-center justify-center rounded-full border border-white/35 bg-white/10 px-4 py-2 text-sm font-black text-white backdrop-blur transition hover:bg-white/18">
+              <Link to="/watt-the-hack/submissions" className={`${wattClasses.buttonOutline} gap-3 px-6 py-3`}>
+                <PaperAirplaneIcon className="h-5 w-5 stroke-[2.1] text-[#155420]" aria-hidden="true" />
                 Submit Project
               </Link>
             </div>
           </div>
         </section>
 
-        <div className="grid gap-4 md:grid-cols-3">
-          <StatCard label="Team Status" value={team ? "Joined" : "Not joined"} icon={UserGroupIcon} />
-          <StatCard label="Members" value={team ? String(team.member_count) : "0"} icon={UserGroupIcon} />
-          <StatCard label="Submission" value={latestSubmission ? "Received" : "Not submitted"} icon={DocumentTextIcon} />
+        <div className="grid gap-5 md:grid-cols-3">
+          <StatCard
+            label="Team Status"
+            value={team ? "Joined" : "Not joined"}
+            description={team ? team.team_name : "Create or join a team to get started."}
+            icon={UserGroupIcon}
+          />
+          <StatCard
+            label="Members"
+            value={team ? String(team.member_count) : "0"}
+            description={team ? "Your team is ready to build." : "You don't have any teammates yet."}
+            icon={UserGroupIcon}
+          />
+          <StatCard
+            label="Submission"
+            value={latestSubmission ? "Submitted" : "Not submitted"}
+            description={latestSubmission ? "Your prototype is in the queue." : "Submit your project prototype."}
+            icon={DocumentTextIcon}
+          />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="space-y-6">
-            <Announcements announcements={announcements} variant="watt" />
-            <ResourcesPanel resources={resources} />
-          </div>
-          <div className="space-y-6">
+        <div className="grid gap-5 lg:grid-cols-[1fr_1.08fr]">
+          <Announcements announcements={announcements} variant="watt" />
+          <div className="space-y-5">
             <TeamPanel team={team} />
             <SubmissionPanel submission={latestSubmission} />
           </div>
         </div>
+
+        <ResourcesPanel resources={resources} />
       </div>
     </div>
   );

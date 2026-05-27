@@ -1,3 +1,14 @@
+- [x] Lower Watt dashboard resource illustration to panel base
+- [x] Keep collapsed Watt sidebar illustration visible and enlarge collapsed logo
+- [x] Restyle Watt announcements as green accent panel
+- [x] Run Watt tweak verification
+- [x] Add supplied Watt The Hack resource pack to `/watt-the-hack/resources`
+- [x] Run Watt The Hack resources verification
+- [x] Update Watt The Hack theme image constants and shared visual tokens
+- [x] Add animated collapsed/expanded Watt The Hack sidebar treatment
+- [x] Rebuild Watt The Hack dashboard to match the reference layout
+- [x] Restyle Watt The Hack announcements/resources/cards with the reference surface treatment
+- [x] Run Watt The Hack verification checks
 - [x] Add QR-friendly DisplayLink setup tutorial page
 - [x] Register the DisplayLink tutorial route without adding a main-nav entry point
 - [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text
