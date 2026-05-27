@@ -40,10 +40,10 @@ const PERSONA_OPTIONS = [
 ] as const;
 
 const PERSONA_CONFIG: Record<string, { label: string; color: string }> = {
-  hacker: { label: "Hacker", color: "border-[#c9dbb8] bg-[#dfead1] text-[#1f5b2c]" },
-  hustler: { label: "Hustler", color: "border-[#f2c34c]/60 bg-[#fff8dc] text-[#6f4b08]" },
+  hacker: { label: "Hacker", color: "border-[#c9dbb8] bg-[#e6efd7] text-[#155420]" },
+  hustler: { label: "Hustler", color: "border-[#f0c742]/60 bg-[#fff8dc] text-[#6f4b08]" },
   hipster: { label: "Hipster", color: "border-[#df5047]/25 bg-[#fff1ef] text-[#9f2f28]" },
-  healer: { label: "Healer", color: "border-[#c9dbb8] bg-[#edf5df] text-[#1f5b2c]" },
+  healer: { label: "Healer", color: "border-[#c9dbb8] bg-[#edf5df] text-[#155420]" },
 };
 
 export async function loader({ request, context }: Route.LoaderArgs) {
@@ -105,7 +105,7 @@ function personaLabel(persona: string) {
 }
 
 function personaClass(persona: string) {
-  return PERSONA_CONFIG[persona.toLowerCase()]?.color || "border-[#e7dfcf] bg-[#fffdf7] text-[#6f756c]";
+  return PERSONA_CONFIG[persona.toLowerCase()]?.color || "border-[#e8dfcf] bg-[#fffefa] text-[#64705f]";
 }
 
 export default function WattTheHackProfile() {
@@ -242,12 +242,12 @@ export default function WattTheHackProfile() {
                 <img
                   alt=""
                   src={avatarUrl}
-                  className="size-16 rounded-full object-cover ring-2 ring-[#dfead1]"
+                  className="size-16 rounded-full object-cover ring-2 ring-[#e6efd7]"
                 />
                 <span aria-hidden="true" className="absolute inset-0 rounded-full shadow-inner" />
                 <button
                   type="button"
-                  className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-[#20231d]/55 opacity-0 transition-opacity hover:opacity-100"
+                  className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-full bg-[#121e16]/55 opacity-0 transition-opacity hover:opacity-100"
                   onClick={() => setIsAvatarModalOpen(true)}
                 >
                   <span className="sr-only">Update profile image</span>
@@ -257,8 +257,8 @@ export default function WattTheHackProfile() {
             </div>
             <div>
               <p className={wattClasses.eyebrow}>Profile & Team</p>
-              <h1 className="text-2xl font-black text-[#20231d]">{fullName}</h1>
-              <p className="text-sm font-medium text-[#6f756c]">
+              <h1 className="text-2xl font-black text-[#121e16]">{fullName}</h1>
+              <p className="text-sm font-medium text-[#64705f]">
                 {teamName ? `Member of ${teamName}` : "No team yet"}
               </p>
             </div>
@@ -269,16 +269,16 @@ export default function WattTheHackProfile() {
           <div className="space-y-6 lg:col-span-2 lg:col-start-1">
             <section aria-labelledby="team-management-title" className={wattClasses.panel}>
               <div className="px-4 py-5 sm:px-6">
-                <h2 id="team-management-title" className="text-lg font-black leading-6 text-[#20231d]">
+                <h2 id="team-management-title" className="text-lg font-black leading-6 text-[#121e16]">
                   {teamName ? "Change Team" : "Create or Join a Team"}
                 </h2>
-                <p className="mt-1 max-w-2xl text-sm text-[#6f756c]">
+                <p className="mt-1 max-w-2xl text-sm text-[#64705f]">
                   {teamName
                     ? "Create a new team or switch to an existing one."
                     : "You need a team to participate in the hackathon."}
                 </p>
               </div>
-              <div className="border-t border-[#e7dfcf] px-4 py-5 sm:px-6">
+              <div className="border-t border-[#e8dfcf] px-4 py-5 sm:px-6">
                 {actionData?.error && (
                   <div className={`mb-4 ${wattClasses.errorAlert}`}>{actionData.error}</div>
                 )}
@@ -288,7 +288,7 @@ export default function WattTheHackProfile() {
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
                   <div>
-                    <h3 className="mb-4 text-sm font-bold text-[#6f756c]">Create a new team</h3>
+                    <h3 className="mb-4 text-sm font-bold text-[#64705f]">Create a new team</h3>
                     <Form method="post">
                       <div>
                         <label htmlFor="team-name" className={wattClasses.label}>
@@ -311,8 +311,8 @@ export default function WattTheHackProfile() {
                     </Form>
                   </div>
 
-                  <div className="border-t border-[#e7dfcf] pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
-                    <h3 className="mb-4 text-sm font-bold text-[#6f756c]">Join an existing team</h3>
+                  <div className="border-t border-[#e8dfcf] pt-8 md:border-l md:border-t-0 md:pl-8 md:pt-0">
+                    <h3 className="mb-4 text-sm font-bold text-[#64705f]">Join an existing team</h3>
                     <Form method="post">
                       <div>
                         <label htmlFor="team-code" className={wattClasses.label}>
@@ -336,7 +336,7 @@ export default function WattTheHackProfile() {
                               className={wattClasses.inputBare}
                             />
                             {isJoinDropdownOpen && filteredTeams.length > 0 && (
-                              <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] py-1 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
+                              <ul className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-2xl border border-[#e8dfcf] bg-[#fffefa] py-1 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
                                 {filteredTeams.map((team) => (
                                   <li
                                     key={team.team_id ?? team.id ?? team.team_name}
@@ -345,7 +345,7 @@ export default function WattTheHackProfile() {
                                       setJoinSearch(team.team_name);
                                       setIsJoinDropdownOpen(false);
                                     }}
-                                    className="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[#dfead1]"
+                                    className="flex cursor-pointer items-center gap-3 px-3 py-2.5 transition-colors hover:bg-[#e6efd7]"
                                   >
                                     <img
                                       src={team.avatar_url || generateAvatarUrl(getInitials(team.team_name))}
@@ -353,8 +353,8 @@ export default function WattTheHackProfile() {
                                       className="h-8 w-8 shrink-0 rounded-full object-cover ring-1 ring-[#c9dbb8]"
                                     />
                                     <div className="min-w-0">
-                                      <p className="truncate text-sm font-black text-[#20231d]">{team.team_name}</p>
-                                      <p className="text-xs text-[#6f756c]">
+                                      <p className="truncate text-sm font-black text-[#121e16]">{team.team_name}</p>
+                                      <p className="text-xs text-[#64705f]">
                                         {team.member_count} member{team.member_count !== 1 ? "s" : ""}
                                         {team.member_count >= 6 && " (full)"}
                                       </p>
@@ -364,8 +364,8 @@ export default function WattTheHackProfile() {
                               </ul>
                             )}
                             {isJoinDropdownOpen && joinSearch && filteredTeams.length === 0 && (
-                              <div className="absolute z-20 mt-1 w-full rounded-2xl border border-[#e7dfcf] bg-[#fffdf7] px-3 py-3 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
-                                <p className="text-sm text-[#6f756c]">No teams found matching &ldquo;{joinSearch}&rdquo;</p>
+                              <div className="absolute z-20 mt-1 w-full rounded-2xl border border-[#e8dfcf] bg-[#fffefa] px-3 py-3 shadow-[0_18px_42px_rgba(67,54,33,0.14)]">
+                                <p className="text-sm text-[#64705f]">No teams found matching &ldquo;{joinSearch}&rdquo;</p>
                               </div>
                             )}
                           </div>
@@ -384,12 +384,12 @@ export default function WattTheHackProfile() {
 
             <section aria-labelledby="applicant-information-title" className={wattClasses.panelStrong}>
               <div className="px-4 py-5 sm:px-6">
-                <h2 id="applicant-information-title" className="text-lg font-black leading-6 text-[#20231d]">
+                <h2 id="applicant-information-title" className="text-lg font-black leading-6 text-[#121e16]">
                   Profile Information
                 </h2>
-                <p className="mt-1 max-w-2xl text-sm text-[#6f756c]">Personal details and application.</p>
+                <p className="mt-1 max-w-2xl text-sm text-[#64705f]">Personal details and application.</p>
               </div>
-              <div className="border-t border-[#e7dfcf] px-4 py-5 sm:px-6">
+              <div className="border-t border-[#e8dfcf] px-4 py-5 sm:px-6">
                 <fetcher.Form onSubmit={handleProfileSubmit}>
                   <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
                     <div className="sm:col-span-3">
@@ -441,8 +441,8 @@ export default function WattTheHackProfile() {
                       <label htmlFor="phone" className={wattClasses.label}>
                         Phone
                       </label>
-                      <div className="mt-2 flex rounded-[0.85rem] border border-[#e7dfcf] bg-[#fffdf7] shadow-sm transition focus-within:border-[#3d7339] focus-within:ring-2 focus-within:ring-[#3d7339]/20">
-                        <div className="flex select-none items-center rounded-l-[0.85rem] border-r border-[#e7dfcf] bg-[#fbf7ea] px-3 text-[#6f756c] sm:text-sm">
+                      <div className="mt-2 flex rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] shadow-sm transition focus-within:border-[#2f6f2c] focus-within:ring-2 focus-within:ring-[#2f6f2c]/20">
+                        <div className="flex select-none items-center rounded-l-[0.85rem] border-r border-[#e8dfcf] bg-[#fbf6e9] px-3 text-[#64705f] sm:text-sm">
                           +61
                         </div>
                         <input
@@ -452,7 +452,7 @@ export default function WattTheHackProfile() {
                           value={phone}
                           onChange={(event) => setPhone(event.target.value)}
                           autoComplete="tel"
-                          className="block min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-[#20231d] outline-none placeholder:text-[#8a8477] focus:ring-0 sm:text-sm sm:leading-6"
+                          className="block min-w-0 flex-1 border-0 bg-transparent px-3 py-2 text-[#121e16] outline-none placeholder:text-[#8a8477] focus:ring-0 sm:text-sm sm:leading-6"
                           placeholder="4XX XXX XXX"
                         />
                       </div>
@@ -476,14 +476,14 @@ export default function WattTheHackProfile() {
                       <div className="mb-2 flex items-center gap-2">
                         <label className={wattClasses.label}>My Persona</label>
                         <div className="group relative flex items-center">
-                          <InformationCircleIcon className="h-4 w-4 cursor-help text-[#6f756c]" />
-                          <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-64 -translate-x-1/2 rounded-2xl border border-[#e7dfcf] bg-[#20231d] px-3 py-2 text-xs text-white shadow-lg group-hover:block">
+                          <InformationCircleIcon className="h-4 w-4 cursor-help text-[#64705f]" />
+                          <div className="absolute bottom-full left-1/2 z-10 mb-2 hidden w-64 -translate-x-1/2 rounded-2xl border border-[#e8dfcf] bg-[#121e16] px-3 py-2 text-xs text-white shadow-lg group-hover:block">
                             {PERSONA_OPTIONS.map((option) => (
                               <p key={option.id} className="mb-1 last:mb-0">
                                 <strong>{personaLabel(option.id)}:</strong> {option.description}
                               </p>
                             ))}
-                            <div className="absolute left-1/2 top-full -mt-1 h-2 w-2 -translate-x-1/2 rotate-45 bg-[#20231d]" />
+                            <div className="absolute left-1/2 top-full -mt-1 h-2 w-2 -translate-x-1/2 rotate-45 bg-[#121e16]" />
                           </div>
                         </div>
                       </div>
@@ -503,11 +503,11 @@ export default function WattTheHackProfile() {
                                     setPersonas(personas.filter((persona) => persona !== option.id));
                                   }
                                 }}
-                                className="h-4 w-4 rounded border-[#d8cfbd] bg-[#fffdf7] text-[#3d7339] focus:ring-[#3d7339]"
+                                className="h-4 w-4 rounded border-[#d8cfbd] bg-[#fffefa] text-[#2f6f2c] focus:ring-[#2f6f2c]"
                               />
                             </div>
                             <div className="ml-3 text-sm leading-6">
-                              <label htmlFor={option.id} className="font-bold text-[#20231d]">
+                              <label htmlFor={option.id} className="font-bold text-[#121e16]">
                                 {option.label}
                               </label>
                             </div>
@@ -518,7 +518,7 @@ export default function WattTheHackProfile() {
                   </div>
 
                   <div className="mt-6 flex flex-wrap items-center justify-end gap-x-6 gap-y-3">
-                    {message && <p className="text-sm font-bold text-[#1f5b2c]">{message}</p>}
+                    {message && <p className="text-sm font-bold text-[#155420]">{message}</p>}
                     {error && <p className="text-sm font-bold text-[#9f2f28]">{error}</p>}
                     {profileFetcherData?.error && <p className="text-sm font-bold text-[#9f2f28]">{profileFetcherData.error}</p>}
                     <button type="submit" disabled={isSaving} className={`${wattClasses.buttonPrimary} disabled:opacity-50`}>
@@ -536,30 +536,30 @@ export default function WattTheHackProfile() {
                 <>
                   <div
                     className={`flex items-center justify-between rounded-t-[1.25rem] border-b px-4 py-3 sm:px-6 ${
-                      isValidTeamSize ? "border-[#c9dbb8] bg-[#dfead1]" : "border-[#f2c34c]/50 bg-[#fff8dc]"
+                      isValidTeamSize ? "border-[#c9dbb8] bg-[#e6efd7]" : "border-[#f0c742]/50 bg-[#fff8dc]"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className={`flex h-2 w-2 rounded-full ${isValidTeamSize ? "bg-[#1f5b2c]" : "bg-[#f2c34c]"}`} />
-                      <span className={`text-sm font-black ${isValidTeamSize ? "text-[#1f5b2c]" : "text-[#6f4b08]"}`}>
+                      <span className={`flex h-2 w-2 rounded-full ${isValidTeamSize ? "bg-[#155420]" : "bg-[#f0c742]"}`} />
+                      <span className={`text-sm font-black ${isValidTeamSize ? "text-[#155420]" : "text-[#6f4b08]"}`}>
                         {isValidTeamSize ? "Team Ready" : "Forming Team"}
                       </span>
                     </div>
-                    <div className="flex items-center gap-1 text-xs font-bold text-[#6f756c]">
+                    <div className="flex items-center gap-1 text-xs font-bold text-[#64705f]">
                       <span>{memberCount}/6</span>
                       <span className="hidden sm:inline">members</span>
                       <div className="group relative flex items-center">
-                        <InformationCircleIcon className="h-4 w-4 cursor-help text-[#6f756c]" />
-                        <div className="absolute bottom-full right-0 z-10 mb-2 hidden w-48 rounded-2xl bg-[#20231d] px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                        <InformationCircleIcon className="h-4 w-4 cursor-help text-[#64705f]" />
+                        <div className="absolute bottom-full right-0 z-10 mb-2 hidden w-48 rounded-2xl bg-[#121e16] px-2 py-1 text-xs text-white shadow-lg group-hover:block">
                           Teams must have between 2 and 6 members.
-                          <div className="absolute right-1 top-full -mt-1 h-2 w-2 rotate-45 bg-[#20231d]" />
+                          <div className="absolute right-1 top-full -mt-1 h-2 w-2 rotate-45 bg-[#121e16]" />
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="px-4 py-5 sm:px-6">
-                    <div className="flex flex-col items-center border-b border-[#e7dfcf] pb-6">
+                    <div className="flex flex-col items-center border-b border-[#e8dfcf] pb-6">
                       <div className="relative inline-block">
                         <img
                           className="h-24 w-24 rounded-2xl object-cover ring-1 ring-[#c9dbb8]"
@@ -568,21 +568,21 @@ export default function WattTheHackProfile() {
                         />
                         <button
                           type="button"
-                          className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-[#20231d]/55 opacity-0 transition-opacity hover:opacity-100"
+                          className="absolute inset-0 flex cursor-pointer items-center justify-center rounded-2xl bg-[#121e16]/55 opacity-0 transition-opacity hover:opacity-100"
                           onClick={() => setIsTeamAvatarModalOpen(true)}
                         >
                           <span className="sr-only">Update team logo</span>
                           <PencilIcon className="h-6 w-6 text-white" aria-hidden="true" />
                         </button>
                       </div>
-                      <h2 id="timeline-title" className="mt-3 text-center text-xl font-black text-[#20231d]">
+                      <h2 id="timeline-title" className="mt-3 text-center text-xl font-black text-[#121e16]">
                         {teamName}
                       </h2>
                     </div>
 
-                    <h3 className="mt-6 text-sm font-bold text-[#6f756c]">Team Members</h3>
+                    <h3 className="mt-6 text-sm font-bold text-[#64705f]">Team Members</h3>
                     <div className="mt-4 flow-root">
-                      <ul role="list" className="-my-5 divide-y divide-[#e7dfcf]">
+                      <ul role="list" className="-my-5 divide-y divide-[#e8dfcf]">
                         {teamMembers.length > 0 ? (
                           teamMembers.map((member: GenericHackathonMember & { personas?: string[] }, index: number) => {
                             const memberInitials = getInitials(member.full_name || member.email);
@@ -598,7 +598,7 @@ export default function WattTheHackProfile() {
                                     />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-black text-[#20231d]">{member.full_name || member.email}</p>
+                                    <p className="truncate text-sm font-black text-[#121e16]">{member.full_name || member.email}</p>
                                     <div className="mt-1 flex flex-wrap gap-1">
                                       {member.personas && member.personas.length > 0 ? (
                                         member.personas.map((persona) => (
@@ -610,7 +610,7 @@ export default function WattTheHackProfile() {
                                           </span>
                                         ))
                                       ) : (
-                                        <span className="text-xs italic text-[#6f756c]">{member.role || "Participant"}</span>
+                                        <span className="text-xs italic text-[#64705f]">{member.role || "Participant"}</span>
                                       )}
                                     </div>
                                   </div>
@@ -620,7 +620,7 @@ export default function WattTheHackProfile() {
                           })
                         ) : (
                           <li className="py-4">
-                            <p className="text-sm text-[#6f756c]">No team members yet.</p>
+                            <p className="text-sm text-[#64705f]">No team members yet.</p>
                           </li>
                         )}
                       </ul>
@@ -629,11 +629,11 @@ export default function WattTheHackProfile() {
                 </>
               ) : (
                 <div className="px-4 py-5 text-center sm:px-6">
-                  <div className="mb-3 inline-flex rounded-full bg-[#dfead1] p-3">
-                    <UserGroupIcon className="h-8 w-8 text-[#1f5b2c]" aria-hidden="true" />
+                  <div className="mb-3 inline-flex rounded-full bg-[#e6efd7] p-3">
+                    <UserGroupIcon className="h-8 w-8 text-[#155420]" aria-hidden="true" />
                   </div>
-                  <h2 id="timeline-title" className="text-lg font-black text-[#20231d]">No Team Yet</h2>
-                  <p className="mt-2 text-sm text-[#6f756c]">
+                  <h2 id="timeline-title" className="text-lg font-black text-[#121e16]">No Team Yet</h2>
+                  <p className="mt-2 text-sm text-[#64705f]">
                     Create or join a team using the form on the left to get started.
                   </p>
                 </div>
