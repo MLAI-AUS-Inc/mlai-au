@@ -142,7 +142,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
-  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -452,7 +459,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-content-island-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
       const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
@@ -495,7 +502,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
@@ -528,7 +535,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const candidatePool = [
@@ -3521,7 +3528,7 @@ function ReturningTopicPickerPage({
       {setupMergedNotice ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>The articles directory was merged. You can generate an article now while verification finishes in the background.</p>
+          <p>Articles setup is complete. Choose a topic to generate the next article.</p>
         </div>
       ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">

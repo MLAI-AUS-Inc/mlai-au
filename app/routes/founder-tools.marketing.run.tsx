@@ -113,6 +113,17 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
 }
 
+function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
+}
+
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
 
 function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): ArticleDeliveryMode {
@@ -445,11 +456,11 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
-    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr"].includes(intent)) {
+    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
-      if (intent === "merge-setup-pr" && isArticleSystemSetupMerged(result)) {
+      if ((intent === "merge-setup-pr" || intent === "refresh-setup-pr-status") && isArticleSystemSetupMerged(result)) {
         throw redirect("/founder-tools/marketing?setupMerged=1");
       }
       if (result.runId && result.runId !== runId) {
@@ -461,8 +472,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       });
     } else if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
-      if (bootstrap.checks.scaffold?.setupBlocked) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const selectedCandidate =
@@ -1178,7 +1189,7 @@ function ArticleSystemSetupPreviewPanel({
           <div>
             <p className="text-sm font-black text-amber-950">Manual merge required</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-amber-800">
-              Merge the setup PR in GitHub, then the verification scan can confirm the articles directory before topic research unlocks.
+              Merge the setup PR in GitHub, then refresh merge status to unlock article generation.
             </p>
           </div>
           {prUrl ? (
@@ -1195,9 +1206,9 @@ function ArticleSystemSetupPreviewPanel({
       ) : setupCompleted ? (
         <div className="flex flex-col gap-3 rounded-xl border border-emerald-100 bg-emerald-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-black text-emerald-950">Verifying merged articles directory</p>
+            <p className="text-sm font-black text-emerald-950">Articles setup is complete</p>
             <p className="mt-1 text-sm font-semibold leading-6 text-emerald-800">
-              The setup PR was merged. Article generation is available now while verification confirms the directory on the default branch.
+              Choose a topic to generate the next article.
             </p>
           </div>
           {rescanRunId ? (
@@ -2379,6 +2390,7 @@ function ArticleSetupPublishDetail({
   const prCreateFailed = setupStatus === "setup_pr_create_failed";
   const approvePending = isActionPending?.("approve") ?? isSubmitting;
   const mergePending = isActionPending?.("merge-setup-pr") ?? isSubmitting;
+  const refreshMergePending = isActionPending?.("refresh-setup-pr-status") ?? isSubmitting;
   const enableDailyPending = isActionPending?.("enable-daily-automation") ?? isSubmitting;
   const runDailyPending = isActionPending?.("run-daily-discovery-now") ?? isSubmitting;
   const dailyCheck = bootstrap.checks.dailyAutomation as
@@ -2396,7 +2408,7 @@ function ArticleSetupPublishDetail({
             <p className="text-xs font-black uppercase tracking-wide text-violet-700">Publish setup PR</p>
             <h2 className="mt-1 text-xl font-black text-gray-950">Finish articles setup</h2>
             <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-600">
-              Review the setup PR, merge it after checks pass, then return to article generation while verification continues.
+              Review the setup PR and merge it after checks pass. Once merged, article generation unlocks without a repo re-scan.
             </p>
           </div>
           <WorkflowStatusPill status={setupMerged ? "complete" : prUrl ? "needs_action" : "ready"} />
@@ -2441,22 +2453,34 @@ function ArticleSetupPublishDetail({
 
           <PublishFlowCard title="Merge to main" status={setupMerged ? "complete" : mergePending ? "running" : prUrl ? "ready" : "locked"} eyebrow={setupMerged ? "Merged" : checksStatus || mergeStatus || (prUrl ? "Ready" : "Waiting")}>
             {setupMerged ? (
-              <p className="text-sm font-semibold text-gray-600">The setup PR has been merged. You can generate articles while verification continues in the background.</p>
+              <p className="text-sm font-semibold text-gray-600">Articles setup is complete. Choose a topic to generate the next article.</p>
             ) : prUrl ? (
               <Form method="POST" className="space-y-3">
                 <p className="text-sm font-semibold text-gray-600">
-                  {mergeBlockedReason || "Checks must pass before the setup PR can be merged."}
+                  {mergeBlockedReason || "Merge the setup PR, then article generation unlocks."}
                 </p>
-                <button
-                  type="submit"
-                  name="intent"
-                  value="merge-setup-pr"
-                  disabled={isSubmitting}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                >
-                  {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
-                  {mergePending ? "Checking..." : "Check and merge"}
-                </button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="merge-setup-pr"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {mergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                    {mergePending ? "Checking..." : "Check and merge"}
+                  </button>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="refresh-setup-pr-status"
+                    disabled={isSubmitting}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-black text-gray-800 shadow-sm transition hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    {refreshMergePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
+                    {refreshMergePending ? "Refreshing..." : "I merged this in GitHub"}
+                  </button>
+                </div>
               </Form>
             ) : (
               <p className="text-sm font-semibold text-gray-500">Create the setup PR before merging to main.</p>
@@ -3660,7 +3684,7 @@ export default function FounderToolsMarketingRun() {
   const isArticleWorkflowRun = isArticleWorkflow(workflow);
   const isArticleGenerationRun = isArticleGenerationWorkflow(workflow);
   const hasArticlePreview = hasReadyArticlePreview(run);
-  const setupBlocked = Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  const setupBlocked = isArticleSystemSetupBlocked(bootstrap);
   const isDiscoveryConfirmation =
     ["auto_discovery", "content_factory_discovery", "daily_discovery"].includes(workflow) &&
     run.status === "awaiting_confirmation" &&

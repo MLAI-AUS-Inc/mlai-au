@@ -405,12 +405,26 @@ function effectiveArticleDeliveryMode(bootstrap: VibeMarketingBootstrap): Articl
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
-  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
 }
 
 function isArticleSystemPublished(bootstrap: VibeMarketingBootstrap) {
   const scaffold = bootstrap.checks.scaffold;
-  return Boolean(scaffold?.published || (scaffold?.passed && !scaffold?.setupBlocked));
+  return Boolean(
+    scaffold?.generationReady ||
+      bootstrap.articleSetupState?.generationReady ||
+      scaffold?.setupMerged ||
+      bootstrap.articleSetupState?.setupMerged ||
+      scaffold?.published ||
+      (scaffold?.passed && !isArticleSystemSetupBlocked(bootstrap)),
+  );
 }
 
 function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
@@ -725,7 +739,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return {
           intent,
-          error: "Finish approving, merging, and verifying the articles directory setup before researching topics.",
+          error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status.",
         };
       }
       const result = await startVibeMarketingDiscovery(env, request, {});
@@ -738,7 +752,7 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (isArticleSystemSetupBlocked(bootstrap)) {
         return {
           intent,
-          error: "Finish approving, merging, and verifying the articles directory setup before generating articles.",
+          error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status.",
         };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");

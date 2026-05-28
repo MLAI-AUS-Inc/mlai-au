@@ -86,6 +86,7 @@ export interface VibeMarketingArticleSetupState {
   setupCurrentStep?: string | null;
   setupBlocked?: boolean;
   setupMerged?: boolean;
+  generationReady?: boolean;
   published?: boolean;
   routePath?: string | null;
   previewUrl?: string | null;
@@ -247,6 +248,7 @@ export interface VibeMarketingCheck {
   published?: boolean;
   setupBlocked?: boolean;
   setupMerged?: boolean;
+  generationReady?: boolean;
   setupRunId?: string | null;
   setupStatus?: string | null;
   rescanRunId?: string | null;
