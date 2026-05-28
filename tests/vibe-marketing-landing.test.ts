@@ -24,8 +24,7 @@ describe("vibe marketing landing", () => {
     expect(
       shouldShowVibeMarketingTopicPicker(
         bootstrapFixture({
-          checks: { scaffold: { passed: false, setupBlocked: true, setupMerged: true } },
-          articleSetupState: { setupMerged: true },
+          checks: { scaffold: { passed: false, setupBlocked: true } },
           startPageMode: "topic_picker",
         }),
       ),
@@ -37,6 +36,17 @@ describe("vibe marketing landing", () => {
       shouldShowVibeMarketingTopicPicker(
         bootstrapFixture({
           checks: { scaffold: { passed: false, setupBlocked: false, setupMerged: true } },
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  test("shows topic picker when generation ready overrides stale setup blockers", () => {
+    expect(
+      shouldShowVibeMarketingTopicPicker(
+        bootstrapFixture({
+          checks: { scaffold: { passed: false, setupBlocked: true, generationReady: true } },
+          articleSetupState: { setupBlocked: true, generationReady: true },
         }),
       ),
     ).toBe(true);
