@@ -1,3 +1,6 @@
+- [x] Add Watt The Hack track sidebar routes
+- [x] Add Watt The Hack track placeholder pages
+- [x] Run Watt The Hack track tab verification
 - [x] Lower Watt dashboard resource illustration to panel base
 - [x] Keep collapsed Watt sidebar illustration visible and enlarge collapsed logo
 - [x] Restyle Watt announcements as green accent panel
