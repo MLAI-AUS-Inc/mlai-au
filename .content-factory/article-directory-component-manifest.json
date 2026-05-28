@@ -35,28 +35,28 @@
   "schema_version": 1,
   "slots": {
     "article_card": {
-      "implementation_source": "generated_local_helper",
-      "present": true,
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
       "required": true,
       "target_components": [],
-      "verification_status": "present"
+      "verification_status": "missing"
     },
     "article_link": {
-      "implementation_source": "generated_local_helper",
-      "present": true,
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
       "required": true,
       "target_components": [],
-      "verification_status": "present"
+      "verification_status": "missing"
     },
     "article_list": {
-      "implementation_source": "generated_local_helper",
-      "present": true,
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
       "required": true,
       "target_components": [],
-      "verification_status": "present"
+      "verification_status": "missing"
     },
     "article_registry": {
-      "implementation_source": "generated_local_helper",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "target_components": [],
@@ -70,7 +70,7 @@
       "verification_status": "missing"
     },
     "author_registry": {
-      "implementation_source": "generated_local_helper",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "target_components": [],
@@ -105,11 +105,11 @@
       "verification_status": "missing"
     },
     "empty_state": {
-      "implementation_source": "generated_local_helper",
-      "present": true,
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
       "required": true,
       "target_components": [],
-      "verification_status": "present"
+      "verification_status": "missing"
     },
     "featured_articles": {
       "implementation_source": "generated_local_helper",
@@ -126,21 +126,21 @@
       "verification_status": "missing"
     },
     "page_heading": {
-      "implementation_source": "generated_local_helper",
-      "present": true,
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
       "required": true,
       "target_components": [],
-      "verification_status": "present"
+      "verification_status": "missing"
     },
     "page_intro": {
-      "implementation_source": "generated_local_helper",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "target_components": [],
       "verification_status": "present"
     },
     "pagination": {
-      "implementation_source": "generated_local_helper",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "target_components": [],
@@ -167,7 +167,7 @@
       "verification_status": "missing"
     },
     "seo_metadata": {
-      "implementation_source": "generated_local_helper",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "target_components": [],
