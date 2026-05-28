@@ -1,0 +1,314 @@
+{
+  "existing_components": [],
+  "missing_required_slots": [],
+  "needs_llm_adjudication": false,
+  "new_components_needed": [],
+  "present_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "required_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "route_path": "/articles",
+  "route_shell_path": "app/routes/articles.index.tsx",
+  "slots": {
+    "article_card": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `article-card` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "article_link": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `article-link` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "article_list": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `article-list` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "article_registry": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `article-registry` slot marker",
+        "Manifest verification: present",
+        "Generated support file satisfies `article_registry`"
+      ],
+      "implementation_source": "generated_support_file",
+      "present": true,
+      "required": true,
+      "scaffold_action": "create_support_file",
+      "setup_preview_status": "created support file",
+      "target_components": []
+    },
+    "author_avatar": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    },
+    "author_registry": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `author-registry` slot marker",
+        "Manifest verification: present",
+        "Generated support file satisfies `author_registry`"
+      ],
+      "implementation_source": "generated_support_file",
+      "present": true,
+      "required": true,
+      "scaffold_action": "create_support_file",
+      "setup_preview_status": "created support file",
+      "target_components": []
+    },
+    "category_navigation": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `category-navigation` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "date_archive": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    },
+    "directory_container": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `directory-container` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "downloadable_resources": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    },
+    "empty_state": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `empty-state` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "featured_articles": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `featured-articles` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "newsletter_cta": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    },
+    "page_heading": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `page-heading` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "page_intro": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `page-intro` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "pagination": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `pagination` slot marker",
+        "Manifest verification: present"
+      ],
+      "implementation_source": "existing_route_marker",
+      "present": true,
+      "required": true,
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
+      "target_components": []
+    },
+    "rich_image_cards": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    },
+    "search": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [
+        "Repository component `ArticleSearchBar` is available for `search`"
+      ],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": [
+        {
+          "name": "ArticleSearchBar",
+          "path": "app/components/articles/ArticleSearchBar.tsx",
+          "source": "existing_component"
+        }
+      ]
+    },
+    "seo_metadata": {
+      "component_status": "exists",
+      "confidence": "high",
+      "evidence": [
+        "Explicit `seo-metadata` slot marker",
+        "Manifest verification: present",
+        "Generated support file satisfies `seo_metadata`"
+      ],
+      "implementation_source": "generated_support_file",
+      "present": true,
+      "required": true,
+      "scaffold_action": "create_support_file",
+      "setup_preview_status": "created support file",
+      "target_components": []
+    },
+    "structured_data": {
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
+      "required": false,
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
+      "target_components": []
+    }
+  },
+  "status": "ready",
+  "support_files_needed": [],
+  "unclassified_route_components": [],
+  "warnings": []
+}
