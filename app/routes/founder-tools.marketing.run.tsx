@@ -27,6 +27,16 @@ import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
+  articleReviewApproveIntentForRun,
+  articleReviewApproveLabelForRun,
+  hasPublishHandoffEvidence,
+  isArticleReviewPreviewReady,
+  isPublishApprovalGate,
+  publishPreviewUrlForRun,
+  publishPrUrlForRun,
+  viewedWorkflowStepIdForRun,
+} from "~/lib/vibe-marketing-run-view";
+import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
   acceptVibeMarketingComponentRevision,
@@ -2087,7 +2097,9 @@ function LiveArticlePreviewPanel({
   isActionPending?: (...keys: string[]) => boolean;
 }) {
   const publishStep = run.workflowProgress?.steps.find((step) => step.id === "publish");
-  const acceptArticleIntent = publishStep?.primaryAction?.intent ?? "promote-bundle";
+  const acceptArticleIntent = articleReviewApproveIntentForRun(run, publishStep?.primaryAction?.intent);
+  const acceptArticleLabel = articleReviewApproveLabelForRun(run);
+  const reviewApprovalReady = isArticleReviewPreviewReady(run);
 
   return (
     <section className="space-y-5">
@@ -2112,13 +2124,13 @@ function LiveArticlePreviewPanel({
             reviewState.latestBatch?.status !== "accepted" &&
             Boolean(reviewState.batchId);
           const canAcceptArticleForPublish = Boolean(
-            run.status === "completed" &&
-              run.contentPackage?.contentPackaged &&
+            (run.status === "completed" || reviewApprovalReady) &&
+              (run.contentPackage?.contentPackaged || reviewApprovalReady) &&
               reviewState.canRenderPreview &&
               reviewState.draftComments.length === 0 &&
               !canAcceptRevision &&
               !reviewState.hasPendingRevisionBatch &&
-              publishStep?.status === "ready" &&
+              (reviewApprovalReady || publishStep?.status === "ready") &&
               acceptArticleIntent,
           );
           const acceptArticlePending = isActionPending?.(acceptArticleIntent) ?? isSubmitting;
@@ -2136,7 +2148,7 @@ function LiveArticlePreviewPanel({
                     className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-700 disabled:opacity-50 sm:w-auto"
                   >
                     {acceptArticlePending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                    {acceptArticlePending ? "Continuing..." : "Accept article and continue"}
+                    {acceptArticlePending ? acceptArticleLabel.pending : acceptArticleLabel.idle}
                   </button>
                 </Form>
               ) : null}
@@ -3302,6 +3314,7 @@ function ArticleWorkflowPrimaryAction({
   const publishUrl = publishPreviewUrlForRun(run) || publishPrUrlForRun(run);
   const buttonClass = "inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-black shadow-sm transition disabled:opacity-50";
 
+  if (isArticleReviewPreviewReady(run)) return null;
   if (isPublishApprovalGate(run)) return null;
 
   if (publishStep?.status === "ready" && publishStep.primaryAction?.intent) {
@@ -3473,28 +3486,9 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   return typeof setupRunId === "string" && setupRunId.trim() ? setupRunId.trim() : "";
 }
 
-function publishPrUrlForRun(run: VibeMarketingRunSummary) {
-  return run.prUrl?.trim() || stringResultValue(run, "pr_url", "prUrl", "pull_request_url", "pullRequestUrl", "draft_pr_url", "draftPrUrl");
-}
-
-function publishPreviewUrlForRun(run: VibeMarketingRunSummary) {
-  return run.previewUrl?.trim() || stringResultValue(run, "preview_url", "previewUrl", "article_url", "articleUrl", "url");
-}
-
 function prNumberFromPullUrl(url: string) {
   const match = url.match(/\/pull\/(\d+)/);
   return match?.[1] ?? "";
-}
-
-function hasPublishHandoffEvidence(run: VibeMarketingRunSummary) {
-  return Boolean(
-    publishPrUrlForRun(run) ||
-      publishPreviewUrlForRun(run) ||
-      stringResultValue(run, "publish_child_run_id", "promoted_publish_job_id", "promote_bundle_requested_at") ||
-      run.result?.["publish_handoff_pending"] === true ||
-      run.workflowProgress?.currentStepId === "publish" ||
-      run.workflowProgress?.currentStepId === "automation",
-  );
 }
 
 function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketingBootstrap) {
@@ -3503,19 +3497,6 @@ function deliveryModeForRun(run: VibeMarketingRunSummary, bootstrap: VibeMarketi
     return runMode;
   }
   return effectiveArticleDeliveryMode(bootstrap);
-}
-
-function hasReviewTarget(run: VibeMarketingRunSummary) {
-  return Boolean(publishPreviewUrlForRun(run) || publishPrUrlForRun(run));
-}
-
-function isRunApprovalRequired(run: VibeMarketingRunSummary) {
-  return run.approvalState === "approval_required" || APPROVAL_GATE_STATUSES.has(run.status);
-}
-
-function isPublishApprovalGate(run: VibeMarketingRunSummary) {
-  const workflow = String(run.workflow ?? "");
-  return isArticleWorkflow(workflow) && isRunApprovalRequired(run) && hasReviewTarget(run);
 }
 
 function isSetupScanRun(run: VibeMarketingRunSummary) {
@@ -3536,25 +3517,6 @@ function setupWorkflowStepIdForRun(run: VibeMarketingRunSummary) {
 function setupStepViewFromSearch(search: string): ArticleSetupStepView | null {
   const value = new URLSearchParams(search).get("setupStep");
   return value && SETUP_STEP_VIEW_VALUES.has(value) ? (value as ArticleSetupStepView) : null;
-}
-
-function viewedWorkflowStepIdForRun(run: VibeMarketingRunSummary, requestedSetupStep?: ArticleSetupStepView | null) {
-  const workflow = String(run.workflow ?? "");
-  if (DISCOVERY_WORKFLOWS.has(workflow)) {
-    return run.status === "awaiting_confirmation" ? "choose_topic" : "research";
-  }
-  if (SCAN_WORKFLOWS.has(workflow)) return "article_system";
-  if (workflow === "article_system_setup") return requestedSetupStep ?? setupWorkflowStepIdForRun(run);
-  if (workflow === "website_baseline") return "baseline";
-  if (workflow === "article_revision") return hasPublishHandoffEvidence(run) ? "publish" : "revise";
-  if (isArticleWorkflow(workflow)) {
-    if (hasPublishHandoffEvidence(run)) return "publish";
-    if (POLLING_STATUSES.has(run.status)) return "generate";
-    if (run.componentManifest) return "review";
-    if (run.contentPackage?.contentPackaged) return "package";
-    return "generate";
-  }
-  return run.workflowProgress?.currentStepId ?? null;
 }
 
 function workflowProgressForRunPage(
@@ -3703,7 +3665,7 @@ export default function FounderToolsMarketingRun() {
     [discoveryCandidates, selectedDiscoveryCandidateId],
   );
   const requestedSetupStep = isArticleSystemSetupRun ? setupStepViewFromSearch(location.search) : null;
-  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep);
+  const viewedWorkflowStepId = viewedWorkflowStepIdForRun(run, requestedSetupStep, setupWorkflowStepIdForRun(run));
   const workflowProgress = workflowProgressForRunPage(run, bootstrap.workflowProgress);
   const deliveryMode = deliveryModeForRun(run, bootstrap);
   const directPublishMode = deliveryMode === "publish_code";
