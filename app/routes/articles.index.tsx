@@ -86,23 +86,28 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
     const paginatedSummaries = filteredSummaries.slice(start, start + PAGE_SIZE);
 
     return (
-        <main className="min-h-screen bg-[var(--brutalist-beige)]">
+        <main className="min-h-screen bg-[var(--brutalist-beige)]" data-cf-slot="directory-container">
             {/* Hero Section */}
             <HeroSection
                 title={PAGE_TITLE}
                 description={PAGE_DESCRIPTION}
                 variant="yellow"
+              headingSlot="page-heading"
+              descriptionSlot="page-intro"
             >
-                <ArticleSearchBar
+                <div data-cf-slot="category-navigation">
+                  <ArticleSearchBar
                     onSearch={setSearchQuery}
                     onFilterChange={setActiveFilters}
                 />
+                </div>
             </HeroSection>
 
             {/* Featured Articles & Calendar Section */}
             <div className="max-w-6xl mx-auto px-4 lg:px-6">
                 {/* Featured Articles Grid */}
-                <CardGrid columns={{ sm: 2, lg: 4 }} gap={4} className="mt-8">
+                <section data-cf-slot="featured-articles">
+                  <CardGrid columns={{ sm: 2, lg: 4 }} gap={4} className="mt-8">
                     {featured.map((article, index) => (
                         <FeaturedArticleCard
                             key={article.slug}
@@ -120,6 +125,7 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
                         />
                     )}
                 </CardGrid>
+                </section>
 
                 {/* Article Calendar Section */}
                 <div className="py-12">
@@ -134,6 +140,11 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
                                 totalPages={totalPages}
                                 pageSize={PAGE_SIZE}
                                 paginationBasePath="/articles"
+                              sectionSlot="article-list"
+                              articleCardSlot="article-card"
+                              articleLinkSlot="article-link"
+                              emptyStateSlot="empty-state"
+                              paginationSlot="pagination"
                             />
                         ) : (
                             <div className="text-center py-12">
@@ -156,6 +167,11 @@ export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
                             pageSize={PAGE_SIZE}
                             paginationBasePath="/articles"
                             paginationHash="#all-articles"
+                          sectionSlot="article-list"
+                          articleCardSlot="article-card"
+                          articleLinkSlot="article-link"
+                          emptyStateSlot="empty-state"
+                          paginationSlot="pagination"
                         />
                     )}
                 </div>
