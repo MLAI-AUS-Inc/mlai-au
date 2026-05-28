@@ -73,6 +73,21 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/tech-central-sydney-and-the-ai-builder-opportunity': {
+        title: "Tech Central Sydney and the AI Builder Opportunity",
+        date: "2026-05-28",
+        description: "Tech Central Sydney guide for AI founders and builders.",
+        author: "Dr Sam Donegan",
+        authorKey: "default-author",
+        authors: ["default-author"],
+        category: "featured",
+        tags: [],
+        featured: true,
+        slug: "featured/tech-central-sydney-and-the-ai-builder-opportunity",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-ff1ce79c-716d-4271-a614-d769c4d5e26c.jpg?alt=media&token=65dc1cd7-a129-460b-87e6-e6fd69b7706a",
+        imageAlt: "AI founders collaborating on a laptop in Sydney\u2019s Tech Central hub, captured in a candid close-up moment",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
