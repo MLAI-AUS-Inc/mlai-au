@@ -27,6 +27,10 @@ import ArticleSystemSurfaceSummary, {
   type SurfaceCandidate,
 } from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import {
+  articleSystemConnectionStepStates,
+  type ArticleSystemConnectionStepState,
+} from "~/lib/article-system-connection-steps";
 import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 type ArticleSystemConnectionPanelProps = {
@@ -272,34 +276,83 @@ function FlowStep({
   title,
   description,
   children,
-  muted = false,
+  stepState,
 }: {
   number: number;
   title: string;
   description?: string;
   children: ReactNode;
-  muted?: boolean;
+  stepState: ArticleSystemConnectionStepState;
 }) {
+  const [expanded, setExpanded] = useState(stepState.defaultExpanded);
+  const resetKey = `${stepState.id}:${stepState.status}:${stepState.defaultExpanded ? "open" : "closed"}`;
+
+  useEffect(() => {
+    setExpanded(stepState.defaultExpanded);
+  }, [resetKey, stepState.defaultExpanded]);
+
+  const isLocked = stepState.status === "locked";
+  const statusLabel = {
+    active: "Current",
+    blocked: "Needs attention",
+    complete: "Complete",
+    locked: "Not ready yet",
+  }[stepState.status];
+  const numberTone = {
+    active: "bg-violet-600 text-white",
+    blocked: "bg-red-600 text-white",
+    complete: "bg-emerald-600 text-white",
+    locked: "bg-slate-200 text-slate-500",
+  }[stepState.status];
+  const statusTone = {
+    active: "bg-violet-50 text-violet-700 ring-violet-100",
+    blocked: "bg-red-50 text-red-700 ring-red-100",
+    complete: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    locked: "bg-slate-100 text-slate-500 ring-slate-200",
+  }[stepState.status];
+
   return (
     <div className="relative pl-12">
       <div className="absolute left-4 top-10 bottom-[-1.25rem] w-px bg-slate-200 last:hidden" aria-hidden="true" />
       <span
         className={clsx(
           "absolute left-0 top-5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow-sm",
-          muted ? "bg-slate-200 text-slate-500" : "bg-violet-600 text-white",
+          numberTone,
         )}
       >
         {number}
       </span>
-      <section className={clsx("rounded-2xl border bg-white p-4 shadow-sm sm:p-5", muted ? "border-slate-200" : "border-slate-200")}>
-        <div className="mb-4">
-          <h3 className="flex items-center gap-2 text-lg font-black text-slate-950">
-            <HelpCircle className="h-4 w-4 text-violet-600" />
-            {title}
-          </h3>
-          {description ? <p className="mt-2 text-sm font-semibold leading-6 text-slate-500">{description}</p> : null}
-        </div>
-        {children}
+      <section className={clsx("rounded-2xl border bg-white p-4 shadow-sm sm:p-5", isLocked ? "border-slate-200" : "border-slate-200")}>
+        <button
+          type="button"
+          className="flex w-full items-start justify-between gap-4 text-left"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+        >
+          <span>
+            <span className={clsx("flex items-center gap-2 text-lg font-black", isLocked ? "text-slate-500" : "text-slate-950")}>
+              <HelpCircle className={clsx("h-4 w-4", isLocked ? "text-slate-400" : "text-violet-600")} />
+              {title}
+            </span>
+            {description ? <span className="mt-2 block text-sm font-semibold leading-6 text-slate-500">{description}</span> : null}
+            {isLocked && stepState.unavailableReason ? (
+              <span className="mt-2 block text-xs font-bold text-slate-500">{stepState.unavailableReason}</span>
+            ) : null}
+          </span>
+          <span className="flex flex-shrink-0 items-center gap-2">
+            <span className={clsx("hidden rounded-full px-2.5 py-1 text-xs font-black ring-1 sm:inline-flex", statusTone)}>{statusLabel}</span>
+            <ChevronDown className={clsx("h-5 w-5 text-slate-400 transition", expanded && "rotate-180")} />
+          </span>
+        </button>
+        {expanded ? (
+          <fieldset
+            disabled={stepState.disabled}
+            aria-disabled={stepState.disabled}
+            className={clsx("mt-4 min-w-0 border-0 p-0", stepState.disabled && "pointer-events-none opacity-55 grayscale-[0.15]")}
+          >
+            {children}
+          </fieldset>
+        ) : null}
       </section>
     </div>
   );
@@ -416,6 +469,73 @@ function CreateNewChoiceCard({
   );
 }
 
+function DisabledLocationPreview() {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex gap-4">
+          <input type="radio" disabled className="mt-4 h-5 w-5 border-slate-300 text-violet-600" />
+          <span className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+            <FileText className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-slate-700">Detected articles/blogs route</p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Scan results will appear here when they are ready.</p>
+            <div className="mt-3 h-2 w-2/3 rounded-full bg-slate-100" />
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <div className="flex gap-4">
+          <input type="radio" disabled className="mt-4 h-5 w-5 border-slate-300 text-violet-600" />
+          <span className="mt-1 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+            <Plus className="h-6 w-6" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-slate-700">Create a new articles folder</p>
+            <p className="mt-1 text-sm font-semibold text-slate-500">Available if the scan does not find a suitable public route.</p>
+            <input
+              disabled
+              value="/articles"
+              readOnly
+              className="mt-3 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-500"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-slate-100 pt-4">
+        <p className="text-sm font-black text-slate-700">Or paste manually</p>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <div className="relative flex-1">
+            <Link2 className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              disabled
+              placeholder="https://example.com/articles or /articles"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-11 pr-4 text-sm font-bold text-slate-500"
+            />
+          </div>
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-black text-slate-500"
+          >
+            Check this location
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function articleSetupHintValue(articleSetupState: VibeMarketingArticleSetupState | null | undefined) {
+  const hint = resultObject(articleSetupState?.articleSurfaceHint);
+  for (const key of ["route_path", "routePath", "path", "public_url", "publicUrl", "url"]) {
+    const value = hint[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
 function githubConnectHref({ forceReconnect = false, githubRepo = "" }: { forceReconnect?: boolean; githubRepo?: string } = {}) {
   const params = new URLSearchParams({
     returnTo: "/founder-tools/marketing/create?step=articleSystem",
@@ -525,6 +645,20 @@ export default function ArticleSystemConnectionPanel({
         : [manualArticleRoute.trim()].filter(Boolean);
   const saveIntent = selectedMode === "create" ? "create-article-surface" : "confirm-article-surface";
   const savePending = confirmSurfacePending || createSurfacePending;
+  const scanLoading = Boolean(currentScanRunId && !effectiveScanRun);
+  const savedSurfaceUrl = articleSetupState?.routePath || articleSetupHintValue(articleSetupState);
+  const displayedSurfaceUrl = selectedSurfaceUrl || savedSurfaceUrl;
+  const stepStates = articleSystemConnectionStepStates({
+    connected,
+    currentScanRunId,
+    scanLoading,
+    scanRunning,
+    scanFailed,
+    scanStale,
+    inventoryReady,
+    setupTargetReady,
+    selectedSurfaceUrl,
+  });
 
   useEffect(() => {
     setSelectedChoiceId("");
@@ -679,6 +813,7 @@ export default function ArticleSystemConnectionPanel({
           number={1}
           title="Connect GitHub & choose repository"
           description="Choose the repository that contains your website."
+          stepState={stepStates.connect}
         >
           {!connected ? (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-8 text-center">
@@ -795,61 +930,87 @@ export default function ArticleSystemConnectionPanel({
           )}
         </FlowStep>
 
-        {currentScanRunId && !effectiveScanRun ? (
-          <FlowStep number={2} title="Scanning repository" description="Loading scan progress">
+        <FlowStep
+          number={2}
+          title="Scanning repository"
+          description="Looking for article pages and content locations"
+          stepState={stepStates.scan}
+        >
+          {scanLoading ? (
             <div className="rounded-2xl border border-violet-100 bg-violet-50 p-4 text-sm font-semibold text-violet-800">
               Loading scan progress...
             </div>
-          </FlowStep>
-        ) : null}
-
-        {inventoryProgressRun ? (
-          <FlowStep number={2} title="Scanning repository" description="Looking for article pages and content locations">
-            <MarketingRunProgressCard run={inventoryProgressRun} />
-            {scanRunning || scanFailed || scanStale ? (
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <Link
-                  to={`/founder-tools/marketing/runs/${encodeURIComponent(inventoryProgressRun.runId)}`}
-                  className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
-                >
-                  View scan run
-                </Link>
-                <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
-                  <input type="hidden" name="scanRunId" value={inventoryProgressRun.runId} />
-                  {inventoryProgressRun.retryAvailable || inventoryProgressRun.stale ? (
+          ) : inventoryProgressRun ? (
+            <>
+              <MarketingRunProgressCard run={inventoryProgressRun} />
+              {scanRunning || scanFailed || scanStale ? (
+                <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <Link
+                    to={`/founder-tools/marketing/runs/${encodeURIComponent(inventoryProgressRun.runId)}`}
+                    className="inline-flex text-xs font-black text-violet-700 transition hover:text-violet-900"
+                  >
+                    View scan run
+                  </Link>
+                  <Form method="POST" className="flex flex-col gap-2 sm:flex-row">
+                    <input type="hidden" name="scanRunId" value={inventoryProgressRun.runId} />
+                    {inventoryProgressRun.retryAvailable || inventoryProgressRun.stale ? (
+                      <button
+                        type="submit"
+                        name="intent"
+                        value="retry-scan"
+                        disabled={retryScanPending || cancelScanPending}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                      >
+                        <Loader2 className={clsx("h-4 w-4", retryScanPending && "animate-spin")} />
+                        {retryScanPending ? "Retrying..." : "Retry scan"}
+                      </button>
+                    ) : null}
                     <button
                       type="submit"
                       name="intent"
-                      value="retry-scan"
+                      value="cancel-scan"
                       disabled={retryScanPending || cancelScanPending}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 transition hover:bg-violet-50 disabled:opacity-50"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                     >
-                      <Loader2 className={clsx("h-4 w-4", retryScanPending && "animate-spin")} />
-                      {retryScanPending ? "Retrying..." : "Retry scan"}
+                      {cancelScanPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {cancelScanPending ? "Cancelling..." : "Cancel scan"}
                     </button>
-                  ) : null}
-                  <button
-                    type="submit"
-                    name="intent"
-                    value="cancel-scan"
-                    disabled={retryScanPending || cancelScanPending}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-700 transition hover:bg-red-50 disabled:opacity-50"
-                  >
-                    {cancelScanPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                    {cancelScanPending ? "Cancelling..." : "Cancel scan"}
-                  </button>
-                </Form>
-              </div>
-            ) : null}
-          </FlowStep>
-        ) : null}
+                  </Form>
+                </div>
+              ) : null}
+            </>
+          ) : setupTargetReady ? (
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-800">
+              Repository scan completed previously and an articles/blogs location is already saved.
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-6 text-slate-600">
+              Repository scan progress will appear here after you start the read-only scan.
+            </div>
+          )}
+        </FlowStep>
 
-        {inventoryReady ? (
-          <FlowStep
-            number={3}
-            title="Choose your articles/blogs location"
-            description="Pick the right place from routes we found, paste a path manually, or create a new articles directory."
-          >
+        <FlowStep
+          number={3}
+          title="Choose your articles/blogs location"
+          description="Pick the right place from routes we found, paste a path manually, or create a new articles directory."
+          stepState={stepStates.chooseLocation}
+        >
+          {setupTargetReady && !inventoryReady ? (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="flex gap-3">
+                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <CheckCircle2 className="h-6 w-6" />
+                </span>
+                <div>
+                  <p className="text-sm font-black text-slate-950">Articles/blogs location already selected</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-600">
+                    {displayedSurfaceUrl ? `Public route: ${displayedSurfaceUrl}` : "The saved setup location will be used for article drafts and previews."}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ) : inventoryReady ? (
             <div className="space-y-3">
               {publicRouteCandidates.length ? (
                 publicRouteCandidates.map((candidate) => (
@@ -931,121 +1092,146 @@ export default function ArticleSystemConnectionPanel({
 
               {effectiveScanRun ? <ArticleSystemSurfaceSummary run={effectiveScanRun} /> : null}
             </div>
-          </FlowStep>
-        ) : null}
+          ) : (
+            <DisabledLocationPreview />
+          )}
+        </FlowStep>
 
-        {selectedSurfaceUrl || setupTargetReady ? (
-          <FlowStep number={4} title="Articles/blogs location selected">
-            {setupTargetReady ? (
-              <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex gap-3">
-                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                      <FileText className="h-6 w-6" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-slate-950">Articles/blogs location saved</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-500">
-                        Build the articles/blogs directory page and inspect the setup preview.
-                      </p>
-                    </div>
+        <FlowStep number={4} title="Articles/blogs location selected" stepState={stepStates.buildSetup}>
+          {setupTargetReady ? (
+            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                    <FileText className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-950">Articles/blogs location saved</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                      Build the articles/blogs directory page and inspect the setup preview.
+                    </p>
+                    {displayedSurfaceUrl ? <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p> : null}
                   </div>
-                </div>
-                <div className="flex flex-col justify-center gap-3">
-                  <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    Content Factory will use this location when preparing article drafts and previews.
-                  </p>
-                  {setupRunId ? (
-                    <Link
-                      to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-                    >
-                      Open articles setup build
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  ) : (
-                    <Form method="POST">
-                      <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
-                      <button
-                        type="submit"
-                        name="intent"
-                        value="build-article-system-preview"
-                        disabled={isSubmitting || !effectiveScanRun?.runId}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                      >
-                        Build articles/blogs directory page
-                        <ArrowRight className="h-4 w-4" />
-                      </button>
-                    </Form>
-                  )}
                 </div>
               </div>
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="flex gap-3">
-                    <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                      <FileText className="h-6 w-6" />
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-slate-950">{selectedTitle}</p>
-                      <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {selectedSurfaceUrl}</p>
-                      {selectedFiles.length ? (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {selectedFiles.slice(0, 4).map((file) => (
-                            <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
-                              {file}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col justify-center gap-3">
-                  <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                    Good choice. Content Factory will use this location for the articles setup preview.
-                  </p>
-                  <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+              <div className="flex flex-col justify-center gap-3">
+                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  Content Factory will use this location when preparing article drafts and previews.
+                </p>
+                {setupRunId ? (
+                  <Link
+                    to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
+                  >
+                    Open articles setup build
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                ) : (
+                  <Form method="POST">
+                    <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
                     <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedChoiceId("");
-                        setManualRouteError("");
-                      }}
-                      className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+                      type="submit"
+                      name="intent"
+                      value="build-article-system-preview"
+                      disabled={isSubmitting || !effectiveScanRun?.runId}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
                     >
-                      Change selection
+                      Build articles/blogs directory page
+                      <ArrowRight className="h-4 w-4" />
                     </button>
-                    <Form method="POST">
-                      <input type="hidden" name="intent" value={saveIntent} />
-                      <input type="hidden" name="githubRepo" value={selectedRepo} />
-                      <input type="hidden" name="sourceScanRunId" value={effectiveScanRun?.runId ?? ""} />
-                      <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
-                      <button
-                        type="submit"
-                        disabled={savePending || !selectedSurfaceUrl}
-                        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                      >
-                        {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        {savePending ? "Starting setup..." : "Build articles/blogs directory page"}
-                        {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
-                      </button>
-                    </Form>
+                  </Form>
+                )}
+              </div>
+            </div>
+          ) : selectedSurfaceUrl ? (
+            <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+                    <FileText className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-950">{selectedTitle}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {selectedSurfaceUrl}</p>
+                    {selectedFiles.length ? (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {selectedFiles.slice(0, 4).map((file) => (
+                          <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
+                            {file}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
               </div>
-            )}
-          </FlowStep>
-        ) : null}
-
-        {connected && !currentScanRunId && !canonicalScanComplete ? (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-500">
-            Run the repository scan first. It is read-only and will not create branches, pull requests, or setup files.
-          </div>
-        ) : null}
+              <div className="flex flex-col justify-center gap-3">
+                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  Good choice. Content Factory will use this location for the articles setup preview.
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedChoiceId("");
+                      setManualRouteError("");
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Change selection
+                  </button>
+                  <Form method="POST">
+                    <input type="hidden" name="intent" value={saveIntent} />
+                    <input type="hidden" name="githubRepo" value={selectedRepo} />
+                    <input type="hidden" name="sourceScanRunId" value={effectiveScanRun?.runId ?? ""} />
+                    <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
+                    <button
+                      type="submit"
+                      disabled={savePending || !selectedSurfaceUrl}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                    >
+                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {savePending ? "Starting setup..." : "Build articles/blogs directory page"}
+                      {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
+                    </button>
+                  </Form>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <div className="flex gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                    <FileText className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-700">No articles/blogs location selected yet</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-500">
+                      Once a location is selected, you can build and inspect the setup preview here.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex flex-col justify-center gap-3">
+                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-500">
+                  <LockKeyhole className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                  Approval and setup actions unlock after a location is chosen.
+                </p>
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-black text-slate-500"
+                >
+                  Build articles/blogs directory page
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </FlowStep>
 
         {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
           <Link
