@@ -1,0 +1,70 @@
+{
+  "attempted_repair": true,
+  "branch_commit_sha": "",
+  "branch_name": "",
+  "check": "article_directory_dom_slot_compliance",
+  "component_status": {
+    "ArticleCalendarSection": {
+      "patched": "false",
+      "path": "",
+      "source": "missing_import"
+    },
+    "HeroSection": {
+      "patched": "false",
+      "path": "",
+      "source": "missing_import"
+    }
+  },
+  "marker_inventory": {
+    "article-card": [
+      "app/routes/articles.index.tsx"
+    ],
+    "article-link": [
+      "app/routes/articles.index.tsx"
+    ],
+    "article-list": [
+      "app/routes/articles.index.tsx"
+    ],
+    "category-navigation": [
+      "app/routes/articles.index.tsx"
+    ],
+    "directory-container": [
+      "app/routes/articles.index.tsx"
+    ],
+    "empty-state": [
+      "app/routes/articles.index.tsx"
+    ],
+    "featured-articles": [
+      "app/routes/articles.index.tsx"
+    ],
+    "page-heading": [
+      "app/routes/articles.index.tsx"
+    ],
+    "page-intro": [
+      "app/routes/articles.index.tsx"
+    ],
+    "pagination": [
+      "app/routes/articles.index.tsx"
+    ]
+  },
+  "missing_dom_slots": [],
+  "repair_diagnostics": [],
+  "required_dom_slots": [
+    "directory-container",
+    "page-heading",
+    "page-intro",
+    "featured-articles",
+    "article-list",
+    "category-navigation",
+    "article-card",
+    "article-link",
+    "empty-state",
+    "pagination"
+  ],
+  "route_shell_path": "app/routes/articles.index.tsx",
+  "route_source_sha": "0cdef638a9734b135d22b7fe0c5508ac04e51e36ac602182b3c18c46eb34525a",
+  "served_route_shell_path": "app/routes/articles.index.tsx",
+  "status": "ready",
+  "success": true,
+  "updated_files": []
+}
