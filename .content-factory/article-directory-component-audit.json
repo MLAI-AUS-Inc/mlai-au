@@ -1,8 +1,70 @@
 {
-  "existing_components": [],
-  "missing_required_slots": [],
-  "needs_llm_adjudication": false,
-  "new_components_needed": [],
+  "existing_components": [
+    {
+      "import_path": "~/components/ui/HeroSection",
+      "name": "HeroSection",
+      "path": "components/ui/HeroSection",
+      "slots": [
+        "directory_container",
+        "page_heading"
+      ],
+      "source": "route_import"
+    },
+    {
+      "import_path": "~/components/articles/ArticleSearchBar",
+      "name": "ArticleSearchBar",
+      "path": "components/articles/ArticleSearchBar",
+      "slots": [
+        "search"
+      ],
+      "source": "route_import"
+    },
+    {
+      "import_path": "~/components/ui/CardGrid",
+      "name": "CardGrid",
+      "path": "components/ui/CardGrid",
+      "slots": [
+        "article_list",
+        "article_card"
+      ],
+      "source": "route_import"
+    },
+    {
+      "import_path": "~/components/articles/FeaturedArticleCard",
+      "name": "FeaturedArticleCard",
+      "path": "components/articles/FeaturedArticleCard",
+      "slots": [
+        "featured_articles",
+        "article_card"
+      ],
+      "source": "route_import"
+    },
+    {
+      "import_path": "~/components/ui/EmptyState",
+      "name": "EmptyState",
+      "path": "components/ui/EmptyState",
+      "slots": [
+        "empty_state"
+      ],
+      "source": "route_import"
+    },
+    {
+      "import_path": "~/components/articles/ArticleCalendarSection",
+      "name": "ArticleCalendarSection",
+      "path": "components/articles/ArticleCalendarSection",
+      "slots": [
+        "directory_container"
+      ],
+      "source": "route_import"
+    }
+  ],
+  "missing_required_slots": [
+    "article_link"
+  ],
+  "needs_llm_adjudication": true,
+  "new_components_needed": [
+    "article_link"
+  ],
   "present_slots": [
     "directory_container",
     "seo_metadata",
@@ -15,8 +77,7 @@
     "article_card",
     "category_navigation",
     "empty_state",
-    "pagination",
-    "article_link"
+    "pagination"
   ],
   "required_slots": [
     "directory_container",
@@ -38,51 +99,63 @@
   "slots": {
     "article_card": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `article-card` slot marker",
-        "Manifest verification: present"
+        "JSX component `CardGrid` maps to `article_card`",
+        "JSX component `FeaturedArticleCard` maps to `article_card`"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "existing_route_component",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "CardGrid",
+          "path": "components/ui/CardGrid",
+          "source": "route_import"
+        },
+        {
+          "name": "FeaturedArticleCard",
+          "path": "components/articles/FeaturedArticleCard",
+          "source": "route_import"
+        }
+      ]
     },
     "article_link": {
-      "component_status": "exists",
-      "confidence": "high",
-      "evidence": [
-        "Explicit `article-link` slot marker",
-        "Manifest verification: present"
-      ],
-      "implementation_source": "existing_route_marker",
-      "present": true,
+      "component_status": "needs_generation",
+      "confidence": "none",
+      "evidence": [],
+      "implementation_source": "missing",
+      "present": false,
       "required": true,
-      "scaffold_action": "reuse",
-      "setup_preview_status": "reused from existing page",
+      "scaffold_action": "generate",
+      "setup_preview_status": "generated missing component",
       "target_components": []
     },
     "article_list": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `article-list` slot marker",
-        "Manifest verification: present"
+        "JSX component `CardGrid` maps to `article_list`"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "existing_route_component",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "CardGrid",
+          "path": "components/ui/CardGrid",
+          "source": "route_import"
+        }
+      ]
     },
     "article_registry": {
       "component_status": "exists",
       "confidence": "high",
       "evidence": [
-        "Explicit `article-registry` slot marker",
         "Manifest verification: present",
         "Generated support file satisfies `article_registry`"
       ],
@@ -108,7 +181,6 @@
       "component_status": "exists",
       "confidence": "high",
       "evidence": [
-        "Explicit `author-registry` slot marker",
         "Manifest verification: present",
         "Generated support file satisfies `author_registry`"
       ],
@@ -149,14 +221,27 @@
       "confidence": "high",
       "evidence": [
         "Explicit `directory-container` slot marker",
-        "Manifest verification: present"
+        "Manifest verification: present",
+        "JSX component `HeroSection` maps to `directory_container`",
+        "JSX component `ArticleCalendarSection` maps to `directory_container`"
       ],
       "implementation_source": "existing_route_marker",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "HeroSection",
+          "path": "components/ui/HeroSection",
+          "source": "route_import"
+        },
+        {
+          "name": "ArticleCalendarSection",
+          "path": "components/articles/ArticleCalendarSection",
+          "source": "route_import"
+        }
+      ]
     },
     "downloadable_resources": {
       "component_status": "needs_generation",
@@ -171,31 +256,43 @@
     },
     "empty_state": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `empty-state` slot marker",
-        "Manifest verification: present"
+        "JSX component `EmptyState` maps to `empty_state`"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "existing_route_component",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "EmptyState",
+          "path": "components/ui/EmptyState",
+          "source": "route_import"
+        }
+      ]
     },
     "featured_articles": {
       "component_status": "exists",
       "confidence": "high",
       "evidence": [
         "Explicit `featured-articles` slot marker",
-        "Manifest verification: present"
+        "Manifest verification: present",
+        "JSX component `FeaturedArticleCard` maps to `featured_articles`"
       ],
       "implementation_source": "existing_route_marker",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "FeaturedArticleCard",
+          "path": "components/articles/FeaturedArticleCard",
+          "source": "route_import"
+        }
+      ]
     },
     "newsletter_cta": {
       "component_status": "needs_generation",
@@ -210,26 +307,30 @@
     },
     "page_heading": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `page-heading` slot marker",
-        "Manifest verification: present"
+        "JSX component `HeroSection` maps to `page_heading`"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "existing_route_component",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
       "setup_preview_status": "reused from existing page",
-      "target_components": []
+      "target_components": [
+        {
+          "name": "HeroSection",
+          "path": "components/ui/HeroSection",
+          "source": "route_import"
+        }
+      ]
     },
     "page_intro": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `page-intro` slot marker",
         "Manifest verification: present"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
@@ -238,12 +339,11 @@
     },
     "pagination": {
       "component_status": "exists",
-      "confidence": "high",
+      "confidence": "medium",
       "evidence": [
-        "Explicit `pagination` slot marker",
         "Manifest verification: present"
       ],
-      "implementation_source": "existing_route_marker",
+      "implementation_source": "minimal_accessible_markup",
       "present": true,
       "required": true,
       "scaffold_action": "reuse",
@@ -262,21 +362,27 @@
       "target_components": []
     },
     "search": {
-      "component_status": "needs_generation",
-      "confidence": "none",
+      "component_status": "exists",
+      "confidence": "medium",
       "evidence": [
+        "JSX component `ArticleSearchBar` maps to `search`",
         "Repository component `ArticleSearchBar` is available for `search`"
       ],
-      "implementation_source": "missing",
-      "present": false,
+      "implementation_source": "existing_route_component",
+      "present": true,
       "required": false,
-      "scaffold_action": "generate",
-      "setup_preview_status": "generated missing component",
+      "scaffold_action": "reuse",
+      "setup_preview_status": "reused from existing page",
       "target_components": [
         {
           "name": "ArticleSearchBar",
           "path": "app/components/articles/ArticleSearchBar.tsx",
           "source": "existing_component"
+        },
+        {
+          "name": "ArticleSearchBar",
+          "path": "components/articles/ArticleSearchBar",
+          "source": "route_import"
         }
       ]
     },
@@ -284,7 +390,6 @@
       "component_status": "exists",
       "confidence": "high",
       "evidence": [
-        "Explicit `seo-metadata` slot marker",
         "Manifest verification: present",
         "Generated support file satisfies `seo_metadata`"
       ],
@@ -307,8 +412,10 @@
       "target_components": []
     }
   },
-  "status": "ready",
-  "support_files_needed": [],
+  "status": "missing_required_slots",
+  "support_files_needed": [
+    "app/articles/resources.ts"
+  ],
   "unclassified_route_components": [],
   "warnings": []
 }
