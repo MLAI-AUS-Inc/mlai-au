@@ -1,6 +1,51 @@
 {
   "check": "directory_dependency_validation",
-  "findings": [],
+  "findings": [
+    {
+      "candidate_paths": "",
+      "code": "UNVERIFIED_FRAMEWORK_VIRTUAL_IMPORT",
+      "framework": "react-router",
+      "import_path": "./+types/articles.index",
+      "importing_file": "app/routes/articles.index.tsx",
+      "language": "typescript",
+      "message": "Generated scaffold file `app/routes/articles.index.tsx` imports framework virtual module `./+types/articles.index`, but the scan did not verify that this virtual module is available for the target repo.",
+      "runtime_family": "node",
+      "suggested_repair": "Remove the virtual import or verify the framework/runtime evidence that provides it."
+    },
+    {
+      "candidate_paths": "",
+      "code": "UNRESOLVED_PACKAGE_IMPORT",
+      "framework": "react-router",
+      "import_path": "clsx",
+      "importing_file": "app/components/articles/ArticleCalendarSection.tsx",
+      "language": "typescript",
+      "message": "Generated scaffold file `app/components/articles/ArticleCalendarSection.tsx` imports package `clsx`, but that package is not declared in target repo dependency evidence.",
+      "runtime_family": "node",
+      "suggested_repair": "Use existing declared dependencies, inline markup, or add a generated helper that has no new package dependency."
+    },
+    {
+      "candidate_paths": "",
+      "code": "UNRESOLVED_PACKAGE_IMPORT",
+      "framework": "react-router",
+      "import_path": "@heroicons/react/20/solid",
+      "importing_file": "app/components/articles/ArticleCalendarSection.tsx",
+      "language": "typescript",
+      "message": "Generated scaffold file `app/components/articles/ArticleCalendarSection.tsx` imports package `@heroicons/react/20/solid`, but that package is not declared in target repo dependency evidence.",
+      "runtime_family": "node",
+      "suggested_repair": "Use existing declared dependencies, inline markup, or add a generated helper that has no new package dependency."
+    },
+    {
+      "code": "DIRECTORY_REQUIRED_SLOT_MISSING",
+      "message": "Missing required directory component slots: article_card, article_link, article_list, empty_state, page_heading",
+      "missing_slots": [
+        "page_heading",
+        "article_list",
+        "article_card",
+        "empty_state",
+        "article_link"
+      ]
+    }
+  ],
   "ignored_diagnostic_files": [
     ".content-factory/target.yml",
     ".content-factory/hooks/materialize.py",
@@ -17,8 +62,14 @@
     ".content-factory/article-directory-dom-slot-compliance.json"
   ],
   "manifest_slot_count": 20,
-  "missing_required_slots": [],
-  "success": true,
+  "missing_required_slots": [
+    "page_heading",
+    "article_list",
+    "article_card",
+    "empty_state",
+    "article_link"
+  ],
+  "success": false,
   "verified_imports": [
     {
       "import_path": "./authorRegistry",
@@ -27,10 +78,46 @@
       "verification_source": "generated_files"
     },
     {
-      "import_path": "../articles/registry",
+      "import_path": "~/components/articles/FeaturedArticleCard",
       "importing_file": "app/routes/articles.index.tsx",
-      "resolved_path": "app/articles/registry.ts",
+      "resolved_path": "app/components/articles/FeaturedArticleCard.tsx",
+      "verification_source": "scan_evidence"
+    },
+    {
+      "import_path": "~/components/articles/ArticleSearchBar",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/components/articles/ArticleSearchBar.tsx",
+      "verification_source": "scan_evidence"
+    },
+    {
+      "import_path": "~/components/articles/ArticleCalendarSection",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/components/articles/ArticleCalendarSection.tsx",
       "verification_source": "generated_files"
+    },
+    {
+      "import_path": "~/components/ui/HeroSection",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/components/ui/HeroSection.tsx",
+      "verification_source": "generated_files"
+    },
+    {
+      "import_path": "~/components/ui/CardGrid",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/components/ui/CardGrid.tsx",
+      "verification_source": "repo_lookup"
+    },
+    {
+      "import_path": "~/components/ui/EmptyState",
+      "importing_file": "app/routes/articles.index.tsx",
+      "resolved_path": "app/components/ui/EmptyState.tsx",
+      "verification_source": "repo_lookup"
+    },
+    {
+      "import_path": "~/lib/formatDate",
+      "importing_file": "app/components/articles/ArticleCalendarSection.tsx",
+      "resolved_path": "app/lib/formatDate.ts",
+      "verification_source": "repo_lookup"
     }
   ]
 }
