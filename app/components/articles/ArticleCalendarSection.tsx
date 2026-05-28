@@ -24,6 +24,11 @@ interface ArticleCalendarSectionProps {
     pageSize: number
     paginationBasePath: string
     paginationHash?: string
+    sectionSlot?: string;
+    articleCardSlot?: string;
+    articleLinkSlot?: string;
+    emptyStateSlot?: string;
+    paginationSlot?: string;
 }
 
 interface CalendarDay {
@@ -106,6 +111,7 @@ function Pagination({
     totalPages,
     basePath,
     hash,
+  slot,
 }: {
     currentPage: number
     totalPages: number
@@ -124,7 +130,7 @@ function Pagination({
         <nav
             className="flex items-center justify-between border-t border-zinc-200 pt-6"
             aria-label="Pagination"
-        >
+         data-cf-slot={slot}>
             <div className="flex w-0 flex-1">
                 {currentPage === 1 ? (
                     <span className="inline-flex items-center gap-2 text-sm font-medium text-zinc-300">
@@ -196,6 +202,11 @@ export default function ArticleCalendarSection({
     pageSize,
     paginationBasePath,
     paginationHash,
+  sectionSlot,
+  articleCardSlot,
+  articleLinkSlot,
+  emptyStateSlot,
+  paginationSlot,
 }: ArticleCalendarSectionProps) {
     const todayIso = useMemo(() => formatISODate(new Date()), [])
 
@@ -311,7 +322,7 @@ export default function ArticleCalendarSection({
     const showEmptyState = listArticles.length === 0
 
     return (
-        <section id={id} className="scroll-mt-24">
+        <section id={id} className="scroll-mt-24" data-cf-slot={sectionSlot}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">{listHeading}</h2>
@@ -410,7 +421,7 @@ export default function ArticleCalendarSection({
 
                     <div className="flex flex-col gap-6">
                         {showEmptyState ? (
-                            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-zinc-500">
+                            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-zinc-500" data-cf-slot={emptyStateSlot}>
                                 <p className="font-medium">
                                     {selectedDate ? `No articles published on ${formatDate(selectedDate)}.` : 'No articles available yet.'}
                                 </p>
@@ -419,11 +430,11 @@ export default function ArticleCalendarSection({
                         ) : (
                             <ul role="list" className="list-none space-y-4">
                                 {listArticles.map((article) => (
-                                    <li key={article.slug}>
+                                    <li key={article.slug} data-cf-slot={articleCardSlot}>
                                         <Link
                                             to={`/articles/${article.slug}`}
                                             className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                                        >
+                                         data-cf-slot={articleLinkSlot}>
                                             <time
                                                 dateTime={article.date}
                                                 className="text-xs font-medium uppercase tracking-wide text-zinc-400"
@@ -457,7 +468,7 @@ export default function ArticleCalendarSection({
                                 totalPages={totalPages}
                                 basePath={paginationBasePath}
                                 hash={paginationHash}
-                            />
+                             slot={paginationSlot}/>
                         ) : null}
                     </div>
                 </div>
