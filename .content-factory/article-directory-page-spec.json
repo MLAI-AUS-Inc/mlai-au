@@ -1,0 +1,81 @@
+{
+  "directory_name": "articles",
+  "empty_state_copy": "No articles yet. Check back soon.",
+  "featured_policy": "Use getFeaturedArticles when available; otherwise show the newest registry records.",
+  "intro": "Browse the latest articles and resources from MLAI.",
+  "optional_semantic_slots": [
+    "structured_data",
+    "search",
+    "date_archive",
+    "newsletter_cta",
+    "rich_image_cards",
+    "downloadable_resources",
+    "author_avatar"
+  ],
+  "page_title": "Articles",
+  "pagination_policy": {
+    "avoid_eager_body_imports": true,
+    "bounded_initial_render": true,
+    "page_size": 24
+  },
+  "pillars": [
+    {
+      "description": "A practical learning hub for beginners, students, and technically curious professionals who want to understand AI and machine learning without getting lost in hype or theory. This pillar can cover beginner pathways, workshops, project ideas, community learning, and how to get involved in Australia\u2019s AI ecosystem.",
+      "slug": "learn-ai-machine-learning-australia",
+      "title": "Learn AI and Machine Learning in Australia"
+    },
+    {
+      "description": "A pillar focused on helping builders, learners, founders, researchers, and professionals find meaningful ways to connect with Australia\u2019s AI community. It can support cluster articles about meetups, networking, Slack communities, volunteering, mentorship, community contribution, and Roo Points.",
+      "slug": "ai-events-meetups-community-networking",
+      "title": "AI Events, Meetups and Community Networking"
+    },
+    {
+      "description": "A pillar for people who want to build practical AI prototypes, join multidisciplinary teams, and work on real-world challenges. It can cover hackathon preparation, team formation, problem selection, prototyping workflows, judging, mentoring, and responsible expectations around hackathon outcomes.",
+      "slug": "ai-hackathons-real-world-prototyping",
+      "title": "AI Hackathons and Real-World Prototyping"
+    },
+    {
+      "description": "A healthcare-focused pillar for clinicians, healthcare workers, AI builders, students, and mentors interested in applying AI to healthcare bottlenecks through responsible collaboration. It can support articles on healthcare AI use cases, clinical problem discovery, MedHack preparation, multidisciplinary teams, rural care, workforce load, emergency departments, and preventative medicine.",
+      "slug": "ai-healthcare-medtech-collaboration",
+      "title": "AI for Healthcare and MedTech Collaboration"
+    },
+    {
+      "description": "A founder-focused pillar about building investor relationships earlier, writing clearer founder updates, sharpening traction signals, and preparing for a future raise. It can support clusters on monthly updates, investor CRM habits, startup metrics, asks, milestones, risks, blockers, and using founder tools such as Vibe Raising.",
+      "slug": "ai-startup-fundraising-founder-updates",
+      "title": "AI Startup Fundraising and Founder Updates"
+    },
+    {
+      "description": "A pillar for founders and teams looking to use AI-assisted workflows for marketing strategy, topic discovery, keyword clustering, content generation, metadata, internal linking, and analytics-informed recommendations. It connects directly to Vibe Marketing while staying grounded in practical startup marketing needs.",
+      "slug": "ai-marketing-seo-content-workflows-startups",
+      "title": "AI Marketing, SEO and Content Workflows for Startups"
+    },
+    {
+      "description": "A pillar for organisations, sponsors, and ecosystem leaders that want to support Australia\u2019s AI and machine learning community in a credible, community-aligned way. It can cover sponsorship strategy, event partnerships, ecosystem building, responsible partner positioning, talent-community connection, and supporting practical AI programs.",
+      "slug": "ai-ecosystem-sponsorship-partnerships",
+      "title": "AI Ecosystem Sponsorship and Partnerships"
+    }
+  ],
+  "required_semantic_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "route_path": "/articles",
+  "route_shell_path": "app/routes/articles.index.tsx",
+  "schema_version": 1,
+  "seo_record": {
+    "canonical_path": "/articles",
+    "description": "Latest articles and resources from MLAI.",
+    "title": "Articles | MLAI"
+  }
+}

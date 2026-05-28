@@ -1,0 +1,62 @@
+{
+  "branch_commit_sha": "",
+  "branch_name": "feature/articles-publish-route-9df626769899-1c560253",
+  "check": "article_directory_dom_slot_compliance",
+  "marker_inventory": {
+    "article-card": [
+      "app/components/articles/ArticleCalendarSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "article-link": [
+      "app/components/articles/ArticleCalendarSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "article-list": [
+      "app/components/articles/ArticleCalendarSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "category-navigation": [
+      "app/routes/articles.index.tsx"
+    ],
+    "directory-container": [
+      "app/routes/articles.index.tsx"
+    ],
+    "empty-state": [
+      "app/components/articles/ArticleCalendarSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "featured-articles": [
+      "app/routes/articles.index.tsx"
+    ],
+    "page-heading": [
+      "app/components/ui/HeroSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "page-intro": [
+      "app/components/ui/HeroSection.tsx",
+      "app/routes/articles.index.tsx"
+    ],
+    "pagination": [
+      "app/components/articles/ArticleCalendarSection.tsx",
+      "app/routes/articles.index.tsx"
+    ]
+  },
+  "missing_dom_slots": [],
+  "required_dom_slots": [
+    "directory-container",
+    "page-heading",
+    "page-intro",
+    "featured-articles",
+    "article-list",
+    "category-navigation",
+    "article-card",
+    "article-link",
+    "empty-state",
+    "pagination"
+  ],
+  "route_shell_path": "app/routes/articles.index.tsx",
+  "route_source_sha": "189c0eccacd12d622496c7c553e1bae4c8327c78589bbb66b3116f330b950b1a",
+  "served_route_shell_path": "app/routes/articles.index.tsx",
+  "status": "ready",
+  "success": true
+}

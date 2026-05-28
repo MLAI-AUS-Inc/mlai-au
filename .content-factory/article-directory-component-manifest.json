@@ -1,0 +1,192 @@
+{
+  "optional_slots": [
+    "structured_data",
+    "search",
+    "date_archive",
+    "newsletter_cta",
+    "rich_image_cards",
+    "downloadable_resources",
+    "author_avatar"
+  ],
+  "required_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "route_path": "/articles",
+  "route_shell_path": "app/routes/articles.index.tsx",
+  "scale_policy": {
+    "avoid_eager_body_imports": true,
+    "index_page_size": 24,
+    "index_source": "registry_metadata_only",
+    "prefer_static_params_or_loader_pagination": true,
+    "target_article_count": "hundreds"
+  },
+  "schema_version": 1,
+  "slots": {
+    "article_card": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": true,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "article_link": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": true,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "article_list": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": true,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "article_registry": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "author_avatar": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "author_registry": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "category_navigation": {
+      "implementation_source": "generated_local_helper",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "date_archive": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "directory_container": {
+      "implementation_source": "generated_local_helper",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "downloadable_resources": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "empty_state": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": true,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "featured_articles": {
+      "implementation_source": "generated_local_helper",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "newsletter_cta": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "page_heading": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": true,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "page_intro": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "pagination": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "rich_image_cards": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    },
+    "search": {
+      "implementation_source": "reused_target_component",
+      "present": false,
+      "required": false,
+      "target_components": [
+        {
+          "name": "ArticleSearchBar",
+          "path": "app/components/articles/ArticleSearchBar.tsx",
+          "source": "existing_component"
+        }
+      ],
+      "verification_status": "missing"
+    },
+    "seo_metadata": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": true,
+      "required": true,
+      "target_components": [],
+      "verification_status": "present"
+    },
+    "structured_data": {
+      "implementation_source": "minimal_accessible_markup",
+      "present": false,
+      "required": false,
+      "target_components": [],
+      "verification_status": "missing"
+    }
+  },
+  "style_policy": {
+    "detected_styling": [
+      "tailwind"
+    ],
+    "instruction": "Use existing target-repo styling conventions and tokens. If no safe local convention is available, use minimal semantic markup that inherits the site's global typography.",
+    "mode": "tailwind"
+  },
+  "target_style_evidence_available": true
+}
