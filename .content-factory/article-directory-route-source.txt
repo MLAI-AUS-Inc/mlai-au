@@ -1,80 +1,181 @@
-// Generated articles setup route
-// cf-slot: seo-metadata
-// cf-slot: article-registry
-// cf-slot: author-registry
-import { CATEGORY_SEGMENTS, getArticlesSortedNewestFirst, getFeaturedArticles } from '../articles/registry'
+import { useState } from "react";
+import {
+    getArticlesSortedNewestFirst,
+    resolveArticleRouteSlug,
+} from "~/articles/registry";
 
-const sectionTitle = "Articles"
-const brandName = "MLAI"
-const routeBase = "articles"
-const pageSize = 24
+import FeaturedArticleCard, { type FeaturedCardColor } from "~/components/articles/FeaturedArticleCard";
+import ArticleSearchBar from "~/components/articles/ArticleSearchBar";
+import ArticleCalendarSection from "~/components/articles/ArticleCalendarSection";
+import HeroSection from "~/components/ui/HeroSection";
+import CardGrid from "~/components/ui/CardGrid";
+import EmptyState from "~/components/ui/EmptyState";
+import type { Route } from "./+types/articles.index";
 
-export default function ArticlesPage() {
-    const articles = getArticlesSortedNewestFirst()
-    const visibleArticles = articles.slice(0, pageSize)
-    const featuredArticles = getFeaturedArticles(3)
-    const featuredPreview = featuredArticles.length > 0 ? featuredArticles : visibleArticles.slice(0, 3)
-    const remainingCount = Math.max(articles.length - visibleArticles.length, 0)
+const PAGE_TITLE = 'Writing on AI, Machine Learning and Community.';
+const PAGE_DESCRIPTION =
+    'Plain-English guides on AI, Machine Learning, data science careers, and technology in Australia. Written by the MLAI community for builders and learners.';
+
+const FALLBACK_IMAGE = 'https://placehold.co/1200x630/png';
+
+// Person image for the first featured card
+const PERSON_IMAGE = 'https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/Pixel%20Team.png?alt=media&token=da7df43a-eafa-4ee5-a94d-260791a376b8';
+
+// Color rotation for featured cards (first one is special with person image)
+const FEATURED_COLORS: FeaturedCardColor[] = ['coral-with-person', 'purple', 'black', 'blue'];
+
+const PAGE_SIZE = 10;
+
+function getFeaturedColor(index: number): FeaturedCardColor {
+    return FEATURED_COLORS[index % FEATURED_COLORS.length];
+}
+
+export function meta({ data }: Route.MetaArgs) {
+    const pageNumber = data?.page ?? 1;
+    const baseTitle = 'MLAI Articles Library';
+    const title =
+        pageNumber <= 1
+            ? `${baseTitle} | AI & ML Guides`
+            : `${baseTitle} – Page ${pageNumber} | AI & ML Guides`;
+
+    return [
+        { title: title },
+        { name: "description", content: PAGE_DESCRIPTION },
+        { tagName: "link", rel: "canonical", href: pageNumber <= 1 ? "https://mlai.au/articles" : `https://mlai.au/articles?page=${pageNumber}` },
+    ];
+}
+
+export async function loader({ request }: Route.LoaderArgs) {
+    const url = new URL(request.url);
+    const pageParam = url.searchParams.get("page");
+    const parsed = parseInt(pageParam ?? '1', 10);
+    const pageNumber = Number.isNaN(parsed) ? 1 : Math.max(1, parsed);
+
+    return { page: pageNumber };
+}
+
+export default function ArticlesIndex({ loaderData }: Route.ComponentProps) {
+    const { page } = loaderData;
+    const sorted = getArticlesSortedNewestFirst();
+    const featured = sorted.filter((article) => article.slug.startsWith('featured/')).slice(0, 4);
+
+    // Search/filter state (UI only for now)
+    const [searchQuery, setSearchQuery] = useState("");
+    const [, setActiveFilters] = useState<string[]>([]);
+
+    // Build article summaries for the calendar section
+    const articleSummaries = sorted.map((currentArticle) => ({
+        slug: resolveArticleRouteSlug(currentArticle.slug),
+        title: currentArticle.title,
+        description: currentArticle.description,
+        date: currentArticle.date,
+    }));
+
+    // Filter articles based on search query (simple title match for now)
+    const filteredSummaries = searchQuery
+        ? articleSummaries.filter((a) =>
+            a.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        : articleSummaries;
+
+    // Pagination
+    const total = filteredSummaries.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const currentPage = Math.min(Math.max(page, 1), totalPages);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const paginatedSummaries = filteredSummaries.slice(start, start + PAGE_SIZE);
 
     return (
-        <main data-cf-slot="directory-container" className="mx-auto max-w-5xl px-6 py-12">
-            <header className="space-y-4">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{brandName}</p>
-                <h1 data-cf-slot="page-heading" className="text-4xl font-semibold tracking-tight text-slate-950">{sectionTitle}</h1>
-                <p data-cf-slot="page-intro" className="max-w-2xl text-base leading-7 text-slate-600">
-                    Browse the latest {sectionTitle.toLowerCase()} from {brandName}.
-                </p>
-            </header>
-            <nav data-cf-slot="category-navigation" className="mt-8 flex flex-wrap gap-2" aria-label="Article categories">
-                {CATEGORY_SEGMENTS.map(category => (
-                    <a key={category} href={`/${routeBase}?category=${category}#article-index`} className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700">
-                        {category}
-                    </a>
-                ))}
-            </nav>
-            <section data-cf-slot="featured-articles" className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Featured articles">
-                {featuredPreview.map(article => (
-                    <article key={`featured-${article.slug}`} data-cf-slot="article-card" className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
-                        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{article.date}</p>
-                        <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                            <a data-cf-slot="article-link" href={`/${routeBase}/${article.slug}`} className="hover:text-slate-700">
-                                {article.title}
-                            </a>
-                        </h2>
-                        <p className="mt-2 text-sm leading-6 text-slate-600">{article.description}</p>
-                    </article>
-                ))}
-            </section>
-            <section data-cf-slot="article-list" className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {articles.length === 0 ? (
-                    <div data-cf-slot="empty-state" className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-6 sm:col-span-2 lg:col-span-3">
-                        <h2 className="text-lg font-semibold text-slate-950">No {sectionTitle.toLowerCase()} yet</h2>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                            New {sectionTitle.toLowerCase()} will appear here as soon as they are published.
-                        </p>
-                    </div>
-                ) : (
-                    visibleArticles.map(article => (
-                        <article key={article.slug} data-cf-slot="article-card" className="rounded-2xl border border-slate-200 bg-white px-5 py-5 shadow-sm">
-                            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{article.date}</p>
-                            <h2 className="mt-3 text-xl font-semibold text-slate-950">
-                                <a data-cf-slot="article-link" href={`/${routeBase}/${article.slug}`} className="hover:text-slate-700">
-                                    {article.title}
-                                </a>
-                            </h2>
-                            <p className="mt-2 text-sm leading-6 text-slate-600">{article.description}</p>
-                            <p className="mt-4 text-sm font-semibold text-slate-700">{article.author}</p>
-                        </article>
-                    ))
-                )}
-            </section>
-            {remainingCount > 0 ? (
-                <p data-cf-slot="pagination" className="mt-6 text-sm text-slate-600">
-                    Showing {visibleArticles.length} of {articles.length} {sectionTitle.toLowerCase()}.
-                </p>
-            ) : (
-                <p data-cf-slot="pagination" className="sr-only">Showing all {visibleArticles.length} {sectionTitle.toLowerCase()}.</p>
-            )}
+        <main className="min-h-screen bg-[var(--brutalist-beige)]" data-cf-slot="directory-container">
+            {/* Hero Section */}
+            <HeroSection
+                title={PAGE_TITLE}
+                description={PAGE_DESCRIPTION}
+                variant="yellow"
+              headingSlot="page-heading"
+              descriptionSlot="page-intro"
+            >
+                <div data-cf-slot="category-navigation">
+                  <ArticleSearchBar
+                    onSearch={setSearchQuery}
+                    onFilterChange={setActiveFilters}
+                />
+                </div>
+            </HeroSection>
+
+            {/* Featured Articles & Calendar Section */}
+            <div className="max-w-6xl mx-auto px-4 lg:px-6">
+                {/* Featured Articles Grid */}
+                <section data-cf-slot="featured-articles">
+                  <CardGrid columns={{ sm: 2, lg: 4 }} gap={4} className="mt-8">
+                    {featured.map((article, index) => (
+                        <FeaturedArticleCard
+                            key={article.slug}
+                            href={`/articles/${resolveArticleRouteSlug(article.slug)}`}
+                            title={article.title}
+                            image={article.image ?? FALLBACK_IMAGE}
+                            color={getFeaturedColor(index)}
+                            personImage={index === 0 ? PERSON_IMAGE : undefined}
+                        />
+                    ))}
+                    {featured.length === 0 && (
+                        <EmptyState
+                            message="No featured articles yet."
+                            className="col-span-full"
+                        />
+                    )}
+                </CardGrid>
+                </section>
+
+                {/* Article Calendar Section */}
+                <div className="py-12">
+                    {searchQuery ? (
+                        // Show filtered results when searching
+                        filteredSummaries.length > 0 ? (
+                            <ArticleCalendarSection
+                                title={`Search results for "${searchQuery}"`}
+                                articles={filteredSummaries}
+                                paginatedArticles={paginatedSummaries}
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                pageSize={PAGE_SIZE}
+                                paginationBasePath="/articles"
+                              sectionSlot="article-list"
+                              articleCardSlot="article-card"
+                              articleLinkSlot="article-link"
+                              emptyStateSlot="empty-state"
+                              paginationSlot="pagination"
+                            />
+                        ) : (
+                            <div className="text-center py-12">
+                                <h2 className="text-2xl font-bold text-zinc-900 mb-4">
+                                    No articles found
+                                </h2>
+                                <p className="text-zinc-500">
+                                    No articles match "{searchQuery}". Try a different search term.
+                                </p>
+                            </div>
+                        )
+                    ) : (
+                        <ArticleCalendarSection
+                            id="all-articles"
+                            title="All Articles"
+                            articles={articleSummaries}
+                            paginatedArticles={paginatedSummaries}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            pageSize={PAGE_SIZE}
+                            paginationBasePath="/articles"
+                            paginationHash="#all-articles"
+                          sectionSlot="article-list"
+                          articleCardSlot="article-card"
+                          articleLinkSlot="article-link"
+                          emptyStateSlot="empty-state"
+                          paginationSlot="pagination"
+                        />
+                    )}
+                </div>
+            </div>
         </main>
-    )
+    );
 }
