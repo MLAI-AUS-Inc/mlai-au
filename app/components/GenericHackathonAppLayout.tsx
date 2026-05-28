@@ -4,9 +4,12 @@ import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
   BookOpenIcon,
+  BuildingOffice2Icon,
   ChevronDownIcon,
   DocumentTextIcon,
   HomeIcon,
+  HomeModernIcon,
+  PresentationChartBarIcon,
   UserGroupIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -44,6 +47,13 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
     { name: "Profile & Team", href: `${config.basePath}/profile`, icon: UserGroupIcon },
     { name: "Submissions", href: `${config.basePath}/submissions`, icon: DocumentTextIcon },
     { name: "Resources", href: `${config.basePath}/resources`, icon: BookOpenIcon },
+    ...(isWattTheme
+      ? [
+          { name: "Base44 (Pitching) Track", href: `${config.basePath}/base44-pitching`, icon: PresentationChartBarIcon },
+          { name: "City Of Melbourne (Advanced) Track", href: `${config.basePath}/city-of-melbourne-advanced`, icon: BuildingOffice2Icon },
+          { name: "Smart Home (Beginner) Track", href: `${config.basePath}/smart-home-beginner`, icon: HomeModernIcon },
+        ]
+      : []),
   ].map((item) => ({
     ...item,
     current: location.pathname === item.href,
@@ -150,15 +160,15 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                       item.current
                         ? "bg-[#e6efd7] text-[#155420]"
                         : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
-                      "group flex h-[52px] items-center rounded-xl px-3 text-sm font-black leading-6 transition-all duration-200",
+                      "group flex min-h-[52px] items-center rounded-xl px-3 py-2 text-sm font-black leading-6 transition-all duration-200",
                       mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
                     )}
                   >
                     <item.icon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
                     <span
                       className={classNames(
-                        "overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out",
-                        mobile || expanded ? "ml-1 w-auto opacity-100" : "ml-0 w-0 opacity-0",
+                        "min-w-0 overflow-hidden transition-all duration-300 ease-in-out",
+                        mobile || expanded ? "ml-1 w-full whitespace-normal opacity-100" : "ml-0 w-0 whitespace-nowrap opacity-0",
                       )}
                     >
                       {item.name}
