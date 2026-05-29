@@ -674,7 +674,12 @@ export function ArticleLayout({
                 </div>
               ) : null}
               {showCitations ? (
-                <section className="not-prose mt-10 rounded-[24px] border border-gray-400 bg-transparent p-6 sm:p-8">
+                <section
+                  data-cf-component-id="authoritative-references"
+                  data-cf-component-type="references"
+                  data-cf-component-label="Authoritative References"
+                  className="not-prose mt-10 rounded-[24px] border border-gray-400 bg-transparent p-6 sm:p-8"
+                >
                   <h2 className="text-base font-bold uppercase tracking-wide text-gray-700">Authoritative references</h2>
                   <ul className="mt-4 space-y-4 text-sm text-gray-800">
                     {DEFAULT_CITATIONS.map((citation) => (

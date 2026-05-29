@@ -9,6 +9,9 @@ type ArticleDisclaimerProps = {
 export function ArticleDisclaimer({ className }: ArticleDisclaimerProps) {
   return (
     <section
+      data-cf-component-id="disclaimer"
+      data-cf-component-type="disclaimer"
+      data-cf-component-label="Disclaimer"
       className={clsx(
         'not-prose my-12 rounded-full bg-black px-6 sm:px-8 py-4 text-white flex items-center gap-4 border border-black',
         className,
