@@ -25,6 +25,10 @@ import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
 import { TopicDecisionCard } from "~/components/TopicDecisionCard";
 import { getEnv } from "~/lib/env.server";
+import {
+  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
+  createVibeMarketingClientRequestId,
+} from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   articleReviewApproveIntentForRun,
@@ -294,7 +298,15 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       setupRun = null;
     }
   }
-  return { run, bootstrap, setupRun, githubRepos };
+  return {
+    run,
+    bootstrap,
+    setupRun,
+    githubRepos,
+    billingRequestIds: {
+      articleJob: createVibeMarketingClientRequestId("vibe-article-job", runId),
+    },
+  };
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
@@ -501,6 +513,8 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         return { intent, error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
       }
       const result = await startVibeMarketingArticle(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
         targetKeyword,
         customTitle,
@@ -3610,7 +3624,7 @@ function workflowProgressForRunPage(
 }
 
 export default function FounderToolsMarketingRun() {
-  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos } = useLoaderData<typeof loader>();
+  const { run: loaderRun, bootstrap, setupRun: loaderSetupRun, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const navigation = useNavigation();
   const location = useLocation();
@@ -3874,6 +3888,7 @@ export default function FounderToolsMarketingRun() {
               {discoveryCandidates.length > 0 && selectedDiscoveryCandidate ? (
                 <Form method="POST" className="mt-4 space-y-4">
                   <input type="hidden" name="intent" value="start-article" />
+                  <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
@@ -3898,7 +3913,7 @@ export default function FounderToolsMarketingRun() {
                       </div>
                       <button type="submit" disabled={isSubmitting} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50">
                         {pendingActions.isPending("start-article") ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <CheckCircleIcon className="h-4 w-4" />}
-                        {pendingActions.isPending("start-article") ? "Starting article..." : "Generate draft article"}
+                        {pendingActions.isPending("start-article") ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
                       </button>
                     </div>
                   </div>

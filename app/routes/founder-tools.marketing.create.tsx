@@ -29,6 +29,10 @@ import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import {
+  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
+  createVibeMarketingClientRequestId,
+} from "~/lib/vibe-marketing-billing";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
@@ -489,7 +493,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       };
     }
   }
-  return { bootstrap, githubRepos };
+  return {
+    bootstrap,
+    githubRepos,
+    billingRequestIds: {
+      articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
+    },
+  };
 }
 
 export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
@@ -784,6 +794,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         };
       }
       const result = await startVibeMarketingArticle(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
         targetKeyword,
         customTitle: customTitle || selectedCandidate?.title || "",
@@ -911,7 +923,7 @@ function PanelHeader({
 }
 
 export default function FounderToolsMarketingCreate() {
-  const { bootstrap, githubRepos } = useLoaderData<typeof loader>();
+  const { bootstrap, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
   const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
   const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
@@ -1403,6 +1415,7 @@ export default function FounderToolsMarketingCreate() {
               ) : null}
               <Form method="POST" className="space-y-5">
                 <input type="hidden" name="intent" value="start-article" />
+                <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryModeExplicit" value="false" /> : null}
@@ -1489,7 +1502,7 @@ export default function FounderToolsMarketingCreate() {
                     </div>
                     <button type="submit" disabled={isSubmitting || !bootstrap.checks.baseline?.passed} className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-60">
                       {articleStartPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <RocketLaunchIcon className="h-4 w-4" />}
-                      {articleStartPending ? "Starting article..." : "Generate draft article"}
+                      {articleStartPending ? "Starting article..." : `Generate draft article (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)`}
                     </button>
                   </div>
                 </div>
