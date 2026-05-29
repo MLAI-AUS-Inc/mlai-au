@@ -260,6 +260,7 @@ export interface VibeMarketingCheck {
 
 export interface VibeMarketingTopicCandidate {
   id: string;
+  rawCandidateId?: string | null;
   keyword: string;
   title: string;
   reason?: string | null;
