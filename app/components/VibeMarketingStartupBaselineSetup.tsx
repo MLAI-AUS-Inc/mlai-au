@@ -1913,6 +1913,7 @@ export default function VibeMarketingStartupBaselineSetup({
     message: googleTrafficMessage,
   };
   const embedded = variant === "workflow";
+  const companySetupWorkflow = embedded && !includeBaseline;
   const shouldShowSecondaryAction = showSecondaryAction ?? true;
   const defaultPrimaryActionLabel = includeBaseline ? "Continue to GitHub setup" : embedded ? "Save and continue" : "Continue";
   const baselineActive = baselinePending || baselinePolling;
@@ -2209,7 +2210,8 @@ export default function VibeMarketingStartupBaselineSetup({
     <Form
       method="POST"
       className={clsx(
-        "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm",
+        "overflow-hidden border border-gray-200 bg-white shadow-sm",
+        embedded ? "rounded-[1.75rem]" : "rounded-2xl",
         embedded ? "" : "mt-10",
       )}
     >
@@ -2219,12 +2221,12 @@ export default function VibeMarketingStartupBaselineSetup({
         <div className="border-b border-rose-100 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-700">{error}</div>
       ) : null}
 
-      <div className="space-y-6 p-5 sm:p-6 lg:p-8">
+      <div className={clsx("space-y-6", embedded ? "p-6 sm:p-8 lg:p-11" : "p-5 sm:p-6 lg:p-8")}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,520px)] lg:items-start">
           <div ref={mobileIntroRef}>
-            <p className="text-sm font-black uppercase tracking-wide text-violet-700">{setupEyebrow}</p>
-            <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">{setupDescription}</p>
+            <p className="text-sm font-black uppercase tracking-[0.08em] text-violet-700">{setupEyebrow}</p>
+            <h2 className={clsx("mt-3 font-black tracking-normal text-gray-950", embedded ? "text-4xl leading-tight sm:text-5xl" : "text-3xl")}>{setupTitle}</h2>
+            <p className={clsx("mt-4 max-w-3xl font-semibold text-gray-600", embedded ? "text-lg leading-8" : "text-sm leading-6")}>{setupDescription}</p>
             <button
               type="button"
               onClick={openMobileTutorial}
@@ -2246,10 +2248,13 @@ export default function VibeMarketingStartupBaselineSetup({
           ) : null}
         </div>
 
-        {profileContentExpanded ? <StartupProfileAiHelperBanner /> : null}
-
-        <div className={clsx("grid gap-5", profileContentExpanded && "xl:grid-cols-[minmax(0,1fr)_390px]")}>
-          <section className={clsx("rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7", researchLocked && "bg-gray-50/80")}>
+        <div className={clsx("grid gap-8", profileContentExpanded && "xl:grid-cols-[minmax(0,1fr)_390px]")}>
+          <section className={clsx(
+            embedded
+              ? "min-w-0"
+              : "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7",
+            researchLocked && (embedded ? "opacity-90" : "bg-gray-50/80"),
+          )}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-5">
                 <StepNumberBadge>1</StepNumberBadge>
@@ -2279,9 +2284,30 @@ export default function VibeMarketingStartupBaselineSetup({
 
             {!profileContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{startupProfileSummary(startupValues)}</p> : null}
 
-            <div className={clsx("mt-7 border-t border-gray-100 pt-7", !profileContentExpanded && "hidden")}>
-              <div className="grid gap-5 lg:grid-cols-2">
-                <FormField label="Company name" badge={<RequiredPill />} className="lg:col-span-2">
+            <div className={clsx("mt-7 border-t border-gray-200 pt-7", !profileContentExpanded && "hidden")}>
+              <section className="overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70 p-5">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex gap-4">
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+                      <Sparkles className="h-6 w-6" />
+                    </span>
+                    <div>
+                      <h3 className="text-lg font-black tracking-normal text-violet-800">Let AI help with setup</h3>
+                      <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-700">
+                        <span className="sm:hidden">Fill the basics, then let AI prep company context from public sources.</span>
+                        <span className="hidden sm:inline">Complete the basics, then AI can research trusted public sources and prepare article context from your answers.</span>
+                      </p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                    Learn how it works <ArrowRight className="h-4 w-4" />
+                  </span>
+                  {!embedded ? <SetupDocumentMockups /> : null}
+                </div>
+              </section>
+
+              <div className={clsx("mt-7", companySetupWorkflow ? "space-y-5" : "grid gap-5 lg:grid-cols-2")}>
+                <FormField label="Company name" badge={<RequiredPill />} className={companySetupWorkflow ? "" : "lg:col-span-2"}>
                   <div className="relative">
                     <ControlIcon icon={Building2} />
                     <input
@@ -2291,13 +2317,13 @@ export default function VibeMarketingStartupBaselineSetup({
                       disabled={researchLocked}
                       required
                       autoComplete="organization"
-                      placeholder="e.g. Acme Inc."
+                      placeholder={companySetupWorkflow ? "Enter your company name" : "e.g. Acme Inc."}
                       className={inputWithIconClass}
                     />
                   </div>
                 </FormField>
 
-                <FormField label="Website domain" badge={<RequiredPill />}>
+                <FormField label={companySetupWorkflow ? "Website" : "Website domain"} badge={<RequiredPill />}>
                   <div className="relative">
                     <ControlIcon icon={Globe2} />
                     <input
@@ -2307,13 +2333,13 @@ export default function VibeMarketingStartupBaselineSetup({
                       disabled={researchLocked}
                       required
                       autoComplete="url"
-                      placeholder="e.g. acme.com"
+                      placeholder={companySetupWorkflow ? "https://yourcompany.com" : "e.g. acme.com"}
                       className={inputWithIconClass}
                     />
                   </div>
                 </FormField>
 
-                <FormField label="LinkedIn company page" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
+                <FormField label={companySetupWorkflow ? "LinkedIn" : "LinkedIn company page"} badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
                   <div className="relative">
                     <ControlIcon icon={Link2} />
                     <input
@@ -2321,7 +2347,7 @@ export default function VibeMarketingStartupBaselineSetup({
                       value={startupValues.companyLinkedInUrl}
                       onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
                       disabled={researchLocked}
-                      placeholder="e.g. linkedin.com/company/acme-inc"
+                      placeholder={companySetupWorkflow ? "https://www.linkedin.com/company/yourcompany" : "e.g. linkedin.com/company/acme-inc"}
                       className={inputWithIconClass}
                     />
                   </div>
@@ -2331,47 +2357,6 @@ export default function VibeMarketingStartupBaselineSetup({
                     </p>
                   ) : null}
                 </FormField>
-              </div>
-
-              <button
-                type="button"
-                onClick={startAutofill}
-                disabled={!canStartAutofill}
-                ref={mobileResearchButtonRef}
-                className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-[var(--vr-color-primary)] px-6 py-5 text-left text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <span className="flex min-w-0 items-center gap-4">
-                  {autofillPending || autofillPolling ? <Loader2 className="h-7 w-7 shrink-0 animate-spin" /> : <Sparkles className="h-7 w-7 shrink-0" />}
-                  <span className="min-w-0">
-                    <span className="block text-lg font-black">Research my company context</span>
-                    <span className="mt-1 block text-sm font-semibold text-white/80">AI will use these answers to prepare article context and SEO inputs</span>
-                  </span>
-                </span>
-                <ArrowRight className="h-6 w-6 shrink-0" />
-              </button>
-
-              {!canStartAutofill && !autofillPending && !autofillPolling ? (
-                <p className="mt-3 text-xs font-bold text-gray-500">Add a company name and website domain before researching with AI.</p>
-              ) : null}
-              <p className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
-                <ShieldCheck className="h-4 w-4" />
-                AI can fill empty profile fields; details you already entered stay as you entered them.
-              </p>
-              {autofillStartData?.error && !autofillStartData?.autofillRunId ? (
-                <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{autofillStartData.error}</div>
-              ) : null}
-              <div className="mt-4">
-                <ProfileResearchProgressCard
-                  run={autofillRun}
-                  runId={autofillRunId}
-                  pending={autofillPending}
-                  startStatus={autofillStartStatus}
-                  startError={autofillStartError}
-                  stalled={autofillStalled}
-                  unavailable={autofillUnavailable}
-                  onRetry={startAutofill}
-                  retryDisabled={!canRetryAutofill}
-                />
               </div>
 
               <div className="mt-7 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -2519,17 +2504,59 @@ export default function VibeMarketingStartupBaselineSetup({
                   </div>
                 </CompanyDetailsPanel>
               </div>
+
+              <button
+                type="button"
+                onClick={startAutofill}
+                disabled={!canStartAutofill}
+                ref={mobileResearchButtonRef}
+                className="mt-7 flex w-full items-center justify-between gap-4 rounded-xl bg-[var(--vr-color-primary)] px-6 py-5 text-left text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <span className="flex min-w-0 items-center gap-4">
+                  {autofillPending || autofillPolling ? <Loader2 className="h-7 w-7 shrink-0 animate-spin" /> : <Sparkles className="h-7 w-7 shrink-0" />}
+                  <span className="min-w-0">
+                    <span className="block text-lg font-black">Research my company context</span>
+                    <span className="mt-1 block text-sm font-semibold text-white/80">AI will use these answers to prepare article context and SEO inputs</span>
+                  </span>
+                </span>
+                <ArrowRight className="h-6 w-6 shrink-0" />
+              </button>
+
+              {!canStartAutofill && !autofillPending && !autofillPolling ? (
+                <p className="mt-3 text-xs font-bold text-gray-500">Add a company name and website domain before researching with AI.</p>
+              ) : null}
+              <p className="mt-4 flex items-center justify-center gap-2 text-xs font-bold text-gray-500">
+                <ShieldCheck className="h-4 w-4" />
+                Scan results prepare hidden article context; your visible profile fields stay as you entered them.
+              </p>
+              {autofillStartData?.error && !autofillStartData?.autofillRunId ? (
+                <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">{autofillStartData.error}</div>
+              ) : null}
+              <div className="mt-4">
+                <ProfileResearchProgressCard
+                  run={autofillRun}
+                  runId={autofillRunId}
+                  pending={autofillPending}
+                  startStatus={autofillStartStatus}
+                  startError={autofillStartError}
+                  stalled={autofillStalled}
+                  unavailable={autofillUnavailable}
+                  onRetry={startAutofill}
+                  retryDisabled={!canRetryAutofill}
+                />
+              </div>
             </div>
           </section>
 
-          <aside ref={mobileNextStepsRef} className={clsx("self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm", !profileContentExpanded && "hidden")}>
-            <h3 className="text-base font-black text-gray-950">What happens next?</h3>
-            <div className="mt-5 space-y-5">
+          <aside ref={mobileNextStepsRef} className={clsx("self-start rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:p-8", !profileContentExpanded && "hidden")}>
+            <h3 className="text-xl font-black text-gray-950">What happens next?</h3>
+            <div className="mt-7 space-y-6">
               <NextStepItem icon={Search} title="We research your company" body="AI reviews your site, LinkedIn page, and trusted public sources using your answers as ground truth." />
               <NextStepItem icon={PenLine} title="We prepare article context" body="Generated context is stored separately for future articles and is not written back into this form." />
               <NextStepItem icon={CheckCircle2} title="You stay in control" body="Edit your startup profile any time; scan results will not replace your details." last />
             </div>
-            <div className="mt-6 rounded-xl bg-gray-50 p-4">
+            <div className="mt-7 border-t border-gray-200 pt-7">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
               <div className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-gray-700" />
                 <div>
@@ -2537,6 +2564,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">We&apos;ll never publish or make changes unless you specifically approve.</p>
                 </div>
               </div>
+            </div>
             </div>
           </aside>
         </div>
@@ -2881,10 +2909,13 @@ export default function VibeMarketingStartupBaselineSetup({
         </section>
       ) : null}
 
-      <div className="flex flex-col gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className={clsx(
+        "flex flex-col gap-4 border-t border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8",
+        companySetupWorkflow ? "bg-white" : "bg-gray-50/70",
+      )}>
         <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
-          <ShieldCheck className="h-5 w-5 text-gray-400" />
-          Your data is secure and never shared.
+          {companySetupWorkflow ? null : <ShieldCheck className="h-5 w-5 text-gray-400" />}
+          {companySetupWorkflow ? "You can edit your profile anytime." : "Your data is secure and never shared."}
         </p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           {shouldShowSecondaryAction ? (
@@ -2904,7 +2935,12 @@ export default function VibeMarketingStartupBaselineSetup({
             name="nextAction"
             value="continue"
             disabled={saveActionPending || researchLocked}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-sm shadow-[rgba(0,128,128,0.16)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50 sm:px-7"
+            className={clsx(
+              "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-black text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:px-7",
+              companySetupWorkflow
+                ? "bg-violet-700 shadow-violet-200 hover:bg-violet-800"
+                : "bg-[var(--vr-color-primary)] shadow-[rgba(0,128,128,0.16)] hover:bg-[var(--vr-palette-black)]",
+            )}
           >
             {continuePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             {continuePending ? "Continuing..." : primaryActionLabel ?? defaultPrimaryActionLabel}

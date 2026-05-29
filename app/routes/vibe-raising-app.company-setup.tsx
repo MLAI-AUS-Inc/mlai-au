@@ -322,22 +322,14 @@ export default function CompanySetup() {
   const title = isAddingNew ? "Add a company" : isEditingExisting ? "Edit company setup" : "Set up your company";
 
   return (
-    <div className="min-h-screen bg-[#fbfaf8] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <p className="text-sm font-black text-violet-700">Founder Tools</p>
-          <h1 className="mt-2 text-3xl font-black tracking-normal text-gray-950">{title}</h1>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
-            These details power Vibe Raising and Vibe Marketing, so you only need to set them up once.
-          </p>
-        </div>
-
+    <div className="min-h-screen bg-[#f7f6f2] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <VibeMarketingStartupBaselineSetup
           bootstrap={bootstrap}
           error={error}
           variant="workflow"
           includeBaseline={false}
-          setupEyebrow="Company setup"
+          setupEyebrow={title === "Set up your company" ? "Company setup" : title}
           setupTitle="Tell us about your startup"
           setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
           guidanceTitle="Shared profile"
