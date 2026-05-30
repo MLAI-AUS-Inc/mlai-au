@@ -657,6 +657,7 @@ export interface VibeMarketingBootstrap {
   googleBaselineConnection: VibeMarketingGoogleBaselineConnection;
   checks: Record<string, VibeMarketingCheck>;
   articleSetupState?: VibeMarketingArticleSetupState | null;
+  article_setup_state?: VibeMarketingArticleSetupState | null;
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];

@@ -38,6 +38,7 @@ import { clsx } from "clsx";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import type { MarketingRunProgressTheme } from "~/components/MarketingRunProgressCard";
 import AvatarModal from "~/components/AvatarModal";
+import GitHubMark from "~/components/GitHubMark";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
 import { readableBackendError, readableBackendErrors } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
@@ -770,6 +771,68 @@ function startupTags(bootstrap: VibeMarketingBootstrap) {
     .map((tag) => String(tag ?? "").trim())
     .filter(Boolean);
   return Array.from(new Set(tags)).slice(0, 3);
+}
+
+function objectRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function firstStringValue(source: Record<string, unknown>, ...keys: string[]) {
+  for (const key of keys) {
+    const value = source[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
+}
+
+function normalizeDashboardDomain(value: string | null | undefined) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return url.hostname.replace(/\/+$/, "");
+  } catch {
+    return raw.replace(/^[a-z][a-z0-9+.-]*:\/\//i, "").split(/[/?#]/, 1)[0].replace(/\/+$/, "");
+  }
+}
+
+function normalizeArticleRoutePath(value: string) {
+  const raw = value.trim();
+  if (!raw) return "/articles";
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      return normalizeArticleRoutePath(new URL(raw).pathname || "/articles");
+    } catch {
+      return "/articles";
+    }
+  }
+  const withLeadingSlash = raw.startsWith("/") ? raw : `/${raw}`;
+  const normalized = withLeadingSlash.split(/[?#]/, 1)[0].replace(/\/+/g, "/");
+  return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
+}
+
+function articleRoutePathForDashboard(bootstrap: VibeMarketingBootstrap) {
+  const articleSetupState = objectRecord(bootstrap.articleSetupState);
+  const pendingSetup = objectRecord(bootstrap.settings.pendingArticleSystemSetup);
+  const scaffoldArticleSystem = objectRecord(bootstrap.checks.scaffold?.articleSystem);
+  return normalizeArticleRoutePath(
+    firstStringValue(articleSetupState, "routePath", "route_path") ||
+      firstStringValue(pendingSetup, "routePath", "route_path") ||
+      firstStringValue(scaffoldArticleSystem, "route_path", "routePath") ||
+      "/articles",
+  );
+}
+
+function articleRouteDisplayForDashboard(bootstrap: VibeMarketingBootstrap, domain: string | null | undefined) {
+  const routePath = articleRoutePathForDashboard(bootstrap);
+  const host = normalizeDashboardDomain(domain);
+  return host ? `${host}${routePath}` : routePath;
+}
+
+function githubConnectHrefForDashboard(connected: boolean) {
+  const params = new URLSearchParams({ returnTo: "/founder-tools/marketing" });
+  if (connected) params.set("forceReconnect", "true");
+  return `/founder-tools/marketing/github-connect?${params.toString()}`;
 }
 
 function topicChips(bootstrap: VibeMarketingBootstrap) {
@@ -3153,6 +3216,13 @@ function ReturningTopicPickerPage({
   const companyName = bootstrap.settings.brandName || bootstrap.organization.name || bootstrap.company.name || "YourStartup";
   const domain = bootstrap.company.domain || bootstrap.organization.domain;
   const tags = startupTags(bootstrap);
+  const githubConnected = Boolean(
+    githubReadyForPublishing ||
+      bootstrap.settings.githubConnectionState === "connected" ||
+      bootstrap.checks.github?.connectionState === "connected",
+  );
+  const githubConnectionHref = githubConnectHrefForDashboard(githubConnected);
+  const articleRouteDisplay = articleRouteDisplayForDashboard(bootstrap, domain);
   const savedCompanyAvatarUrl = bootstrap.company.avatarUrl ?? null;
   const companyAvatarUrl = companyAvatarPreviewUrl || savedCompanyAvatarUrl;
   const companyAvatarSaving = companyAvatarFetcher.state !== "idle";
@@ -3872,6 +3942,27 @@ function ReturningTopicPickerPage({
               <Link to="/founder-tools/marketing/settings" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm hover:bg-slate-50">
                 Manage
               </Link>
+            </div>
+            <div className="mt-4 grid gap-3">
+              <a
+                href={githubConnectionHref}
+                className="inline-flex w-full items-center justify-center gap-3 rounded-xl bg-slate-950 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-black"
+              >
+                <GitHubMark className="h-5 w-5" />
+                {githubConnected ? "Manage GitHub" : "Connect GitHub"}
+              </a>
+              <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-black uppercase tracking-wide text-slate-400">Articles route</p>
+                  <p className="mt-1 break-all text-sm font-black text-slate-900">{articleRouteDisplay}</p>
+                </div>
+                <Link
+                  to="/founder-tools/marketing/create?step=articleSystem"
+                  className="inline-flex shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-100"
+                >
+                  Edit route
+                </Link>
+              </div>
             </div>
           </section>
 

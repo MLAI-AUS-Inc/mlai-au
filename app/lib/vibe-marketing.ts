@@ -351,6 +351,7 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
   const rawDeclinedTopicFeedback = payload.declinedTopicFeedback ?? payload.declined_topic_feedback;
   const rawDraftArticles = payload.draftArticles ?? payload.draft_articles;
   const rawTopicPillars = payload.topicPillars ?? payload.topic_pillars;
+  const articleSetupState = normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state);
 
   return {
     company: {
@@ -409,7 +410,8 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
       payload.checks && typeof payload.checks === "object"
         ? (payload.checks as VibeMarketingBootstrap["checks"])
         : {},
-    articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
+    articleSetupState,
+    article_setup_state: articleSetupState,
     latestRuns,
     latestRunsByWorkflow,
     topicCandidates: Array.isArray(payload.topicCandidates)
