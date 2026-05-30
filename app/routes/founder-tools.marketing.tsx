@@ -2676,8 +2676,7 @@ function TopicDeclineRequest({
 const PILLAR_THEMES = {
   green: {
     iconWrap: "bg-emerald-500 text-white shadow-emerald-100",
-    button: "border-emerald-200 text-emerald-600 hover:bg-emerald-50",
-    arrow: "text-emerald-500",
+    solidButton: "border-emerald-500 bg-emerald-500 text-white shadow-emerald-100 hover:border-emerald-600 hover:bg-emerald-600",
     row: {
       focus: "focus:ring-emerald-100",
       selected: "border-emerald-300 bg-emerald-50/60",
@@ -2697,8 +2696,7 @@ const PILLAR_THEMES = {
   },
   purple: {
     iconWrap: "bg-violet-700 text-white shadow-violet-100",
-    button: "border-violet-200 text-violet-700 hover:bg-violet-50",
-    arrow: "text-violet-600",
+    solidButton: "border-violet-700 bg-violet-700 text-white shadow-violet-100 hover:border-violet-800 hover:bg-violet-800",
     row: {
       focus: "focus:ring-violet-100",
       selected: "border-violet-300 bg-violet-50/60",
@@ -2718,8 +2716,7 @@ const PILLAR_THEMES = {
   },
   blue: {
     iconWrap: "bg-blue-600 text-white shadow-blue-100",
-    button: "border-blue-200 text-blue-600 hover:bg-blue-50",
-    arrow: "text-blue-500",
+    solidButton: "border-blue-600 bg-blue-600 text-white shadow-blue-100 hover:border-blue-700 hover:bg-blue-700",
     row: {
       focus: "focus:ring-blue-100",
       selected: "border-blue-300 bg-blue-50/60",
@@ -2739,8 +2736,7 @@ const PILLAR_THEMES = {
   },
   orange: {
     iconWrap: "bg-orange-500 text-white shadow-orange-100",
-    button: "border-orange-200 text-orange-600 hover:bg-orange-50",
-    arrow: "text-orange-500",
+    solidButton: "border-orange-500 bg-orange-500 text-white shadow-orange-100 hover:border-orange-600 hover:bg-orange-600",
     row: {
       focus: "focus:ring-orange-100",
       selected: "border-orange-300 bg-orange-50/60",
@@ -2911,6 +2907,7 @@ function TopicPillarsSection({
   submitting,
   discoverySubmitting,
   generatingPillarSlug,
+  confirmingPillarSlug,
   activePillarSlug,
   customNotice,
   helpOpen,
@@ -2923,6 +2920,7 @@ function TopicPillarsSection({
   submitting: boolean;
   discoverySubmitting: boolean;
   generatingPillarSlug?: string | null;
+  confirmingPillarSlug?: string | null;
   activePillarSlug: string | null;
   customNotice: boolean;
   helpOpen: boolean;
@@ -2979,6 +2977,8 @@ function TopicPillarsSection({
         {visiblePillars.map((pillar) => {
           const theme = pillarTheme(pillar.colorKey);
           const active = pillar.slug === activePillarSlug;
+          const confirming = pillar.slug === confirmingPillarSlug;
+          const generatingThisPillar = generatingPillarSlug === pillar.slug;
           return (
             <article
               key={pillar.id || pillar.slug}
@@ -3000,19 +3000,19 @@ function TopicPillarsSection({
                 onClick={() => onGenerate(pillar)}
                 disabled={submitting || generating}
                 className={clsx(
-                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border bg-white text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
-                  theme.button,
+                  "mt-auto inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-black transition disabled:cursor-not-allowed disabled:opacity-60",
+                  theme.solidButton,
                 )}
               >
-                {generatingPillarSlug === pillar.slug ? (
+                {generatingThisPillar ? (
                   <>
-                    <Loader2 className={clsx("h-4 w-4 animate-spin", theme.arrow)} />
+                    <Loader2 className="h-4 w-4 animate-spin text-white" />
                     loading
                   </>
                 ) : (
                   <>
-                    Generate ({VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)
-                    <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
+                    {confirming ? `Generate (${VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)` : "Generate"}
+                    <ArrowRight className="h-4 w-4 text-white" />
                   </>
                 )}
               </button>
@@ -3085,6 +3085,7 @@ function ReturningTopicPickerPage({
   const [visibleCount, setVisibleCount] = useState(5);
   const [toast, setToast] = useState<TopicToast | null>(null);
   const [activePillarSlug, setActivePillarSlug] = useState<string | null>(null);
+  const [confirmingContentIslandSlug, setConfirmingContentIslandSlug] = useState<string | null>(null);
   const [customPillarNotice, setCustomPillarNotice] = useState(false);
   const [pillarHelpOpen, setPillarHelpOpen] = useState(false);
   const [contentIslandDiscoveryRun, setContentIslandDiscoveryRun] = useState<ContentIslandDiscoveryRunState | null>(null);
@@ -3273,6 +3274,7 @@ function ReturningTopicPickerPage({
 
   function handleGenerateContentIslandIdeas(pillar: VibeMarketingTopicPillar) {
     if (contentIslandDiscoveryBusy) return;
+    setConfirmingContentIslandSlug(null);
     setActivePillarSlug(null);
     setActiveTab("choose");
     setVisibleCount(5);
@@ -3288,6 +3290,15 @@ function ReturningTopicPickerPage({
     formData.set("contentIslandIconKey", pillar.iconKey);
     formData.set("contentIslandColorKey", pillar.colorKey);
     contentIslandDiscoveryFetcher.submit(formData, { method: "POST" });
+  }
+
+  function handleContentIslandGenerateClick(pillar: VibeMarketingTopicPillar) {
+    if (contentIslandDiscoveryBusy) return;
+    if (confirmingContentIslandSlug === pillar.slug) {
+      handleGenerateContentIslandIdeas(pillar);
+      return;
+    }
+    setConfirmingContentIslandSlug(pillar.slug);
   }
 
   function handleAddCustomPillar() {
@@ -3482,6 +3493,13 @@ function ReturningTopicPickerPage({
       setActivePillarSlug(null);
     }
   }, [activePillarSlug, bootstrap.topicPillars]);
+
+  useEffect(() => {
+    if (!confirmingContentIslandSlug) return;
+    if (!bootstrap.topicPillars.some((pillar) => pillar.slug === confirmingContentIslandSlug)) {
+      setConfirmingContentIslandSlug(null);
+    }
+  }, [confirmingContentIslandSlug, bootstrap.topicPillars]);
 
   useEffect(() => {
     if (!topics.length) {
@@ -3792,11 +3810,12 @@ function ReturningTopicPickerPage({
             submitting={isSubmitting || contentIslandDiscoveryBusy}
             discoverySubmitting={discoverySubmitting}
             generatingPillarSlug={generatingPillarSlug}
+            confirmingPillarSlug={confirmingContentIslandSlug}
             activePillarSlug={activePillarSlug}
             customNotice={customPillarNotice}
             helpOpen={pillarHelpOpen}
             helpRef={pillarHelpRef}
-            onGenerate={handleGenerateContentIslandIdeas}
+            onGenerate={handleContentIslandGenerateClick}
             onAddCustomPillar={handleAddCustomPillar}
             onLearnMore={handleLearnMorePillars}
           />
