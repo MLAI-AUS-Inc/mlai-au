@@ -1215,7 +1215,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         </Link>
                         <button
                             type="button"
-                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
+                            onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
                             className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                         >
                             <PlusIcon className="w-4 h-4" />
@@ -1241,12 +1241,12 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 No monthly update yet, {firstName}.
                             </h2>
                             <p className="max-w-2xl text-base leading-7 text-gray-600">
-                                Your workspace is ready. Start a draft from your data sources, or head back to the overview page any time to revisit the full founder-facing hero and example update.
+                                Your workspace is ready. Start a draft from the update template, then connect data only if you want source-assisted drafting.
                             </p>
                             <div className="flex flex-wrap gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => triggerAnnouncement(() => navigate("/founder-tools/data-sources"))}
+                                    onClick={() => triggerAnnouncement(() => navigate("/founder-tools/updates/create"))}
                                     className="inline-flex items-center gap-3 rounded-xl bg-[var(--vr-color-primary)] px-6 py-3 font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                                 >
                                     Create Your First Update
@@ -1271,7 +1271,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                                 </div>
                                 <div className="space-y-3">
                                     {[
-                                        "Connect one source or start with manual materials.",
+                                        "Pick a month and start from the draft template.",
                                         "Generate a private draft and keep refining it.",
                                         "Publish when you are ready for investors to see it.",
                                     ].map((item) => (
@@ -1316,7 +1316,7 @@ function FounderDashboard({ user, updates }: { user: any, updates: any[] }) {
                         My Drafts
                     </Link>
                     <Link
-                        to="/founder-tools/data-sources"
+                        to="/founder-tools/updates/create"
                         className="inline-flex items-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-4 py-3 text-sm font-black text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition hover:bg-[var(--vr-palette-black)]"
                     >
                         <PlusIcon className="w-4 h-4" />

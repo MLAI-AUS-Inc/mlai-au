@@ -1,0 +1,26 @@
+{
+  "check": "directory_static_policy",
+  "findings": [
+    {
+      "code": "DIRECTORY_STATIC_UNSAFE_API",
+      "message": "Directory page uses static-unsafe APIs: searchParams"
+    }
+  ],
+  "required_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "success": false,
+  "target_style_proven": true
+}

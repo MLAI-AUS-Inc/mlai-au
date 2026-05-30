@@ -1,0 +1,373 @@
+{
+  "article_surface_mode": "new",
+  "changes_required": true,
+  "delta_audit": {
+    "complete_existing_route_skips": [
+      "route generation",
+      "support generation",
+      "branch creation",
+      "hosted preview",
+      "browser/style gates",
+      "preview approval",
+      "setup PR creation"
+    ],
+    "existing_route_first": [
+      "Validate the selected route hint against scan resolver output.",
+      "Ensure the selected route is a listing page, not a detail route.",
+      "Read the existing route source from the repo.",
+      "Audit existing semantic slots before generating anything.",
+      "Parse and classify imported route components.",
+      "Optionally use the coding LLM to adjudicate opaque existing components.",
+      "Preserve original route source when patching.",
+      "Mark setup complete with no branch, preview, or PR when all required pieces already exist."
+    ],
+    "from_scratch_only": [
+      "Generate a brand-new article listing route.",
+      "Generate listing layout/card/list/navigation/empty/pagination/link surface.",
+      "Generate all required support modules.",
+      "Generate article content/category placeholders.",
+      "Potentially add a site navigation link to the new route.",
+      "Create and commit a setup branch.",
+      "Start a hosted Cloudflare/GitHub Actions preview.",
+      "Run hosted browser and visual style gates.",
+      "Wait for user preview approval.",
+      "Create the setup PR after approval."
+    ],
+    "shared_when_changes_required": [
+      "Build article surface plan.",
+      "Ensure support modules exist.",
+      "Ensure registry-backed listing behavior exists.",
+      "Produce component audit, manifest, dependency, and static artifacts.",
+      "Validate dependency and static policy.",
+      "Run local build gate.",
+      "Use hosted preview as the approval gate.",
+      "Create PR only after successful preview approval."
+    ]
+  },
+  "durable_step_order": [
+    "fetch_org_config",
+    "refresh_repo_auth",
+    "scan_repository",
+    "classify_repository",
+    "synthesize_repository_contract",
+    "load_context",
+    "validate_plan",
+    "load_directory_context",
+    "inspect_existing_directory_route",
+    "plan_directory_surface",
+    "render_directory_page",
+    "validate_directory_dependencies",
+    "verify_directory_static",
+    "verify_directory_dom_slots",
+    "verify_directory_build",
+    "repair_directory_build_failure",
+    "prepare_branch",
+    "prove_directory_publish_surface",
+    "start_hosted_preview",
+    "publish_hosted_preview",
+    "acquire_directory_preview",
+    "verify_directory_browser",
+    "repair_directory_browser_failure",
+    "review_directory_visual_style",
+    "repair_directory_visual_style",
+    "await_review",
+    "await_setup_review",
+    "create_pull_request",
+    "create_setup_pr_after_approval"
+  ],
+  "existing_route_decision": {
+    "manual_correction_required": false,
+    "reason": "No existing route is being reused; Content Factory will create a new scaffold.",
+    "skip_branch_preview_pr": false,
+    "status": "ready"
+  },
+  "existing_route_flow": [
+    {
+      "description": "Use the selected `/blog`, `/articles`, `/insights`, or equivalent listing route as source of truth.",
+      "durable_step": "validate_plan",
+      "id": "select_existing_route",
+      "sequence": 1,
+      "title": "User selects existing route"
+    },
+    {
+      "description": "Require scan resolver status `matched`, a concrete route file, and a listing/index surface.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "validate_route_hint",
+      "sequence": 2,
+      "title": "Validate route hint"
+    },
+    {
+      "description": "Read the exact route file from the repository default branch.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "load_matched_route_source",
+      "sequence": 3,
+      "title": "Load matched route source"
+    },
+    {
+      "description": "Build surface plan, resolve repo paths, parse imports, and load imported component snippets when needed.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "build_route_audit_context",
+      "sequence": 4,
+      "title": "Build route audit context"
+    },
+    {
+      "description": "Check slot markers, source heuristics, imported components, and repo component slot mappings.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "run_deterministic_audit",
+      "sequence": 5,
+      "title": "Run deterministic audit"
+    },
+    {
+      "description": "Mark every required slot as `exists`, `missing`, or `needs_generation` with evidence.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "classify_required_slots",
+      "sequence": 6,
+      "title": "Classify required slots"
+    },
+    {
+      "description": "Ask the coding model for structured slot classification only when deterministic confidence is low.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "llm_adjudication_if_needed",
+      "sequence": 7,
+      "title": "Use LLM adjudication if needed"
+    },
+    {
+      "description": "If every slot and support module exists, complete setup without branch, preview, or PR.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "complete_if_ready",
+      "sequence": 8,
+      "title": "Complete if ready"
+    },
+    {
+      "description": "Create only missing registry, author, SEO, resources, or placeholder support files.",
+      "durable_step": "render_directory_page",
+      "id": "generate_missing_support",
+      "sequence": 9,
+      "title": "Generate missing support files"
+    },
+    {
+      "description": "Incrementally patch the existing route while preserving layout, imports, copy, classes, and design-system components.",
+      "durable_step": "render_directory_page",
+      "id": "patch_missing_ui",
+      "sequence": 10,
+      "title": "Patch missing UI slots"
+    },
+    {
+      "description": "Write audit, LLM patch plan, original route source, manifest, dependency, and static reports.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "persist_existing_route_artifacts",
+      "sequence": 11,
+      "title": "Persist existing-route artifacts"
+    },
+    {
+      "description": "Run dependency, static, build, hosted preview, browser, style, approval, and PR gates only when repo changes are needed.",
+      "durable_step": "validate_directory_dependencies",
+      "id": "run_shared_gates_if_changed",
+      "sequence": 12,
+      "title": "Run shared gates if changed"
+    }
+  ],
+  "from_scratch_flow": [
+    {
+      "description": "Create durable setup status and track requester, repo, parent scan, and route hint metadata.",
+      "durable_step": "fetch_org_config",
+      "id": "initialize_setup_run",
+      "sequence": 1,
+      "title": "Initialize setup run"
+    },
+    {
+      "description": "Load brand, domain, target repo, content, model, and scan metadata.",
+      "durable_step": "fetch_org_config",
+      "id": "fetch_org_config",
+      "sequence": 2,
+      "title": "Fetch organization config"
+    },
+    {
+      "description": "Resolve the target repository, token, and default branch.",
+      "durable_step": "refresh_repo_auth",
+      "id": "refresh_repo_auth",
+      "sequence": 3,
+      "title": "Refresh GitHub repo auth"
+    },
+    {
+      "description": "Gather route tree, package/build metadata, repo paths, and framework signals.",
+      "durable_step": "scan_repository",
+      "id": "scan_repository",
+      "sequence": 4,
+      "title": "Scan repository"
+    },
+    {
+      "description": "Determine framework, runtime family, route conventions, and scaffold strategy.",
+      "durable_step": "classify_repository",
+      "id": "classify_repository",
+      "sequence": 5,
+      "title": "Classify repository"
+    },
+    {
+      "description": "Build directory, support-root, content-root, route, strategy, and adapter contract.",
+      "durable_step": "synthesize_repository_contract",
+      "id": "synthesize_repository_contract",
+      "sequence": 6,
+      "title": "Synthesize repository contract"
+    },
+    {
+      "description": "Load visual context, style profile, component candidates, code fingerprint, and article surface detections.",
+      "durable_step": "load_context",
+      "id": "load_context",
+      "sequence": 7,
+      "title": "Load generation context"
+    },
+    {
+      "description": "Ensure the scaffold plan is actionable and block unsupported plans without a safe path.",
+      "durable_step": "validate_plan",
+      "id": "validate_plan",
+      "sequence": 8,
+      "title": "Validate plan"
+    },
+    {
+      "description": "Capture or reuse visual/style context, build surface plan/page spec, and plan optional site navigation.",
+      "durable_step": "load_directory_context",
+      "id": "load_directory_context",
+      "sequence": 9,
+      "title": "Load directory context"
+    },
+    {
+      "description": "Record that no existing route is being reused, or audit a generated route after rendering.",
+      "durable_step": "inspect_existing_directory_route",
+      "id": "inspect_existing_directory_route",
+      "sequence": 10,
+      "title": "Inspect existing directory route"
+    },
+    {
+      "description": "Persist article surface plan, page spec, site link plan, and any component audit.",
+      "durable_step": "plan_directory_surface",
+      "id": "plan_directory_surface",
+      "sequence": 11,
+      "title": "Plan directory surface"
+    },
+    {
+      "description": "Generate listing route, support modules, placeholders, diagnostics, and semantic repairs.",
+      "durable_step": "render_directory_page",
+      "id": "render_directory_page",
+      "sequence": 12,
+      "title": "Render directory page"
+    },
+    {
+      "description": "Check imports, registry wiring, semantic slots, and generated route dependencies.",
+      "durable_step": "validate_directory_dependencies",
+      "id": "validate_directory_dependencies",
+      "sequence": 13,
+      "title": "Validate directory dependencies"
+    },
+    {
+      "description": "Block unsafe dynamic APIs, eager article-body imports, and unscaffolded category links.",
+      "durable_step": "verify_directory_static",
+      "id": "verify_directory_static",
+      "sequence": 14,
+      "title": "Verify static policy"
+    },
+    {
+      "description": "Require final renderable Content Factory DOM slot markers before branch preparation or preview.",
+      "durable_step": "verify_directory_dom_slots",
+      "id": "verify_directory_dom_slots",
+      "sequence": 15,
+      "title": "Verify DOM slot markers"
+    },
+    {
+      "description": "Run local build gate and revalidate dependency/static checks after repair overrides.",
+      "durable_step": "verify_directory_build",
+      "id": "verify_directory_build",
+      "sequence": 16,
+      "title": "Verify directory build"
+    },
+    {
+      "description": "Create setup branch and stage generated files plus managed existing-file updates.",
+      "durable_step": "prepare_branch",
+      "id": "prepare_branch",
+      "sequence": 17,
+      "title": "Prepare branch"
+    },
+    {
+      "description": "Verify the branch contains the concrete route and files needed for article publishing.",
+      "durable_step": "prove_directory_publish_surface",
+      "id": "prove_directory_publish_surface",
+      "sequence": 18,
+      "title": "Prove publish surface"
+    },
+    {
+      "description": "Dispatch the hosted Cloudflare/GitHub Actions preview for the setup branch.",
+      "durable_step": "start_hosted_preview",
+      "id": "start_hosted_preview",
+      "sequence": 19,
+      "title": "Start hosted preview"
+    },
+    {
+      "description": "Wait for hosted preview output and require an exact setup route preview.",
+      "durable_step": "publish_hosted_preview",
+      "id": "publish_hosted_preview",
+      "sequence": 20,
+      "title": "Publish hosted preview"
+    },
+    {
+      "description": "Load the hosted preview and confirm it renders the real article listing page.",
+      "durable_step": "verify_directory_browser",
+      "id": "verify_directory_browser",
+      "sequence": 21,
+      "title": "Verify browser"
+    },
+    {
+      "description": "Compare hosted preview against target visual/style context and block if it fails.",
+      "durable_step": "review_directory_visual_style",
+      "id": "review_directory_visual_style",
+      "sequence": 22,
+      "title": "Review visual style"
+    },
+    {
+      "description": "Expose preview-ready approval only after exact preview and quality gates pass.",
+      "durable_step": "await_review",
+      "id": "await_review",
+      "sequence": 23,
+      "title": "Await review"
+    },
+    {
+      "description": "Create the setup PR only after explicit hosted preview approval.",
+      "durable_step": "create_setup_pr_after_approval",
+      "id": "create_setup_pr_after_approval",
+      "sequence": 24,
+      "title": "Create PR after approval"
+    }
+  ],
+  "required_slots": [
+    "directory_container",
+    "seo_metadata",
+    "article_registry",
+    "author_registry",
+    "page_heading",
+    "page_intro",
+    "featured_articles",
+    "article_list",
+    "article_card",
+    "category_navigation",
+    "empty_state",
+    "pagination",
+    "article_link"
+  ],
+  "schema_version": 1,
+  "selected_path": "from_scratch_scaffold",
+  "slot_summary": {
+    "missing_required_slots": [],
+    "present_slot_count": 13,
+    "required_slot_count": 13,
+    "setup_preview_status_counts": {
+      "created support file": 3,
+      "generated missing component": 0,
+      "manual correction required": 0,
+      "reused from existing page": 10
+    },
+    "slot_status_counts": {
+      "exists": 13,
+      "missing": 0,
+      "needs_generation": 0
+    }
+  }
+}

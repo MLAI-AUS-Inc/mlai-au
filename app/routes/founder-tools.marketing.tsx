@@ -48,6 +48,11 @@ import {
   isAutofillStatusPollFailure,
 } from "~/lib/vibe-marketing-autofill-state";
 import { shouldShowVibeMarketingTopicPicker } from "~/lib/vibe-marketing-landing";
+import {
+  VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
+  VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
+  createVibeMarketingClientRequestId,
+} from "~/lib/vibe-marketing-billing";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -142,7 +147,14 @@ function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
 }
 
 function isArticleSystemSetupBlocked(bootstrap: VibeMarketingBootstrap) {
-  return Boolean(bootstrap.checks.scaffold?.setupBlocked);
+  return Boolean(
+    bootstrap.checks.scaffold?.setupBlocked &&
+      !bootstrap.hasCompletedArticleFlow &&
+      !bootstrap.checks.scaffold?.generationReady &&
+      !bootstrap.checks.scaffold?.setupMerged &&
+      !bootstrap.articleSetupState?.generationReady &&
+      !bootstrap.articleSetupState?.setupMerged,
+  );
 }
 
 type ArticleDeliveryMode = "review_draft" | "publish_code" | "content_only";
@@ -270,11 +282,25 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   }
 
   if (!vibeContext.appUser) {
-    return { bootstrap: emptyBootstrapFromProfile(vibeContext.profile), hasFounderCompany: false };
+    return {
+      bootstrap: emptyBootstrapFromProfile(vibeContext.profile),
+      hasFounderCompany: false,
+      billingRequestIds: {
+        articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
+        contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
+      },
+    };
   }
 
   const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
-  return { bootstrap, hasFounderCompany: true };
+  return {
+    bootstrap,
+    hasFounderCompany: true,
+    billingRequestIds: {
+      articleJob: createVibeMarketingClientRequestId("vibe-article-job"),
+      contentIslandTopics: createVibeMarketingClientRequestId("vibe-content-island-topics"),
+    },
+  };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -452,7 +478,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-content-island-discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const contentIslandSlug = stringFromForm(formData, "contentIslandSlug");
       const pillar = bootstrap.topicPillars.find((item) => item.slug === contentIslandSlug);
@@ -464,6 +490,8 @@ export async function action({ request, context }: Route.ActionArgs) {
         pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ||
         pillar.name;
       const run = await startVibeMarketingDiscovery(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         contentIslandSlug: pillar.slug,
         content_island_slug: pillar.slug,
         contentIslandName: pillar.name,
@@ -495,7 +523,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before researching topics." };
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
       }
       const run = await startVibeMarketingDiscovery(env, request, {});
       if (run.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(run.runId)}`);
@@ -528,7 +556,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     if (intent === "start-article") {
       const bootstrap = await getVibeMarketingBootstrap(env, request);
       if (isArticleSystemSetupBlocked(bootstrap)) {
-        return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
+        return { intent, error: "Merge the articles setup PR before generating articles. If you merged it in GitHub, refresh merge status." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
       const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
@@ -559,6 +587,8 @@ export async function action({ request, context }: Route.ActionArgs) {
       }
 
       const result = await startVibeMarketingArticle(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
         topic,
         targetKeyword,
         customTitle: customTitle || selectedCandidate?.title || "",
@@ -2320,7 +2350,7 @@ function TopicRow({
               : rowTheme?.idleButton ?? "bg-violet-50 text-violet-700 hover:bg-violet-100",
           )}
         >
-          {selected ? "Continue" : "Select"}
+          {selected ? `Continue (${VIBE_MARKETING_ARTICLE_JOB_COST_POINTS} pts)` : "Select"}
           {selected && submitting ? (
             <Loader2 className={clsx("h-4 w-4 animate-spin", rowTheme?.arrow ?? "text-violet-500")} />
           ) : (
@@ -2980,7 +3010,7 @@ function TopicPillarsSection({
                   </>
                 ) : (
                   <>
-                    Generate
+                    Generate ({VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS} pt)
                     <ArrowRight className={clsx("h-4 w-4", theme.arrow)} />
                   </>
                 )}
@@ -3025,11 +3055,13 @@ function TopicPillarsSection({
 
 function ReturningTopicPickerPage({
   bootstrap,
+  billingRequestIds,
   error,
   errorIntent,
   setupMergedNotice = false,
 }: {
   bootstrap: VibeMarketingBootstrap;
+  billingRequestIds: { articleJob: string; contentIslandTopics: string };
   error: string | null;
   errorIntent?: string | null;
   setupMergedNotice?: boolean;
@@ -3248,6 +3280,7 @@ function ReturningTopicPickerPage({
     setContentIslandRefreshRunId(null);
     const formData = new FormData();
     formData.set("intent", "start-content-island-discovery");
+    formData.set("clientRequestId", `${billingRequestIds.contentIslandTopics}:${pillar.slug}`);
     formData.set("contentIslandSlug", pillar.slug);
     formData.set("contentIslandName", pillar.name);
     formData.set("contentIslandKeyword", pillar.topicCandidates.find((candidate) => candidate.pillarKeyword)?.pillarKeyword ?? pillar.name);
@@ -3522,13 +3555,14 @@ function ReturningTopicPickerPage({
       {setupMergedNotice ? (
         <div className="mb-5 flex items-start gap-3 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-800">
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
-          <p>The articles directory was merged. You can generate an article now while verification finishes in the background.</p>
+          <p>Articles setup is complete. Choose a topic to generate the next article.</p>
         </div>
       ) : null}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
           <Form ref={articleFormRef} method="POST" className="space-y-5">
             <input type="hidden" name="intent" value="start-article" />
+            <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
             <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
@@ -3906,7 +3940,7 @@ function ReturningTopicPickerPage({
 }
 
 export default function FounderToolsMarketing() {
-  const { bootstrap } = useLoaderData<typeof loader>();
+  const { bootstrap, billingRequestIds } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
   const location = useLocation();
   const error = actionError(actionData);
@@ -3917,7 +3951,13 @@ export default function FounderToolsMarketing() {
   return (
     <div className="min-h-screen bg-[#fbfaf8]">
       {shouldShowTopicPicker ? (
-        <ReturningTopicPickerPage bootstrap={bootstrap} error={error} errorIntent={errorIntent} setupMergedNotice={setupMergedNotice} />
+        <ReturningTopicPickerPage
+          bootstrap={bootstrap}
+          billingRequestIds={billingRequestIds}
+          error={error}
+          errorIntent={errorIntent}
+          setupMergedNotice={setupMergedNotice}
+        />
       ) : (
         <VibeMarketingStartupBaselineSetup bootstrap={bootstrap} error={error} />
       )}

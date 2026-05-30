@@ -249,6 +249,7 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
     setupCurrentStep: asNullableString(payload.setupCurrentStep) ?? asNullableString(payload.setup_current_step),
     setupBlocked: asBoolean(payload.setupBlocked ?? payload.setup_blocked),
     setupMerged: asBoolean(payload.setupMerged ?? payload.setup_merged),
+    generationReady: asBoolean(payload.generationReady ?? payload.generation_ready),
     published: asBoolean(payload.published),
     routePath: asNullableString(payload.routePath) ?? asNullableString(payload.route_path),
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
