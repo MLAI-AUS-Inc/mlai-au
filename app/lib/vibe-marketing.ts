@@ -19,6 +19,7 @@ import type {
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
+  VibeMarketingScanProgress,
   VibeMarketingStepState,
   VibeMarketingStartupProfile,
   VibeMarketingWebsiteBaseline,
@@ -191,6 +192,32 @@ function normalizeStep(raw: unknown): VibeMarketingStepState {
   };
 }
 
+function normalizeScanProgress(raw: unknown): VibeMarketingScanProgress | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const phaseKey = asNullableString(payload.phaseKey) ?? asNullableString(payload.phase_key) ?? "";
+  const phaseLabel = asNullableString(payload.phaseLabel) ?? asNullableString(payload.phase_label) ?? "";
+  const message = asNullableString(payload.message) ?? "";
+  const phaseIndex = Math.max(0, Math.round(asNumber(payload.phaseIndex ?? payload.phase_index) ?? 0));
+  const phaseCount = Math.max(0, Math.round(asNumber(payload.phaseCount ?? payload.phase_count) ?? 0));
+  const percent = Math.max(0, Math.min(100, Math.round(asNumber(payload.percent) ?? 0)));
+  const detail = asObjectRecord(payload.detail);
+  if (!phaseKey && !phaseLabel && !message && phaseIndex === 0 && phaseCount === 0 && percent === 0) {
+    return null;
+  }
+  return {
+    phaseKey,
+    phaseLabel,
+    phaseIndex,
+    phaseCount,
+    percent,
+    message,
+    detail,
+    currentStep: asNullableString(payload.currentStep) ?? asNullableString(payload.current_step),
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+  };
+}
+
 function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupState | null {
   const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -247,6 +274,10 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
 
 export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const result =
+    payload.result && typeof payload.result === "object" && !Array.isArray(payload.result)
+      ? (payload.result as Record<string, unknown>)
+      : {};
   return {
     runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id) ?? "",
     workflow: asNullableString(payload.workflow) ?? "",
@@ -274,6 +305,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     componentManifest: normalizeComponentManifest(payload.componentManifest ?? payload.component_manifest),
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
+    scanProgress: normalizeScanProgress(payload.scanProgress ?? payload.scan_progress ?? result.scanProgress ?? result.scan_progress),
     workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
     publishChildStatus: asNullableString(payload.publishChildStatus) ?? asNullableString(payload.publish_child_status),
     publishChildRecoverable: Boolean(payload.publishChildRecoverable ?? payload.publish_child_recoverable),
@@ -283,10 +315,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     retryAvailable: Boolean(payload.retryAvailable ?? payload.retry_available),
     queueName: asNullableString(payload.queueName) ?? asNullableString(payload.queue_name),
     queuedAt: asNullableString(payload.queuedAt) ?? asNullableString(payload.queued_at),
-    result:
-      payload.result && typeof payload.result === "object"
-        ? (payload.result as Record<string, unknown>)
-        : {},
+    result,
     articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
   };
 }
@@ -383,13 +412,13 @@ function normalizeBootstrap(raw: unknown): VibeMarketingBootstrap {
     latestRuns,
     latestRunsByWorkflow,
     topicCandidates: Array.isArray(payload.topicCandidates)
-      ? payload.topicCandidates.map(normalizeTopicCandidate)
+      ? canonicalizeTopicCandidates(payload.topicCandidates.map(normalizeTopicCandidate), "topic")
       : [],
     topicPillars: Array.isArray(rawTopicPillars)
       ? rawTopicPillars.map(normalizeTopicPillar).filter((pillar): pillar is VibeMarketingTopicPillar => Boolean(pillar))
       : [],
     hiddenTopicCandidates: Array.isArray(payload.hiddenTopicCandidates)
-      ? payload.hiddenTopicCandidates.map(normalizeTopicCandidate)
+      ? canonicalizeTopicCandidates(payload.hiddenTopicCandidates.map(normalizeTopicCandidate), "hidden")
       : [],
     declinedTopicFeedback: Array.isArray(rawDeclinedTopicFeedback)
       ? rawDeclinedTopicFeedback
@@ -450,6 +479,11 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
 function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.target_keyword) ?? "Topic";
+  const rawCandidateId =
+    asNullableString(payload.rawCandidateId) ??
+    asNullableString(payload.raw_candidate_id) ??
+    asNullableString(payload.id) ??
+    keyword;
   const normalizePaaQuestions = (value: unknown): VibeMarketingTopicCandidate["paaQuestions"] => {
     if (!Array.isArray(value)) return [];
     return value
@@ -464,7 +498,8 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
       .filter((item) => item.question);
   };
   return {
-    id: String(payload.id ?? keyword),
+    id: rawCandidateId,
+    rawCandidateId,
     keyword,
     title:
       asNullableString(payload.title) ??
@@ -511,6 +546,49 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   };
 }
 
+function topicCandidateIdPart(value: unknown, fallback = "topic"): string {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return normalized || fallback;
+}
+
+export function stableTopicCandidateId(candidate: Pick<VibeMarketingTopicCandidate, "id" | "rawCandidateId" | "keyword" | "title" | "sourceRunId" | "source">, namespace = "topic"): string {
+  const namespacePart = topicCandidateIdPart(namespace);
+  if ((!candidate.rawCandidateId || candidate.rawCandidateId === candidate.id) && candidate.id?.startsWith(`${namespacePart}:`)) {
+    return candidate.id;
+  }
+  const keywordPart = topicCandidateIdPart(candidate.keyword || candidate.title);
+  const sourceRunId = candidate.sourceRunId?.trim();
+  if (sourceRunId) {
+    return `${namespacePart}:run:${topicCandidateIdPart(sourceRunId, "source")}:${keywordPart}`;
+  }
+  const rawId = candidate.rawCandidateId || candidate.id;
+  if (rawId) {
+    return `${namespacePart}:${topicCandidateIdPart(rawId, "candidate")}:${keywordPart}`;
+  }
+  return `${namespacePart}:${topicCandidateIdPart(candidate.source, "candidate")}:${keywordPart}`;
+}
+
+export function canonicalizeTopicCandidates(
+  candidates: VibeMarketingTopicCandidate[],
+  namespace = "topic",
+): VibeMarketingTopicCandidate[] {
+  const seen = new Map<string, number>();
+  return candidates.map((candidate) => {
+    const baseId = stableTopicCandidateId(candidate, namespace);
+    const nextCount = (seen.get(baseId) ?? 0) + 1;
+    seen.set(baseId, nextCount);
+    return {
+      ...candidate,
+      rawCandidateId: candidate.rawCandidateId ?? candidate.id,
+      id: nextCount === 1 ? baseId : `${baseId}:${nextCount}`,
+    };
+  });
+}
+
 function normalizeTopicPillar(raw: unknown): VibeMarketingTopicPillar | null {
   const payload = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -528,7 +606,7 @@ function normalizeTopicPillar(raw: unknown): VibeMarketingTopicPillar | null {
     colorKey: asNullableString(payload.colorKey) ?? asNullableString(payload.color_key) ?? "purple",
     source: asNullableString(payload.source) ?? "semantic_cluster",
     topicCandidates: Array.isArray(rawCandidates)
-      ? rawCandidates.map(normalizeTopicCandidate)
+      ? canonicalizeTopicCandidates(rawCandidates.map(normalizeTopicCandidate), `pillar:${slug}`)
       : [],
   };
 }

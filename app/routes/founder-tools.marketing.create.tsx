@@ -29,6 +29,7 @@ import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
+import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
@@ -742,11 +743,12 @@ export async function action({ request, context }: Route.ActionArgs) {
         };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const selectedCandidate =
-        topicCandidateId && topicCandidateId !== "__custom__"
+        !isCustomTopic
           ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
-      if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
+      if (!isCustomTopic && !selectedCandidate) {
         return {
           intent,
           error: "That topic is no longer available. Choose a pending topic or enter a custom article.",
@@ -778,7 +780,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
-        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
+        sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       return redirect("/founder-tools/marketing/create?step=writeCheck");
@@ -1072,7 +1074,7 @@ export default function FounderToolsMarketingCreate() {
       (!pendingArticleSystemSetupRunId && !isSetupProgressTerminal(pendingArticleSystemScan));
     if (!shouldPollParent) return;
     const hasLoadedCurrentRun = setupScanStatusFetcher.data?.runId === pendingArticleSystemScan.runId;
-    const signature = `${pendingArticleSystemScan.runId}:${pendingArticleSystemScan.status}:${pendingArticleSystemScan.currentStep ?? ""}:${pendingArticleSystemScan.updatedAt ?? ""}`;
+    const signature = repoScanProgressRefreshKey(pendingArticleSystemScan);
     if (setupParentProgressSignatureRef.current !== signature) {
       setupParentProgressSignatureRef.current = signature;
       setupParentProgressAtRef.current = Date.now();
@@ -1087,8 +1089,7 @@ export default function FounderToolsMarketingCreate() {
     );
     return () => window.clearTimeout(timer);
   }, [
-    pendingArticleSystemScan?.runId,
-    pendingArticleSystemScan?.status,
+    pendingArticleSystemScan,
     pendingArticleSystemSetupRunId,
     pageVisible,
     setupScanStatusFetcher,

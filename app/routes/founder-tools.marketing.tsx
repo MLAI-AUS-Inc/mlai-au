@@ -531,16 +531,17 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const candidatePool = [
         ...bootstrap.topicCandidates,
         ...bootstrap.topicPillars.flatMap((pillar) => pillar.topicCandidates),
       ];
       const selectedCandidate =
-        topicCandidateId && topicCandidateId !== "__custom__"
+        !isCustomTopic
           ? candidatePool.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
 
-      if (topicCandidateId && topicCandidateId !== "__custom__" && !selectedCandidate) {
+      if (!isCustomTopic && !selectedCandidate) {
         return { intent, error: "That topic is no longer available. Choose another topic or enter a custom one." };
       }
 
@@ -567,7 +568,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
-        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
+        sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
       if (result.runId) {
@@ -3531,7 +3532,7 @@ function ReturningTopicPickerPage({
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
             <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
-            <input type="hidden" name="sourceDiscoveryRunId" value={selectedTopic?.sourceRunId ?? ""} />
+            <input type="hidden" name="sourceDiscoveryRunId" value={activeTab === "choose" ? selectedTopic?.sourceRunId ?? "" : ""} />
             {activeTab === "choose" ? (
               <>
                 <input type="hidden" name="targetKeyword" value={selectedTopic?.keyword ?? ""} />

@@ -25,6 +25,18 @@ export interface VibeMarketingStepState {
   completedAt?: string | null;
 }
 
+export interface VibeMarketingScanProgress {
+  phaseKey: string;
+  phaseLabel: string;
+  phaseIndex: number;
+  phaseCount: number;
+  percent: number;
+  message: string;
+  detail: Record<string, unknown>;
+  currentStep?: string | null;
+  updatedAt?: string | null;
+}
+
 export interface VibeMarketingRunSummary {
   runId: string;
   workflow: string;
@@ -51,6 +63,7 @@ export interface VibeMarketingRunSummary {
   componentManifest?: VibeMarketingComponentManifest | null;
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
+  scanProgress?: VibeMarketingScanProgress | null;
   workflowProgress?: VibeMarketingWorkflowProgress | null;
   publishChildStatus?: string | null;
   publishChildRecoverable?: boolean;
@@ -258,6 +271,7 @@ export interface VibeMarketingCheck {
 
 export interface VibeMarketingTopicCandidate {
   id: string;
+  rawCandidateId?: string | null;
   keyword: string;
   title: string;
   reason?: string | null;

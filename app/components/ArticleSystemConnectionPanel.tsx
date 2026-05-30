@@ -27,6 +27,7 @@ import ArticleSystemSurfaceSummary, {
   type SurfaceCandidate,
 } from "~/components/ArticleSystemSurfaceSummary";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
+import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
 import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
 type ArticleSystemConnectionPanelProps = {
@@ -574,13 +575,7 @@ export default function ArticleSystemConnectionPanel({
         !scanStale);
     if (!shouldPollScan) return;
     const hasLoadedCurrentRun = runStatusFetcher.data?.runId === currentScanRunId;
-    const signature = [
-      effectiveScanRun?.runId,
-      effectiveScanRun?.status,
-      effectiveScanRun?.currentStep,
-      effectiveScanRun?.updatedAt,
-      effectiveScanRun?.steps.map((step) => `${step.key}:${step.status}:${step.completedAt ?? ""}`).join(","),
-    ].join("|");
+    const signature = repoScanProgressRefreshKey(effectiveScanRun);
     if (lastScanProgressSignatureRef.current !== signature) {
       lastScanProgressSignatureRef.current = signature;
       lastScanProgressAtRef.current = Date.now();

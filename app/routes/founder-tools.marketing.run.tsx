@@ -52,6 +52,7 @@ import {
   startVibeMarketingLivePreview,
   startVibeMarketingArticle,
   updateVibeMarketingComponentComment,
+  canonicalizeTopicCandidates,
 } from "~/lib/vibe-marketing";
 import { requireVibeRaisingFounder } from "~/lib/vibe-raising";
 import type {
@@ -475,8 +476,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         return { intent, error: "Finish approving, merging, and verifying the articles directory setup before generating articles." };
       }
       const topicCandidateId = stringFromForm(formData, "topicCandidateId");
+      const isCustomTopic = !topicCandidateId || topicCandidateId === "__custom__";
       const selectedCandidate =
-        topicCandidateId && topicCandidateId !== "__custom__"
+        !isCustomTopic
           ? bootstrap.topicCandidates.find((candidate) => candidate.id === topicCandidateId) ?? null
           : null;
       const candidateTitle = stringFromForm(formData, "candidateTitle");
@@ -497,7 +499,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
         deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
         deliveryModeConfirmed: true,
-        sourceRunId: selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
+        sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
     }
@@ -597,10 +599,10 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
     );
     appendCandidateSource(rawCandidates, mapping.selected);
   }
-  return rawCandidates
+  const candidates = rawCandidates
     .map((raw, index): VibeMarketingTopicCandidate | null => {
       if (typeof raw === "string") {
-        return { id: String(index), keyword: raw, title: raw, sourceRunId: run.runId };
+        return { id: String(index), rawCandidateId: String(index), keyword: raw, title: raw, sourceRunId: run.runId };
       }
       if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
       const payload = raw as Record<string, unknown>;
@@ -621,6 +623,7 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
       if (!keyword && !title) return null;
       return {
         id: asString(payload.id) || asString(payload.keyword_id) || String(index),
+        rawCandidateId: asString(payload.id) || asString(payload.keyword_id) || String(index),
         keyword: keyword || title,
         title: title || keyword,
         reason: asString(payload.reason) || asString(payload.selection_reason) || asString(payload.rationale),
@@ -639,6 +642,7 @@ function topicCandidatesFromRun(run: { result?: Record<string, unknown>; runId: 
       };
     })
     .filter((candidate): candidate is VibeMarketingTopicCandidate => candidate !== null);
+  return canonicalizeTopicCandidates(candidates, "topic");
 }
 
 function StepStatusDot({ status }: { status: string }) {
