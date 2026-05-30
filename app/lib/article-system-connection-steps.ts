@@ -2,6 +2,17 @@ export type ArticleSystemConnectionStepId = "connect" | "scan" | "chooseLocation
 
 export type ArticleSystemConnectionStepStatus = "active" | "blocked" | "complete" | "locked";
 
+export type ArticleSystemScaffoldStatus =
+  | "not_ready"
+  | "ready_to_build"
+  | "building"
+  | "review_ready"
+  | "publish_ready"
+  | "verifying"
+  | "ready"
+  | "legacy_ready"
+  | "failed";
+
 export type ArticleSystemConnectionStepState = {
   id: ArticleSystemConnectionStepId;
   status: ArticleSystemConnectionStepStatus;
@@ -20,13 +31,26 @@ export type ArticleSystemConnectionStepInput = {
   inventoryReady?: boolean;
   setupTargetReady?: boolean;
   selectedSurfaceUrl?: string | null;
+  scaffoldStatus?: ArticleSystemScaffoldStatus;
 };
+
+export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldStatus) {
+  if (status === "ready_to_build") return "Build articles scaffold";
+  if (status === "building") return "Open setup build";
+  if (status === "review_ready") return "Review setup preview";
+  if (status === "publish_ready") return "Finish setup PR";
+  if (status === "verifying") return "Verifying merged scaffold...";
+  if (status === "ready" || status === "legacy_ready") return "Continue to topic research";
+  if (status === "failed") return "Open setup build";
+  return "Choose articles route first";
+}
 
 export function articleSystemConnectionStepStates(input: ArticleSystemConnectionStepInput): Record<ArticleSystemConnectionStepId, ArticleSystemConnectionStepState> {
   const hasScanRun = Boolean(input.currentScanRunId?.trim());
   const hasSelectedSurface = Boolean(input.selectedSurfaceUrl?.trim());
   const scanLoadingOrRunning = Boolean(input.scanLoading || input.scanRunning || (hasScanRun && !input.inventoryReady && !input.setupTargetReady && !input.scanFailed && !input.scanStale));
   const scanBlocked = Boolean(input.scanFailed || input.scanStale);
+  const hasSetupTarget = Boolean(input.setupTargetReady || hasSelectedSurface);
 
   const connect: ArticleSystemConnectionStepState = input.connected
     ? {
@@ -124,23 +148,42 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
     };
   }
 
-  const buildSetup: ArticleSystemConnectionStepState = input.connected && (input.setupTargetReady || hasSelectedSurface)
-    ? {
-        id: "buildSetup",
-        status: "active",
-        defaultExpanded: true,
-        disabled: false,
-        unavailableReason: "",
-      }
-    : {
-        id: "buildSetup",
-        status: "locked",
-        defaultExpanded: false,
-        disabled: true,
-        unavailableReason: input.connected
-          ? "Choose an articles/blogs location before building the setup preview."
-          : "Connect GitHub and choose an articles/blogs location before building the setup preview.",
-      };
+  let buildSetup: ArticleSystemConnectionStepState;
+  if (!input.connected || !hasSetupTarget || input.scaffoldStatus === "not_ready") {
+    buildSetup = {
+      id: "buildSetup",
+      status: "locked",
+      defaultExpanded: false,
+      disabled: true,
+      unavailableReason: input.connected
+        ? "Choose an articles route before building the articles scaffold."
+        : "Connect GitHub and choose an articles route before building the articles scaffold.",
+    };
+  } else if (input.scaffoldStatus === "ready" || input.scaffoldStatus === "legacy_ready") {
+    buildSetup = {
+      id: "buildSetup",
+      status: "complete",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason: "",
+    };
+  } else if (input.scaffoldStatus === "failed") {
+    buildSetup = {
+      id: "buildSetup",
+      status: "blocked",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason: "",
+    };
+  } else {
+    buildSetup = {
+      id: "buildSetup",
+      status: "active",
+      defaultExpanded: true,
+      disabled: false,
+      unavailableReason: "",
+    };
+  }
 
   return {
     connect,

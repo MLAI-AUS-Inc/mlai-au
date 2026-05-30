@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
 
-import { articleSystemConnectionStepStates } from "../app/lib/article-system-connection-steps";
+import {
+  articleSystemConnectionStepStates,
+  articleSystemScaffoldActionLabel,
+} from "../app/lib/article-system-connection-steps";
 
 describe("article system connection step states", () => {
   test("renders future steps as collapsed and disabled before a scan starts", () => {
@@ -53,12 +56,62 @@ describe("article system connection step states", () => {
       currentScanRunId: "scan-3",
       inventoryReady: true,
       selectedSurfaceUrl: "/articles",
+      scaffoldStatus: "ready_to_build",
     });
 
     expect(steps.chooseLocation.status).toBe("complete");
     expect(steps.chooseLocation.defaultExpanded).toBe(true);
     expect(steps.buildSetup.status).toBe("active");
     expect(steps.buildSetup.disabled).toBe(false);
+    expect(articleSystemScaffoldActionLabel("ready_to_build")).toBe("Build articles scaffold");
+  });
+
+  test("marks the scaffold step complete when setup is explicitly ready", () => {
+    for (const scaffoldStatus of ["ready", "legacy_ready"] as const) {
+      const steps = articleSystemConnectionStepStates({
+        connected: true,
+        setupTargetReady: true,
+        scaffoldStatus,
+      });
+
+      expect(steps.chooseLocation.status).toBe("complete");
+      expect(steps.buildSetup.status).toBe("complete");
+      expect(steps.buildSetup.defaultExpanded).toBe(true);
+      expect(articleSystemScaffoldActionLabel(scaffoldStatus)).toBe("Continue to topic research");
+    }
+  });
+
+  test("uses the review CTA when a setup preview is ready", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      setupTargetReady: true,
+      scaffoldStatus: "review_ready",
+    });
+
+    expect(steps.buildSetup.status).toBe("active");
+    expect(articleSystemScaffoldActionLabel("review_ready")).toBe("Review setup preview");
+  });
+
+  test("uses the PR CTA when setup publishing is pending", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      setupTargetReady: true,
+      scaffoldStatus: "publish_ready",
+    });
+
+    expect(steps.buildSetup.status).toBe("active");
+    expect(articleSystemScaffoldActionLabel("publish_ready")).toBe("Finish setup PR");
+  });
+
+  test("blocks the scaffold step when setup failed", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      setupTargetReady: true,
+      scaffoldStatus: "failed",
+    });
+
+    expect(steps.buildSetup.status).toBe("blocked");
+    expect(steps.buildSetup.defaultExpanded).toBe(true);
   });
 
   test("blocks downstream steps when the scan failed or went stale", () => {

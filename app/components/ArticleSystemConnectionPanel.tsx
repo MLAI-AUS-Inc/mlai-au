@@ -29,7 +29,9 @@ import ArticleSystemSurfaceSummary, {
 import GitHubMark from "~/components/GitHubMark";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import {
+  articleSystemScaffoldActionLabel,
   articleSystemConnectionStepStates,
+  type ArticleSystemScaffoldStatus,
   type ArticleSystemConnectionStepState,
 } from "~/lib/article-system-connection-steps";
 import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
@@ -67,6 +69,9 @@ const SCAN_TERMINAL_REVALIDATE_STATUSES = new Set([
   "cancelled",
   "canceled",
 ]);
+const SETUP_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "preview_failed", "denied", "cancelled", "canceled"]);
+const SETUP_PUBLISH_STATUSES = new Set(["pr_created", "setup_pr_created", "manual_merge_required"]);
+const SETUP_VERIFYING_STATUSES = new Set(["merged", "merged_verifying", "verifying"]);
 
 function isGithubPublishingReady(bootstrap: VibeMarketingBootstrap) {
   return Boolean(bootstrap.checks.github?.passed && bootstrap.settings.githubRepo);
@@ -156,6 +161,54 @@ function setupRunIdForRun(run: VibeMarketingRunSummary) {
   const setup = articleSystemSetupPayload(run);
   const value = setup.setup_run_id ?? setup.setupRunId;
   return typeof value === "string" && value.trim() ? value.trim() : "";
+}
+
+function articleSystemSetupString(run: VibeMarketingRunSummary | null | undefined, ...keys: string[]) {
+  if (!run) return "";
+  const setup = articleSystemSetupPayload(run);
+  for (const key of keys) {
+    const setupValue = setup[key];
+    if (typeof setupValue === "string" && setupValue.trim()) return setupValue.trim();
+    if (typeof setupValue === "number" && Number.isFinite(setupValue)) return String(setupValue);
+  }
+  return stringResultValue(run, ...keys);
+}
+
+function setupPreviewUrlForRun(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return "";
+  return (
+    run.livePreview?.previewUrl?.trim() ||
+    run.previewUrl?.trim() ||
+    articleSystemSetupString(
+      run,
+      "preview_url",
+      "previewUrl",
+      "live_preview_url",
+      "livePreviewUrl",
+      "fallback_preview_url",
+      "fallbackPreviewUrl",
+    )
+  );
+}
+
+function setupPrUrlForRun(run: VibeMarketingRunSummary | null | undefined) {
+  if (!run) return "";
+  return (
+    run.prUrl?.trim() ||
+    articleSystemSetupString(
+      run,
+      "pr_url",
+      "prUrl",
+      "pull_request_url",
+      "pullRequestUrl",
+      "draft_pr_url",
+      "draftPrUrl",
+    )
+  );
+}
+
+function normalizedStatus(value: string | null | undefined) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function isScanAwaitingSetupApproval(run: VibeMarketingRunSummary | null | undefined) {
@@ -578,6 +631,7 @@ export default function ArticleSystemConnectionPanel({
   const setupRunId = articleSetupState?.setupRunId || (effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "");
   const inventoryScan = isInventoryScan(effectiveScanRun);
   const setupTargetScan = isSetupTargetScan(effectiveScanRun);
+  const effectiveSetupRun = setupTargetScan ? effectiveScanRun : null;
   const inventoryProgressRun = effectiveScanRun && inventoryScan && !setupTargetScan ? effectiveScanRun : null;
   const inventoryReady = Boolean(inventoryProgressRun?.status === "completed" || (canonicalScanComplete && !articleSetupState?.setupRunId));
   const setupTargetReady = Boolean(
@@ -621,16 +675,6 @@ export default function ArticleSystemConnectionPanel({
         : selectedMode === "create"
           ? createNewPath.trim()
           : "";
-  const selectedTitle =
-    selectedMode === "existing"
-      ? selectedCandidate
-        ? candidateLabel(selectedCandidate)
-        : "Selected route"
-      : selectedMode === "manual"
-        ? "Manual article location"
-        : selectedMode === "create"
-          ? "New articles folder"
-          : "";
   const selectedFiles =
     selectedMode === "existing" && selectedCandidate
       ? candidateFiles(selectedCandidate)
@@ -642,6 +686,63 @@ export default function ArticleSystemConnectionPanel({
   const scanLoading = Boolean(currentScanRunId && !effectiveScanRun);
   const savedSurfaceUrl = articleSetupState?.routePath || articleSetupHintValue(articleSetupState);
   const displayedSurfaceUrl = selectedSurfaceUrl || savedSurfaceUrl;
+  const scaffoldCheck = bootstrap.checks.scaffold;
+  const scaffoldExplicitReady = Boolean(
+    scaffoldCheck?.generationReady ||
+      scaffoldCheck?.setupMerged ||
+      scaffoldCheck?.published ||
+      articleSetupState?.generationReady ||
+      articleSetupState?.setupMerged ||
+      articleSetupState?.published,
+  );
+  const setupStatus = normalizedStatus(
+    articleSetupState?.setupRunStatus ||
+      articleSetupState?.setupStatus ||
+      articleSystemSetupString(effectiveSetupRun, "status", "setup_status", "setupStatus") ||
+      (setupRunId ? effectiveSetupRun?.currentStep || effectiveSetupRun?.status : ""),
+  );
+  const setupMergeStatus = normalizedStatus(
+    articleSetupState?.mergeStatus ||
+      articleSystemSetupString(effectiveSetupRun, "merge_status", "mergeStatus", "checks_status", "checksStatus"),
+  );
+  const setupPreviewUrl =
+    articleSetupState?.livePreview?.previewUrl?.trim() ||
+    articleSetupState?.livePreviewUrl?.trim() ||
+    articleSetupState?.previewUrl?.trim() ||
+    setupPreviewUrlForRun(effectiveSetupRun);
+  const setupPrUrl = articleSetupState?.prUrl?.trim() || setupPrUrlForRun(effectiveSetupRun);
+  const scaffoldLegacyReady = Boolean(scaffoldReady && !setupBlocked && !scaffoldExplicitReady);
+  const scaffoldFailed = Boolean(
+    setupRunId &&
+      (articleSetupState?.error ||
+        SETUP_FAILED_STATUSES.has(setupStatus) ||
+        SETUP_FAILED_STATUSES.has(normalizedStatus(effectiveSetupRun?.status))),
+  );
+  const scaffoldVerifying = Boolean(
+    !scaffoldExplicitReady &&
+      (setupMergeStatus === "merged" ||
+        SETUP_VERIFYING_STATUSES.has(setupStatus) ||
+        (setupBlocked && (scaffoldCheck?.rescanRunId || setupStatus === "completed"))),
+  );
+  const scaffoldPublishReady = Boolean(setupPrUrl || SETUP_PUBLISH_STATUSES.has(setupStatus));
+  const scaffoldStatus: ArticleSystemScaffoldStatus = !setupTargetReady && !selectedSurfaceUrl
+    ? "not_ready"
+    : scaffoldExplicitReady
+      ? "ready"
+      : scaffoldFailed
+        ? "failed"
+        : scaffoldVerifying
+          ? "verifying"
+          : scaffoldPublishReady
+            ? "publish_ready"
+            : setupPreviewUrl
+              ? "review_ready"
+              : scaffoldLegacyReady
+                ? "legacy_ready"
+                : setupRunId
+                  ? "building"
+                  : "ready_to_build";
+  const setupRunHref = setupRunId ? `/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}` : "";
   const stepStates = articleSystemConnectionStepStates({
     connected,
     currentScanRunId,
@@ -652,6 +753,7 @@ export default function ArticleSystemConnectionPanel({
     inventoryReady,
     setupTargetReady,
     selectedSurfaceUrl,
+    scaffoldStatus,
   });
 
   useEffect(() => {
@@ -774,6 +876,157 @@ export default function ArticleSystemConnectionPanel({
       setSelectedChoiceId("manual");
     }
   };
+
+  const scaffoldRouteLabel = displayedSurfaceUrl || "the selected route";
+  const scaffoldStatusCopy: Record<ArticleSystemScaffoldStatus, { title: string; body: string; tone: "emerald" | "violet" | "amber" | "red" | "slate" }> = {
+    not_ready: {
+      title: "No articles route selected yet",
+      body: "Choose an articles route before building the scaffold page.",
+      tone: "slate",
+    },
+    ready_to_build: {
+      title: "Articles route is ready for setup",
+      body: `Next: build the articles scaffold preview for ${scaffoldRouteLabel}.`,
+      tone: "violet",
+    },
+    building: {
+      title: "Articles scaffold build started",
+      body: "Open the setup build to watch progress and inspect the preview when it is ready.",
+      tone: "violet",
+    },
+    review_ready: {
+      title: "Articles setup preview is ready",
+      body: "Review the setup preview and approve it before a setup PR is created.",
+      tone: "violet",
+    },
+    publish_ready: {
+      title: "Setup PR needs finishing",
+      body: "Finish the setup PR so the articles scaffold can be merged to the website.",
+      tone: "amber",
+    },
+    verifying: {
+      title: "Verifying merged articles scaffold",
+      body: "The merge is being checked before article generation unlocks.",
+      tone: "emerald",
+    },
+    ready: {
+      title: "Articles scaffold is live",
+      body: `Articles scaffold is live at ${scaffoldRouteLabel} and ready for article generation.`,
+      tone: "emerald",
+    },
+    legacy_ready: {
+      title: "Articles scaffold check passed",
+      body: `Scaffold check passed for ${scaffoldRouteLabel}. No setup PR merge record was found.`,
+      tone: "emerald",
+    },
+    failed: {
+      title: "Articles scaffold setup needs attention",
+      body: articleSetupState?.error || "Open the setup build to review the failure and retry.",
+      tone: "red",
+    },
+  };
+  const scaffoldStatusContent = scaffoldStatusCopy[scaffoldStatus];
+  const scaffoldIconTone = {
+    emerald: "bg-emerald-100 text-emerald-700",
+    violet: "bg-violet-100 text-violet-700",
+    amber: "bg-amber-100 text-amber-700",
+    red: "bg-red-100 text-red-700",
+    slate: "bg-slate-100 text-slate-400",
+  }[scaffoldStatusContent.tone];
+  const scaffoldActionLabel = articleSystemScaffoldActionLabel(scaffoldStatus);
+  const scaffoldActionHelp: Record<ArticleSystemScaffoldStatus, string> = {
+    not_ready: "Choose an articles route in step 3.",
+    ready_to_build: "Build the scaffold preview for review.",
+    building: "Track build progress and open the preview when it is ready.",
+    review_ready: "Inspect the preview and approve it when it looks right.",
+    publish_ready: "Create or merge the setup PR from the setup run.",
+    verifying: "Waiting for the merged scaffold to verify.",
+    ready: "The scaffold is ready. Continue to topic research.",
+    legacy_ready: "The scaffold check has passed. Continue to topic research.",
+    failed: "Open the setup build to review the failure.",
+  };
+  const scaffoldAction =
+    scaffoldStatus === "ready_to_build" ? (
+      selectedSurfaceUrl ? (
+        <Form method="POST" className="w-full sm:w-auto">
+          <input type="hidden" name="intent" value={saveIntent} />
+          <input type="hidden" name="githubRepo" value={selectedRepo} />
+          <input type="hidden" name="sourceScanRunId" value={effectiveScanRun?.runId ?? ""} />
+          <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
+          <button
+            type="submit"
+            disabled={savePending || !selectedSurfaceUrl}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50 sm:w-auto"
+          >
+            {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            {savePending ? "Starting setup..." : scaffoldActionLabel}
+            {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
+          </button>
+        </Form>
+      ) : (
+        <Form method="POST" className="w-full sm:w-auto">
+          <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
+          <button
+            type="submit"
+            name="intent"
+            value="build-article-system-preview"
+            disabled={isSubmitting || !effectiveScanRun?.runId}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50 sm:w-auto"
+          >
+            {scaffoldActionLabel}
+            <ArrowRight className="h-4 w-4" />
+          </button>
+        </Form>
+      )
+    ) : scaffoldStatus === "building" || scaffoldStatus === "review_ready" || scaffoldStatus === "publish_ready" || scaffoldStatus === "failed" ? (
+      setupRunHref ? (
+        <Link
+          to={setupRunHref}
+          className={clsx(
+            "inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-black shadow-sm transition sm:w-auto",
+            scaffoldStatus === "failed"
+              ? "border border-red-200 bg-white text-red-700 hover:bg-red-50"
+              : "bg-violet-600 text-white hover:bg-violet-700",
+          )}
+        >
+          {scaffoldActionLabel}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      ) : (
+        <button
+          type="button"
+          disabled
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500 sm:w-auto"
+        >
+          {scaffoldActionLabel}
+        </button>
+      )
+    ) : scaffoldStatus === "verifying" ? (
+      <button
+        type="button"
+        disabled
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white opacity-60 shadow-sm sm:w-auto"
+      >
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {scaffoldActionLabel}
+      </button>
+    ) : scaffoldStatus === "ready" || scaffoldStatus === "legacy_ready" ? (
+      <Link
+        to="/founder-tools/marketing/create?step=research"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-emerald-700 sm:w-auto"
+      >
+        {scaffoldActionLabel}
+        <ArrowRight className="h-4 w-4" />
+      </Link>
+    ) : (
+      <button
+        type="button"
+        disabled
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-200 px-5 py-3 text-sm font-black text-slate-500 sm:w-auto"
+      >
+        {scaffoldActionLabel}
+      </button>
+    );
 
   return (
     <section className={clsx(framed && "rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6")}>
@@ -980,8 +1233,8 @@ export default function ArticleSystemConnectionPanel({
 
         <FlowStep
           number={3}
-          title="Choose your articles/blogs location"
-          description="Pick the right place from routes we found, paste a path manually, or create a new articles directory."
+          title="Choose articles route"
+          description="Pick the route we found, paste a path manually, or create a new articles directory."
           stepState={stepStates.chooseLocation}
         >
           {setupTargetReady && !inventoryReady ? (
@@ -991,9 +1244,9 @@ export default function ArticleSystemConnectionPanel({
                   <CheckCircle2 className="h-6 w-6" />
                 </span>
                 <div>
-                  <p className="text-sm font-black text-slate-950">Articles/blogs location already selected</p>
+                  <p className="text-sm font-black text-slate-950">Articles route selected</p>
                   <p className="mt-1 text-sm font-semibold text-slate-600">
-                    {displayedSurfaceUrl ? `Public route: ${displayedSurfaceUrl}` : "The saved setup location will be used for article drafts and previews."}
+                    {displayedSurfaceUrl ? `Articles route selected: ${displayedSurfaceUrl}` : "The saved articles route will be used for article drafts and previews."}
                   </p>
                 </div>
               </div>
@@ -1085,151 +1338,50 @@ export default function ArticleSystemConnectionPanel({
           )}
         </FlowStep>
 
-        <FlowStep number={4} title="Articles/blogs location selected" stepState={stepStates.buildSetup}>
-          {setupTargetReady ? (
-            <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex gap-3">
-                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                    <FileText className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-black text-slate-950">Articles/blogs location saved</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-500">
-                      Build the articles/blogs directory page and inspect the setup preview.
-                    </p>
-                    {displayedSurfaceUrl ? <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p> : null}
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center gap-3">
-                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  Content Factory will use this location when preparing article drafts and previews.
-                </p>
-                {setupRunId ? (
-                  <Link
-                    to={`/founder-tools/marketing/runs/${encodeURIComponent(setupRunId)}`}
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-                  >
-                    Open articles setup build
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
+        <FlowStep
+          number={4}
+          title="Build and publish articles scaffold"
+          description="Build the route scaffold, review the preview, and publish it before article generation."
+          stepState={stepStates.buildSetup}
+        >
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <div className="flex gap-3">
+              <span className={clsx("flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl", scaffoldIconTone)}>
+                {scaffoldStatus === "ready" || scaffoldStatus === "legacy_ready" ? (
+                  <CheckCircle2 className="h-6 w-6" />
+                ) : scaffoldStatus === "not_ready" ? (
+                  <LockKeyhole className="h-6 w-6" />
                 ) : (
-                  <Form method="POST">
-                    <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
-                    <button
-                      type="submit"
-                      name="intent"
-                      value="build-article-system-preview"
-                      disabled={isSubmitting || !effectiveScanRun?.runId}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                    >
-                      Build articles/blogs directory page
-                      <ArrowRight className="h-4 w-4" />
-                    </button>
-                  </Form>
+                  <FileText className="h-6 w-6" />
                 )}
-              </div>
-            </div>
-          ) : selectedSurfaceUrl ? (
-            <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex gap-3">
-                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
-                    <FileText className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-black text-slate-950">{selectedTitle}</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-600">Public route: {selectedSurfaceUrl}</p>
-                    {selectedFiles.length ? (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {selectedFiles.slice(0, 4).map((file) => (
-                          <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
-                            {file}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-slate-950">{scaffoldStatusContent.title}</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldStatusContent.body}</p>
+                {displayedSurfaceUrl ? (
+                  <p className="mt-1 break-all text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p>
+                ) : null}
+                {selectedFiles.length && selectedSurfaceUrl ? (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {selectedFiles.slice(0, 4).map((file) => (
+                      <span key={file} className="rounded-md bg-white px-2 py-1 text-xs font-bold text-slate-500">
+                        {file}
+                      </span>
+                    ))}
                   </div>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center gap-3">
-                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-600">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
-                  Good choice. Content Factory will use this location for the articles setup preview.
-                </p>
-                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedChoiceId("");
-                      setManualRouteError("");
-                    }}
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
-                  >
-                    Change selection
-                  </button>
-                  <Form method="POST">
-                    <input type="hidden" name="intent" value={saveIntent} />
-                    <input type="hidden" name="githubRepo" value={selectedRepo} />
-                    <input type="hidden" name="sourceScanRunId" value={effectiveScanRun?.runId ?? ""} />
-                    <input type="hidden" name="articleSurfaceUrl" value={selectedSurfaceUrl} />
-                    <button
-                      type="submit"
-                      disabled={savePending || !selectedSurfaceUrl}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
-                    >
-                      {savePending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                      {savePending ? "Starting setup..." : "Build articles/blogs directory page"}
-                      {!savePending ? <ArrowRight className="h-4 w-4" /> : null}
-                    </button>
-                  </Form>
-                </div>
+                ) : null}
               </div>
             </div>
-          ) : (
-            <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
-              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                <div className="flex gap-3">
-                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-                    <FileText className="h-6 w-6" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-black text-slate-700">No articles/blogs location selected yet</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-500">
-                      Once a location is selected, you can build and inspect the setup preview here.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col justify-center gap-3">
-                <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-slate-500">
-                  <LockKeyhole className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                  Approval and setup actions unlock after a location is chosen.
-                </p>
-                <button
-                  type="button"
-                  disabled
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-200 px-4 py-3 text-sm font-black text-slate-500"
-                >
-                  Build articles/blogs directory page
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
+          </div>
         </FlowStep>
 
-        {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
-          <Link
-            to="/founder-tools/marketing/create?step=research"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-          >
-            Continue
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        ) : null}
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-black text-slate-950">Next action</p>
+            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">{scaffoldActionHelp[scaffoldStatus]}</p>
+          </div>
+          <div className="mt-4 flex-shrink-0 sm:mt-0">{scaffoldAction}</div>
+        </div>
       </div>
     </section>
   );
