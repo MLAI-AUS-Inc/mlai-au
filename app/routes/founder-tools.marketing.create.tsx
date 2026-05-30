@@ -794,6 +794,7 @@ export async function action({ request, context }: Route.ActionArgs) {
           error: "Choose a discovered topic or enter a custom title or keyword before generating an article.",
         };
       }
+      const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -803,9 +804,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
-        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
-        deliveryModeConfirmed: true,
+        deliveryMode: deliveryModeExplicit ? stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap) : undefined,
+        deliveryModeExplicit,
+        deliveryModeConfirmed: deliveryModeExplicit,
         sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
       if (result.runId) return redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
@@ -1417,7 +1418,6 @@ export default function FounderToolsMarketingCreate() {
                 <input type="hidden" name="intent" value="start-article" />
                 <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
                 <input type="hidden" name="sourceDiscoveryRunId" value={latestDiscovery?.runId ?? ""} />
-                {!isCustomArticleSelected ? <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} /> : null}
                 {!isCustomArticleSelected ? <input type="hidden" name="deliveryModeExplicit" value="false" /> : null}
                 <TopicMetricExplainerStrip />
                 <div className="grid gap-3">

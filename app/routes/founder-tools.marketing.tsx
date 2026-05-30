@@ -586,6 +586,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         return { intent, error: "Choose a topic or enter a custom article idea before generating." };
       }
 
+      const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -595,9 +596,9 @@ export async function action({ request, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title ?? "",
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
-        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
-        deliveryModeConfirmed: true,
+        deliveryMode: deliveryModeExplicit ? stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap) : undefined,
+        deliveryModeExplicit,
+        deliveryModeConfirmed: deliveryModeExplicit,
         sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceDiscoveryRunId"),
       });
 
@@ -3564,7 +3565,6 @@ function ReturningTopicPickerPage({
             <input type="hidden" name="intent" value="start-article" />
             <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
-            <input type="hidden" name="deliveryMode" value={effectiveDeliveryMode} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
             <input type="hidden" name="sourceDiscoveryRunId" value={activeTab === "choose" ? selectedTopic?.sourceRunId ?? "" : ""} />
             {activeTab === "choose" ? (

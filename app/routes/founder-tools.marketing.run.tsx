@@ -172,6 +172,22 @@ function isFailedArticlePreview(preview: VibeMarketingRunSummary["livePreview"] 
   return Boolean(preview?.error || LIVE_PREVIEW_FAILURE_STATUSES.has(previewStatus) || LIVE_PREVIEW_FAILURE_STATUSES.has(platformStatus));
 }
 
+function previewUnavailableReason(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  const proof = preview?.proof && typeof preview.proof === "object" ? (preview.proof as Record<string, unknown>) : {};
+  return String(
+    preview?.previewUnavailableReason ??
+      proof.previewUnavailableReason ??
+      proof.preview_unavailable_reason ??
+      "",
+  )
+    .trim()
+    .toLowerCase();
+}
+
+function isContentOnlyNoRenderPreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
+  return previewUnavailableReason(preview) === "content_only_no_render_artifact";
+}
+
 function hasActiveLivePreview(preview: VibeMarketingRunSummary["livePreview"] | null | undefined) {
   const previewStatus = String(preview?.status ?? "").trim().toLowerCase();
   const platformStatus = String(preview?.platformStatus ?? "").trim().toLowerCase();
@@ -252,6 +268,9 @@ function hasPendingArticlePreview(run: VibeMarketingRunSummary) {
     return false;
   }
   const preview = run.livePreview;
+  if (isContentOnlyNoRenderPreview(preview)) {
+    return false;
+  }
   if (isFailedArticlePreview(preview)) {
     return false;
   }
@@ -479,7 +498,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (result.runId) {
         throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
       }
-    } else if (["approve", "deny", "resume", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
+    } else if (["approve", "deny", "resume", "restart", "promote-bundle", "publish-pr", "merge-publish-pr", "merge-setup-pr", "refresh-setup-pr-status"].includes(intent)) {
       const sourceRunId = stringFromForm(formData, "sourceRunId");
       const controlRunId = intent === "promote-bundle" || intent === "publish-pr" ? sourceRunId || runId : runId;
       const result = await controlVibeMarketingRun(env, request, controlRunId, intent, sourceRunId ? { sourceRunId } : {});
@@ -512,6 +531,7 @@ export async function action({ request, params, context }: Route.ActionArgs) {
       if (!topic && !targetKeyword) {
         return { intent, error: "Choose a discovered topic or enter a custom title or keyword before generating an article." };
       }
+      const deliveryModeExplicit = stringFromForm(formData, "deliveryModeExplicit") === "true";
       const result = await startVibeMarketingArticle(env, request, {
         clientRequestId: stringFromForm(formData, "clientRequestId"),
         client_request_id: stringFromForm(formData, "clientRequestId"),
@@ -521,9 +541,9 @@ export async function action({ request, params, context }: Route.ActionArgs) {
         selectedTitle: selectedCandidate?.title || candidateTitle,
         topicCandidateId,
         context: stringFromForm(formData, "articleContext"),
-        deliveryMode: stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap),
-        deliveryModeExplicit: stringFromForm(formData, "deliveryModeExplicit") === "true",
-        deliveryModeConfirmed: true,
+        deliveryMode: deliveryModeExplicit ? stringFromForm(formData, "deliveryMode") || effectiveArticleDeliveryMode(bootstrap) : undefined,
+        deliveryModeExplicit,
+        deliveryModeConfirmed: deliveryModeExplicit,
         sourceRunId: isCustomTopic ? "" : selectedCandidate?.sourceRunId || stringFromForm(formData, "sourceRunId") || runId,
       });
       if (result.runId) throw redirect(`/founder-tools/marketing/runs/${encodeURIComponent(result.runId)}`);
@@ -2232,6 +2252,7 @@ function ArticlePreviewEmptyState({
   const hasManifest = Boolean(run.componentManifest);
   const hostedPreview = preview?.previewMode === "platform_deployment";
   const failed = isFailedArticlePreview(preview);
+  const contentOnlyNoRender = isContentOnlyNoRenderPreview(preview);
   const retryablePreviewCodes = new Set([
     "clone_auth_failed",
     "dev_server_startup_failed",
@@ -2246,15 +2267,18 @@ function ArticlePreviewEmptyState({
     "unsupported_runtime_for_v1",
   ]);
   const nativeRetryable = typeof nativePreviewFailure.retryable === "boolean" ? nativePreviewFailure.retryable : undefined;
-  const retryable = preview?.retryable !== false && nativeRetryable !== false ? true : retryablePreviewCodes.has(previewErrorCode);
+  const retryable = !contentOnlyNoRender && (preview?.retryable !== false && nativeRetryable !== false ? true : retryablePreviewCodes.has(previewErrorCode));
   const statusLabel = previewStatus ? previewStatus.replace(/_/g, " ") : "not started";
   const failedPhase = String(preview?.failedPhase || nativePreviewFailure.failedPhase || nativePreviewFailure.failed_phase || "").trim();
   const failedCommand = String(
     preview?.failedCommand || nativePreviewFailure.failedCommand || nativePreviewFailure.failed_command || "",
   ).trim();
   const displayError =
-    String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
+    contentOnlyNoRender
+      ? "Content-only article runs package markdown and metadata but do not produce repo file overrides for component live preview."
+      : String(preview?.error || nativeError || "The article preview could not be prepared. Retry the preview when the generator is available.").trim();
   const retryPreviewPending = isActionPending?.("start-live-preview") ?? isSubmitting;
+  const restartPreviewPending = isActionPending?.("restart") ?? isSubmitting;
   const diagnosticRows = [
     failedPhase ? ["Phase", failedPhase] : null,
     failedCommand ? ["Command", failedCommand] : null,
@@ -2270,7 +2294,7 @@ function ArticlePreviewEmptyState({
       "",
   ).trim();
 
-  if (failed) {
+  if (failed || contentOnlyNoRender) {
     return (
       <section className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -2307,7 +2331,20 @@ function ArticlePreviewEmptyState({
               ) : null}
             </div>
           </div>
-          {retryable ? (
+          {contentOnlyNoRender ? (
+            <Form method="POST">
+              <button
+                type="submit"
+                name="intent"
+                value="restart"
+                disabled={restartPreviewPending}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-black text-red-800 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+              >
+                {restartPreviewPending ? <ArrowPathIcon className="h-4 w-4 animate-spin" /> : <PlayIcon className="h-4 w-4" />}
+                {restartPreviewPending ? "Regenerating..." : "Regenerate with exact preview"}
+              </button>
+            </Form>
+          ) : retryable ? (
             <Form method="POST">
               <input type="hidden" name="force" value="true" />
               <button
@@ -3892,7 +3929,6 @@ export default function FounderToolsMarketingRun() {
                   <input type="hidden" name="candidateTitle" value={selectedDiscoveryCandidate.title} />
                   <input type="hidden" name="candidateKeyword" value={selectedDiscoveryCandidate.keyword} />
                   <input type="hidden" name="sourceRunId" value={selectedDiscoveryCandidate.sourceRunId ?? run.runId} />
-                  <input type="hidden" name="deliveryMode" value={effectiveArticleDeliveryMode(bootstrap)} />
                   <input type="hidden" name="deliveryModeExplicit" value="false" />
                   <div className="grid gap-3">
                     {discoveryCandidates.slice(0, 5).map((candidate, index) => (
