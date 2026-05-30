@@ -1,0 +1,1533 @@
+{
+  "input_format": "content_bundle_v1",
+  "title": "How Do AI Detectors Work?",
+  "slug": "how-do-ai-detectors-work",
+  "category": "featured",
+  "target_keyword": "how do ai detectors work",
+  "meta_title": "How Do AI Detectors Work",
+  "meta_description": "How do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.",
+  "article_markdown": "# How Do AI Detectors Work?\n\nHow do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.\n\n![Teacher reviewing AI detector results with a student on a laptop in a candid close-up scene](https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-896dcfa8-844c-4e16-a455-f35c35940c03.jpg?alt=media&token=881477bf-b6b4-42a7-a871-983b3d942019)\n*How do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.*\n\n## Quick Summary\n\n- **How do AI detectors even detect AI?:** They compare writing patterns with examples often associated with AI-generated and human-written text. Signals can include style, sentence structure, word choice, repetition, and statistical regularities.\n- **How to trick AI content detectors?:** Avoidance tactics are unreliable and can create compliance, quality, or trust problems. A better approach is clear disclosure, human review, fact-checking, and responsible use of AI tools.\n- **How to 100% humanize AI text?:** Editing can change detector signals, but no rewrite can guarantee a perfect human score across tools. The responsible goal is accurate, transparent, high-quality writing that follows the relevant policy.\n\n## AI detectors estimate patterns; they do not prove authorship\n\nAI detectors work by analysing text for patterns that may suggest AI involvement. They look at signals such as writing style, sentence structure, word choice, and statistical patterns, then estimate whether the text is more likely to be AI-generated or human-written.\n\nThat estimate is not proof of authorship. A detector score should be treated as a signal, not a verdict. In education, publishing, content moderation, and professional settings, the safer approach is to use AI detection as one input in a broader review process, alongside context, human judgement, and clear policy.\n\n## What AI detectors look for in text\n\nAI detectors do not usually look for one magic clue. They compare a submitted passage with patterns often seen in human-written text and machine-generated text. The result is an estimate, not proof. A detector may examine writing style, structure, and repeated patterns, then decide whether the text looks more like examples it has seen before.\n\nA very smooth or predictable passage may attract more scrutiny because some AI systems produce text with regular phrasing and steady structure. Human writing can be polished, repetitive, or formulaic, while AI-assisted writing can be edited until it looks less machine-like. That is why no single trait is enough to identify AI use on its own.\n\n![Laptop text draft beside notebook notes, suggesting AI detector patterns in writing analysis](https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-342ebb45-0309-449c-b375-7a181881b170.jpg?alt=media&token=733c3377-b72f-4c0d-b7d4-6a48af2645e8)\n*What AI detectors look for in text*\n\n## The main methods behind AI detection\n\nAI detectors usually compare a new passage with patterns learned from known human-written and AI-generated text. A machine learning classifier can be trained on many examples, then used to judge whether a fresh passage looks closer to one group or the other. It does not \u201cknow\u201d who wrote the text. It looks for signals in style, structure, and patterns.\n\nDetectors can assess whether word choices and sentence patterns look unusually predictable or machine-like. If a passage uses very even sentence structures, repeated phrasing, or patterns that resemble generated text, the detector may raise its AI-likelihood score.\n\nFor example, a detector may compare whether the writing keeps the same style throughout, or whether its sentence patterns resemble examples from AI-generated datasets.\n\n## Why AI detectors can be wrong\n\nAI detectors estimate likelihood. Sources such as Grammarly and Coursera describe these tools as systems that analyse writing style, structure, and patterns to judge whether text may be AI-generated.\n\nFalse positives happen when human writing is flagged as AI-generated. A concise, polished, or highly structured piece of writing may look similar to patterns the detector associates with AI. The University of San Diego Legal Research Center notes that false positives can have serious consequences when they lead to accusations of misconduct.\n\nFalse negatives also happen. A detector may miss AI-generated text if the writing has been edited, mixed with human writing, or written in a style that does not match the examples the detector has learned from. Performance can also vary by the detector, the length of the text, the subject area, the language, and how recently the tool has been updated.\n\n![Messy desk with laptop showing AI writing analysis, notes, and coffee in a candid workspace setting](https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f3e918f9-c8fc-4ae1-ba4b-e04648a22aa4.jpg?alt=media&token=bb664ef1-32cf-4b47-9751-d0666d6a8b0c)\n*Why AI detectors can be wrong*\n\n## How to use AI detector results responsibly\n\nUse an AI detector report as a reason to review a piece of work, not as automatic proof that someone broke a rule. The priority sources describe AI detectors as tools used in education, publishing, professional settings, and integrity checks, while also noting that effectiveness and limitations matter. That means the score should sit beside the text itself, the purpose of the work, and the standards that apply in that setting.\n\nFirst, read the flagged passages and the detector result together, looking for whether the concern is about originality, accuracy, missing sources, or writing style.\n\nThe last step is to document the decision. It also helps teams and educators improve their AI policies over time, because they can see where detector results were useful and where human review carried more weight.\n\n![Close-up of hands reviewing an AI detector report beside highlighted student writing](https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2ca34d81-dc80-4889-8bdb-a32f7188fd19.jpg?alt=media&token=b60921a5-f8e8-4382-a485-996d437e7834)\n*How to use AI detector results responsibly*\n\n## Common questions about AI detector scores\n\nAI detectors detect possible AI writing by comparing patterns in a text with patterns often seen in AI-generated and human-written content. They may look at writing style, sentence structure, word use, and other signals, then estimate the likelihood that AI was involved. This is why a detector score is usually a probability-style signal, not a final judgment.\n\nA score such as 40% AI should be treated with care. Sources on AI detection consistently describe limits in reliability, so a score should not be used alone to accuse a student, employee, writer, or applicant. It is better used as one prompt for a closer review.\n\nEditing can change detector signals, but the responsible goal is not to make AI text look \u201c100% human.\u201d The better goal is accurate, transparent, high-quality writing. If AI helped with grammar, structure, drafting, or idea generation, the right response depends on the policy of the school, publisher, workplace, or platform.\n\nPeople often ask how to trick AI content detectors, but evasion advice is not useful or reliable. Detection systems vary, and avoidance can create new problems if the final text becomes misleading, low quality, or non-compliant. Stronger policies focus on responsible AI use, clear disclosure rules, human review, and verification of facts, citations, and claims.\n\n## Use detectors as evidence, not authority\n\nAI detectors can help people ask better questions about a piece of work. They can point to patterns that may be associated with AI-generated text, and they can support integrity checks in education, publishing, business, and professional settings.\n\nA practical next step is to write a simple use policy before relying on any detector. State when the tool may be used, who reviews the result, what other evidence is considered, and how the person affected can respond. It also fits the way good AI practice should work: learn the tools, understand their limits, and make decisions with human context.\n\n![Teachers reviewing AI detector results together during an integrity check in a candid classroom scene](https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-34a4107e-cfe5-413a-84ac-25f67dd23c04.jpg?alt=media&token=8a1e5dbc-19d4-4693-94bd-38256ae111dc)\n*Use detectors as evidence, not authority*\n\n## FAQ\n\n### Can AI detectors prove who wrote a text?\n\nNo. AI detectors estimate whether text has patterns associated with AI-generated writing. Their scores should be treated as signals for review, not proof of authorship or misconduct.\n\n### Why do AI detectors give false positives?\n\nFalse positives can happen when human writing is concise, polished, repetitive, or highly structured. Those traits may resemble patterns a detector associates with AI-generated text.\n\n### Why do AI detectors miss some AI-written text?\n\nFalse negatives can happen when AI-generated text has been edited, blended with human writing, or written in a style outside the detector\u2019s training examples.\n\n### Is 40% AI detection bad?\n\nA 40% score should be treated as a risk signal, not a final judgement. Its meaning depends on the tool, the text length, the context, and the review process used alongside it.\n\n### How should schools or teams use AI detector results?\n\nThey should review the flagged text, compare it with available process evidence, ask for context where appropriate, and document the decision. Detector output should not be the only evidence.\n\n## Next Step\n\n**Build clearer AI use policies**\n\nUse AI detectors as one part of a wider review process. Make expectations clear, document decisions, and focus on responsible AI use rather than scores alone.\n\n[Explore practical AI learning](/practical-ai-learning-australia)\n\n## References\n\n- [How Do AI Detectors Work? Key Methods and Limitations | Grammarly](https://www.grammarly.com/blog/ai/how-do-ai-detectors-work/)\n- [AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan](https://youscan.io/blog/how-do-ai-detectors-work/)\n- [How Do AI Detectors Work? Techniques, Limitations & More](https://gptzero.me/news/how-ai-detectors-work/)\n- [How Reliable Are AI Detectors For Academic Text? - The Effortless Academic](https://effortlessacademic.com/how-reliable-are-ai-detectors/)\n- [AI Content Detectors: Top Tools for Businesses - Shopify Australia](https://www.shopify.com/au/blog/ai-content-detectors)\n- [How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre](https://www.admscentre.org.au/how-do-ai-detection-tools-actually-work-and-are-they-effective/)\n- [How does AI detection work? | Pangram Labs](https://www.pangram.com/blog/how-does-ai-detection-work)\n- [The Problems with AI Detectors: False Positives and False Negatives - Generative AI Detection Tools - Guides at University of San Diego Legal Research Center](https://lawlibguides.sandiego.edu/c.php?g=1443311&p=10721367)\n- [How Do AI Detectors Work? Understanding Methods and Accuracy | Paperpal](https://paperpal.com/blog/academic-writing-guides/how-do-ai-detectors-work)\n",
+  "article_json": {
+    "title": "How Do AI Detectors Work?",
+    "meta_title": "How Do AI Detectors Work",
+    "meta_description": "How do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.",
+    "slug": "how-do-ai-detectors-work",
+    "category": "featured",
+    "target_keyword": "how do ai detectors work",
+    "published_date": "2026-05-30",
+    "modified_date": "2026-05-30",
+    "summary_items": [
+      {
+        "label": "How do AI detectors even detect AI?",
+        "description": "They compare writing patterns with examples often associated with AI-generated and human-written text. Signals can include style, sentence structure, word choice, repetition, and statistical regularities."
+      },
+      {
+        "label": "How to trick AI content detectors?",
+        "description": "Avoidance tactics are unreliable and can create compliance, quality, or trust problems. A better approach is clear disclosure, human review, fact-checking, and responsible use of AI tools."
+      },
+      {
+        "label": "How to 100% humanize AI text?",
+        "description": "Editing can change detector signals, but no rewrite can guarantee a perfect human score across tools. The responsible goal is accurate, transparent, high-quality writing that follows the relevant policy."
+      }
+    ],
+    "summary_question_candidates": [
+      {
+        "question": "How do AI detectors even detect AI?",
+        "source": "paa",
+        "google_volume": 0,
+        "ai_volume": 0,
+        "depth": 1,
+        "relevance_score": 0.9,
+        "ranking_reasons": [
+          "source=paa",
+          "google_volume=0",
+          "relevance=0.90",
+          "depth=1",
+          "ai_volume=0"
+        ],
+        "answer_snippet": ""
+      },
+      {
+        "question": "How to trick AI content detectors?",
+        "source": "paa",
+        "google_volume": 0,
+        "ai_volume": 0,
+        "depth": 1,
+        "relevance_score": 0.65,
+        "ranking_reasons": [
+          "source=paa",
+          "google_volume=0",
+          "relevance=0.65",
+          "depth=1",
+          "ai_volume=0"
+        ],
+        "answer_snippet": ""
+      },
+      {
+        "question": "How to 100% humanize AI text?",
+        "source": "paa",
+        "google_volume": 0,
+        "ai_volume": 63,
+        "depth": 1,
+        "relevance_score": 0.4,
+        "ranking_reasons": [
+          "source=paa",
+          "google_volume=0",
+          "relevance=0.40",
+          "depth=1",
+          "ai_volume=63"
+        ],
+        "answer_snippet": ""
+      },
+      {
+        "question": "Is 40% AI detection bad?",
+        "source": "paa",
+        "google_volume": 0,
+        "ai_volume": 43,
+        "depth": 1,
+        "relevance_score": 0.4,
+        "ranking_reasons": [
+          "source=paa",
+          "google_volume=0",
+          "relevance=0.40",
+          "depth=1",
+          "ai_volume=43"
+        ],
+        "answer_snippet": ""
+      }
+    ],
+    "faq_items": [
+      {
+        "question": "Can AI detectors prove who wrote a text?",
+        "answer": "No. AI detectors estimate whether text has patterns associated with AI-generated writing. Their scores should be treated as signals for review, not proof of authorship or misconduct."
+      },
+      {
+        "question": "Why do AI detectors give false positives?",
+        "answer": "False positives can happen when human writing is concise, polished, repetitive, or highly structured. Those traits may resemble patterns a detector associates with AI-generated text."
+      },
+      {
+        "question": "Why do AI detectors miss some AI-written text?",
+        "answer": "False negatives can happen when AI-generated text has been edited, blended with human writing, or written in a style outside the detector\u2019s training examples."
+      },
+      {
+        "question": "Is 40% AI detection bad?",
+        "answer": "A 40% score should be treated as a risk signal, not a final judgement. Its meaning depends on the tool, the text length, the context, and the review process used alongside it."
+      },
+      {
+        "question": "How should schools or teams use AI detector results?",
+        "answer": "They should review the flagged text, compare it with available process evidence, ask for context where appropriate, and document the decision. Detector output should not be the only evidence."
+      }
+    ],
+    "sections": [
+      {
+        "section_id": "intro-ai-detectors-answer",
+        "heading": "AI detectors estimate patterns; they do not prove authorship",
+        "section_type": "intro",
+        "paragraphs": [
+          "AI detectors work by analysing text for patterns that may suggest AI involvement. They look at signals such as writing style, sentence structure, word choice, and statistical patterns, then estimate whether the text is more likely to be AI-generated or human-written.",
+          "That estimate is not proof of authorship. A detector score should be treated as a signal, not a verdict. In education, publishing, content moderation, and professional settings, the safer approach is to use AI detection as one input in a broader review process, alongside context, human judgement, and clear policy."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      },
+      {
+        "section_id": "what-ai-detectors-check",
+        "heading": "What AI detectors look for in text",
+        "section_type": "prose",
+        "paragraphs": [
+          "AI detectors do not usually look for one magic clue. They compare a submitted passage with patterns often seen in human-written text and machine-generated text. The result is an estimate, not proof. A detector may examine writing style, structure, and repeated patterns, then decide whether the text looks more like examples it has seen before.",
+          "A very smooth or predictable passage may attract more scrutiny because some AI systems produce text with regular phrasing and steady structure. Human writing can be polished, repetitive, or formulaic, while AI-assisted writing can be edited until it looks less machine-like. That is why no single trait is enough to identify AI use on its own."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      },
+      {
+        "section_id": "core-detection-methods",
+        "heading": "The main methods behind AI detection",
+        "section_type": "prose",
+        "paragraphs": [
+          "AI detectors usually compare a new passage with patterns learned from known human-written and AI-generated text. A machine learning classifier can be trained on many examples, then used to judge whether a fresh passage looks closer to one group or the other. It does not \u201cknow\u201d who wrote the text. It looks for signals in style, structure, and patterns.",
+          "Detectors can assess whether word choices and sentence patterns look unusually predictable or machine-like. If a passage uses very even sentence structures, repeated phrasing, or patterns that resemble generated text, the detector may raise its AI-likelihood score.",
+          "For example, a detector may compare whether the writing keeps the same style throughout, or whether its sentence patterns resemble examples from AI-generated datasets."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": [
+          {
+            "heading": "Why detectors return likelihoods, not certainty",
+            "paragraphs": [
+              "These methods produce estimates, not certainty. Most detectors return a score or classification that reflects the likelihood of AI involvement.",
+              "There are good reasons for caution. A human can write in a plain, predictable style. An AI-assisted draft can also be edited by a person until it looks less machine-like. The best use of a detector is to combine its result with context, such as drafting history, writing samples, and the purpose of the review."
+            ],
+            "bullets": []
+          }
+        ]
+      },
+      {
+        "section_id": "why-detectors-get-it-wrong",
+        "heading": "Why AI detectors can be wrong",
+        "section_type": "prose",
+        "paragraphs": [
+          "AI detectors estimate likelihood. Sources such as Grammarly and Coursera describe these tools as systems that analyse writing style, structure, and patterns to judge whether text may be AI-generated.",
+          "False positives happen when human writing is flagged as AI-generated. A concise, polished, or highly structured piece of writing may look similar to patterns the detector associates with AI. The University of San Diego Legal Research Center notes that false positives can have serious consequences when they lead to accusations of misconduct.",
+          "False negatives also happen. A detector may miss AI-generated text if the writing has been edited, mixed with human writing, or written in a style that does not match the examples the detector has learned from. Performance can also vary by the detector, the length of the text, the subject area, the language, and how recently the tool has been updated."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      },
+      {
+        "section_id": "how-to-use-results-responsibly",
+        "heading": "How to use AI detector results responsibly",
+        "section_type": "prose",
+        "paragraphs": [
+          "Use an AI detector report as a reason to review a piece of work, not as automatic proof that someone broke a rule. The priority sources describe AI detectors as tools used in education, publishing, professional settings, and integrity checks, while also noting that effectiveness and limitations matter. That means the score should sit beside the text itself, the purpose of the work, and the standards that apply in that setting.",
+          "First, read the flagged passages and the detector result together, looking for whether the concern is about originality, accuracy, missing sources, or writing style.",
+          "The last step is to document the decision. It also helps teams and educators improve their AI policies over time, because they can see where detector results were useful and where human review carried more weight."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      },
+      {
+        "section_id": "common-questions",
+        "heading": "Common questions about AI detector scores",
+        "section_type": "prose",
+        "paragraphs": [
+          "AI detectors detect possible AI writing by comparing patterns in a text with patterns often seen in AI-generated and human-written content. They may look at writing style, sentence structure, word use, and other signals, then estimate the likelihood that AI was involved. This is why a detector score is usually a probability-style signal, not a final judgment.",
+          "A score such as 40% AI should be treated with care. Sources on AI detection consistently describe limits in reliability, so a score should not be used alone to accuse a student, employee, writer, or applicant. It is better used as one prompt for a closer review.",
+          "Editing can change detector signals, but the responsible goal is not to make AI text look \u201c100% human.\u201d The better goal is accurate, transparent, high-quality writing. If AI helped with grammar, structure, drafting, or idea generation, the right response depends on the policy of the school, publisher, workplace, or platform.",
+          "People often ask how to trick AI content detectors, but evasion advice is not useful or reliable. Detection systems vary, and avoidance can create new problems if the final text becomes misleading, low quality, or non-compliant. Stronger policies focus on responsible AI use, clear disclosure rules, human review, and verification of facts, citations, and claims."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      },
+      {
+        "section_id": "conclusion-next-step",
+        "heading": "Use detectors as evidence, not authority",
+        "section_type": "conclusion",
+        "paragraphs": [
+          "AI detectors can help people ask better questions about a piece of work. They can point to patterns that may be associated with AI-generated text, and they can support integrity checks in education, publishing, business, and professional settings.",
+          "A practical next step is to write a simple use policy before relying on any detector. State when the tool may be used, who reviews the result, what other evidence is considered, and how the person affected can respond. It also fits the way good AI practice should work: learn the tools, understand their limits, and make decisions with human context."
+        ],
+        "bullets": [],
+        "recommended_component_id": null,
+        "callout": null,
+        "image": null,
+        "internal_links": [],
+        "subsections": []
+      }
+    ],
+    "cta": {
+      "title": "Build clearer AI use policies",
+      "body": "Use AI detectors as one part of a wider review process. Make expectations clear, document decisions, and focus on responsible AI use rather than scores alone.",
+      "button_text": "Explore practical AI learning",
+      "button_href": "/practical-ai-learning-australia"
+    },
+    "notes": [
+      "Grounded sections support a featured article shell with seven sections, at least three prose sections, one subsection, and more than ten total paragraphs. Required component placement, references, images, quote blocks, step list, structured data, and internal link implementation should be verified in the page template.",
+      "Selected summary questions: How do AI detectors even detect AI? (paa, vol=0, ai=0); How to trick AI content detectors? (paa, vol=0, ai=0); How to 100% humanize AI text? (paa, vol=0, ai=63)",
+      "Rendered with the mlai_au_featured article profile for a full featured-article shell."
+    ],
+    "claim_bindings": [
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors work by analysing text for patterns that may suggest AI involvement.",
+        "section_id": "intro-ai-detectors-answer",
+        "location": "sections.intro-ai-detectors-answer.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "They look at signals such as writing style, sentence structure, word choice, and statistical patterns, then estimate whether the text is more likely to be AI-generated or human-written.",
+        "section_id": "intro-ai-detectors-answer",
+        "location": "sections.intro-ai-detectors-answer.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "That estimate is not proof of authorship.",
+        "section_id": "intro-ai-detectors-answer",
+        "location": "sections.intro-ai-detectors-answer.paragraphs[1][0]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "A detector score should be treated as a signal, not a verdict.",
+        "section_id": "intro-ai-detectors-answer",
+        "location": "sections.intro-ai-detectors-answer.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-05"
+        ],
+        "support_excerpt": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan\nHow do AI detectors work? Learn the tech behind perplexity, burstiness, classifiers, and watermarking \u2014 plus why these tools get it wrong.\nHow Do AI Detectors Work in 2026? The Tech Behind AI-Generated C",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "In education, publishing, content moderation, and professional settings, the safer approach is to use AI detection as one input in a broader review process, alongside context, human judgement, and clear policy.",
+        "section_id": "intro-ai-detectors-answer",
+        "location": "sections.intro-ai-detectors-answer.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors do not usually look for one magic clue.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "They compare a submitted passage with patterns often seen in human-written text and machine-generated text.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "The result is an estimate, not proof.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[0][2]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "A detector may examine writing style, structure, and repeated patterns, then decide whether the text looks more like examples it has seen before.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[0][3]",
+        "required": true,
+        "source_ids": [
+          "source-05"
+        ],
+        "support_excerpt": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan\nHow do AI detectors work? Learn the tech behind perplexity, burstiness, classifiers, and watermarking \u2014 plus why these tools get it wrong.\nHow Do AI Detectors Work in 2026? The Tech Behind AI-Generated C",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "Common signals include word choice, sentence structure, consistency, repetition, and broader style.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "A very smooth or predictable passage may attract more scrutiny because some AI systems produce text with regular phrasing and steady structure.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "But the reverse can also happen.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-008",
+        "claim_text": "Human writing can be polished, repetitive, or formulaic, while AI-assisted writing can be edited until it looks less machine-like.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[1][3]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-009",
+        "claim_text": "That is why no single trait is enough to identify AI use on its own.",
+        "section_id": "what-ai-detectors-check",
+        "location": "sections.what-ai-detectors-check.paragraphs[1][4]",
+        "required": true,
+        "source_ids": [
+          "source-07"
+        ],
+        "support_excerpt": "AI Content Detectors: Top Tools for Businesses - Shopify Australia\nAI content detectors scan text to identify linguistic patterns associated with AI-generated text and help you protect your brand\u2019s authenticity.\nAI Content Detectors: Top Tools for Businesses What are AI content d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors usually compare a new passage with patterns learned from known human-written and AI-generated text.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "A machine learning classifier can be trained on many examples, then used to judge whether a fresh passage looks closer to one group or the other.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-02"
+        ],
+        "support_excerpt": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre\nAs nearly half of all Australians say they have recently used artificial intelligence (AI) tools, knowing when and how they\u2019re being used is becoming more important.\nHow do \u2018AI detection\u2019 tools actu",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "It does not \u201cknow\u201d who wrote the text.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[0][2]",
+        "required": true,
+        "source_ids": [
+          "source-08"
+        ],
+        "support_excerpt": "How does AI detection work? | Pangram Labs\nAI detectors use machine learning to determine AI-generated content by identifying patterns, structure, and word choices. Old detectors relied on burstiness and perplexity, but these are unreliable. New detectors work much better and rel",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "It looks for signals in style, structure, and patterns.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[0][3]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "Statistical analysis is another common method.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "Detectors can assess whether word choices and sentence patterns look unusually predictable or machine-like.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-08"
+        ],
+        "support_excerpt": "How does AI detection work? | Pangram Labs\nAI detectors use machine learning to determine AI-generated content by identifying patterns, structure, and word choices. Old detectors relied on burstiness and perplexity, but these are unreliable. New detectors work much better and rel",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "If a passage uses very even sentence structures, repeated phrasing, or patterns that resemble generated text, the detector may raise its AI-likelihood score.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-008",
+        "claim_text": "Stylometric analysis looks at the feel of the writing across the whole piece.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[2][0]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-009",
+        "claim_text": "This can include tone, rhythm, structure, and consistency.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[2][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-010",
+        "claim_text": "For example, a detector may compare whether the writing keeps the same style throughout, or whether its sentence patterns resemble examples from AI-generated datasets.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.paragraphs[2][2]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-011",
+        "claim_text": "These methods produce estimates, not certainty.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-012",
+        "claim_text": "Most detectors return a score or classification that reflects the likelihood of AI involvement.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-013",
+        "claim_text": "That is why a result should be read as a signal for review, not as final proof of authorship.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[0][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-014",
+        "claim_text": "There are good reasons for caution.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[1][0]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-015",
+        "claim_text": "A human can write in a plain, predictable style.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-016",
+        "claim_text": "An AI-assisted draft can also be edited by a person until it looks less machine-like.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[1][2]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-017",
+        "claim_text": "The best use of a detector is to combine its result with context, such as drafting history, writing samples, and the purpose of the review.",
+        "section_id": "core-detection-methods",
+        "location": "sections.core-detection-methods.subsections[0].paragraphs[1][3]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors estimate likelihood.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[0][0]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "They do not prove authorship.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "Sources such as Grammarly and Coursera describe these tools as systems that analyse writing style, structure, and patterns to judge whether text may be AI-generated.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[0][2]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "That means their output is a signal based on patterns, not a final decision about who wrote the text.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[0][3]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "False positives happen when human writing is flagged as AI-generated.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [
+          "source-12"
+        ],
+        "support_excerpt": "The Problems with AI Detectors: False Positives and False Negatives - Generative AI Detection Tools - Guides at University of San Diego Legal Research Center\n4 Dec 2025 \u2014 Multiple studies have shown that AI detectors were neither accurate nor reliable, producing a high number of ",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "This can matter in schools, publishing, hiring, or any setting where the result affects trust.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "A concise, polished, or highly structured piece of writing may look similar to patterns the detector associates with AI.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-008",
+        "claim_text": "The University of San Diego Legal Research Center notes that false positives can have serious consequences when they lead to accusations of misconduct.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[1][3]",
+        "required": true,
+        "source_ids": [
+          "source-12"
+        ],
+        "support_excerpt": "The Problems with AI Detectors: False Positives and False Negatives - Generative AI Detection Tools - Guides at University of San Diego Legal Research Center\n4 Dec 2025 \u2014 Multiple studies have shown that AI detectors were neither accurate nor reliable, producing a high number of ",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-009",
+        "claim_text": "False negatives also happen.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[2][0]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-010",
+        "claim_text": "A detector may miss AI-generated text if the writing has been edited, mixed with human writing, or written in a style that does not match the examples the detector has learned from.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[2][1]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-011",
+        "claim_text": "Performance can also vary by the detector, the length of the text, the subject area, the language, and how recently the tool has been updated.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[2][2]",
+        "required": true,
+        "source_ids": [
+          "source-02"
+        ],
+        "support_excerpt": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre\nAs nearly half of all Australians say they have recently used artificial intelligence (AI) tools, knowing when and how they\u2019re being used is becoming more important.\nHow do \u2018AI detection\u2019 tools actu",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-012",
+        "claim_text": "For this reason, a score such as 40% or 80% should be read as a risk indicator.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[3][0]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-013",
+        "claim_text": "It should prompt a closer review, not end the discussion.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[3][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-014",
+        "claim_text": "In real decisions, the score should be considered alongside drafts, notes, references, version history, and a conversation with the writer where appropriate.",
+        "section_id": "why-detectors-get-it-wrong",
+        "location": "sections.why-detectors-get-it-wrong.paragraphs[3][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "Use an AI detector report as a reason to review a piece of work, not as automatic proof that someone broke a rule.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "The priority sources describe AI detectors as tools used in education, publishing, professional settings, and integrity checks, while also noting that effectiveness and limitations matter.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "That means the score should sit beside the text itself, the purpose of the work, and the standards that apply in that setting.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[0][2]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "A responsible review can follow a simple flow.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "First, read the flagged passages and the detector result together, looking for whether the concern is about originality, accuracy, missing sources, or writing style.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "Next, compare the work with available context, such as known writing samples, drafts, source checks, version history, or editorial notes.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "Then ask the author for context before making a decision.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][3]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-008",
+        "claim_text": "In learning settings, this should be a conversation about process and transparency, not a public attempt to catch or shame someone.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][4]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-009",
+        "claim_text": "In professional settings, the final decision should also consider quality, citation accuracy, and whether the document is fit for use.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[1][5]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-010",
+        "claim_text": "The last step is to document the decision.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[2][0]",
+        "required": false,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-011",
+        "claim_text": "Record what the detector reported, what other evidence was reviewed, what the author said, and why the final outcome was chosen.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[2][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-012",
+        "claim_text": "This protects the reviewer as well as the writer.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[2][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-013",
+        "claim_text": "It also helps teams and educators improve their AI policies over time, because they can see where detector results were useful and where human review carried more weight.",
+        "section_id": "how-to-use-results-responsibly",
+        "location": "sections.how-to-use-results-responsibly.paragraphs[2][3]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors detect possible AI writing by comparing patterns in a text with patterns often seen in AI-generated and human-written content.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "They may look at writing style, sentence structure, word use, and other signals, then estimate the likelihood that AI was involved.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "This is why a detector score is usually a probability-style signal, not a final judgment.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[0][2]",
+        "required": true,
+        "source_ids": [
+          "source-05"
+        ],
+        "support_excerpt": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan\nHow do AI detectors work? Learn the tech behind perplexity, burstiness, classifiers, and watermarking \u2014 plus why these tools get it wrong.\nHow Do AI Detectors Work in 2026? The Tech Behind AI-Generated C",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "A score such as 40% AI should be treated with care.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "It may be a weak or moderate signal, depending on the tool, the length of the text, the writing style, and the setting.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "Sources on AI detection consistently describe limits in reliability, so a score should not be used alone to accuse a student, employee, writer, or applicant.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "It is better used as one prompt for a closer review.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[1][3]",
+        "required": true,
+        "source_ids": [
+          "source-02"
+        ],
+        "support_excerpt": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre\nAs nearly half of all Australians say they have recently used artificial intelligence (AI) tools, knowing when and how they\u2019re being used is becoming more important.\nHow do \u2018AI detection\u2019 tools actu",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-008",
+        "claim_text": "Editing can change detector signals, but the responsible goal is not to make AI text look \u201c100% human.\u201d The better goal is accurate, transparent, high-quality writing.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[2][0]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-009",
+        "claim_text": "If AI helped with grammar, structure, drafting, or idea generation, the right response depends on the policy of the school, publisher, workplace, or platform.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[2][1]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-010",
+        "claim_text": "People often ask how to trick AI content detectors, but evasion advice is not useful or reliable.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[3][0]",
+        "required": true,
+        "source_ids": [
+          "source-09"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Understanding Methods and Accuracy | Paperpal\nHow do AI detectors work? How reliable are they in detecting AI-generated content? Are AI content detectors and plagiarism checkers the same? Get all your questions answered in this detailed article.\nHow Do A",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-011",
+        "claim_text": "Detection systems vary, and avoidance can create new problems if the final text becomes misleading, low quality, or non-compliant.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[3][1]",
+        "required": true,
+        "source_ids": [
+          "source-03"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Techniques, Limitations & More\nLearn how AI content detectors work, and how to use machine learning to spot the difference between AI and human writing.\nWhat are AI content detectors? How do AI detectors work? Key techniques in AI content detection Why d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-012",
+        "claim_text": "Stronger policies focus on responsible AI use, clear disclosure rules, human review, and verification of facts, citations, and claims.",
+        "section_id": "common-questions",
+        "location": "sections.common-questions.paragraphs[3][2]",
+        "required": true,
+        "source_ids": [
+          "source-11"
+        ],
+        "support_excerpt": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic\nCan AI generated text be detected and is it plagiarism? Is it safe to use foe academics? All questions on academic AI writing answered.\nHow Reliable Are AI Detectors For Academic Text? How does AI detectio",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-001",
+        "claim_text": "AI detectors can help people ask better questions about a piece of work.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[0][0]",
+        "required": true,
+        "source_ids": [
+          "source-09"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Understanding Methods and Accuracy | Paperpal\nHow do AI detectors work? How reliable are they in detecting AI-generated content? Are AI content detectors and plagiarism checkers the same? Get all your questions answered in this detailed article.\nHow Do A",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-002",
+        "claim_text": "They can point to patterns that may be associated with AI-generated text, and they can support integrity checks in education, publishing, business, and professional settings.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[0][1]",
+        "required": true,
+        "source_ids": [
+          "source-07"
+        ],
+        "support_excerpt": "AI Content Detectors: Top Tools for Businesses - Shopify Australia\nAI content detectors scan text to identify linguistic patterns associated with AI-generated text and help you protect your brand\u2019s authenticity.\nAI Content Detectors: Top Tools for Businesses What are AI content d",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-003",
+        "claim_text": "But their value is strongest when the result starts a review, not when it ends one.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[0][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-004",
+        "claim_text": "A practical next step is to write a simple use policy before relying on any detector.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[1][0]",
+        "required": true,
+        "source_ids": [
+          "source-05"
+        ],
+        "support_excerpt": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan\nHow do AI detectors work? Learn the tech behind perplexity, burstiness, classifiers, and watermarking \u2014 plus why these tools get it wrong.\nHow Do AI Detectors Work in 2026? The Tech Behind AI-Generated C",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-005",
+        "claim_text": "State when the tool may be used, who reviews the result, what other evidence is considered, and how the person affected can respond.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[1][1]",
+        "required": true,
+        "source_ids": [
+          "source-02"
+        ],
+        "support_excerpt": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre\nAs nearly half of all Australians say they have recently used artificial intelligence (AI) tools, knowing when and how they\u2019re being used is becoming more important.\nHow do \u2018AI detection\u2019 tools actu",
+        "outcome": "passed",
+        "repair_action": null
+      },
+      {
+        "claim_id": "claim-006",
+        "claim_text": "That keeps the focus on process, provenance, and quality.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[1][2]",
+        "required": true,
+        "source_ids": [],
+        "support_excerpt": null,
+        "outcome": "skipped",
+        "repair_action": "dropped_unsupported_claim"
+      },
+      {
+        "claim_id": "claim-007",
+        "claim_text": "It also fits the way good AI practice should work: learn the tools, understand their limits, and make decisions with human context.",
+        "section_id": "conclusion-next-step",
+        "location": "sections.conclusion-next-step.paragraphs[1][3]",
+        "required": true,
+        "source_ids": [
+          "source-01"
+        ],
+        "support_excerpt": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly\nCurious about AI detection? Learn how AI detectors identify AI-generated content and discover best practices for using AI detection tools effectively.\nHow Do AI Detectors Work? Methods and Limitations What are AI d",
+        "outcome": "passed",
+        "repair_action": null
+      }
+    ],
+    "references": [
+      {
+        "source_id": "source-01",
+        "title": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly",
+        "url": "https://www.grammarly.com/blog/ai/how-do-ai-detectors-work/"
+      },
+      {
+        "source_id": "source-05",
+        "title": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan",
+        "url": "https://youscan.io/blog/how-do-ai-detectors-work/"
+      },
+      {
+        "source_id": "source-03",
+        "title": "How Do AI Detectors Work? Techniques, Limitations & More",
+        "url": "https://gptzero.me/news/how-ai-detectors-work/"
+      },
+      {
+        "source_id": "source-11",
+        "title": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic",
+        "url": "https://effortlessacademic.com/how-reliable-are-ai-detectors/"
+      },
+      {
+        "source_id": "source-07",
+        "title": "AI Content Detectors: Top Tools for Businesses - Shopify Australia",
+        "url": "https://www.shopify.com/au/blog/ai-content-detectors"
+      },
+      {
+        "source_id": "source-02",
+        "title": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre",
+        "url": "https://www.admscentre.org.au/how-do-ai-detection-tools-actually-work-and-are-they-effective/"
+      },
+      {
+        "source_id": "source-08",
+        "title": "How does AI detection work? | Pangram Labs",
+        "url": "https://www.pangram.com/blog/how-does-ai-detection-work"
+      },
+      {
+        "source_id": "source-12",
+        "title": "The Problems with AI Detectors: False Positives and False Negatives - Generative AI Detection Tools - Guides at University of San Diego Legal Research Center",
+        "url": "https://lawlibguides.sandiego.edu/c.php?g=1443311&p=10721367"
+      },
+      {
+        "source_id": "source-09",
+        "title": "How Do AI Detectors Work? Understanding Methods and Accuracy | Paperpal",
+        "url": "https://paperpal.com/blog/academic-writing-guides/how-do-ai-detectors-work"
+      }
+    ]
+  },
+  "hero_image": {
+    "kind": "hero",
+    "status": "generated",
+    "url": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-896dcfa8-844c-4e16-a455-f35c35940c03.jpg?alt=media&token=881477bf-b6b4-42a7-a871-983b3d942019",
+    "alt_text": "Teacher reviewing AI detector results with a student on a laptop in a candid close-up scene",
+    "width": "1200",
+    "height": "630",
+    "section_id": null,
+    "section_heading": null,
+    "caption": "How do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.",
+    "error": null,
+    "shot_role": "people_closeup",
+    "generation_prompt": "Create an original hero image for a website article.\nHeadline or section title: \"How Do AI Detectors Work?\".\nContext: How do AI detectors work? Learn what they check, why scores can be wrong, and how to use results responsibly.\n\nArt Direction:\n- Overall style: Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a close-up candid people scene.\n- Medium: candid amateur photography\n- Palette: Use the target site palette and contrast levels.\n- Composition: Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use close-up or medium-close framing on one or two people so expressions, gestures, and hands dominate the frame. Avoid reading as a wide room shot.\n- Lighting: Natural ambient lighting with controlled contrast and no dramatic filters.\n- Subject treatment: Depict the article topic directly through people, objects, or scenes relevant to the reader's context in a candid, documentary-style moment Show a candid human interaction tied to the topic, captured at close range with relaxed documentary realism.\n- Background treatment: Use subtle environmental context and avoid clutter or literal UI capture Keep the background soft and secondary so the people remain the clear focal point.\n- Brand alignment: Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...\n- Shot role: people_closeup\n- Required style cues: candid, amateur photographer, natural moment, unpolished realism, documentary feel, candid moment, amateur photographer aesthetic, natural imperfect framing, believable ambient lighting, everyday realism.\n- Reference notes: Create an original asset that feels native to the site without copying any existing image Make this the intimate, person-led image in the set rather than the abstract or environmental one.\n- Brand context: MLAI\n\nHard Constraints:\n- No text, captions, labels, logos, or watermarks.\n- Do not depict browser chrome, app UI, or literal screenshots.\n- Do not recreate any supplied site image too closely; make an original composition.\n- Keep the image suitable for a 1536x1024 landscape frame that will be center-cropped to 1200x630.\n- Maintain candid amateur-photography realism rather than polished commercial stock or synthetic concept art.\n- Avoid: logos, literal screenshots, stock-photo poses, staged corporate smiles, studio-lit commercial polish, generic stock imagery, uncanny AI artifacts, plastic skin, extra fingers, surreal anatomy, text overlays, watermarks, distant people, wide conference-room views, no stock-photo poses, no staged corporate group shots, no polished ad-style composition, no glossy studio lighting, no uncanny AI artifacts, no overly symmetrical faces or anatomy, no waxy skin or plastic textures, no surreal or hyperreal concept-art look.",
+    "art_direction": {
+      "style_summary": "Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a close-up candid people scene.",
+      "medium": "candid amateur photography",
+      "palette": [],
+      "composition": "Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use close-up or medium-close framing on one or two people so expressions, gestures, and hands dominate the frame. Avoid reading as a wide room shot.",
+      "lighting": "Natural ambient lighting with controlled contrast and no dramatic filters.",
+      "subject_treatment": "Depict the article topic directly through people, objects, or scenes relevant to the reader's context in a candid, documentary-style moment Show a candid human interaction tied to the topic, captured at close range with relaxed documentary realism.",
+      "background_treatment": "Use subtle environmental context and avoid clutter or literal UI capture Keep the background soft and secondary so the people remain the clear focal point.",
+      "brand_alignment": "Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...",
+      "reference_notes": "Create an original asset that feels native to the site without copying any existing image Make this the intimate, person-led image in the set rather than the abstract or environmental one.",
+      "avoid": [
+        "logos",
+        "literal screenshots",
+        "stock-photo poses",
+        "staged corporate smiles",
+        "studio-lit commercial polish",
+        "generic stock imagery",
+        "uncanny AI artifacts",
+        "plastic skin",
+        "extra fingers",
+        "surreal anatomy",
+        "text overlays",
+        "watermarks",
+        "distant people",
+        "wide conference-room views"
+      ],
+      "shot_role": "people_closeup",
+      "source_mode": "fallback"
+    }
+  },
+  "inline_images": [
+    {
+      "kind": "inline",
+      "status": "generated",
+      "url": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-342ebb45-0309-449c-b375-7a181881b170.jpg?alt=media&token=733c3377-b72f-4c0d-b7d4-6a48af2645e8",
+      "alt_text": "Laptop text draft beside notebook notes, suggesting AI detector patterns in writing analysis",
+      "width": "1200",
+      "height": "630",
+      "section_id": "what-ai-detectors-check",
+      "section_heading": "What AI detectors look for in text",
+      "caption": "What AI detectors look for in text",
+      "error": null,
+      "shot_role": "abstract",
+      "generation_prompt": "Create an original inline image for a website section.\nHeadline or section title: \"What AI detectors look for in text\".\nContext: AI detectors do not usually look for one magic clue. They compare a submitted passage with patterns often seen in human-written text and machine-generated text. The result is an estimate, not proof. A detector may examine writing style, structure, and repeated patterns, then decide whether the text looks more like examples it has seen before. A very smooth or predictable passage may attract more scrutiny because some AI systems produce text with regular phrasing and steady structure. Human wr...\n\nArt Direction:\n- Overall style: Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a abstract photographic editorial detail.\n- Medium: candid amateur photography\n- Palette: Use the target site palette and contrast levels.\n- Composition: Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Build the frame from real photographic details, partial subjects, reflections, shadows, or tools instead of a standard face-to-face meeting setup.\n- Lighting: Natural ambient lighting with controlled contrast and no dramatic filters.\n- Subject treatment: Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Depict the topic through suggestive real-world details such as hands, notebooks, desks, coffee cups, whiteboard fragments, or motion blur. People can be partial, obscured, or absent.\n- Background treatment: Use subtle environmental context and avoid clutter or literal UI capture Lean on negative space, shallow depth of field, and environmental texture while staying grounded in documentary photography.\n- Brand alignment: Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...\n- Shot role: abstract\n- Required style cues: candid, amateur photographer, natural moment, unpolished realism, documentary feel, candid moment, amateur photographer aesthetic, natural imperfect framing, believable ambient lighting, everyday realism.\n- Reference notes: Create an original asset that feels native to the site without copying any existing image Keep it abstract in composition but still clearly camera-made, candid, and amateur-photographer realistic.\n- Brand context: MLAI\n\nHard Constraints:\n- No text, captions, labels, logos, or watermarks.\n- Do not depict browser chrome, app UI, or literal screenshots.\n- Do not recreate any supplied site image too closely; make an original composition.\n- Keep the image suitable for a 1536x1024 landscape frame that will be center-cropped to 1200x630.\n- Maintain candid amateur-photography realism rather than polished commercial stock or synthetic concept art.\n- Avoid: logos, literal screenshots, stock-photo poses, staged corporate smiles, studio-lit commercial polish, generic stock imagery, uncanny AI artifacts, plastic skin, extra fingers, surreal anatomy, text overlays, watermarks, floating icons, literal diagrams, full staged meeting scenes, no stock-photo poses, no staged corporate group shots, no polished ad-style composition, no glossy studio lighting, no uncanny AI artifacts, no overly symmetrical faces or anatomy, no waxy skin or plastic textures, no surreal or hyperreal concept-art look.",
+      "art_direction": {
+        "style_summary": "Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a abstract photographic editorial detail.",
+        "medium": "candid amateur photography",
+        "palette": [],
+        "composition": "Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Build the frame from real photographic details, partial subjects, reflections, shadows, or tools instead of a standard face-to-face meeting setup.",
+        "lighting": "Natural ambient lighting with controlled contrast and no dramatic filters.",
+        "subject_treatment": "Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Depict the topic through suggestive real-world details such as hands, notebooks, desks, coffee cups, whiteboard fragments, or motion blur. People can be partial, obscured, or absent.",
+        "background_treatment": "Use subtle environmental context and avoid clutter or literal UI capture Lean on negative space, shallow depth of field, and environmental texture while staying grounded in documentary photography.",
+        "brand_alignment": "Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...",
+        "reference_notes": "Create an original asset that feels native to the site without copying any existing image Keep it abstract in composition but still clearly camera-made, candid, and amateur-photographer realistic.",
+        "avoid": [
+          "logos",
+          "literal screenshots",
+          "stock-photo poses",
+          "staged corporate smiles",
+          "studio-lit commercial polish",
+          "generic stock imagery",
+          "uncanny AI artifacts",
+          "plastic skin",
+          "extra fingers",
+          "surreal anatomy",
+          "text overlays",
+          "watermarks",
+          "floating icons",
+          "literal diagrams",
+          "full staged meeting scenes"
+        ],
+        "shot_role": "abstract",
+        "source_mode": "fallback"
+      }
+    },
+    {
+      "kind": "inline",
+      "status": "generated",
+      "url": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-f3e918f9-c8fc-4ae1-ba4b-e04648a22aa4.jpg?alt=media&token=bb664ef1-32cf-4b47-9751-d0666d6a8b0c",
+      "alt_text": "Messy desk with laptop showing AI writing analysis, notes, and coffee in a candid workspace setting",
+      "width": "1200",
+      "height": "630",
+      "section_id": "why-detectors-get-it-wrong",
+      "section_heading": "Why AI detectors can be wrong",
+      "caption": "Why AI detectors can be wrong",
+      "error": null,
+      "shot_role": "environmental",
+      "generation_prompt": "Create an original inline image for a website section.\nHeadline or section title: \"Why AI detectors can be wrong\".\nContext: AI detectors estimate likelihood. Sources such as Grammarly and Coursera describe these tools as systems that analyse writing style, structure, and patterns to judge whether text may be AI-generated. False positives happen when human writing is flagged as AI-generated. A concise, polished, or highly structured piece of writing may look similar to patterns the detector associates with AI. The University of San Diego Legal Research Center notes that false positives can have serious consequences...\n\nArt Direction:\n- Overall style: Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a environmental landscape scene.\n- Medium: candid amateur photography\n- Palette: Use the target site palette and contrast levels.\n- Composition: Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use a wider environmental composition that prioritizes place, atmosphere, and context over faces or tight interaction.\n- Lighting: Natural ambient lighting with controlled contrast and no dramatic filters.\n- Subject treatment: Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Show the surrounding workspace, streetscape, campus, building, desk area, or broader environment connected to the article theme. People should be minimal, distant, or absent.\n- Background treatment: Use subtle environmental context and avoid clutter or literal UI capture Let the setting carry the image with natural clutter, depth, and ambient realism.\n- Brand alignment: Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...\n- Shot role: environmental\n- Required style cues: candid, amateur photographer, natural moment, unpolished realism, documentary feel, candid moment, amateur photographer aesthetic, natural imperfect framing, believable ambient lighting, everyday realism.\n- Reference notes: Create an original asset that feels native to the site without copying any existing image This should be the landscape or environmental image in the set, distinct from the tighter people shots.\n- Brand context: MLAI\n\nHard Constraints:\n- No text, captions, labels, logos, or watermarks.\n- Do not depict browser chrome, app UI, or literal screenshots.\n- Do not recreate any supplied site image too closely; make an original composition.\n- Keep the image suitable for a 1536x1024 landscape frame that will be center-cropped to 1200x630.\n- Maintain candid amateur-photography realism rather than polished commercial stock or synthetic concept art.\n- Avoid: logos, literal screenshots, stock-photo poses, staged corporate smiles, studio-lit commercial polish, generic stock imagery, uncanny AI artifacts, plastic skin, extra fingers, surreal anatomy, text overlays, watermarks, tight face crops, dominant foreground portraits, no stock-photo poses, no staged corporate group shots, no polished ad-style composition, no glossy studio lighting, no uncanny AI artifacts, no overly symmetrical faces or anatomy, no waxy skin or plastic textures, no surreal or hyperreal concept-art look.",
+      "art_direction": {
+        "style_summary": "Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a environmental landscape scene.",
+        "medium": "candid amateur photography",
+        "palette": [],
+        "composition": "Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use a wider environmental composition that prioritizes place, atmosphere, and context over faces or tight interaction.",
+        "lighting": "Natural ambient lighting with controlled contrast and no dramatic filters.",
+        "subject_treatment": "Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Show the surrounding workspace, streetscape, campus, building, desk area, or broader environment connected to the article theme. People should be minimal, distant, or absent.",
+        "background_treatment": "Use subtle environmental context and avoid clutter or literal UI capture Let the setting carry the image with natural clutter, depth, and ambient realism.",
+        "brand_alignment": "Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...",
+        "reference_notes": "Create an original asset that feels native to the site without copying any existing image This should be the landscape or environmental image in the set, distinct from the tighter people shots.",
+        "avoid": [
+          "logos",
+          "literal screenshots",
+          "stock-photo poses",
+          "staged corporate smiles",
+          "studio-lit commercial polish",
+          "generic stock imagery",
+          "uncanny AI artifacts",
+          "plastic skin",
+          "extra fingers",
+          "surreal anatomy",
+          "text overlays",
+          "watermarks",
+          "tight face crops",
+          "dominant foreground portraits"
+        ],
+        "shot_role": "environmental",
+        "source_mode": "fallback"
+      }
+    },
+    {
+      "kind": "inline",
+      "status": "generated",
+      "url": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-2ca34d81-dc80-4889-8bdb-a32f7188fd19.jpg?alt=media&token=b60921a5-f8e8-4382-a485-996d437e7834",
+      "alt_text": "Close-up of hands reviewing an AI detector report beside highlighted student writing",
+      "width": "1200",
+      "height": "630",
+      "section_id": "how-to-use-results-responsibly",
+      "section_heading": "How to use AI detector results responsibly",
+      "caption": "How to use AI detector results responsibly",
+      "error": null,
+      "shot_role": "people_ultra_closeup",
+      "generation_prompt": "Create an original inline image for a website section.\nHeadline or section title: \"How to use AI detector results responsibly\".\nContext: Use an AI detector report as a reason to review a piece of work, not as automatic proof that someone broke a rule. The priority sources describe AI detectors as tools used in education, publishing, professional settings, and integrity checks, while also noting that effectiveness and limitations matter. That means the score should sit beside the text itself, the purpose of the work, and the standards that apply in that setting. First, read the flagged passages and the detector result together,...\n\nArt Direction:\n- Overall style: Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a ultra close-up candid people detail.\n- Medium: candid amateur photography\n- Palette: Use the target site palette and contrast levels.\n- Composition: Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use an ultra-tight crop with documentary immediacy, focusing on faces, eyes, hands, or shoulder-to-shoulder interaction from very close range.\n- Lighting: Natural ambient lighting with controlled contrast and no dramatic filters.\n- Subject treatment: Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Capture a fleeting human detail that feels observed rather than staged, with partial framing allowed if it strengthens realism.\n- Background treatment: Use subtle environmental context and avoid clutter or literal UI capture Reduce background information and let shallow depth of field isolate the human moment.\n- Brand alignment: Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...\n- Shot role: people_ultra_closeup\n- Required style cues: candid, amateur photographer, natural moment, unpolished realism, documentary feel, candid moment, amateur photographer aesthetic, natural imperfect framing, believable ambient lighting, everyday realism.\n- Reference notes: Create an original asset that feels native to the site without copying any existing image Make this visibly tighter and more intimate than the regular close-up people image.\n- Brand context: MLAI\n\nHard Constraints:\n- No text, captions, labels, logos, or watermarks.\n- Do not depict browser chrome, app UI, or literal screenshots.\n- Do not recreate any supplied site image too closely; make an original composition.\n- Keep the image suitable for a 1536x1024 landscape frame that will be center-cropped to 1200x630.\n- Maintain candid amateur-photography realism rather than polished commercial stock or synthetic concept art.\n- Avoid: logos, literal screenshots, stock-photo poses, staged corporate smiles, studio-lit commercial polish, generic stock imagery, uncanny AI artifacts, plastic skin, extra fingers, surreal anatomy, text overlays, watermarks, wide room context, full-body framing, no stock-photo poses, no staged corporate group shots, no polished ad-style composition, no glossy studio lighting, no uncanny AI artifacts, no overly symmetrical faces or anatomy, no waxy skin or plastic textures, no surreal or hyperreal concept-art look.",
+      "art_direction": {
+        "style_summary": "Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a ultra close-up candid people detail.",
+        "medium": "candid amateur photography",
+        "palette": [],
+        "composition": "Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Use an ultra-tight crop with documentary immediacy, focusing on faces, eyes, hands, or shoulder-to-shoulder interaction from very close range.",
+        "lighting": "Natural ambient lighting with controlled contrast and no dramatic filters.",
+        "subject_treatment": "Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Capture a fleeting human detail that feels observed rather than staged, with partial framing allowed if it strengthens realism.",
+        "background_treatment": "Use subtle environmental context and avoid clutter or literal UI capture Reduce background information and let shallow depth of field isolate the human moment.",
+        "brand_alignment": "Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...",
+        "reference_notes": "Create an original asset that feels native to the site without copying any existing image Make this visibly tighter and more intimate than the regular close-up people image.",
+        "avoid": [
+          "logos",
+          "literal screenshots",
+          "stock-photo poses",
+          "staged corporate smiles",
+          "studio-lit commercial polish",
+          "generic stock imagery",
+          "uncanny AI artifacts",
+          "plastic skin",
+          "extra fingers",
+          "surreal anatomy",
+          "text overlays",
+          "watermarks",
+          "wide room context",
+          "full-body framing"
+        ],
+        "shot_role": "people_ultra_closeup",
+        "source_mode": "fallback"
+      }
+    },
+    {
+      "kind": "inline",
+      "status": "generated",
+      "url": "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Finline-34a4107e-cfe5-413a-84ac-25f67dd23c04.jpg?alt=media&token=8a1e5dbc-19d4-4693-94bd-38256ae111dc",
+      "alt_text": "Teachers reviewing AI detector results together during an integrity check in a candid classroom scene",
+      "width": "1200",
+      "height": "630",
+      "section_id": "conclusion-next-step",
+      "section_heading": "Use detectors as evidence, not authority",
+      "caption": "Use detectors as evidence, not authority",
+      "error": null,
+      "shot_role": "people_wide",
+      "generation_prompt": "Create an original inline image for a website section.\nHeadline or section title: \"Use detectors as evidence, not authority\".\nContext: AI detectors can help people ask better questions about a piece of work. They can point to patterns that may be associated with AI-generated text, and they can support integrity checks in education, publishing, business, and professional settings. A practical next step is to write a simple use policy before relying on any detector. State when the tool may be used, who reviews the result, what other evidence is considered, and how the person affected can respond. It also fits the way good AI p...\n\nArt Direction:\n- Overall style: Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a wide candid people scene.\n- Medium: candid amateur photography\n- Palette: Use the target site palette and contrast levels.\n- Composition: Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Pull the camera further back so people sit within a wider room or outdoor context and the environment reads clearly.\n- Lighting: Natural ambient lighting with controlled contrast and no dramatic filters.\n- Subject treatment: Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Show people engaged naturally in the setting, but keep them smaller in frame than the close-up images.\n- Background treatment: Use subtle environmental context and avoid clutter or literal UI capture Let the surrounding space, furniture, architecture, or environment stay legible and meaningful.\n- Brand alignment: Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...\n- Shot role: people_wide\n- Required style cues: candid, amateur photographer, natural moment, unpolished realism, documentary feel, candid moment, amateur photographer aesthetic, natural imperfect framing, believable ambient lighting, everyday realism.\n- Reference notes: Create an original asset that feels native to the site without copying any existing image This should be the furthest-back people shot in the set and clearly distinct from the close-up images.\n- Brand context: MLAI\n\nHard Constraints:\n- No text, captions, labels, logos, or watermarks.\n- Do not depict browser chrome, app UI, or literal screenshots.\n- Do not recreate any supplied site image too closely; make an original composition.\n- Keep the image suitable for a 1536x1024 landscape frame that will be center-cropped to 1200x630.\n- Maintain candid amateur-photography realism rather than polished commercial stock or synthetic concept art.\n- Avoid: logos, literal screenshots, stock-photo poses, staged corporate smiles, studio-lit commercial polish, generic stock imagery, uncanny AI artifacts, plastic skin, extra fingers, surreal anatomy, text overlays, watermarks, tight face crops, isolated single-person portraits, no stock-photo poses, no staged corporate group shots, no polished ad-style composition, no glossy studio lighting, no uncanny AI artifacts, no overly symmetrical faces or anatomy, no waxy skin or plastic textures, no surreal or hyperreal concept-art look.",
+      "art_direction": {
+        "style_summary": "Brand-aligned candid photography that feels consistent with the target site's layout, contrast, and overall polish while avoiding stock-photo polish Use candid amateur photography with candid, amateur photographer, natural moment, unpolished realism, documentary feel Make it read as a wide candid people scene.",
+        "medium": "candid amateur photography",
+        "palette": [],
+        "composition": "Wide horizontal framing with a clear focal subject and enough negative space for a safe center crop Favor natural imperfect framing over polished ad-style symmetry Pull the camera further back so people sit within a wider room or outdoor context and the environment reads clearly.",
+        "lighting": "Natural ambient lighting with controlled contrast and no dramatic filters.",
+        "subject_treatment": "Depict the section topic through one candid, focused scene or object tied directly to the adjacent content Show people engaged naturally in the setting, but keep them smaller in frame than the close-up images.",
+        "background_treatment": "Use subtle environmental context and avoid clutter or literal UI capture Let the surrounding space, furniture, architecture, or environment stay legible and meaningful.",
+        "brand_alignment": "Reflect the site's palette and tone. Brand context: MLAI. Guide hint: # EXISTING ARTIFACT MLAI \u2014 Brand & Design Guide \u2014 Current Codebase Version: 1.1 \u2014 Scope: branding, tokens, article content components, routing/import rules, accessibility, and safe one-shot code ge...",
+        "reference_notes": "Create an original asset that feels native to the site without copying any existing image This should be the furthest-back people shot in the set and clearly distinct from the close-up images.",
+        "avoid": [
+          "logos",
+          "literal screenshots",
+          "stock-photo poses",
+          "staged corporate smiles",
+          "studio-lit commercial polish",
+          "generic stock imagery",
+          "uncanny AI artifacts",
+          "plastic skin",
+          "extra fingers",
+          "surreal anatomy",
+          "text overlays",
+          "watermarks",
+          "tight face crops",
+          "isolated single-person portraits"
+        ],
+        "shot_role": "people_wide",
+        "source_mode": "fallback"
+      }
+    }
+  ],
+  "references": [
+    {
+      "source_id": "source-01",
+      "title": "How Do AI Detectors Work? Key Methods and Limitations | Grammarly",
+      "url": "https://www.grammarly.com/blog/ai/how-do-ai-detectors-work/"
+    },
+    {
+      "source_id": "source-05",
+      "title": "AI Detectors Explained: How They Spot AI-Generated Content in 2026 | YouScan",
+      "url": "https://youscan.io/blog/how-do-ai-detectors-work/"
+    },
+    {
+      "source_id": "source-03",
+      "title": "How Do AI Detectors Work? Techniques, Limitations & More",
+      "url": "https://gptzero.me/news/how-ai-detectors-work/"
+    },
+    {
+      "source_id": "source-11",
+      "title": "How Reliable Are AI Detectors For Academic Text? - The Effortless Academic",
+      "url": "https://effortlessacademic.com/how-reliable-are-ai-detectors/"
+    },
+    {
+      "source_id": "source-07",
+      "title": "AI Content Detectors: Top Tools for Businesses - Shopify Australia",
+      "url": "https://www.shopify.com/au/blog/ai-content-detectors"
+    },
+    {
+      "source_id": "source-02",
+      "title": "How do \u2018AI detection\u2019 tools actually work? And are they effective? - ADM+S Centre",
+      "url": "https://www.admscentre.org.au/how-do-ai-detection-tools-actually-work-and-are-they-effective/"
+    },
+    {
+      "source_id": "source-08",
+      "title": "How does AI detection work? | Pangram Labs",
+      "url": "https://www.pangram.com/blog/how-does-ai-detection-work"
+    },
+    {
+      "source_id": "source-12",
+      "title": "The Problems with AI Detectors: False Positives and False Negatives - Generative AI Detection Tools - Guides at University of San Diego Legal Research Center",
+      "url": "https://lawlibguides.sandiego.edu/c.php?g=1443311&p=10721367"
+    },
+    {
+      "source_id": "source-09",
+      "title": "How Do AI Detectors Work? Understanding Methods and Accuracy | Paperpal",
+      "url": "https://paperpal.com/blog/academic-writing-guides/how-do-ai-detectors-work"
+    }
+  ],
+  "published_date": "2026-05-30",
+  "modified_date": "2026-05-30",
+  "bootstrap_materialization": {
+    "strategy": "react_component",
+    "target_path": "app/articles/content/featured/how-do-ai-detectors-work.tsx",
+    "route_path": "/articles/featured/how-do-ai-detectors-work",
+    "registry_path": "app/articles/registry.ts",
+    "registry_slug": "featured/how-do-ai-detectors-work",
+    "metadata_strategy": {
+      "title_key": "title",
+      "description_key": "description",
+      "date_key": "date",
+      "slug_key": "slug",
+      "category_key": "category",
+      "permalink_key": "permalink"
+    },
+    "support_files": {
+      ".content-factory/hooks/materialize.py": "import json\nimport os\nimport re\nimport sys\nfrom pathlib import Path\n\n\ndef _serialize_frontmatter(frontmatter: dict[str, object], body: str) -> str:\n    lines = [\"---\"]\n    for key, value in frontmatter.items():\n        if value in (None, \"\"):\n            continue\n        text = str(value).replace('\"', '\\\"')\n        lines.append(f'{key}: \"{text}\"')\n    lines.append(\"---\")\n    lines.append(\"\")\n    lines.append(body.rstrip())\n    lines.append(\"\")\n    return \"\\n\".join(lines)\n\n\ndef _slug_text(value: object, fallback: str = \"\") -> str:\n    text = str(value or fallback or \"\").strip().lower()\n    text = re.sub(r\"[^a-z0-9]+\", \"-\", text).strip(\"-\")\n    return text or fallback\n\n\ndef _jsx_string(value: object) -> str:\n    return json.dumps(str(value or \"\"), ensure_ascii=False)\n\n\ndef _paragraphs(markdown: object) -> list[str]:\n    text = str(markdown or \"\").replace(\"\\r\\n\", \"\\n\")\n    blocks = []\n    current = []\n    for raw_line in text.split(\"\\n\"):\n        line = raw_line.strip()\n        if not line:\n            if current:\n                blocks.append(\" \".join(current).strip())\n                current = []\n            continue\n        if line.startswith(\"#\"):\n            if current:\n                blocks.append(\" \".join(current).strip())\n                current = []\n            heading = line.lstrip(\"#\").strip()\n            if heading:\n                blocks.append(heading)\n            continue\n        current.append(line)\n    if current:\n        blocks.append(\" \".join(current).strip())\n    return [block for block in blocks if block][:24]\n\n\ndef _react_component_source(payload: dict[str, object], bootstrap: dict[str, object], route_path: str) -> str:\n    title = str(payload.get(\"title\") or payload.get(\"meta_title\") or \"Generated Article\")\n    description = str(payload.get(\"meta_description\") or \"\")\n    category = str(payload.get(\"category\") or \"featured\")\n    slug = str(payload.get(\"slug\") or _slug_text(title, \"article\"))\n    published = str(payload.get(\"published_date\") or payload.get(\"date\") or \"\")\n    modified = str(payload.get(\"modified_date\") or published)\n    hero = payload.get(\"hero_image\") if isinstance(payload.get(\"hero_image\"), dict) else {}\n    image = str(hero.get(\"url\") or payload.get(\"hero_image_url\") or \"\")\n    image_alt = str(hero.get(\"alt\") or payload.get(\"hero_image_alt\") or title)\n    body_blocks = _paragraphs(payload.get(\"article_markdown\"))\n    if not body_blocks:\n        body_blocks = [description or title]\n    body_json = json.dumps(body_blocks, ensure_ascii=False, indent=2)\n    return f'''export const useCustomHeader = false\n\nexport const faqItems = []\n\nexport const articleMeta = {{\n  title: {_jsx_string(title)},\n  topic: {_jsx_string(title)},\n  category: {_jsx_string(category)},\n  slug: {_jsx_string(slug)},\n  description: {_jsx_string(description)},\n  datePublished: {_jsx_string(published)},\n  dateModified: {_jsx_string(modified)},\n  author: {_jsx_string(str(payload.get(\"author\") or payload.get(\"author_name\") or \"Content Team\"))},\n  image: {_jsx_string(image)},\n  imageAlt: {_jsx_string(image_alt)},\n  canonicalPath: {_jsx_string(route_path)},\n}}\n\nconst bodyBlocks = {body_json}\n\nexport default function GeneratedArticleContent() {{\n  return (\n    <article className=\"prose prose-lg prose-zinc dark:prose-invert mx-auto max-w-3xl\">\n      <header className=\"mb-8\">\n        <p className=\"text-sm font-semibold uppercase tracking-wide text-primary\">{{articleMeta.category}}</p>\n        <h1>{{articleMeta.title}}</h1>\n        {{articleMeta.description ? <p className=\"lead\">{{articleMeta.description}}</p> : null}}\n      </header>\n      <div className=\"space-y-5\">\n        {{bodyBlocks.map((paragraph, index) => (\n          <p key={{index}} data-cf-component-id={{`section:${{index + 1}}`}}>{{paragraph}}</p>\n        ))}}\n      </div>\n    </article>\n  )\n}}\n'''\n\n\ndef _registry_record(payload: dict[str, object], route_path: str, registry_slug: str) -> str:\n    title = str(payload.get(\"title\") or payload.get(\"meta_title\") or \"Generated Article\")\n    description = str(payload.get(\"meta_description\") or \"\")\n    hero = payload.get(\"hero_image\") if isinstance(payload.get(\"hero_image\"), dict) else {}\n    image = str(hero.get(\"url\") or payload.get(\"hero_image_url\") or \"\")\n    image_alt = str(hero.get(\"alt\") or payload.get(\"hero_image_alt\") or title)\n    date = str(payload.get(\"published_date\") or payload.get(\"date\") or \"\")\n    author = str(payload.get(\"author\") or payload.get(\"author_name\") or \"Content Team\")\n    return (\n        f\"  {json.dumps(registry_slug)}: {{\\n\"\n        f\"    title: {json.dumps(title)},\\n\"\n        f\"    date: {json.dumps(date)},\\n\"\n        f\"    description: {json.dumps(description)},\\n\"\n        f\"    author: {json.dumps(author)},\\n\"\n        f\"    slug: {json.dumps(registry_slug)},\\n\"\n        f\"    image: {json.dumps(image)},\\n\"\n        f\"    imageAlt: {json.dumps(image_alt)},\\n\"\n        f\"    hasContent: true,\\n\"\n        f\"  }},\\n\"\n    )\n\n\ndef _patch_registry(workspace: Path, registry_path: str, payload: dict[str, object], route_path: str, registry_slug: str) -> str:\n    path = workspace / registry_path\n    try:\n        source = path.read_text(encoding=\"utf-8\")\n    except FileNotFoundError:\n        source = \"export const ARTICLE_REGISTRY = {\\n}\\n\"\n    if json.dumps(registry_slug) in source or f\"'{registry_slug}'\" in source:\n        return source\n    record = _registry_record(payload, route_path, registry_slug)\n    marker = \"ARTICLE_REGISTRY\"\n    index = source.find(marker)\n    brace = source.find(\"{\", index if index >= 0 else 0)\n    if brace < 0:\n        return source.rstrip() + \"\\n\\nexport const ARTICLE_REGISTRY = {\\n\" + record + \"}\\n\"\n    return source[: brace + 1] + \"\\n\" + record + source[brace + 1 :]\n\n\ndef main() -> int:\n    bundle_path = os.environ.get(\"CF_ARTICLE_BUNDLE\", \"\").strip()\n    output_path = os.environ.get(\"CF_MATERIALIZATION_OUTPUT\", \"\").strip()\n    workspace_root = Path(os.environ.get(\"CF_WORKSPACE_ROOT\", \"\") or \".\").resolve()\n    if not bundle_path or not output_path:\n        raise RuntimeError(\"CF_ARTICLE_BUNDLE and CF_MATERIALIZATION_OUTPUT are required\")\n\n    payload = json.loads(Path(bundle_path).read_text(encoding=\"utf-8\"))\n    bootstrap = payload.get(\"bootstrap_materialization\") or {}\n    strategy = str(bootstrap.get(\"strategy\") or \"\").strip()\n    target_path = str(bootstrap.get(\"target_path\") or \"\").strip()\n    route_path = str(bootstrap.get(\"route_path\") or \"\").strip()\n    support_files = bootstrap.get(\"support_files\") or {}\n    metadata = bootstrap.get(\"metadata_strategy\") or {}\n    if not target_path:\n        raise RuntimeError(\"Bootstrap materialization target_path is required\")\n\n    if strategy == \"frontmatter\":\n        frontmatter = {\n            str(metadata.get(\"title_key\") or \"title\"): payload.get(\"title\") or payload.get(\"meta_title\") or \"\",\n            str(metadata.get(\"description_key\") or \"description\"): payload.get(\"meta_description\") or \"\",\n            str(metadata.get(\"date_key\") or \"date\"): payload.get(\"published_date\") or \"\",\n            str(metadata.get(\"slug_key\") or \"slug\"): payload.get(\"slug\") or \"\",\n            str(metadata.get(\"category_key\") or \"category\"): payload.get(\"category\") or \"\",\n            str(metadata.get(\"permalink_key\") or \"permalink\"): route_path,\n        }\n        document = _serialize_frontmatter(frontmatter, str(payload.get(\"article_markdown\") or \"\"))\n    elif strategy == \"react_component\":\n        document = _react_component_source(payload, bootstrap, route_path)\n    else:\n        raise RuntimeError(\"Unsupported bootstrap materialization strategy\")\n\n    file_overrides = {target_path: document}\n    if strategy == \"react_component\":\n        registry_path = str(bootstrap.get(\"registry_path\") or \"\").strip()\n        registry_slug = str(bootstrap.get(\"registry_slug\") or \"\").strip()\n        if registry_path and registry_slug:\n            file_overrides[registry_path] = _patch_registry(\n                workspace_root,\n                registry_path,\n                payload,\n                route_path,\n                registry_slug,\n            )\n    for path, content in support_files.items():\n        normalized_path = str(path).strip()\n        if normalized_path:\n            file_overrides[normalized_path] = str(content)\n\n    materialized = {\n        \"file_overrides\": file_overrides,\n        \"primary_artifact_path\": target_path,\n        \"primary_article_path\": target_path,\n        \"route_path\": route_path,\n        \"target_kind\": \"hook_publish_target\",\n        \"delivery_adapter\": \"hook_bundle\",\n        \"article_path\": target_path,\n        \"notes\": \"Managed Content Factory hook materialized the article bundle into the repository target path.\",\n    }\n    Path(output_path).write_text(json.dumps(materialized, indent=2), encoding=\"utf-8\")\n    return 0\n\n\nif __name__ == \"__main__\":\n    try:\n        raise SystemExit(main())\n    except Exception as exc:\n        print(str(exc), file=sys.stderr)\n        raise\n"
+    }
+  }
+}
