@@ -480,10 +480,11 @@ function normalizeStartupProfile(payload: Record<string, unknown>): VibeMarketin
 function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const keyword = asNullableString(payload.keyword) ?? asNullableString(payload.target_keyword) ?? "Topic";
+  const serverId = asNullableString(payload.id);
   const rawCandidateId =
     asNullableString(payload.rawCandidateId) ??
     asNullableString(payload.raw_candidate_id) ??
-    asNullableString(payload.id) ??
+    serverId ??
     keyword;
   const normalizePaaQuestions = (value: unknown): VibeMarketingTopicCandidate["paaQuestions"] => {
     if (!Array.isArray(value)) return [];
@@ -499,7 +500,7 @@ function normalizeTopicCandidate(raw: unknown): VibeMarketingTopicCandidate {
       .filter((item) => item.question);
   };
   return {
-    id: rawCandidateId,
+    id: serverId ?? rawCandidateId,
     rawCandidateId,
     keyword,
     title:
@@ -558,8 +559,16 @@ function topicCandidateIdPart(value: unknown, fallback = "topic"): string {
 
 export function stableTopicCandidateId(candidate: Pick<VibeMarketingTopicCandidate, "id" | "rawCandidateId" | "keyword" | "title" | "sourceRunId" | "source">, namespace = "topic"): string {
   const namespacePart = topicCandidateIdPart(namespace);
-  if ((!candidate.rawCandidateId || candidate.rawCandidateId === candidate.id) && candidate.id?.startsWith(`${namespacePart}:`)) {
-    return candidate.id;
+  const candidateId = candidate.id?.trim();
+  if (
+    candidateId &&
+    (
+      candidateId.startsWith(`${namespacePart}:`) ||
+      /^(topic|hidden|pillar):/.test(candidateId) ||
+      (Boolean(candidate.rawCandidateId) && candidate.rawCandidateId !== candidateId && candidateId.includes(":"))
+    )
+  ) {
+    return candidateId;
   }
   const keywordPart = topicCandidateIdPart(candidate.keyword || candidate.title);
   const sourceRunId = candidate.sourceRunId?.trim();
