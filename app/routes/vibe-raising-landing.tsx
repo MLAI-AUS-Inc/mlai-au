@@ -27,7 +27,7 @@ export default function VibeRaisingLandingPage({}: Route.ComponentProps) {
   const navigate = useNavigate();
 
   const continueToUpdateCreation = () => {
-    navigate("/platform/login?app=founder-tools&next=/founder-tools/data-sources");
+    navigate("/platform/login?app=founder-tools&next=/founder-tools/updates/create");
   };
 
   return (

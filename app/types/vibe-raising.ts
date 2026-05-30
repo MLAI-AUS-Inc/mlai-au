@@ -204,6 +204,7 @@ export interface VibeRaisingVideoCompressionMetadata {
 
 export type VibeRaisingInputSourceKey =
   | "gmail"
+  | "google_analytics"
   | "stripe"
   | "xero"
   | "bank_feed"

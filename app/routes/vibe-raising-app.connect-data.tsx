@@ -67,7 +67,7 @@ const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const FUNCTIONAL_SOURCES = new Set<VibeRaisingInputSourceKey>(["gmail", "stripe", "xero", "bank_feed", "notion", "google_drive", "slack", "linear"]);
 const OAUTH_CONNECTABLE_WHEN_STATUS_UNAVAILABLE = new Set<VibeRaisingInputSourceKey>(["stripe"]);
-const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["linear", "stripe", "notion"];
+const PRIORITY_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_analytics", "stripe", "linear", "notion"];
 const MORE_SOURCE_KEYS: VibeRaisingInputSourceKey[] = ["google_drive", "gmail", "slack", "bank_feed", "xero"];
 const SLACK_CHANNEL_PAGE_LIMIT = 100;
 const LINEAR_PROJECT_PAGE_LIMIT = 100;
@@ -90,6 +90,13 @@ const EMPTY_SOURCES: VibeRaisingInputSourceSummary[] = [
     capabilities: ["context"],
     selected: false,
     status: "not_connected",
+  },
+  {
+    key: "google_analytics",
+    label: "Google Analytics",
+    capabilities: ["metrics"],
+    selected: false,
+    status: "coming_soon",
   },
   {
     key: "stripe",
@@ -271,7 +278,7 @@ function MobileDataSourcesTour({
   );
 }
 
-type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+type OAuthSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "google_analytics" | "manual_documents">;
 
 function isOAuthSourceKey(key: VibeRaisingInputSourceKey): key is OAuthSourceKey {
   return key !== "gmail" && key !== "manual_documents";
@@ -322,6 +329,11 @@ const SOURCE_COPY: Record<VibeRaisingInputSourceKey, { description: string; mobi
     description: "Scan emails for key updates, investor feedback, and important threads.",
     mobileDescription: "Scan key emails and investor threads.",
     connectedUse: "Emails, investor threads",
+  },
+  google_analytics: {
+    description: "Bring product traffic, acquisition, and engagement metrics into updates.",
+    mobileDescription: "Bring traffic and engagement metrics.",
+    connectedUse: "Traffic, acquisition, engagement",
   },
   stripe: {
     description: "Pull revenue, subscriptions, and financial metrics automatically.",
@@ -1397,6 +1409,14 @@ function SourceLogo({ sourceKey, large = false }: { sourceKey: VibeRaisingInputS
     );
   }
 
+  if (sourceKey === "google_analytics") {
+    return (
+      <div className={badgeClassName}>
+        <img src="/vibe-raising/logos/google-analytics.svg" alt="" className={officialLogoClassName} />
+      </div>
+    );
+  }
+
   if (sourceKey === "linear") {
     return (
       <div className={clsx("flex shrink-0 items-center justify-center bg-gray-950 shadow-sm transition-all duration-300", large ? "h-12 w-12 rounded-xl sm:h-16 sm:w-16 sm:rounded-2xl" : "h-10 w-10 rounded-xl")}>
@@ -1460,7 +1480,6 @@ function ConnectorCard({
   busy,
   isMobileView = false,
   onConnect,
-  onManageGmail,
   onToggle,
 }: {
   source: VibeRaisingInputSourceSummary;
@@ -1468,7 +1487,6 @@ function ConnectorCard({
   busy: boolean;
   isMobileView?: boolean;
   onConnect: (source: VibeRaisingInputSourceSummary) => void;
-  onManageGmail: (source: VibeRaisingInputSourceSummary) => void;
   onToggle: (source: VibeRaisingInputSourceSummary) => void;
 }) {
   const selectable = FUNCTIONAL_SOURCES.has(source.key) && (source.status === "connected" || source.status === "syncing");
@@ -1481,21 +1499,8 @@ function ConnectorCard({
     (source.status !== "unavailable" || canConnectWhenUnavailable);
   const disabled = source.status === "coming_soon" || (source.status === "unavailable" && !canConnectWhenUnavailable);
   const isConnected = source.status === "connected" || source.status === "syncing";
-  const displayedStatus = canConnectWhenUnavailable ? "not_connected" : source.status;
-  const displayedStatusLabel = canConnectWhenUnavailable ? "Ready to connect" : statusLabel(source.status);
-  const shouldShowHeaderStatus = !isMobileView && displayedStatus !== "coming_soon" && displayedStatus !== "unavailable";
-  const trustMessage = isMobileView
-    ? isConnected
-      ? `Only this workspace can see synced ${source.label} data.`
-      : `Only this workspace can see synced ${source.label} data.`
-    : isConnected
-      ? `Only this founder workspace can see synced ${source.label} context. You can manage access here anytime.`
-      : `Only this founder workspace can see synced ${source.label} context. We only scan ${sourceScanSummary(source)}.`;
-  const description = isMobileView ? "" : SOURCE_COPY[source.key].description;
-  const shouldShowCapabilities = !isMobileView;
-  const shouldShowTrustMessage = !isMobileView;
   const connectClassName = clsx(
-    "block w-full rounded-lg px-3 py-2 text-center text-xs font-extrabold transition",
+    "block w-full rounded-xl px-3 py-2.5 text-center text-sm font-extrabold transition",
     disabled || !canConnect
       ? "cursor-not-allowed bg-gray-100 text-gray-400"
       : "bg-[rgba(0,255,215,0.12)] text-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.18)] hover:ring-1 hover:ring-[rgba(0,128,128,0.18)]",
@@ -1503,7 +1508,7 @@ function ConnectorCard({
 
   return (
     <div className={clsx(
-      "relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border p-3 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[220px] sm:rounded-2xl sm:p-4",
+      "relative flex min-h-[112px] flex-col overflow-hidden rounded-xl border p-4 shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-[rgba(0,128,128,0.20)] sm:min-h-[190px] sm:rounded-2xl sm:p-5",
       isConnected
         ? "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white ring-1 ring-[rgba(0,128,128,0.24)]"
         : selected
@@ -1515,21 +1520,12 @@ function ConnectorCard({
           className={clsx(
             "flex gap-3",
             isMobileView ? "items-center justify-center" : "items-start",
-            shouldShowHeaderStatus && "justify-between",
           )}
         >
           <SourceLogo sourceKey={source.key} large={!isMobileView} />
-          {shouldShowHeaderStatus ? (
-            <span className={clsx(
-              "inline-flex max-w-[8rem] flex-shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold ring-1 sm:max-w-[9rem] sm:px-2 sm:text-[10px]",
-              isConnected ? "bg-white text-[var(--vr-color-primary)] ring-white/60" : statusClassName(displayedStatus),
-            )}>
-              {displayedStatusLabel}
-            </span>
-          ) : null}
         </div>
         <h3 className={clsx(
-          "break-words text-base font-black leading-tight sm:text-left sm:text-lg",
+          "break-words text-lg font-black leading-tight sm:text-left sm:text-xl",
           isMobileView && "text-center",
           isConnected ? "text-white" : "text-gray-950",
         )}>
@@ -1537,36 +1533,28 @@ function ConnectorCard({
         </h3>
       </div>
 
-      <div className={clsx("flex flex-1 flex-col", isMobileView ? "pt-2" : "pt-4 sm:pt-5")}>
-        {description ? (
-          <p className={clsx("mt-1 line-clamp-3 min-h-0 text-[11px] leading-4 sm:mt-2 sm:min-h-10 sm:text-xs sm:leading-5 sm:line-clamp-4", isConnected ? "text-white/80" : "text-slate-500")}>
-            {description}
-          </p>
-        ) : null}
+      <div className="flex flex-1 flex-col pt-3 sm:pt-4">
+        <div className="flex flex-wrap gap-1.5">
+          {source.capabilities.map((capability) => (
+            <span
+              key={capability}
+              className={clsx(
+                "rounded-full px-2 py-1 text-[11px] font-extrabold",
+                isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
+              )}
+            >
+              {capabilityLabel(capability)}
+            </span>
+          ))}
+        </div>
 
-        {shouldShowCapabilities ? (
-          <div className="mt-2 flex flex-wrap gap-1 sm:mt-3">
-            {source.capabilities.map((capability) => (
-              <span
-                key={capability}
-                className={clsx(
-                  "rounded-full px-1.5 py-0.5 text-[9px] font-bold sm:text-[10px]",
-                  isConnected ? "bg-white/[0.14] text-white ring-1 ring-white/20" : "bg-gray-50 text-slate-500",
-                )}
-              >
-                {capabilityLabel(capability)}
-              </span>
-            ))}
-          </div>
-        ) : null}
-
-        <div className={clsx("mt-auto", isMobileView ? "pt-2" : "pt-3 sm:pt-4")}>
+        <div className="mt-auto pt-4">
           {selectable ? (
             <button
               type="button"
               onClick={() => onToggle(source)}
               className={clsx(
-                "flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-[11px] font-extrabold transition sm:px-3 sm:text-xs",
+                "flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-extrabold transition",
                 isConnected && selected
                   ? "bg-white text-[var(--vr-color-primary)] hover:bg-white/90"
                 : isConnected
@@ -1589,33 +1577,6 @@ function ConnectorCard({
               {busy ? "Connecting..." : canConnect ? "Connect" : statusLabel(source.status)}
             </button>
           )}
-
-          {source.key === "gmail" && isConnected ? (
-            <button
-              type="button"
-              onClick={() => onManageGmail(source)}
-              className={clsx(
-                "mt-2 flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-extrabold transition",
-                isConnected
-                  ? "bg-white/[0.14] text-white ring-1 ring-white/[0.24] hover:bg-white/[0.20]"
-                  : "border border-gray-200 text-gray-700 hover:bg-gray-50",
-              )}
-            >
-              <ShieldCheckIcon className="h-4 w-4" />
-              Manage Gmail access
-            </button>
-              ) : null}
-
-          {shouldShowTrustMessage ? (
-            <p
-              className={clsx(
-                "mt-2 min-h-8 line-clamp-2 text-[10px] leading-4 sm:min-h-[2.75rem] sm:text-[11px] sm:line-clamp-none",
-                isConnected ? "text-white/80" : "text-slate-500",
-              )}
-            >
-              {trustMessage}
-            </p>
-          ) : null}
         </div>
       </div>
     </div>
@@ -1631,11 +1592,7 @@ function GoogleAnalyticsPlaceholderCard({ isMobileView = false }: { isMobileView
       <div className="pointer-events-none flex flex-col gap-3">
         <div className={clsx("flex gap-3", isMobileView ? "justify-center" : "items-start justify-between")}>
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-gray-200 sm:h-16 sm:w-16 sm:rounded-2xl">
-            <svg viewBox="0 0 36 36" className="h-8 w-8 sm:h-10 sm:w-10" aria-hidden>
-              <rect x="8" y="18" width="6" height="10" rx="3" fill="#f59e0b" />
-              <rect x="16" y="10" width="6" height="18" rx="3" fill="#f97316" />
-              <circle cx="27" cy="12" r="4" fill="#fb923c" />
-            </svg>
+            <img src="/vibe-raising/logos/google-analytics.svg" alt="" className="h-8 w-8 object-contain sm:h-10 sm:w-10" />
           </div>
         </div>
         <h3 className={clsx("break-words text-base font-black leading-tight text-gray-950 sm:text-left sm:text-lg", isMobileView && "text-center")}>
@@ -1768,6 +1725,8 @@ function sourceScanSummary(source: VibeRaisingInputSourceSummary) {
   switch (source.key) {
     case "gmail":
       return "recent emails, relevant threads, and attachments that match your drafting filters";
+    case "google_analytics":
+      return "traffic, acquisition, and engagement metrics relevant to this reporting period";
     case "slack":
       return "selected channels and messages you choose for update drafting";
     case "linear":
@@ -2901,7 +2860,7 @@ export default function ConnectData() {
         <MonthlyUpdateStepper
           activeStep="connect"
           disableMotion
-          enabledSteps={["connect", "draft"]}
+          enabledSteps={["draft", "connect"]}
           onStepClick={handleStepperClick}
           expandOnHover
           frameless
@@ -2991,7 +2950,6 @@ export default function ConnectData() {
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
-          <GoogleAnalyticsPlaceholderCard isMobileView={isMobileTourViewport} />
           {prioritySources.map((source) => (
             <ConnectorCard
               key={source.key}
@@ -3000,7 +2958,6 @@ export default function ConnectData() {
               busy={busyProvider === source.key}
               isMobileView={isMobileTourViewport}
               onConnect={requestConnectSource}
-              onManageGmail={handleOpenGmailManagement}
               onToggle={handleToggle}
             />
           ))}
@@ -3031,7 +2988,6 @@ export default function ConnectData() {
                 busy={busyProvider === source.key}
                 isMobileView={isMobileTourViewport}
                 onConnect={requestConnectSource}
-                onManageGmail={handleOpenGmailManagement}
                 onToggle={handleToggle}
               />
             ))}
