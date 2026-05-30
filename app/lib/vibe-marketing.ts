@@ -19,6 +19,7 @@ import type {
   VibeMarketingLivePreview,
   VibeMarketingPublishEvidence,
   VibeMarketingRunSummary,
+  VibeMarketingScanProgress,
   VibeMarketingStepState,
   VibeMarketingStartupProfile,
   VibeMarketingWebsiteBaseline,
@@ -191,6 +192,32 @@ function normalizeStep(raw: unknown): VibeMarketingStepState {
   };
 }
 
+function normalizeScanProgress(raw: unknown): VibeMarketingScanProgress | null {
+  const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  if (!payload) return null;
+  const phaseKey = asNullableString(payload.phaseKey) ?? asNullableString(payload.phase_key) ?? "";
+  const phaseLabel = asNullableString(payload.phaseLabel) ?? asNullableString(payload.phase_label) ?? "";
+  const message = asNullableString(payload.message) ?? "";
+  const phaseIndex = Math.max(0, Math.round(asNumber(payload.phaseIndex ?? payload.phase_index) ?? 0));
+  const phaseCount = Math.max(0, Math.round(asNumber(payload.phaseCount ?? payload.phase_count) ?? 0));
+  const percent = Math.max(0, Math.min(100, Math.round(asNumber(payload.percent) ?? 0)));
+  const detail = asObjectRecord(payload.detail);
+  if (!phaseKey && !phaseLabel && !message && phaseIndex === 0 && phaseCount === 0 && percent === 0) {
+    return null;
+  }
+  return {
+    phaseKey,
+    phaseLabel,
+    phaseIndex,
+    phaseCount,
+    percent,
+    message,
+    detail,
+    currentStep: asNullableString(payload.currentStep) ?? asNullableString(payload.current_step),
+    updatedAt: asNullableString(payload.updatedAt) ?? asNullableString(payload.updated_at),
+  };
+}
+
 function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupState | null {
   const payload = raw && typeof raw === "object" && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
   if (!payload) return null;
@@ -248,6 +275,10 @@ function normalizeArticleSetupState(raw: unknown): VibeMarketingArticleSetupStat
 
 export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
   const payload = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const result =
+    payload.result && typeof payload.result === "object" && !Array.isArray(payload.result)
+      ? (payload.result as Record<string, unknown>)
+      : {};
   return {
     runId: asNullableString(payload.runId) ?? asNullableString(payload.run_id) ?? "",
     workflow: asNullableString(payload.workflow) ?? "",
@@ -275,6 +306,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     componentManifest: normalizeComponentManifest(payload.componentManifest ?? payload.component_manifest),
     livePreview: normalizeLivePreview(payload.livePreview ?? payload.live_preview),
     componentFeedback: normalizeComponentFeedback(payload.componentFeedback ?? payload.component_feedback),
+    scanProgress: normalizeScanProgress(payload.scanProgress ?? payload.scan_progress ?? result.scanProgress ?? result.scan_progress),
     workflowProgress: normalizeWorkflowProgress(payload.workflowProgress ?? payload.workflow_progress),
     publishChildStatus: asNullableString(payload.publishChildStatus) ?? asNullableString(payload.publish_child_status),
     publishChildRecoverable: Boolean(payload.publishChildRecoverable ?? payload.publish_child_recoverable),
@@ -284,10 +316,7 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     retryAvailable: Boolean(payload.retryAvailable ?? payload.retry_available),
     queueName: asNullableString(payload.queueName) ?? asNullableString(payload.queue_name),
     queuedAt: asNullableString(payload.queuedAt) ?? asNullableString(payload.queued_at),
-    result:
-      payload.result && typeof payload.result === "object"
-        ? (payload.result as Record<string, unknown>)
-        : {},
+    result,
     articleSetupState: normalizeArticleSetupState(payload.articleSetupState ?? payload.article_setup_state),
   };
 }

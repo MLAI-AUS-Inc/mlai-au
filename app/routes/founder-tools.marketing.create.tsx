@@ -33,6 +33,7 @@ import {
   VIBE_MARKETING_ARTICLE_JOB_COST_POINTS,
   createVibeMarketingClientRequestId,
 } from "~/lib/vibe-marketing-billing";
+import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
 import { shouldSkipVibeMarketingCreateRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import { combineCompanyContext as combineStartupCompanyContext } from "~/lib/vibe-marketing-startup-setup";
 import {
@@ -1099,7 +1100,7 @@ export default function FounderToolsMarketingCreate() {
       (!pendingArticleSystemSetupRunId && !isSetupProgressTerminal(pendingArticleSystemScan));
     if (!shouldPollParent) return;
     const hasLoadedCurrentRun = setupScanStatusFetcher.data?.runId === pendingArticleSystemScan.runId;
-    const signature = `${pendingArticleSystemScan.runId}:${pendingArticleSystemScan.status}:${pendingArticleSystemScan.currentStep ?? ""}:${pendingArticleSystemScan.updatedAt ?? ""}`;
+    const signature = repoScanProgressRefreshKey(pendingArticleSystemScan);
     if (setupParentProgressSignatureRef.current !== signature) {
       setupParentProgressSignatureRef.current = signature;
       setupParentProgressAtRef.current = Date.now();
@@ -1114,8 +1115,7 @@ export default function FounderToolsMarketingCreate() {
     );
     return () => window.clearTimeout(timer);
   }, [
-    pendingArticleSystemScan?.runId,
-    pendingArticleSystemScan?.status,
+    pendingArticleSystemScan,
     pendingArticleSystemSetupRunId,
     pageVisible,
     setupScanStatusFetcher,

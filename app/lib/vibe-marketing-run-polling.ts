@@ -4,6 +4,23 @@ type LivePreviewLike = {
   error?: string | null;
 };
 
+type ScanProgressLike = {
+  phaseKey?: string | null;
+  phase_key?: string | null;
+  phaseLabel?: string | null;
+  phase_label?: string | null;
+  phaseIndex?: number | string | null;
+  phase_index?: number | string | null;
+  phaseCount?: number | string | null;
+  phase_count?: number | string | null;
+  percent?: number | string | null;
+  message?: string | null;
+  currentStep?: string | null;
+  current_step?: string | null;
+  updatedAt?: string | null;
+  updated_at?: string | null;
+};
+
 type RunLike = {
   runId?: string | null;
   workflow?: string | null;
@@ -12,6 +29,8 @@ type RunLike = {
   updatedAt?: string | null;
   error?: string | null;
   livePreview?: LivePreviewLike | null;
+  scanProgress?: ScanProgressLike | null;
+  steps?: Array<{ key?: string | null; status?: string | null; completedAt?: string | null }> | null;
   result?: Record<string, unknown> | null;
 };
 
@@ -45,6 +64,13 @@ export function isLivePreviewFailedForPolling(preview: LivePreviewLike | null | 
 
 function recordValue(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
+}
+
+function scanProgressForPolling(run: RunLike): ScanProgressLike | null {
+  if (run.scanProgress) return run.scanProgress;
+  const result = recordValue(run.result);
+  const progress = recordValue(result?.scanProgress) ?? recordValue(result?.scan_progress);
+  return progress as ScanProgressLike | null;
 }
 
 function setupStatusForPolling(run: RunLike) {
@@ -83,4 +109,27 @@ export function statusPollRefreshKey(run: RunLike) {
     ].join(":");
   }
   return [run.runId, run.status, run.updatedAt ?? "", run.currentStep ?? ""].join(":");
+}
+
+export function repoScanProgressRefreshKey(run: RunLike | null | undefined) {
+  if (!run) return "";
+  const progress = scanProgressForPolling(run);
+  const stepSignature = Array.isArray(run.steps)
+    ? run.steps.map((step) => `${step.key ?? ""}:${step.status ?? ""}:${step.completedAt ?? ""}`).join(",")
+    : "";
+  return [
+    run.runId ?? "",
+    normalized(run.status),
+    run.currentStep ?? "",
+    run.updatedAt ?? "",
+    progress?.phaseKey ?? progress?.phase_key ?? "",
+    progress?.phaseLabel ?? progress?.phase_label ?? "",
+    progress?.phaseIndex ?? progress?.phase_index ?? "",
+    progress?.phaseCount ?? progress?.phase_count ?? "",
+    progress?.percent ?? "",
+    progress?.message ?? "",
+    progress?.currentStep ?? progress?.current_step ?? "",
+    progress?.updatedAt ?? progress?.updated_at ?? "",
+    stepSignature,
+  ].join("|");
 }
