@@ -1,6 +1,7 @@
 import { createApiClient, shouldUseDevBackendFallback, shouldUseDevBackendStub } from "~/lib/api";
 import { readableBackendErrors } from "~/lib/backend-error";
 import { hasAcceptedAutofillRun } from "~/lib/vibe-marketing-autofill-state";
+import { blockingCodeFromPayload, blockingReasonFromPayload } from "~/lib/vibe-marketing-run-failures";
 import type {
   VibeMarketingBootstrap,
   VibeMarketingArticleSetupState,
@@ -294,6 +295,15 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
     steps: Array.isArray(payload.steps) ? payload.steps.map(normalizeStep) : [],
     warnings: asStringList(payload.warnings),
     errors: asStringList(payload.errors),
+    errorCode: asNullableString(payload.errorCode) ?? asNullableString(payload.error_code) ?? asNullableString(result.errorCode) ?? asNullableString(result.error_code),
+    blockingReason:
+      asNullableString(payload.blockingReason) ??
+      asNullableString(payload.blocking_reason) ??
+      blockingReasonFromPayload(result),
+    blockingCode:
+      asNullableString(payload.blockingCode) ??
+      asNullableString(payload.blocking_code) ??
+      blockingCodeFromPayload(result),
     artifacts: Array.isArray(payload.artifacts) ? payload.artifacts : [],
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
@@ -1590,6 +1600,12 @@ export function startVibeMarketingScan(env: Env, request: Request, body: Record<
 
 export function startVibeMarketingArticleSystemSetup(env: Env, request: Request, body: Record<string, unknown>) {
   return startMarketingRun(env, request, "article-system-setup", body);
+}
+
+export async function resetVibeMarketingArticleSetup(env: Env, request: Request, body: Record<string, unknown>) {
+  const client = createApiClient(env, request);
+  const response = await client.post(`${BASE_PATH}/article-setup/reset`, body);
+  return response.data as Record<string, unknown>;
 }
 
 export function startVibeMarketingDiscovery(env: Env, request: Request, body: Record<string, unknown>) {

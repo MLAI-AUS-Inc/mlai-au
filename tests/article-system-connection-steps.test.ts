@@ -31,7 +31,7 @@ describe("article system connection step states", () => {
     expect(steps.scan.status).toBe("active");
     expect(steps.scan.defaultExpanded).toBe(true);
     expect(steps.chooseLocation.status).toBe("complete");
-    expect(steps.chooseLocation.defaultExpanded).toBe(false);
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
     expect(steps.buildSetup.status).toBe("active");
     expect(steps.buildSetup.defaultExpanded).toBe(true);
   });
@@ -125,5 +125,56 @@ describe("article system connection step states", () => {
     expect(steps.scan.defaultExpanded).toBe(true);
     expect(steps.chooseLocation.status).toBe("locked");
     expect(steps.chooseLocation.unavailableReason).toContain("scan issue");
+  });
+
+  test("marks a saved setup as needing refresh when the current scan failed", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-5",
+      scanFailed: true,
+      setupTargetReady: true,
+      setupSurfaceUrl: "/articles",
+      persistedSetupIsStale: true,
+      scaffoldStatus: "ready_to_build",
+    });
+
+    expect(steps.scan.status).toBe("blocked");
+    expect(steps.chooseLocation.status).toBe("complete");
+    expect(steps.chooseLocation.attention).toBe(true);
+    expect(steps.chooseLocation.attentionLabel).toBe("Saved setup needs refresh");
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
+    expect(steps.buildSetup.status).toBe("active");
+    expect(steps.buildSetup.attention).toBe(true);
+  });
+
+  test("returns to choose location after reset clears the saved setup", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      currentScanRunId: "scan-after-reset",
+      inventoryReady: true,
+      setupTargetReady: false,
+      persistedSetupIsStale: false,
+      selectedSurfaceUrl: null,
+      setupSurfaceUrl: null,
+    });
+
+    expect(steps.scan.status).toBe("complete");
+    expect(steps.chooseLocation.status).toBe("active");
+    expect(steps.chooseLocation.disabled).toBe(false);
+    expect(steps.chooseLocation.attention).toBeUndefined();
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
+    expect(steps.buildSetup.status).toBe("locked");
+    expect(steps.buildSetup.disabled).toBe(true);
+  });
+
+  test("expands a saved setup when the saved route cannot be resolved", () => {
+    const steps = articleSystemConnectionStepStates({
+      connected: true,
+      setupTargetReady: true,
+      scaffoldStatus: "ready_to_build",
+    });
+
+    expect(steps.chooseLocation.status).toBe("complete");
+    expect(steps.chooseLocation.defaultExpanded).toBe(true);
   });
 });

@@ -43,6 +43,7 @@ import {
   getVibeMarketingBootstrap,
   replayVibeMarketingDaily,
   refreshVibeMarketingBaselineGoogle,
+  resetVibeMarketingArticleSetup,
   saveVibeMarketingSettings,
   skipVibeMarketingBaseline,
   startVibeMarketingArticle,
@@ -724,6 +725,16 @@ export async function action({ request, context }: Route.ActionArgs) {
       return redirect("/founder-tools/marketing/create?step=articleSystem");
     }
 
+    if (intent === "reset-article-setup") {
+      const githubRepo = stringFromForm(formData, "githubRepo");
+      if (!githubRepo) return { intent, error: "Choose a GitHub repository before resetting articles setup." };
+      await resetVibeMarketingArticleSetup(env, request, {
+        githubRepo,
+        github_repo: githubRepo,
+      });
+      return redirect("/founder-tools/marketing/create?step=articleSystem");
+    }
+
     if (intent === "build-article-system-preview") {
       const scanRunId = stringFromForm(formData, "scanRunId");
       if (!scanRunId) {
@@ -848,6 +859,7 @@ function actionIntentStep(intent?: string | null): VibeMarketingStepKey | null {
   if (intent === "start-scan") return "articleSystem";
   if (intent === "confirm-article-surface" || intent === "create-article-surface") return "articleSystem";
   if (intent === "save-article-system") return "articleSystem";
+  if (intent === "reset-article-setup") return "articleSystem";
   if (intent === "start-discovery") return "research";
   if (intent === "start-article") return "chooseArticle";
   if (intent === "save-startup-details" || intent === "start-autofill") return "startupDetails";
