@@ -124,7 +124,11 @@ function BrandBar() {
             rel="noopener noreferrer"
             className="transition-transform hover:scale-105"
           >
-            <img src="/mdn-logo.png" alt="MDN Logo" className="h-10 object-contain" />
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FRobotics%20%26%20AI%20For%20Everyone%20(5)%20(1).png?alt=media&token=dc52eeaa-033f-40a3-95e7-030ace78444d"
+              alt="MDN Logo"
+              className="h-10 object-contain"
+            />
           </a>
           <a
             href="https://www.linkedin.com/company/mlai-aus-inc/"
@@ -132,7 +136,11 @@ function BrandBar() {
             rel="noopener noreferrer"
             className="transition-transform hover:scale-105"
           >
-            <img src="/mlai-logo.webp" alt="MLAI Logo" className="h-10 object-contain" />
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI%20logo.png?alt=media&token=35ee6faf-8f75-4b41-becb-0f192f4c20f2"
+              alt="MLAI Logo"
+              className="h-10 object-contain"
+            />
           </a>
         </div>
         <div className="flex items-center gap-4">
