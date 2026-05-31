@@ -1,6 +1,7 @@
 import { ArrowPathIcon, ExclamationTriangleIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { clsx } from "clsx";
 import type { ReactNode } from "react";
+import { runFailureGuidance } from "~/lib/vibe-marketing-run-failures";
 import type { VibeMarketingRunSummary, VibeMarketingScanProgress } from "~/types/vibe-marketing";
 
 export type MarketingRunProgressTheme = {
@@ -35,6 +36,8 @@ function labelForCurrentStep(step: string) {
 }
 
 function shortErrorMessage(run: VibeMarketingRunSummary, error: string) {
+  const guidance = runFailureGuidance(run);
+  if (guidance.specific) return guidance.summary;
   if (["repo_scan", "content_factory_scan"].includes(run.workflow)) {
     return "Repository scan failed. Retry the scan or choose a different repository.";
   }
@@ -132,6 +135,10 @@ export default function MarketingRunProgressCard({
   const completedSegmentClassName = theme?.completedSegmentClassName ?? "bg-violet-600";
   const activeSegmentClassName = theme?.activeSegmentClassName ?? "animate-pulse bg-violet-300";
   const pendingSegmentClassName = theme?.pendingSegmentClassName ?? "bg-white";
+  const failureGuidance = attentionState ? runFailureGuidance(run) : null;
+  const failureReason = failureGuidance?.reason ?? "";
+  const rawError = run.errors[0] ?? "";
+  const showFailureDetails = Boolean(failureGuidance || rawError);
 
   return (
     <div
@@ -194,10 +201,13 @@ export default function MarketingRunProgressCard({
           <p className="mt-2 text-xs font-medium text-gray-500">
             {progressFooter}
           </p>
-          {run.errors.length > 0 ? (
+          {showFailureDetails ? (
             <details className="mt-3 rounded-xl border border-red-200 bg-white/80 px-4 py-3 text-sm text-red-700">
-              <summary className="cursor-pointer font-bold">{shortErrorMessage(run, run.errors[0])}</summary>
-              <p className="mt-2 break-words font-mono text-xs leading-5 text-red-600">{run.errors[0]}</p>
+              <summary className="cursor-pointer font-bold">{shortErrorMessage(run, rawError)}</summary>
+              {failureReason ? <p className="mt-2 font-semibold leading-6">{failureReason}</p> : null}
+              {failureGuidance?.nextStep ? <p className="mt-2 font-semibold leading-6">Next step: {failureGuidance.nextStep}</p> : null}
+              {failureGuidance?.code ? <p className="mt-2 text-xs font-black uppercase tracking-wide text-red-500">{failureGuidance.code.replace(/_/g, " ")}</p> : null}
+              {rawError && rawError !== failureReason ? <p className="mt-2 break-words font-mono text-xs leading-5 text-red-600">{rawError}</p> : null}
             </details>
           ) : null}
         </div>

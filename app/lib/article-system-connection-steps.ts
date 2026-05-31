@@ -19,6 +19,8 @@ export type ArticleSystemConnectionStepState = {
   defaultExpanded: boolean;
   disabled: boolean;
   unavailableReason: string;
+  attention?: boolean;
+  attentionLabel?: string;
 };
 
 export type ArticleSystemConnectionStepInput = {
@@ -30,8 +32,10 @@ export type ArticleSystemConnectionStepInput = {
   scanStale?: boolean;
   inventoryReady?: boolean;
   setupTargetReady?: boolean;
+  persistedSetupIsStale?: boolean;
   selectedSurfaceUrl?: string | null;
   scaffoldStatus?: ArticleSystemScaffoldStatus;
+  setupSurfaceUrl?: string | null;
 };
 
 export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldStatus) {
@@ -48,9 +52,17 @@ export function articleSystemScaffoldActionLabel(status: ArticleSystemScaffoldSt
 export function articleSystemConnectionStepStates(input: ArticleSystemConnectionStepInput): Record<ArticleSystemConnectionStepId, ArticleSystemConnectionStepState> {
   const hasScanRun = Boolean(input.currentScanRunId?.trim());
   const hasSelectedSurface = Boolean(input.selectedSurfaceUrl?.trim());
+  const hasSetupSurface = Boolean(input.setupSurfaceUrl?.trim());
+  const persistedSetupIsStale = Boolean(input.persistedSetupIsStale && input.setupTargetReady);
   const scanLoadingOrRunning = Boolean(input.scanLoading || input.scanRunning || (hasScanRun && !input.inventoryReady && !input.setupTargetReady && !input.scanFailed && !input.scanStale));
   const scanBlocked = Boolean(input.scanFailed || input.scanStale);
   const hasSetupTarget = Boolean(input.setupTargetReady || hasSelectedSurface);
+  const staleSetupAttention = persistedSetupIsStale
+    ? {
+        attention: true,
+        attentionLabel: "Saved setup needs refresh",
+      }
+    : {};
 
   const connect: ArticleSystemConnectionStepState = input.connected
     ? {
@@ -124,9 +136,13 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
     chooseLocation = {
       id: "chooseLocation",
       status: "complete",
-      defaultExpanded: Boolean(input.inventoryReady && hasSelectedSurface),
+      defaultExpanded: Boolean(
+        (input.inventoryReady && hasSelectedSurface) ||
+          (input.setupTargetReady && (!input.inventoryReady || !hasSetupSurface || persistedSetupIsStale)),
+      ),
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
     };
   } else if (input.inventoryReady) {
     chooseLocation = {
@@ -156,8 +172,8 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: false,
       disabled: true,
       unavailableReason: input.connected
-        ? "Choose an articles route before building the articles scaffold."
-        : "Connect GitHub and choose an articles route before building the articles scaffold.",
+        ? "Choose an articles/blogs location before building the setup preview."
+        : "Connect GitHub and choose an articles/blogs location before building the setup preview.",
     };
   } else if (input.scaffoldStatus === "ready" || input.scaffoldStatus === "legacy_ready") {
     buildSetup = {
@@ -166,6 +182,7 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: true,
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
     };
   } else if (input.scaffoldStatus === "failed") {
     buildSetup = {
@@ -174,6 +191,7 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: true,
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
     };
   } else {
     buildSetup = {
@@ -182,6 +200,7 @@ export function articleSystemConnectionStepStates(input: ArticleSystemConnection
       defaultExpanded: true,
       disabled: false,
       unavailableReason: "",
+      ...staleSetupAttention,
     };
   }
 

@@ -15,6 +15,7 @@ import {
   Loader2,
   LockKeyhole,
   Plus,
+  RotateCcw,
   Search,
   ShieldCheck,
   UserCheck,
@@ -34,6 +35,7 @@ import {
   type ArticleSystemScaffoldStatus,
   type ArticleSystemConnectionStepState,
 } from "~/lib/article-system-connection-steps";
+import { runFailureGuidance } from "~/lib/vibe-marketing-run-failures";
 import { repoScanProgressRefreshKey } from "~/lib/vibe-marketing-run-polling";
 import type { VibeMarketingArticleSetupState, VibeMarketingBootstrap, VibeMarketingGithubReposResponse, VibeMarketingRunSummary } from "~/types/vibe-marketing";
 
@@ -339,24 +341,28 @@ function FlowStep({
   }, [resetKey, stepState.defaultExpanded]);
 
   const isLocked = stepState.status === "locked";
-  const statusLabel = {
+  const statusLabel = stepState.attentionLabel || {
     active: "Current",
     blocked: "Needs attention",
     complete: "Complete",
     locked: "Not ready yet",
   }[stepState.status];
-  const numberTone = {
-    active: "bg-violet-600 text-white",
-    blocked: "bg-red-600 text-white",
-    complete: "bg-emerald-600 text-white",
-    locked: "bg-slate-200 text-slate-500",
-  }[stepState.status];
-  const statusTone = {
-    active: "bg-violet-50 text-violet-700 ring-violet-100",
-    blocked: "bg-red-50 text-red-700 ring-red-100",
-    complete: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-    locked: "bg-slate-100 text-slate-500 ring-slate-200",
-  }[stepState.status];
+  const numberTone = stepState.attention
+    ? "bg-amber-500 text-white"
+    : {
+        active: "bg-violet-600 text-white",
+        blocked: "bg-red-600 text-white",
+        complete: "bg-emerald-600 text-white",
+        locked: "bg-slate-200 text-slate-500",
+      }[stepState.status];
+  const statusTone = stepState.attention
+    ? "bg-amber-50 text-amber-800 ring-amber-200"
+    : {
+        active: "bg-violet-50 text-violet-700 ring-violet-100",
+        blocked: "bg-red-50 text-red-700 ring-red-100",
+        complete: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+        locked: "bg-slate-100 text-slate-500 ring-slate-200",
+      }[stepState.status];
 
   return (
     <div className="relative pl-12">
@@ -627,6 +633,9 @@ export default function ArticleSystemConnectionPanel({
   const scanFailed = Boolean(effectiveScanRun && SCAN_FAILED_STATUSES.has(effectiveScanRun.status));
   const canonicalScanComplete = articleSetupState?.scanStatus === "completed" && !articleSetupState.scanStale;
   const scanStale = Boolean(effectiveScanRun?.stale || effectiveScanRun?.staleReason === "scan_queue_not_started" || articleSetupState?.scanStale);
+  const scanFailureGuidance = effectiveScanRun && (scanFailed || scanStale) ? runFailureGuidance(effectiveScanRun) : null;
+  const manualFallbackReady = Boolean(scanFailureGuidance);
+  const savedSurfaceUrl = articleSetupState?.routePath || articleSetupHintValue(articleSetupState);
   const scanNeedsSetupApproval = isScanAwaitingSetupApproval(effectiveScanRun);
   const setupRunId = articleSetupState?.setupRunId || (effectiveScanRun ? setupRunIdForRun(effectiveScanRun) : "");
   const inventoryScan = isInventoryScan(effectiveScanRun);
@@ -639,15 +648,19 @@ export default function ArticleSystemConnectionPanel({
       articleSetupState?.routePath ||
       (effectiveScanRun && setupTargetScan && (scanNeedsSetupApproval || setupRunId)),
   );
+  const persistedSetupReady = Boolean(articleSetupState?.setupRunId || articleSetupState?.routePath);
+  const persistedSetupIsStale = Boolean(persistedSetupReady && (scanFailed || scanStale));
   const scanStartPending = actionPending("start-scan");
   const retryScanPending = actionPending("retry-scan");
   const cancelScanPending = actionPending("cancel-scan");
+  const resetArticleSetupPending = actionPending("reset-article-setup");
   const confirmSurfacePending = actionPending("confirm-article-surface");
   const createSurfacePending = actionPending("create-article-surface");
   const [selectedChoiceId, setSelectedChoiceId] = useState("");
   const [manualArticleRoute, setManualArticleRoute] = useState("");
   const [manualRouteError, setManualRouteError] = useState("");
   const [createNewPath, setCreateNewPath] = useState(articleSurfaceDefault || "/articles");
+  const [changingSavedLocation, setChangingSavedLocation] = useState(false);
   const lastScanProgressSignatureRef = useRef("");
   const lastScanProgressAtRef = useRef(Date.now());
   const lastTerminalRevalidationRef = useRef("");
@@ -684,8 +697,9 @@ export default function ArticleSystemConnectionPanel({
   const saveIntent = selectedMode === "create" ? "create-article-surface" : "confirm-article-surface";
   const savePending = confirmSurfacePending || createSurfacePending;
   const scanLoading = Boolean(currentScanRunId && !effectiveScanRun);
-  const savedSurfaceUrl = articleSetupState?.routePath || articleSetupHintValue(articleSetupState);
   const displayedSurfaceUrl = selectedSurfaceUrl || savedSurfaceUrl;
+  const showSavedSetup = setupTargetReady && !changingSavedLocation;
+  const locationChooserReady = Boolean(inventoryReady || changingSavedLocation || manualFallbackReady);
   const scaffoldCheck = bootstrap.checks.scaffold;
   const scaffoldExplicitReady = Boolean(
     scaffoldCheck?.generationReady ||
@@ -750,10 +764,12 @@ export default function ArticleSystemConnectionPanel({
     scanRunning,
     scanFailed,
     scanStale,
-    inventoryReady,
-    setupTargetReady,
+    inventoryReady: locationChooserReady,
+    setupTargetReady: showSavedSetup,
+    persistedSetupIsStale: showSavedSetup && persistedSetupIsStale,
     selectedSurfaceUrl,
     scaffoldStatus,
+    setupSurfaceUrl: displayedSurfaceUrl,
   });
 
   useEffect(() => {
@@ -761,6 +777,7 @@ export default function ArticleSystemConnectionPanel({
     setManualArticleRoute("");
     setManualRouteError("");
     setCreateNewPath(articleSurfaceDefault || "/articles");
+    setChangingSavedLocation(false);
   }, [articleSurfaceDefault, effectiveScanRun?.runId]);
 
   useEffect(() => {
@@ -1049,6 +1066,13 @@ export default function ArticleSystemConnectionPanel({
         <ReassuranceStrip />
       </div>
 
+      {persistedSetupIsStale ? (
+        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm font-semibold leading-6 text-amber-900">
+          Your last articles/blogs setup is saved, but the latest repository scan needs attention. Re-scan to refresh the choices, or change the saved
+          location and rebuild the setup preview.
+        </div>
+      ) : null}
+
       <div className="mt-6 space-y-5">
         <FlowStep
           number={1}
@@ -1221,8 +1245,15 @@ export default function ArticleSystemConnectionPanel({
               ) : null}
             </>
           ) : setupTargetReady ? (
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm font-semibold leading-6 text-emerald-800">
-              Repository scan completed previously and an articles/blogs location is already saved.
+            <div
+              className={clsx(
+                "rounded-2xl border p-4 text-sm font-semibold leading-6",
+                persistedSetupIsStale ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-100 bg-emerald-50 text-emerald-800",
+              )}
+            >
+              {persistedSetupIsStale
+                ? "A previous articles/blogs location is saved, but the latest scan did not complete cleanly."
+                : "Repository scan completed previously and an articles/blogs location is already saved."}
             </div>
           ) : (
             <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm font-semibold leading-6 text-slate-600">
@@ -1237,22 +1268,61 @@ export default function ArticleSystemConnectionPanel({
           description="Pick the route we found, paste a path manually, or create a new articles directory."
           stepState={stepStates.chooseLocation}
         >
-          {setupTargetReady && !inventoryReady ? (
+          {showSavedSetup && !inventoryReady ? (
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="flex gap-3">
-                <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                  <CheckCircle2 className="h-6 w-6" />
-                </span>
-                <div>
-                  <p className="text-sm font-black text-slate-950">Articles route selected</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-600">
-                    {displayedSurfaceUrl ? `Articles route selected: ${displayedSurfaceUrl}` : "The saved articles route will be used for article drafts and previews."}
-                  </p>
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="flex gap-3">
+                  <span className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                    <CheckCircle2 className="h-6 w-6" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-black text-slate-950">Articles/blogs location already selected</p>
+                    {displayedSurfaceUrl ? (
+                      <p className="mt-1 break-all text-sm font-semibold text-slate-600">Public route: {displayedSurfaceUrl}</p>
+                    ) : (
+                      <p className="mt-1 text-sm font-semibold text-amber-800">Saved location could not be resolved. Re-scan to refresh your choices.</p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setChangingSavedLocation(true);
+                      setSelectedChoiceId("");
+                      setManualArticleRoute(displayedSurfaceUrl || "");
+                      setManualRouteError("");
+                    }}
+                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-700 shadow-sm transition hover:bg-slate-50"
+                  >
+                    Change location
+                  </button>
+                  <Form method="POST">
+                    <input type="hidden" name="intent" value="start-scan" />
+                    <input type="hidden" name="scanPurpose" value="inventory" />
+                    <input type="hidden" name="articleSurfaceMode" value="not_sure" />
+                    <input type="hidden" name="githubRepo" value={selectedRepo} />
+                    <button
+                      type="submit"
+                      disabled={scanStartPending || scanRunning || !selectedRepo}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-violet-200 bg-white px-4 py-2.5 text-sm font-black text-violet-700 shadow-sm transition hover:bg-violet-50 disabled:opacity-50"
+                    >
+                      {scanStartPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                      {scanStartPending ? "Starting scan..." : "Re-scan repository"}
+                    </button>
+                  </Form>
                 </div>
               </div>
             </div>
-          ) : inventoryReady ? (
+          ) : locationChooserReady ? (
             <div className="space-y-3">
+              {manualFallbackReady && scanFailureGuidance ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-6 text-amber-900">
+                  <p className="font-black">Scan issue: {scanFailureGuidance.reason}</p>
+                  <p className="mt-1">Next step: {scanFailureGuidance.nextStep}</p>
+                  <p className="mt-1">You can still paste the known public articles/blogs route below, or create a new articles directory.</p>
+                </div>
+              ) : null}
               {publicRouteCandidates.length ? (
                 publicRouteCandidates.map((candidate) => (
                   <SurfaceChoiceCard
@@ -1382,6 +1452,49 @@ export default function ArticleSystemConnectionPanel({
           </div>
           <div className="mt-4 flex-shrink-0 sm:mt-0">{scaffoldAction}</div>
         </div>
+
+        {setupTargetReady || scaffoldReady ? (
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-black text-red-900">Reset articles setup</p>
+                <p className="mt-1 text-sm font-semibold leading-6 text-red-800">
+                  Clear the saved articles/blogs setup for this repository and start the setup flow again.
+                </p>
+              </div>
+              <Form
+                method="POST"
+                onSubmit={(event) => {
+                  if (typeof window !== "undefined" && !window.confirm("Reset the saved articles setup for this repository?")) {
+                    event.preventDefault();
+                  }
+                }}
+              >
+                <input type="hidden" name="githubRepo" value={selectedRepo} />
+                <button
+                  type="submit"
+                  name="intent"
+                  value="reset-article-setup"
+                  disabled={resetArticleSetupPending || !selectedRepo}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-3 text-sm font-black text-red-700 shadow-sm transition hover:bg-red-100 disabled:opacity-50 sm:w-auto"
+                >
+                  {resetArticleSetupPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                  {resetArticleSetupPending ? "Resetting..." : "Reset articles setup"}
+                </button>
+              </Form>
+            </div>
+          </div>
+        ) : null}
+
+        {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
+          <Link
+            to="/founder-tools/marketing/create?step=research"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
+          >
+            Continue
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        ) : null}
       </div>
     </section>
   );

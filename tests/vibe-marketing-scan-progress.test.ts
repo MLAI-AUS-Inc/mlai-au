@@ -107,4 +107,28 @@ describe("vibe marketing scan progress", () => {
     expect(markup).toContain("78% complete");
     expect((markup.match(/aria-label="Scan phase/g) ?? []).length).toBe(9);
   });
+
+  test("renders specific scan blocking reason and next step", () => {
+    const run = normalizeMarketingRun({
+      runId: "scan-blocked-1",
+      workflow: "repo_scan",
+      domain: "statdoctor.app",
+      status: "blocked",
+      result: {
+        blocking_reason: "No build script was found for the repository web app.",
+        blocking_code: "ARTICLE_DIRECTORY_UNSUPPORTED_RUNTIME",
+      },
+      errors: ["No build script was found for the repository web app."],
+    });
+
+    const markup = renderToStaticMarkup(createElement(MarketingRunProgressCard, { run }));
+
+    expect(run.blockingReason).toBe("No build script was found for the repository web app.");
+    expect(run.blockingCode).toBe("ARTICLE_DIRECTORY_UNSUPPORTED_RUNTIME");
+    expect(markup).toContain("Repository scan needs attention");
+    expect(markup).toContain("No build script was found for the repository web app.");
+    expect(markup).toContain("Next step:");
+    expect(markup).toContain("Add or expose a package build script");
+    expect(markup).not.toContain("Repository scan failed. Retry the scan or choose a different repository.");
+  });
 });
