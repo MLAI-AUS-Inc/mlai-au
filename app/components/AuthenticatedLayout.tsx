@@ -404,13 +404,13 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             aria-hidden="true"
                             className={classNames(
                                 "h-6 w-px lg:hidden",
-                                isFounderToolsApp ? "bg-[var(--vr-color-border)]" : "bg-gray-900/10"
+                                isFounderToolsApp ? "hidden bg-[var(--vr-color-border)] sm:block" : "bg-gray-900/10"
                             )}
                         />
 
                         <div className="flex flex-1 items-center justify-between gap-x-2 self-stretch sm:gap-x-4 lg:gap-x-6">
                             {showVibeRaisingTopNavigation ? (
-                                <nav className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-2 pr-1 sm:gap-2" aria-label="Vibe Raising">
+                                <nav className="hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto py-2 pr-1 sm:flex sm:gap-2" aria-label="Vibe Raising">
                                     {VIBE_RAISING_TOP_NAVIGATION.map((item) => {
                                         const current = pathname === item.href || pathname.startsWith(`${item.href}/`);
 
@@ -433,7 +433,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
                             ) : (
                                 <div />
                             )}
-                            <div className="flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6">
+                            <div className={classNames("flex shrink-0 items-center gap-x-2 sm:gap-x-4 lg:gap-x-6", isFounderToolsApp && "hidden sm:flex")}>
                                 <Menu as="div" className="relative">
                                     <Menu.Button className="-m-1.5 flex items-center p-1.5">
                                         <span className="sr-only">Open user menu</span>

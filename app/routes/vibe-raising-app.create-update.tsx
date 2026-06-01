@@ -24,6 +24,7 @@ import {
     SparklesIcon,
     ArrowPathIcon,
     CloudArrowUpIcon,
+    VideoCameraIcon,
     ChevronDownIcon,
     LightBulbIcon,
     QuestionMarkCircleIcon,
@@ -42,6 +43,7 @@ import {
     ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { useDropzone } from 'react-dropzone';
+import { motion, useInView } from "motion/react";
 import { clsx } from "clsx";
 import DraftFromEmailWizard from "~/components/DraftFromEmailWizard";
 import EmailDraftInProgressCard from "~/components/EmailDraftInProgressCard";
@@ -732,10 +734,11 @@ type MissingFounderLinkedInDraft = {
     linkedinUrl: string;
 };
 
-const MAX_UPLOAD_SIZE_MB = 25;
-const MAX_VIDEO_UPLOAD_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
-const MAX_SOURCE_VIDEO_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
-const MAX_PITCH_DECK_UPLOAD_BYTES = MAX_UPLOAD_SIZE_MB * 1024 * 1024;
+const MAX_PITCH_DECK_UPLOAD_SIZE_MB = 10;
+const MAX_VIDEO_UPLOAD_SIZE_MB = 25;
+const MAX_VIDEO_UPLOAD_BYTES = MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024;
+const MAX_SOURCE_VIDEO_BYTES = MAX_VIDEO_UPLOAD_SIZE_MB * 1024 * 1024;
+const MAX_PITCH_DECK_UPLOAD_BYTES = MAX_PITCH_DECK_UPLOAD_SIZE_MB * 1024 * 1024;
 const VIDEO_COMPRESSION_THRESHOLD_BYTES = 75 * 1024 * 1024;
 const FFMPEG_CORE_BASE_URL = "https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/umd";
 const STORY_MATERIALS_SUGGESTION_TEXT_THRESHOLD = 4;
@@ -876,7 +879,7 @@ function isSupportedVideoFile(file: File) {
 function getDropzoneRejectionMessage(fileRejections: Array<{ errors: Array<{ code: string; message: string }> }>) {
     const firstError = fileRejections[0]?.errors[0];
     if (!firstError) return "We couldn't use that file. Add a PDF, PPT, PPTX, or a supported video walkthrough.";
-    if (firstError.code === "file-too-large") return `File is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`;
+    if (firstError.code === "file-too-large") return `File is too large. Use a file under ${MAX_VIDEO_UPLOAD_SIZE_MB} MB.`;
     if (firstError.code === "file-invalid-type") {
         return "Use a PDF, PPT, PPTX, or a common video format like MP4, MOV, M4V, WebM, AVI, MPEG, 3GP, OGV, or MKV.";
     }
@@ -913,7 +916,7 @@ function getPitchDeckUploadErrorMessage(error: unknown) {
         return "Pitch deck uploads are not available on the backend yet. Deploy the latest backend release and try again.";
     }
     if (statusCode === 413) {
-        return `This deck is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`;
+        return `This deck is too large. Use a file under ${MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB.`;
     }
     if (statusCode === 403 && requestPath === "signed-storage-upload") {
         return "The pitch deck upload session expired. Please select the file again.";
@@ -1331,6 +1334,48 @@ interface SectionWithExampleProps {
     defaultValue?: string;
     value?: string;
     onChange?: (value: string) => void;
+    enableMobileAdvance?: boolean;
+    mobileAdvanceTo?: string;
+}
+
+const DRAFT_QUESTION_META = {
+    highlights: {
+        step: "01",
+        eyebrow: "Momentum",
+        prompt: "What moved the business forward?",
+    },
+    challenges: {
+        step: "02",
+        eyebrow: "Context",
+        prompt: "What is slowing you down?",
+    },
+    learnings: {
+        step: "03",
+        eyebrow: "Learning",
+        prompt: "What did customers or experiments teach you?",
+    },
+    next30Days: {
+        step: "04",
+        eyebrow: "Focus",
+        prompt: "What happens next?",
+    },
+    asks: {
+        step: "05",
+        eyebrow: "Help",
+        prompt: "What should investors help with?",
+    },
+} as const;
+
+type DraftQuestionKey = keyof typeof DRAFT_QUESTION_META;
+
+function getDraftQuestionKey(name: string, label: string): DraftQuestionKey | null {
+    const source = `${name} ${label}`.toLowerCase();
+    if (source.includes("highlight")) return "highlights";
+    if (source.includes("challenge")) return "challenges";
+    if (source.includes("learning")) return "learnings";
+    if (source.includes("next30")) return "next30Days";
+    if (source.includes("ask")) return "asks";
+    return null;
 }
 
 function parseBulletItems(value?: string) {
@@ -1344,7 +1389,7 @@ function parseBulletItems(value?: string) {
             : [normalized];
 
     const items = paragraphs
-        .map((item) => item.replace(/^\s*•\s*/, "").trim())
+        .map((item) => item.replace(/^\s*(?:[-*]|\u2022)\s*/, "").trim())
         .filter(Boolean);
 
     return items.length ? items : [""];
@@ -1398,12 +1443,16 @@ function BulletTextarea({
     placeholder,
     onChange,
     onFocus,
+    onMobileAdvance,
+    enterKeyHint,
     className,
 }: {
     value: string;
     placeholder: string;
     onChange: (value: string) => void;
     onFocus?: () => void;
+    onMobileAdvance?: () => void;
+    enterKeyHint?: "enter" | "done" | "go" | "next" | "previous" | "search" | "send";
     className?: string;
 }) {
     const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -1426,6 +1475,13 @@ function BulletTextarea({
                 onChange(event.target.value);
             }}
             onFocus={onFocus}
+            onKeyDown={(event) => {
+                if (!onMobileAdvance) return;
+                if (event.key !== "Enter" || event.shiftKey || event.nativeEvent.isComposing) return;
+                event.preventDefault();
+                onMobileAdvance();
+            }}
+            enterKeyHint={enterKeyHint}
             placeholder={placeholder}
             className={clsx(
                 "w-full resize-none overflow-hidden whitespace-pre-wrap break-words",
@@ -1442,9 +1498,40 @@ function SectionWithExample({
     icon: Icon,
     value,
     onChange,
+    enableMobileAdvance = false,
+    mobileAdvanceTo,
 }: SectionWithExampleProps) {
+    const titleId = useId();
+    const cardRef = useRef<HTMLElement | null>(null);
+    const cardInView = useInView(cardRef, { amount: 0.45, once: false });
     const { items, commitItems } = useBulletItemsState(value, onChange);
-    const hints = SECTION_HINTS[name] || [];
+    const questionKey = getDraftQuestionKey(name, label);
+    const questionMeta = questionKey ? DRAFT_QUESTION_META[questionKey] : null;
+    const hints = SECTION_HINTS[name] || (questionKey ? SECTION_HINTS[questionKey] : []) || [];
+    const questionPrompt = questionMeta?.prompt || placeholder;
+
+    const handleMobileAdvance = useCallback(() => {
+        if (!enableMobileAdvance || typeof document === "undefined") return;
+
+        if (!mobileAdvanceTo) {
+            const activeElement = document.activeElement;
+            if (activeElement instanceof HTMLElement) activeElement.blur();
+            return;
+        }
+
+        const nextSection = document.querySelector<HTMLElement>(`[data-draft-section="${mobileAdvanceTo}"]`);
+        if (!nextSection) return;
+
+        nextSection.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        window.setTimeout(() => {
+            const nextInput = nextSection.querySelector<HTMLTextAreaElement>("textarea");
+            if (!nextInput) return;
+            nextInput.focus({ preventScroll: true });
+            const end = nextInput.value.length;
+            nextInput.setSelectionRange(end, end);
+        }, 180);
+    }, [enableMobileAdvance, mobileAdvanceTo]);
 
     const updateItem = (index: number, text: string) => {
         const updated = [...items];
@@ -1462,45 +1549,69 @@ function SectionWithExample({
     };
 
     return (
-        <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-                <Icon className="h-4 w-4 text-[var(--vr-color-primary)]" />
-                <p className="text-sm font-black text-gray-950">{label}</p>
-            </div>
-            <div className="overflow-hidden rounded-xl border border-[var(--vr-color-border)] bg-white">
+        <motion.section
+            ref={cardRef}
+            className="rounded-2xl border border-[var(--vr-color-border)] bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.06)] motion-safe:will-change-transform sm:p-5"
+            data-draft-section={name}
+            data-draft-question-card="true"
+            aria-labelledby={titleId}
+            initial={{ scale: 0.94, opacity: 0 }}
+            animate={cardInView ? { scale: 1, opacity: 1 } : { scale: 0.94, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+        >
             <input type="hidden" name={name} value={value || ""} />
-            <div className="space-y-3 p-4">
+            <header className="grid grid-cols-[2.75rem_1fr] gap-x-3 gap-y-1">
+                <span className="row-span-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)]">
+                    <Icon className="h-5 w-5" />
+                </span>
+                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">
+                    {questionMeta ? `${questionMeta.step} / 05 - ${questionMeta.eyebrow}` : label}
+                </p>
+                <h3 id={titleId} className="text-base font-black leading-snug text-gray-950 sm:text-lg">
+                    {questionPrompt}
+                </h3>
+                <p className="text-xs font-bold uppercase tracking-wide text-[var(--vr-color-primary)]">{label}</p>
+            </header>
+
+            <ul className="mt-4 space-y-2" aria-labelledby={titleId}>
                 {items.map((item, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                        <span className="mt-2.5 flex-shrink-0 select-none text-sm text-[var(--vr-color-primary)]">•</span>
+                    <li key={i} className="grid grid-cols-[auto_1fr_auto] items-start gap-2 rounded-xl bg-[var(--vr-palette-paper)] px-3 py-2.5 ring-1 ring-[var(--vr-color-border)] focus-within:bg-white focus-within:ring-2 focus-within:ring-[var(--vr-color-primary)]">
+                        <span className="mt-2.5 select-none text-sm font-black text-[var(--vr-color-primary)]" aria-hidden="true">-</span>
                         <BulletTextarea
                             value={item}
                             onChange={(text) => updateItem(i, text)}
+                            onMobileAdvance={handleMobileAdvance}
+                            enterKeyHint={enableMobileAdvance ? (mobileAdvanceTo ? "next" : "done") : undefined}
                             placeholder={hints[i % hints.length] || placeholder}
-                            className="flex-1 rounded-xl border-2 border-[var(--vr-color-border)] bg-white px-4 py-2 text-sm leading-6 text-gray-900 placeholder:text-gray-300 placeholder:italic focus:border-[var(--vr-color-primary)] focus:ring-0"
+                            className="min-h-11 flex-1 rounded-none border-0 bg-transparent px-0 py-2 text-[16px] leading-6 text-gray-900 placeholder:text-gray-400 placeholder:italic focus:outline-none focus:ring-0 sm:text-sm"
                         />
                         {(items.length > 1 || item.trim().length > 0) && (
                             <button
                                 type="button"
                                 onClick={() => removeItem(i)}
-                                className="mt-1.5 rounded-lg p-1.5 text-gray-300 transition-all hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
+                                className="mt-1.5 flex h-8 w-8 items-center justify-center rounded-lg text-gray-300 transition hover:bg-[rgba(242,114,63,0.12)] hover:text-[var(--vr-palette-coral)]"
+                                aria-label={`Remove ${label} point ${i + 1}`}
                             >
-                                <XMarkIcon className="w-4 h-4" />
+                                <XMarkIcon className="h-4 w-4" />
                             </button>
                         )}
-                    </div>
+                    </li>
                 ))}
-            </div>
-            <button
-                type="button"
-                onClick={addItem}
-                className="flex w-full items-center justify-center gap-1.5 border-t border-dashed border-[var(--vr-color-border)] py-3 text-xs font-bold text-[var(--vr-color-primary)] transition-colors hover:bg-[rgba(0,255,215,0.12)]"
-            >
-                <span className="text-base leading-none">+</span>
-                Add point
-            </button>
-            </div>
-        </div>
+            </ul>
+
+            <footer className="mt-3 border-t border-dashed border-[var(--vr-color-border)] pt-3">
+                <button
+                    type="button"
+                    onClick={addItem}
+                    className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)]"
+                >
+                    <span className="text-base leading-none" aria-hidden="true">+</span>
+                    Add point
+                </button>
+            </footer>
+        </motion.section>
     );
 }
 
@@ -2320,7 +2431,7 @@ export default function CreateUpdate() {
     const monthSelectorRef = useRef<HTMLDivElement | null>(null);
     const draftStickyTriggerRef = useRef<HTMLDivElement | null>(null);
     const generateDraftSwipeStartRef = useRef<{ x: number; y: number } | null>(null);
-    const shouldDimMetricsTemplate = isManualOnlyDraftFlow && draftMetricOptions.length >= 12;
+    const shouldDimMetricsTemplate = false;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
     const [showDraftStickyOnMobile, setShowDraftStickyOnMobile] = useState(false);
 
@@ -2531,7 +2642,7 @@ export default function CreateUpdate() {
 
         if (file.size > MAX_SOURCE_VIDEO_BYTES) {
             setVideoUploadStatus("error");
-            setVideoUploadError(`File is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`);
+            setVideoUploadError(`File is too large. Use a file under ${MAX_VIDEO_UPLOAD_SIZE_MB} MB.`);
             return;
         }
 
@@ -2554,13 +2665,13 @@ export default function CreateUpdate() {
                 } catch (compressionError) {
                     if (abortController.signal.aborted || videoUploadSequenceRef.current !== sequence) return;
                     if (file.size > MAX_VIDEO_UPLOAD_BYTES) {
-                        throw new Error(`File exceeds the ${MAX_UPLOAD_SIZE_MB} MB upload limit after compression. Try a shorter clip.`);
+                        throw new Error(`File exceeds the ${MAX_VIDEO_UPLOAD_SIZE_MB} MB upload limit after compression. Try a shorter clip.`);
                     }
                 }
             }
 
             if (uploadCandidate.size > MAX_VIDEO_UPLOAD_BYTES) {
-                throw new Error(`File exceeds the ${MAX_UPLOAD_SIZE_MB} MB upload limit.`);
+                throw new Error(`File exceeds the ${MAX_VIDEO_UPLOAD_SIZE_MB} MB upload limit.`);
             }
 
             setVideoContentType(uploadCandidate.type || inferVideoContentType(null, uploadCandidate.name));
@@ -2621,7 +2732,7 @@ export default function CreateUpdate() {
 
         if (file.size > MAX_PITCH_DECK_UPLOAD_BYTES) {
             setPitchDeckUploadStatus("error");
-            setPitchDeckUploadError(`Pitch deck is too large. Use a file under ${MAX_UPLOAD_SIZE_MB} MB.`);
+            setPitchDeckUploadError(`Pitch deck is too large. Use a file under ${MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB.`);
             return;
         }
 
@@ -3366,6 +3477,21 @@ export default function CreateUpdate() {
         String(uploadedVideoUrl || videoStoragePath || "").trim() ||
         (videoUploadStatus === "ready" && String(videoPreviewUrl || "").trim())
     );
+    const draftQuestionCompletionItems = [
+        { label: "Highlights", done: String(highlights || "").trim().length > 0 },
+        { label: "Challenges", done: String(challenges || "").trim().length > 0 },
+        { label: "Learnings", done: String(learnings || "").trim().length > 0 },
+        { label: "Next", done: String(next30Days || "").trim().length > 0 },
+        { label: "Ask", done: String(asks || "").trim().length > 0 },
+    ];
+    const draftProgressItems = [
+        { label: "Story", done: hasUploadedStoryMaterial },
+        { label: "Metrics", done: hasAnyMetricValue },
+        ...draftQuestionCompletionItems,
+    ];
+    const draftCompletedCount = draftProgressItems.filter((item) => item.done).length;
+    const draftCompletionPercent = Math.round((draftCompletedCount / draftProgressItems.length) * 100);
+    const nextDraftProgressItem = draftProgressItems.find((item) => !item.done);
     const shouldSuggestStoryMaterials =
         hasDraftTemplate &&
         hasQualitativeDraftText &&
@@ -3460,7 +3586,7 @@ export default function CreateUpdate() {
             statusDetail: selectedMetricOptions.length > 0
                 ? `AI selected ${selectedMetricOptions.length} metric${selectedMetricOptions.length === 1 ? "" : "s"} for ${selectedMonthLabel}.`
                 : isManualOnlyDraftFlow
-                    ? `Use the full 16-metric template for ${selectedMonthLabel}.`
+                    ? undefined
                     : `AI drafted ${selectedMonthLabel}; core metrics are ready to edit below.`,
             primaryLabel: isSubmitting ? "Reviewing..." : "Review draft",
             primaryType: "submit" as const,
@@ -3882,10 +4008,7 @@ export default function CreateUpdate() {
         >
             <div className="flex items-end justify-between gap-4">
                 <div>
-                    <h2 className="text-xl font-black text-gray-950">Say it your way</h2>
-                    <p className="mt-3 text-sm text-slate-500">
-                        Record a video or upload a file to support this update.
-                    </p>
+                    <h2 className="text-xl font-black text-gray-950">Add a deck or short founder walkthrough.</h2>
                 </div>
             </div>
             <div className="relative mt-6">
@@ -3902,49 +4025,7 @@ export default function CreateUpdate() {
                         >
                             <input {...getMaterialsInputProps()} />
                             <div className="w-full max-w-4xl">
-                                <div className="mb-8 flex flex-col items-center text-center">
-                                    <div className="mb-4 h-12 w-12 text-slate-400">
-                                        <CloudArrowUpIcon className="h-full w-full stroke-1" />
-                                    </div>
-                                    <p className="text-xl font-black text-gray-950">
-                                        {isMaterialsDragActive ? "Drop your file here" : "Drag your pitch deck or video here"}
-                                    </p>
-                                    <p className="mt-2 max-w-md text-sm font-semibold leading-6 text-slate-600">
-                                        Choose the format that tells the investor story best. Final upload limit: {MAX_UPLOAD_SIZE_MB} MB.
-                                    </p>
-                                </div>
-
-                                <div className="grid gap-6 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
-                                    <div className="flex flex-col items-center text-center md:items-start md:text-left">
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
-                                            Pitch deck
-                                        </p>
-                                        <h3 className="mt-2 text-xl font-black text-gray-950">Upload the deck</h3>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Best for slides, founder bio, market story, and early traction notes.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            PDF, PPT, or PPTX
-                                        </p>
-                                    </div>
-
-                                    <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
-
-                                    <div className="flex flex-col items-center text-center md:items-start md:text-left">
-                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
-                                            Walkthrough video
-                                        </p>
-                                        <h3 className="mt-2 text-xl font-black text-gray-950">Record the founder story</h3>
-                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
-                                            Best when metrics are light and investors need to hear the founder thinking.
-                                        </p>
-                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
-                                            MP4, MOV, WebM and more
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                                <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
                                     <button
                                         type="button"
                                         disabled={isEmailDraftBusy}
@@ -3952,10 +4033,29 @@ export default function CreateUpdate() {
                                             event.stopPropagation();
                                             openMaterialsPicker();
                                         }}
-                                        className="rounded-xl bg-black px-5 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-gray-900 active:scale-95 disabled:opacity-60"
+                                        className="group flex min-h-44 flex-col items-center rounded-2xl p-4 text-center transition hover:bg-[rgba(0,128,128,0.05)] focus:outline-none focus:ring-2 focus:ring-[var(--vr-color-primary)] active:scale-[0.99] disabled:opacity-60 md:items-start md:text-left"
                                     >
-                                        Choose pitch deck
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                                            Pitch deck
+                                        </p>
+                                        <h3 className="mt-2 text-xl font-black text-gray-950">Upload deck</h3>
+                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
+                                            <CloudArrowUpIcon className="h-4 w-4" aria-hidden="true" />
+                                            Upload file
+                                        </span>
+                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                                            Slides, bio, market story, traction.
+                                        </p>
+                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
+                                            PDF, PPT, or PPTX
+                                        </p>
+                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
+                                            Up to {MAX_PITCH_DECK_UPLOAD_SIZE_MB} MB
+                                        </p>
                                     </button>
+
+                                    <div className="h-px w-full bg-[var(--vr-color-border)] md:h-auto md:w-px" aria-hidden />
+
                                     <button
                                         type="button"
                                         disabled={isEmailDraftBusy || isRecordingPermissionPending}
@@ -3968,16 +4068,29 @@ export default function CreateUpdate() {
                                             }
                                         }}
                                         className={clsx(
-                                            "flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition shadow-sm disabled:opacity-60",
-                                            isRecording
-                                                ? "animate-pulse bg-[rgba(242,114,63,0.14)] text-[var(--vr-palette-coral)] ring-2 ring-[rgba(242,114,63,0.22)]"
-                                                : "bg-[rgba(242,114,63,0.10)] text-[var(--vr-palette-coral)] hover:bg-[rgba(242,114,63,0.16)]",
+                                            "group flex min-h-44 flex-col items-center rounded-2xl p-4 text-center transition focus:outline-none focus:ring-2 focus:ring-[var(--vr-palette-coral)] active:scale-[0.99] disabled:opacity-60 md:items-start md:text-left",
+                                            isRecording ? "bg-[rgba(242,114,63,0.10)]" : "hover:bg-[rgba(242,114,63,0.06)]",
                                         )}
                                     >
-                                        <span className="h-2.5 w-2.5 rounded-full bg-[var(--vr-palette-coral)]" aria-hidden />
-                                        {isRecordingPermissionPending ? "Requesting access..." : isRecording ? "Stop recording" : "Record walkthrough"}
+                                        <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-palette-coral)]">
+                                            Walkthrough video
+                                        </p>
+                                        <span className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-black px-5 py-2 text-sm font-black text-white shadow-sm transition group-hover:bg-gray-900">
+                                            <VideoCameraIcon className="h-4 w-4" aria-hidden="true" />
+                                            {isRecordingPermissionPending ? "Requesting access" : isRecording ? "Stop recording" : "Start recording"}
+                                        </span>
+                                        <p className="mt-3 text-sm font-semibold leading-6 text-slate-600">
+                                            Useful when metrics are light.
+                                        </p>
+                                        <p className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-slate-400">
+                                            MP4, MOV, WebM
+                                        </p>
+                                        <p className="mt-1 text-[11px] font-bold text-slate-400">
+                                            Up to {MAX_VIDEO_UPLOAD_SIZE_MB} MB
+                                        </p>
                                     </button>
                                 </div>
+
                                 {isRecordingPermissionPending ? (
                                     <p className="mt-4 text-sm font-semibold text-[var(--vr-color-primary)]">
                                         Waiting for your browser camera and microphone prompt...
@@ -4887,7 +5000,7 @@ export default function CreateUpdate() {
     return (
         <div className="mx-auto max-w-6xl space-y-10 pb-32">
             <div className="space-y-4">
-                <div ref={draftStepperRef}>
+                <div ref={draftStepperRef} className="hidden sm:block">
                     <MonthlyUpdateStepper
                         activeStep="draft"
                         disableMotion
@@ -4920,20 +5033,15 @@ export default function CreateUpdate() {
                 <div className="space-y-4">
                     {monthConfirmed ? (
                         <div
-                            className="w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 shadow-sm sm:px-6 sm:py-4"
+                            className="flex min-w-0 items-center gap-2 px-1 py-1.5"
                             aria-label={`Selected update month: ${selectedMonthLabel}`}
                         >
-                            <div className="flex min-w-0 flex-1 items-center gap-3">
-                                <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
-                                <div className="min-w-0">
-                                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
-                                        Selected month
-                                    </p>
-                                    <p className="truncate text-base font-black text-gray-950">
-                                        {selectedMonthLabel}
-                                    </p>
-                                </div>
-                            </div>
+                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)]" aria-hidden="true" />
+                            <p className="min-w-0 truncate text-sm font-black text-gray-950">
+                                <span className="font-semibold text-slate-500">Update month</span>
+                                <span className="mx-1.5 text-slate-300" aria-hidden="true">/</span>
+                                {selectedMonthLabel}
+                            </p>
                         </div>
                     ) : (
                         <div ref={monthSelectorRef} className="space-y-3">
@@ -5029,7 +5137,9 @@ export default function CreateUpdate() {
                                 />
                             ) : null}
                             {hasDraftTemplate ? (
-                                <div className="overflow-hidden rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-8 lg:p-10">
+                                <>
+                                    {materialsSection}
+                                    <div className="space-y-6">
                                 <Form id={DRAFT_REVIEW_FORM_ID} method="POST" className="space-y-6">
                                     <input type="hidden" name="intent" value="review" />
                                     <input type="hidden" name="metricKeys" value={formMetricKeys.join(",")} />
@@ -5050,7 +5160,7 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="month" value={selectedMonth} />
                                     <input type="hidden" name="year" value={selectedYear} />
 
-                                    <div className="space-y-3">
+                                    <div className="rounded-[1.75rem] border border-[var(--vr-color-border)] bg-white p-4 shadow-sm sm:p-5">
                                         {shouldDimMetricsTemplate ? (
                                             <p className="text-xs font-medium tracking-[0.02em] text-gray-500">
                                                 Click any metric card to start editing.
@@ -5069,7 +5179,7 @@ export default function CreateUpdate() {
                                                         "relative min-w-0 rounded-2xl border p-3 transition duration-200 sm:p-4",
                                                         isHiddenOnMobile ? "hidden sm:block" : null,
                                                         isMetricCardAwake
-                                                            ? "border-gray-200 bg-[var(--vr-palette-paper)]"
+                                                            ? "border-[rgba(0,128,128,0.12)] bg-[var(--vr-palette-paper)]"
                                                             : "cursor-pointer border-gray-200/80 bg-[rgba(247,246,242,0.65)] opacity-45 saturate-0",
                                                     )}
                                                     onClick={(event) => {
@@ -5151,8 +5261,9 @@ export default function CreateUpdate() {
                                                         Math.min(previous + mobileDraftMetricBatchSize, draftMetricOptions.length),
                                                     );
                                                 }}
-                                                className="inline-flex w-full items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-2.5 text-xs font-black uppercase tracking-wide text-gray-700 transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)] sm:hidden"
+                                                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[rgba(0,128,128,0.08)] px-4 py-2 text-xs font-black uppercase tracking-wide text-[var(--vr-color-primary)] transition hover:bg-[rgba(0,255,215,0.16)] sm:hidden"
                                             >
+                                                <span className="text-base leading-none" aria-hidden="true">+</span>
                                                 Show more
                                             </button>
                                         ) : null}
@@ -5164,6 +5275,8 @@ export default function CreateUpdate() {
                                             name="highlights"
                                             value={highlights}
                                             onChange={setHighlights}
+                                            enableMobileAdvance={isMobileTourViewport}
+                                            mobileAdvanceTo="challenges"
                                             placeholder="What went well this month? Major wins, product launches, partnerships..."
                                             icon={SparklesIcon}
                                         />
@@ -5172,6 +5285,8 @@ export default function CreateUpdate() {
                                             name="challenges"
                                             value={challenges}
                                             onChange={setChallenges}
+                                            enableMobileAdvance={isMobileTourViewport}
+                                            mobileAdvanceTo="learnings"
                                             placeholder="What obstacles are you facing? Where do you need help?"
                                             icon={ExclamationCircleIcon}
                                         />
@@ -5180,6 +5295,8 @@ export default function CreateUpdate() {
                                             name="learnings"
                                             value={learnings}
                                             onChange={setLearnings}
+                                            enableMobileAdvance={isMobileTourViewport}
+                                            mobileAdvanceTo="next30Days"
                                             placeholder="What did you learn from customers, experiments, or execution this month?"
                                             icon={LightBulbIcon}
                                         />
@@ -5188,6 +5305,8 @@ export default function CreateUpdate() {
                                             name="next30Days"
                                             value={next30Days}
                                             onChange={setNext30Days}
+                                            enableMobileAdvance={isMobileTourViewport}
+                                            mobileAdvanceTo="asks"
                                             placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
                                             icon={ArrowRightIcon}
                                         />
@@ -5196,58 +5315,60 @@ export default function CreateUpdate() {
                                             name="asks"
                                             value={asks}
                                             onChange={setAsks}
+                                            enableMobileAdvance={isMobileTourViewport}
                                             placeholder="How can your investors help? Introductions, advice, specific expertise..."
                                             icon={QuestionMarkCircleIcon}
                                         />
                                     </div>
 
                                 </Form>
-                                <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-black text-gray-950">
-                                            {draftSaved ? "Draft saved privately in My Drafts." : "Save privately now and come back later from My Drafts."}
-                                        </p>
-                                        <p className="mt-1 text-sm text-slate-500">
-                                            Private drafts stay visible only to you until you publish them.
-                                        </p>
+                                    <div ref={draftStickyTriggerRef} aria-hidden className="h-1 w-full" />
                                     </div>
-                                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                        <Link
-                                            to="/founder-tools/drafts"
-                                            className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-white px-4 py-3 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
-                                        >
-                                            Open My Drafts
-                                        </Link>
-                                        <button
-                                            type="button"
-                                            onClick={handlePersistDraft}
-                                            disabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
-                                            className="inline-flex min-w-40 items-center justify-center rounded-xl bg-[var(--vr-palette-black)] px-4 py-3 text-sm font-extrabold text-white transition hover:bg-[var(--vr-color-primary)] disabled:cursor-not-allowed disabled:opacity-60"
-                                        >
-                                            {saveDraftFetcher.state !== "idle" ? "Saving..." : draftSaved ? "Draft Saved" : "Save as Draft"}
-                                        </button>
-                                    </div>
-                                </div>
-                                <div ref={draftStickyTriggerRef} aria-hidden className="h-1 w-full" />
-                                </div>
+                                </>
                             ) : null}
-                            {materialsSection}
                         </>
                     ) : null}
 
                 </div>
             </section>
 
+            {isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate ? (
+                <div className="pointer-events-none fixed left-14 right-4 top-0 z-50 flex h-16 items-center sm:hidden" aria-label="Draft progress">
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-[var(--vr-color-primary)]">Draft progress</p>
+                            <p className="shrink-0 text-sm font-black text-gray-950">{draftCompletionPercent}%</p>
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                            <div className="h-1 flex-1 overflow-hidden rounded-full bg-slate-200/80">
+                                <div
+                                    className="h-full rounded-full bg-[var(--vr-color-primary)] transition-all duration-300 ease-out"
+                                    style={{ width: `${draftCompletionPercent}%` }}
+                                />
+                            </div>
+                            <p className="max-w-[8rem] truncate text-[10px] font-bold text-slate-500">
+                                {nextDraftProgressItem ? `Next: ${nextDraftProgressItem.label}` : "Ready"}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
+
             <VibeRaisingStickyStepBar
                 className={clsx(
                     !monthConfirmed && "hidden sm:block",
                     isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate && !showDraftStickyOnMobile && "hidden sm:block",
                 )}
+                hideStatusOnMobile={isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate}
                 hideBackOnMobile
                 statusIcon={draftStickyStatusIcon}
                 statusTitle={draftStickyBar.statusTitle}
                 statusDetail={draftStickyBar.statusDetail}
                 onBack={draftStickyBar.onBack}
+                secondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving..." : draftSaved ? "Draft saved" : "Save as Draft") : undefined}
+                mobileSecondaryLabel={selectedDraftStage === "reporting" && hasDraftTemplate ? (saveDraftFetcher.state !== "idle" ? "Saving" : draftSaved ? "Saved" : "Save draft") : undefined}
+                onSecondary={selectedDraftStage === "reporting" && hasDraftTemplate ? handlePersistDraft : undefined}
+                secondaryDisabled={saveDraftFetcher.state !== "idle" || isEmailDraftBusy || isVideoUploadBlocking}
                 primaryLabel={draftStickyBar.primaryLabel}
                 onPrimary={draftStickyBar.onPrimary}
                 primaryDisabled={draftStickyBar.primaryDisabled}
@@ -5275,7 +5396,7 @@ export default function CreateUpdate() {
                                     Founder-first update
                                 </p>
                                 <h2 id="story-materials-suggestion-title" className="mt-2 text-xl font-black leading-tight text-[var(--vr-color-text)]">
-                                    No metrics yet? A pitch deck or short video may work better.
+                                    No metrics? Add deck/video.
                                 </h2>
                             </div>
                             <button
@@ -5290,7 +5411,7 @@ export default function CreateUpdate() {
 
                         <div className="px-6 py-6">
                             <p className="text-sm leading-7 text-[var(--vr-color-text-mid)]">
-                                For early-stage startups, investors often value founder accountability, clarity, and founder-market fit before the numbers are mature. A short walkthrough, founder bio, pitch deck, and LinkedIn link can tell that story faster than empty metrics.
+                                Add a short deck or walkthrough so investors can see the story behind the numbers.
                             </p>
 
                             {missingFounderLinkedInDrafts.length > 0 ? (
@@ -5779,6 +5900,8 @@ export default function CreateUpdate() {
 	                                    name={isViewingCurrentUpdate ? "highlights" : `pastMonth_${activePastIndex}_highlights`}
 	                                    value={activeHighlights}
 	                                    onChange={updateActiveHighlights}
+                                    enableMobileAdvance={isMobileTourViewport}
+                                    mobileAdvanceTo={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
                                     rows={3}
                                     placeholder="What went well this month? Major wins, product launches, partnerships..."
                                     icon={SparklesIcon}
@@ -5788,6 +5911,8 @@ export default function CreateUpdate() {
 	                                    name={isViewingCurrentUpdate ? "challenges" : `pastMonth_${activePastIndex}_challenges`}
 	                                    value={activeChallenges}
 	                                    onChange={updateActiveChallenges}
+                                    enableMobileAdvance={isMobileTourViewport}
+                                    mobileAdvanceTo={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
                                     rows={3}
                                     placeholder="What obstacles are you facing? Where do you need help?"
                                     icon={ExclamationCircleIcon}
@@ -5797,6 +5922,8 @@ export default function CreateUpdate() {
 	                                    name={isViewingCurrentUpdate ? "learnings" : `pastMonth_${activePastIndex}_learnings`}
 	                                    value={activeLearnings}
 	                                    onChange={updateActiveLearnings}
+                                    enableMobileAdvance={isMobileTourViewport}
+                                    mobileAdvanceTo={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
                                     rows={3}
                                     placeholder="What did you learn from customers, experiments, or execution this month?"
                                     icon={LightBulbIcon}
@@ -5806,6 +5933,8 @@ export default function CreateUpdate() {
 	                                    name={isViewingCurrentUpdate ? "next30Days" : `pastMonth_${activePastIndex}_next30Days`}
 	                                    value={activeNext30Days}
 	                                    onChange={updateActiveNext30Days}
+                                    enableMobileAdvance={isMobileTourViewport}
+                                    mobileAdvanceTo={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
                                     rows={3}
                                     placeholder="What are the highest priority actions, deadlines, or goals for the next month?"
                                     icon={ArrowRightIcon}
@@ -5815,6 +5944,7 @@ export default function CreateUpdate() {
 	                                    name={isViewingCurrentUpdate ? "asks" : `pastMonth_${activePastIndex}_asks`}
 	                                    value={activeAsks}
 	                                    onChange={updateActiveAsks}
+                                    enableMobileAdvance={isMobileTourViewport}
                                     rows={3}
                                     placeholder="How can your investors help? Introductions, advice, specific expertise..."
                                     icon={QuestionMarkCircleIcon}
