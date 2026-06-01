@@ -54,6 +54,12 @@ import {
   VIBE_MARKETING_CONTENT_ISLAND_TOPIC_COST_POINTS,
   createVibeMarketingClientRequestId,
 } from "~/lib/vibe-marketing-billing";
+import {
+  filterOptimisticallyDeletedDrafts,
+  hiddenDraftRunIdsAfterSubmit,
+  pruneHiddenDraftRunIds,
+  restoreHiddenDraftRunId,
+} from "~/lib/vibe-marketing-draft-delete";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import {
   controlVibeMarketingRun,
@@ -550,8 +556,13 @@ export async function action({ request, context }: Route.ActionArgs) {
       if (!runId) {
         return { intent, error: "Choose a draft article to delete." };
       }
-      await controlVibeMarketingRun(env, request, runId, "cancel");
-      return { intent, runId };
+      const run = await controlVibeMarketingRun(env, request, runId, "cancel", { cancel_group: true });
+      return {
+        intent,
+        runId,
+        cancelledRunIds: run.cancelledRunIds ?? [],
+        protectedRunIds: run.protectedRunIds ?? [],
+      };
     }
 
     if (intent === "start-article") {
@@ -661,6 +672,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     const responseErrors = readableBackendErrors(error, { fallback });
     return {
       intent,
+      ...(intent === "delete-draft" ? { runId: stringFromForm(formData, "runId") } : {}),
       error: readableBackendError(error, { fallback }),
       errors: responseErrors,
     };
@@ -672,6 +684,12 @@ export async function action({ request, context }: Route.ActionArgs) {
 export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
   if (actionIntent(args.actionResult) === "start-content-island-discovery") {
     return false;
+  }
+  if (actionIntent(args.actionResult) === "delete-draft") {
+    if (actionError(args.actionResult)) return false;
+    return actionStringList(args.actionResult, "protectedRunIds", "protected_run_ids").length > 0
+      ? args.defaultShouldRevalidate
+      : false;
   }
   return args.defaultShouldRevalidate;
 }
@@ -686,6 +704,30 @@ function actionIntent(data: unknown): string | null {
   if (!data || typeof data !== "object" || !("intent" in data)) return null;
   const intent = (data as { intent?: unknown }).intent;
   return typeof intent === "string" ? intent : null;
+}
+
+function actionString(data: unknown, key: string): string {
+  if (!data || typeof data !== "object" || !(key in data)) return "";
+  const value = (data as Record<string, unknown>)[key];
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function actionStringList(data: unknown, ...keys: string[]): string[] {
+  if (!data || typeof data !== "object") return [];
+  const payload = data as Record<string, unknown>;
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) {
+      return value.map((item) => String(item ?? "").trim()).filter(Boolean);
+    }
+    if (typeof value === "string") {
+      return value
+        .split(/[,\n]/)
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+  return [];
 }
 
 function numericValue(value: unknown): number | null {
@@ -2613,7 +2655,7 @@ function DraftDeleteConfirmationModal({
       <div className="w-full max-w-md rounded-2xl border border-rose-100 bg-white p-5 shadow-2xl">
         <h2 id="draft-delete-confirmation-title" className="text-lg font-black text-slate-950">Delete draft article?</h2>
         <p className="mt-2 text-sm font-semibold leading-6 text-slate-600">
-          This cancels the article run and removes generated content for &quot;{draft.title}&quot;.
+          This cancels this draft and related retry attempts for &quot;{draft.title}&quot;.
         </p>
         <label className="mt-4 flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-600">
           <input
@@ -3131,6 +3173,7 @@ function ReturningTopicPickerPage({
   setupMergedNotice?: boolean;
 }) {
   const navigation = useNavigation();
+  const routeActionData = useActionData<typeof action>();
   const location = useLocation();
   const revalidator = useRevalidator();
   const restoreFetcher = useFetcher<TopicFeedbackActionData>();
@@ -3159,6 +3202,7 @@ function ReturningTopicPickerPage({
   const completedContentIslandDiscoveryRuns = useRef<Set<string>>(new Set());
   const contentIslandRefreshStartCount = useRef(0);
   const companyAvatarPreviewObjectUrl = useRef<string | null>(null);
+  const handledDeleteActionRef = useRef<unknown>(null);
   const articleFormRef = useRef<HTMLFormElement>(null);
   const activePillar = useMemo(
     () => bootstrap.topicPillars.find((pillar) => pillar.slug === activePillarSlug) ?? null,
@@ -3291,6 +3335,11 @@ function ReturningTopicPickerPage({
   const [draftDeleteRequest, setDraftDeleteRequest] = useState<{ runId: string; title: string } | null>(null);
   const [skipDeleteConfirmation, setSkipDeleteConfirmation] = useState(false);
   const [deletingDraftRunId, setDeletingDraftRunId] = useState<string | null>(null);
+  const [optimisticallyDeletedDraftRunIds, setOptimisticallyDeletedDraftRunIds] = useState<string[]>([]);
+  const visibleDraftArticles = useMemo(
+    () => filterOptimisticallyDeletedDrafts(bootstrap.draftArticles ?? [], optimisticallyDeletedDraftRunIds),
+    [bootstrap.draftArticles, optimisticallyDeletedDraftRunIds],
+  );
 
   const submitSelectedTopic = useCallback(() => {
     if (articleSubmitting || !selectedTopic) return;
@@ -3449,6 +3498,8 @@ function ReturningTopicPickerPage({
     if (String(navigation.formData?.get("intent") ?? "") !== "delete-draft") return;
     const runId = String(navigation.formData?.get("runId") ?? "").trim();
     setDeletingDraftRunId(runId || null);
+    setOptimisticallyDeletedDraftRunIds((current) => hiddenDraftRunIdsAfterSubmit(current, runId));
+    setDraftDeleteRequest((current) => (current?.runId === runId ? null : current));
   }, [navigation.formData, navigation.state]);
 
   useEffect(() => {
@@ -3457,10 +3508,44 @@ function ReturningTopicPickerPage({
   }, [deleteDraftSubmitting]);
 
   useEffect(() => {
+    setOptimisticallyDeletedDraftRunIds((current) => pruneHiddenDraftRunIds(current, bootstrap.draftArticles ?? []));
+  }, [bootstrap.draftArticles]);
+
+  useEffect(() => {
+    if (!routeActionData || handledDeleteActionRef.current === routeActionData) return;
+    if (actionIntent(routeActionData) !== "delete-draft") return;
+    handledDeleteActionRef.current = routeActionData;
+    pendingActions.clearPending();
+
+    const runId = actionString(routeActionData, "runId");
+    const deleteError = actionError(routeActionData);
+    if (deleteError) {
+      setOptimisticallyDeletedDraftRunIds((current) => restoreHiddenDraftRunId(current, runId));
+      setDeletingDraftRunId(null);
+      setToast({ kind: "error", message: deleteError });
+      return;
+    }
+
+    const protectedRunIds = actionStringList(routeActionData, "protectedRunIds", "protected_run_ids");
+    if (protectedRunIds.length) {
+      setOptimisticallyDeletedDraftRunIds((current) =>
+        protectedRunIds.reduce((next, protectedRunId) => restoreHiddenDraftRunId(next, protectedRunId), current),
+      );
+      setToast({
+        kind: "error",
+        message:
+          protectedRunIds.length === 1
+            ? "One related article attempt was not deleted because it already has publish evidence."
+            : `${protectedRunIds.length} related article attempts were not deleted because they already have publish evidence.`,
+      });
+    }
+  }, [pendingActions, routeActionData]);
+
+  useEffect(() => {
     if (!draftDeleteRequest) return;
-    const stillPresent = (bootstrap.draftArticles ?? []).some((draft) => draft.runId === draftDeleteRequest.runId);
+    const stillPresent = visibleDraftArticles.some((draft) => draft.runId === draftDeleteRequest.runId);
     if (!stillPresent) setDraftDeleteRequest(null);
-  }, [bootstrap.draftArticles, draftDeleteRequest]);
+  }, [draftDeleteRequest, visibleDraftArticles]);
 
   useEffect(() => {
     const data = contentIslandDiscoveryFetcher.data;
@@ -3967,7 +4052,7 @@ function ReturningTopicPickerPage({
           </section>
 
           <DraftArticlesCard
-            drafts={bootstrap.draftArticles ?? []}
+            drafts={visibleDraftArticles}
             submitting={isSubmitting}
             deletingRunId={deleteDraftSubmitting ? deletingDraftRunId : null}
             skipDeleteConfirmation={skipDeleteConfirmation}

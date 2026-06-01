@@ -56,6 +56,8 @@ export interface VibeMarketingRunSummary {
   errorCode?: string | null;
   blockingReason?: string | null;
   blockingCode?: string | null;
+  cancelledRunIds?: string[];
+  protectedRunIds?: string[];
   artifacts: unknown[];
   previewUrl?: string | null;
   prUrl?: string | null;

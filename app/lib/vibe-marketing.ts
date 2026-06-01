@@ -304,6 +304,8 @@ export function normalizeMarketingRun(raw: unknown): VibeMarketingRunSummary {
       asNullableString(payload.blockingCode) ??
       asNullableString(payload.blocking_code) ??
       blockingCodeFromPayload(result),
+    cancelledRunIds: asStringList(payload.cancelledRunIds ?? payload.cancelled_run_ids),
+    protectedRunIds: asStringList(payload.protectedRunIds ?? payload.protected_run_ids),
     artifacts: Array.isArray(payload.artifacts) ? payload.artifacts : [],
     previewUrl: asNullableString(payload.previewUrl) ?? asNullableString(payload.preview_url),
     prUrl: asNullableString(payload.prUrl) ?? asNullableString(payload.pr_url),
