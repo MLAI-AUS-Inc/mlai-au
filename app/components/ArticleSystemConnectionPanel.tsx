@@ -1486,15 +1486,6 @@ export default function ArticleSystemConnectionPanel({
           </div>
         ) : null}
 
-        {connected && scaffoldReady && !setupBlocked && !setupTargetReady && !inventoryReady ? (
-          <Link
-            to="/founder-tools/marketing/create?step=research"
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700"
-          >
-            Continue
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        ) : null}
       </div>
     </section>
   );
