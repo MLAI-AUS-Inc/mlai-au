@@ -19,7 +19,6 @@ import { clsx } from "clsx";
 import ArticleRunStageProgress from "~/components/ArticleRunStageProgress";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
-import ArticleSystemSurfaceSummary from "~/components/ArticleSystemSurfaceSummary";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
 import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
@@ -1118,8 +1117,6 @@ function ArticleSystemSetupPreviewPanel({
           </div>
         </div>
       </div>
-
-      <ArticleSystemSurfaceSummary run={source} />
 
       {changedFiles.length ? (
         <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
