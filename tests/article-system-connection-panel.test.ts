@@ -162,4 +162,22 @@ describe("article system connection panel", () => {
     expect(markup).toContain("Reset articles setup");
     expect(markup).toContain("value=\"reset-article-setup\"");
   });
+
+  test("does not render the old standalone Continue CTA when scaffold is ready without a selected target", () => {
+    const markup = renderPanel({
+      bootstrap: baseBootstrap({
+        checks: {
+          github: { passed: true },
+          scaffold: { passed: true, setupBlocked: false },
+        },
+      }),
+      articleSetupState: null,
+      scanRun: null,
+    });
+
+    expect(markup).toContain("Reset articles setup");
+    expect(markup).toContain("value=\"reset-article-setup\"");
+    expect(markup).not.toContain(">Continue<");
+    expect(markup).not.toContain("/founder-tools/marketing/create?step=research");
+  });
 });
