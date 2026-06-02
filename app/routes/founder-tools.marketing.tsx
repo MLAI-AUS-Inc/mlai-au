@@ -527,6 +527,40 @@ export async function action({ request, context }: Route.ActionArgs) {
       };
     }
 
+    if (intent === "research-custom-topic") {
+      const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
+      if (isArticleSystemSetupBlocked(bootstrap)) {
+        return { intent, error: "Merge the articles setup PR before researching topics. If you merged it in GitHub, refresh merge status." };
+      }
+      const customTitle = stringFromForm(formData, "customTitle");
+      const targetKeyword = stringFromForm(formData, "targetKeyword");
+      const articleContext = stringFromForm(formData, "articleContext");
+      if (!customTitle && !targetKeyword) {
+        return { intent, error: "Add an article title/angle or a target keyword to research." };
+      }
+      const run = await startVibeMarketingDiscovery(env, request, {
+        clientRequestId: stringFromForm(formData, "clientRequestId"),
+        client_request_id: stringFromForm(formData, "clientRequestId"),
+        customTopicTitle: customTitle,
+        custom_topic_title: customTitle,
+        customTopicKeyword: targetKeyword,
+        custom_topic_keyword: targetKeyword,
+        customTopicContext: articleContext,
+        custom_topic_context: articleContext,
+        requestedTopicCount: 4,
+        requested_topic_count: 4,
+      });
+      if (run.runId) {
+        throw redirect(
+          `/founder-tools/marketing/create?step=chooseArticle&researchRunId=${encodeURIComponent(run.runId)}`,
+        );
+      }
+      return {
+        intent,
+        error: run.error || run.errors?.[0] || "Research could not start. Please try again.",
+      };
+    }
+
     if (intent === "start-discovery" || intent === "discovery") {
       const bootstrap = await getVibeMarketingBootstrap(env, request, null, "summary");
       if (isArticleSystemSetupBlocked(bootstrap)) {
@@ -3319,6 +3353,7 @@ function ReturningTopicPickerPage({
     : submittedContentIslandSlug || null;
   const articleSubmitting = pendingActions.isPending("start-article");
   const discoverySubmitting = pendingActions.isPending("start-discovery", "discovery");
+  const customResearchPending = pendingActions.isPending("research-custom-topic");
   const deleteDraftSubmitting = pendingActions.isPending("delete-draft");
   const restoreBusy = restoreFetcher.state !== "idle";
   const visibleTopics = topics.slice(0, visibleCount);
@@ -3735,7 +3770,9 @@ function ReturningTopicPickerPage({
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.08fr)_minmax(440px,0.92fr)] xl:items-start">
         <div className="space-y-5">
           <Form ref={articleFormRef} method="POST" className="space-y-5">
-            <input type="hidden" name="intent" value="start-article" />
+            {activeTab === "choose" ? (
+              <input type="hidden" name="intent" value="start-article" />
+            ) : null}
             <input type="hidden" name="clientRequestId" value={billingRequestIds.articleJob} />
             <input type="hidden" name="topicCandidateId" value={activeTab === "choose" ? selectedTopicId : "__custom__"} />
             <input type="hidden" name="deliveryModeExplicit" value="false" />
@@ -3953,6 +3990,21 @@ function ReturningTopicPickerPage({
                       className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-100"
                     />
                   </FormField>
+                </div>
+                <div className="mt-6 flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm font-semibold text-slate-500">
+                    We'll research the strongest keywords and titles for your idea, then let you pick one before writing.
+                  </p>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="research-custom-topic"
+                    disabled={isSubmitting}
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50"
+                  >
+                    {customResearchPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                    {customResearchPending ? "Researching..." : "Research this topic"}
+                  </button>
                 </div>
               </>
             )}

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/founder-tools.marketing.create";
 import type { ShouldRevalidateFunctionArgs } from "react-router";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useSearchParams } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator, useSearchParams } from "react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
@@ -14,6 +14,7 @@ import {
 import { clsx } from "clsx";
 
 import MarketingWorkflowShell from "~/components/MarketingWorkflowShell";
+import MarketingRunProgressCard from "~/components/MarketingRunProgressCard";
 import ArticleSystemConnectionPanel from "~/components/ArticleSystemConnectionPanel";
 import ArticlesSetupProgressCard from "~/components/ArticlesSetupProgressCard";
 import CancelSetupBuildButton, { CANCEL_SETUP_BUILD_INTENT, canCancelSetupBuild } from "~/components/CancelSetupBuildButton";
@@ -433,13 +434,23 @@ function isArticleSystemPublished(bootstrap: VibeMarketingBootstrap) {
   );
 }
 
-function resolveActiveStep(value: string | null | undefined, bootstrap: VibeMarketingBootstrap): VibeMarketingStepKey {
+function resolveActiveStep(
+  value: string | null | undefined,
+  bootstrap: VibeMarketingBootstrap,
+  options: { hasResearchRun?: boolean } = {},
+): VibeMarketingStepKey {
   const requiredStep =
     createStepForWorkflowStep(bootstrap.workflowProgress?.currentStepId) ??
     normalizeStep(bootstrap.currentGuidedStep, "startupDetails");
   const requested = normalizeStep(value, requiredStep);
   if (isArticleSystemSetupBlocked(bootstrap) && ["research", "chooseArticle"].includes(requested)) {
     return "articleSystem";
+  }
+  // Custom-topic research routes here with ?researchRunId=… to show progress and the resulting
+  // candidates. Honour that target even while choose_topic is still locked (no candidates yet),
+  // otherwise the lock-gate below would bounce it back to the research step mid-research.
+  if (requested === "chooseArticle" && options.hasResearchRun) {
+    return "chooseArticle";
   }
   const requestedWorkflowStepId = WORKFLOW_STEP_ID_BY_CREATE_STEP[requested];
   const requestedWorkflowStep = bootstrap.workflowProgress?.steps?.find((step) => step.id === requestedWorkflowStepId);
@@ -482,7 +493,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     repos: [],
     repositories: [],
   };
-  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap);
+  const activeStep = resolveActiveStep(url.searchParams.get("step"), bootstrap, {
+    hasResearchRun: Boolean(url.searchParams.get("researchRunId")?.trim()),
+  });
   if (activeStep === "articleSystem" || requestedStep === "articleSystem") {
     try {
       githubRepos = await getVibeMarketingGithubRepos(env, request);
@@ -939,7 +952,9 @@ function PanelHeader({
 export default function FounderToolsMarketingCreate() {
   const { bootstrap, githubRepos, billingRequestIds } = useLoaderData<typeof loader>();
   const [searchParams] = useSearchParams();
-  const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap);
+  const activeStep = resolveActiveStep(searchParams.get("step"), bootstrap, {
+    hasResearchRun: Boolean(searchParams.get("researchRunId")?.trim()),
+  });
   const requestedStep = normalizeStep(searchParams.get("step"), activeStep);
   const shouldRefreshGoogleBaseline = searchParams.get("googleBaseline") === "refresh";
   const actionData = useActionData<typeof action>();
@@ -1034,10 +1049,14 @@ export default function FounderToolsMarketingCreate() {
   const buildArticleSystemPreviewPending = pendingActions.isPending("build-article-system-preview");
   const saveDailyPending = pendingActions.isPending("save-daily");
   const dailyReplayPending = pendingActions.isPending("daily-replay");
-  const selectableTopicCandidates = useMemo(
-    () => bootstrap.topicCandidates.filter((candidate) => !candidate.alreadyWritten).slice(0, 5),
-    [bootstrap.topicCandidates],
-  );
+  const researchRunId = searchParams.get("researchRunId")?.trim() ?? "";
+  const selectableTopicCandidates = useMemo(() => {
+    const available = bootstrap.topicCandidates.filter((candidate) => !candidate.alreadyWritten);
+    const scoped = researchRunId
+      ? available.filter((candidate) => candidate.sourceRunId === researchRunId)
+      : available;
+    return scoped.slice(0, 5);
+  }, [bootstrap.topicCandidates, researchRunId]);
   const alreadyWrittenCandidates = useMemo(() => {
     const candidates = [...bootstrap.hiddenTopicCandidates, ...bootstrap.topicCandidates].filter(
       (candidate) => candidate.alreadyWritten,
@@ -1058,6 +1077,62 @@ export default function FounderToolsMarketingCreate() {
     [selectableTopicCandidates, selectedTopicCandidateId],
   );
   const isCustomArticleSelected = selectedTopicCandidateId === "__custom__";
+
+  // Custom-topic research lands here with ?researchRunId=…; poll until it produces candidates,
+  // then render them scoped to that run (selectableTopicCandidates already filters by sourceRunId).
+  const researchStatusFetcher = useFetcher<VibeMarketingRunSummary>();
+  const researchRevalidator = useRevalidator();
+  const polledResearchRun =
+    researchStatusFetcher.data && researchStatusFetcher.data.runId === researchRunId
+      ? researchStatusFetcher.data
+      : null;
+  const researchRun = polledResearchRun ?? findRunById(bootstrap.latestRuns, researchRunId);
+  const researchStatus = String(researchRun?.status ?? "").trim().toLowerCase();
+  const researchFailed = ["failed", "blocked", "blocked_verification", "denied", "cancelled", "canceled"].includes(
+    researchStatus,
+  );
+  const researchCandidates = researchRunId ? selectableTopicCandidates : [];
+  const researchRunReady = ["completed", "awaiting_confirmation", "awaiting_approval", "approval_required"].includes(
+    researchStatus,
+  );
+  // Revalidate the loader exactly once after the run finishes so freshly materialized
+  // candidates load in; the ref stops the 3s poll from re-triggering it every tick.
+  const researchRevalidatedRunRef = useRef<string | null>(null);
+  // Show progress while the run is in flight or settling, then fall through to the candidate
+  // list (or empty state) once it has finished and reloaded — so it never spins forever.
+  const researchSettled =
+    researchFailed ||
+    (researchRunReady && researchRevalidatedRunRef.current === researchRunId && researchRevalidator.state === "idle");
+  const researchActive = Boolean(researchRunId) && researchCandidates.length === 0 && !researchSettled;
+
+  useEffect(() => {
+    if (!researchRunId || researchFailed || researchRunReady || researchCandidates.length > 0) return;
+    const statusPath = `/founder-tools/marketing/runs/${encodeURIComponent(researchRunId)}/status`;
+    researchStatusFetcher.load(statusPath);
+    const intervalId = window.setInterval(() => {
+      if (researchStatusFetcher.state === "idle") {
+        researchStatusFetcher.load(statusPath);
+      }
+    }, 3000);
+    return () => window.clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [researchRunId, researchFailed, researchRunReady, researchCandidates.length]);
+
+  useEffect(() => {
+    if (!researchRunId || !researchRunReady || researchCandidates.length > 0) return;
+    if (researchRevalidatedRunRef.current === researchRunId) return;
+    researchRevalidatedRunRef.current = researchRunId;
+    if (researchRevalidator.state === "idle") {
+      researchRevalidator.revalidate();
+    }
+  }, [researchRunId, researchRunReady, researchCandidates.length, researchRevalidator]);
+
+  useEffect(() => {
+    if (!researchRunId || researchCandidates.length === 0) return;
+    setSelectedTopicCandidateId((current) =>
+      researchCandidates.some((candidate) => candidate.id === current) ? current : researchCandidates[0].id,
+    );
+  }, [researchRunId, researchCandidates]);
   const selectedTopicLabel = selectedTopicCandidate?.title ?? "Custom article";
   const githubReadyForPublishing = isGithubPublishingReady(bootstrap);
   const effectiveDeliveryMode = effectiveArticleDeliveryMode(bootstrap);
@@ -1418,6 +1493,30 @@ export default function FounderToolsMarketingCreate() {
                   </div>
                 </div>
               </div>
+              {researchActive ? (
+                researchRun ? (
+                  <MarketingRunProgressCard
+                    run={researchRun}
+                    title="Researching your topic"
+                    currentStepLabel="Finding the strongest keywords and titles for your idea…"
+                  />
+                ) : (
+                  <div className="flex items-center gap-3 rounded-2xl border border-violet-100 bg-violet-50/60 px-5 py-6 text-sm font-black text-slate-700">
+                    <ArrowPathIcon className="h-4 w-4 animate-spin text-violet-600" />
+                    Starting research…
+                  </div>
+                )
+              ) : (
+                <>
+                  {researchRunId && researchFailed ? (
+                    <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-800">
+                      Research could not complete. Try a different angle or keyword from the{" "}
+                      <Link to="/founder-tools/marketing" className="font-black text-rose-900 underline">
+                        custom topic form
+                      </Link>
+                      .
+                    </div>
+                  ) : null}
               {!bootstrap.checks.baseline?.passed ? (
                 <div className="mb-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
                   Run or skip the website baseline before generating an article.
@@ -1519,6 +1618,8 @@ export default function FounderToolsMarketingCreate() {
                   </div>
                 </div>
               </Form>
+                </>
+              )}
             </>
           ) : null}
 
