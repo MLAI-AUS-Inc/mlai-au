@@ -11,6 +11,9 @@ export const wattImages = {
     "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2028%2C%202026%2C%2012_43_15%20AM%20(1).png?alt=media&token=6b695dbd-b2bc-4d5d-9369-dc9c9b1d783b",
   bottomScene:
     "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2F2e55e310-c6f3-44c1-baf7-2f97c86bdbc3%20(1).png?alt=media&token=a23d7abb-2e77-48e1-9714-99d3fa87fa52",
+  // Scenic energy-neighbourhood backdrop (shared with the Watt The Hack marketing site).
+  submitBackdrop:
+    "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FChatGPT%20Image%20May%2021%2C%202026%2C%2010_33_57%20PM%20(1).png?alt=media&token=d14521c8-c549-434c-bb27-643ab95189ad",
 } as const;
 
 export const wattPalette = {

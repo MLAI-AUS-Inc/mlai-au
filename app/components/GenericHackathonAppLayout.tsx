@@ -1,5 +1,5 @@
 import { Fragment, useState } from "react";
-import { Dialog, Menu, Transition } from "@headlessui/react";
+import { Dialog, Disclosure, Menu, Transition } from "@headlessui/react";
 import {
   ArrowLeftOnRectangleIcon,
   Bars3Icon,
@@ -50,13 +50,25 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
     ...(isWattTheme
       ? [
           { name: "Base44 (Pitching) Track", href: `${config.basePath}/base44-pitching`, icon: PresentationChartBarIcon },
-          { name: "City Of Melbourne (Advanced) Track", href: `${config.basePath}/city-of-melbourne-advanced`, icon: BuildingOffice2Icon },
+          { 
+            name: "City Of Melbourne (Advanced) Track", 
+            icon: BuildingOffice2Icon,
+            children: [
+              { name: "Sandbox", href: `${config.basePath}/city-of-melbourne-advanced` },
+              { name: "Submission Portal", href: `${config.basePath}/city-of-melbourne-advanced-submit` },
+              { name: "Current Standings", href: `${config.basePath}/city-of-melbourne-advanced-leaderboard` }
+            ]
+          },
           { name: "Smart Home (Beginner) Track", href: `${config.basePath}/smart-home-beginner`, icon: HomeModernIcon },
         ]
       : []),
   ].map((item) => ({
     ...item,
-    current: location.pathname === item.href,
+    current: item.href ? location.pathname === item.href : false,
+    children: item.children?.map(child => ({
+      ...child,
+      current: location.pathname === child.href
+    }))
   }));
 
   const defaultSidebar = (
@@ -75,19 +87,62 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
             <ul className="-mx-2 space-y-1">
               {navigation.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={classNames(
-                      item.current
-                        ? "bg-white/10 text-[#9fe870]"
-                        : "text-white/72 hover:bg-white/8 hover:text-white",
-                      "group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition",
-                    )}
-                  >
-                    <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
-                    {item.name}
-                  </Link>
+                  {!item.children ? (
+                    <Link
+                      to={item.href!}
+                      onClick={() => setSidebarOpen(false)}
+                      className={classNames(
+                        item.current
+                          ? "bg-white/10 text-[#9fe870]"
+                          : "text-white/72 hover:bg-white/8 hover:text-white",
+                        "group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition",
+                      )}
+                    >
+                      <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                      {item.name}
+                    </Link>
+                  ) : (
+                    <Disclosure as="div" defaultOpen={item.children.some(c => c.current)}>
+                      {({ open }) => (
+                        <>
+                          <Disclosure.Button
+                            className={classNames(
+                              item.children!.some(c => c.current) ? "bg-white/10 text-[#9fe870]" : "text-white/72 hover:bg-white/8 hover:text-white",
+                              "group flex w-full gap-x-3 rounded-md p-2 text-left text-sm font-semibold leading-6 transition"
+                            )}
+                          >
+                            <item.icon className="h-6 w-6 shrink-0" aria-hidden="true" />
+                            {item.name}
+                            <ChevronDownIcon
+                              className={classNames(
+                                open ? "rotate-180" : "",
+                                "ml-auto h-5 w-5 shrink-0 transition-transform"
+                              )}
+                              aria-hidden="true"
+                            />
+                          </Disclosure.Button>
+                          <Disclosure.Panel as="ul" className="mt-1 px-2 space-y-1">
+                            {item.children!.map((subItem) => (
+                              <li key={subItem.name}>
+                                <Link
+                                  to={subItem.href!}
+                                  onClick={() => setSidebarOpen(false)}
+                                  className={classNames(
+                                    subItem.current
+                                      ? "bg-white/10 text-[#9fe870]"
+                                      : "text-white/72 hover:bg-white/8 hover:text-white",
+                                    "block rounded-md py-2 pl-9 pr-2 text-sm leading-6 transition"
+                                  )}
+                                >
+                                  {subItem.name}
+                                </Link>
+                              </li>
+                            ))}
+                          </Disclosure.Panel>
+                        </>
+                      )}
+                    </Disclosure>
+                  )}
                 </li>
               ))}
             </ul>
@@ -153,27 +208,90 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
             <ul className="space-y-4">
               {navigation.map((item) => (
                 <li key={item.name}>
-                  <Link
-                    to={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={classNames(
-                      item.current
-                        ? "bg-[#e6efd7] text-[#155420]"
-                        : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
-                      "group flex min-h-[52px] items-center rounded-xl px-3 py-2 text-sm font-black leading-6 transition-all duration-200",
-                      mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
-                    )}
-                  >
-                    <item.icon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
-                    <span
+                  {!item.children ? (
+                    <Link
+                      to={item.href!}
+                      onClick={() => setSidebarOpen(false)}
                       className={classNames(
-                        "min-w-0 overflow-hidden transition-all duration-300 ease-in-out",
-                        mobile || expanded ? "ml-1 w-full whitespace-normal opacity-100" : "ml-0 w-0 whitespace-nowrap opacity-0",
+                        item.current
+                          ? "bg-[#e6efd7] text-[#155420]"
+                          : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
+                        "group flex min-h-[52px] items-center rounded-xl px-3 py-2 text-sm font-black leading-6 transition-all duration-200",
+                        mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
                       )}
                     >
-                      {item.name}
-                    </span>
-                  </Link>
+                      <item.icon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
+                      <span
+                        className={classNames(
+                          "min-w-0 overflow-hidden transition-all duration-300 ease-in-out",
+                          mobile || expanded ? "ml-1 w-full whitespace-normal opacity-100" : "ml-0 w-0 whitespace-nowrap opacity-0",
+                        )}
+                      >
+                        {item.name}
+                      </span>
+                    </Link>
+                  ) : (
+                    <Disclosure as="div" defaultOpen={item.children.some(c => c.current)}>
+                      {({ open }) => (
+                        <>
+                          <Disclosure.Button
+                            className={classNames(
+                              item.children!.some(c => c.current) ? "bg-[#e6efd7] text-[#155420]" : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
+                              "group flex min-h-[52px] w-full items-center rounded-xl px-3 py-2 text-left text-sm font-black leading-6 transition-all duration-200",
+                              mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0"
+                            )}
+                          >
+                            <item.icon className="h-7 w-7 shrink-0 stroke-[1.7]" aria-hidden="true" />
+                            <span
+                              className={classNames(
+                                "min-w-0 overflow-hidden transition-all duration-300 ease-in-out",
+                                mobile || expanded ? "ml-1 w-full whitespace-normal opacity-100" : "ml-0 w-0 whitespace-nowrap opacity-0"
+                              )}
+                            >
+                              {item.name}
+                            </span>
+                            {(mobile || expanded) && (
+                              <ChevronDownIcon
+                                className={classNames(
+                                  open ? "rotate-180" : "",
+                                  "ml-auto h-5 w-5 shrink-0 transition-transform"
+                                )}
+                                aria-hidden="true"
+                              />
+                            )}
+                          </Disclosure.Button>
+                          <Transition
+                            show={open && (mobile || expanded)}
+                            enter="transition-all duration-300 ease-in-out overflow-hidden"
+                            enterFrom="max-h-0 opacity-0"
+                            enterTo="max-h-[200px] opacity-100"
+                            leave="transition-all duration-300 ease-in-out overflow-hidden"
+                            leaveFrom="max-h-[200px] opacity-100"
+                            leaveTo="max-h-0 opacity-0"
+                          >
+                            <Disclosure.Panel static as="ul" className="mt-1 px-2 space-y-1">
+                              {item.children!.map((subItem) => (
+                                <li key={subItem.name}>
+                                  <Link
+                                    to={subItem.href!}
+                                    onClick={() => setSidebarOpen(false)}
+                                    className={classNames(
+                                      subItem.current
+                                        ? "bg-[#e6efd7] text-[#155420]"
+                                        : "text-[#64705f] hover:bg-[#fbf6e9] hover:text-[#155420]",
+                                      "block rounded-xl py-2 pl-11 pr-2 text-sm font-bold leading-6 transition-all duration-200"
+                                    )}
+                                  >
+                                    {subItem.name}
+                                  </Link>
+                                </li>
+                              ))}
+                            </Disclosure.Panel>
+                          </Transition>
+                        </>
+                      )}
+                    </Disclosure>
+                  )}
                 </li>
               ))}
             </ul>
