@@ -38,11 +38,11 @@ import {
 } from "lucide-react";
 import { wattClasses } from "~/lib/watt-theme";
 import type { DeployFeedback } from "~/components/SmartHomeController";
+import type { SmartHomePipeline } from "~/lib/generic-hackathon";
 import {
   PIPELINE,
   PIPELINE_BY_TYPE,
   PALETTE,
-  compilePipeline,
   emptyPipeline,
   isComplete,
   type BlockDef,
@@ -276,7 +276,7 @@ export function SmartHomeControllerV2({
   isDeploying,
   feedback,
 }: {
-  onDeploy: (blockIds: string[]) => void;
+  onDeploy: (pipeline: SmartHomePipeline) => void;
   isDeploying: boolean;
   feedback: DeployFeedback;
 }) {
@@ -325,9 +325,19 @@ export function SmartHomeControllerV2({
   }, [cells]);
 
   const complete = isComplete(pipeline);
-  const { blockIds, incompatible } = useMemo(() => compilePipeline(pipeline), [pipeline]);
+  const pipelinePayload = useMemo<SmartHomePipeline>(
+    () => ({
+      inputs: pipeline.input.map((b) => b.id),
+      schedule: pipeline.schedule.map((b) => b.id),
+      brain: pipeline.brain.map((b) => b.id),
+      actions: pipeline.action.map((b) => b.id),
+      outputs: pipeline.output.map((b) => b.id),
+      safety: pipeline.safety.map((b) => b.id),
+    }),
+    [pipeline],
+  );
   const activeType = activeBlock?.type ?? null;
-  const canDeploy = complete && blockIds.length > 0 && !isDeploying;
+  const canDeploy = complete && !isDeploying;
   const countOf = (type: SlotType) => cells[type].filter(Boolean).length;
 
   return (
@@ -351,7 +361,7 @@ export function SmartHomeControllerV2({
         </div>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext id="watt-smart-home-controller" sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
           {/* Controller board */}
           <div>
@@ -386,7 +396,7 @@ export function SmartHomeControllerV2({
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <button
                 type="button"
-                onClick={() => onDeploy(blockIds)}
+                onClick={() => onDeploy(pipelinePayload)}
                 disabled={!canDeploy}
                 className={`${wattClasses.buttonPrimary} gap-2 px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
               >
@@ -394,7 +404,7 @@ export function SmartHomeControllerV2({
                 {isDeploying ? "Deploying…" : "Deploy Controller"}
               </button>
               <span className="text-xs font-semibold text-[#64705f]">
-                {complete ? `${blockIds.length} device command${blockIds.length === 1 ? "" : "s"} ready` : "Fix all required slots to deploy"}
+                {complete ? "Ready to deploy" : "Fix all required slots to deploy"}
               </span>
               {feedback && (
                 <span className={`text-sm font-semibold ${feedback.ok ? "text-[#155420]" : "text-[#9f2f28]"}`}>{feedback.message}</span>
@@ -403,10 +413,16 @@ export function SmartHomeControllerV2({
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             </div>
-            {incompatible.length > 0 && (
-              <p className="mt-2 text-xs font-medium text-[#9f6a08]">
-                Ignored {incompatible.length} incompatible pairing{incompatible.length === 1 ? "" : "s"} (e.g. {incompatible[0].action} → {incompatible[0].device}).
-              </p>
+            {feedback?.decisions && feedback.decisions.length > 0 && (
+              <ul className="mt-3 space-y-1.5 rounded-[0.9rem] border border-[#e8dfcf] bg-[#fbf6e9] p-3">
+                <li className="text-[11px] font-black uppercase tracking-[0.12em] text-[#7c5cd6]">Your brain decided</li>
+                {feedback.decisions.map((line, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs font-medium text-[#354031]">
+                    <Brain className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#7c5cd6]" />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 

@@ -1,5 +1,5 @@
 import type { Route } from "./+types/watt-the-hack.smart-home-beginner";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData, type ShouldRevalidateFunctionArgs } from "react-router";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -7,11 +7,14 @@ import {
   deploySmartHome,
   getSmartHomeBlocks,
   type SmartHomeCatalog,
+  type SmartHomePipeline,
+  type SmartHomeState,
   type WattUnitySession,
 } from "~/lib/generic-hackathon";
 import { getEnv } from "~/lib/env.server";
 import { wattClasses } from "~/lib/watt-theme";
 import { SmartHomeControllerV2 } from "~/components/SmartHomeControllerV2";
+import { SmartHomeStatusBar } from "~/components/SmartHomeStatusBar";
 import type { DeployFeedback } from "~/components/SmartHomeController";
 
 type StreamData = {
@@ -64,15 +67,15 @@ export async function action({ request, context }: Route.ActionArgs) {
   const intent = String(formData.get("intent") || "reconnect");
 
   if (intent === "deploy") {
-    let blockIds: string[] = [];
+    let pipeline: SmartHomePipeline = { inputs: [], schedule: [], brain: [], actions: [], outputs: [], safety: [] };
     try {
-      const parsed = JSON.parse(String(formData.get("blocks") || "[]"));
-      if (Array.isArray(parsed)) blockIds = parsed.map((value) => String(value));
+      const parsed = JSON.parse(String(formData.get("pipeline") || "{}"));
+      if (parsed && typeof parsed === "object") pipeline = { ...pipeline, ...parsed };
     } catch {
-      blockIds = [];
+      /* keep empty pipeline */
     }
     try {
-      const result = await deploySmartHome(env, request, blockIds);
+      const result = await deploySmartHome(env, request, pipeline);
       return { kind: "deploy" as const, result, error: null as string | null };
     } catch (error) {
       return {
@@ -136,17 +139,61 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     if (!deployData || deployData.kind !== "deploy") return null;
     if (deployData.result) {
       const count = deployData.result.deployed_count;
-      return { ok: true, message: `Deployed ${count} change${count === 1 ? "" : "s"} — watch your house above.` };
+      return {
+        ok: true,
+        message: `Deployed ${count} change${count === 1 ? "" : "s"} — watch your house above.`,
+        decisions: deployData.result.decisions ?? [],
+      };
     }
     return { ok: false, message: deployData.error || "Couldn't deploy to your Smart Home." };
   }, [deployData, isDeploying]);
 
-  const handleDeploy = (blockIds: string[]) =>
-    deployFetcher.submit({ intent: "deploy", blocks: JSON.stringify(blockIds) }, { method: "post" });
+  const handleDeploy = (pipeline: SmartHomePipeline) =>
+    deployFetcher.submit({ intent: "deploy", pipeline: JSON.stringify(pipeline) }, { method: "post" });
+
+  // Poll the live game state for the goal/day/wallet status bar.
+  const stateFetcher = useFetcher();
+  const homeState = stateFetcher.data as SmartHomeState | undefined;
+  useEffect(() => {
+    const STATE_PATH = "/watt-the-hack/smart-home-beginner/state";
+    stateFetcher.load(STATE_PATH);
+    const id = setInterval(() => stateFetcher.load(STATE_PATH), 6000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Lightweight recap: snapshot the deltas when the game day advances.
+  const lastDayRef = useRef<{ day: number; wallet: number; comfort: number } | null>(null);
+  const [recap, setRecap] = useState<string | null>(null);
+  useEffect(() => {
+    if (!homeState || typeof homeState.day !== "number") return;
+    const snap = {
+      day: homeState.day,
+      wallet: typeof homeState.wallet === "number" ? homeState.wallet : 0,
+      comfort: typeof homeState.comfort === "number" ? homeState.comfort : 0,
+    };
+    const prev = lastDayRef.current;
+    if (prev && snap.day > prev.day) {
+      const dWallet = Math.round((snap.wallet - prev.wallet) * 100) / 100;
+      setRecap(
+        `Day ${prev.day} done — wallet ${dWallet >= 0 ? "+" : ""}$${dWallet}, comfort ${Math.round(snap.comfort)}%. Tune your controller for day ${snap.day}.`,
+      );
+    }
+    lastDayRef.current = snap;
+  }, [homeState]);
 
   return (
     <div className={wattClasses.page}>
       <div className="mx-auto max-w-7xl space-y-6">
+        <SmartHomeStatusBar state={homeState} />
+        {recap && (
+          <div className={`${wattClasses.successAlert} flex items-center justify-between gap-3`}>
+            <span>{recap}</span>
+            <button type="button" onClick={() => setRecap(null)} className="shrink-0 text-xs font-bold underline">
+              Dismiss
+            </button>
+          </div>
+        )}
         <section className={`${wattClasses.panelStrong} overflow-hidden p-0`}>
           <div className="relative aspect-video w-full bg-black">
             {session?.stream_url ? (
