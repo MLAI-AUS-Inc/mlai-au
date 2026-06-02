@@ -982,12 +982,12 @@ export default function ArticleSystemConnectionPanel({
         </Form>
       ) : (
         <Form method="POST" className="w-full sm:w-auto">
-          <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? ""} />
+          <input type="hidden" name="scanRunId" value={effectiveScanRun?.runId ?? currentScanRunId} />
           <button
             type="submit"
             name="intent"
             value="build-article-system-preview"
-            disabled={isSubmitting || !effectiveScanRun?.runId}
+            disabled={isSubmitting || !currentScanRunId}
             className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-3 text-sm font-black text-white shadow-sm transition hover:bg-violet-700 disabled:opacity-50 sm:w-auto"
           >
             {scaffoldActionLabel}
