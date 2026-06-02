@@ -20,14 +20,14 @@ export const MONTHLY_UPDATE_STEPS: Array<{
   helper: string;
 }> = [
   {
-    key: "connect",
-    title: "Connect data",
-    helper: "Choose inputs",
-  },
-  {
     key: "draft",
     title: "Draft update",
-    helper: "Generate or edit",
+    helper: "Select month",
+  },
+  {
+    key: "connect",
+    title: "Connect data",
+    helper: "Optional inputs",
   },
   {
     key: "review",

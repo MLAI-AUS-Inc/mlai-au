@@ -16,6 +16,7 @@ import SectionMarkers from "./components/SectionMarkers";
 import Sidebar from "./components/sidebar";
 
 const GA_MEASUREMENT_ID = "G-1645KKLT8B";
+const CLARITY_TAG_ID = "wwfzm7293o";
 
 export const meta: Route.MetaFunction = () => [
   { title: "MLAI" },
@@ -84,7 +85,14 @@ export default function Layout() {
   const isValleyApp =
     location.pathname === "/valley" ||
     location.pathname.startsWith("/valley/");
-  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingLegacyApp || isFounderToolsApp || isValleyApp;
+  const isWattTheHackApp = location.pathname.startsWith("/watt-the-hack");
+  const isAppRoute =
+    isEsafetyApp ||
+    isHospitalApp ||
+    isVibeRaisingLegacyApp ||
+    isFounderToolsApp ||
+    isValleyApp ||
+    isWattTheHackApp;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -175,6 +183,20 @@ export default function Layout() {
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false });
+            `,
+              }}
+            />
+
+            {/* Microsoft Clarity */}
+            <script
+              id="microsoft-clarity"
+              dangerouslySetInnerHTML={{
+                __html: `
+              (function(c,l,a,r,i,t,y){
+                  c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+                  t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+                  y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+              })(window, document, "clarity", "script", "${CLARITY_TAG_ID}");
             `,
               }}
             />

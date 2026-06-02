@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import clsx from 'clsx'
 import { ArrowLongLeftIcon, ArrowLongRightIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 
-import { formatDate } from "~/lib/formatDate"
+import { formatDate } from '~/lib/formatDate'
 
 type ArticleSummary = {
     slug: string
@@ -24,6 +24,11 @@ interface ArticleCalendarSectionProps {
     pageSize: number
     paginationBasePath: string
     paginationHash?: string
+    sectionSlot?: string;
+    articleCardSlot?: string;
+    articleLinkSlot?: string;
+    emptyStateSlot?: string;
+    paginationSlot?: string;
 }
 
 interface CalendarDay {
@@ -68,7 +73,7 @@ function getCalendarStart(date: Date): Date {
 }
 
 function buildArticlesHref(basePath: string, hash: string | undefined, page: number) {
-    const anchor = hash ?? ""
+    const anchor = hash ?? ''
     return page <= 1 ? `${basePath}${anchor}` : `${basePath}?page=${page}${anchor}`
 }
 
@@ -85,7 +90,7 @@ function getPageItems(currentPage: number, totalPages: number): PageItem[] {
 
     for (const page of sortedPages) {
         if (previous !== undefined && page - previous > 1) {
-            items.push("ellipsis")
+            items.push('ellipsis')
         }
         items.push(page)
         previous = page
@@ -106,11 +111,13 @@ function Pagination({
     totalPages,
     basePath,
     hash,
+  slot,
 }: {
     currentPage: number
     totalPages: number
     basePath: string
     hash?: string
+    slot?: string
 }) {
     if (totalPages <= 1) {
         return null
@@ -122,29 +129,29 @@ function Pagination({
 
     return (
         <nav
-            className="flex items-center justify-between border-t border-zinc-200 pt-6"
-            aria-label="Pagination"
-        >
-            <div className="flex w-0 flex-1">
+            className='flex items-center justify-between border-t border-zinc-200 pt-6'
+            aria-label='Pagination'
+         data-cf-slot={slot}>
+            <div className='flex w-0 flex-1'>
                 {currentPage === 1 ? (
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-zinc-300">
-                        <ArrowLongLeftIcon aria-hidden="true" className="h-5 w-5" />
+                    <span className='inline-flex items-center gap-2 text-sm font-medium text-zinc-300'>
+                        <ArrowLongLeftIcon aria-hidden='true' className='h-5 w-5' />
                         Previous
                     </span>
                 ) : (
                     <Link
                         to={buildArticlesHref(basePath, hash, prevPage)}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900"
+                        className='inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900'
                     >
-                        <ArrowLongLeftIcon aria-hidden="true" className="h-5 w-5 text-zinc-400" />
+                        <ArrowLongLeftIcon aria-hidden='true' className='h-5 w-5 text-zinc-400' />
                         Previous
                     </Link>
                 )}
             </div>
-            <div className="hidden md:flex md:items-center md:gap-2">
+            <div className='hidden md:flex md:items-center md:gap-2'>
                 {pageItems.map((item, index) =>
                     item === 'ellipsis' ? (
-                        <span key={`ellipsis-${index}`} className="px-2 text-sm text-zinc-400">
+                        <span key={`ellipsis-${index}`} className='px-2 text-sm text-zinc-400'>
                             …
                         </span>
                     ) : (
@@ -164,19 +171,19 @@ function Pagination({
                     )
                 )}
             </div>
-            <div className="flex w-0 flex-1 justify-end">
+            <div className='flex w-0 flex-1 justify-end'>
                 {currentPage === totalPages ? (
-                    <span className="inline-flex items-center gap-2 text-sm font-medium text-zinc-300">
+                    <span className='inline-flex items-center gap-2 text-sm font-medium text-zinc-300'>
                         Next
-                        <ArrowLongRightIcon aria-hidden="true" className="h-5 w-5" />
+                        <ArrowLongRightIcon aria-hidden='true' className='h-5 w-5' />
                     </span>
                 ) : (
                     <Link
                         to={buildArticlesHref(basePath, hash, nextPage)}
-                        className="inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900"
+                        className='inline-flex items-center gap-2 text-sm font-medium text-zinc-500 transition hover:text-zinc-900'
                     >
                         Next
-                        <ArrowLongRightIcon aria-hidden="true" className="h-5 w-5 text-zinc-400" />
+                        <ArrowLongRightIcon aria-hidden='true' className='h-5 w-5 text-zinc-400' />
                     </Link>
                 )}
             </div>
@@ -196,6 +203,11 @@ export default function ArticleCalendarSection({
     pageSize,
     paginationBasePath,
     paginationHash,
+  sectionSlot,
+  articleCardSlot,
+  articleLinkSlot,
+  emptyStateSlot,
+  paginationSlot,
 }: ArticleCalendarSectionProps) {
     const todayIso = useMemo(() => formatISODate(new Date()), [])
 
@@ -311,74 +323,74 @@ export default function ArticleCalendarSection({
     const showEmptyState = listArticles.length === 0
 
     return (
-        <section id={id} className="scroll-mt-24">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <section id={id} className='scroll-mt-24' data-cf-slot={sectionSlot}>
+            <div className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
                 <div>
-                    <h2 className="text-2xl font-semibold tracking-tight text-zinc-900">{listHeading}</h2>
+                    <h2 className='text-2xl font-semibold tracking-tight text-zinc-900'>{listHeading}</h2>
                     {!selectedDate && listRange ? (
-                        <p className="mt-1 text-sm text-zinc-500">
+                        <p className='mt-1 text-sm text-zinc-500'>
                             Showing {listRange.start.toLocaleString('en-AU')} – {listRange.end.toLocaleString('en-AU')} of {articles.length.toLocaleString('en-AU')} articles
                         </p>
                     ) : null}
                     {selectedDate ? (
-                        <p className="mt-1 text-sm text-zinc-500">{articlesByDate.get(selectedDate)?.length ?? 0} article(s) on this date</p>
+                        <p className='mt-1 text-sm text-zinc-500'>{articlesByDate.get(selectedDate)?.length ?? 0} article(s) on this date</p>
                     ) : null}
                 </div>
                 {selectedDate ? (
                     <button
-                        type="button"
+                        type='button'
                         onClick={clearSelectedDate}
-                        className="inline-flex items-center justify-center rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900"
+                        className='inline-flex items-center justify-center rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-zinc-300 hover:text-zinc-900'
                     >
                         Clear date filter
                     </button>
                 ) : null}
             </div>
 
-            <div className="mt-8 rounded-3xl border border-zinc-200 bg-white/70 p-6 shadow-sm sm:p-8">
-                <div className="grid gap-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+            <div className='mt-8 rounded-3xl border border-zinc-200 bg-white/70 p-6 shadow-sm sm:p-8'>
+                <div className='grid gap-10 lg:grid-cols-[minmax(0,320px)_minmax(0,1fr)]'>
                     <div>
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-semibold text-zinc-900">{visibleMonthLabel}</h3>
-                            <div className="flex items-center gap-2">
+                        <div className='flex items-center justify-between'>
+                            <h3 className='text-sm font-semibold text-zinc-900'>{visibleMonthLabel}</h3>
+                            <div className='flex items-center gap-2'>
                                 <button
-                                    type="button"
+                                    type='button'
                                     onClick={() => canGoPrev && setVisibleMonth(addMonths(visibleMonth, -1))}
                                     disabled={!canGoPrev}
-                                    className="inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className='inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
                                 >
-                                    <span className="sr-only">Previous month</span>
-                                    <ChevronLeftIcon aria-hidden="true" className="h-5 w-5" />
+                                    <span className='sr-only'>Previous month</span>
+                                    <ChevronLeftIcon aria-hidden='true' className='h-5 w-5' />
                                 </button>
                                 <button
-                                    type="button"
+                                    type='button'
                                     onClick={() => canGoNext && setVisibleMonth(addMonths(visibleMonth, 1))}
                                     disabled={!canGoNext}
-                                    className="inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+                                    className='inline-flex items-center rounded-full p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:cursor-not-allowed disabled:opacity-40'
                                 >
-                                    <span className="sr-only">Next month</span>
-                                    <ChevronRightIcon aria-hidden="true" className="h-5 w-5" />
+                                    <span className='sr-only'>Next month</span>
+                                    <ChevronRightIcon aria-hidden='true' className='h-5 w-5' />
                                 </button>
                             </div>
                         </div>
 
-                        <div className="mt-6 grid grid-cols-7 text-center text-xs uppercase tracking-wide text-zinc-400">
+                        <div className='mt-6 grid grid-cols-7 text-center text-xs uppercase tracking-wide text-zinc-400'>
                             {weekdayLabels.map((label) => (
                                 <div key={label}>{label}</div>
                             ))}
                         </div>
 
-                        <div className="mt-2 grid grid-cols-7 text-sm">
+                        <div className='mt-2 grid grid-cols-7 text-sm'>
                             {calendarDays.map((day) => {
                                 const isSelected = selectedDate === day.iso
                                 const articleCount = articlesByDate.get(day.iso)?.length ?? 0
                                 return (
                                     <div
                                         key={day.iso}
-                                        className="py-1.5"
+                                        className='py-1.5'
                                     >
                                         <button
-                                            type="button"
+                                            type='button'
                                             aria-pressed={isSelected}
                                             aria-label={day.hasArticles ? `${formatDate(day.iso)} (${articleCount} article${articleCount === 1 ? '' : 's'})` : formatDate(day.iso)}
                                             onClick={() => handleSelectDay(day)}
@@ -396,7 +408,7 @@ export default function ArticleCalendarSection({
                                         >
                                             <span>{day.label}</span>
                                             {day.hasArticles ? (
-                                                <span className="sr-only">{` ${articleCount} article${articleCount === 1 ? '' : 's'}`}</span>
+                                                <span className='sr-only'>{` ${articleCount} article${articleCount === 1 ? '' : 's'}`}</span>
                                             ) : null}
                                         </button>
                                         {day.hasArticles ? (
@@ -408,42 +420,42 @@ export default function ArticleCalendarSection({
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-6">
+                    <div className='flex flex-col gap-6'>
                         {showEmptyState ? (
-                            <div className="rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-zinc-500">
-                                <p className="font-medium">
+                            <div className='rounded-2xl border border-dashed border-zinc-200 bg-zinc-50/70 p-6 text-center text-zinc-500' data-cf-slot={emptyStateSlot}>
+                                <p className='font-medium'>
                                     {selectedDate ? `No articles published on ${formatDate(selectedDate)}.` : 'No articles available yet.'}
                                 </p>
-                                {!selectedDate ? <p className="mt-2 text-sm">Check back soon for new writing.</p> : null}
+                                {!selectedDate ? <p className='mt-2 text-sm'>Check back soon for new writing.</p> : null}
                             </div>
                         ) : (
-                            <ul role="list" className="list-none space-y-4">
+                            <ul role='list' className='list-none space-y-4'>
                                 {listArticles.map((article) => (
-                                    <li key={article.slug}>
+                                    <li key={article.slug} data-cf-slot={articleCardSlot}>
                                         <Link
                                             to={`/articles/${article.slug}`}
-                                            className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                                        >
+                                            className='group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500'
+                                         data-cf-slot={articleLinkSlot}>
                                             <time
                                                 dateTime={article.date}
-                                                className="text-xs font-medium uppercase tracking-wide text-zinc-400"
+                                                className='text-xs font-medium uppercase tracking-wide text-zinc-400'
                                             >
                                                 {formatDate(article.date)}
                                             </time>
-                                            <div className="mt-2 flex items-start justify-between gap-4">
-                                                <h3 className="text-lg font-semibold text-zinc-900 transition group-hover:text-[#1028E0]">
+                                            <div className='mt-2 flex items-start justify-between gap-4'>
+                                                <h3 className='text-lg font-semibold text-zinc-900 transition group-hover:text-[#1028E0]'>
                                                     {article.title}
                                                 </h3>
-                                                <span className="hidden size-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[#1028E0] transition group-hover:bg-[#1028E0] group-hover:text-white sm:flex">
-                                                    <ChevronRightIcon aria-hidden="true" className="h-5 w-5" />
+                                                <span className='hidden size-10 flex-shrink-0 items-center justify-center rounded-full bg-indigo-50 text-[#1028E0] transition group-hover:bg-[#1028E0] group-hover:text-white sm:flex'>
+                                                    <ChevronRightIcon aria-hidden='true' className='h-5 w-5' />
                                                 </span>
                                             </div>
-                                            <p className="mt-2 text-sm leading-6 text-zinc-600">
+                                            <p className='mt-2 text-sm leading-6 text-zinc-600'>
                                                 {article.description}
                                             </p>
-                                            <span className="mt-4 inline-flex items-center text-sm font-medium text-[#1028E0]">
+                                            <span className='mt-4 inline-flex items-center text-sm font-medium text-[#1028E0]'>
                                                 Read article
-                                                <ChevronRightIcon aria-hidden="true" className="ml-1.5 h-4 w-4" />
+                                                <ChevronRightIcon aria-hidden='true' className='ml-1.5 h-4 w-4' />
                                             </span>
                                         </Link>
                                     </li>
@@ -457,7 +469,7 @@ export default function ArticleCalendarSection({
                                 totalPages={totalPages}
                                 basePath={paginationBasePath}
                                 hash={paginationHash}
-                            />
+                             slot={paginationSlot}/>
                         ) : null}
                     </div>
                 </div>

@@ -1,6 +1,7 @@
 import { redirect, useActionData, useLoaderData } from "react-router";
 import type { Route } from "./+types/vibe-raising-app.company-setup";
 import VibeMarketingStartupBaselineSetup from "~/components/VibeMarketingStartupBaselineSetup";
+import { readableBackendError } from "~/lib/backend-error";
 import { getEnv } from "~/lib/env.server";
 import { parseFounderProfilesFormValue } from "~/lib/founder-profiles";
 import {
@@ -30,56 +31,19 @@ function stringFromForm(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function fieldLabel(field: string) {
-  const labels: Record<string, string> = {
-    companyLinkedInUrl: "Company LinkedIn URL",
-    company_linkedin_url: "Company LinkedIn URL",
-    organizationKind: "Organization type",
-    organization_kind: "Organization type",
-    companyId: "Company",
-    company_id: "Company",
-    name: "Company name",
-    domain: "Website domain",
-    abn: "ABN",
-    location: "Startup location",
-    non_field_errors: "Company details",
-  };
-  return labels[field] ?? field.replace(/_/g, " ");
-}
-
-function readableBackendError(error: any) {
-  const data = error?.data ?? error?.response?.data;
-
-  if (typeof data === "string" && data.trim()) {
-    return data.trim();
-  }
-
-  if (data && typeof data === "object") {
-    const payload = data as Record<string, unknown>;
-    for (const key of ["detail", "error", "message"]) {
-      const value = payload[key];
-      if (typeof value === "string" && value.trim()) {
-        return value.trim();
-      }
-    }
-
-    const fieldMessages = Object.entries(payload)
-      .flatMap(([field, value]) => {
-        const messages = Array.isArray(value) ? value : [value];
-        return messages
-          .map((item) => String(item ?? "").trim())
-          .filter(Boolean)
-          .map((message) => `${fieldLabel(field)}: ${message}`);
-      })
-      .filter(Boolean);
-
-    if (fieldMessages.length > 0) {
-      return fieldMessages.join(" ");
-    }
-  }
-
-  return error?.message ?? "Company details could not be saved.";
-}
+const COMPANY_SETUP_FIELD_LABELS: Record<string, string> = {
+  companyLinkedInUrl: "Company LinkedIn URL",
+  company_linkedin_url: "Company LinkedIn URL",
+  organizationKind: "Organization type",
+  organization_kind: "Organization type",
+  companyId: "Company",
+  company_id: "Company",
+  name: "Company name",
+  domain: "Website domain",
+  abn: "ABN",
+  location: "Startup location",
+  non_field_errors: "Company details",
+};
 
 function emptyBootstrap(profile: VibeRaisingProfile | null, company: VibeRaisingCompany | null): VibeMarketingBootstrap {
   const companyName = company?.name ?? profile?.organizationName ?? "";
@@ -336,7 +300,16 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
   } catch (error: any) {
     if (error instanceof Response) throw error;
-    return { intent, error: readableBackendError(error) };
+    return {
+      intent,
+      error: readableBackendError(error, {
+        fallback:
+          intent === "start-autofill"
+            ? "AI research could not start. Check the backend logs and try again."
+            : "Company details could not be saved.",
+        fieldLabels: COMPANY_SETUP_FIELD_LABELS,
+      }),
+    };
   }
 
   throw redirect("/founder-tools");
@@ -349,22 +322,14 @@ export default function CompanySetup() {
   const title = isAddingNew ? "Add a company" : isEditingExisting ? "Edit company setup" : "Set up your company";
 
   return (
-    <div className="min-h-screen bg-[#fbfaf8] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-6">
-          <p className="text-sm font-black text-violet-700">Founder Tools</p>
-          <h1 className="mt-2 text-3xl font-black tracking-normal text-gray-950">{title}</h1>
-          <p className="mt-2 max-w-2xl text-sm font-semibold leading-6 text-gray-600">
-            These details power Vibe Raising and Vibe Marketing, so you only need to set them up once.
-          </p>
-        </div>
-
+    <div className="min-h-screen bg-[#f7f6f2] px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
         <VibeMarketingStartupBaselineSetup
           bootstrap={bootstrap}
           error={error}
           variant="workflow"
           includeBaseline={false}
-          setupEyebrow="Company setup"
+          setupEyebrow={title === "Set up your company" ? "Company setup" : title}
           setupTitle="Tell us about your startup"
           setupDescription="This shared profile is used across Vibe Raising and Vibe Marketing."
           guidanceTitle="Shared profile"

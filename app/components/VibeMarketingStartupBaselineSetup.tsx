@@ -36,6 +36,11 @@ import {
   type StartupSetupField,
   type StartupSetupValues,
 } from "~/lib/vibe-marketing-startup-setup";
+import {
+  autofillProgressState,
+  autofillStartErrorsForDisplay,
+  isAutofillStatusPollFailure,
+} from "~/lib/vibe-marketing-autofill-state";
 import { useMarketingActionPending } from "~/lib/vibe-marketing-pending-actions";
 import type {
   VibeMarketingAutofillCompetitor,
@@ -54,8 +59,8 @@ const FLOW_STEPS = [
   { label: "Drive more traffic & grow", icon: BarChart3 },
 ] as const;
 
-const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running"]);
-const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "cancelled", "denied"]);
+const RESEARCH_RUNNING_STATUSES = new Set(["queued", "running", "processing", "in_progress"]);
+const RESEARCH_FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "precondition_failed", "cancelled", "canceled", "denied", "error"]);
 const RESEARCH_DONE_STATUSES = new Set(["completed", ...RESEARCH_FAILED_STATUSES]);
 const MOBILE_STARTUP_SETUP_TUTORIAL_STORAGE_KEY = "vibe_marketing_startup_setup_mobile_tour_seen_v1";
 
@@ -363,10 +368,26 @@ function autofillProfileFields(value: unknown) {
   };
 }
 
+function resultLooksLikeAutofillPayload(payload: Record<string, unknown>) {
+  return Boolean(
+    payload.profileFields ||
+      payload.profile_fields ||
+      payload.companyContext ||
+      payload.company_context ||
+      payload.companyLinkedInUrl ||
+      payload.company_linkedin_url ||
+      payload.directCompetitors ||
+      payload.direct_competitors ||
+      payload.competitors ||
+      payload.seedKeywords ||
+      payload.seed_keywords,
+  );
+}
+
 function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeMarketingAutofillResult | null {
-  const raw = run?.result?.autofill;
-  if (!raw || typeof raw !== "object") return null;
-  const payload = raw as Record<string, unknown>;
+  const resultPayload = plainObject(run?.result);
+  const payload = plainObject(resultPayload?.autofill) ?? (resultPayload && resultLooksLikeAutofillPayload(resultPayload) ? resultPayload : undefined);
+  if (!payload) return null;
   const groupsPayload = plainObject(payload.competitorGroups) ?? {};
   const directCompetitors = competitorList(payload.directCompetitors ?? payload.direct_competitors ?? groupsPayload.directCompetitors);
   const seoCompetitors = competitorList(payload.seoCompetitors ?? payload.seo_competitors ?? groupsPayload.seoCompetitors);
@@ -464,6 +485,27 @@ function extractAutofill(run: VibeMarketingRunSummary | null | undefined): VibeM
     stepDurations: researchDepth(payload.stepDurations ?? payload.step_durations),
     warnings: listFromUnknown(payload.warnings),
   };
+}
+
+function hasAutofillSuggestions(autofill: VibeMarketingAutofillResult | null | undefined) {
+  if (!autofill) return false;
+  const fields = autofill.profileFields;
+  const profileFieldValues = [
+    fields?.shortDescription,
+    fields?.problemSolved,
+    fields?.targetAudience,
+    fields?.location,
+    fields?.organizationKind,
+    fields?.stage,
+    fields?.founderNames,
+    fields?.abn,
+  ];
+  return Boolean(
+    profileFieldValues.some((value) => String(value ?? "").trim()) ||
+      String(autofill.companyLinkedInUrl ?? "").trim() ||
+      (autofill.competitors?.length ?? 0) > 0 ||
+      (autofill.seedKeywords?.length ?? 0) > 0,
+  );
 }
 
 function normalizeResearchStepKey(step?: string | null) {
@@ -967,6 +1009,29 @@ function isStartupProfileComplete(values: StartupSetupValues) {
   return isBasicsComplete(values) && isCompanyDetailsComplete(values);
 }
 
+function applyAutofillToEmptyStartupFields(values: StartupSetupValues, autofill: VibeMarketingAutofillResult): StartupSetupValues {
+  const profileFields = autofill.profileFields;
+  const updates: Partial<StartupSetupValues> = {
+    companyLinkedInUrl: autofill.companyLinkedInUrl ?? undefined,
+    location: profileFields?.location ?? undefined,
+    abn: profileFields?.abn ?? undefined,
+    shortDescription: profileFields?.shortDescription ?? undefined,
+    problemSolved: profileFields?.problemSolved ?? undefined,
+    targetAudience: profileFields?.targetAudience ?? undefined,
+    founderNames: profileFields?.founderNames ?? undefined,
+    stage: profileFields?.stage ?? undefined,
+    organizationKind: profileFields?.organizationKind ?? undefined,
+    competitors: autofill.competitors?.join("\n"),
+    seedKeywords: autofill.seedKeywords?.join(", "),
+  };
+
+  return Object.entries(updates).reduce<StartupSetupValues>((nextValues, [field, value]) => {
+    const nextValue = String(value ?? "").trim();
+    if (!nextValue || nextValues[field as StartupSetupField].trim()) return nextValues;
+    return { ...nextValues, [field]: nextValue };
+  }, values);
+}
+
 function defaultSectionExpanded(values: StartupSetupValues, complete: (values: StartupSetupValues) => boolean, collapseCompletedSectionsByDefault: boolean) {
   return !collapseCompletedSectionsByDefault || !complete(values);
 }
@@ -1170,6 +1235,31 @@ function SetupDocumentMockups() {
         </div>
       </div>
     </div>
+  );
+}
+
+function StartupProfileAiHelperBanner() {
+  return (
+    <section className="overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70 p-5">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex gap-4">
+          <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-white shadow-lg shadow-violet-200">
+            <Sparkles className="h-7 w-7" />
+          </span>
+          <div>
+            <h3 className="text-xl font-black tracking-normal text-violet-800">Let AI do the heavy lifting</h3>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-700">
+              <span className="sm:hidden">Fill the basics, then let AI prep company context from public sources.</span>
+              <span className="hidden sm:inline">Add or review your details below, then AI can scan public sources and prepare article-generation context from your answers.</span>
+              <span className="ml-2 inline-flex items-center gap-1 font-black text-violet-700">
+                Learn how it works <ArrowRight className="h-4 w-4" />
+              </span>
+            </p>
+          </div>
+        </div>
+        <SetupDocumentMockups />
+      </div>
+    </section>
   );
 }
 
@@ -1491,34 +1581,38 @@ function ProfileResearchProgressCard({
 }) {
   if (!runId && !pending) return null;
   const autofill = extractAutofill(run);
+  const hasSuggestions = hasAutofillSuggestions(autofill);
   const partial = Boolean(autofill?.partial);
   const effectiveStatus = run?.status ?? startStatus ?? (pending ? "queued" : null);
   const active = pending || (!isResearchTerminalStatus(effectiveStatus) && (!run || isResearchRunningStatus(run.status)));
   const failed = isResearchFailedStatus(effectiveStatus) || unavailable;
-  const completed = run?.status === "completed" && !failed;
+  const needsReview = failed || partial;
+  const completed = run?.status === "completed" && !needsReview;
   const completedSteps = completedResearchStepCount(run, pending);
   const totalSteps = PROFILE_RESEARCH_STEPS.length;
   const progressLabel = `${Math.min(completedSteps, totalSteps)} of ${totalSteps} steps`;
   const label = pending
     ? "Starting AI research"
-    : run?.status === "completed"
-      ? "Article context ready"
-      : failed
-        ? partial
-          ? "AI context partially ready"
-          : "AI research needs attention"
-        : autofillStepLabel(run?.currentStep);
+    : partial
+      ? "AI context partially ready"
+      : completed
+        ? hasSuggestions
+          ? "Startup profile suggestions ready"
+          : "Research complete"
+        : failed
+          ? "AI research needs attention"
+          : autofillStepLabel(run?.currentStep);
   const sourceCount = autofill?.sourceCount ?? autofill?.sources?.length ?? 0;
   const competitorCount = autofill?.competitorCount ?? autofill?.competitorSuggestions?.length ?? autofill?.competitors?.length ?? 0;
   const seedKeywordCount = autofill?.seedKeywordCount ?? autofill?.seedKeywords?.length ?? 0;
   const errorMessage =
     partial
-      ? "AI prepared partial article context. Your visible startup profile was not changed."
+      ? "AI prepared partial suggestions. Review the filled fields and retry if you need a stronger result."
       : startError ||
         run?.errors?.[0] ||
         (failed ? "AI research is unavailable. Check the Content Factory backend and try again." : null);
   const notice = unavailable
-    ? "We have not received a fresh status update for more than 2 minutes. You can retry now, or keep this page open while polling continues."
+    ? "We have not received a fresh status update for more than 10 minutes. You can retry now, or keep this page open while polling continues."
     : stalled
       ? "This is taking longer than expected. We will keep checking for progress in the background."
       : null;
@@ -1527,32 +1621,50 @@ function ProfileResearchProgressCard({
     <div
       className={clsx(
         "relative overflow-hidden rounded-2xl border p-5 text-sm shadow-sm",
-        failed
+        needsReview
           ? partial
             ? "border-amber-200 bg-amber-50 text-amber-950"
             : "border-rose-200 bg-rose-50 text-rose-900"
           : completed
-            ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+            ? hasSuggestions
+              ? "border-emerald-200 bg-emerald-50 text-emerald-950"
+              : "border-amber-200 bg-amber-50 text-amber-950"
             : "border-purple-100 bg-gradient-to-br from-purple-50 via-violet-50 to-indigo-50 text-violet-950",
       )}
     >
       <div
         className={clsx(
           "absolute right-0 top-0 -mr-10 -mt-10 h-36 w-36 rounded-full blur-3xl",
-          failed ? (partial ? "bg-amber-200/30" : "bg-rose-200/30") : completed ? "bg-emerald-200/40" : "bg-purple-200/30",
+          needsReview
+            ? partial
+              ? "bg-amber-200/30"
+              : "bg-rose-200/30"
+            : completed
+              ? hasSuggestions
+                ? "bg-emerald-200/40"
+                : "bg-amber-200/30"
+              : "bg-purple-200/30",
         )}
       />
       <div className="relative z-10 flex gap-4">
         <div
           className={clsx(
             "flex h-12 w-12 shrink-0 items-center justify-center rounded-xl",
-            failed ? (partial ? "bg-amber-100" : "bg-rose-100") : completed ? "bg-emerald-100" : "bg-purple-100",
+            needsReview
+              ? partial
+                ? "bg-amber-100"
+                : "bg-rose-100"
+              : completed
+                ? hasSuggestions
+                  ? "bg-emerald-100"
+                  : "bg-amber-100"
+                : "bg-purple-100",
           )}
         >
-          {failed ? (
+          {needsReview ? (
             <AlertTriangle className={clsx("h-6 w-6", partial ? "text-amber-600" : "text-rose-600")} />
           ) : completed ? (
-            <CheckCircle2 className="h-6 w-6 text-emerald-600" />
+            <CheckCircle2 className={clsx("h-6 w-6", hasSuggestions ? "text-emerald-600" : "text-amber-600")} />
           ) : (
             <Sparkles className="h-6 w-6 text-purple-600" />
           )}
@@ -1564,34 +1676,49 @@ function ProfileResearchProgressCard({
             <span
               className={clsx(
                 "rounded-full px-2.5 py-1 text-[11px] font-black uppercase tracking-wide",
-                failed
+                needsReview
                   ? partial
                     ? "bg-white/80 text-amber-700"
                     : "bg-white/80 text-rose-700"
                   : completed
-                    ? "bg-white/80 text-emerald-700"
+                    ? hasSuggestions
+                      ? "bg-white/80 text-emerald-700"
+                      : "bg-white/80 text-amber-700"
                     : "bg-white/80 text-purple-700",
               )}
             >
-              {failed ? (partial ? "Review needed" : "Retry available") : completed ? "Complete" : progressLabel}
+              {needsReview ? (partial ? "Review needed" : "Retry available") : completed ? (hasSuggestions ? "Complete" : "Suggestions unavailable") : progressLabel}
             </span>
           </div>
 
           {!completed ? (
             <>
               <p className="mt-1 text-sm font-semibold text-gray-700">
-                {pending ? "Contacting the AI research service" : partial ? "AI prepared partial article context without changing your profile." : autofillStepLabel(run?.currentStep)}
+                {pending ? "Contacting the AI research service" : partial ? "AI prepared partial startup profile suggestions." : autofillStepLabel(run?.currentStep)}
               </p>
               <p className="mt-1 text-sm font-medium text-gray-500">
-                {active ? "Usually takes 1-3 minutes. Refreshing the page is safe." : failed ? "The form is unlocked so you can edit your details or retry." : "Article context is ready for future article generation."}
+                {active ? "Deep research can take several minutes. Refreshing the page is safe." : needsReview ? "The form is unlocked so you can edit your details or retry." : "Startup profile suggestions are ready."}
               </p>
             </>
           ) : null}
 
-          {!failed && !completed ? (
+          {!needsReview && !completed ? (
             <div className="mt-4 space-y-2">
               <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
-              <p className="text-xs font-semibold text-gray-500">We will keep checking until hidden article context is ready.</p>
+              <p className="text-xs font-semibold text-gray-500">We will keep checking until startup profile suggestions are ready.</p>
+            </div>
+          ) : completed ? (
+            <div className="mt-4 space-y-3">
+              <ProfileResearchSegments completedSteps={completedSteps} totalSteps={totalSteps} failed={false} />
+              {hasSuggestions ? (
+                <p className="rounded-xl border border-emerald-200 bg-white/80 px-4 py-3 text-sm font-semibold text-emerald-700">
+                  AI filled empty startup profile fields where it found confident suggestions. Details you already entered were preserved.
+                </p>
+              ) : (
+                <p className="rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-700">
+                  Research finished, but profile suggestions were not included in this status update. Refresh in a moment, or run research again if fields stay empty.
+                </p>
+              )}
             </div>
           ) : (
             <div className="mt-4 space-y-3">
@@ -1612,12 +1739,12 @@ function ProfileResearchProgressCard({
             </div>
           )}
 
-          {notice && !failed ? (
+          {notice && !needsReview ? (
             <p className="mt-3 rounded-xl border border-amber-200 bg-white/80 px-4 py-3 text-sm font-semibold text-amber-700">{notice}</p>
           ) : null}
 
           {autofill ? (
-            <div className={clsx("mt-4 flex flex-wrap gap-2 text-xs font-black", completed ? "text-emerald-800" : "text-violet-800")}>
+            <div className={clsx("mt-4 flex flex-wrap gap-2 text-xs font-black", needsReview ? (partial ? "text-amber-800" : "text-rose-800") : completed ? "text-emerald-800" : "text-violet-800")}>
               <span>{sourceCount} sources reviewed</span>
               <span>{competitorCount} competitors found</span>
               <span>{seedKeywordCount} high-fit keywords selected</span>
@@ -1702,10 +1829,17 @@ export default function VibeMarketingStartupBaselineSetup({
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
       ? autofillStartData.status
       : null;
-  const autofillStartError =
+  const autofillStartDisplayErrors =
     autofillStartData?.autofillRunId && autofillStartData.autofillRunId === autofillRunId
-      ? autofillStartData.error ?? autofillStartData.errors?.[0] ?? null
-      : null;
+      ? autofillStartErrorsForDisplay({
+          runId: autofillStartData.autofillRunId,
+          status: autofillStartStatus,
+          error: autofillStartData.error,
+          errors: autofillStartData.errors,
+        })
+      : [];
+  const autofillStartError =
+    autofillStartDisplayErrors[0] ?? null;
   const baselineStartData = baselineStartFetcher.data;
   const baselineRun = baselineRunFetcher.data as VibeMarketingRunSummary | undefined;
   const latestBaselineRun = bootstrap.latestRuns.find((run) => run.workflow === "website_baseline");
@@ -1730,8 +1864,11 @@ export default function VibeMarketingStartupBaselineSetup({
   const baselinePolling = Boolean(baselineRunId && (!baselineRun || ["queued", "running"].includes(baselineRun.status)));
   const autofillStatusAgeMs = autofillStartedAt ? autofillClock - (autofillLastPollAt ?? autofillStartedAt) : 0;
   const autofillProgressAgeMs = autofillStartedAt ? autofillClock - (autofillLastProgressAt ?? autofillStartedAt) : 0;
-  const autofillStalled = Boolean(autofillPolling && autofillProgressAgeMs > 60_000);
-  const autofillUnavailable = Boolean(autofillPolling && (autofillStatusAgeMs > 120_000 || autofillProgressAgeMs > 120_000));
+  const { stalled: autofillStalled, unavailable: autofillUnavailable } = autofillProgressState({
+    polling: autofillPolling,
+    statusAgeMs: autofillStatusAgeMs,
+    progressAgeMs: autofillProgressAgeMs,
+  });
   const researchLocked = autofillPending || (autofillPolling && !autofillUnavailable);
   const canStartAutofill =
     Boolean(startupValues.companyName.trim() && startupValues.domain.trim()) &&
@@ -1776,6 +1913,7 @@ export default function VibeMarketingStartupBaselineSetup({
     message: googleTrafficMessage,
   };
   const embedded = variant === "workflow";
+  const companySetupWorkflow = embedded && !includeBaseline;
   const shouldShowSecondaryAction = showSecondaryAction ?? true;
   const defaultPrimaryActionLabel = includeBaseline ? "Continue to GitHub setup" : embedded ? "Save and continue" : "Continue";
   const baselineActive = baselinePending || baselinePolling;
@@ -2019,6 +2157,7 @@ export default function VibeMarketingStartupBaselineSetup({
 
   useEffect(() => {
     if (!autofillRunId || !autofillRun) return;
+    if (isAutofillStatusPollFailure(autofillRun)) return;
     const now = Date.now();
     const signature = researchProgressSignature(autofillRun);
     setAutofillLastPollAt(now);
@@ -2060,9 +2199,10 @@ export default function VibeMarketingStartupBaselineSetup({
   useEffect(() => {
     if (!autofillRunId || appliedAutofillRunId === autofillRunId) return;
     const autofill = extractAutofill(autofillRun);
-    if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial)) return;
+    if (!autofill || (autofillRun?.status !== "completed" && !autofill.partial) || !hasAutofillSuggestions(autofill)) return;
     const profileFields = autofill.profileFields;
     setGeneratedCompanyContext(String(profileFields?.companyContext || autofill.companyContext || "").trim());
+    setStartupValues((current) => applyAutofillToEmptyStartupFields(current, autofill));
     setAppliedAutofillRunId(autofillRunId);
   }, [appliedAutofillRunId, autofillRun, autofillRunId]);
 
@@ -2070,7 +2210,8 @@ export default function VibeMarketingStartupBaselineSetup({
     <Form
       method="POST"
       className={clsx(
-        "overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm",
+        "overflow-hidden border border-gray-200 bg-white shadow-sm",
+        embedded ? "rounded-[1.75rem]" : "rounded-2xl",
         embedded ? "" : "mt-10",
       )}
     >
@@ -2080,12 +2221,12 @@ export default function VibeMarketingStartupBaselineSetup({
         <div className="border-b border-rose-100 bg-rose-50 px-6 py-4 text-sm font-bold text-rose-700">{error}</div>
       ) : null}
 
-      <div className="space-y-6 p-5 sm:p-6 lg:p-8">
+      <div className={clsx("space-y-6", embedded ? "p-6 sm:p-8 lg:p-11" : "p-5 sm:p-6 lg:p-8")}>
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(240px,520px)] lg:items-start">
           <div ref={mobileIntroRef}>
-            <p className="text-sm font-black uppercase tracking-wide text-violet-700">{setupEyebrow}</p>
-            <h2 className="mt-3 text-3xl font-black tracking-normal text-gray-950">{setupTitle}</h2>
-            <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-gray-600">{setupDescription}</p>
+            <p className="text-sm font-black uppercase tracking-[0.08em] text-violet-700">{setupEyebrow}</p>
+            <h2 className={clsx("mt-3 font-black tracking-normal text-gray-950", embedded ? "text-4xl leading-tight sm:text-5xl" : "text-3xl")}>{setupTitle}</h2>
+            <p className={clsx("mt-4 max-w-3xl font-semibold text-gray-600", embedded ? "text-lg leading-8" : "text-sm leading-6")}>{setupDescription}</p>
             <button
               type="button"
               onClick={openMobileTutorial}
@@ -2107,8 +2248,13 @@ export default function VibeMarketingStartupBaselineSetup({
           ) : null}
         </div>
 
-        <div className={clsx("grid gap-5", profileContentExpanded && "xl:grid-cols-[minmax(0,1fr)_390px]")}>
-          <section className={clsx("rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7", researchLocked && "bg-gray-50/80")}>
+        <div className={clsx("grid gap-8", profileContentExpanded && "xl:grid-cols-[minmax(0,1fr)_390px]")}>
+          <section className={clsx(
+            embedded
+              ? "min-w-0"
+              : "rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:p-7",
+            researchLocked && (embedded ? "opacity-90" : "bg-gray-50/80"),
+          )}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex items-start gap-5">
                 <StepNumberBadge>1</StepNumberBadge>
@@ -2138,30 +2284,30 @@ export default function VibeMarketingStartupBaselineSetup({
 
             {!profileContentExpanded ? <p className="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-bold text-slate-600">{startupProfileSummary(startupValues)}</p> : null}
 
-            <div className={clsx("mt-7 border-t border-gray-100 pt-7", !profileContentExpanded && "hidden")}>
+            <div className={clsx("mt-7 border-t border-gray-200 pt-7", !profileContentExpanded && "hidden")}>
               <section className="overflow-hidden rounded-xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-violet-50/70 p-5">
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="flex gap-4">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-violet-700 text-white shadow-lg shadow-violet-200">
-                      <Sparkles className="h-7 w-7" />
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-violet-50 text-violet-700 ring-1 ring-violet-200">
+                      <Sparkles className="h-6 w-6" />
                     </span>
                     <div>
-                      <h3 className="text-xl font-black tracking-normal text-violet-800">Let AI do the heavy lifting</h3>
+                      <h3 className="text-lg font-black tracking-normal text-violet-800">Let AI help with setup</h3>
                       <p className="mt-2 max-w-3xl text-sm font-semibold leading-6 text-gray-700">
                         <span className="sm:hidden">Fill the basics, then let AI prep company context from public sources.</span>
-                        <span className="hidden sm:inline">Add or review your details below, then AI can scan public sources and prepare article-generation context from your answers.</span>
-                        <span className="ml-2 inline-flex items-center gap-1 font-black text-violet-700">
-                          Learn how it works <ArrowRight className="h-4 w-4" />
-                        </span>
+                        <span className="hidden sm:inline">Complete the basics, then AI can research trusted public sources and prepare article context from your answers.</span>
                       </p>
                     </div>
                   </div>
-                  <SetupDocumentMockups />
+                  <span className="inline-flex items-center gap-2 text-sm font-black text-violet-700">
+                    Learn how it works <ArrowRight className="h-4 w-4" />
+                  </span>
+                  {!embedded ? <SetupDocumentMockups /> : null}
                 </div>
               </section>
 
-              <div className="mt-7 grid gap-5 lg:grid-cols-2">
-                <FormField label="Company name" badge={<RequiredPill />} className="lg:col-span-2">
+              <div className={clsx("mt-7", companySetupWorkflow ? "space-y-5" : "grid gap-5 lg:grid-cols-2")}>
+                <FormField label="Company name" badge={<RequiredPill />} className={companySetupWorkflow ? "" : "lg:col-span-2"}>
                   <div className="relative">
                     <ControlIcon icon={Building2} />
                     <input
@@ -2171,13 +2317,13 @@ export default function VibeMarketingStartupBaselineSetup({
                       disabled={researchLocked}
                       required
                       autoComplete="organization"
-                      placeholder="e.g. Acme Inc."
+                      placeholder={companySetupWorkflow ? "Enter your company name" : "e.g. Acme Inc."}
                       className={inputWithIconClass}
                     />
                   </div>
                 </FormField>
 
-                <FormField label="Website domain" badge={<RequiredPill />}>
+                <FormField label={companySetupWorkflow ? "Website" : "Website domain"} badge={<RequiredPill />}>
                   <div className="relative">
                     <ControlIcon icon={Globe2} />
                     <input
@@ -2187,13 +2333,13 @@ export default function VibeMarketingStartupBaselineSetup({
                       disabled={researchLocked}
                       required
                       autoComplete="url"
-                      placeholder="e.g. acme.com"
+                      placeholder={companySetupWorkflow ? "https://yourcompany.com" : "e.g. acme.com"}
                       className={inputWithIconClass}
                     />
                   </div>
                 </FormField>
 
-                <FormField label="LinkedIn company page" badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
+                <FormField label={companySetupWorkflow ? "LinkedIn" : "LinkedIn company page"} badge={<span className="text-xs font-bold text-gray-500">(optional)</span>}>
                   <div className="relative">
                     <ControlIcon icon={Link2} />
                     <input
@@ -2201,7 +2347,7 @@ export default function VibeMarketingStartupBaselineSetup({
                       value={startupValues.companyLinkedInUrl}
                       onChange={(event) => updateValue("companyLinkedInUrl", event.target.value)}
                       disabled={researchLocked}
-                      placeholder="e.g. linkedin.com/company/acme-inc"
+                      placeholder={companySetupWorkflow ? "https://www.linkedin.com/company/yourcompany" : "e.g. linkedin.com/company/acme-inc"}
                       className={inputWithIconClass}
                     />
                   </div>
@@ -2402,14 +2548,15 @@ export default function VibeMarketingStartupBaselineSetup({
             </div>
           </section>
 
-          <aside ref={mobileNextStepsRef} className={clsx("self-start rounded-xl border border-gray-200 bg-white p-6 shadow-sm", !profileContentExpanded && "hidden")}>
-            <h3 className="text-base font-black text-gray-950">What happens next?</h3>
-            <div className="mt-5 space-y-5">
+          <aside ref={mobileNextStepsRef} className={clsx("self-start rounded-2xl border border-gray-200 bg-white p-6 shadow-sm lg:p-8", !profileContentExpanded && "hidden")}>
+            <h3 className="text-xl font-black text-gray-950">What happens next?</h3>
+            <div className="mt-7 space-y-6">
               <NextStepItem icon={Search} title="We research your company" body="AI reviews your site, LinkedIn page, and trusted public sources using your answers as ground truth." />
               <NextStepItem icon={PenLine} title="We prepare article context" body="Generated context is stored separately for future articles and is not written back into this form." />
               <NextStepItem icon={CheckCircle2} title="You stay in control" body="Edit your startup profile any time; scan results will not replace your details." last />
             </div>
-            <div className="mt-6 rounded-xl bg-gray-50 p-4">
+            <div className="mt-7 border-t border-gray-200 pt-7">
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
               <div className="flex gap-3">
                 <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-gray-700" />
                 <div>
@@ -2417,6 +2564,7 @@ export default function VibeMarketingStartupBaselineSetup({
                   <p className="mt-1 text-sm font-semibold leading-6 text-gray-600">We&apos;ll never publish or make changes unless you specifically approve.</p>
                 </div>
               </div>
+            </div>
             </div>
           </aside>
         </div>
@@ -2761,10 +2909,13 @@ export default function VibeMarketingStartupBaselineSetup({
         </section>
       ) : null}
 
-      <div className="flex flex-col gap-4 border-t border-gray-100 bg-gray-50/70 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className={clsx(
+        "flex flex-col gap-4 border-t border-gray-100 px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8",
+        companySetupWorkflow ? "bg-white" : "bg-gray-50/70",
+      )}>
         <p className="flex items-center gap-3 text-sm font-bold text-gray-500">
-          <ShieldCheck className="h-5 w-5 text-gray-400" />
-          Your data is secure and never shared.
+          {companySetupWorkflow ? null : <ShieldCheck className="h-5 w-5 text-gray-400" />}
+          {companySetupWorkflow ? "You can edit your profile anytime." : "Your data is secure and never shared."}
         </p>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
           {shouldShowSecondaryAction ? (
@@ -2784,7 +2935,12 @@ export default function VibeMarketingStartupBaselineSetup({
             name="nextAction"
             value="continue"
             disabled={saveActionPending || researchLocked}
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-black text-white shadow-sm shadow-[rgba(0,128,128,0.16)] transition hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-50 sm:px-7"
+            className={clsx(
+              "inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-black text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 sm:px-7",
+              companySetupWorkflow
+                ? "bg-violet-700 shadow-violet-200 hover:bg-violet-800"
+                : "bg-[var(--vr-color-primary)] shadow-[rgba(0,128,128,0.16)] hover:bg-[var(--vr-palette-black)]",
+            )}
           >
             {continuePending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
             {continuePending ? "Continuing..." : primaryActionLabel ?? defaultPrimaryActionLabel}

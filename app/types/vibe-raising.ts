@@ -14,6 +14,7 @@ export interface VibeRaisingCompany {
   companyLinkedInUrl?: string | null;
   abn?: string | null;
   location?: string | null;
+  avatarUrl?: string | null;
   founderProfiles?: VibeRaisingFounderProfile[];
   founderNames?: string[];
   stage?: string | null;
@@ -203,6 +204,7 @@ export interface VibeRaisingVideoCompressionMetadata {
 
 export type VibeRaisingInputSourceKey =
   | "gmail"
+  | "google_analytics"
   | "stripe"
   | "xero"
   | "bank_feed"

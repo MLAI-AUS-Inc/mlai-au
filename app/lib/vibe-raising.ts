@@ -97,6 +97,11 @@ const INPUT_SOURCE_DEFINITIONS: Record<VibeRaisingInputSourceKey, Omit<VibeRaisi
     label: "Gmail",
     capabilities: ["context"],
   },
+  google_analytics: {
+    key: "google_analytics",
+    label: "Google Analytics",
+    capabilities: ["metrics"],
+  },
   stripe: {
     key: "stripe",
     label: "Stripe",
@@ -232,6 +237,9 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
   const companyLinkedInUrl =
     asNullableString(payload.companyLinkedInUrl) ??
     asNullableString(payload.company_linkedin_url);
+  const avatarUrl =
+    asNullableString(payload.avatarUrl) ??
+    asNullableString(payload.avatar_url);
   const location =
     asNullableString(payload.location) ??
     asNullableString(payload.companyLocation) ??
@@ -282,6 +290,7 @@ function normalizeCompany(raw: unknown): VibeRaisingCompany {
     companyLinkedInUrl,
     abn,
     location,
+    avatarUrl,
     founderProfiles,
     founderNames,
     stage,
@@ -1188,6 +1197,7 @@ function normalizeInputSourceProvider(value: unknown): VibeRaisingInputSourceKey
   const normalized = String(value || "").trim().toLowerCase().replace(/[-\s]+/g, "_");
   if (normalized === "stripe") return "stripe";
   if (normalized === "xero") return "xero";
+  if (normalized === "google_analytics" || normalized === "google_analytics_4" || normalized === "ga4") return "google_analytics";
   if (normalized === "gmail" || normalized === "google" || normalized === "google_gmail") return "gmail";
   if (normalized === "bank_feed" || normalized === "basiq") return "bank_feed";
   if (normalized === "notion") return "notion";
@@ -2388,7 +2398,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
     const summaries = normalizeInputSourceSummaries(response);
     const sources = (Object.keys(INPUT_SOURCE_DEFINITIONS) as VibeRaisingInputSourceKey[]).map((key) => (
-      summaries[key] ?? createInputSourceSummary(key, "not_connected")
+      summaries[key] ?? createInputSourceSummary(key, key === "google_analytics" ? "coming_soon" : "not_connected")
     ));
     return {
       sources,
@@ -2454,7 +2464,7 @@ export async function getVibeRaisingInputSourcesStatus(
     );
   }
 
-  for (const key of ["notion", "google_drive", "slack", "linear"] as const) {
+  for (const key of ["google_analytics", "notion", "google_drive", "slack", "linear"] as const) {
     sources.push(createInputSourceSummary(key, "unavailable", {
       selected: false,
       warning: "This connector is not available on this backend yet.",
@@ -2464,7 +2474,7 @@ export async function getVibeRaisingInputSourcesStatus(
   return { sources, financeUnavailable };
 }
 
-type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "manual_documents">;
+type ConnectableVibeRaisingInputSourceKey = Exclude<VibeRaisingInputSourceKey, "gmail" | "google_analytics" | "manual_documents">;
 
 const CONNECTOR_PROVIDER_SLUGS: Record<ConnectableVibeRaisingInputSourceKey, string> = {
   stripe: "stripe",

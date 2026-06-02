@@ -1,3 +1,25 @@
+- [x] Add Watt The Hack track sidebar routes
+- [x] Add Watt The Hack track placeholder pages
+- [x] Run Watt The Hack track tab verification
+- [x] Lower Watt dashboard resource illustration to panel base
+- [x] Keep collapsed Watt sidebar illustration visible and enlarge collapsed logo
+- [x] Restyle Watt announcements as green accent panel
+- [x] Run Watt tweak verification
+- [x] Add supplied Watt The Hack resource pack to `/watt-the-hack/resources`
+- [x] Run Watt The Hack resources verification
+- [x] Update Watt The Hack theme image constants and shared visual tokens
+- [x] Add animated collapsed/expanded Watt The Hack sidebar treatment
+- [x] Rebuild Watt The Hack dashboard to match the reference layout
+- [x] Restyle Watt The Hack announcements/resources/cards with the reference surface treatment
+- [x] Run Watt The Hack verification checks
+- [x] Add QR-friendly DisplayLink setup tutorial page
+- [x] Register the DisplayLink tutorial route without adding a main-nav entry point
+- [x] Replace `/terms` and `/privacy` legal copy with the May 20 updated text
+- [x] Restyle `/terms` and `/privacy` to match the main MLAI brutalist page shell
+- [x] Verify styled legal pages in the local browser
+- [x] Rewrite `/terms` as MLAI-wide Terms of Service with product schedules
+- [x] Rewrite `/privacy` as MLAI-wide Privacy Policy with Google and product-specific sections
+- [x] Run `bun run typecheck`
 - [x] Simplify the mobile review sticky footer on Founder Tools create-update
 - [x] Polish Founder Tools dashboard CTA hierarchy for the May 17-18 mobile follow-up branch
 - [x] Improve Create Update AI draft card touch/mobile affordance
@@ -212,6 +234,8 @@
 - [x] Move the credibility section from the MLAI homepage to the Vibe Raising landing flow
 - [x] Move the credibility section from the login flow to the founder dashboard hero page
 - [x] Simplify the founder dashboard credibility section and remove the beige frame styling
+- [x] Install Microsoft Clarity on the global app shell
+- [x] Run `bun run typecheck`
 - [x] Add functioning Google sign-in to the Vibe Raising login page
 - [x] Add Google client ID env scaffolding for local and deployed Vibe Raising sign-in
 - [x] Run typecheck after the Google login work
@@ -408,3 +432,17 @@
 - [x] Hide the extra Before you connect trust box on the Connect Data page
 - [x] Hide the Back to month selection button on the draft update step
 - [x] Make the update progress steps always visible and remove the thin progress bars
+- [x] Re-enable local backend Customer.io magic-link delivery for localhost Founder Tools login
+- [x] Clear broken local proxy env vars for backend Customer.io delivery and prevent provider failures from crashing login
+- [x] Troubleshoot Vibe Raising publishing so saved monthly update input appears on the Updates page
+- [x] Make the Vibe Raising review publish step submit the saved draft directly instead of only opening the confirmation modal
+- [x] Disable the local Vibe Raising dev-auth fallback so localhost uses the real backend session and no fake update data
+- [x] Replace the create-update month bar with a mobile-only dropdown while keeping desktop tabs
+- [x] Extend the Founder Tools app shell background to full viewport height so no white floor appears
+- [x] Split the mobile create-update date picker into separate month and year dropdowns
+- [x] Add a publish fallback that resolves and publishes the latest real backend draft when the UI carries a local stub id
+- [x] Let the selected month summary on the draft update page reopen month selection
+- [x] Fix the draft template so manual metric cards remain clickable after month selection
+- [x] Consolidate Vibe Raising publish handling so publish errors stay on-page instead of crashing
+- [x] Restore the publish confirmation popup before sending the reviewed update
+- [x] Disable publish-send in the popup and make local save the primary action

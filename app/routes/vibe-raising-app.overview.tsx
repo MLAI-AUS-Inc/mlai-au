@@ -37,7 +37,7 @@ export default function VibeRaisingOverviewRoute() {
     <VibeRaisingFounderOverview
       firstName={firstName}
       onCreateFirstUpdate={() =>
-        triggerAnnouncement(() => navigate("/founder-tools/data-sources"))
+        triggerAnnouncement(() => navigate("/founder-tools/updates/create"))
       }
     />
   );

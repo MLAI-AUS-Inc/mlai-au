@@ -11,6 +11,7 @@ export default [
   route("/privacy", "routes/privacy.tsx"),
   route("/terms", "routes/terms.tsx"),
   route("/resources", "routes/resources.tsx"),
+  route("/displaylink", "routes/displaylink.tsx"),
   route("/roo", "routes/roo.tsx"),
   route("/roo/topup/:purchaseId", "routes/roo.topup.$purchaseId.tsx"),
   route("/&", "routes/article-link-cleanups.tsx", { id: "cleanup-root-ampersand" }),
@@ -50,6 +51,19 @@ export default [
     route("coding", "routes/hospital.app.coding.tsx"),
     route("pitching", "routes/hospital.app.pitching.tsx"),
     route("profile", "routes/hospital.app.profile.tsx"),
+  ]),
+
+  // Watt The Hack generic hackathon app routes
+  route("/watt-the-hack", "routes/watt-the-hack.tsx", [
+    index("routes/watt-the-hack._index.tsx"),
+    route("dashboard", "routes/watt-the-hack.dashboard.tsx"),
+    route("profile", "routes/watt-the-hack.profile.tsx"),
+    route("team", "routes/watt-the-hack.team.tsx"),
+    route("submissions", "routes/watt-the-hack.submissions.tsx"),
+    route("resources", "routes/watt-the-hack.resources.tsx"),
+    route("base44-pitching", "routes/watt-the-hack.base44-pitching.tsx"),
+    route("city-of-melbourne-advanced", "routes/watt-the-hack.city-of-melbourne-advanced.tsx"),
+    route("smart-home-beginner", "routes/watt-the-hack.smart-home-beginner.tsx"),
   ]),
 
   // Hackathon pages

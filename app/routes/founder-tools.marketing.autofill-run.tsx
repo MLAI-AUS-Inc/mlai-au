@@ -17,34 +17,34 @@ function runLoaderErrorMessage(error: unknown) {
   return "Company profile research status is unavailable. We will keep trying, but you can retry the research if this continues.";
 }
 
-function blockedRunPayload(runId: string, error: unknown): VibeMarketingRunSummary {
+function statusPollFailurePayload(runId: string, error: unknown): VibeMarketingRunSummary {
   const message = runLoaderErrorMessage(error);
   return {
     runId,
     workflow: "startup_autofill",
     domain: "",
     githubRepo: null,
-    status: "blocked",
-    currentStep: "status_check_failed",
+    status: "running",
+    currentStep: null,
     approvalState: null,
     resumeAvailable: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     stepOrder: [],
     steps: [],
-    warnings: [],
-    errors: [message],
+    warnings: [message],
+    errors: [],
     artifacts: [],
     previewUrl: null,
     prUrl: null,
     routePath: null,
-    diagnostics: { statusLoaderError: message },
+    diagnostics: { statusLoaderError: message, retryable: true },
     contentPackage: null,
     componentManifest: null,
     livePreview: null,
     componentFeedback: null,
     workflowProgress: null,
-    result: { error: message, errors: [message], diagnostics: { statusLoaderError: message } },
+    result: { warnings: [message], diagnostics: { statusLoaderError: message, retryable: true } },
   };
 }
 
@@ -55,6 +55,6 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
   try {
     return await getVibeMarketingRun(env, request, runId, null, "status");
   } catch (error) {
-    return blockedRunPayload(runId, error);
+    return statusPollFailurePayload(runId, error);
   }
 }

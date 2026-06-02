@@ -1,5 +1,5 @@
 import type { Route } from "./+types/platform.login";
-import { Form, Link, redirect, useActionData, useSearchParams, useSubmit } from "react-router";
+import { Form, Link, redirect, useActionData, useNavigation, useSearchParams, useSubmit } from "react-router";
 import { checkUser, createUser, getCurrentUser, sendMagicLink, type AuthAppName } from "~/lib/auth";
 import { useEffect, useState } from "react";
 import { GradientBackground } from "~/components/GradientBackground";
@@ -16,7 +16,7 @@ export const meta: Route.MetaFunction = () => [
 
 function parseAuthApp(value: string | null): AuthAppName | null {
     if (value === "vibe-raising") return "founder-tools";
-    return value === "esafety" || value === "hospital" || value === "founder-tools"
+    return value === "esafety" || value === "hospital" || value === "founder-tools" || value === "watt-the-hack"
         ? value
         : null;
 }
@@ -183,6 +183,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             });
             return {
                 sent: true,
+                sentAt: Date.now(),
                 email,
                 message: result.message,
                 magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
@@ -205,6 +206,7 @@ export async function action({ request, context }: Route.ActionArgs) {
         const result = await sendMagicLink(env, { email, next, app });
         return {
             sent: true,
+            sentAt: Date.now(),
             email,
             message: result.message,
             magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
@@ -225,9 +227,12 @@ export default function PlatformLogin() {
     const next = normalizeAuthNextForApp(app, searchParams.get("next"), { fallback: "/hackathons" });
     const error = searchParams.get("error");
     const submit = useSubmit();
+    const navigation = useNavigation();
 
     const [timeLeft, setTimeLeft] = useState(0);
     const [email, setEmail] = useState(data?.email || "");
+    const isSubmitting = navigation.state === "submitting";
+    const isResending = isSubmitting && data?.sent === true;
 
     useEffect(() => {
         if (data?.email) {
@@ -244,7 +249,7 @@ export default function PlatformLogin() {
         if (data?.sent) {
             setTimeLeft(30);
         }
-    }, [data?.sent]);
+    }, [data?.sent, data?.sentAt]);
 
     useEffect(() => {
         if (timeLeft > 0) {
@@ -267,6 +272,7 @@ export default function PlatformLogin() {
     const getWelcomeText = () => {
         if (app === "esafety") return "Sign in to eSafety Hackathon";
         if (app === "hospital") return "Sign in to Medhack: Frontiers";
+        if (app === "watt-the-hack") return "Sign in to Watt The Hack";
         if (app === "founder-tools") return "Sign in to Founder Tools";
         return "Welcome!";
     };
@@ -274,6 +280,9 @@ export default function PlatformLogin() {
     const getSupportText = () => {
         if (app === "founder-tools") {
             return "Use your email to sign in to Founder Tools. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
+        }
+        if (app === "watt-the-hack") {
+            return "Use your email to sign in. If you do not have an account yet, we will ask for a few extra details before sending the magic link.";
         }
 
         return "Provide your email to create your account";
@@ -366,10 +375,10 @@ export default function PlatformLogin() {
                 <button
                     type="button"
                     onClick={handleResend}
-                    disabled={timeLeft > 0}
-                    className={`mt-2 text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ${timeLeft > 0 ? "opacity-50 cursor-not-allowed" : ""}`}
+                    disabled={timeLeft > 0 || isResending}
+                    className={`mt-2 text-sm font-semibold leading-6 text-indigo-600 hover:text-indigo-500 ${(timeLeft > 0 || isResending) ? "opacity-50 cursor-not-allowed" : ""}`}
                 >
-                    {timeLeft > 0 ? `Please wait ${timeLeft}s` : "Resend Magic Link"}
+                    {isResending ? "Sending..." : timeLeft > 0 ? `Please wait ${timeLeft}s` : "Resend Magic Link"}
                 </button>
             </div>
         </div>
@@ -462,9 +471,10 @@ export default function PlatformLogin() {
                                         type="submit"
                                         name="intent"
                                         value={data?.userExists === false ? "create" : "check"}
+                                        disabled={isSubmitting}
                                         className="flex w-full justify-center rounded-md bg-indigo-600 px-6 py-3 text-base font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                                     >
-                                        {data?.userExists === false ? "Create new account" : "Send Email Link"}
+                                        {isSubmitting ? "Sending..." : data?.userExists === false ? "Create new account" : "Send Email Link"}
                                     </button>
                                 </div>
                             </Form>

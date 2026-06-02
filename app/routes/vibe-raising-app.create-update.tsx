@@ -1,4 +1,4 @@
-import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, redirect } from "react-router";
+import { Form, Link, useActionData, useFetcher, useLocation, useNavigate, useNavigation, useLoaderData, useSubmit, redirect } from "react-router";
 import React, { startTransition, useCallback, useEffect, useEffectEvent, useId, useMemo, useRef, useState, type RefObject } from "react";
 import type { Route } from "./+types/vibe-raising-app.create-update";
 import { getEnv } from "~/lib/env.server";
@@ -6,8 +6,10 @@ import {
     cancelVibeRaisingStartupUpdate,
     requireVibeRaisingFounder,
     bootstrapVibeRaisingStartupUpdate,
+    getVibeRaisingDrafts,
     getVibeRaisingMonthlyUpdates,
     getVibeRaisingMonthlyUpdateById,
+    getVibeRaisingInputSourcesStatus,
     getVibeRaisingStartupUpdateActiveRun,
     getVibeRaisingStartupUpdateDraftResults,
     getVibeRaisingStartupUpdateStatus,
@@ -54,6 +56,7 @@ import { getVibeRaisingMonthTheme, parseVibeRaisingMonthYear, VIBE_RAISING_MONTH
 import type {
     VibeRaisingInputSourceKey,
     VibeRaisingFounderProfile,
+    VibeRaisingInputSourceSummary,
     VibeRaisingManualDocument,
     VibeRaisingMetricSuggestion,
     VibeRaisingMonthlyUpdate,
@@ -63,6 +66,7 @@ import type {
 
 const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
     "gmail",
+    "google_analytics",
     "stripe",
     "xero",
     "bank_feed",
@@ -75,6 +79,7 @@ const VALID_INPUT_SOURCE_KEYS = new Set<VibeRaisingInputSourceKey>([
 
 const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     gmail: "Gmail",
+    google_analytics: "Google Analytics",
     stripe: "Stripe",
     xero: "Xero",
     bank_feed: "Bank Feed",
@@ -85,11 +90,23 @@ const INPUT_SOURCE_LABELS: Record<VibeRaisingInputSourceKey, string> = {
     manual_documents: "Manual documents",
 };
 
+const COMPACT_OPTIONAL_SOURCE_KEYS: VibeRaisingInputSourceKey[] = [
+    "google_analytics",
+    "stripe",
+    "linear",
+    "notion",
+    "google_drive",
+    "gmail",
+    "slack",
+    "xero",
+];
+
 const DEFAULT_BACKEND_BASE_URL = "https://api.mlai.au";
 const MANUAL_MATERIALS_STORAGE_KEY = "vibe_raising_manual_materials";
 const CREATE_UPDATE_MOBILE_TOUR_STORAGE_KEY = "vibe_raising_create_update_mobile_tour_seen_v1";
 const SHOW_AI_REVIEW_FEEDBACK = false;
 const DRAFT_REVIEW_FORM_ID = "vibe-raising-draft-review-form";
+const PUBLISH_REVIEW_FORM_ID = "vibe-raising-publish-review-form";
 
 type CreateUpdateMobileTourStep = {
     key: string;
@@ -152,6 +169,111 @@ function parseInputSources(value: string | null): VibeRaisingInputSourceKey[] {
             }
         });
     return Array.from(seen);
+}
+
+function isConnectedInputSource(source: VibeRaisingInputSourceSummary) {
+    return source.status === "connected" || source.status === "syncing";
+}
+
+function compactSourceStatusLabel(source: VibeRaisingInputSourceSummary) {
+    switch (source.status) {
+        case "connected":
+            return "Connected";
+        case "syncing":
+            return "Syncing";
+        case "error":
+            return "Needs attention";
+        case "coming_soon":
+        case "unavailable":
+            return "Coming soon";
+        default:
+            return "Not connected";
+    }
+}
+
+function DraftSourceLogo({ sourceKey }: { sourceKey: VibeRaisingInputSourceKey }) {
+    const badgeClassName = "flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200";
+    const officialLogoClassName = "h-8 w-8 object-contain";
+
+    if (sourceKey === "gmail") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/gmail.svg" alt="" className={officialLogoClassName} />
+            </span>
+        );
+    }
+
+    if (sourceKey === "slack") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/slack.png" alt="" className={officialLogoClassName} />
+            </span>
+        );
+    }
+
+    if (sourceKey === "google_analytics") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/google-analytics.svg" alt="" className={officialLogoClassName} />
+            </span>
+        );
+    }
+
+    if (sourceKey === "linear") {
+        return (
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gray-950 shadow-sm">
+                <svg viewBox="0 0 36 36" className="h-8 w-8" aria-hidden>
+                    <path d="M8 25l17-17" stroke="white" strokeLinecap="round" strokeWidth="3" />
+                    <path d="M14 28l14-14" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.85" />
+                    <path d="M8 17l9-9" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.7" />
+                    <path d="M22 28l6-6" stroke="white" strokeLinecap="round" strokeWidth="3" opacity="0.55" />
+                </svg>
+            </span>
+        );
+    }
+
+    if (sourceKey === "stripe") {
+        return (
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#635bff] text-2xl font-black text-white shadow-sm">
+                S
+            </span>
+        );
+    }
+
+    if (sourceKey === "bank_feed") {
+        return (
+            <span className={badgeClassName}>
+                <BanknotesIcon className="h-7 w-7 text-[var(--vr-color-primary)]" />
+            </span>
+        );
+    }
+
+    if (sourceKey === "notion") {
+        return (
+            <span className={badgeClassName}>
+                <img src="/vibe-raising/logos/notion.png" alt="" className="h-8 w-8 rounded-lg object-contain" />
+            </span>
+        );
+    }
+
+    if (sourceKey === "google_drive") {
+        return (
+            <span className={badgeClassName}>
+                <svg viewBox="0 0 36 32" className="h-8 w-8" aria-hidden>
+                    <path d="M13 2h10l11 19H24z" fill="#34a853" />
+                    <path d="M13 2L2 21l5 9 11-19z" fill="#fbbc05" />
+                    <path d="M7 30h22l5-9H12z" fill="#4285f4" />
+                    <path d="M13 2l5 9h10l-5-9z" fill="#188038" opacity="0.55" />
+                </svg>
+            </span>
+        );
+    }
+
+    return (
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#13b5ea] text-xs font-black uppercase text-white shadow-sm">
+            xero
+        </span>
+    );
 }
 
 function getMonthlyUpdateKey(month: string, year: number | string) {
@@ -331,6 +453,25 @@ function buildMonthlyUpdateSavePayload(formData: FormData) {
     };
 }
 
+function extractVibeRaisingActionError(error: unknown, fallback: string) {
+    const responseData = (error as any)?.response?.data;
+    if (typeof responseData?.detail === "string" && responseData.detail.trim()) {
+        return responseData.detail.trim();
+    }
+
+    if (responseData && typeof responseData === "object") {
+        const firstValue = Object.values(responseData)[0];
+        if (Array.isArray(firstValue) && firstValue.length > 0) {
+            return String(firstValue[0]);
+        }
+        if (typeof firstValue === "string" && firstValue.trim()) {
+            return firstValue.trim();
+        }
+    }
+
+    return fallback;
+}
+
 export async function action({ request, context }: Route.ActionArgs) {
     const env = getEnv(context);
     const { appUser } = await requireVibeRaisingFounder(env, request);
@@ -338,6 +479,60 @@ export async function action({ request, context }: Route.ActionArgs) {
     const intent = formData.get("intent");
     const updates = Object.fromEntries(formData);
     const savePayload = buildMonthlyUpdateSavePayload(formData);
+
+    if (intent === "publish") {
+        const draftId = String(formData.get("draftId") || "").trim();
+        try {
+            if (/^\d+$/.test(draftId)) {
+                await publishVibeRaisingMonthlyUpdate(env, request, draftId);
+                return redirect("/founder-tools/updates");
+            }
+
+            const drafts = await getVibeRaisingDrafts(env, request);
+            const formMonth = savePayload.month;
+            const formYear = savePayload.year;
+            const matchingDraft = drafts.find((draft) => (
+                (!formMonth || draft.monthName === formMonth || draft.month === `${formMonth} ${formYear}`) &&
+                (!Number.isFinite(formYear) || !formYear || draft.year === formYear) &&
+                draft.status === "ready" &&
+                draft.visibility !== "published" &&
+                /^\d+$/.test(draft.id)
+            ));
+            const fallbackDraft = matchingDraft ?? drafts.find((draft) => (
+                draft.status === "ready" &&
+                draft.visibility !== "published" &&
+                /^\d+$/.test(draft.id)
+            ));
+
+            if (fallbackDraft) {
+                await publishVibeRaisingMonthlyUpdate(env, request, fallbackDraft.id);
+                return redirect("/founder-tools/updates");
+            }
+
+            const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
+                ...savePayload,
+                saveMode: "ready",
+            });
+            if (savedUpdate?.id) {
+                await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
+                return redirect("/founder-tools/updates");
+            }
+        } catch (error) {
+            console.warn("Unable to publish Vibe Raising monthly update.", (error as any)?.response?.data ?? error);
+            return {
+                step: "publish-error",
+                data: updates,
+                error: extractVibeRaisingActionError(error, "We could not publish this update yet. Please check the draft content and try again."),
+            };
+        }
+
+        return {
+            step: "publish-error",
+            data: updates,
+            error: "We could not find a saved draft to publish. Review the draft once, then publish again.",
+        };
+    }
+
     const founderProfiles = parseFounderProfilesFormValue(formData.get("founderProfiles"));
     const activeCompany =
         appUser.companies.find((company) => company.id === appUser.activeCompanyId) ??
@@ -371,7 +566,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     }
 
     if (intent === "review") {
-        await saveVibeRaisingMonthlyUpdate(env, request, {
+        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
             ...savePayload,
             saveMode: "ready",
         });
@@ -379,7 +574,11 @@ export async function action({ request, context }: Route.ActionArgs) {
         // Mock AI analysis
         return {
             step: "feedback",
-            data: updates,
+            data: {
+                ...updates,
+                draftId: savedUpdate?.id ?? updates.draftId,
+            },
+            update: savedUpdate,
             feedback: {
                 grade: "A+",
                 strengths: [
@@ -406,18 +605,6 @@ export async function action({ request, context }: Route.ActionArgs) {
             step: "draft-saved",
             update,
         };
-    }
-
-    if (intent === "publish") {
-        const savedUpdate = await saveVibeRaisingMonthlyUpdate(env, request, {
-            ...savePayload,
-            saveMode: "ready",
-        });
-        if (savedUpdate?.id) {
-            await publishVibeRaisingMonthlyUpdate(env, request, savedUpdate.id);
-        }
-
-        return redirect("/founder-tools/updates");
     }
 
     return null;
@@ -466,16 +653,7 @@ function hasDisplayableMetricValue(value: unknown) {
     if (!rawValue) return false;
 
     const lowerValue = rawValue.toLowerCase();
-    if (["0", "0.0", "0.00", "null", "undefined", "-", "—", "�"].includes(lowerValue)) return false;
-
-    const numericText = rawValue
-        .replace(/[$,%\s,]/g, "")
-        .replace(/[a-z]+/gi, "");
-    if (numericText && /^-?\d+(\.\d+)?$/.test(numericText)) {
-        return Number(numericText) !== 0;
-    }
-
-    return true;
+    return !["null", "undefined", "-", "—"].includes(lowerValue);
 }
 
 function getMetricOptionsForMetrics(metrics?: Record<string, string>) {
@@ -561,6 +739,14 @@ function MonthYearTabs({
         : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
     const useCompactCreateTimeline = Boolean(monthChoices?.length);
     const showYearInMonthLabel = new Set(visibleMonthChoices.map((option) => option.year)).size > 1;
+    const mobileMonthOptions = monthChoices?.length
+        ? visibleMonthChoices.filter((option, index, options) => (
+            options.findIndex((candidate) => candidate.month === option.month) === index
+        ))
+        : VIBE_RAISING_MONTH_OPTIONS.map((option) => ({ month: option.name, year }));
+    const mobileYearOptions = monthChoices?.length
+        ? Array.from(new Set(visibleMonthChoices.map((option) => option.year))).sort((a, b) => b - a)
+        : yearOptions;
 
     useEffect(() => {
         if (!isYearMenuOpen) return;
@@ -589,8 +775,86 @@ function MonthYearTabs({
 
     return (
         <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-stretch">
-            <div className="min-w-0 flex-1">
-                {submitDateFields && <input type="hidden" name="month" value={month} />}
+            {submitDateFields && (
+                <>
+                    <input type="hidden" name="month" value={month} />
+                    <input type="hidden" name="year" value={year} />
+                </>
+            )}
+
+            <div className="grid grid-cols-[minmax(0,1fr)_104px] gap-2 sm:hidden">
+                <div>
+                    <label className="sr-only" htmlFor="vibe-raising-mobile-month-select">
+                        Select update month
+                    </label>
+                    <select
+                        id="vibe-raising-mobile-month-select"
+                        value={month}
+                        disabled={!isDateEditable}
+                        onChange={(event) => {
+                            if (!isDateEditable) return;
+                            const nextMonth = event.target.value;
+                            const matchingChoice =
+                                visibleMonthChoices.find((option) => option.month === nextMonth && option.year === year) ??
+                                visibleMonthChoices.find((option) => option.month === nextMonth);
+                            onMonthChange(nextMonth);
+                            if (matchingChoice) {
+                                onYearChange(matchingChoice.year);
+                            }
+                            onPeriodChange?.("current");
+                            setIsYearMenuOpen(false);
+                        }}
+                        className={clsx(
+                            "h-12 w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-4 text-sm font-black text-gray-950 shadow-sm outline-none ring-1 ring-white/60 transition focus:border-[var(--vr-color-primary)] focus:ring-4 focus:ring-[rgba(0,255,215,0.18)]",
+                            isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
+                        )}
+                    >
+                        {mobileMonthOptions.map((option) => (
+                            <option key={option.month} value={option.month}>
+                                {option.month}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                <div>
+                    <label className="sr-only" htmlFor="vibe-raising-mobile-year-select">
+                        Select update year
+                    </label>
+                    <select
+                        id="vibe-raising-mobile-year-select"
+                        value={year}
+                        disabled={!isDateEditable}
+                        onChange={(event) => {
+                            if (!isDateEditable) return;
+                            const nextYear = Number(event.target.value);
+                            if (!Number.isFinite(nextYear)) return;
+                            const matchingChoice = visibleMonthChoices.find(
+                                (option) => option.year === nextYear && option.month === month,
+                            );
+                            const fallbackChoice = visibleMonthChoices.find((option) => option.year === nextYear);
+                            onYearChange(nextYear);
+                            if (!matchingChoice && fallbackChoice) {
+                                onMonthChange(fallbackChoice.month);
+                            }
+                            onPeriodChange?.("current");
+                            setIsYearMenuOpen(false);
+                        }}
+                        className={clsx(
+                            "h-12 w-full rounded-2xl border border-gray-950 bg-gray-950 px-3 text-center text-sm font-black tracking-[0.08em] text-white shadow-lg shadow-black/15 outline-none ring-1 ring-white/10 transition focus:ring-4 focus:ring-[rgba(11,11,11,0.16)]",
+                            isDateEditable ? "cursor-pointer" : "cursor-default opacity-70",
+                        )}
+                    >
+                        {mobileYearOptions.map((optionYear) => (
+                            <option key={optionYear} value={optionYear}>
+                                {optionYear}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+
+            <div className="hidden min-w-0 flex-1 sm:block">
                 <div className="overflow-hidden rounded-t-2xl rounded-b-lg border border-[var(--vr-color-border)] bg-white shadow-xl ring-1 ring-white/40">
                     <div
                         role="listbox"
@@ -637,10 +901,9 @@ function MonthYearTabs({
                 </div>
             </div>
 
-            <div ref={yearMenuRef} className="relative sm:min-w-[108px]">
+            <div ref={yearMenuRef} className="relative hidden sm:block sm:min-w-[108px]">
                 {useCompactCreateTimeline ? (
                     <div className="relative z-10 flex h-full items-center justify-center overflow-hidden rounded-t-2xl rounded-b-lg bg-gray-950 px-4 py-3 text-sm font-black tracking-[0.12em] text-white shadow-lg shadow-black/20 ring-1 ring-white/10">
-                        {submitDateFields && <input type="hidden" name="year" value={year} />}
                         <span>{year}</span>
                     </div>
                 ) : (
@@ -651,7 +914,6 @@ function MonthYearTabs({
                                 isYearMenuOpen ? "rounded-t-2xl rounded-b-none" : "rounded-t-2xl rounded-b-lg",
                             )}
                         >
-                            {submitDateFields && <input type="hidden" name="year" value={year} />}
                             <button
                                 type="button"
                                 disabled={!isDateEditable}
@@ -2184,15 +2446,17 @@ export default function CreateUpdate() {
         isEdit,
         backendBaseUrl,
         resumeEmailDrafting,
-        selectedInputSources,
+        selectedInputSources: initialSelectedInputSources,
         existingMonthlyUpdates,
     } = useLoaderData<typeof loader>();
     const actionData = useActionData<typeof action>() as any;
     const saveDraftFetcher = useFetcher<typeof action>();
+    const submit = useSubmit();
     const navigate = useNavigate();
     const location = useLocation();
     const navigation = useNavigation();
     const isSubmitting = navigation.state === "submitting";
+    const initialSelectedInputSourcesKey = initialSelectedInputSources.join(",");
     const goToConnectDataStep = useCallback(() => {
         const returnPath = `${location.pathname}${location.search || ""}`;
         navigate(`/founder-tools/data-sources?next=${encodeURIComponent(returnPath)}`);
@@ -2207,7 +2471,7 @@ export default function CreateUpdate() {
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     }, [goToConnectDataStep]);
-    const defaultData = actionData?.step === "feedback" ? (actionData.data as any) : (existingData || {});
+    const defaultData = actionData?.step === "feedback" || actionData?.step === "publish-error" ? (actionData.data as any) : (existingData || {});
     const [dismissedFeedback, setDismissedFeedback] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [pitchDeckPreviewUrl, setPitchDeckPreviewUrl] = useState<string | null>(defaultData?.pitchDeckUrl || null);
@@ -2250,7 +2514,7 @@ export default function CreateUpdate() {
 
     // Reset dismissed state when new feedback arrives
     useEffect(() => {
-        if (actionData?.step === "feedback") setDismissedFeedback(false);
+        if (actionData?.step === "feedback" || actionData?.step === "publish-error") setDismissedFeedback(false);
     }, [actionData]);
 
     useEffect(() => {
@@ -2317,6 +2581,19 @@ export default function CreateUpdate() {
         });
         return initial;
     });
+    const [compactSources, setCompactSources] = useState<VibeRaisingInputSourceSummary[]>([]);
+    const [compactSourcesLoading, setCompactSourcesLoading] = useState(false);
+    const [compactSourcesError, setCompactSourcesError] = useState<string | null>(null);
+    const [selectedDraftInputSources, setSelectedDraftInputSources] = useState<Set<VibeRaisingInputSourceKey>>(
+        () => new Set(initialSelectedInputSources),
+    );
+    useEffect(() => {
+        setSelectedDraftInputSources(new Set(initialSelectedInputSources));
+    }, [initialSelectedInputSourcesKey]);
+    const selectedInputSources = useMemo(
+        () => Array.from(selectedDraftInputSources).filter((key) => VALID_INPUT_SOURCE_KEYS.has(key)),
+        [selectedDraftInputSources],
+    );
     const hasSelectedInputSources = selectedInputSources.length > 0;
     const isManualOnlyDraftFlow = !hasSelectedInputSources;
     const selectedMetricOptions = Array.from(selectedMetrics)
@@ -2324,9 +2601,7 @@ export default function CreateUpdate() {
         .filter((metric): metric is MetricOption => Boolean(metric));
     const draftMetricOptions = selectedMetricOptions.length > 0
         ? selectedMetricOptions
-        : isManualOnlyDraftFlow
-            ? METRIC_OPTIONS
-            : metricOptionsFromKeys(["revenue", "activeUsers", "mrr", "burnRate"]);
+        : METRIC_OPTIONS;
     const mobileDraftMetricBatchSize = 6;
     const [mobileVisibleDraftMetricCount, setMobileVisibleDraftMetricCount] = useState(mobileDraftMetricBatchSize);
     const [isMobileTourViewport, setIsMobileTourViewport] = useState(false);
@@ -2434,6 +2709,67 @@ export default function CreateUpdate() {
     const shouldDimMetricsTemplate = false;
     const [awakeMetricCards, setAwakeMetricCards] = useState<Set<string>>(new Set());
     const [showDraftStickyOnMobile, setShowDraftStickyOnMobile] = useState(false);
+    const compactOptionalSources = useMemo(() => {
+        const byKey = new Map(compactSources.map((source) => [source.key, source]));
+        return COMPACT_OPTIONAL_SOURCE_KEYS
+            .map((key) => byKey.get(key))
+            .filter((source): source is VibeRaisingInputSourceSummary => Boolean(source));
+    }, [compactSources]);
+    const selectedConnectedSourceLabels = useMemo(
+        () => compactOptionalSources
+            .filter((source) => selectedDraftInputSources.has(source.key))
+            .map((source) => source.label),
+        [compactOptionalSources, selectedDraftInputSources],
+    );
+    const draftReturnPath = useMemo(() => {
+        const params = new URLSearchParams(location.search);
+        const selected = Array.from(selectedDraftInputSources);
+        if (selected.length > 0) {
+            params.set("inputs", selected.join(","));
+        } else {
+            params.delete("inputs");
+        }
+        const query = params.toString();
+        return `${location.pathname}${query ? `?${query}` : ""}`;
+    }, [location.pathname, location.search, selectedDraftInputSources]);
+    const manageConnectionsHref = `/founder-tools/data-sources?next=${encodeURIComponent(draftReturnPath)}`;
+
+    useEffect(() => {
+        let cancelled = false;
+        setCompactSourcesLoading(true);
+        setCompactSourcesError(null);
+        getVibeRaisingInputSourcesStatus(backendBaseUrl)
+            .then((response) => {
+                if (!cancelled) {
+                    setCompactSources(response.sources);
+                }
+            })
+            .catch((error) => {
+                if (!cancelled) {
+                    setCompactSourcesError(error instanceof Error ? error.message : "We couldn't load source status.");
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setCompactSourcesLoading(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [backendBaseUrl]);
+
+    const toggleDraftInputSource = useCallback((source: VibeRaisingInputSourceSummary) => {
+        if (!isConnectedInputSource(source)) return;
+        setSelectedDraftInputSources((previous) => {
+            const next = new Set(previous);
+            if (next.has(source.key)) {
+                next.delete(source.key);
+            } else {
+                next.add(source.key);
+            }
+            return next;
+        });
+    }, []);
 
     const wakeMetricCard = useCallback((metricKey: string) => {
         if (shouldDimMetricsTemplate) {
@@ -2894,8 +3230,8 @@ export default function CreateUpdate() {
         () => [
             {
                 key: "stepper",
-                title: "Keep your materials together",
-                body: "Bring in your raw materials first. We keep the selected month, inputs, and draft fields together through review and publish.",
+                title: "Draft first",
+                body: "Pick a month and start from the template. Connected data is optional if you want source-assisted drafting.",
                 targetRef: draftStepperRef,
             },
             {
@@ -3039,6 +3375,10 @@ export default function CreateUpdate() {
     }, [backendBaseUrl, emailDraftForceRegenerateKey, manualDocumentIds, manualSummary, selectedInputSources, targetMonthIso]);
 
     const startDraftFromSelectedInputs = useCallback(async (options?: { forceRegenerate?: boolean }) => {
+        if (selectedInputSources.length === 0) {
+            setEmailDraftUiError("Choose an optional connected source before generating a source-assisted draft.");
+            return;
+        }
         if (!canGenerateDraftFromEmail) {
             navigate("/founder-tools/companies");
             return;
@@ -3103,20 +3443,16 @@ export default function CreateUpdate() {
         setMonthConfirmed(true);
         setSelectedDraftStage("reporting");
         setMetricsConfirmed(true);
-        if (isManualOnlyDraftFlow) {
-            setShowEmailWizard(false);
-            setEmailDraftStatus(null);
-            setEmailDraftUiError(null);
-            setEmailDraftPollingDegraded(false);
-            setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
-            return;
-        }
-        requestDraftFromSelectedInputs();
-    }, [isManualOnlyDraftFlow, isSelectedMonthInFuture, requestDraftFromSelectedInputs]);
+        setShowEmailWizard(false);
+        setEmailDraftStatus(null);
+        setEmailDraftUiError(null);
+        setEmailDraftPollingDegraded(false);
+        setEmailDraftPollDelayMs(EMAIL_DRAFT_POLL_INTERVAL_MS);
+    }, [isSelectedMonthInFuture]);
 
     const handleGenerateDraftFromEmailClick = useCallback(() => {
-        handleGenerateSelectedMonthUpdate();
-    }, [handleGenerateSelectedMonthUpdate]);
+        requestDraftFromSelectedInputs();
+    }, [requestDraftFromSelectedInputs]);
     const handleGenerateDraftCardTouchStart = useCallback((event: React.TouchEvent<HTMLButtonElement>) => {
         const touch = event.touches[0];
         if (!touch) return;
@@ -3133,9 +3469,9 @@ export default function CreateUpdate() {
         const deltaX = touch.clientX - start.x;
         const deltaY = Math.abs(touch.clientY - start.y);
         if (deltaX >= 72 && deltaY <= 40) {
-            void handleGenerateDraftFromEmailClick();
+            handleGenerateSelectedMonthUpdate();
         }
-    }, [emailDraftActionBusy, handleGenerateDraftFromEmailClick, isMobileTourViewport, isSelectedMonthInFuture]);
+    }, [emailDraftActionBusy, handleGenerateSelectedMonthUpdate, isMobileTourViewport, isSelectedMonthInFuture]);
 
     const handleConfirmRegenerateDraft = useCallback(() => {
         const request = pendingDraftRequest ?? {};
@@ -3385,13 +3721,15 @@ export default function CreateUpdate() {
             ? emailDraftUiError
             : null;
     const selectedMonthGenerationVerb = existingUpdateForSelectedMonth ? "Regenerate" : "Generate";
-    const emailDraftButtonTitle = emailDraftActionBusy
+    const hasNoSourceForAssistedDraft = selectedInputSources.length === 0;
+    const emailDraftButtonTitle = hasNoSourceForAssistedDraft
+        ? "Connect one source to unlock AI drafting"
+        : emailDraftActionBusy
         ? `Generating ${selectedMonthLabel} update`
-        : `${selectedMonthGenerationVerb} ${selectedMonthLabel} update`;
-    const emailDraftButtonAriaLabel = isMobileTourViewport
-        ? `${emailDraftButtonTitle}. Swipe right on mobile to ${selectedMonthGenerationVerb.toLowerCase()} this update.`
-        : emailDraftButtonTitle;
-    const emailDraftButtonDescription = emailDraftActionBusy
+        : `Draft from ${selectedInputSourceDescription}`;
+    const emailDraftButtonDescription = hasNoSourceForAssistedDraft
+        ? "MLAI needs at least one approved source to generate a draft. You can also skip this and write manually."
+        : emailDraftActionBusy
         ? "Contacting the MLAI backend and preparing the selected sources for drafting."
         : isSelectedMonthInFuture
             ? "Choose the current month or a previous month. Future monthly updates can be drafted once that month starts."
@@ -3545,10 +3883,9 @@ export default function CreateUpdate() {
             return {
                 statusTitle: "Select month",
                 statusDetail: selectedMonthLabel,
-                primaryLabel: `${selectedMonthGenerationVerb} update`,
+                primaryLabel: "Start draft",
                 onPrimary: handleGenerateSelectedMonthUpdate,
                 primaryDisabled: isSelectedMonthInFuture || emailDraftActionBusy,
-                onBack: goToConnectDataStep,
             };
         }
 
@@ -4002,7 +4339,7 @@ export default function CreateUpdate() {
         <section
             ref={materialsSectionRef}
             className={clsx(
-                "scroll-mt-28 rounded-[2rem] transition-all duration-300",
+                "scroll-mt-28 rounded-[2rem] pt-4 transition-all duration-300 sm:pt-6",
                 highlightMaterialsSection && "ring-4 ring-[rgba(242,114,63,0.28)] ring-offset-4 ring-offset-[var(--vr-palette-paper)]",
             )}
         >
@@ -4220,6 +4557,128 @@ export default function CreateUpdate() {
         </section>
     );
 
+    const optionalDataSourcesSection = !isEdit ? (
+        <section className="rounded-[2rem] border border-[var(--vr-color-border)] bg-white p-5 shadow-sm sm:p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className="min-w-0">
+                    <p className="text-xs font-black uppercase tracking-[0.18em] text-[var(--vr-color-primary)]">
+                        Optional step 2
+                    </p>
+                    <h2 className="mt-2 text-xl font-black text-gray-950">Connect data for AI drafting</h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+                        The template below works without connected data. Select a connected source only if you want MLAI to generate a source-assisted first draft.
+                    </p>
+                </div>
+                <Link
+                    to={manageConnectionsHref}
+                    className="inline-flex items-center justify-center rounded-xl border border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] px-4 py-3 text-sm font-extrabold text-[var(--vr-color-text)] transition hover:border-[var(--vr-color-primary)] hover:text-[var(--vr-color-primary)]"
+                >
+                    Manage connections
+                </Link>
+            </div>
+
+            {compactSourcesError ? (
+                <p className="mt-4 rounded-xl border border-[rgba(255,200,1,0.42)] bg-[rgba(255,200,1,0.14)] px-4 py-3 text-sm font-semibold text-[var(--vr-color-text)]">
+                    {compactSourcesError}
+                </p>
+            ) : null}
+
+            <div className="mt-5 flex flex-wrap gap-2">
+                {selectedConnectedSourceLabels.length > 0 ? (
+                    selectedConnectedSourceLabels.map((label) => (
+                        <span
+                            key={label}
+                            className="rounded-full bg-[rgba(0,255,215,0.12)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]"
+                        >
+                            Using {label}
+                        </span>
+                    ))
+                ) : (
+                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
+                        Manual draft only
+                    </span>
+                )}
+                {compactSourcesLoading ? (
+                    <span className="rounded-full bg-gray-50 px-3 py-1 text-xs font-bold text-slate-500 ring-1 ring-gray-100">
+                        Checking sources...
+                    </span>
+                ) : null}
+            </div>
+
+            <div className="mt-5">
+                <div className="grid grid-cols-3 gap-3 lg:grid-cols-8">
+                {compactOptionalSources.map((source) => {
+                    const connected = isConnectedInputSource(source);
+                    const selected = selectedDraftInputSources.has(source.key);
+                    return (
+                        <button
+                            key={source.key}
+                            type="button"
+                            disabled={!connected}
+                            onClick={() => toggleDraftInputSource(source)}
+                            className={clsx(
+                                "group relative flex min-w-0 flex-col items-center gap-2 rounded-2xl border px-2 py-3 text-center transition sm:px-3",
+                                source.key !== "google_analytics" && source.key !== "stripe" && "hidden lg:flex",
+                                connected
+                                    ? selected
+                                        ? "border-[var(--vr-color-primary)] bg-[rgba(0,255,215,0.12)] ring-1 ring-[rgba(0,128,128,0.16)]"
+                                        : "border-gray-200 bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)]"
+                                    : "cursor-not-allowed border-gray-100 bg-gray-50 opacity-60",
+                            )}
+                            title={`${source.label}: ${compactSourceStatusLabel(source)}`}
+                            aria-pressed={connected ? selected : undefined}
+                            aria-label={`${selected ? "Remove" : "Use"} ${source.label} for source-assisted drafting`}
+                        >
+                            <DraftSourceLogo sourceKey={source.key} />
+                            <span
+                                className={clsx(
+                                    "absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-full border bg-white text-[10px] font-black shadow-sm",
+                                    selected
+                                        ? "border-[var(--vr-color-primary)] text-[var(--vr-color-primary)]"
+                                        : connected
+                                            ? "border-emerald-200 text-emerald-500"
+                                            : "border-gray-200 text-gray-300",
+                                )}
+                                aria-hidden
+                            >
+                                {selected ? (
+                                    <CheckCircleIcon className="h-4 w-4" />
+                                ) : connected ? (
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                                ) : null}
+                            </span>
+                            <span className="w-full truncate text-xs font-black text-gray-950">{source.label}</span>
+                            <span
+                                className={clsx(
+                                    "w-full truncate text-[11px] font-bold",
+                                    connected ? "text-[var(--vr-color-primary)]" : "text-slate-400",
+                                )}
+                            >
+                                {compactSourceStatusLabel(source)}
+                            </span>
+                        </button>
+                    );
+                })}
+                    <Link
+                        to={manageConnectionsHref}
+                        className="group relative flex min-w-0 flex-col items-center gap-2 rounded-2xl border border-gray-200 bg-white px-2 py-3 text-center transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] sm:px-3 lg:hidden"
+                        aria-label="Open all source connections"
+                    >
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-gray-200">
+                            <span className="flex items-center gap-1">
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                                <span className="h-1.5 w-1.5 rounded-full bg-slate-500" />
+                            </span>
+                        </span>
+                        <span className="w-full truncate text-xs font-black text-gray-950">More</span>
+                        <span className="w-full truncate text-[11px] font-bold text-slate-400">Connections</span>
+                    </Link>
+                </div>
+            </div>
+        </section>
+    ) : null;
+
     const handlePersistDraft = useCallback(() => {
         const draftForm = document.getElementById(DRAFT_REVIEW_FORM_ID);
         if (!(draftForm instanceof HTMLFormElement)) return;
@@ -4229,9 +4688,11 @@ export default function CreateUpdate() {
     }, [saveDraftFetcher]);
 
     // 1. Feedback View — preview-dominant with rating sidebar
-    if (actionData?.step === "feedback" && !dismissedFeedback) {
+    if ((actionData?.step === "feedback" || actionData?.step === "publish-error") && !dismissedFeedback) {
         const { feedback, data } = actionData;
+        const publishError = actionData.step === "publish-error" ? String((actionData as any).error || "") : "";
         const reviewData = data as any;
+        const reviewDraftId = String(reviewData?.draftId || actionData?.update?.id || "").trim();
         const reviewMonth = String(reviewData?.month || selectedMonth);
         const reviewYear = Number(reviewData?.year || selectedYear);
         const reviewSummary = String(reviewData?.summary || "").trim();
@@ -4326,8 +4787,70 @@ export default function CreateUpdate() {
             }
         };
 
+        const handlePublishReviewedUpdate = () => {
+            const publishForm = document.getElementById(PUBLISH_REVIEW_FORM_ID);
+            if (publishForm instanceof HTMLFormElement) {
+                submit(publishForm, { method: "post" });
+                return;
+            }
+
+            setShowConfirmPopup(true);
+        };
+
         return (
             <div className="mx-auto max-w-6xl space-y-10 pb-32">
+                <Form id={PUBLISH_REVIEW_FORM_ID} method="POST" className="hidden">
+                    <input type="hidden" name="intent" value="publish" />
+                    {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
+                    <input type="hidden" name="month" value={reviewMonth} />
+                    <input type="hidden" name="year" value={reviewYear} />
+                </Form>
+
+                {showConfirmPopup ? (
+                    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-gray-900/60 p-4 backdrop-blur-sm">
+                        <div className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl">
+                            <MonthlyUpdateStepper
+                                activeStep="publish"
+                                disableMotion
+                                enabledSteps={["connect", "draft", "review", "publish"]}
+                                onStepClick={handleReviewStepperClick}
+                                expandOnHover
+                                frameless
+                                className="mb-6 text-left"
+                            />
+                            <h2 className="mb-2 text-2xl font-black tracking-tight text-gray-900">Ready to publish?</h2>
+                            <p className="mb-6 text-sm leading-relaxed text-gray-600">
+                                Your update is about to go live on Vibe Raising for <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
+                            </p>
+                            <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
+                                You do not need to publish this yet. Save it locally first if you want to come back and keep refining the earlier steps.
+                            </p>
+                            <div className="space-y-3">
+                                <button
+                                    type="button"
+                                    onClick={handlePublishReviewedUpdate}
+                                    disabled
+                                    aria-disabled="true"
+                                    className="w-full cursor-not-allowed rounded-xl bg-gray-200 px-5 py-3 text-sm font-bold text-gray-500 shadow-sm"
+                                >
+                                    Publish update coming soon
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        handlePersistDraft();
+                                        setShowConfirmPopup(false);
+                                    }}
+                                    disabled={saveDraftFetcher.state !== "idle"}
+                                    className="w-full rounded-xl bg-[var(--vr-color-primary)] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-[rgba(0,128,128,0.18)] transition-all hover:bg-[var(--vr-palette-black)] disabled:cursor-not-allowed disabled:opacity-55 active:scale-95"
+                                >
+                                    {saveDraftFetcher.state !== "idle" ? "Saving..." : "Save it locally"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : null}
+
                 <MonthlyUpdateStepper
                     activeStep="review"
                     disableMotion
@@ -4829,7 +5352,7 @@ export default function CreateUpdate() {
                     ) : null}
 
                     {/* Pre-Publish Confirmation Popup */}
-                    {showConfirmPopup && (
+                    {false && showConfirmPopup && (
                             <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-sm p-4">
                                 <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
                                     <div className="mb-6 text-left">
@@ -4839,10 +5362,10 @@ export default function CreateUpdate() {
                                     </div>
                                     <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Ready to send? 🚀</h2>
                                     <p className="text-gray-600 mb-6 text-sm leading-relaxed">
-                                        Your update is about to go live on Vibe Raising. We will send it directly to <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
+                                        Your update is about to go live on Vibe Raising for <strong className="font-bold text-gray-900">{reviewAudienceCount} investors</strong> matching your criteria: {reviewAudienceCriteria.join(", ")}.
                                     </p>
                                     <p className="mb-6 rounded-xl border border-[rgba(0,255,215,0.24)] bg-[rgba(0,255,215,0.10)] px-4 py-3 text-left text-sm leading-relaxed text-[var(--vr-color-text)]">
-                                        You do not need to send this yet. Save it locally first if you want to come back and keep refining the earlier steps.
+                                        You do not need to publish this yet. Save it locally first if you want to come back and keep refining the earlier steps.
                                     </p>
 
                                     <Form 
@@ -4850,6 +5373,7 @@ export default function CreateUpdate() {
                                         className="space-y-3"
                                     >
                                         <input type="hidden" name="intent" value="publish" />
+                                        {reviewDraftId ? <input type="hidden" name="draftId" value={reviewDraftId} /> : null}
                                         <input type="hidden" name="summary" value={reviewSummary} />
                                         <input type="hidden" name="sourceUrl" value={reviewSourceUrl} />
                                         <input type="hidden" name="pitchDeckUrl" value={reviewPitchDeckUrl} />
@@ -4988,10 +5512,16 @@ export default function CreateUpdate() {
                     mobileSecondaryLabel={draftSaved ? "Draft saved" : "Save draft"}
                     onSecondary={handlePersistDraft}
                     secondaryDisabled={saveDraftFetcher.state !== "idle"}
-                    primaryLabel="Publish and Send"
+                    primaryLabel="Publish update"
                     mobilePrimaryLabel="Publish"
                     onPrimary={() => setShowConfirmPopup(true)}
                 />
+
+                {publishError ? (
+                    <div className="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm font-semibold text-red-800 shadow-sm">
+                        {publishError}
+                    </div>
+                ) : null}
             </div>
         );
     }
@@ -5004,7 +5534,7 @@ export default function CreateUpdate() {
                     <MonthlyUpdateStepper
                         activeStep="draft"
                         disableMotion
-                        enabledSteps={isEdit ? ["draft"] : ["connect", "draft"]}
+                        enabledSteps={isEdit ? ["draft"] : ["draft", "connect"]}
                         onStepClick={handleDraftStepperClick}
                         expandOnHover
                         frameless
@@ -5020,7 +5550,7 @@ export default function CreateUpdate() {
                         <div className="min-w-0">
                             <h2 className="text-lg font-black text-gray-950">How it works</h2>
                             <p className="mt-1 text-sm leading-6 text-slate-600">
-                                Bring in your raw materials first. We keep the selected month, inputs, and draft fields together through review and publish.
+                                Pick a month, start with the draft template, then connect data only if you want source-assisted drafting.
                                 <br />
                                 Early stage? No worries. Record a selfie video or short presentation to share your idea with investors.
                             </p>
@@ -5032,17 +5562,29 @@ export default function CreateUpdate() {
             <section>
                 <div className="space-y-4">
                     {monthConfirmed ? (
-                        <div
-                            className="flex min-w-0 items-center gap-2 px-1 py-1.5"
+                        <button
+                            type="button"
+                            onClick={returnToMonthSelection}
+                            className="group w-full rounded-2xl border border-[var(--vr-color-border)] bg-white px-5 py-3 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.08)] focus:outline-none focus:ring-4 focus:ring-[rgba(0,255,215,0.18)] sm:px-6 sm:py-4"
                             aria-label={`Selected update month: ${selectedMonthLabel}`}
                         >
-                            <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)]" aria-hidden="true" />
-                            <p className="min-w-0 truncate text-sm font-black text-gray-950">
-                                <span className="font-semibold text-slate-500">Update month</span>
-                                <span className="mx-1.5 text-slate-300" aria-hidden="true">/</span>
-                                {selectedMonthLabel}
-                            </p>
-                        </div>
+                            <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                                <div className="flex min-w-0 items-center gap-3">
+                                    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-[var(--vr-palette-mint)] ring-4 ring-[rgba(0,255,215,0.14)]" />
+                                    <div className="min-w-0">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.14em] text-slate-500">
+                                            Selected month
+                                        </p>
+                                        <p className="truncate text-base font-black text-gray-950">
+                                            {selectedMonthLabel}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="flex-shrink-0 rounded-full border border-[rgba(0,128,128,0.18)] bg-[rgba(0,255,215,0.10)] px-3 py-1 text-xs font-black text-[var(--vr-color-primary)] transition group-hover:bg-[var(--vr-color-primary)] group-hover:text-white">
+                                    Edit
+                                </span>
+                            </div>
+                        </button>
                     ) : (
                         <div ref={monthSelectorRef} className="space-y-3">
                             <p className="px-1 text-sm font-black text-gray-950">Select month</p>
@@ -5075,7 +5617,7 @@ export default function CreateUpdate() {
                                         type="button"
                                         disabled={isSelectedMonthInFuture || emailDraftActionBusy}
                                         onClick={() => {
-                                            void handleGenerateDraftFromEmailClick();
+                                            handleGenerateSelectedMonthUpdate();
                                         }}
                                         onTouchStart={handleGenerateDraftCardTouchStart}
                                         onTouchEnd={handleGenerateDraftCardTouchEnd}
@@ -5085,36 +5627,41 @@ export default function CreateUpdate() {
                                                 ? "cursor-not-allowed border-[var(--vr-color-border)] bg-[var(--vr-palette-paper)] text-slate-400"
                                                 : "cursor-pointer border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white hover:-translate-y-0.5 hover:border-[var(--vr-palette-black)] hover:bg-[var(--vr-palette-black)] focus:ring-[rgba(0,128,128,0.2)]",
                                         )}
-                                        aria-label={emailDraftButtonAriaLabel}
+                                        aria-label={`Start ${selectedMonthLabel} draft`}
                                     >
                                         <div>
-                                            <p
-                                                className={clsx(
-                                                    "text-xs font-black uppercase tracking-[0.16em]",
-                                                    isSelectedMonthInFuture || emailDraftActionBusy ? "text-slate-400" : "text-white/65",
-                                                )}
-                                            >
-                                                AI drafting
+                                            <p className="text-xs font-black uppercase tracking-[0.18em] text-white/70">
+                                                Step 1
                                             </p>
-                                            <p className="mt-3 text-lg font-black leading-tight">
-                                                {selectedMonthGenerationVerb} update
+                                            <p className="mt-3 text-lg font-black">
+                                                Start draft
                                             </p>
                                         </div>
-                                        <div className="mt-5 flex items-center justify-between gap-3 text-sm font-semibold">
+                                        <span className="mt-5 flex items-center justify-between text-sm font-black">
                                             <span>{selectedMonthLabel}</span>
                                             {emailDraftActionBusy ? (
                                                 <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                             ) : (
-                                                <ArrowRightIcon className="h-4 w-4" />
+                                                <ArrowRightIcon className="h-5 w-5 transition-transform group-hover:translate-x-1" />
                                             )}
-                                        </div>
+                                        </span>
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
+                </div>
+            </section>
 
-                    {selectedDraftStage === "reporting" ? (
+            {monthConfirmed ? optionalDataSourcesSection : null}
+
+            <section
+                className={clsx(
+                    "transition-opacity",
+                    !monthConfirmed && "hidden sm:block",
+                )}
+            >
+                {selectedDraftStage === "reporting" ? (
                         <>
                             {shouldShowEmailDraftProgress ? (
                                 <EmailDraftInProgressCard
@@ -5136,6 +5683,55 @@ export default function CreateUpdate() {
                                     manualFallbackMessage={canContinueDraftManually ? "You can keep editing the update below while the backend draft connection is unavailable." : null}
                                 />
                             ) : null}
+                            {!shouldShowEmailDraftProgress ? (
+                                <button
+                                    type="button"
+                                    disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
+                                    onClick={() => {
+                                        void handleGenerateDraftFromEmailClick();
+                                    }}
+                                    className={clsx(
+                                        "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
+                                        canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
+                                            ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
+                                            : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
+                                    )}
+                                >
+                                    <div className="flex min-w-0 items-center gap-4">
+                                        <div className={clsx(
+                                            "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
+                                            hasNoSourceForAssistedDraft
+                                                ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
+                                                : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                                        )}>
+                                            {emailDraftActionBusy ? (
+                                                <ArrowPathIcon className="h-5 w-5 animate-spin" />
+                                            ) : (
+                                                <SparklesIcon className="h-5 w-5" />
+                                            )}
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-base font-bold text-gray-950">
+                                                {emailDraftButtonTitle}
+                                            </p>
+                                            <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-600">
+                                                {emailDraftButtonDescription}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={clsx(
+                                        "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
+                                        hasNoSourceForAssistedDraft
+                                            ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
+                                            : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
+                                    )}>
+                                        <ArrowRightIcon className={clsx(
+                                            "h-5 w-5",
+                                            hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
+                                        )} />
+                                    </span>
+                                </button>
+                            ) : null}
                             {hasDraftTemplate ? (
                                 <>
                                     {materialsSection}
@@ -5151,6 +5747,8 @@ export default function CreateUpdate() {
                                     <input type="hidden" name="pitchDeckFileSizeBytes" value={pitchDeckFileSizeBytes ?? ""} />
                                     <input type="hidden" name="pitchDeckOriginalFilename" value={pitchDeckOriginalFilename} />
                                     <input type="hidden" name="pitchDeckSummary" value={pitchDeckSummary} />
+                                    <input type="hidden" name="manualDocumentIds" value={manualDocumentIds.join(",")} />
+                                    <input type="hidden" name="manualSummary" value={manualSummary} />
                                     <input type="hidden" name="videoUrl" value={uploadedVideoUrl} />
                                     <input type="hidden" name="videoStoragePath" value={videoStoragePath} />
                                     <input type="hidden" name="videoContentType" value={videoContentType} />
@@ -5209,7 +5807,7 @@ export default function CreateUpdate() {
                                                     <div className="flex items-start gap-2">
                                                         <span className={clsx(
                                                             "mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full transition duration-200",
-                                                            isMetricCardAwake ? "bg-[rgba(0,255,215,0.18)]" : "bg-white",
+                                                            isMetricCardAwake ? "bg-[rgba(0,255,215,0.18)]" : "bg-white text-gray-500",
                                                         )}>
                                                             {metric.icon}
                                                         </span>
@@ -5217,7 +5815,7 @@ export default function CreateUpdate() {
                                                             <div className="group/metric-heading relative flex max-w-full flex-wrap items-center gap-1">
                                                                 <span className={clsx(
                                                                     "min-w-0 cursor-help break-words text-left text-[11px] font-black uppercase leading-tight tracking-wide transition duration-200 sm:text-xs",
-                                                                    isMetricCardAwake ? "text-gray-500" : "text-gray-400",
+                                                                    "text-gray-500",
                                                                 )}>
                                                                     {metric.label}
                                                                 </span>
@@ -5245,7 +5843,7 @@ export default function CreateUpdate() {
                                                             "mt-4 w-full min-w-0 border-b-2 bg-transparent py-1 text-base font-black outline-none transition placeholder:text-sm sm:text-lg",
                                                             isMetricCardAwake
                                                                 ? "border-[rgba(0,128,128,0.26)] text-gray-950 focus:border-[var(--vr-color-primary)]"
-                                                                : "border-gray-300 text-gray-400 focus:border-[var(--vr-color-primary)]",
+                                                                : "border-gray-200 text-gray-300 opacity-45 saturate-0 placeholder:text-gray-300 focus:border-[var(--vr-color-primary)] focus:opacity-100 focus:saturate-100",
                                                         )}
                                                     />
                                                 </label>
@@ -5329,7 +5927,6 @@ export default function CreateUpdate() {
                         </>
                     ) : null}
 
-                </div>
             </section>
 
             {isMobileTourViewport && selectedDraftStage === "reporting" && hasDraftTemplate ? (
@@ -5571,10 +6168,10 @@ export default function CreateUpdate() {
                         <div className="flex shrink-0 justify-end">
                             {!isEdit && (
                                 <Link
-                                    to="/founder-tools/data-sources"
+                                    to={manageConnectionsHref}
                                     className="inline-flex items-center justify-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-bold text-gray-600 transition hover:bg-gray-50"
                                 >
-                                    Change inputs
+                                    Manage connections
                                 </Link>
                             )}
                         </div>
@@ -5612,19 +6209,24 @@ export default function CreateUpdate() {
                         ) : (
                             <button
                                 type="button"
-                                disabled={emailDraftActionBusy || isSelectedMonthInFuture}
+                                disabled={emailDraftActionBusy || isSelectedMonthInFuture || selectedInputSources.length === 0}
                                 onClick={() => {
                                     void handleGenerateDraftFromEmailClick();
                                 }}
                                 className={clsx(
-                                    "group flex w-full items-center justify-between gap-4 rounded-2xl border border-[var(--vr-color-border)] bg-white p-5 text-left shadow-sm transition hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)] disabled:cursor-not-allowed disabled:opacity-60",
-                                    canGenerateDraftFromEmail && !isSelectedMonthInFuture
-                                        ? "cursor-pointer"
-                                        : "cursor-not-allowed",
+                                    "group flex w-full items-center justify-between gap-4 rounded-2xl border p-5 text-left shadow-sm transition disabled:cursor-not-allowed",
+                                    canGenerateDraftFromEmail && !isSelectedMonthInFuture && selectedInputSources.length > 0
+                                        ? "cursor-pointer border-[var(--vr-color-border)] bg-white hover:border-[var(--vr-color-primary)] hover:bg-[rgba(0,255,215,0.12)]"
+                                        : "cursor-not-allowed border-[rgba(0,128,128,0.32)] bg-[rgba(0,255,215,0.08)]",
                                 )}
                             >
                                 <div className="flex min-w-0 items-center gap-4">
-                                    <div className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-1 ring-[rgba(0,255,215,0.26)]">
+                                    <div className={clsx(
+                                        "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl ring-1",
+                                        hasNoSourceForAssistedDraft
+                                            ? "bg-[rgba(0,255,215,0.10)] text-[rgba(0,128,128,0.58)] ring-[rgba(0,128,128,0.14)]"
+                                            : "bg-[rgba(0,255,215,0.14)] text-[var(--vr-color-primary)] ring-[rgba(0,255,215,0.26)]",
+                                    )}>
                                         {emailDraftActionBusy ? (
                                             <ArrowPathIcon className="h-5 w-5 animate-spin" />
                                         ) : (
@@ -5640,7 +6242,17 @@ export default function CreateUpdate() {
                                         </p>
                                     </div>
                                 </div>
-                                <ArrowRightIcon className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform group-hover:translate-x-1" />
+                                <span className={clsx(
+                                    "flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border transition group-hover:translate-x-1",
+                                    hasNoSourceForAssistedDraft
+                                        ? "border-[rgba(0,128,128,0.14)] bg-[rgba(0,128,128,0.08)] text-[rgba(0,128,128,0.38)]"
+                                        : "border-[var(--vr-color-primary)] bg-[var(--vr-color-primary)] text-white shadow-sm shadow-[rgba(0,128,128,0.18)] group-hover:bg-[var(--vr-palette-black)]",
+                                )}>
+                                    <ArrowRightIcon className={clsx(
+                                        "h-5 w-5",
+                                        hasNoSourceForAssistedDraft ? "text-gray-300" : "text-current",
+                                    )} />
+                                </span>
                             </button>
                         )}
                     </div>

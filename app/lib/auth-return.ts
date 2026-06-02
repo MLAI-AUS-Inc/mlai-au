@@ -2,7 +2,8 @@ export type AuthReturnAppName =
   | "esafety"
   | "hospital"
   | "founder-tools"
-  | "vibe-raising";
+  | "vibe-raising"
+  | "watt-the-hack";
 
 const LEGACY_FOUNDER_NEXT_PATHS: Record<string, string> = {
   "/vibe-raising": "/founder-tools",
@@ -25,6 +26,7 @@ function pathWithSearchAndHash(url: URL) {
 export function getDefaultAuthNext(app: AuthReturnAppName | string | null | undefined, fallback = "/hackathons"): string {
   if (app === "hospital") return "/hospital/app";
   if (app === "esafety") return "/esafety/dashboard";
+  if (app === "watt-the-hack") return "/watt-the-hack/dashboard";
   if (isFounderToolsApp(app)) return "/founder-tools";
   return fallback;
 }

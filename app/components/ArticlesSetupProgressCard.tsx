@@ -13,9 +13,32 @@ interface ArticlesSetupProgressCardProps {
 }
 
 const COMPLETE_STEP_STATUSES = new Set(["completed", "skipped"]);
-const FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "denied", "cancelled"]);
+const FAILED_STATUSES = new Set(["failed", "blocked", "blocked_verification", "preview_failed", "denied", "cancelled"]);
+const FALLBACK_STATUSES = new Set(["fallback_ready"]);
 const READY_STATUSES = new Set(["awaiting_confirmation", "awaiting_approval", "approval_required"]);
-const RUNNING_STATUSES = new Set(["queued", "pending", "starting", "running"]);
+const RUNNING_STATUSES = new Set(["queued", "pending", "starting", "processing", "running", "in_progress", "preview_building", "preview_verifying", "repair_preview_building"]);
+
+function nestedObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+}
+
+function setupPayload(run: VibeMarketingRunSummary) {
+  const result = nestedObject(run.result);
+  const direct = nestedObject(result.article_system_setup);
+  if (Object.keys(direct).length) return direct;
+  const nested = nestedObject(nestedObject(result.result).article_system_setup);
+  return nested;
+}
+
+function setupStatus(run: VibeMarketingRunSummary) {
+  const setup = setupPayload(run);
+  return String(setup.status ?? run.result?.["status"] ?? run.currentStep ?? run.status ?? "").trim().toLowerCase();
+}
+
+function setupCurrentStep(run: VibeMarketingRunSummary) {
+  const setup = setupPayload(run);
+  return String(setup.current_step ?? setup.currentStep ?? run.result?.current_step ?? run.result?.currentStep ?? run.currentStep ?? "").trim();
+}
 
 function humanize(value: string) {
   const normalized = value
@@ -58,22 +81,41 @@ function activeStepLabel(run: VibeMarketingRunSummary, steps: VibeMarketingStepS
     steps.find((step) => RUNNING_STATUSES.has(step.status)) ??
     steps.find((step) => !COMPLETE_STEP_STATUSES.has(step.status)) ??
     [...steps].reverse().find((step) => COMPLETE_STEP_STATUSES.has(step.status));
-  const key = active?.key || run.currentStep || "";
+  const key = setupCurrentStep(run) || active?.key || run.currentStep || "";
   return key ? setupStepLabel(key) : "Waiting for setup progress";
 }
 
 function setupPhase(run: VibeMarketingRunSummary) {
   const isSetupPreviewRun = run.workflow === "article_system_setup";
-  const failed = FAILED_STATUSES.has(run.status);
+  const status = setupStatus(run);
+  const active = RUNNING_STATUSES.has(run.status) || RUNNING_STATUSES.has(status);
+  const fallback = !active && (FALLBACK_STATUSES.has(run.status) || FALLBACK_STATUSES.has(status));
+  const failed = !active && (FAILED_STATUSES.has(run.status) || FAILED_STATUSES.has(status));
   const stale = Boolean(run.stale || run.staleReason);
   const approved = run.status === "completed" || run.approvalState === "approved";
-  const ready = READY_STATUSES.has(run.status);
+  const ready = READY_STATUSES.has(run.status) || READY_STATUSES.has(status);
 
+  if (active) {
+    return {
+      title: isSetupPreviewRun ? "Building articles setup preview" : "Preparing articles setup",
+      description: isSetupPreviewRun
+        ? "Creating the setup branch, validating the directory page, and preparing the preview."
+        : "Validating the articles/blogs location and preparing setup work for preview.",
+      tone: "running" as const,
+    };
+  }
   if (stale) {
     return {
       title: "Articles setup build did not advance",
       description: "The setup worker stopped moving through the build steps. Retry the setup build or review the technical details.",
       tone: "error" as const,
+    };
+  }
+  if (fallback) {
+    return {
+      title: "Exact articles preview is not ready",
+      description: "A diagnostic fallback preview is available, but setup approval remains blocked until exact verification passes.",
+      tone: "warning" as const,
     };
   }
   if (failed) {
@@ -98,7 +140,7 @@ function setupPhase(run: VibeMarketingRunSummary) {
     return {
       title: isSetupPreviewRun ? "Articles setup preview ready" : "Articles setup ready to build",
       description: isSetupPreviewRun
-        ? "Review the Cloudflare preview, leave revision comments if needed, then approve the setup PR."
+        ? "Review the Cloudflare preview, leave revision comments if needed, then approve setup PR creation."
         : "The articles/blogs location is ready. The setup preview can be generated next.",
       tone: "ready" as const,
     };
@@ -115,12 +157,13 @@ function setupPhase(run: VibeMarketingRunSummary) {
 function progressPercent(run: VibeMarketingRunSummary, steps: VibeMarketingStepState[]) {
   const totalSteps = Math.max(steps.length, run.stepOrder.length, 1);
   const completedSteps = steps.filter((step) => COMPLETE_STEP_STATUSES.has(step.status)).length;
-  const currentIndex = run.currentStep ? steps.findIndex((step) => step.key === run.currentStep) : -1;
+  const currentStep = setupCurrentStep(run) || run.currentStep || "";
+  const currentIndex = currentStep ? steps.findIndex((step) => step.key === currentStep) : -1;
   const completedUnits = Math.max(completedSteps, currentIndex > 0 ? currentIndex : 0);
 
   if (run.status === "completed" || run.approvalState === "approved" || READY_STATUSES.has(run.status)) return 100;
   if (FAILED_STATUSES.has(run.status)) return Math.max(12, Math.min(100, Math.round((completedUnits / totalSteps) * 100)));
-  if (RUNNING_STATUSES.has(run.status)) return Math.max(12, Math.min(95, Math.round((completedUnits / totalSteps) * 100)));
+  if (RUNNING_STATUSES.has(run.status) || RUNNING_STATUSES.has(setupStatus(run))) return Math.max(12, Math.min(95, Math.round((completedUnits / totalSteps) * 100)));
   return Math.max(5, Math.min(100, Math.round((completedUnits / totalSteps) * 100)));
 }
 
@@ -136,9 +179,10 @@ export default function ArticlesSetupProgressCard({
   const completedSteps = steps.filter((step) => COMPLETE_STEP_STATUSES.has(step.status)).length;
   const percent = progressPercent(run, steps);
   const failed = phase.tone === "error";
+  const warning = phase.tone === "warning";
   const success = phase.tone === "success";
   const ready = phase.tone === "ready";
-  const Icon = failed ? ExclamationTriangleIcon : success ? CheckCircleIcon : ready ? SparklesIcon : ArrowPathIcon;
+  const Icon = failed || warning ? ExclamationTriangleIcon : success ? CheckCircleIcon : ready ? SparklesIcon : ArrowPathIcon;
 
   return (
     <section
@@ -146,6 +190,8 @@ export default function ArticlesSetupProgressCard({
         "rounded-xl border p-5 shadow-sm",
         failed
           ? "border-red-200 bg-red-50"
+          : warning
+            ? "border-amber-200 bg-amber-50"
           : success
             ? "border-emerald-200 bg-emerald-50"
             : ready
@@ -159,7 +205,7 @@ export default function ArticlesSetupProgressCard({
           <div
             className={clsx(
               "flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-white",
-              failed ? "text-red-600" : success ? "text-emerald-700" : "text-violet-700",
+              failed ? "text-red-600" : warning ? "text-amber-700" : success ? "text-emerald-700" : "text-violet-700",
             )}
           >
             <Icon className={clsx("h-6 w-6", phase.tone === "running" && "animate-spin")} />
@@ -168,7 +214,7 @@ export default function ArticlesSetupProgressCard({
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base font-black text-gray-950">{phase.title}</h2>
               <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-700">
-                {run.status.replace(/_/g, " ")}
+                {(setupStatus(run) || run.status).replace(/_/g, " ")}
               </span>
             </div>
             <p className="mt-1 text-sm font-semibold leading-6 text-gray-700">{phase.description}</p>

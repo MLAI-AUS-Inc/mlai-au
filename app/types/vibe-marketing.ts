@@ -25,6 +25,18 @@ export interface VibeMarketingStepState {
   completedAt?: string | null;
 }
 
+export interface VibeMarketingScanProgress {
+  phaseKey: string;
+  phaseLabel: string;
+  phaseIndex: number;
+  phaseCount: number;
+  percent: number;
+  message: string;
+  detail: Record<string, unknown>;
+  currentStep?: string | null;
+  updatedAt?: string | null;
+}
+
 export interface VibeMarketingRunSummary {
   runId: string;
   workflow: string;
@@ -42,6 +54,10 @@ export interface VibeMarketingRunSummary {
   warnings: string[];
   errors: string[];
   errorCode?: string | null;
+  blockingReason?: string | null;
+  blockingCode?: string | null;
+  cancelledRunIds?: string[];
+  protectedRunIds?: string[];
   artifacts: unknown[];
   previewUrl?: string | null;
   prUrl?: string | null;
@@ -51,6 +67,7 @@ export interface VibeMarketingRunSummary {
   componentManifest?: VibeMarketingComponentManifest | null;
   livePreview?: VibeMarketingLivePreview | null;
   componentFeedback?: VibeMarketingComponentFeedback | null;
+  scanProgress?: VibeMarketingScanProgress | null;
   workflowProgress?: VibeMarketingWorkflowProgress | null;
   publishChildStatus?: string | null;
   publishChildRecoverable?: boolean;
@@ -60,7 +77,48 @@ export interface VibeMarketingRunSummary {
   retryAvailable?: boolean;
   queueName?: string | null;
   queuedAt?: string | null;
+  resumeGeneration?: number | null;
+  isCurrentAttempt?: boolean;
+  failureStep?: string | null;
   result?: Record<string, unknown>;
+  articleSetupState?: VibeMarketingArticleSetupState | null;
+}
+
+export interface VibeMarketingArticleSetupState {
+  repo?: string | null;
+  githubRepo?: string | null;
+  defaultBranch?: string | null;
+  defaultBranchSha?: string | null;
+  lastScannedSha?: string | null;
+  scanRunId?: string | null;
+  scanStatus?: VibeMarketingRunStatus | null;
+  scanCompletedAt?: string | null;
+  scanUpdatedAt?: string | null;
+  scanStale?: boolean;
+  scanNeedsRescan?: boolean;
+  staleReason?: string | null;
+  setupRunId?: string | null;
+  setupStatus?: VibeMarketingRunStatus | string | null;
+  setupRunStatus?: VibeMarketingRunStatus | string | null;
+  setupCurrentStep?: string | null;
+  setupBlocked?: boolean;
+  setupMerged?: boolean;
+  generationReady?: boolean;
+  published?: boolean;
+  routePath?: string | null;
+  previewUrl?: string | null;
+  fallbackPreviewUrl?: string | null;
+  livePreviewUrl?: string | null;
+  prUrl?: string | null;
+  prNumber?: string | number | null;
+  mergeStatus?: string | null;
+  livePreview?: VibeMarketingLivePreview | null;
+  retryAvailable?: boolean;
+  error?: string | null;
+  source?: "config" | "scan_run" | "setup_run" | "none" | string;
+  updatedAt?: string | null;
+  articleSurfaceMode?: string | null;
+  articleSurfaceHint?: Record<string, unknown> | null;
 }
 
 export interface VibeMarketingAutofillSource {
@@ -155,6 +213,7 @@ export interface VibeMarketingCompany {
   name: string;
   domain?: string | null;
   companyLinkedInUrl?: string | null;
+  avatarUrl?: string | null;
   location?: string | null;
   abn?: string | null;
   organizationId?: number | null;
@@ -205,15 +264,20 @@ export interface VibeMarketingCheck {
   articleSystem?: Record<string, unknown>;
   published?: boolean;
   setupBlocked?: boolean;
+  setupMerged?: boolean;
+  generationReady?: boolean;
   setupRunId?: string | null;
   setupStatus?: string | null;
   rescanRunId?: string | null;
+  mergeStatus?: string | null;
   prUrl?: string | null;
+  prNumber?: string | number | null;
   previewUrl?: string | null;
 }
 
 export interface VibeMarketingTopicCandidate {
   id: string;
+  rawCandidateId?: string | null;
   keyword: string;
   title: string;
   reason?: string | null;
@@ -249,6 +313,8 @@ export interface VibeMarketingTopicCandidate {
   pillarSlug?: string | null;
   pillarName?: string | null;
   pillarKeyword?: string | null;
+  pillarIconKey?: string | null;
+  pillarColorKey?: string | null;
   paaQuestions?: Array<{
     question: string;
     answerSnippet?: string | null;
@@ -344,6 +410,8 @@ export interface VibeMarketingLivePreview {
   available: boolean;
   status: string;
   previewUrl?: string | null;
+  fallbackPreviewUrl?: string | null;
+  failedPreviewUrl?: string | null;
   internalPreviewUrl?: string | null;
   proxyPath?: string | null;
   routePath?: string | null;
@@ -356,6 +424,7 @@ export interface VibeMarketingLivePreview {
   workspacePath?: string | null;
   logPath?: string | null;
   failedPhase?: string | null;
+  failureKind?: string | null;
   failedCommand?: string | null;
   logExcerpt?: string | null;
   proofWarnings?: string[];
@@ -365,9 +434,13 @@ export interface VibeMarketingLivePreview {
   proofAcceptedWithWarnings?: boolean;
   verificationSkippedForPreview?: boolean;
   previewMode?: string | null;
+  previewBuildMode?: string | null;
+  fullSiteBuildSkipped?: boolean;
   renderMode?: string | null;
   renderConfidence?: string | null;
   fallbackReason?: string | null;
+  previewUnavailableReason?: string | null;
+  proof?: Record<string, unknown>;
   nativePreviewFailure?: Record<string, unknown>;
   visualFallback?: {
     cssSources?: string[];
@@ -587,6 +660,8 @@ export interface VibeMarketingBootstrap {
   websiteBaseline: VibeMarketingWebsiteBaseline;
   googleBaselineConnection: VibeMarketingGoogleBaselineConnection;
   checks: Record<string, VibeMarketingCheck>;
+  articleSetupState?: VibeMarketingArticleSetupState | null;
+  article_setup_state?: VibeMarketingArticleSetupState | null;
   latestRuns: VibeMarketingRunSummary[];
   latestRunsByWorkflow: Record<string, VibeMarketingRunSummary>;
   topicCandidates: VibeMarketingTopicCandidate[];

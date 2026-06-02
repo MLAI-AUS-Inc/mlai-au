@@ -21,11 +21,6 @@
   <priority>0.7</priority>
  </url>
  <url>
-  <loc>https://mlai.au/resources</loc>
-  <changefreq>monthly</changefreq>
-  <priority>0.6</priority>
- </url>
- <url>
   <loc>https://mlai.au/roo</loc>
   <changefreq>monthly</changefreq>
   <priority>0.6</priority>
@@ -44,11 +39,6 @@
   <loc>https://mlai.au/vibe-raising</loc>
   <changefreq>monthly</changefreq>
   <priority>0.7</priority>
- </url>
- <url>
-  <loc>https://mlai.au/how-to-pitch-your-idea</loc>
-  <changefreq>monthly</changefreq>
-  <priority>0.6</priority>
  </url>
  <url>
   <loc>https://mlai.au/members</loc>

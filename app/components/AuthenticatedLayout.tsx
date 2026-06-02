@@ -106,7 +106,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
     return (
         <>
-            <div>
+            <div className={classNames("min-h-screen", isFounderToolsApp ? "bg-[var(--vr-color-app-bg)]" : "bg-gray-50")}>
                 <Transition.Root show={sidebarOpen} as={Fragment}>
                     <Dialog
                         as="div"
@@ -528,7 +528,7 @@ export default function AuthenticatedLayout({ children, user, navigation: custom
 
                     <main
                         className={classNames(
-                            "py-4 sm:py-6 lg:py-6 px-4 sm:px-6 lg:px-4",
+                            "min-h-[calc(100vh-4rem)] py-4 sm:py-6 lg:py-6 px-4 sm:px-6 lg:px-4",
                             isFounderToolsApp ? "bg-[var(--vr-color-app-bg)]" : "bg-gray-50"
                         )}
                     >

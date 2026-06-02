@@ -49,7 +49,12 @@ export default function UpcomingEventsCTA({
 
     if (upcomingEvents.length === 0) {
         return (
-            <div className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-8 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}>
+            <div
+                data-cf-component-id="events-cta"
+                data-cf-component-type="events-cta"
+                data-cf-component-label="Upcoming events CTA"
+                className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-8 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
+            >
                 <div className="text-center text-white">
                     <h3 className="text-3xl font-semibold mb-2">Join our community events</h3>
                     <p className="text-white/85 mb-6">Stay tuned for upcoming AI and ML events in Australia.</p>
@@ -65,7 +70,12 @@ export default function UpcomingEventsCTA({
     }
 
     return (
-        <div className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-6 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}>
+        <div
+            data-cf-component-id="events-cta"
+            data-cf-component-type="events-cta"
+            data-cf-component-label="Upcoming events CTA"
+            className={`relative overflow-hidden rounded-[32px] bg-[#4b1bd1] p-6 sm:p-10 shadow-[0_25px_80px_-30px_rgba(0,0,0,0.45)] ${className}`}
+        >
             <div className="text-center mb-8 sm:mb-10 text-white">
                 <h3 className="text-3xl sm:text-4xl font-bold mb-3">Join our upcoming events</h3>
                 <p className="text-white/85 text-base sm:text-lg">Connect with the AI & ML community at our next gatherings.</p>
@@ -94,17 +104,6 @@ export default function UpcomingEventsCTA({
                         rel="noopener noreferrer"
                         className={`group relative flex flex-col rounded-[28px] overflow-hidden shadow-[0_25px_70px_-30px_rgba(0,0,0,0.45)] transition-transform duration-300 hover:-translate-y-1.5 border ${style.border} ${style.bg}`}
                     >
-                        {/* Event Image */}
-                        {event.bannerImage?.url && (
-                            <div className="relative h-40 overflow-hidden">
-                                <img
-                                    src={event.bannerImage.url}
-                                    alt={event.name}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                />
-                            </div>
-                        )}
-
                         {/* Event Details */}
                         <div className="flex flex-col flex-grow p-5 sm:p-6">
                             <h4 className={`font-semibold text-lg sm:text-xl mb-3 line-clamp-2 transition-colors ${style.text}`}>
