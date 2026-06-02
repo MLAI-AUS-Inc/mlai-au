@@ -19,7 +19,7 @@ import { getEnv } from "~/lib/env.server";
  *
  * Config via Cloudflare env (shared with the leaderboard proxy):
  *   WTH_ADMIN_URL   origin to forward to. RECOMMENDED: an MLAI-owned subdomain
- *                   pointed at the eval ingress, e.g. "https://eval.mlai.au".
+ *                   pointed at the eval ingress, e.g. "https://eval.eliascorp.org".
  *   WTH_ADMIN_HOST  optional ingress Host header for the IP + resolveOverride
  *                   fallback (only used when it differs from the URL host).
  */
@@ -40,7 +40,7 @@ export async function action({ request, context }: Route.ActionArgs) {
 
   const env = getEnv(context) as unknown as AdminProxyEnv;
   // Default to the MLAI-owned Cloudflare-proxied subdomain (TLS handled by CF).
-  const base = env.WTH_ADMIN_URL || "https://eval.mlai.au";
+  const base = env.WTH_ADMIN_URL || "https://eval.eliascorp.org";
   // No Host override needed for a real public origin; only used for the
   // legacy IP + resolveOverride fallback.
   const host = env.WTH_ADMIN_HOST ?? "";
@@ -101,7 +101,7 @@ export async function action({ request, context }: Route.ActionArgs) {
     target = `${baseUrl.protocol}//${host}/submissions`;
     init.cf = { resolveOverride: baseUrl.hostname };
   } else {
-    // Clean path: WTH_ADMIN_URL is a real reachable origin (e.g. https://eval.mlai.au).
+    // Clean path: WTH_ADMIN_URL is a real reachable origin (e.g. https://eval.eliascorp.org).
     target = `${baseUrl.origin}/submissions`;
   }
 

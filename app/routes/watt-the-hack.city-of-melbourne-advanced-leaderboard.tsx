@@ -153,7 +153,24 @@ export default function WattTheHackLeaderboard() {
       const res = await fetch("/watt-the-hack/city-of-melbourne-advanced-leaderboard-data", {
         headers: { Accept: "application/json" },
       });
-      if (!res.ok) throw new Error(`Leaderboard service responded ${res.status}`);
+      if (!res.ok) {
+        // The proxy returns { error, upstreamStatus?, detail? } — surface the
+        // real reason instead of a bare status code.
+        let message = `Leaderboard service responded ${res.status}`;
+        try {
+          const info = (await res.json()) as { error?: string; upstreamStatus?: number; detail?: string };
+          if (info?.upstreamStatus) {
+            message = `Upstream responded ${info.upstreamStatus}`;
+          } else if (info?.error === "upstream_unreachable") {
+            message = "Couldn't reach the evaluation server";
+          } else if (info?.error || info?.detail) {
+            message = String(info.detail || info.error);
+          }
+        } catch {
+          // non-JSON body — keep the generic message
+        }
+        throw new Error(message);
+      }
       const data = (await res.json()) as LeaderboardEntry[];
       if (!Array.isArray(data)) throw new Error("Unexpected response from leaderboard service");
 
