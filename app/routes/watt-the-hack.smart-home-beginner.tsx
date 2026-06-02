@@ -11,7 +11,8 @@ import {
 } from "~/lib/generic-hackathon";
 import { getEnv } from "~/lib/env.server";
 import { wattClasses } from "~/lib/watt-theme";
-import { SmartHomeController, type DeployFeedback } from "~/components/SmartHomeController";
+import { SmartHomeControllerV2 } from "~/components/SmartHomeControllerV2";
+import type { DeployFeedback } from "~/components/SmartHomeController";
 
 type StreamData = {
   session: WattUnitySession | null;
@@ -189,8 +190,7 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
           </div>
         </section>
 
-        <SmartHomeController
-          catalog={initialData.catalog}
+        <SmartHomeControllerV2
           onDeploy={handleDeploy}
           isDeploying={isDeploying}
           feedback={feedback}
