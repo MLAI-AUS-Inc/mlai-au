@@ -1,7 +1,7 @@
 import type { Route } from "./+types/founder-tools.marketing.run";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator } from "react-router";
+import { Form, Link, redirect, useActionData, useFetcher, useLoaderData, useLocation, useNavigation, useRevalidator, type ShouldRevalidateFunctionArgs } from "react-router";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -39,6 +39,7 @@ import {
   publishPrUrlForRun,
   viewedWorkflowStepIdForRun,
 } from "~/lib/vibe-marketing-run-view";
+import { shouldSkipVibeMarketingRunRevalidation } from "~/lib/vibe-marketing-step-revalidation";
 import {
   connectVibeMarketingGithub,
   controlVibeMarketingRun,
@@ -325,6 +326,17 @@ export async function loader({ request, params, context }: Route.LoaderArgs) {
       articleJob: createVibeMarketingClientRequestId("vibe-article-job", runId),
     },
   };
+}
+
+export function shouldRevalidate(args: ShouldRevalidateFunctionArgs) {
+  // Switching the run-page sub-view (?setupStep=...) on the same run renders from
+  // data the loader already returned. Skipping revalidation there avoids re-running
+  // the heavy loader (bootstrap + full run + setup run + repos). Poll-driven
+  // revalidator.revalidate() and post-action revalidations are NOT skipped.
+  if (shouldSkipVibeMarketingRunRevalidation(args)) {
+    return false;
+  }
+  return args.defaultShouldRevalidate;
 }
 
 export async function action({ request, params, context }: Route.ActionArgs) {
