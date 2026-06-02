@@ -6,7 +6,7 @@ import {
   CodeIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "~/components/watt-the-hack/sandbox/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/watt-the-hack/sandbox/ui/card";
@@ -21,8 +21,6 @@ import { lookupMechanic, type MechanicSlider } from "~/lib/watt-the-hack-sandbox
 import { useSimStore } from "~/lib/watt-the-hack-sandbox/sim-store";
 import type { SimpleControllerParams } from "~/lib/watt-the-hack-sandbox/types";
 import { cn } from "~/lib/watt-the-hack-sandbox/utils";
-
-const MonacoEditor = lazy(() => import("@monaco-editor/react"));
 
 export function ControllerEditor() {
   const controllerKind = useSimStore((s) => s.controllerKind);
@@ -57,17 +55,12 @@ export function ControllerEditor() {
 
   const [draft, setDraft] = useState(controllerSource);
   const [dirty, setDirty] = useState(false);
-  const [editorReady, setEditorReady] = useState(false);
 
   useEffect(() => {
     if (!dirty) {
       setDraft(controllerSource);
     }
   }, [controllerSource, dirty]);
-
-  useEffect(() => {
-    setEditorReady(true);
-  }, []);
 
   return (
     <Card className="overflow-hidden">
@@ -150,39 +143,21 @@ export function ControllerEditor() {
             />
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_280px]">
               <div className="overflow-hidden rounded-lg border border-line">
-                {editorReady ? (
-                  <Suspense fallback={<div className="flex h-[460px] items-center justify-center text-xs text-muted">Loading editor...</div>}>
-                    <MonacoEditor
-                      height="460px"
-                      language="python"
-                      theme="vs"
-                      value={draft}
-                      onChange={(value) => {
-                        const next = value ?? "";
-                        setDraft(next);
-                        setDirty(next !== controllerSource);
-                      }}
-                      options={{
-                        minimap: { enabled: false },
-                        fontSize: 13,
-                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                        lineNumbers: "on",
-                        scrollBeyondLastLine: false,
-                        smoothScrolling: true,
-                        padding: { top: 16, bottom: 16 },
-                        fontLigatures: true,
-                        tabSize: 4,
-                        automaticLayout: true,
-                        scrollbar: {
-                          vertical: "auto",
-                          horizontal: "auto",
-                        },
-                      }}
-                    />
-                  </Suspense>
-                ) : (
-                  <div className="flex h-[460px] items-center justify-center text-xs text-muted">Loading editor...</div>
-                )}
+                <textarea
+                  value={draft}
+                  onChange={(e) => {
+                    const next = e.target.value;
+                    setDraft(next);
+                    setDirty(next !== controllerSource);
+                  }}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  wrap="off"
+                  aria-label="Controller Python source"
+                  className="block h-[460px] w-full resize-none overflow-auto bg-canvas px-4 py-3 font-mono text-[13px] leading-relaxed text-ink outline-none"
+                  style={{ tabSize: 4 }}
+                />
               </div>
               <CodeReference />
             </div>
