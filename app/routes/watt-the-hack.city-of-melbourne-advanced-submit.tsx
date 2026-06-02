@@ -3,7 +3,10 @@ import { ArrowUpTrayIcon, CheckCircleIcon, ExclamationTriangleIcon, CodeBracketI
 import JSZip from "jszip";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
 
-const ADMIN_URL = import.meta.env.VITE_WTH_ADMIN_URL || "https://api.watt-the-hack.com";
+// Same-origin worker proxy. It forwards the upload to the WTH admin eval cluster
+// server-side (see routes/watt-the-hack.city-of-melbourne-advanced-submit-data.ts),
+// so the admin origin/credentials are never exposed to the browser.
+const SUBMIT_ENDPOINT = "/watt-the-hack/city-of-melbourne-advanced-submit-data";
 
 const SCENARIOS = [
   { id: "duck_curve", name: "Level 1: The Duck Curve" },
@@ -66,7 +69,7 @@ export default function WattTheHackSubmissionPortal() {
       formData.append("team_id", teamId);
       formData.append("file", zipBlob, "submission.zip");
 
-      const res = await fetch(`${ADMIN_URL}/submissions`, {
+      const res = await fetch(SUBMIT_ENDPOINT, {
         method: "POST",
         headers: {
           "X-Team-Token": teamToken,
