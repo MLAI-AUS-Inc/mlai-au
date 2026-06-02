@@ -178,7 +178,7 @@ export interface SmartHomeCatalog {
 
 export interface SmartHomeDeployCommand {
   command_id: string;
-  block_id: string;
+  block_id: string | null;
   action: string;
   target_id: string;
 }
@@ -188,6 +188,32 @@ export interface SmartHomeDeployResult {
   tick_seen: number;
   deployed_count: number;
   commands: SmartHomeDeployCommand[];
+  decisions: string[];
+  brain?: string | null;
+}
+
+export interface SmartHomePipeline {
+  inputs: string[];
+  schedule: string[];
+  brain: string[];
+  actions: string[];
+  outputs: string[];
+  safety: string[];
+}
+
+export interface SmartHomeState {
+  live: boolean;
+  household_id?: string;
+  day?: number | null;
+  tick?: number | null;
+  game_time?: string | null;
+  wallet?: number | null;
+  cost?: number | null;
+  energy_kwh?: number | null;
+  comfort?: number | null;
+  score?: number | null;
+  tariff_period?: string | null;
+  weather_condition?: string | null;
 }
 
 export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
@@ -203,9 +229,16 @@ export async function getSmartHomeBlocks(env: Env, request: Request): Promise<Sm
 export async function deploySmartHome(
   env: Env,
   request: Request,
-  blockIds: string[],
+  pipeline: SmartHomePipeline,
 ): Promise<SmartHomeDeployResult> {
   const client = createApiClient(env, request);
-  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { blocks: blockIds });
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { pipeline });
   return response.data as SmartHomeDeployResult;
+}
+
+export async function getSmartHomeState(env: Env, request: Request): Promise<SmartHomeState> {
+  const client = createApiClient(env, request);
+  const response = await client.get("/api/v1/hackathons/watt/smart-home/state/");
+  const data = (response.data ?? {}) as Partial<SmartHomeState>;
+  return { ...data, live: Boolean(data.live) } as SmartHomeState;
 }

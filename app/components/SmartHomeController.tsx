@@ -13,7 +13,7 @@ import {
 import { wattClasses } from "~/lib/watt-theme";
 import type { SmartHomeBlock, SmartHomeCatalog } from "~/lib/generic-hackathon";
 
-export type DeployFeedback = { ok: boolean; message: string } | null;
+export type DeployFeedback = { ok: boolean; message: string; decisions?: string[] } | null;
 
 type PlacedBlock = { instanceId: string; block: SmartHomeBlock };
 
