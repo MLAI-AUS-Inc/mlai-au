@@ -55,6 +55,12 @@ export interface GenericHackathonResource {
   order: number;
 }
 
+export interface WattUnitySession {
+  stream_url: string;
+  household_id: string;
+  expires_at: string;
+}
+
 function appPath(slug: string, path: string) {
   return `/api/v1/hackathons/${slug}/app/${path}`;
 }
@@ -144,4 +150,62 @@ export async function getGenericResources(env: Env, request: Request, slug = WAT
   const client = createApiClient(env, request);
   const response = await client.get(appPath(slug, "resources/"));
   return response.data || [];
+}
+
+export async function createWattUnitySession(env: Env, request: Request): Promise<WattUnitySession> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/unity-sessions/current/", {});
+  const data = response.data as Partial<WattUnitySession>;
+  if (!data || typeof data.stream_url !== "string" || typeof data.expires_at !== "string") {
+    throw new Error("Invalid Unity stream session response.");
+  }
+  return data as WattUnitySession;
+}
+
+// --- Smart Home (Beginner) coding-blocks challenge ---
+
+export interface SmartHomeBlock {
+  block_id: string;
+  group: string;
+  label: string;
+  blurb: string;
+}
+
+export interface SmartHomeCatalog {
+  groups: string[];
+  blocks: SmartHomeBlock[];
+}
+
+export interface SmartHomeDeployCommand {
+  command_id: string;
+  block_id: string;
+  action: string;
+  target_id: string;
+}
+
+export interface SmartHomeDeployResult {
+  household_id: string;
+  tick_seen: number;
+  deployed_count: number;
+  commands: SmartHomeDeployCommand[];
+}
+
+export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
+  const client = createApiClient(env, request);
+  const response = await client.get("/api/v1/hackathons/watt/smart-home/blocks/");
+  const data = (response.data ?? {}) as Partial<SmartHomeCatalog>;
+  return {
+    groups: Array.isArray(data.groups) ? data.groups.map((group) => String(group)) : [],
+    blocks: Array.isArray(data.blocks) ? (data.blocks as SmartHomeBlock[]) : [],
+  };
+}
+
+export async function deploySmartHome(
+  env: Env,
+  request: Request,
+  blockIds: string[],
+): Promise<SmartHomeDeployResult> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { blocks: blockIds });
+  return response.data as SmartHomeDeployResult;
 }
