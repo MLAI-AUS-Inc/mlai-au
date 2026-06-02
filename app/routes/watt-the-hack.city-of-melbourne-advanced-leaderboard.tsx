@@ -10,7 +10,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
 
-const ADMIN_URL = import.meta.env.VITE_WTH_ADMIN_URL || "https://api.watt-the-hack.com";
 const REFRESH_MS = 15000;
 
 // Fixed tile geometry so we can drive vertical position from rank and let CSS
