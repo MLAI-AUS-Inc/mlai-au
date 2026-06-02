@@ -25,8 +25,8 @@ interface AdminProxyEnv {
 
 export async function loader({ request, context }: Route.LoaderArgs) {
   const env = getEnv(context) as unknown as AdminProxyEnv;
-  // Default to the public Cloudflare-proxied subdomain (TLS handled by CF).
-  const base = env.WTH_ADMIN_URL || "https://eval.eliascorp.org";
+  // Default to the MLAI-owned Cloudflare-proxied subdomain (TLS handled by CF).
+  const base = env.WTH_ADMIN_URL || "https://eval.mlai.au";
   // No Host override needed for a real public origin; only used for the
   // legacy IP + resolveOverride fallback.
   const host = env.WTH_ADMIN_HOST ?? "";

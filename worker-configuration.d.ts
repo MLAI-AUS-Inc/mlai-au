@@ -6,7 +6,7 @@ declare namespace Cloudflare {
 		mainModule: typeof import("./workers/app");
 	}
 	interface Env {
-		WTH_ADMIN_URL: "https://eval.eliascorp.org";
+		WTH_ADMIN_URL: "https://eval.mlai.au";
 		VALUE_FROM_CLOUDFLARE: string;
 		BACKEND_BASE_URL: string;
 		VITE_API_URL: string;
