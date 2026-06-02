@@ -36,6 +36,21 @@ const livePreviewDisableHmr = ["1", "true", "yes", "on"].includes(
 );
 const inspectorPort =
   livePreviewDisableHmr || process.env.CLOUDFLARE_INSPECTOR_PORT === "false" ? false : undefined;
+const sharedOptimizeDepsInclude = [
+  "@heroicons/react/20/solid",
+  "@heroicons/react/24/solid",
+  "@heroicons/react/24/outline",
+  "@headlessui/react",
+  "@ffmpeg/ffmpeg",
+  "@ffmpeg/util",
+  "class-variance-authority",
+  "clsx",
+  "date-fns",
+  "gsap",
+  "gsap/ScrollTrigger",
+  "react-dropzone",
+  "tailwind-merge",
+];
 
 export default defineConfig({
   plugins: [
@@ -55,20 +70,15 @@ export default defineConfig({
       },
     },
   },
+  environments: {
+    ssr: {
+      optimizeDeps: {
+        include: sharedOptimizeDepsInclude,
+      },
+    },
+  },
   optimizeDeps: {
-    include: [
-      "@heroicons/react/20/solid",
-      "@heroicons/react/24/solid",
-      "@heroicons/react/24/outline",
-      "@headlessui/react",
-      "@ffmpeg/ffmpeg",
-      "@ffmpeg/util",
-      "class-variance-authority",
-      "clsx",
-      "date-fns",
-      "react-dropzone",
-      "tailwind-merge",
-    ],
+    include: sharedOptimizeDepsInclude,
   },
   resolve: {
     dedupe: ["react", "react-dom"],

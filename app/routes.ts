@@ -71,6 +71,13 @@ export default [
   route("/hackathons", "routes/hackathons.tsx"),
   route("/medhack", "routes/medhack.tsx"),
 
+  // Valley MVP demo (mobile-first, mocked, no auth)
+  route("/valley", "routes/valley._index.tsx"),
+  route("/valley/update/new", "routes/valley.update.new.tsx"),
+  route("/valley/update/review", "routes/valley.update.review.tsx"),
+  route("/valley/update/published", "routes/valley.update.published.tsx"),
+  route("/valley/profile", "routes/valley.profile.tsx"),
+
   // Misc
   route("/.well-known/appspecific/com.chrome.devtools.json", "routes/chrome-devtools.tsx"),
 

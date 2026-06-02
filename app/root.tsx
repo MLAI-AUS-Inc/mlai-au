@@ -82,8 +82,17 @@ export default function Layout() {
   const isFounderToolsApp =
     location.pathname === "/founder-tools" ||
     location.pathname.startsWith("/founder-tools/");
+  const isValleyApp =
+    location.pathname === "/valley" ||
+    location.pathname.startsWith("/valley/");
   const isWattTheHackApp = location.pathname.startsWith("/watt-the-hack");
-  const isAppRoute = isEsafetyApp || isHospitalApp || isVibeRaisingLegacyApp || isFounderToolsApp || isWattTheHackApp;
+  const isAppRoute =
+    isEsafetyApp ||
+    isHospitalApp ||
+    isVibeRaisingLegacyApp ||
+    isFounderToolsApp ||
+    isValleyApp ||
+    isWattTheHackApp;
 
   return (
     <html lang="en" suppressHydrationWarning>
