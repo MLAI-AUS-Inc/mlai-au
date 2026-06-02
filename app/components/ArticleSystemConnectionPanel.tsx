@@ -21,7 +21,7 @@ import {
   UserCheck,
 } from "lucide-react";
 
-import ArticleSystemSurfaceSummary, {
+import {
   articleSurfaceCandidates,
   candidateLabel,
   isSelectablePublicRoute,
@@ -1401,7 +1401,15 @@ export default function ArticleSystemConnectionPanel({
                 You can change this anytime later from your project settings.
               </div>
 
-              {effectiveScanRun ? <ArticleSystemSurfaceSummary run={effectiveScanRun} /> : null}
+              {selectedSurfaceUrl ? (
+                <div className="flex items-start gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-600" />
+                  <span>
+                    Selected <span className="break-all font-black">{selectedSurfaceUrl}</span>. Continue to step 4 below to build and preview the
+                    articles/blogs page.
+                  </span>
+                </div>
+              ) : null}
             </div>
           ) : (
             <DisabledLocationPreview />
