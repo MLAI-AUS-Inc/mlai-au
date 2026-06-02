@@ -73,6 +73,21 @@ export function removeCategoryPrefix(slug: string): string {
 
 // Registry Data
 export const ARTICLE_REGISTRY: Record<string, ArticleWithSlug> = {
+    'featured/how-an-ai-meetup-helps-you-learn-and-build-faster': {
+        title: "How an AI Meetup Helps You Learn and Build Faster",
+        date: "2026-06-02",
+        description: "Meetup guide for faster AI learning and better projects.",
+        author: "Dr Sam Donegan",
+        authorKey: "default-author",
+        authors: ["default-author"],
+        category: "featured",
+        tags: [],
+        featured: true,
+        slug: "featured/how-an-ai-meetup-helps-you-learn-and-build-faster",
+        image: "https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/content-factory%2FU05QPB483K9%2FMLAI-AUS-Inc%2Fmlai-au%2Fimages%2Fhero-9448fd34-aa11-4f0d-b36d-b6fec453dc71.jpg?alt=media&token=2a29e2be-3761-459c-93b2-2b61bad80bf8",
+        imageAlt: "Close-up of AI meetup attendees discussing a laptop prototype and notes during a hands-on learning session",
+        hasContent: true,
+    },
     'featured/how-many-people-use-artificial-intelligence-in-2026': {
         title: "How Many People Use Artificial Intelligence in 2026?",
         date: "2026-05-11",
