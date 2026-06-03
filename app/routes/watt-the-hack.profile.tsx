@@ -8,9 +8,12 @@ import { getInitials, generateAvatarUrl } from "~/lib/avatar";
 import { getEnv } from "~/lib/env.server";
 import {
   createGenericTeam,
+  disbandGenericTeam,
   getGenericCurrentTeam,
   getGenericTeams,
   joinGenericTeam,
+  leaveGenericTeam,
+  transferTeamLead,
   WATT_THE_HACK_SLUG,
   type GenericHackathonMember,
   type GenericHackathonTeam,
@@ -83,6 +86,23 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Ac
       const code = String(formData.get("code") || "").trim();
       if (!code) return { error: "Team code or name is required." };
       await joinGenericTeam(env, request, WATT_THE_HACK_SLUG, code);
+      return { success: true };
+    }
+
+    if (intent === "leave_team") {
+      await leaveGenericTeam(env, request, WATT_THE_HACK_SLUG);
+      return { success: true };
+    }
+
+    if (intent === "transfer_lead") {
+      const memberId = Number(formData.get("member_id"));
+      if (!memberId) return { error: "Pick a teammate to make leader." };
+      await transferTeamLead(env, request, WATT_THE_HACK_SLUG, memberId);
+      return { success: true };
+    }
+
+    if (intent === "disband_team") {
+      await disbandGenericTeam(env, request, WATT_THE_HACK_SLUG);
       return { success: true };
     }
 
@@ -183,6 +203,9 @@ export default function WattTheHackProfile() {
   const memberCount = currentTeam?.member_count ?? currentTeam?.members?.length ?? 0;
   const isValidTeamSize = memberCount >= 2 && memberCount <= 6;
   const teamMembers = currentTeam?.members || [];
+  const currentUserId = initialUser.id ?? null;
+  const leaderId = currentTeam?.leader_id ?? null;
+  const isTeamLeader = leaderId != null && currentUserId != null && leaderId === currentUserId;
 
   const fullName = initialUser.full_name || [initialUser.first_name, initialUser.last_name].filter(Boolean).join(" ") || initialUser.email;
   const isSaving = fetcher.state !== "idle";
@@ -598,7 +621,14 @@ export default function WattTheHackProfile() {
                                     />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-black text-[#121e16]">{member.full_name || member.email}</p>
+                                    <p className="truncate text-sm font-black text-[#121e16]">
+                                      {member.full_name || member.email}
+                                      {member.id === leaderId && (
+                                        <span className="ml-2 inline-flex items-center rounded-full border border-[#c9dbb8] bg-[#e6efd7] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#155420]">
+                                          Leader
+                                        </span>
+                                      )}
+                                    </p>
                                     <div className="mt-1 flex flex-wrap gap-1">
                                       {member.personas && member.personas.length > 0 ? (
                                         member.personas.map((persona) => (
@@ -614,6 +644,19 @@ export default function WattTheHackProfile() {
                                       )}
                                     </div>
                                   </div>
+                                  {isTeamLeader && member.id !== leaderId && (
+                                    <fetcher.Form method="post" className="shrink-0">
+                                      <input type="hidden" name="intent" value="transfer_lead" />
+                                      <input type="hidden" name="member_id" value={member.id} />
+                                      <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2.5 py-1 text-xs font-bold text-[#155420] hover:bg-[#e6efd7] disabled:opacity-50"
+                                      >
+                                        Make leader
+                                      </button>
+                                    </fetcher.Form>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -624,6 +667,45 @@ export default function WattTheHackProfile() {
                           </li>
                         )}
                       </ul>
+                    </div>
+
+                    <div className="mt-6 border-t border-[#e8dfcf] pt-4">
+                      {isTeamLeader ? (
+                        <fetcher.Form
+                          method="post"
+                          onSubmit={(e) => {
+                            if (!window.confirm("Disband this team? Every member will be removed.")) e.preventDefault();
+                          }}
+                        >
+                          <input type="hidden" name="intent" value="disband_team" />
+                          <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="w-full rounded-[0.65rem] border border-[#df5047]/40 bg-[#fff1ef] px-3 py-2 text-sm font-bold text-[#9f2f28] hover:bg-[#ffe4e0] disabled:opacity-50"
+                          >
+                            Disband team
+                          </button>
+                          <p className="mt-2 text-xs text-[#64705f]">
+                            As leader, transfer leadership to a teammate to leave, or disband to remove the whole team.
+                          </p>
+                        </fetcher.Form>
+                      ) : (
+                        <fetcher.Form method="post">
+                          <input type="hidden" name="intent" value="leave_team" />
+                          <button
+                            type="submit"
+                            disabled={isSaving || memberCount <= 2}
+                            className="w-full rounded-[0.65rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-sm font-bold text-[#64705f] hover:bg-[#fbf6e9] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Leave team
+                          </button>
+                          {memberCount <= 2 && (
+                            <p className="mt-2 text-xs text-[#64705f]">
+                              Your team needs at least 2 members — ask the leader to disband.
+                            </p>
+                          )}
+                        </fetcher.Form>
+                      )}
                     </div>
                   </div>
                 </>

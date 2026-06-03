@@ -21,6 +21,7 @@ export interface GenericHackathonTeam {
   avatar_url?: string | null;
   member_count: number;
   members: GenericHackathonMember[];
+  leader_id?: number | null;
 }
 
 export interface GenericHackathonSubmission {
@@ -142,6 +143,22 @@ export async function joinGenericTeam(env: Env, request: Request, slug: string, 
   const client = createApiClient(env, request);
   const response = await client.post(appPath(slug, "teams/join/"), { code });
   return response.data;
+}
+
+export async function leaveGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, "team/leave/"), {});
+}
+
+export async function transferTeamLead(env: Env, request: Request, slug: string, memberId: number): Promise<GenericHackathonTeam> {
+  const client = createApiClient(env, request);
+  const response = await client.post(appPath(slug, "team/transfer-lead/"), { member_id: memberId });
+  return response.data;
+}
+
+export async function disbandGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, "team/disband/"), {});
 }
 
 export async function getGenericSubmissions(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonSubmission[]> {
