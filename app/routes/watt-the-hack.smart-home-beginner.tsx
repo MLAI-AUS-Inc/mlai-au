@@ -3,17 +3,20 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFetcher, useLoaderData, type ShouldRevalidateFunctionArgs } from "react-router";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
+  buySmartHomeUpgrade,
   createWattUnitySession,
   deploySmartHome,
   getSmartHomeBlocks,
   type SmartHomeCatalog,
   type SmartHomePipeline,
+  type SmartHomeShopState,
   type SmartHomeState,
   type WattUnitySession,
 } from "~/lib/generic-hackathon";
 import { getEnv } from "~/lib/env.server";
 import { wattClasses } from "~/lib/watt-theme";
 import { SmartHomeControllerV2 } from "~/components/SmartHomeControllerV2";
+import { SmartHomeShop, type ShopFeedback } from "~/components/SmartHomeShop";
 import { SmartHomeStatusBar } from "~/components/SmartHomeStatusBar";
 import type { DeployFeedback } from "~/components/SmartHomeController";
 
@@ -82,6 +85,23 @@ export async function action({ request, context }: Route.ActionArgs) {
         kind: "deploy" as const,
         result: null,
         error: errorMessage(error, "Couldn't deploy to your Smart Home."),
+      };
+    }
+  }
+
+  if (intent === "buy") {
+    const itemId = String(formData.get("item_id") || "").trim();
+    if (!itemId) {
+      return { kind: "buy" as const, result: null, error: "Pick an upgrade to buy." as string | null };
+    }
+    try {
+      const result = await buySmartHomeUpgrade(env, request, itemId);
+      return { kind: "buy" as const, result, error: null as string | null };
+    } catch (error) {
+      return {
+        kind: "buy" as const,
+        result: null,
+        error: errorMessage(error, "Couldn't complete your purchase."),
       };
     }
   }
@@ -182,6 +202,44 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     lastDayRef.current = snap;
   }, [homeState]);
 
+  // Poll the upgrades shop (the game publishes it on day-change + after a purchase).
+  const shopFetcher = useFetcher<SmartHomeShopState>();
+  const shop = shopFetcher.data;
+  const SHOP_PATH = "/watt-the-hack/smart-home-beginner/shop";
+  useEffect(() => {
+    shopFetcher.load(SHOP_PATH);
+    const id = setInterval(() => shopFetcher.load(SHOP_PATH), 6000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const buyFetcher = useFetcher<typeof action>();
+  const buyData = buyFetcher.data;
+  const isBuying = buyFetcher.state !== "idle";
+  const rawBuyingId = buyFetcher.formData?.get("item_id");
+  const buyingId = isBuying && typeof rawBuyingId === "string" ? rawBuyingId : null;
+
+  const buyFeedback: ShopFeedback | null = useMemo(() => {
+    if (isBuying) return null;
+    if (!buyData || buyData.kind !== "buy") return null;
+    if (buyData.result) {
+      const r = buyData.result;
+      if (r.pending) return { ok: true, message: "Purchase sent — your house is applying it…" };
+      if (r.ok) return { ok: true, message: r.message || "Upgrade purchased — it's installed in your house." };
+      return { ok: false, message: r.reason || r.message || "Couldn't buy that upgrade." };
+    }
+    return { ok: false, message: buyData.error || "Couldn't complete your purchase." };
+  }, [buyData, isBuying]);
+
+  // Refresh the shop as soon as a purchase resolves (owned + wallet update).
+  useEffect(() => {
+    if (!isBuying && buyData && buyData.kind === "buy") shopFetcher.load(SHOP_PATH);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [buyData, isBuying]);
+
+  const handleBuy = (itemId: string) =>
+    buyFetcher.submit({ intent: "buy", item_id: itemId }, { method: "post" });
+
   return (
     <div className={wattClasses.page}>
       <div className="mx-auto max-w-7xl space-y-6">
@@ -242,6 +300,8 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
           isDeploying={isDeploying}
           feedback={feedback}
         />
+
+        <SmartHomeShop shop={shop} onBuy={handleBuy} buyingId={buyingId} feedback={buyFeedback} />
       </div>
     </div>
   );
