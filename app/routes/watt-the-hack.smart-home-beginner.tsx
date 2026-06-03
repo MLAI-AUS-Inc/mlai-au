@@ -61,11 +61,10 @@ export async function loader({ request, context }: Route.LoaderArgs) {
   // Gate the whole page (stream + controller + shop) behind a valid 2..6 member team.
   // Redirects to the profile/team page before any Unity stream session is minted.
   await requireValidWattTeam(getEnv(context), request);
-  const [stream, catalog] = await Promise.all([
-    loadSession(request, context),
-    loadCatalog(request, context),
-  ]);
-  return { ...stream, catalog };
+  // T7: do NOT mint a Vagon session on page load -- that allocates a GPU instance just for
+  // visiting the page. The player clicks "Start your house" (the reconnect action) to begin.
+  const catalog = await loadCatalog(request, context);
+  return { session: null as WattUnitySession | null, error: null as string | null, catalog };
 }
 
 export async function action({ request, context }: Route.ActionArgs) {
@@ -147,12 +146,16 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
   // at startup, so we intentionally do NOT refresh on ticket expiry (that would
   // restart the whole stream). We only reconnect on an iframe load error.
 
+  const hasStream = Boolean(session?.stream_url);
+  // T7: before the first "Start your house" click there is no session, so the panel shows a
+  // Start CTA (not a perpetual spinner) and no GPU session is allocated for a passive visit.
+  const notStarted = !hasStream && !isReconnecting && !error;
+
   const statusLabel = useMemo(() => {
-    if (isReconnecting) return "Connecting...";
-    if (!session) return "Connecting...";
-    if (!isFrameLoaded) return "Starting your house...";
+    if (isReconnecting) return "Starting your house...";
+    if (hasStream && !isFrameLoaded) return "Starting your house...";
     return "";
-  }, [isFrameLoaded, isReconnecting, session]);
+  }, [hasStream, isFrameLoaded, isReconnecting]);
 
   const reconnect = () => reconnectFetcher.submit({ intent: "reconnect" }, { method: "post" });
 
@@ -178,6 +181,19 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
   // Poll the live game state for the goal/day/wallet status bar.
   const stateFetcher = useFetcher();
   const homeState = stateFetcher.data as SmartHomeState | undefined;
+
+  // T5: live/offline badge driven by the published-observation freshness the backend reports
+  // (live / stale / no_observation / missing_timestamp from observation_liveness).
+  const liveBadge = useMemo(() => {
+    if (homeState?.live) return { dot: "bg-emerald-400", label: "Live" };
+    const reason = homeState?.live_reason;
+    if (reason === "stale") return { dot: "bg-amber-400", label: "Reconnecting…" };
+    if (reason === "no_observation" || reason === "missing_timestamp")
+      return { dot: "bg-amber-400", label: "Starting…" };
+    if (homeState && homeState.live === false) return { dot: "bg-rose-400", label: "Offline" };
+    return { dot: "bg-amber-400", label: "…" };
+  }, [homeState]);
+
   useEffect(() => {
     const STATE_PATH = "/watt-the-hack/smart-home-beginner/state";
     stateFetcher.load(STATE_PATH);
@@ -274,6 +290,31 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
                 }}
               />
             ) : null}
+
+            {hasStream && (
+              <div className="absolute left-3 top-3 z-10 flex items-center gap-2 rounded-full bg-black/55 px-3 py-1.5 text-xs font-black text-white backdrop-blur-sm">
+                <span className={`h-2 w-2 rounded-full ${liveBadge.dot}`} aria-hidden="true" />
+                {liveBadge.label}
+              </div>
+            )}
+
+            {notStarted && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#121e16]">
+                <div className="mx-4 flex max-w-md flex-col items-center text-center">
+                  <p className="text-lg font-black text-[#fffefa]">Your team's house isn't running yet.</p>
+                  <p className="mt-2 text-sm text-[#cfe0c2]">
+                    Start it to watch your smart home live and deploy your controller.
+                  </p>
+                  <button
+                    type="button"
+                    className={`${wattClasses.buttonPrimary} mt-6 px-6 py-3`}
+                    onClick={reconnect}
+                  >
+                    Start your house
+                  </button>
+                </div>
+              </div>
+            )}
 
             {(statusLabel || error) && (
               <div className="absolute inset-0 flex items-center justify-center bg-[#121e16]">

@@ -1,6 +1,6 @@
 import type { Route } from "./+types/watt-the-hack.profile";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Form, redirect, useActionData, useFetcher, useLoaderData } from "react-router";
+import { Form, redirect, useActionData, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { InformationCircleIcon, PencilIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import AvatarModal from "~/components/AvatarModal";
 import { getCurrentUser, updateUser } from "~/lib/auth";
@@ -144,6 +144,9 @@ function personaClass(persona: string) {
 
 export default function WattTheHackProfile() {
   const { user: initialUser, currentTeam, teams, requests } = useLoaderData<typeof loader>();
+  // T6: surface *why* the Smart Home track bounced them here (requireValidWattTeam redirect).
+  const [searchParams] = useSearchParams();
+  const needsValidTeam = searchParams.get("reason") === "team-size";
   const actionData = useActionData<typeof action>() as ActionResult | undefined;
   const fetcher = useFetcher<ActionResult>();
 
@@ -303,6 +306,13 @@ export default function WattTheHackProfile() {
             </div>
           </div>
         </div>
+
+        {needsValidTeam && (
+          <div className={`mt-6 ${wattClasses.warningAlert}`}>
+            You need a team of 2–6 members to enter the Smart Home Beginner track. Create or join
+            one below, then head back to the game.
+          </div>
+        )}
 
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-flow-col-dense lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2 lg:col-start-1">
