@@ -242,3 +242,52 @@ export async function getSmartHomeState(env: Env, request: Request): Promise<Sma
   const data = (response.data ?? {}) as Partial<SmartHomeState>;
   return { ...data, live: Boolean(data.live) } as SmartHomeState;
 }
+
+export interface SmartHomeShopItem {
+  item_id: string;
+  name: string;
+  summary: string;
+  category: string;
+  cost: number;
+  visible_from_day: number;
+  owned: boolean;
+  can_buy: boolean;
+}
+
+export interface SmartHomeShopState {
+  available: boolean;
+  day?: number | null;
+  wallet?: number | null;
+  items: SmartHomeShopItem[];
+}
+
+export interface SmartHomeBuyResult {
+  ok: boolean;
+  item_id: string;
+  reason?: string | null;
+  message?: string | null;
+  pending?: boolean;
+  command_id?: string;
+}
+
+export async function getSmartHomeShop(env: Env, request: Request): Promise<SmartHomeShopState> {
+  const client = createApiClient(env, request);
+  const response = await client.get("/api/v1/hackathons/watt/smart-home/shop/");
+  const data = (response.data ?? {}) as Partial<SmartHomeShopState>;
+  return {
+    available: Boolean(data.available),
+    day: data.day ?? null,
+    wallet: data.wallet ?? null,
+    items: Array.isArray(data.items) ? (data.items as SmartHomeShopItem[]) : [],
+  };
+}
+
+export async function buySmartHomeUpgrade(
+  env: Env,
+  request: Request,
+  itemId: string,
+): Promise<SmartHomeBuyResult> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/buy/", { item_id: itemId });
+  return response.data as SmartHomeBuyResult;
+}
