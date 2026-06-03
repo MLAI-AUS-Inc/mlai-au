@@ -7,12 +7,16 @@ import { getCurrentUser, updateUser } from "~/lib/auth";
 import { getInitials, generateAvatarUrl } from "~/lib/avatar";
 import { getEnv } from "~/lib/env.server";
 import {
+  acceptJoinRequest,
+  cancelJoinRequest,
   createGenericTeam,
   disbandGenericTeam,
   getGenericCurrentTeam,
   getGenericTeams,
+  getJoinRequests,
   joinGenericTeam,
   leaveGenericTeam,
+  rejectJoinRequest,
   transferTeamLead,
   WATT_THE_HACK_SLUG,
   type GenericHackathonMember,
@@ -61,12 +65,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect("/platform/login?app=watt-the-hack&next=/watt-the-hack/profile");
   }
 
-  const [currentTeam, teams] = await Promise.all([
+  const [currentTeam, teams, requests] = await Promise.all([
     getGenericCurrentTeam(env, request).catch(() => null),
     getGenericTeams(env, request).catch(() => []),
+    getJoinRequests(env, request).catch(() => ({ incoming: [], outgoing: [] })),
   ]);
 
-  return { user: user as WattUser, currentTeam, teams };
+  return { user: user as WattUser, currentTeam, teams, requests };
 }
 
 export async function action({ request, context }: Route.ActionArgs): Promise<ActionResult | null> {
@@ -86,6 +91,15 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Ac
       const code = String(formData.get("code") || "").trim();
       if (!code) return { error: "Team code or name is required." };
       await joinGenericTeam(env, request, WATT_THE_HACK_SLUG, code);
+      return { success: "Request sent! The team leader will review it." };
+    }
+
+    if (intent === "accept_request" || intent === "reject_request" || intent === "cancel_request") {
+      const requestId = Number(formData.get("request_id"));
+      if (!requestId) return { error: "Missing request." };
+      if (intent === "accept_request") await acceptJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
+      else if (intent === "reject_request") await rejectJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
+      else await cancelJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
       return { success: true };
     }
 
@@ -129,7 +143,7 @@ function personaClass(persona: string) {
 }
 
 export default function WattTheHackProfile() {
-  const { user: initialUser, currentTeam, teams } = useLoaderData<typeof loader>();
+  const { user: initialUser, currentTeam, teams, requests } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>() as ActionResult | undefined;
   const fetcher = useFetcher<ActionResult>();
 
@@ -206,6 +220,8 @@ export default function WattTheHackProfile() {
   const currentUserId = initialUser.id ?? null;
   const leaderId = currentTeam?.leader_id ?? null;
   const isTeamLeader = leaderId != null && currentUserId != null && leaderId === currentUserId;
+  const incomingRequests = requests?.incoming ?? [];
+  const outgoingRequests = requests?.outgoing ?? [];
 
   const fullName = initialUser.full_name || [initialUser.first_name, initialUser.last_name].filter(Boolean).join(" ") || initialUser.email;
   const isSaving = fetcher.state !== "idle";
@@ -306,7 +322,9 @@ export default function WattTheHackProfile() {
                   <div className={`mb-4 ${wattClasses.errorAlert}`}>{actionData.error}</div>
                 )}
                 {actionData?.success && !actionData?.profileUpdated && (
-                  <div className={`mb-4 ${wattClasses.successAlert}`}>Team operation successful.</div>
+                  <div className={`mb-4 ${wattClasses.successAlert}`}>
+                    {typeof actionData.success === "string" ? actionData.success : "Team operation successful."}
+                  </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -402,6 +420,36 @@ export default function WattTheHackProfile() {
                     </Form>
                   </div>
                 </div>
+                {outgoingRequests.length > 0 && (
+                  <div className="mt-8 border-t border-[#e8dfcf] pt-6">
+                    <h3 className="mb-3 text-sm font-bold text-[#64705f]">Your pending requests</h3>
+                    <ul className="space-y-2">
+                      {outgoingRequests.map((req) => (
+                        <li
+                          key={req.id}
+                          className="flex items-center justify-between gap-3 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[#121e16]">{req.team_name}</p>
+                            <p className="text-xs text-[#64705f]">Waiting for the team leader to accept.</p>
+                          </div>
+                          <fetcher.Form method="post" className="shrink-0">
+                            <input type="hidden" name="request_id" value={req.id} />
+                            <button
+                              type="submit"
+                              name="intent"
+                              value="cancel_request"
+                              disabled={isSaving}
+                              className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2.5 py-1 text-xs font-bold text-[#64705f] hover:bg-[#fbf6e9] disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </fetcher.Form>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -668,6 +716,56 @@ export default function WattTheHackProfile() {
                         )}
                       </ul>
                     </div>
+
+                    {isTeamLeader && incomingRequests.length > 0 && (
+                      <div className="mt-6 border-t border-[#e8dfcf] pt-4">
+                        <h3 className="flex items-center gap-1.5 text-sm font-bold text-[#64705f]">
+                          Requests to join
+                          <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#df5047] px-1.5 text-[10px] font-black text-white">
+                            {incomingRequests.length}
+                          </span>
+                        </h3>
+                        <ul className="mt-3 space-y-3">
+                          {incomingRequests.map((req) => (
+                            <li key={req.id} className="flex items-center gap-2">
+                              <img
+                                src={req.user.avatar_url || generateAvatarUrl(getInitials(req.user.full_name || req.user.email))}
+                                alt=""
+                                className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[#c9dbb8]"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-black text-[#121e16]">{req.user.full_name || req.user.email}</p>
+                                <p className="truncate text-xs text-[#64705f]">{req.user.email}</p>
+                              </div>
+                              <fetcher.Form method="post" className="shrink-0">
+                                <input type="hidden" name="request_id" value={req.id} />
+                                <button
+                                  type="submit"
+                                  name="intent"
+                                  value="accept_request"
+                                  disabled={isSaving}
+                                  className="rounded-[0.5rem] bg-[#2f6f2c] px-2.5 py-1 text-xs font-black text-white hover:bg-[#155420] disabled:opacity-50"
+                                >
+                                  Accept
+                                </button>
+                              </fetcher.Form>
+                              <fetcher.Form method="post" className="shrink-0">
+                                <input type="hidden" name="request_id" value={req.id} />
+                                <button
+                                  type="submit"
+                                  name="intent"
+                                  value="reject_request"
+                                  disabled={isSaving}
+                                  className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2 py-1 text-xs font-bold text-[#9f2f28] hover:bg-[#fff1ef] disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </fetcher.Form>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
 
                     <div className="mt-6 border-t border-[#e8dfcf] pt-4">
                       {isTeamLeader ? (

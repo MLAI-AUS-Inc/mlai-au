@@ -24,6 +24,19 @@ export interface GenericHackathonTeam {
   leader_id?: number | null;
 }
 
+export interface GenericHackathonJoinRequest {
+  id: number;
+  user: { id: number; full_name: string; email: string; avatar_url?: string | null };
+  team_id: number;
+  team_name: string;
+  created_at: string;
+}
+
+export interface GenericHackathonRequests {
+  incoming: GenericHackathonJoinRequest[];
+  outgoing: GenericHackathonJoinRequest[];
+}
+
 export interface GenericHackathonSubmission {
   id: number;
   title: string;
@@ -139,10 +152,16 @@ export async function createGenericTeam(env: Env, request: Request, slug: string
   return response.data.team;
 }
 
-export async function joinGenericTeam(env: Env, request: Request, slug: string, code: string): Promise<GenericHackathonTeam> {
+export async function joinGenericTeam(
+  env: Env,
+  request: Request,
+  slug: string,
+  code: string,
+): Promise<{ pending?: boolean; team_name?: string; request_id?: number }> {
+  // Now creates a *join request* the team leader must accept — no longer an instant join.
   const client = createApiClient(env, request);
   const response = await client.post(appPath(slug, "teams/join/"), { code });
-  return response.data;
+  return response.data || {};
 }
 
 export async function leaveGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
@@ -159,6 +178,28 @@ export async function transferTeamLead(env: Env, request: Request, slug: string,
 export async function disbandGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
   const client = createApiClient(env, request);
   await client.post(appPath(slug, "team/disband/"), {});
+}
+
+export async function getJoinRequests(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonRequests> {
+  const client = createApiClient(env, request);
+  const response = await client.get(appPath(slug, "team/requests/"));
+  const data = (response.data || {}) as Partial<GenericHackathonRequests>;
+  return { incoming: data.incoming || [], outgoing: data.outgoing || [] };
+}
+
+export async function acceptJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/accept/`), {});
+}
+
+export async function rejectJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/reject/`), {});
+}
+
+export async function cancelJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/cancel/`), {});
 }
 
 export async function getGenericSubmissions(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonSubmission[]> {
