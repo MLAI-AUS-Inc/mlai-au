@@ -120,8 +120,25 @@ const SCENARIOS = [
   { id: "ai_grid_shock", name: "Level 3: AI Grid Shock" },
   { id: "operators_mandate", name: "Level 4: The Operator's Mandate" },
   { id: "cybersecurity_sandbox", name: "Level 5: Cybersecurity sandbox" },
-  { id: "gauntlet", name: "Level 6: The Gauntlet" },
+  { id: "gauntlet", name: "FINALE: The Gauntlet — 3x weight, 1 submission" },
 ];
+
+// Per-scenario hard submission cap, mirroring `_enforce_scenario_cap` in
+// the eval-platform gateway. The Gauntlet is one-shot; the rest are
+// standard 3-attempt scenarios. Keep this in sync with the gateway.
+const SCENARIO_SUBMISSION_CAP: Record<string, number> = {
+  gauntlet: 1,
+};
+const DEFAULT_SUBMISSION_CAP = 3;
+
+function capFor(scenarioId: string): number {
+  return SCENARIO_SUBMISSION_CAP[scenarioId] ?? DEFAULT_SUBMISSION_CAP;
+}
+
+// Scenarios we want to surface with extra prominence on the picker. Today
+// the Gauntlet is the only one — but the shape is here so we can add
+// future headline events without touching layout code.
+const HEADLINE_SCENARIO_IDS = new Set<string>(["gauntlet"]);
 
 export default function WattTheHackSubmissionPortal() {
   const [teamId, setTeamId] = useState("");
@@ -140,12 +157,28 @@ export default function WattTheHackSubmissionPortal() {
   // Set on a successful accept so the tracker below can poll status. Cleared
   // when the user changes the form, so a stale tracker never lingers.
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
+  // Pending submission gating — when the user hits the submit button we
+  // first surface a confirmation modal that summarises how many attempts
+  // they have left for the chosen scenario (and, on the Gauntlet, that
+  // this is a one-shot, 3x-weighted finale). The actual upload only fires
+  // after the user confirms.
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Cached count of completed/in-flight submissions per scenario for the
+  // team, derived from the recent-submissions endpoint. Used by the
+  // confirmation modal AND by an inline "attempts remaining" chip on the
+  // scenario picker so the cap is visible before the user clicks submit.
+  const [scenarioUsage, setScenarioUsage] = useState<Record<string, number>>({});
 
   // Live entrypoint detection — drives both the inline badge under the editor
   // and the metadata.json the zip carries up to the gateway.
   const detected = useMemo(() => detectEntrypoint(controllerCode), [controllerCode]);
   const templates = useMemo(() => getTemplatesForScenario(scenarioId), [scenarioId]);
   const scenarioNeedsLLM = LLM_SCENARIO_IDS.has(scenarioId);
+
+  const scenarioCap = capFor(scenarioId);
+  const scenarioUsed = scenarioUsage[scenarioId] ?? 0;
+  const scenarioRemaining = Math.max(0, scenarioCap - scenarioUsed);
+  const isHeadline = HEADLINE_SCENARIO_IDS.has(scenarioId);
 
   const loadTemplate = (tpl: ControllerTemplate) => {
     setControllerCode(tpl.source);
@@ -154,7 +187,52 @@ export default function WattTheHackSubmissionPortal() {
     setRequirements("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Poll the gateway for the team's submission history and bucket the
+  // counts by scenario so the modal + inline chip can show "X of Y
+  // attempts used" without hitting the upload path. Only fetches when
+  // both credentials look plausible.
+  useEffect(() => {
+    if (!UUID_RE.test(teamId.trim()) || !teamToken.trim()) {
+      setScenarioUsage({});
+      return;
+    }
+    let cancelled = false;
+    const tick = async () => {
+      try {
+        const res = await fetch(
+          `/watt-the-hack/city-of-melbourne-advanced-recent-submissions-data?team_id=${encodeURIComponent(teamId.trim())}`,
+          {
+            headers: {
+              "X-Team-Token": teamToken.trim(),
+              Accept: "application/json",
+            },
+          },
+        );
+        if (!res.ok) return;
+        const rows = (await res.json()) as Array<{ scenario_id: string | null }>;
+        if (cancelled) return;
+        const counts: Record<string, number> = {};
+        for (const r of rows) {
+          if (!r.scenario_id) continue;
+          counts[r.scenario_id] = (counts[r.scenario_id] ?? 0) + 1;
+        }
+        setScenarioUsage(counts);
+      } catch {
+        // Soft-fail — the count is informational; the gateway is still
+        // the authoritative cap. Don't block the form on a polling miss.
+      }
+    };
+    void tick();
+    // Refresh after each successful accept (activeSubmissionId rotates).
+    return () => {
+      cancelled = true;
+    };
+  }, [teamId, teamToken, activeSubmissionId]);
+
+  // Form-validation gate before we open the modal. The actual upload
+  // lives in performSubmit() below — split so the modal's "Confirm"
+  // button can call it directly.
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamId || !teamToken || !strategyName || !controllerCode) {
       setStatus("error");
@@ -166,7 +244,20 @@ export default function WattTheHackSubmissionPortal() {
       setMessage(detected.reason);
       return;
     }
+    if (scenarioRemaining <= 0) {
+      setStatus("error");
+      setMessage(
+        `You have used all ${scenarioCap} submission${scenarioCap === 1 ? "" : "s"} for this scenario. The cap is enforced server-side.`,
+      );
+      return;
+    }
+    setStatus("idle");
+    setMessage("");
+    setConfirmOpen(true);
+  };
 
+  const performSubmit = async () => {
+    setConfirmOpen(false);
     setIsSubmitting(true);
     setStatus("idle");
     setMessage("");
@@ -320,6 +411,37 @@ export default function WattTheHackSubmissionPortal() {
                   </svg>
                 </div>
               </div>
+              {/* Attempts-remaining chip — shows the per-scenario cap and
+                  how many submissions the team has already burned, so the
+                  Gauntlet's one-shot rule is visible *before* the user
+                  hits submit. */}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span
+                  className={
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11.5px] font-bold " +
+                    (scenarioRemaining === 0
+                      ? "border border-[#df5047]/30 bg-[#fff1ef] text-[#9f2f28]"
+                      : isHeadline
+                        ? "border border-[#a16f14]/30 bg-[#fff8dc] text-[#6f4b08]"
+                        : "border border-[#2f6f2c]/20 bg-[#edf5df] text-[#155420]")
+                  }
+                >
+                  {scenarioRemaining} of {scenarioCap} submission{scenarioCap === 1 ? "" : "s"} remaining
+                </span>
+                {isHeadline ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#a16f14]/40 bg-[#fff8dc] px-3 py-1 text-[11.5px] font-black uppercase tracking-[0.14em] text-[#6f4b08]">
+                    Finale · weighted 3x
+                  </span>
+                ) : null}
+              </div>
+              {isHeadline ? (
+                <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#a16f14]/30 bg-[#fff8dc] p-3">
+                  <BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6f4b08]" />
+                  <p className="text-[12.5px] leading-snug text-[#6f4b08]">
+                    <strong>The Gauntlet is the championship round.</strong> You get exactly one submission, and the score it earns counts <strong>3x</strong> on the leaderboard. Make it count — local-playtest the controller end-to-end before uploading.
+                  </p>
+                </div>
+              ) : null}
               {scenarioNeedsLLM ? (
                 <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#2f6f2c]/20 bg-[#edf5df] p-3">
                   <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#155420]" />

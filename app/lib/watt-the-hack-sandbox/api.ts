@@ -29,8 +29,8 @@ const baseUrl = (): string => {
     ) {
       return DEFAULT_BASE_URL;
     }
-    // Production: WTH sandbox API is hosted at the Vercel deployment
-    return "https://watt-the-hack.vercel.app";
+    // Production: WTH sim API is served by the Django backend
+    return "https://api.mlai.au/api/v1/hackathons/watt-the-hack";
   }
 
   return DEFAULT_BASE_URL;
@@ -59,11 +59,11 @@ export async function fetchInit(
   const body: Record<string, unknown> = {};
   if (steps) body.steps = steps;
   if (scenarioId) body.scenario_id = scenarioId;
-  return post<InitResponse>("/sim/init", body);
+  return post<InitResponse>("/sim/init/", body);
 }
 
 export async function fetchScenarios(): Promise<ScenarioSummary[]> {
-  const response = await fetch(`${baseUrl()}/sim/scenarios`, {
+  const response = await fetch(`${baseUrl()}/sim/scenarios/`, {
     method: "GET",
     cache: "no-store",
   });
@@ -77,7 +77,7 @@ export async function fetchStep(
   state: SimulationState,
   controller: ControllerSpec,
 ): Promise<StepResponse> {
-  return post<StepResponse>("/sim/step", { state, controller });
+  return post<StepResponse>("/sim/step/", { state, controller });
 }
 
 export async function fetchRun(
@@ -85,5 +85,5 @@ export async function fetchRun(
   controller: ControllerSpec,
   steps: number,
 ): Promise<RunResponse> {
-  return post<RunResponse>("/sim/run", { state, controller, steps });
+  return post<RunResponse>("/sim/run/", { state, controller, steps });
 }
