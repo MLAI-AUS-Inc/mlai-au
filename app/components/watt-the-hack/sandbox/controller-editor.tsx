@@ -165,7 +165,7 @@ export function ControllerEditor() {
                   language="python"
                   theme="vs"
                   value={draft}
-                  onChange={(value: string | undefined) => {
+                  onChange={(value: string | undefined) => { 
                     const next = value ?? "";
                     setDraft(next);
                     setDirty(next !== controllerSource);
