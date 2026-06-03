@@ -310,21 +310,21 @@ function CodeReference() {
             <span className="text-muted">time</span> · int step (0–{totalSteps - 1}, {dtMins}min)
           </li>
           <li>
-            <span className="text-muted">demand</span> · MW
+            <span className="text-muted">demand</span> · MW (current step only)
           </li>
           <li>
-            <span className="text-muted">solar</span> · MW
+            <span className="text-muted">solar</span> · MW (current step only)
           </li>
           <li>
-            <span className="text-muted">soc</span> · 0–1
+            <span className="text-muted">soc</span> · 0–1 (current step only)
           </li>
           <li>
-            <span className="text-muted">price</span> · $/MWh import
+            <span className="text-muted">price</span> · $/MWh import (current step)
           </li>
           {hasForecast ? (
             <li>
               <span className="text-muted">forecast</span> · noisy lookahead
-              dict
+              dict (up to 24h ahead)
             </li>
           ) : null}
           {hasBudget ? (
@@ -408,6 +408,14 @@ ${actionLines.join("\n")}
           sum, tuple, zip
         </span>
         . 100ms time limit per step.
+      </section>
+
+      <section>
+        <div className="mb-1 text-xs font-semibold text-ink">Controller Design</div>
+        <ul className="space-y-0.5">
+          <li>The evaluator auto-detects your entrypoint (a `controller(state)` function or a class with a `step(state)` method).</li>
+          <li>To persist memory across iterations (e.g., arrays or tracking variables), use a class with `self` or module-level variables.</li>
+        </ul>
       </section>
     </div>
   );
