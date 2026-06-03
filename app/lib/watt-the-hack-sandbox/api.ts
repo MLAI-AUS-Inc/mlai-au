@@ -9,8 +9,32 @@ import type {
 
 const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
 
-const baseUrl = (): string =>
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL;
+// Resolve the WTH sandbox FastAPI backend URL.
+// - Vite uses import.meta.env, NOT process.env (Next.js convention).
+// - On mlai.au production, the sandbox proxies through the Vercel-hosted
+//   WTH frontend which has the FastAPI backend behind it.
+const baseUrl = (): string => {
+  // Explicit override always wins (set in .dev.vars or Cloudflare dashboard)
+  const configured = (typeof import.meta !== "undefined" && import.meta.env?.VITE_WTH_SANDBOX_API_URL) || "";
+  if (configured) return configured;
+
+  // Hostname-based resolution (mirrors app/lib/api.ts pattern)
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname.endsWith(".localhost")
+    ) {
+      return DEFAULT_BASE_URL;
+    }
+    // Production: WTH sandbox API is hosted at the Vercel deployment
+    return "https://watt-the-hack.vercel.app";
+  }
+
+  return DEFAULT_BASE_URL;
+};
 
 async function post<T>(path: string, body: unknown): Promise<T> {
   const response = await fetch(`${baseUrl()}${path}`, {

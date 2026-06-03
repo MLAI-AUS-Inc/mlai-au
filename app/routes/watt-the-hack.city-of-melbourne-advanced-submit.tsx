@@ -301,18 +301,25 @@ export default function WattTheHackSubmissionPortal() {
           {/* Configuration Section */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label className={wattClasses.label + " mb-2"}>Target Scenario</label>
-              <select
-                value={scenarioId}
-                onChange={(e) => setScenarioId(e.target.value)}
-                className={wattClasses.input + " appearance-none"}
-              >
-                {SCENARIOS.map((sc) => (
-                  <option key={sc.id} value={sc.id}>
-                    {sc.name}
-                  </option>
-                ))}
-              </select>
+              <label className={wattClasses.label + " mb-2 block"}>Target Scenario</label>
+              <div className="relative">
+                <select
+                  value={scenarioId}
+                  onChange={(e) => setScenarioId(e.target.value)}
+                  className={wattClasses.input + " appearance-none pr-10"}
+                >
+                  {SCENARIOS.map((sc) => (
+                    <option key={sc.id} value={sc.id}>
+                      {sc.name}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-[#2f6f2c]">
+                  <svg className="h-5 w-5 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
               {scenarioNeedsLLM ? (
                 <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#2f6f2c]/20 bg-[#edf5df] p-3">
                   <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#155420]" />
