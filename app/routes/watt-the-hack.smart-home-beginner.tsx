@@ -7,6 +7,7 @@ import {
   createWattUnitySession,
   deploySmartHome,
   getSmartHomeBlocks,
+  requireValidWattTeam,
   type SmartHomeCatalog,
   type SmartHomePipeline,
   type SmartHomeShopState,
@@ -57,6 +58,9 @@ async function loadCatalog(request: Request, context: Route.LoaderArgs["context"
 }
 
 export async function loader({ request, context }: Route.LoaderArgs) {
+  // Gate the whole page (stream + controller + shop) behind a valid 2..6 member team.
+  // Redirects to the profile/team page before any Unity stream session is minted.
+  await requireValidWattTeam(getEnv(context), request);
   const [stream, catalog] = await Promise.all([
     loadSession(request, context),
     loadCatalog(request, context),
