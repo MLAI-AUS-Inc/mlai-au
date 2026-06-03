@@ -1,6 +1,7 @@
 import type { Route } from "./+types/watt-the-hack";
 import { Outlet, redirect, useLoaderData } from "react-router";
 import GenericHackathonAppLayout from "~/components/GenericHackathonAppLayout";
+import WattNotificationBell from "~/components/WattNotificationBell";
 import { getCurrentUser } from "~/lib/auth";
 import { getEnv } from "~/lib/env.server";
 import { WATT_THE_HACK_SLUG } from "~/lib/generic-hackathon";
@@ -36,6 +37,7 @@ export default function WattTheHackApp() {
         basePath: BASE_PATH,
         theme: "watt",
       }}
+      headerAccessory={<WattNotificationBell basePath={BASE_PATH} />}
     >
       <Outlet />
     </GenericHackathonAppLayout>

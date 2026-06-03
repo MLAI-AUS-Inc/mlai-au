@@ -1,16 +1,23 @@
 import type { Route } from "./+types/watt-the-hack.profile";
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Form, redirect, useActionData, useFetcher, useLoaderData } from "react-router";
+import { Form, redirect, useActionData, useFetcher, useLoaderData, useSearchParams } from "react-router";
 import { InformationCircleIcon, PencilIcon, UserGroupIcon } from "@heroicons/react/24/outline";
 import AvatarModal from "~/components/AvatarModal";
 import { getCurrentUser, updateUser } from "~/lib/auth";
 import { getInitials, generateAvatarUrl } from "~/lib/avatar";
 import { getEnv } from "~/lib/env.server";
 import {
+  acceptJoinRequest,
+  cancelJoinRequest,
   createGenericTeam,
+  disbandGenericTeam,
   getGenericCurrentTeam,
   getGenericTeams,
+  getJoinRequests,
   joinGenericTeam,
+  leaveGenericTeam,
+  rejectJoinRequest,
+  transferTeamLead,
   WATT_THE_HACK_SLUG,
   type GenericHackathonMember,
   type GenericHackathonTeam,
@@ -58,12 +65,13 @@ export async function loader({ request, context }: Route.LoaderArgs) {
     throw redirect("/platform/login?app=watt-the-hack&next=/watt-the-hack/profile");
   }
 
-  const [currentTeam, teams] = await Promise.all([
+  const [currentTeam, teams, requests] = await Promise.all([
     getGenericCurrentTeam(env, request).catch(() => null),
     getGenericTeams(env, request).catch(() => []),
+    getJoinRequests(env, request).catch(() => ({ incoming: [], outgoing: [] })),
   ]);
 
-  return { user: user as WattUser, currentTeam, teams };
+  return { user: user as WattUser, currentTeam, teams, requests };
 }
 
 export async function action({ request, context }: Route.ActionArgs): Promise<ActionResult | null> {
@@ -83,6 +91,32 @@ export async function action({ request, context }: Route.ActionArgs): Promise<Ac
       const code = String(formData.get("code") || "").trim();
       if (!code) return { error: "Team code or name is required." };
       await joinGenericTeam(env, request, WATT_THE_HACK_SLUG, code);
+      return { success: "Request sent! The team leader will review it." };
+    }
+
+    if (intent === "accept_request" || intent === "reject_request" || intent === "cancel_request") {
+      const requestId = Number(formData.get("request_id"));
+      if (!requestId) return { error: "Missing request." };
+      if (intent === "accept_request") await acceptJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
+      else if (intent === "reject_request") await rejectJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
+      else await cancelJoinRequest(env, request, WATT_THE_HACK_SLUG, requestId);
+      return { success: true };
+    }
+
+    if (intent === "leave_team") {
+      await leaveGenericTeam(env, request, WATT_THE_HACK_SLUG);
+      return { success: true };
+    }
+
+    if (intent === "transfer_lead") {
+      const memberId = Number(formData.get("member_id"));
+      if (!memberId) return { error: "Pick a teammate to make leader." };
+      await transferTeamLead(env, request, WATT_THE_HACK_SLUG, memberId);
+      return { success: true };
+    }
+
+    if (intent === "disband_team") {
+      await disbandGenericTeam(env, request, WATT_THE_HACK_SLUG);
       return { success: true };
     }
 
@@ -109,7 +143,10 @@ function personaClass(persona: string) {
 }
 
 export default function WattTheHackProfile() {
-  const { user: initialUser, currentTeam, teams } = useLoaderData<typeof loader>();
+  const { user: initialUser, currentTeam, teams, requests } = useLoaderData<typeof loader>();
+  // T6: surface *why* the Smart Home track bounced them here (requireValidWattTeam redirect).
+  const [searchParams] = useSearchParams();
+  const needsValidTeam = searchParams.get("reason") === "team-size";
   const actionData = useActionData<typeof action>() as ActionResult | undefined;
   const fetcher = useFetcher<ActionResult>();
 
@@ -183,6 +220,11 @@ export default function WattTheHackProfile() {
   const memberCount = currentTeam?.member_count ?? currentTeam?.members?.length ?? 0;
   const isValidTeamSize = memberCount >= 2 && memberCount <= 6;
   const teamMembers = currentTeam?.members || [];
+  const currentUserId = initialUser.id ?? null;
+  const leaderId = currentTeam?.leader_id ?? null;
+  const isTeamLeader = leaderId != null && currentUserId != null && leaderId === currentUserId;
+  const incomingRequests = requests?.incoming ?? [];
+  const outgoingRequests = requests?.outgoing ?? [];
 
   const fullName = initialUser.full_name || [initialUser.first_name, initialUser.last_name].filter(Boolean).join(" ") || initialUser.email;
   const isSaving = fetcher.state !== "idle";
@@ -265,6 +307,13 @@ export default function WattTheHackProfile() {
           </div>
         </div>
 
+        {needsValidTeam && (
+          <div className={`mt-6 ${wattClasses.warningAlert}`}>
+            You need a team of 2–6 members to enter the Smart Home Beginner track. Create or join
+            one below, then head back to the game.
+          </div>
+        )}
+
         <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-flow-col-dense lg:grid-cols-3">
           <div className="space-y-6 lg:col-span-2 lg:col-start-1">
             <section aria-labelledby="team-management-title" className={wattClasses.panel}>
@@ -283,7 +332,9 @@ export default function WattTheHackProfile() {
                   <div className={`mb-4 ${wattClasses.errorAlert}`}>{actionData.error}</div>
                 )}
                 {actionData?.success && !actionData?.profileUpdated && (
-                  <div className={`mb-4 ${wattClasses.successAlert}`}>Team operation successful.</div>
+                  <div className={`mb-4 ${wattClasses.successAlert}`}>
+                    {typeof actionData.success === "string" ? actionData.success : "Team operation successful."}
+                  </div>
                 )}
 
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
@@ -379,6 +430,36 @@ export default function WattTheHackProfile() {
                     </Form>
                   </div>
                 </div>
+                {outgoingRequests.length > 0 && (
+                  <div className="mt-8 border-t border-[#e8dfcf] pt-6">
+                    <h3 className="mb-3 text-sm font-bold text-[#64705f]">Your pending requests</h3>
+                    <ul className="space-y-2">
+                      {outgoingRequests.map((req) => (
+                        <li
+                          key={req.id}
+                          className="flex items-center justify-between gap-3 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-black text-[#121e16]">{req.team_name}</p>
+                            <p className="text-xs text-[#64705f]">Waiting for the team leader to accept.</p>
+                          </div>
+                          <fetcher.Form method="post" className="shrink-0">
+                            <input type="hidden" name="request_id" value={req.id} />
+                            <button
+                              type="submit"
+                              name="intent"
+                              value="cancel_request"
+                              disabled={isSaving}
+                              className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2.5 py-1 text-xs font-bold text-[#64705f] hover:bg-[#fbf6e9] disabled:opacity-50"
+                            >
+                              Cancel
+                            </button>
+                          </fetcher.Form>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </section>
 
@@ -598,7 +679,14 @@ export default function WattTheHackProfile() {
                                     />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <p className="truncate text-sm font-black text-[#121e16]">{member.full_name || member.email}</p>
+                                    <p className="truncate text-sm font-black text-[#121e16]">
+                                      {member.full_name || member.email}
+                                      {member.id === leaderId && (
+                                        <span className="ml-2 inline-flex items-center rounded-full border border-[#c9dbb8] bg-[#e6efd7] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#155420]">
+                                          Leader
+                                        </span>
+                                      )}
+                                    </p>
                                     <div className="mt-1 flex flex-wrap gap-1">
                                       {member.personas && member.personas.length > 0 ? (
                                         member.personas.map((persona) => (
@@ -614,6 +702,19 @@ export default function WattTheHackProfile() {
                                       )}
                                     </div>
                                   </div>
+                                  {isTeamLeader && member.id !== leaderId && (
+                                    <fetcher.Form method="post" className="shrink-0">
+                                      <input type="hidden" name="intent" value="transfer_lead" />
+                                      <input type="hidden" name="member_id" value={member.id} />
+                                      <button
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2.5 py-1 text-xs font-bold text-[#155420] hover:bg-[#e6efd7] disabled:opacity-50"
+                                      >
+                                        Make leader
+                                      </button>
+                                    </fetcher.Form>
+                                  )}
                                 </div>
                               </li>
                             );
@@ -624,6 +725,95 @@ export default function WattTheHackProfile() {
                           </li>
                         )}
                       </ul>
+                    </div>
+
+                    {isTeamLeader && incomingRequests.length > 0 && (
+                      <div className="mt-6 border-t border-[#e8dfcf] pt-4">
+                        <h3 className="flex items-center gap-1.5 text-sm font-bold text-[#64705f]">
+                          Requests to join
+                          <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#df5047] px-1.5 text-[10px] font-black text-white">
+                            {incomingRequests.length}
+                          </span>
+                        </h3>
+                        <ul className="mt-3 space-y-3">
+                          {incomingRequests.map((req) => (
+                            <li key={req.id} className="flex items-center gap-2">
+                              <img
+                                src={req.user.avatar_url || generateAvatarUrl(getInitials(req.user.full_name || req.user.email))}
+                                alt=""
+                                className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-[#c9dbb8]"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-black text-[#121e16]">{req.user.full_name || req.user.email}</p>
+                                <p className="truncate text-xs text-[#64705f]">{req.user.email}</p>
+                              </div>
+                              <fetcher.Form method="post" className="shrink-0">
+                                <input type="hidden" name="request_id" value={req.id} />
+                                <button
+                                  type="submit"
+                                  name="intent"
+                                  value="accept_request"
+                                  disabled={isSaving}
+                                  className="rounded-[0.5rem] bg-[#2f6f2c] px-2.5 py-1 text-xs font-black text-white hover:bg-[#155420] disabled:opacity-50"
+                                >
+                                  Accept
+                                </button>
+                              </fetcher.Form>
+                              <fetcher.Form method="post" className="shrink-0">
+                                <input type="hidden" name="request_id" value={req.id} />
+                                <button
+                                  type="submit"
+                                  name="intent"
+                                  value="reject_request"
+                                  disabled={isSaving}
+                                  className="rounded-[0.5rem] border border-[#e8dfcf] bg-[#fffefa] px-2 py-1 text-xs font-bold text-[#9f2f28] hover:bg-[#fff1ef] disabled:opacity-50"
+                                >
+                                  Reject
+                                </button>
+                              </fetcher.Form>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    <div className="mt-6 border-t border-[#e8dfcf] pt-4">
+                      {isTeamLeader ? (
+                        <fetcher.Form
+                          method="post"
+                          onSubmit={(e) => {
+                            if (!window.confirm("Disband this team? Every member will be removed.")) e.preventDefault();
+                          }}
+                        >
+                          <input type="hidden" name="intent" value="disband_team" />
+                          <button
+                            type="submit"
+                            disabled={isSaving}
+                            className="w-full rounded-[0.65rem] border border-[#df5047]/40 bg-[#fff1ef] px-3 py-2 text-sm font-bold text-[#9f2f28] hover:bg-[#ffe4e0] disabled:opacity-50"
+                          >
+                            Disband team
+                          </button>
+                          <p className="mt-2 text-xs text-[#64705f]">
+                            As leader, transfer leadership to a teammate to leave, or disband to remove the whole team.
+                          </p>
+                        </fetcher.Form>
+                      ) : (
+                        <fetcher.Form method="post">
+                          <input type="hidden" name="intent" value="leave_team" />
+                          <button
+                            type="submit"
+                            disabled={isSaving || memberCount <= 2}
+                            className="w-full rounded-[0.65rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 text-sm font-bold text-[#64705f] hover:bg-[#fbf6e9] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Leave team
+                          </button>
+                          {memberCount <= 2 && (
+                            <p className="mt-2 text-xs text-[#64705f]">
+                              Your team needs at least 2 members — ask the leader to disband.
+                            </p>
+                          )}
+                        </fetcher.Form>
+                      )}
                     </div>
                   </div>
                 </>

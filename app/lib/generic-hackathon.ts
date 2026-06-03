@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import { createApiClient, getBaseUrl } from "~/lib/api";
 import type { Announcement } from "~/components/Announcements";
 import type { Hackathon } from "~/services/hackathon";
@@ -20,6 +21,20 @@ export interface GenericHackathonTeam {
   avatar_url?: string | null;
   member_count: number;
   members: GenericHackathonMember[];
+  leader_id?: number | null;
+}
+
+export interface GenericHackathonJoinRequest {
+  id: number;
+  user: { id: number; full_name: string; email: string; avatar_url?: string | null };
+  team_id: number;
+  team_name: string;
+  created_at: string;
+}
+
+export interface GenericHackathonRequests {
+  incoming: GenericHackathonJoinRequest[];
+  outgoing: GenericHackathonJoinRequest[];
 }
 
 export interface GenericHackathonSubmission {
@@ -103,6 +118,30 @@ export async function getGenericCurrentTeam(env: Env, request: Request, slug = W
   return asGenericTeam(response.data);
 }
 
+/** A Watt team may enter the streamed game only with 2..6 members (matches the backend gate). */
+export const WATT_MIN_TEAM_MEMBERS = 2;
+export const WATT_MAX_TEAM_MEMBERS = 6;
+
+export function isValidWattTeam(team: GenericHackathonTeam | null): boolean {
+  if (!team) return false;
+  const count = team.member_count ?? team.members?.length ?? 0;
+  return count >= WATT_MIN_TEAM_MEMBERS && count <= WATT_MAX_TEAM_MEMBERS;
+}
+
+/**
+ * Loader guard: the smart-home game (stream + controller + shop) is only reachable by a team of
+ * 2..6 members. Redirects to the profile/team page otherwise, and returns the team when valid.
+ */
+export async function requireValidWattTeam(env: Env, request: Request): Promise<GenericHackathonTeam> {
+  const team = await getGenericCurrentTeam(env, request);
+  if (!isValidWattTeam(team)) {
+    // Carry a reason so the profile page can explain why they landed there
+    // instead of dumping them on the team page with no context.
+    throw redirect("/watt-the-hack/profile?reason=team-size");
+  }
+  return team as GenericHackathonTeam;
+}
+
 export async function getGenericTeams(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonTeam[]> {
   const client = createApiClient(env, request);
   const response = await client.get(appPath(slug, "teams/"));
@@ -115,10 +154,54 @@ export async function createGenericTeam(env: Env, request: Request, slug: string
   return response.data.team;
 }
 
-export async function joinGenericTeam(env: Env, request: Request, slug: string, code: string): Promise<GenericHackathonTeam> {
+export async function joinGenericTeam(
+  env: Env,
+  request: Request,
+  slug: string,
+  code: string,
+): Promise<{ pending?: boolean; team_name?: string; request_id?: number }> {
+  // Now creates a *join request* the team leader must accept — no longer an instant join.
   const client = createApiClient(env, request);
   const response = await client.post(appPath(slug, "teams/join/"), { code });
+  return response.data || {};
+}
+
+export async function leaveGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, "team/leave/"), {});
+}
+
+export async function transferTeamLead(env: Env, request: Request, slug: string, memberId: number): Promise<GenericHackathonTeam> {
+  const client = createApiClient(env, request);
+  const response = await client.post(appPath(slug, "team/transfer-lead/"), { member_id: memberId });
   return response.data;
+}
+
+export async function disbandGenericTeam(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, "team/disband/"), {});
+}
+
+export async function getJoinRequests(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonRequests> {
+  const client = createApiClient(env, request);
+  const response = await client.get(appPath(slug, "team/requests/"));
+  const data = (response.data || {}) as Partial<GenericHackathonRequests>;
+  return { incoming: data.incoming || [], outgoing: data.outgoing || [] };
+}
+
+export async function acceptJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/accept/`), {});
+}
+
+export async function rejectJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/reject/`), {});
+}
+
+export async function cancelJoinRequest(env: Env, request: Request, slug: string, requestId: number): Promise<void> {
+  const client = createApiClient(env, request);
+  await client.post(appPath(slug, `team/requests/${requestId}/cancel/`), {});
 }
 
 export async function getGenericSubmissions(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonSubmission[]> {
@@ -178,7 +261,7 @@ export interface SmartHomeCatalog {
 
 export interface SmartHomeDeployCommand {
   command_id: string;
-  block_id: string;
+  block_id: string | null;
   action: string;
   target_id: string;
 }
@@ -188,6 +271,36 @@ export interface SmartHomeDeployResult {
   tick_seen: number;
   deployed_count: number;
   commands: SmartHomeDeployCommand[];
+  decisions: string[];
+  brain?: string | null;
+}
+
+export interface SmartHomePipeline {
+  inputs: string[];
+  schedule: string[];
+  brain: string[];
+  actions: string[];
+  outputs: string[];
+  safety: string[];
+}
+
+export interface SmartHomeState {
+  live: boolean;
+  household_id?: string;
+  day?: number | null;
+  tick?: number | null;
+  game_time?: string | null;
+  wallet?: number | null;
+  cost?: number | null;
+  energy_kwh?: number | null;
+  comfort?: number | null;
+  score?: number | null;
+  tariff_period?: string | null;
+  weather_condition?: string | null;
+  // Why the house is/ isn't live (from the backend's observation_liveness):
+  // "live" | "stale" | "no_observation" | "missing_timestamp".
+  live_reason?: string | null;
+  published_age_ms?: number | null;
 }
 
 export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
@@ -203,9 +316,65 @@ export async function getSmartHomeBlocks(env: Env, request: Request): Promise<Sm
 export async function deploySmartHome(
   env: Env,
   request: Request,
-  blockIds: string[],
+  pipeline: SmartHomePipeline,
 ): Promise<SmartHomeDeployResult> {
   const client = createApiClient(env, request);
-  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { blocks: blockIds });
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/deploy/", { pipeline });
   return response.data as SmartHomeDeployResult;
+}
+
+export async function getSmartHomeState(env: Env, request: Request): Promise<SmartHomeState> {
+  const client = createApiClient(env, request);
+  const response = await client.get("/api/v1/hackathons/watt/smart-home/state/");
+  const data = (response.data ?? {}) as Partial<SmartHomeState>;
+  return { ...data, live: Boolean(data.live) } as SmartHomeState;
+}
+
+export interface SmartHomeShopItem {
+  item_id: string;
+  name: string;
+  summary: string;
+  category: string;
+  cost: number;
+  visible_from_day: number;
+  owned: boolean;
+  can_buy: boolean;
+}
+
+export interface SmartHomeShopState {
+  available: boolean;
+  day?: number | null;
+  wallet?: number | null;
+  items: SmartHomeShopItem[];
+}
+
+export interface SmartHomeBuyResult {
+  ok: boolean;
+  item_id: string;
+  reason?: string | null;
+  message?: string | null;
+  pending?: boolean;
+  command_id?: string;
+}
+
+export async function getSmartHomeShop(env: Env, request: Request): Promise<SmartHomeShopState> {
+  const client = createApiClient(env, request);
+  const response = await client.get("/api/v1/hackathons/watt/smart-home/shop/");
+  const data = (response.data ?? {}) as Partial<SmartHomeShopState>;
+  return {
+    available: Boolean(data.available),
+    day: data.day ?? null,
+    wallet: data.wallet ?? null,
+    items: Array.isArray(data.items) ? (data.items as SmartHomeShopItem[]) : [],
+  };
+}
+
+export async function buySmartHomeUpgrade(
+  env: Env,
+  request: Request,
+  itemId: string,
+): Promise<SmartHomeBuyResult> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/smart-home/buy/", { item_id: itemId });
+  return response.data as SmartHomeBuyResult;
 }

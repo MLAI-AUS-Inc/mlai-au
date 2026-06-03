@@ -28,13 +28,14 @@ interface GenericHackathonAppLayoutProps {
     accentClass?: string;
     theme?: "default" | "watt";
   };
+  headerAccessory?: React.ReactNode;
 }
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-export default function GenericHackathonAppLayout({ children, user, config }: GenericHackathonAppLayoutProps) {
+export default function GenericHackathonAppLayout({ children, user, config, headerAccessory }: GenericHackathonAppLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const location = useLocation();
@@ -414,7 +415,9 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
               </p>
               <h1 className={isWattTheme ? "mt-1 text-lg font-black text-[#121e16]" : "text-base font-semibold text-gray-950"}>{config.name}</h1>
             </div>
-            <Menu as="div" className="relative">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {headerAccessory}
+              <Menu as="div" className="relative">
               <Menu.Button
                 className={classNames(
                   isWattTheme
@@ -491,7 +494,8 @@ export default function GenericHackathonAppLayout({ children, user, config }: Ge
                   </Menu.Item>
                 </Menu.Items>
               </Transition>
-            </Menu>
+              </Menu>
+            </div>
           </div>
         </header>
         <main>{children}</main>
