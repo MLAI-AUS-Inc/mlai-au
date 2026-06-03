@@ -270,7 +270,7 @@ export default function GenericHackathonAppLayout({ children, user, config, head
                             leaveFrom="max-h-[200px] opacity-100"
                             leaveTo="max-h-0 opacity-0"
                           >
-                            <Disclosure.Panel static as="ul" className="mt-1 px-2 space-y-1">
+                            <Disclosure.Panel static as="ul" className="mt-1.5 mx-1 space-y-1 rounded-2xl bg-[#fffefa]/65 p-1.5 backdrop-blur-md shadow-[0_4px_12px_rgba(82,67,39,0.08)] border border-[#fffefa]/80">
                               {item.children!.map((subItem) => (
                                 <li key={subItem.name}>
                                   <Link
@@ -278,9 +278,9 @@ export default function GenericHackathonAppLayout({ children, user, config, head
                                     onClick={() => setSidebarOpen(false)}
                                     className={classNames(
                                       subItem.current
-                                        ? "bg-[#e6efd7] text-[#155420]"
-                                        : "text-[#64705f] hover:bg-[#fbf6e9] hover:text-[#155420]",
-                                      "block rounded-xl py-2 pl-11 pr-2 text-sm font-bold leading-6 transition-all duration-200"
+                                        ? "bg-[#e6efd7] text-[#155420] shadow-sm ring-1 ring-black/5"
+                                        : "text-[#354031] hover:bg-[#fffefa]/90 hover:text-[#155420] hover:shadow-sm",
+                                      "block rounded-xl py-2 pl-9 pr-3 text-sm font-bold leading-6 transition-all duration-200"
                                     )}
                                   >
                                     {subItem.name}
