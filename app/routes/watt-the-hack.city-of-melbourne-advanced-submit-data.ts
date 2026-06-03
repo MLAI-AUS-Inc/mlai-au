@@ -65,7 +65,12 @@ function buildAdminRequest(
 export async function loader({ request, context }: Route.LoaderArgs) {
   const url = new URL(request.url);
   const id = url.searchParams.get("id") ?? "";
-  const part = url.searchParams.get("part") === "logs" ? "logs" : "status";
+  // `part` selects which sub-endpoint to proxy. New addition: `source` exposes
+  // the team's own submitted controller `.py` (owner-scoped on the gateway).
+  // Used by the portal's "Recent submissions" panel to render past code.
+  const partRaw = url.searchParams.get("part");
+  const part: "status" | "logs" | "source" =
+    partRaw === "logs" ? "logs" : partRaw === "source" ? "source" : "status";
   // UUID guard — refuse to forward arbitrary path components.
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
     return new Response(JSON.stringify({ detail: "Missing or invalid id" }), {
@@ -83,7 +88,12 @@ export async function loader({ request, context }: Route.LoaderArgs) {
 
   const env = getEnv(context) as unknown as AdminProxyEnv;
   const { baseUrl, hostOverride } = resolveAdmin(env);
-  const path = part === "logs" ? `/submissions/${id}/logs` : `/submissions/${id}`;
+  const path =
+    part === "logs"
+      ? `/submissions/${id}/logs`
+      : part === "source"
+        ? `/submissions/${id}/source`
+        : `/submissions/${id}`;
   const { target, init } = buildAdminRequest(baseUrl, hostOverride, path, {
     headers: { "X-Team-Token": token, Accept: "application/json,text/plain;q=0.9" },
     signal: AbortSignal.timeout(15000),
@@ -97,7 +107,9 @@ export async function loader({ request, context }: Route.LoaderArgs) {
       headers: {
         "Content-Type":
           upstream.headers.get("Content-Type") ??
-          (part === "logs" ? "text/plain; charset=utf-8" : "application/json; charset=utf-8"),
+          (part === "logs" || part === "source"
+            ? "text/plain; charset=utf-8"
+            : "application/json; charset=utf-8"),
         // Don't cache personal status responses at the edge.
         "Cache-Control": "no-store",
       },

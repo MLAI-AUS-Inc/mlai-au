@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowDownTrayIcon,
+  ArrowPathIcon,
   ArrowUpTrayIcon,
+  BoltIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
   CodeBracketIcon,
@@ -279,6 +281,17 @@ export default function WattTheHackSubmissionPortal() {
           </div>
         </form>
       </div>
+
+      {/* Recent submissions — only renders once both credentials look plausible.
+          Avoids hitting the proxy with an empty token (it would just 401), and
+          keeps the panel hidden as decoration noise on first page load. */}
+      <RecentSubmissionsPanel
+        teamId={teamId}
+        teamToken={teamToken}
+        // Bump on each new submission so the panel can show it as soon as
+        // possible without waiting for the next poll tick.
+        activeSubmissionId={activeSubmissionId}
+      />
       </main>
     </>
   );
@@ -534,4 +547,519 @@ function EvaluationTracker({
       ) : null}
     </div>
   );
+}
+
+// ── Recent submissions panel ──────────────────────────────────────────────
+//
+// Lists the team's recent submissions with status, normalized leaderboard
+// points, raw cost, and a "View code" affordance. Polls every few seconds
+// while anything is still in flight, so a participant can leave the page on
+// this screen during a 15 min eval and watch it land without manually
+// refreshing. While in flight the row shows an energy-pulse stage bar plus a
+// soft glow on the active stage; once terminal we collapse to a static
+// success/failure card.
+//
+// Only the team's own data is fetched (the gateway endpoint is X-Team-Token
+// owner-gated). The token never leaves the mlai.au origin in plaintext — same
+// model as the submit POST half above.
+
+const SCENARIO_LABELS: Record<string, string> = SCENARIOS.reduce<Record<string, string>>(
+  (acc, sc) => {
+    acc[sc.id] = sc.name;
+    return acc;
+  },
+  {},
+);
+
+type RecentSubmission = {
+  submission_id: string;
+  strategy_name: string | null;
+  scenario_id: string | null;
+  status: string;
+  status_message: string | null;
+  submitted_at: string;
+  eval_finished_at: string | null;
+  raw_cost: number | null;
+  normalized_score: number | null;
+};
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function RecentSubmissionsPanel({
+  teamId,
+  teamToken,
+  activeSubmissionId,
+}: {
+  teamId: string;
+  teamToken: string;
+  activeSubmissionId: string | null;
+}) {
+  const credsLook = UUID_RE.test(teamId.trim()) && teamToken.trim().length > 0;
+  const [rows, setRows] = useState<RecentSubmission[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [viewer, setViewer] = useState<{ row: RecentSubmission; source: string } | null>(null);
+  const [loadingViewer, setLoadingViewer] = useState(false);
+
+  // Re-fetch every 5 s while anything is non-terminal; back off to 30 s once
+  // everything has settled. Keeps the page light on a long-finished session
+  // without making participants refresh by hand.
+  useEffect(() => {
+    if (!credsLook) {
+      setRows(null);
+      setError(null);
+      return;
+    }
+    let cancelled = false;
+    let timer: number | null = null;
+
+    const tick = async () => {
+      try {
+        const res = await fetch(
+          `/watt-the-hack/city-of-melbourne-advanced-recent-submissions-data?team_id=${encodeURIComponent(teamId.trim())}`,
+          {
+            headers: { "X-Team-Token": teamToken.trim(), Accept: "application/json" },
+          },
+        );
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { detail?: string }).detail || `Status ${res.status}`);
+        }
+        const data = (await res.json()) as RecentSubmission[];
+        if (cancelled) return;
+        setRows(data);
+        setError(null);
+        const hasInflight = data.some((r) => !TERMINAL_STATUSES.has(r.status));
+        const delay = hasInflight ? 5000 : 30000;
+        timer = window.setTimeout(() => void tick(), delay);
+      } catch (err) {
+        if (cancelled) return;
+        setError(err instanceof Error ? err.message : "Couldn't load submissions");
+        // Retry on a generous interval — most failures here are transient
+        // (cold worker, brief admin redeploy). Don't blast the proxy.
+        timer = window.setTimeout(() => void tick(), 8000);
+      }
+    };
+    void tick();
+    return () => {
+      cancelled = true;
+      if (timer !== null) window.clearTimeout(timer);
+    };
+    // activeSubmissionId is in the dep array so a fresh accept triggers a
+    // poll cycle immediately instead of waiting for the current timer.
+  }, [credsLook, teamId, teamToken, activeSubmissionId]);
+
+  const openCode = async (row: RecentSubmission) => {
+    setViewer({ row, source: "" });
+    setLoadingViewer(true);
+    try {
+      const res = await fetch(
+        `/watt-the-hack/city-of-melbourne-advanced-submit-data?id=${encodeURIComponent(row.submission_id)}&part=source`,
+        {
+          headers: { "X-Team-Token": teamToken.trim(), Accept: "text/plain" },
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { detail?: string }).detail || `Status ${res.status}`);
+      }
+      const text = await res.text();
+      setViewer({ row, source: text });
+    } catch (err) {
+      setViewer({
+        row,
+        source: `# Couldn't load source\n# ${err instanceof Error ? err.message : "unknown error"}`,
+      });
+    } finally {
+      setLoadingViewer(false);
+    }
+  };
+
+  if (!credsLook) return null;
+
+  return (
+    <>
+      <section className={`${wattClasses.panelStrong} mt-6 p-6 sm:p-8`}>
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className={wattClasses.eyebrow}>Submission history</p>
+            <h2 className={`${wattClasses.title} mt-1 text-2xl sm:text-3xl`}>Your recent submissions</h2>
+            <p className={`${wattClasses.muted} mt-1 text-sm`}>
+              Updates automatically while an evaluation is running. The leaderboard refreshes when a submission scores.
+            </p>
+          </div>
+          {error ? (
+            <span className="text-xs font-bold text-[#9f2f28]">
+              Couldn&apos;t refresh just now ({error}). Retrying…
+            </span>
+          ) : null}
+        </div>
+
+        {rows === null ? (
+          <PulseSkeleton />
+        ) : rows.length === 0 ? (
+          <div className={`${wattClasses.panelSoft} p-5 text-sm text-[#64705f]`}>
+            You haven&apos;t submitted anything yet. Submissions you make above will appear here.
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {rows.map((row) => (
+              <RecentSubmissionRow
+                key={row.submission_id}
+                row={row}
+                onViewCode={() => openCode(row)}
+                onDownloadLogs={async () => {
+                  try {
+                    const res = await fetch(
+                      `/watt-the-hack/city-of-melbourne-advanced-submit-data?id=${encodeURIComponent(row.submission_id)}&part=logs`,
+                      { headers: { "X-Team-Token": teamToken.trim(), Accept: "text/plain" } },
+                    );
+                    if (!res.ok) throw new Error(`Status ${res.status}`);
+                    const text = await res.text();
+                    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `eval-${row.submission_id.slice(0, 8)}.log`;
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    URL.revokeObjectURL(url);
+                  } catch {
+                    // Silently ignore — the row itself already shows the failure state.
+                  }
+                }}
+              />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {viewer ? (
+        <CodeViewerModal
+          row={viewer.row}
+          source={viewer.source}
+          loading={loadingViewer}
+          onClose={() => setViewer(null)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function RecentSubmissionRow({
+  row,
+  onViewCode,
+  onDownloadLogs,
+}: {
+  row: RecentSubmission;
+  onViewCode: () => void;
+  onDownloadLogs: () => void;
+}) {
+  const terminal = TERMINAL_STATUSES.has(row.status);
+  const failed = terminal && row.status !== "COMPLETED";
+  const completedWithWarning = row.status === "COMPLETED" && !!row.status_message;
+  const relative = useMemo(() => formatRelative(row.submitted_at), [row.submitted_at]);
+  const scenarioLabel = row.scenario_id ? SCENARIO_LABELS[row.scenario_id] ?? row.scenario_id : "—";
+
+  return (
+    <li className={`${wattClasses.panelSoft} p-4 sm:p-5`}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <StatusPill status={row.status} />
+            <span className="text-sm font-bold text-[#354031]">{row.strategy_name || "Untitled strategy"}</span>
+            <span className="text-xs font-medium text-[#8a8477]">·</span>
+            <span className="text-xs font-medium text-[#64705f]">{scenarioLabel}</span>
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[#8a8477]">
+            <span>Submitted {relative}</span>
+            <span className="font-mono text-[11px] text-[#9aa496]">{row.submission_id.slice(0, 8)}…</span>
+          </div>
+        </div>
+
+        {/* Right rail: score (terminal) or pulse animation (in flight). */}
+        {row.status === "COMPLETED" && row.normalized_score !== null ? (
+          <ScoreReadout points={row.normalized_score} rawCost={row.raw_cost} />
+        ) : !terminal ? (
+          <EnergyPulse />
+        ) : null}
+      </div>
+
+      {/* Stage bar — visible while non-terminal, mirrors the EvaluationTracker
+          above so participants see the same vocabulary in both places. */}
+      {!terminal ? (
+        <div className="mt-4">
+          <StageBar status={row.status} />
+        </div>
+      ) : null}
+
+      {/* Outcome message. */}
+      {failed ? (
+        <div className={`${wattClasses.errorAlert} mt-3 flex items-start gap-3`}>
+          <XCircleIcon className="mt-0.5 h-5 w-5 shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-bold">{row.status.replaceAll("_", " ")}</p>
+            <p className="mt-1 break-words text-sm font-medium">
+              {row.status_message || "The evaluation didn't complete. Download the logs for details."}
+            </p>
+          </div>
+        </div>
+      ) : completedWithWarning ? (
+        <div className={`${wattClasses.warningAlert} mt-3 flex items-start gap-3`}>
+          <ExclamationTriangleIcon className="mt-0.5 h-5 w-5 shrink-0 text-[#a16f14]" />
+          <p className="min-w-0 break-words text-sm font-medium">{row.status_message}</p>
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button type="button" onClick={onViewCode} className={`${wattClasses.buttonOutline} gap-2`}>
+          <CodeBracketIcon className="h-4 w-4" />
+          View code
+        </button>
+        {terminal ? (
+          <button type="button" onClick={onDownloadLogs} className={`${wattClasses.buttonOutline} gap-2`}>
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            Download logs
+          </button>
+        ) : null}
+      </div>
+    </li>
+  );
+}
+
+function ScoreReadout({ points, rawCost }: { points: number; rawCost: number | null }) {
+  return (
+    <div className="flex items-end gap-3 text-right">
+      <div>
+        <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#155420]">Points</div>
+        <div className="text-3xl font-black tabular-nums text-[#155420]">{points.toFixed(1)}</div>
+      </div>
+      {rawCost !== null ? (
+        <div className="border-l border-[#c9dbb8] pl-3">
+          <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#64705f]">Raw cost</div>
+          <div className="text-sm font-bold tabular-nums text-[#64705f]">{rawCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function StatusPill({ status }: { status: string }) {
+  const cls = pillClassFor(status);
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.12em] ${cls}`}>
+      {status.replaceAll("_", " ")}
+    </span>
+  );
+}
+
+function pillClassFor(status: string): string {
+  if (status === "COMPLETED") return "bg-[#e6efd7] text-[#155420]";
+  if (FAIL_STATUSES.has(status)) return "bg-[#fff1ef] text-[#9f2f28]";
+  // In-flight / queued.
+  return "bg-[#fff8dc] text-[#6f4b08]";
+}
+
+function StageBar({ status }: { status: string }) {
+  const idx = STAGES.findIndex((stage) => stage.match(status));
+  const current = idx === -1 ? 0 : idx;
+  return (
+    <ol className="flex items-center gap-2">
+      {STAGES.map((stage, i) => {
+        const done = current > i;
+        const active = current === i;
+        return (
+          <li key={stage.key} className="flex flex-1 flex-col items-center gap-1">
+            <span
+              className={
+                "relative h-2 w-full overflow-hidden rounded-full " +
+                (done || active ? "bg-[#2f6f2c]" : "bg-[#e8dfcf]")
+              }
+              aria-hidden="true"
+            >
+              {active ? (
+                <span
+                  className="absolute inset-0"
+                  style={{
+                    background:
+                      "linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.65) 50%, rgba(255,255,255,0) 100%)",
+                    animation: "watt-stage-shimmer 1.6s ease-in-out infinite",
+                  }}
+                />
+              ) : null}
+            </span>
+            <span className={"text-[10px] font-black uppercase tracking-[0.12em] " + (done || active ? "text-[#155420]" : "text-[#8a8477]")}>
+              {stage.label}
+            </span>
+          </li>
+        );
+      })}
+      <style>{`
+        @keyframes watt-stage-shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
+    </ol>
+  );
+}
+
+// Premium loading animation — a bolt icon inside a slowly-rotating conic
+// gradient halo with a soft inner pulse. Visually communicates "energy is
+// flowing through this submission" without being noisy.
+function EnergyPulse() {
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative h-14 w-14">
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{
+            background:
+              "conic-gradient(from 0deg, rgba(47,111,44,0) 0%, rgba(47,111,44,0.55) 35%, rgba(159,232,112,0.9) 50%, rgba(47,111,44,0.55) 65%, rgba(47,111,44,0) 100%)",
+            animation: "watt-pulse-spin 1.6s linear infinite",
+          }}
+          aria-hidden="true"
+        />
+        <span
+          className="absolute inset-1 rounded-full bg-[#fbf6e9]"
+          aria-hidden="true"
+        />
+        <span
+          className="absolute inset-2 rounded-full"
+          style={{
+            background: "radial-gradient(circle, rgba(159,232,112,0.55) 0%, rgba(159,232,112,0) 70%)",
+            animation: "watt-pulse-glow 1.6s ease-in-out infinite",
+          }}
+          aria-hidden="true"
+        />
+        <BoltIcon className="absolute inset-0 m-auto h-6 w-6 text-[#155420]" />
+      </div>
+      <span className="text-[10px] font-black uppercase tracking-[0.16em] text-[#155420]">Evaluating</span>
+      <style>{`
+        @keyframes watt-pulse-spin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes watt-pulse-glow {
+          0%, 100% { opacity: 0.35; transform: scale(0.85); }
+          50%      { opacity: 1.0;  transform: scale(1.05); }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function PulseSkeleton() {
+  return (
+    <div className="flex flex-col gap-3">
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="h-24 rounded-[1.25rem] border border-[#e8dfcf] bg-[#fbf6e9]"
+          style={{ animation: `watt-skeleton-shimmer 2s ease-in-out ${i * 0.15}s infinite` }}
+          aria-hidden="true"
+        />
+      ))}
+      <style>{`
+        @keyframes watt-skeleton-shimmer {
+          0%, 100% { opacity: 0.55; }
+          50%      { opacity: 0.95; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
+function CodeViewerModal({
+  row,
+  source,
+  loading,
+  onClose,
+}: {
+  row: RecentSubmission;
+  source: string;
+  loading: boolean;
+  onClose: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4"
+      onClick={onClose}
+    >
+      <div
+        className={`${wattClasses.panelStrong} flex max-h-[88vh] w-full max-w-3xl flex-col overflow-hidden`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-[#e8dfcf] p-5">
+          <div>
+            <p className={wattClasses.eyebrow}>Submitted code</p>
+            <h3 className={`${wattClasses.title} mt-1 text-lg`}>
+              {row.strategy_name || "Untitled strategy"}{" "}
+              <span className="font-medium text-[#64705f]">
+                · {row.scenario_id ? SCENARIO_LABELS[row.scenario_id] ?? row.scenario_id : "—"}
+              </span>
+            </h3>
+            <p className="mt-1 font-mono text-[11px] text-[#9aa496]">{row.submission_id}</p>
+          </div>
+          <button type="button" onClick={onClose} className={wattClasses.buttonOutline}>
+            Close
+          </button>
+        </div>
+        <div className="relative flex-1 overflow-auto bg-[#1e1e1e] p-4">
+          {loading ? (
+            <div className="flex h-40 items-center justify-center">
+              <ArrowPathIcon className="h-6 w-6 animate-spin text-white/70" />
+            </div>
+          ) : (
+            <pre className="font-mono text-[13px] leading-relaxed text-[#d4d4d4]">{source}</pre>
+          )}
+        </div>
+        <div className="flex justify-end gap-2 border-t border-[#e8dfcf] p-4">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(source);
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1600);
+              } catch {
+                // Clipboard fails in insecure contexts; nothing useful to surface.
+              }
+            }}
+            className={`${wattClasses.buttonOutline} gap-2 disabled:opacity-50`}
+          >
+            <ClipboardDocumentIcon className="h-4 w-4" />
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+const FAIL_STATUSES = new Set([
+  "VALIDATION_FAILED",
+  "BUILD_FAILED",
+  "EVAL_FAILED",
+  "TIMEOUT",
+  "DISQUALIFIED",
+]);
+
+function formatRelative(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return iso;
+  const diff = Date.now() - then;
+  if (diff < 0) return new Date(iso).toLocaleString();
+  const sec = Math.floor(diff / 1000);
+  if (sec < 60) return `${sec}s ago`;
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 48) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 14) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
 }
