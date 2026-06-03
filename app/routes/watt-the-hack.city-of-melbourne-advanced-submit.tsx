@@ -706,28 +706,8 @@ function RecentSubmissionsPanel({
               <RecentSubmissionRow
                 key={row.submission_id}
                 row={row}
+                teamToken={teamToken}
                 onViewCode={() => openCode(row)}
-                onDownloadLogs={async () => {
-                  try {
-                    const res = await fetch(
-                      `/watt-the-hack/city-of-melbourne-advanced-submit-data?id=${encodeURIComponent(row.submission_id)}&part=logs`,
-                      { headers: { "X-Team-Token": teamToken.trim(), Accept: "text/plain" } },
-                    );
-                    if (!res.ok) throw new Error(`Status ${res.status}`);
-                    const text = await res.text();
-                    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = `eval-${row.submission_id.slice(0, 8)}.log`;
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    URL.revokeObjectURL(url);
-                  } catch {
-                    // Silently ignore — the row itself already shows the failure state.
-                  }
-                }}
               />
             ))}
           </ul>
@@ -748,18 +728,64 @@ function RecentSubmissionsPanel({
 
 function RecentSubmissionRow({
   row,
+  teamToken,
   onViewCode,
-  onDownloadLogs,
 }: {
   row: RecentSubmission;
+  teamToken: string;
   onViewCode: () => void;
-  onDownloadLogs: () => void;
 }) {
   const terminal = TERMINAL_STATUSES.has(row.status);
   const failed = terminal && row.status !== "COMPLETED";
   const completedWithWarning = row.status === "COMPLETED" && !!row.status_message;
   const relative = useMemo(() => formatRelative(row.submitted_at), [row.submitted_at]);
   const scenarioLabel = row.scenario_id ? SCENARIO_LABELS[row.scenario_id] ?? row.scenario_id : "—";
+
+  // Per-row state for the "Download logs" button so a 404 (no logs persisted
+  // — happens for failures that crashed before pod startup) is visible to the
+  // user instead of a silent no-op. Cleared on next click.
+  const [logError, setLogError] = useState<string | null>(null);
+  const [downloading, setDownloading] = useState(false);
+
+  const onDownloadLogs = async () => {
+    setLogError(null);
+    setDownloading(true);
+    try {
+      const res = await fetch(
+        `/watt-the-hack/city-of-melbourne-advanced-submit-data?id=${encodeURIComponent(row.submission_id)}&part=logs`,
+        { headers: { "X-Team-Token": teamToken.trim(), Accept: "text/plain" } },
+      );
+      if (!res.ok) {
+        // Gateway returns 404 when no log was persisted (very early failure)
+        // and surfaces a `detail` body for most other cases. `res.json()` is
+        // typed as `unknown` under react-router's stricter tsconfig, so we
+        // narrow via an explicit cast — same pattern as the EvaluationTracker
+        // path further up the file.
+        let detail = `HTTP ${res.status}`;
+        try {
+          const body = (await res.json()) as { detail?: string };
+          if (body && typeof body.detail === "string") detail = body.detail;
+        } catch {
+          // not JSON; fall back to status code.
+        }
+        throw new Error(detail);
+      }
+      const text = await res.text();
+      const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `eval-${row.submission_id.slice(0, 8)}.log`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setLogError(err instanceof Error ? err.message : "Couldn't download logs");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <li className={`${wattClasses.panelSoft} p-4 sm:p-5`}>
@@ -811,16 +837,28 @@ function RecentSubmissionRow({
         </div>
       ) : null}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         <button type="button" onClick={onViewCode} className={`${wattClasses.buttonOutline} gap-2`}>
           <CodeBracketIcon className="h-4 w-4" />
           View code
         </button>
         {terminal ? (
-          <button type="button" onClick={onDownloadLogs} className={`${wattClasses.buttonOutline} gap-2`}>
-            <ArrowDownTrayIcon className="h-4 w-4" />
-            Download logs
+          <button
+            type="button"
+            onClick={onDownloadLogs}
+            disabled={downloading}
+            className={`${wattClasses.buttonOutline} gap-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <ArrowDownTrayIcon className={`h-4 w-4 ${downloading ? "animate-pulse" : ""}`} />
+            {downloading ? "Fetching…" : "Download logs"}
           </button>
+        ) : null}
+        {logError ? (
+          <span className="text-xs font-semibold text-[#9f2f28]">
+            {logError === "Logs not available yet"
+              ? "No logs were captured for this submission. Tell an organiser if this keeps happening."
+              : logError}
+          </span>
         ) : null}
       </div>
     </li>
