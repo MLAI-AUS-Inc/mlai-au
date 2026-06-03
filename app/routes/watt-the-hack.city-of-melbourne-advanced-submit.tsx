@@ -338,8 +338,7 @@ export default function WattTheHackSubmissionPortal() {
                 required
               />
               <p className="mt-1 text-[11.5px] text-[#8a8477]">
-                Display label shown in your submission history. The entrypoint name
-                (class or function) is auto-detected from your code below.
+                Display label shown in your submission history. Our evaluator automatically reads your code to find your main controller class (e.g., <code className="font-mono">class MyStrategy:</code>) or function. You don't need to specify it manually.
               </p>
             </div>
           </div>
@@ -354,31 +353,7 @@ export default function WattTheHackSubmissionPortal() {
                   <CodeBracketIcon className="h-5 w-5 text-[#354031]" />
                   <label className={wattClasses.label}>Controller Code (strategy.py)</label>
                 </div>
-                {templates.length > 0 ? (
-                  <div className="flex items-center gap-2">
-                    <label className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-[#64705f]">
-                      Load template
-                    </label>
-                    <select
-                      value=""
-                      onChange={(e) => {
-                        const tpl = templates.find((t) => t.id === e.target.value);
-                        if (tpl) loadTemplate(tpl);
-                        e.target.value = ""; // reset so picking the same template twice re-fires
-                      }}
-                      className={wattClasses.input + " py-1.5 text-xs"}
-                    >
-                      <option value="" disabled>
-                        Pick a starter…
-                      </option>
-                      {templates.map((t) => (
-                        <option key={t.id} value={t.id} title={t.description}>
-                          {t.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : null}
+
               </div>
               <div className="h-[400px] w-full overflow-hidden rounded-xl border border-[#e8dfcf] bg-[#1e1e1e] shadow-inner p-4">
                 <textarea
@@ -432,8 +407,7 @@ export default function WattTheHackSubmissionPortal() {
                     engine plus <code className="font-mono text-[11px]">numpy</code>,{" "}
                     <code className="font-mono text-[11px]">pandas</code>,{" "}
                     <code className="font-mono text-[11px]">scipy</code>,{" "}
-                    <code className="font-mono text-[11px]">openai</code>,{" "}
-                    <code className="font-mono text-[11px]">anthropic</code>, and{" "}
+                    <code className="font-mono text-[11px]">openai</code>, and{" "}
                     <code className="font-mono text-[11px]">pydantic</code>.
                   </p>
                   <p className="mt-1 text-[#64705f]">
