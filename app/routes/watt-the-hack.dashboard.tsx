@@ -129,38 +129,149 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
         </div>
       )}
       {team && (
-        <div className="mt-5 border-t border-[#e8dfcf] pt-4">
-          <h3 className="text-sm font-bold text-[#64705f]">Evaluation Server Status</h3>
-          <div className="mt-2 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-4 py-3">
-            {!team.eval_token ? (
-              <span className="text-sm font-medium text-[#121e16]">Pending Admin Approval</span>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#121e16]">Team ID</span>
-                  <code className="rounded bg-[#e6efd7] px-2 py-1 text-xs font-mono text-[#155420] break-all max-w-[50%]">
-                    {team.eval_team_uuid || "Not generated"}
-                  </code>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-[#121e16]">Token</span>
-                  <div className="flex items-center gap-2">
-                    <code className="rounded bg-[#e6efd7] px-2 py-1 text-xs font-mono text-[#155420]">
-                      {revealToken ? team.eval_token : "••••••••••••••••"}
-                    </code>
-                    <button
-                      onClick={() => setRevealToken(!revealToken)}
-                      className="text-xs font-medium text-[#465341] hover:text-[#121e16] underline"
-                    >
-                      {revealToken ? "Hide" : "Reveal"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+        <EvalCredentialsPanel
+          uuid={team.eval_team_uuid ?? null}
+          token={team.eval_token ?? null}
+          revealed={revealToken}
+          onToggleReveal={() => setRevealToken((r) => !r)}
+        />
       )}
+    </div>
+  );
+}
+
+/**
+ * Render the FastAPI eval-server credentials in a way that's safe to leave on
+ * a projector during the hackathon.
+ *
+ * - The UUID is shown in plain — it's an opaque identifier (just `teams.id` on
+ *   the cluster), no auth value on its own.
+ * - The token is masked by default (`••••••XXXX` with the last 4 chars).
+ *   `Reveal` toggles plaintext for the participant who actually needs to
+ *   double-check it; `Copy` writes the real value to clipboard without ever
+ *   revealing it visually, which is the path we want them to use.
+ *
+ * If the request was made by a non-member, the server returns `null` for both
+ * fields (see `GenericHackathonTeamSerializer.get_eval_*`), so this panel just
+ * shows "Pending Admin Approval" — non-members literally can't tell whether
+ * the team has been provisioned, which is the right answer.
+ */
+function EvalCredentialsPanel({
+  uuid,
+  token,
+  revealed,
+  onToggleReveal,
+}: {
+  uuid: string | null;
+  token: string | null;
+  revealed: boolean;
+  onToggleReveal: () => void;
+}) {
+  const [uuidCopied, setUuidCopied] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
+
+  const copy = (value: string, setCopied: (b: boolean) => void) => {
+    // Best-effort clipboard write. In non-secure contexts navigator.clipboard
+    // is undefined, in which case we silently no-op — participants can still
+    // Reveal + manual-copy as a fallback.
+    if (!navigator.clipboard) return;
+    void navigator.clipboard.writeText(value).then(() => {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1500);
+    });
+  };
+
+  const maskedToken = token ? `••••••••${token.slice(-4)}` : "";
+
+  return (
+    <div className="mt-5 border-t border-[#e8dfcf] pt-4">
+      <h3 className="text-sm font-bold text-[#64705f]">Evaluation server credentials</h3>
+      <div className="mt-2 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-4 py-3">
+        {!token || !uuid ? (
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-medium text-[#121e16]">Pending admin approval</span>
+            <span className="text-xs text-[#64705f]">
+              An organiser will provision your team for the advanced track. Once approved,
+              your Team ID and Token will appear here.
+            </span>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            <CredentialRow
+              label="Team ID"
+              value={uuid}
+              display={uuid}
+              copied={uuidCopied}
+              onCopy={() => copy(uuid, setUuidCopied)}
+            />
+            <CredentialRow
+              label="Token"
+              value={token}
+              display={revealed ? token : maskedToken}
+              copied={tokenCopied}
+              onCopy={() => copy(token, setTokenCopied)}
+              secondaryAction={{
+                label: revealed ? "Hide" : "Reveal",
+                onClick: onToggleReveal,
+              }}
+            />
+            <p className="text-xs text-[#64705f]">
+              Paste both into the{" "}
+              <Link
+                to="/watt-the-hack/city-of-melbourne-advanced-submit"
+                className="font-bold text-[#155420] underline-offset-2 hover:underline"
+              >
+                submission portal
+              </Link>{" "}
+              to submit a controller.
+            </p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CredentialRow({
+  label,
+  display,
+  copied,
+  onCopy,
+  secondaryAction,
+}: {
+  label: string;
+  /** The plaintext value that lands on the clipboard. Used by onCopy only. */
+  value: string;
+  /** What renders visually — may be masked. */
+  display: string;
+  copied: boolean;
+  onCopy: () => void;
+  secondaryAction?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-medium text-[#121e16]">{label}</span>
+      <div className="flex min-w-0 items-center gap-2">
+        <code className="truncate rounded bg-[#e6efd7] px-2 py-1 text-xs font-mono text-[#155420]">
+          {display}
+        </code>
+        <button
+          type="button"
+          onClick={onCopy}
+          className="text-xs font-bold text-[#155420] hover:text-[#0f3915] underline-offset-2 hover:underline"
+        >
+          {copied ? "Copied" : "Copy"}
+        </button>
+        {secondaryAction ? (
+          <button
+            type="button"
+            onClick={secondaryAction.onClick}
+            className="text-xs font-medium text-[#64705f] hover:text-[#121e16] underline-offset-2 hover:underline"
+          >
+            {secondaryAction.label}
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -22,6 +22,8 @@ export interface GenericHackathonTeam {
   member_count: number;
   members: GenericHackathonMember[];
   leader_id?: number | null;
+  eval_token?: string | null;
+  eval_team_uuid?: string | null;
 }
 
 export interface GenericHackathonJoinRequest {
