@@ -140,7 +140,7 @@ function BrandBar() {
             Watt-The-Hack Advanced Track
           </span>
           <a
-            href="/docs"
+            href="/watt-the-hack/resources#advanced-track"
             target="_blank"
             rel="noopener noreferrer"
             title="Official Documentation"

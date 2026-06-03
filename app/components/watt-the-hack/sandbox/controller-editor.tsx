@@ -195,7 +195,7 @@ export function ControllerEditor() {
               <div className="text-[11px] text-muted">
                 Imports and side effects are disabled. On error the engine
                 falls back to do-nothing actions — your score will look like
-                the passive baseline, NOT your sliders.
+                the passive baseline, NOT your sliders. <strong>Note:</strong> You cannot import packages inside this sandbox. Switch to your local IDE or Google Colab if you need to use external libraries.
               </div>
               <div className="flex gap-2">
                 <Button
