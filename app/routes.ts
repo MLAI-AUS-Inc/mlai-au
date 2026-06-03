@@ -68,6 +68,7 @@ export default [
     route("city-of-melbourne-advanced-submit-data", "routes/watt-the-hack.city-of-melbourne-advanced-submit-data.ts"),
     route("city-of-melbourne-advanced-leaderboard", "routes/watt-the-hack.city-of-melbourne-advanced-leaderboard.tsx"),
     route("city-of-melbourne-advanced-leaderboard-data", "routes/watt-the-hack.city-of-melbourne-advanced-leaderboard-data.ts"),
+    route("city-of-melbourne-advanced-recent-submissions-data", "routes/watt-the-hack.city-of-melbourne-advanced-recent-submissions-data.ts"),
     route("smart-home-beginner", "routes/watt-the-hack.smart-home-beginner.tsx"),
     route("smart-home-beginner/state", "routes/watt-the-hack.smart-home-beginner.state.tsx"),
     route("smart-home-beginner/shop", "routes/watt-the-hack.smart-home-beginner.shop.tsx"),

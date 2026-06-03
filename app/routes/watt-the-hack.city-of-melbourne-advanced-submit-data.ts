@@ -30,6 +30,98 @@ interface AdminProxyEnv {
 
 const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" } as const;
 
+/** Resolve the configured admin origin + optional resolveOverride fallback. */
+function resolveAdmin(env: AdminProxyEnv): { baseUrl: URL; hostOverride: string } {
+  const base = env.WTH_ADMIN_URL || "https://eval.eliascorp.org";
+  const hostOverride = env.WTH_ADMIN_HOST ?? "";
+  return { baseUrl: new URL(base), hostOverride };
+}
+
+/** Build the target URL + fetch init, honoring the IP-bypass fallback when set. */
+function buildAdminRequest(
+  baseUrl: URL,
+  hostOverride: string,
+  path: string,
+  init: RequestInit & { cf?: Record<string, unknown> },
+): { target: string; init: RequestInit & { cf?: Record<string, unknown> } } {
+  if (hostOverride && hostOverride !== baseUrl.host) {
+    return {
+      target: `${baseUrl.protocol}//${hostOverride}${path}`,
+      init: { ...init, cf: { ...(init.cf ?? {}), resolveOverride: baseUrl.hostname } },
+    };
+  }
+  return { target: `${baseUrl.origin}${path}`, init };
+}
+
+/**
+ * GET /watt-the-hack/city-of-melbourne-advanced-submit-data?id=<uuid>&part=status|logs
+ *
+ * Forwards to the admin gateway's `/submissions/{id}` (status) or
+ * `/submissions/{id}/logs` (eval log text). The team token is owner-scoped on
+ * the gateway, so we require + forward `X-Team-Token` from the browser. Keeps
+ * the admin origin off the client bundle and avoids CORS — same model as the
+ * POST half below.
+ */
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id") ?? "";
+  // `part` selects which sub-endpoint to proxy. New addition: `source` exposes
+  // the team's own submitted controller `.py` (owner-scoped on the gateway).
+  // Used by the portal's "Recent submissions" panel to render past code.
+  const partRaw = url.searchParams.get("part");
+  const part: "status" | "logs" | "source" =
+    partRaw === "logs" ? "logs" : partRaw === "source" ? "source" : "status";
+  // UUID guard — refuse to forward arbitrary path components.
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+    return new Response(JSON.stringify({ detail: "Missing or invalid id" }), {
+      status: 400,
+      headers: JSON_HEADERS,
+    });
+  }
+  const token = request.headers.get("X-Team-Token") ?? "";
+  if (!token) {
+    return new Response(JSON.stringify({ detail: "Missing team token" }), {
+      status: 401,
+      headers: JSON_HEADERS,
+    });
+  }
+
+  const env = getEnv(context) as unknown as AdminProxyEnv;
+  const { baseUrl, hostOverride } = resolveAdmin(env);
+  const path =
+    part === "logs"
+      ? `/submissions/${id}/logs`
+      : part === "source"
+        ? `/submissions/${id}/source`
+        : `/submissions/${id}`;
+  const { target, init } = buildAdminRequest(baseUrl, hostOverride, path, {
+    headers: { "X-Team-Token": token, Accept: "application/json,text/plain;q=0.9" },
+    signal: AbortSignal.timeout(15000),
+  });
+
+  try {
+    const upstream = await fetch(target, init);
+    const body = await upstream.text();
+    return new Response(body, {
+      status: upstream.status,
+      headers: {
+        "Content-Type":
+          upstream.headers.get("Content-Type") ??
+          (part === "logs" || part === "source"
+            ? "text/plain; charset=utf-8"
+            : "application/json; charset=utf-8"),
+        // Don't cache personal status responses at the edge.
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (err) {
+    return new Response(
+      JSON.stringify({ detail: "Submission service unreachable", error: String(err) }),
+      { status: 502, headers: JSON_HEADERS },
+    );
+  }
+}
+
 export async function action({ request, context }: Route.ActionArgs) {
   if (request.method !== "POST") {
     return new Response(JSON.stringify({ detail: "Method not allowed" }), {
@@ -39,11 +131,7 @@ export async function action({ request, context }: Route.ActionArgs) {
   }
 
   const env = getEnv(context) as unknown as AdminProxyEnv;
-  // Default to the MLAI-owned Cloudflare-proxied subdomain (TLS handled by CF).
-  const base = env.WTH_ADMIN_URL || "https://eval.eliascorp.org";
-  // No Host override needed for a real public origin; only used for the
-  // legacy IP + resolveOverride fallback.
-  const host = env.WTH_ADMIN_HOST ?? "";
+  const { baseUrl, hostOverride } = resolveAdmin(env);
 
   // Parse the incoming multipart upload and rebuild it for the upstream. The
   // submission is just a few text files zipped together, so buffering it in the
@@ -85,25 +173,12 @@ export async function action({ request, context }: Route.ActionArgs) {
   outgoing.append("team_id", teamId);
   outgoing.append("file", file, "submission.zip");
 
-  const baseUrl = new URL(base);
-  const init: RequestInit & { cf?: Record<string, unknown> } = {
+  const { target, init } = buildAdminRequest(baseUrl, hostOverride, "/submissions", {
     method: "POST",
     headers: { "X-Team-Token": token },
     body: outgoing,
     signal: AbortSignal.timeout(20000), // uploads are small; don't hang the worker
-  };
-
-  let target: string;
-  if (host && host !== baseUrl.host) {
-    // Keep the ingress Host in the URL and connect to the LB IP at the edge.
-    // (`Host` cannot be set as a request header — it is stripped — so this is the
-    // supported technique. resolveOverride requires `host` to be in your CF zone.)
-    target = `${baseUrl.protocol}//${host}/submissions`;
-    init.cf = { resolveOverride: baseUrl.hostname };
-  } else {
-    // Clean path: WTH_ADMIN_URL is a real reachable origin (e.g. https://eval.eliascorp.org).
-    target = `${baseUrl.origin}/submissions`;
-  }
+  });
 
   try {
     const upstream = await fetch(target, init);
