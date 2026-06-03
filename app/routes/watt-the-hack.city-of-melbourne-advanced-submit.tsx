@@ -8,10 +8,106 @@ import {
   ClipboardDocumentIcon,
   CodeBracketIcon,
   ExclamationTriangleIcon,
+  InformationCircleIcon,
+  SparklesIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import JSZip from "jszip";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
+import {
+  LLM_SCENARIO_IDS,
+  getTemplatesForScenario,
+  type ControllerTemplate,
+} from "~/lib/wth-controller-templates";
+
+// Default starter code: minimal class-style controller. Auto-detection picks
+// `MyStrategy` as the class_name, so participants who hit Submit without
+// changing anything still get a valid (do-nothing) submission rather than a
+// confusing "Class not found" error from the cluster.
+const DEFAULT_CODE = `class MyStrategy:
+    """Replace this body with your control logic."""
+
+    def step(self, state):
+        return {
+            "battery_flow_mw": 0.0,
+            "curtail_solar": 0.0,
+            "emergency_generator": 0.0,
+            "fcas_reserve_mw": 0.0,
+        }
+`;
+
+// ── Entrypoint detection ────────────────────────────────────────────────────
+//
+// The cluster's eval runtime (`resolve_strategy_from_path`) accepts EITHER:
+//   - a class with a `step(self, state)` method (named via metadata.class_name)
+//   - a top-level callable (named via metadata.function_name)
+//
+// The portal used to force class-style by setting class_name = the
+// "Strategy Class Name" text field — which had to be kept in sync with the
+// class actually defined in the code. Manual sync = bugs. We now scan the
+// pasted source and decide which key to emit in metadata.json.
+
+type Detected =
+  | { kind: "class"; name: string }
+  | { kind: "function"; name: string }
+  | { kind: "unknown"; reason: string };
+
+function detectEntrypoint(code: string): Detected {
+  // First pass: walk the file line by line, treating top-level (column-0)
+  // `class X:` and `def X(` lines as anchor points. Classes "own" any
+  // indented `def` lines that follow until the next top-level statement.
+  const lines = code.split("\n");
+  type ClassInfo = { name: string; hasStep: boolean };
+  const classes: ClassInfo[] = [];
+  const topLevelFunctions: string[] = [];
+  let current: ClassInfo | null = null;
+
+  for (const line of lines) {
+    const classMatch = /^class\s+([A-Za-z_][A-Za-z0-9_]*)\s*[:(]/.exec(line);
+    if (classMatch) {
+      current = { name: classMatch[1], hasStep: false };
+      classes.push(current);
+      continue;
+    }
+
+    const topDefMatch = /^def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/.exec(line);
+    if (topDefMatch) {
+      current = null;
+      topLevelFunctions.push(topDefMatch[1]);
+      continue;
+    }
+
+    // Indented `def step(self, ...)` inside the current class body.
+    if (current && /^\s+def\s+step\s*\(/.test(line)) {
+      current.hasStep = true;
+    }
+  }
+
+  // Prefer a class with a `step` method (the canonical shape from scenario 2+).
+  const classWithStep = classes.find((c) => c.hasStep);
+  if (classWithStep) return { kind: "class", name: classWithStep.name };
+
+  // Then a top-level `controller` function (the sandbox-style shape for
+  // scenarios 1 + 3).
+  if (topLevelFunctions.includes("controller")) {
+    return { kind: "function", name: "controller" };
+  }
+
+  // Fallback: any class (might have step defined elsewhere we missed) — gives
+  // the cluster a chance to load it and emit a clearer error than ours.
+  if (classes.length > 0) return { kind: "class", name: classes[0].name };
+
+  // Fallback: first top-level function.
+  if (topLevelFunctions.length > 0) {
+    return { kind: "function", name: topLevelFunctions[0] };
+  }
+
+  return {
+    kind: "unknown",
+    reason:
+      "Couldn't find a class with a `step` method or a top-level function in your code.",
+  };
+}
 
 // Same-origin worker proxy. It forwards the upload to the WTH admin eval cluster
 // server-side (see routes/watt-the-hack.city-of-melbourne-advanced-submit-data.ts),
@@ -31,10 +127,11 @@ export default function WattTheHackSubmissionPortal() {
   const [teamId, setTeamId] = useState("");
   const [teamToken, setTeamToken] = useState("");
   const [scenarioId, setScenarioId] = useState(SCENARIOS[0].id);
-  const [strategyName, setStrategyName] = useState("MyStrategy");
-  const [controllerCode, setControllerCode] = useState(
-    "class MyStrategy:\n    def step(self, observation):\n        pass\n"
-  );
+  // Display label only — appears in the team's submission history. The entry-
+  // point name in metadata.json comes from auto-detection of the pasted code,
+  // not from this field.
+  const [strategyName, setStrategyName] = useState("My first strategy");
+  const [controllerCode, setControllerCode] = useState(DEFAULT_CODE);
   const [requirements, setRequirements] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -44,11 +141,29 @@ export default function WattTheHackSubmissionPortal() {
   // when the user changes the form, so a stale tracker never lingers.
   const [activeSubmissionId, setActiveSubmissionId] = useState<string | null>(null);
 
+  // Live entrypoint detection — drives both the inline badge under the editor
+  // and the metadata.json the zip carries up to the gateway.
+  const detected = useMemo(() => detectEntrypoint(controllerCode), [controllerCode]);
+  const templates = useMemo(() => getTemplatesForScenario(scenarioId), [scenarioId]);
+  const scenarioNeedsLLM = LLM_SCENARIO_IDS.has(scenarioId);
+
+  const loadTemplate = (tpl: ControllerTemplate) => {
+    setControllerCode(tpl.source);
+    // requirements.txt resets too — every template is base-image-compatible,
+    // so the default empty file is correct.
+    setRequirements("");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!teamId || !teamToken || !strategyName || !controllerCode) {
       setStatus("error");
-      setMessage("Please fill in all required fields (Team ID, Token, Strategy Name, and Code).");
+      setMessage("Please fill in Team ID, Token, Submission name, and Code.");
+      return;
+    }
+    if (detected.kind === "unknown") {
+      setStatus("error");
+      setMessage(detected.reason);
       return;
     }
 
@@ -66,13 +181,17 @@ export default function WattTheHackSubmissionPortal() {
       // 2. Add requirements.txt
       zip.file("requirements.txt", requirements);
 
-      // 3. Add metadata.json
-      const metadata = {
+      // 3. Add metadata.json — the entry point name is derived from the
+      // detected shape of the pasted code, NOT from a separate text field
+      // that has to be kept in sync. The gateway accepts either class_name
+      // OR function_name; we emit exactly one.
+      const metadata: Record<string, unknown> = {
         strategy_name: strategyName,
         entrypoint: "strategy.py",
-        class_name: strategyName, // Assuming the strategy name is the class name
         scenario_id: scenarioId,
       };
+      if (detected.kind === "class") metadata.class_name = detected.name;
+      else metadata.function_name = detected.name;
       zip.file("metadata.json", JSON.stringify(metadata, null, 2));
 
       // 4. Generate zip blob
@@ -194,17 +313,34 @@ export default function WattTheHackSubmissionPortal() {
                   </option>
                 ))}
               </select>
+              {scenarioNeedsLLM ? (
+                <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#2f6f2c]/20 bg-[#edf5df] p-3">
+                  <SparklesIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#155420]" />
+                  <p className="text-[12.5px] leading-snug text-[#155420]">
+                    LLM access enabled for this scenario.{" "}
+                    <strong>OPENAI_API_KEY is set automatically</strong> in the eval
+                    pod — no <code className="font-mono text-[11px]">.env</code> file
+                    is needed in your submission. The cluster injects the key from a
+                    Kubernetes Secret. (For local testing on your laptop, set it in
+                    your own shell.)
+                  </p>
+                </div>
+              ) : null}
             </div>
             <div>
-              <label className={wattClasses.label + " mb-2"}>Strategy Class Name</label>
+              <label className={wattClasses.label + " mb-2"}>Submission name</label>
               <input
                 type="text"
                 value={strategyName}
                 onChange={(e) => setStrategyName(e.target.value)}
-                placeholder="MyStrategy"
+                placeholder="My first strategy"
                 className={wattClasses.input}
                 required
               />
+              <p className="mt-1 text-[11.5px] text-[#8a8477]">
+                Display label shown in your submission history. The entrypoint name
+                (class or function) is auto-detected from your code below.
+              </p>
             </div>
           </div>
 
@@ -213,9 +349,36 @@ export default function WattTheHackSubmissionPortal() {
           {/* Code Section */}
           <div className="flex flex-col gap-6">
             <div>
-              <div className="mb-2 flex items-center gap-2">
-                <CodeBracketIcon className="h-5 w-5 text-[#354031]" />
-                <label className={wattClasses.label}>Controller Code (strategy.py)</label>
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <CodeBracketIcon className="h-5 w-5 text-[#354031]" />
+                  <label className={wattClasses.label}>Controller Code (strategy.py)</label>
+                </div>
+                {templates.length > 0 ? (
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11.5px] font-bold uppercase tracking-[0.12em] text-[#64705f]">
+                      Load template
+                    </label>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const tpl = templates.find((t) => t.id === e.target.value);
+                        if (tpl) loadTemplate(tpl);
+                        e.target.value = ""; // reset so picking the same template twice re-fires
+                      }}
+                      className={wattClasses.input + " py-1.5 text-xs"}
+                    >
+                      <option value="" disabled>
+                        Pick a starter…
+                      </option>
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id} title={t.description}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
               </div>
               <div className="h-[400px] w-full overflow-hidden rounded-xl border border-[#e8dfcf] bg-[#1e1e1e] shadow-inner p-4">
                 <textarea
@@ -225,6 +388,31 @@ export default function WattTheHackSubmissionPortal() {
                   spellCheck={false}
                 />
               </div>
+              {/* Live detection badge — also surfaces the early failure mode
+                  (e.g. paste prose / forget a class definition). */}
+              <div className="mt-2">
+                {detected.kind === "class" ? (
+                  <span className={`${wattClasses.smallChip} gap-1.5`}>
+                    <CheckCircleIcon className="h-3.5 w-3.5" />
+                    Detected class{" "}
+                    <code className="font-mono">{detected.name}</code> ·{" "}
+                    <span className="font-normal normal-case tracking-normal text-[#64705f]">
+                      step() method
+                    </span>
+                  </span>
+                ) : detected.kind === "function" ? (
+                  <span className={`${wattClasses.smallChip} gap-1.5`}>
+                    <CheckCircleIcon className="h-3.5 w-3.5" />
+                    Detected function{" "}
+                    <code className="font-mono">{detected.name}</code>
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#df5047]/30 bg-[#fff1ef] px-3 py-1 text-xs font-bold text-[#9f2f28]">
+                    <ExclamationTriangleIcon className="h-3.5 w-3.5" />
+                    {detected.reason}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div>
@@ -232,9 +420,31 @@ export default function WattTheHackSubmissionPortal() {
               <textarea
                 value={requirements}
                 onChange={(e) => setRequirements(e.target.value)}
-                placeholder="numpy==1.24.3&#10;pandas==2.0.3"
-                className={wattClasses.input + " h-28 resize-none font-mono text-sm"}
+                placeholder="# Leave empty unless you need a niche package not in the base image."
+                className={wattClasses.input + " h-24 resize-none font-mono text-sm"}
               />
+              <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fbf6e9] p-3">
+                <InformationCircleIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#64705f]" />
+                <div className="text-[12.5px] leading-snug text-[#354031]">
+                  <p>
+                    <strong>Most submissions need an empty requirements.txt.</strong>{" "}
+                    The base image already includes the <code className="font-mono text-[11px]">watt_the_hack</code>{" "}
+                    engine plus <code className="font-mono text-[11px]">numpy</code>,{" "}
+                    <code className="font-mono text-[11px]">pandas</code>,{" "}
+                    <code className="font-mono text-[11px]">scipy</code>,{" "}
+                    <code className="font-mono text-[11px]">openai</code>,{" "}
+                    <code className="font-mono text-[11px]">anthropic</code>, and{" "}
+                    <code className="font-mono text-[11px]">pydantic</code>.
+                  </p>
+                  <p className="mt-1 text-[#64705f]">
+                    Only add a line here if you need something specialised
+                    (e.g. <code className="font-mono text-[11px]">cvxpy</code>,{" "}
+                    <code className="font-mono text-[11px]">optuna</code>). Listing
+                    stdlib modules like <code className="font-mono text-[11px]">os</code>{" "}
+                    or pre-installed packages will fail the build.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
 

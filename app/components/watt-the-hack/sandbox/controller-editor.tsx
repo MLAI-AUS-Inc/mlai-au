@@ -1,13 +1,12 @@
 "use client";
 
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   CheckCircle2Icon,
   CircleAlertIcon,
   CodeIcon,
   SlidersHorizontalIcon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 
 import { Button } from "~/components/watt-the-hack/sandbox/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/watt-the-hack/sandbox/ui/card";
@@ -23,10 +22,14 @@ import { useSimStore } from "~/lib/watt-the-hack-sandbox/sim-store";
 import type { SimpleControllerParams } from "~/lib/watt-the-hack-sandbox/types";
 import { cn } from "~/lib/watt-the-hack-sandbox/utils";
 
-const MonacoEditor = dynamic(
-  () => import("@monaco-editor/react").then((m) => m.default),
-  { ssr: false },
-);
+// Code-split Monaco — it's ~2 MB and only used on this page. Originally this
+// used Next.js `dynamic()` (file was synced from a Next-based source), which
+// doesn't exist in this React Router project; we use React's built-in `lazy`
+// + `Suspense` instead. SSR is fine to skip — the editor is interactive only.
+const MonacoEditor = lazy(async () => {
+  const mod = await import("@monaco-editor/react");
+  return { default: mod.default };
+});
 
 export function ControllerEditor() {
   const controllerKind = useSimStore((s) => s.controllerKind);
@@ -150,12 +153,19 @@ export function ControllerEditor() {
             />
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_280px]">
               <div className="overflow-hidden rounded-lg border border-line">
+                <Suspense
+                  fallback={
+                    <div className="flex h-[460px] items-center justify-center bg-[#fafafa] text-sm text-muted-foreground">
+                      Loading editor…
+                    </div>
+                  }
+                >
                 <MonacoEditor
                   height="460px"
                   language="python"
                   theme="vs"
                   value={draft}
-                  onChange={(value) => {
+                  onChange={(value: string | undefined) => {
                     const next = value ?? "";
                     setDraft(next);
                     setDirty(next !== controllerSource);
@@ -177,6 +187,7 @@ export function ControllerEditor() {
                     },
                   }}
                 />
+                </Suspense>
               </div>
               <CodeReference />
             </div>
