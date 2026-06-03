@@ -89,7 +89,7 @@ export function MetricsPanel() {
                 <DollarSignIcon className="h-3.5 w-3.5" />
               </span>
               <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-sky-700">
-                Leaderboard score
+                Total Cost
               </span>
             </div>
             {crashed ? (

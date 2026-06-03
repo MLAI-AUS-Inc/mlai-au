@@ -1,5 +1,5 @@
-import { DEFAULT_CONTROLLER_SOURCE } from "./default-controller";
-
+// AUTO-GENERATED FILE. DO NOT EDIT DIRECTLY.
+// Run scripts/sync_templates.py to update.
 export interface ControllerTemplate {
   id: string;
   label: string;
@@ -7,141 +7,66 @@ export interface ControllerTemplate {
   source: string;
 }
 
-const DO_NOTHING_SOURCE = `def controller(state):
-    """
-    Baseline: emit zero for every action, every step.
+const DO_NOTHING_SOURCE = "def controller(state):\n    \"\"\"\n    Baseline: emit zero for every action, every step.\n\n    The grid will fully serve demand from imports (no battery, no diesel,\n    no curtailment). Useful as a sanity check and a worst-case score\n    floor: any other controller should beat this on cost and renewable\n    ratio.\n    \"\"\"\n    return {\n        \"battery_flow_mw\": 0.0,\n        \"emergency_generator\": 0.0,\n        \"curtail_solar\": 0.0,\n    }\n";
 
-    The grid will fully serve demand from imports (no battery, no diesel,
-    no curtailment). Useful as a sanity check and a worst-case score
-    floor: any other controller should beat this on cost and renewable
-    ratio.
-    """
-    return {
-        "battery_flow_mw": 0.0,
-        "emergency_generator": 0.0,
-        "curtail_solar": 0.0,
-        "fcas_reserve_mw": 0.0,
+const TEMPLATE_DUCK_CURVE_SOURCE = "def controller(state):\n    \"\"\"    Welcome to your first controller!\n    \n    This function is called every 15 minutes of the simulation.\n    Your goal is to manage the site's battery, solar curtailment, and diesel generator \n    to keep costs as low as possible.\n    \"\"\"\n    \n    # 1. Read the current state of the site\n    soc = float(state[\"soc\"])        # Battery state of charge (0.0 to 1.0)\n    demand = float(state[\"demand\"])  # How much power the site is using (MW)\n    solar = float(state[\"solar\"])    # How much power the solar panels are generating (MW)\n    \n    # 2. Calculate the net power imbalance\n    # Positive net: We need more power (demand > solar)\n    # Negative net: We have extra power (solar > demand)\n    net_imbalance = demand - solar\n    \n    # 3. Make decisions!\n    # Let's write a very simple strategy:\n    battery_flow = 0.0\n\n    if net_imbalance < 0 and soc < 1.0:\n        # We have extra solar and the battery isn't full. Charge it a little bit!\n        # (Negative values mean charging)\n        battery_flow = -1.0 \n    \n    elif net_imbalance > 0 and soc > 0.0:\n        # We need power and the battery isn't empty. Discharge it a little bit!\n        # (Positive values mean discharging)\n        battery_flow = 1.0  \n        \n    # 4. Handle grid limits to avoid massive penalties\n    # The grid can only handle a certain amount of import/export before we are penalized.\n    EXPORT_CAP_MW = 50.0   # Max power we can safely export to the grid\n    IMPORT_CAP_MW = 120.0  # Max power we can safely import from the grid\n    \n    # Calculate what is hitting the grid after our battery action\n    net_after_battery = net_imbalance - battery_flow\n    \n    # If we are exporting more than the cap, we MUST curtail (turn off) some solar\n    export_amount = -net_after_battery\n    curtail = max(0.0, export_amount - EXPORT_CAP_MW)\n    \n    # If we are importing more than the cap, we MUST turn on the emergency diesel generator\n    import_amount = net_after_battery\n    diesel = max(0.0, import_amount - IMPORT_CAP_MW)\n    \n    # 5. Send our commands back to the simulation for that timestep. \n    return {\n        \"battery_flow_mw\": battery_flow,\n        \"curtail_solar\": curtail,\n        \"emergency_generator\": diesel,\n        \"fcas_reserve_mw\": 0.0,\n    }\n";
+const TEMPLATE_FREQUENCY_FRENZY_SOURCE = "class Strategy:\n    \"\"\"\n    Standard Forecast Controller Template\n    \n    This scenario introduces the 'forecast' dictionary in the state.\n    Instead of only looking at current conditions, we can look ahead\n    up to 12 steps (3 hours) to anticipate demand spikes and pre-charge\n    the battery before they hit.\n    \"\"\"\n    def __init__(self):\n        pass\n\n    def step(self, state: dict) -> dict:\n        # Current State\n        soc = float(state.get(\"soc\", 0.0))\n        demand_mw = float(state.get(\"demand\", 0.0))\n        solar_mw = float(state.get(\"solar\", 0.0))\n        \n        # Forecasts (Lists of predicted values for the next 12 steps)\n        forecast_demand = state.get(\"forecast\", {}).get(\"demand\", [])\n        forecast_solar = state.get(\"forecast\", {}).get(\"solar\", [])\n        \n        battery_flow = 0.0\n        current_net = demand_mw - solar_mw\n        \n        # 1. Look ahead to see if a massive demand spike is coming\n        impending_spike = False\n        \n        # We check if any forecasted net demand in the horizon exceeds a safe threshold\n        if forecast_demand and forecast_solar:\n            for predicted_demand, predicted_solar in zip(forecast_demand, forecast_solar):\n                predicted_net = predicted_demand - predicted_solar\n                if predicted_net > 110.0:\n                    impending_spike = True\n                    break\n                    \n        # 2. Make decisions based on the future\n        if impending_spike and soc < 0.90:\n            # A spike is coming and our battery isn't full!\n            # Pre-charge the battery from the grid as fast as safely possible\n            battery_flow = -25.0\n            \n        elif current_net > 0 and soc > 0.10:\n            # We are currently in a deficit, discharge to help out\n            battery_flow = min(current_net, 25.0)\n            \n        elif current_net < 0 and soc < 1.0:\n            # We are currently in a surplus, charge the battery\n            battery_flow = -min(abs(current_net), 25.0)\n            \n        # 3. Handle grid limits\n        net_after_battery = current_net - battery_flow\n        curtail = max(0.0, -net_after_battery - 50.0)\n        diesel = max(0.0, net_after_battery - 120.0)\n        \n        return {\n            \"battery_flow_mw\": battery_flow,\n            \"curtail_solar\": curtail,\n            \"emergency_generator\": diesel,\n        }\n\nstrategy = Strategy()\ndef controller(state: dict) -> dict:\n    return strategy.step(state)\n";
+const TEMPLATE_AI_GRID_SHOCK_SOURCE = "def controller(state):\n    \"\"\"\n    Welcome to AI Grid Shock!\n\n    This function is called every 15 minutes of the simulation.\n    You are managing energy for a large AI datacentre.\n    GPU workloads cause sudden demand spikes \u2014 your job is to use the battery\n    to keep costs low across 3 days of volatile load.\n\n    Important: energy prices lag behind demand by 2-3 steps.\n    By the time price rises to confirm a spike, it may be too late to react.\n    \"\"\"\n\n    # 1. Read the current state of the site\n    soc    = float(state[\"soc\"])       # Battery charge level (0.0 to 1.0)\n    demand = float(state[\"demand\"])    # How much power the site is using (MW)\n    solar  = float(state[\"solar\"])     # How much solar is generating (MW)\n    price  = float(state[\"price\"])     # Spot price $/MWh - lags true cost!\n\n    # 2. Calculate the net power imbalance\n    # Positive net: we need more power than solar provides (import from grid)\n    # Negative net: solar is producing more than we need (export to grid)\n    net_imbalance = demand - solar\n\n    # 3. Read alerts - plain English descriptions of what is happening on the grid\n    # Hint: they tell you whether a spike is a short batch job or a sustained crisis\n    alerts = state.get(\"alerts\", [])\n\n    # 4. The forecast gives predicted demand, solar and price for the next 16 steps.\n    # Be careful during GPU saturation, the forecast tends to underestimate true load.\n    forecast_demand = state.get(\"forecast\", {}).get(\"demand\", [])\n    forecast_price  = state.get(\"forecast\", {}).get(\"price\", [])\n\n    # 5. Make decisions!\n    battery_flow = 0.0  # Negative = charging, Positive = discharging\n\n    if price < 0 and soc < 1.0:\n        # Price is negative, cheap time to charge the battery!\n        battery_flow = -10.0\n\n    elif price > 0.30 and soc > 0.0:\n        # Price is high, use the battery instead of the grid\n        battery_flow = 10.0\n\n    # 6. FCAS - Frequency Control Ancillary Services\n    # You can reserve some inverter capacity for grid frequency services.\n    # This earns passive revenue every step but reduces how much you can\n    # charge or discharge. Every MW reserved for FCAS is unavailable for arbitrage.\n    # The trade-off is yours to optimise.\n    fcas_reserve = 0.0  # MW reserved for FCAS (max 50 MW)\n\n    # 7. Handle grid limits to avoid massive penalties\n    IMPORT_CAP_MW = 120.0  # Max we can safely import from the grid\n    EXPORT_CAP_MW = 50.0   # Max we can safely export to the grid\n\n    net_after_battery = net_imbalance - battery_flow\n\n    # If importing too much, turn on the emergency diesel generator\n    diesel = max(0.0, net_after_battery - IMPORT_CAP_MW)\n\n    # If exporting too much, curtail some solar output\n    curtail = max(0.0, -net_after_battery - EXPORT_CAP_MW)\n\n    # 8. Send commands back to the simulation\n    return {\n        \"battery_flow_mw\":     battery_flow,\n        \"curtail_solar\":       curtail,\n        \"emergency_generator\": diesel,\n        \"fcas_reserve_mw\":     fcas_reserve,\n    }";
+const TEMPLATE_OPERATORS_MANDATE_SOURCE = "from pathlib import Path\nfrom dotenv import load_dotenv\n\nload_dotenv(Path(__file__).resolve().parent / \".env\")\n\n\"\"\"Welcome to your first AGENTIC controller!\n\nWhat's new in this scenario:\n\n  Text alerts arrive every so often in state[\"alerts\"]. They come from\n  AEMO (the regulator), SES (emergency services), vendors, and\n  occasionally marketing emails dressed up as official notices. Your\n  controller has to read the prose and react. There is no neat numeric\n  forecast for any of this \u2014 it's English.\n\nHow this template handles it:\n\n  1. When the engine fires new alerts, it calls Strategy.replan(). We\n     forward the alert text to a small LLM (gpt-5.4-nano) and ask one\n     question: \"should we charge, discharge, or hold this step?\"\n  2. Strategy.step() runs every 15 minutes. It nudges the battery by\n     \u00b110 MW based on whatever the LLM last said.\n\nThat's it. No constraint tracking, no time windows, no sender\npriority, no cancellation handling. As a result this controller\nperforms roughly the same as doing nothing \u2014 which is the point. It\ngives you a working LLM call to build on.\n\nThree concrete ways to beat this template:\n\n  1. Have the LLM extract WINDOWS (start step, end step) and SOC\n     targets, not just an action keyword. Then enforce the target\n     only inside the right window.\n  2. Track WHO sent each directive. A later message from the same\n     sender might RESCIND the earlier one \u2014 the optimal controller\n     listens for that.\n  3. Pre-position SOC BEFORE an announced window so you land at the\n     target on the first step of the window, not the last.\n\nSee optimal.py in this directory for one way to do all three.\n\"\"\"\n\nimport json\nfrom openai import OpenAI\n\n\nclient = OpenAI()  # reads OPENAI_API_KEY from your .env (Make sure you have one!)\n\n\nSYSTEM_PROMPT = \"\"\"You read ONE grid-operator alert and decide what the\nbattery should do RIGHT NOW. Reply with JSON only:\n\n  {\"action\": \"charge\"}     -- charge the battery this step\n  {\"action\": \"discharge\"}  -- discharge the battery this step\n  {\"action\": \"hold\"}       -- do nothing this step\n\nRules of thumb:\n  - Charge when the alert hints at an upcoming reserve requirement or peak.\n  - Discharge when the alert says to drain or shed load.\n  - Hold on marketing / promotional / vendor messages and anything unclear.\n\"\"\"\n\n\ndef ask_llm(alert_text):\n    \"\"\"Send one alert to the LLM and return 'charge', 'discharge', or 'hold'.\"\"\"\n    response = client.chat.completions.create(\n        model=\"gpt-5.4-nano\",\n        messages=[\n            {\"role\": \"system\", \"content\": SYSTEM_PROMPT},\n            {\"role\": \"user\", \"content\": alert_text},\n        ],\n        response_format={\"type\": \"json_object\"},\n        temperature=0.0,\n    )\n    body = json.loads(response.choices[0].message.content or \"{}\")\n    action = body.get(\"action\", \"hold\")\n    return action if action in (\"charge\", \"discharge\", \"hold\") else \"hold\"\n\n\nclass Strategy:\n    \"\"\"The agentic loop the engine drives.\n\n    plan(state)          -- called once before step 0 (we don't use it)\n    replan(state, alerts) -- called whenever new alerts arrive\n    step(state)          -- called every 15-minute timestep\n    \"\"\"\n\n    def __init__(self):\n        self.current_action = \"hold\"\n\n    def replan(self, state, alerts):\n        # Grab the most recent alert and ask the LLM what to do about it.\n        latest_alert = alerts[-1]\n        \n        title = latest_alert.get(\"title\", \"\")\n        body = latest_alert.get(\"description\", \"\")\n        \n        alert_text = f\"{title}\\n{body}\"\n        self.current_action = ask_llm(alert_text)\n        return {}\n\n    def step(self, state):\n        soc = float(state.get(\"soc\", 0.5))\n\n        # Nudge the battery by 10 MW in the direction the LLM picked.\n        # Sign convention: negative = charge, positive = discharge.\n        battery_flow = 0.0\n        if self.current_action == \"charge\" and soc < 0.95:\n            battery_flow = -10.0\n        elif self.current_action == \"discharge\" and soc > 0.05:\n            battery_flow = 10.0\n\n        return {\n            \"battery_flow_mw\": battery_flow,\n            \"curtail_solar\": 0.0,\n            \"emergency_generator\": 0.0,\n            \"fcas_reserve_mw\": 0.0,\n        }\n";
+const TEMPLATE_CYBERSECURITY_SANDBOX_SOURCE = "\"\"\"Cybersecurity \u2014 naive reference controller (`template.py`).\n\nOfficial scoring baseline: run this file for `naive_cost` in\n`scripts/update_scoring_baselines.py`. Beat it with `optimal.py` in\nthis directory.\n\nGoal: show participants the minimum scaffolding for the cybersecurity\nscenario. The four mechanics this template touches:\n\n  1. Compliance windows \u2014 extracted from prose alerts via regex\n     (`>=X% steps A through B`, `<=X% steps A through B`,\n     `<= N MW from steps A through B`). Priority hardcoded:\n     \"Life-safety precedence\" beats anything else inside the same\n     window.\n  2. Cyber attacks \u2014 when an IDS Alert fires, we subscribe to the\n     IDS feed for that step and treat the alert as confirmed; we\n     echo `containment_ack` so the engine doesn't fine us.\n  3. Sensor FDI \u2014 during a known attack window we ignore obviously\n     corrupted readings (impossible SOC jumps, demand=0 while\n     forecast > 10, solar > 200) and fall back to the forecast.\n  4. FCAS dispatch \u2014 reserve windows from ``state[\"fcas_events_upcoming\"]``\n     (engine truth), not briefing prose alone.\n\nThis template will pay for two predictable mistakes: it ACKs every\nsingle IDS alert (the decoy will fine us $650k) and it doesn't\narbitrate cleverly between compliance windows. Beat it by:\n  - cross-checking decoys with `ids_signal_node_a/b`,\n  - LLM-parsing prose directives for richer context,\n  - pre-positioning SOC before FCAS dispatch,\n  - selective IDS subscription to save the per-step fee.\n\nRun from the repo root:\n\n    python -m watt_the_hack.playtest \\\\\n        playtester/reference_controllers/5_cyber_security/template.py \\\\\n        --scenario cybersecurity_sandbox --open-report\n\"\"\"\n\nfrom __future__ import annotations\n\nimport re\n\nfrom constraints import sync_fcas_constraints\n\nINVERTER_MW = 50.0\nBATTERY_CAPACITY_MWH = 100.0\nDT_HOURS = 0.25\nEXPORT_CAP_MW = 50.0\nIMPORT_CAP_MW = 120.0\n\n\n_MIN_SOC_RX = re.compile(r\">=\\s*(\\d+(?:\\.\\d+)?)\\s*%.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)\", re.I | re.S)\n_MAX_SOC_RX = re.compile(r\"<=\\s*(\\d+(?:\\.\\d+)?)\\s*%.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)\", re.I | re.S)\n_EXPORT_CAP_RX = re.compile(r\"(?:export[^.\\n]*?(?:limit|cap|ceiling|tightened)[^.\\n]*?)(\\d+(?:\\.\\d+)?)\\s*MW.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)\", re.I | re.S)\n_ATTACK_ID_RX = re.compile(r\"`?containment_ack`?\\s*[:=]?\\s*`?([A-Za-z0-9_\\-]+)`?\", re.I)\n\n\ndef _parse_alert(alert: dict) -> list[dict]:\n    \"\"\"Pull SOC floors/ceilings, export caps, FCAS reservations from prose.\"\"\"\n    text = f\"{alert.get('title', '')}\\n{alert.get('description', '')}\"\n    priority = 100 if \"life-safety\" in text.lower() else 50\n    out: list[dict] = []\n\n    m = _MIN_SOC_RX.search(text)\n    if m:\n        out.append({\"min_soc\": float(m.group(1)) / 100.0,\n                    \"start\": int(m.group(2)), \"end\": int(m.group(3)),\n                    \"priority\": priority})\n\n    m = _MAX_SOC_RX.search(text)\n    if m:\n        out.append({\"max_soc\": float(m.group(1)) / 100.0,\n                    \"start\": int(m.group(2)), \"end\": int(m.group(3)),\n                    \"priority\": priority})\n\n    m = _EXPORT_CAP_RX.search(text)\n    if m:\n        out.append({\"max_export_mw\": float(m.group(1)),\n                    \"start\": int(m.group(2)), \"end\": int(m.group(3)),\n                    \"priority\": priority})\n\n    return out\n\n\ndef _is_attack_alert(alert: dict) -> tuple[bool, str | None]:\n    \"\"\"Return (True, attack_id) if this is an IDS containment alert.\"\"\"\n    title = alert.get(\"title\", \"\").lower()\n    if \"ids alert\" not in title:\n        return False, None\n    m = _ATTACK_ID_RX.search(alert.get(\"description\", \"\") or \"\")\n    return True, (m.group(1) if m else None)\n\n\nclass Strategy:\n    def __init__(self) -> None:\n        self.constraints: list[dict] = []\n        self._seen_alerts: set[str] = set()\n        self._last_good_soc: float = 0.5\n        self._last_good_demand: float = 0.0\n        self._last_good_solar: float = 0.0\n\n    def replan(self, state: dict, alerts: list[dict]) -> dict:\n        for alert in alerts:\n            aid = alert.get(\"id\")\n            if not isinstance(aid, str) or aid in self._seen_alerts:\n                continue\n            self._seen_alerts.add(aid)\n            for entry in _parse_alert(alert):\n                self.constraints.append(entry)\n        sync_fcas_constraints(self.constraints, state)\n        return {}\n\n    def step(self, state: dict) -> dict:\n        sync_fcas_constraints(self.constraints, state)\n        t = int(state.get(\"time\", 0))\n        alerts = state.get(\"alerts\", []) or []\n\n        # Subscribe to IDS only while an IDS alert is active \u2014 saves the\n        # per-step subscription fee outside attack windows.\n        attack_alerts = [a for a in alerts if _is_attack_alert(a)[0]]\n        subscribe = bool(attack_alerts)\n\n        # Decide which attack ids to ACK. Simple rule: ACK whatever the\n        # alert names \u2014 gets the real ones right and the decoy wrong.\n        ack_id: str | None = None\n        for a in attack_alerts:\n            _, aid = _is_attack_alert(a)\n            if aid:\n                ack_id = aid\n                break\n\n        # Sensor readings \u2014 fall back to forecast / last good values\n        # while an attack is active (FDI may be corrupting them).\n        raw_soc = float(state.get(\"soc\", 0.5))\n        raw_demand = float(state.get(\"demand\", 0.0))\n        raw_solar = float(state.get(\"solar\", 0.0))\n\n        forecast = state.get(\"forecast\", {}) or {}\n        fc_demand = (forecast.get(\"demand\") or [raw_demand])[0]\n        fc_solar = (forecast.get(\"solar\") or [raw_solar])[0]\n\n        if subscribe:\n            # Physically-impossible deltas signal FDI.\n            soc_jump = abs(raw_soc - self._last_good_soc)\n            demand_anomaly = raw_demand < 1.0 and fc_demand > 5.0\n            solar_anomaly = abs(raw_solar - fc_solar) > 100.0\n            if soc_jump > 0.25 or demand_anomaly or solar_anomaly:\n                soc = self._last_good_soc\n                demand = fc_demand\n                solar = fc_solar\n            else:\n                soc = raw_soc\n                demand = raw_demand\n                solar = raw_solar\n                self._last_good_soc = raw_soc\n                self._last_good_demand = raw_demand\n                self._last_good_solar = raw_solar\n        else:\n            soc = raw_soc\n            demand = raw_demand\n            solar = raw_solar\n            self._last_good_soc = raw_soc\n            self._last_good_demand = raw_demand\n            self._last_good_solar = raw_solar\n\n        # Active constraints (priority resolver \u2014 life-safety wins overlap)\n        active = [c for c in self.constraints if c[\"start\"] <= t <= c[\"end\"]]\n        if active:\n            top = max(c[\"priority\"] for c in active)\n            active = [c for c in active if c[\"priority\"] == top]\n        min_soc = max((c[\"min_soc\"] for c in active if \"min_soc\" in c), default=None)\n        max_soc = min((c[\"max_soc\"] for c in active if \"max_soc\" in c), default=None)\n        max_export = min((c[\"max_export_mw\"] for c in active if \"max_export_mw\" in c), default=None)\n\n        # FCAS reserve: hold whatever's requested during the announced window.\n        fcas_reserve = 0.0\n        for c in self.constraints:\n            if \"fcas_mw\" in c and c[\"start\"] <= t <= c[\"end\"]:\n                fcas_reserve = max(fcas_reserve, min(INVERTER_MW, c[\"fcas_mw\"]))\n\n        # Base dispatch: self-consumption.\n        raw_net = demand - solar\n        battery_flow = 0.0\n        if raw_net > 0.0 and soc > 0.1:\n            battery_flow = min(INVERTER_MW - fcas_reserve, raw_net)\n        elif raw_net < 0.0 and soc < 0.95:\n            battery_flow = max(-(INVERTER_MW - fcas_reserve), raw_net)\n\n        # Enforce active SOC bounds.\n        if min_soc is not None and soc < min_soc:\n            battery_flow = -(INVERTER_MW - fcas_reserve)\n        if max_soc is not None and soc > max_soc:\n            battery_flow = (INVERTER_MW - fcas_reserve)\n\n        # Curtail solar to honour export ceiling (hardware + active rule).\n        net_after = demand - solar - battery_flow\n        export_mw = max(0.0, -net_after)\n        curtail = max(0.0, export_mw - EXPORT_CAP_MW)\n        if max_export is not None and export_mw > max_export:\n            curtail = max(curtail, export_mw - max_export)\n\n        diesel = max(0.0, net_after - IMPORT_CAP_MW)\n\n        agent_plan: dict = {}\n        if ack_id:\n            agent_plan[\"containment_ack\"] = ack_id\n\n        return {\n            \"battery_flow_mw\": battery_flow,\n            \"curtail_solar\": curtail,\n            \"emergency_generator\": diesel,\n            \"fcas_reserve_mw\": fcas_reserve,\n            \"subscribe_ids\": subscribe,\n            \"agent_plan\": agent_plan,\n        }\n";
+
+export function getTemplatesForScenario(scenarioId: string | null): ControllerTemplate[] {
+  const templates: ControllerTemplate[] = [
+    {
+      id: 'do-nothing',
+      label: 'Do nothing',
+      description: 'Returns zero every step. Score floor - every other controller should beat this.',
+      source: DO_NOTHING_SOURCE,
     }
-`;
+  ];
 
-const ML_STUB_SOURCE = `# Module-level state persists across timesteps because the sandbox
-# compiles this source ONCE and reuses the namespace for every call.
-# Use globals to remember things between steps — that's your "memory".
+  if (!scenarioId) return templates;
 
-# Parameters we LEARN from data: per-hour-of-day running mean of how
-# wrong the forecast was. Starts at zero (no correction). Improves with
-# every step that passes.
-forecast_bias_by_hour = {h: 0.0 for h in range(24)}
-samples_seen_by_hour = {h: 0 for h in range(24)}
+  if (scenarioId === 'duck_curve') {
+    templates.push({
+      id: 'template-duck_curve',
+      label: 'Scenario Template',
+      description: 'The starting template for this specific scenario.',
+      source: TEMPLATE_DUCK_CURVE_SOURCE,
+    });
+  }
+  if (scenarioId === 'frequency_frenzy') {
+    templates.push({
+      id: 'template-frequency_frenzy',
+      label: 'Scenario Template',
+      description: 'The starting template for this specific scenario.',
+      source: TEMPLATE_FREQUENCY_FRENZY_SOURCE,
+    });
+  }
+  if (scenarioId === 'ai_grid_shock') {
+    templates.push({
+      id: 'template-ai_grid_shock',
+      label: 'Scenario Template',
+      description: 'The starting template for this specific scenario.',
+      source: TEMPLATE_AI_GRID_SHOCK_SOURCE,
+    });
+  }
+  if (scenarioId === 'operators_mandate') {
+    templates.push({
+      id: 'template-operators_mandate',
+      label: 'Scenario Template',
+      description: 'The starting template for this specific scenario.',
+      source: TEMPLATE_OPERATORS_MANDATE_SOURCE,
+    });
+  }
+  if (scenarioId === 'cybersecurity_sandbox') {
+    templates.push({
+      id: 'template-cybersecurity_sandbox',
+      label: 'Scenario Template',
+      description: 'The starting template for this specific scenario.',
+      source: TEMPLATE_CYBERSECURITY_SANDBOX_SOURCE,
+    });
+  }
 
-# Remember last step's first-horizon forecast so we can compare it to
-# the actual demand we observe this step.
-last_forecast_demand = None
-last_hour_bucket = None
-
-
-def controller(state):
-    global last_forecast_demand, last_hour_bucket
-
-    # ---------- 1. READ STATE ----------
-    t           = int(state.get("time", 0))
-    hour        = (t * 0.25) % 24
-    hour_bucket = int(hour)
-    soc         = float(state.get("soc", 0.5))
-    demand_mw   = float(state.get("demand", 0.0))
-    solar_mw    = float(state.get("solar", 0.0))
-    price       = float(state.get("price", 200.0))
-
-    # Forecast scenarios expose a NOISY view of the next ~16 steps.
-    # Early deterministic scenarios may not include this key.
-    forecast = state.get("forecast", {}) or {}
-    demand_fc = forecast.get("demand", []) or []
-    price_fc  = forecast.get("price", []) or []
-
-    # ---------- 2. LEARN FROM LAST STEP'S MISTAKE ----------
-    # Compare the forecast we used last step to what actually arrived.
-    # Update a per-hour-of-day running mean of the systematic error.
-    if last_forecast_demand is not None and last_hour_bucket is not None:
-        error = demand_mw - last_forecast_demand
-        n = samples_seen_by_hour[last_hour_bucket]
-        # Online mean update: new = old + (sample - old) / (n+1)
-        forecast_bias_by_hour[last_hour_bucket] += (
-            error - forecast_bias_by_hour[last_hour_bucket]
-        ) / (n + 1)
-        samples_seen_by_hour[last_hour_bucket] = n + 1
-
-    # ---------- 3. BIAS-CORRECT THE WHOLE HORIZON ----------
-    # Apply the learned per-hour bias to every step in the forecast.
-    corrected_demand = []
-    for h, raw in enumerate(demand_fc):
-        future_hour = int(((t + h) * 0.25) % 24)
-        corrected_demand.append(raw + forecast_bias_by_hour[future_hour])
-
-    # Stash the h=0 forecast we just produced — we'll grade it next step.
-    last_forecast_demand = demand_fc[0] if demand_fc else demand_mw
-    last_hour_bucket = hour_bucket
-
-    # ---------- 4. LOOK AHEAD AT PRICES ----------
-    # Find the highest-price step coming up in the forecast. If a big
-    # spike is approaching, hold the battery for it instead of discharging.
-    upcoming_peak_price = max(price_fc) if price_fc else price
-    peak_is_coming      = upcoming_peak_price > price * 1.5
-    near_peak_now       = price >= upcoming_peak_price * 0.9
-
-    # Best guess at what demand will be right now (bias-corrected h=0)
-    expected_demand = corrected_demand[0] if corrected_demand else demand_mw
-    surplus = solar_mw - expected_demand
-
-    # ---------- 5. ACT ----------
-    battery_flow_mw = 0.0
-    emergency_generator = 0.0
-    curtail_solar = 0.0
-
-    if surplus > 0 and soc < 0.95:
-        # Free solar surplus — soak it into the battery
-        battery_flow_mw = -surplus
-    elif peak_is_coming and soc < 0.80:
-        # A big price spike is coming — hold capacity for it
-        battery_flow_mw = 0.0
-    elif near_peak_now and soc > 0.20:
-        # We're at peak prices now — discharge to cover demand
-        battery_flow_mw = max(0.0, expected_demand - solar_mw)
-
-    # Standard guardrails (same as rule-based)
-    net = demand_mw - solar_mw - battery_flow_mw
-    if net < -50.0:
-        curtail_solar = abs(net) - 50.0
-    elif net > 120.0:
-        emergency_generator = net - 120.0
-
-    return {
-        "battery_flow_mw": battery_flow_mw,
-        "emergency_generator": emergency_generator,
-        "curtail_solar": curtail_solar,
-        "fcas_reserve_mw": 0.0,
-    }
-`;
-
-export const CONTROLLER_TEMPLATES: ControllerTemplate[] = [
-  {
-    id: "do-nothing",
-    label: "Do nothing",
-    description:
-      "Returns zero every step. Score floor — every other controller should beat this.",
-    source: DO_NOTHING_SOURCE,
-  },
-  {
-    id: "rule-based",
-    label: "Rule-based",
-    description:
-      "Hand-written heuristics: charge from surplus solar, discharge at peak prices, curtail to avoid overvoltage, run diesel to avoid blackout.",
-    source: DEFAULT_CONTROLLER_SOURCE,
-  },
-  {
-    id: "ml-stub",
-    label: "ML stub",
-    description:
-      "Online bias correction for forecast-enabled scenarios: learns per-hour forecast error from observed data and uses it to plan dispatch.",
-    source: ML_STUB_SOURCE,
-  },
-];
+  return templates;
+}

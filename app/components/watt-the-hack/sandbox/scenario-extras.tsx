@@ -37,20 +37,30 @@ export function ScenarioExtras() {
   const hasForecast = !!activeMechanic(mechanics, "forecast");
   const hasBudget = !!activeMechanic(mechanics, "throughput_budget");
   const hasForecastBias = !!activeMechanic(mechanics, "forecast_bias");
-  if (!hasForecast && !hasBudget) return null;
+  if (!scenario) return null;
 
   // When the scenario uses forecast_bias, surface the solar chart as well
   // — that's where the divergence between forecast and reality will show
   // up most clearly. Otherwise just the headline demand chart.
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-3">
+      <PriceSignalCard hasForecast={hasForecast} />
       {hasForecast ? (
-        <ForecastChart
-          channel="demand"
-          title="Demand · forecast horizon"
-          unit="MW"
-          color="#0F172A"
-        />
+        <>
+          <ForecastChart
+            channel="price"
+            title="Price · forecast horizon"
+            unit="$/MWh"
+            color="#0EA5E9"
+            subtitle="Current price is exact. Forecast prices are noisy lookahead values exposed to controllers as state['forecast']['price']."
+          />
+          <ForecastChart
+            channel="demand"
+            title="Demand · forecast horizon"
+            unit="MW"
+            color="#0F172A"
+          />
+        </>
       ) : null}
       {hasForecast && hasForecastBias ? (
         <ForecastChart
@@ -62,6 +72,123 @@ export function ScenarioExtras() {
         />
       ) : null}
       {hasBudget ? <ThroughputGauge /> : null}
+    </div>
+  );
+}
+
+// ─── Price signal card ────────────────────────────────────────────────────────
+
+function PriceSignalCard({ hasForecast }: { hasForecast: boolean }) {
+  const state = useSimStore((s) => s.state);
+  const statesHistory = useSimStore((s) => s.statesHistory);
+  const currentPrice = numberOrNull(state?.price);
+  const priceForecast =
+    (state?.forecast as Partial<Record<ForecastChannel, number[]>> | undefined)
+      ?.price ?? [];
+  const observedPrices = statesHistory
+    .map((s) => numberOrNull(s.price))
+    .filter((v): v is number => v !== null);
+  const allVisiblePrices =
+    currentPrice === null ? observedPrices : [...observedPrices, currentPrice];
+  const observedMin =
+    allVisiblePrices.length > 0 ? Math.min(...allVisiblePrices) : null;
+  const observedMax =
+    allVisiblePrices.length > 0 ? Math.max(...allVisiblePrices) : null;
+  const nextForecast = numberOrNull(priceForecast[0]);
+  const forecastMax =
+    priceForecast.length > 0 ? Math.max(...priceForecast.map(Number)) : null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Price signal</CardTitle>
+        <p className="text-[11px] text-muted">
+          For participants, the safest source is{" "}
+          <code className="rounded bg-canvas px-1 font-mono text-[10px] text-ink">
+            state[&apos;price&apos;]
+          </code>
+          . Use the forecast only when this scenario unlocks lookahead.
+        </p>
+      </CardHeader>
+      <CardContent className="flex h-56 flex-col justify-between gap-3">
+        <div className="grid grid-cols-2 gap-2">
+          <PriceStat
+            label="Current import"
+            value={currentPrice === null ? "n/a" : formatPrice(currentPrice)}
+            emphasis
+          />
+          <PriceStat
+            label={hasForecast ? "Next forecast" : "Forecast"}
+            value={
+              hasForecast && nextForecast !== null
+                ? formatPrice(nextForecast)
+                : "locked"
+            }
+          />
+          <PriceStat
+            label="Seen low"
+            value={observedMin === null ? "n/a" : formatPrice(observedMin)}
+          />
+          <PriceStat
+            label={hasForecast ? "Lookahead high" : "Seen high"}
+            value={
+              hasForecast && forecastMax !== null
+                ? formatPrice(forecastMax)
+                : observedMax === null
+                  ? "n/a"
+                  : formatPrice(observedMax)
+            }
+          />
+        </div>
+
+        <div className="space-y-1.5 rounded-md border border-line/70 bg-canvas/60 p-2 text-[11px] leading-relaxed text-muted">
+          <div>
+            Read now:{" "}
+            <code className="rounded bg-surface px-1 font-mono text-[10px] text-ink">
+              price = float(state.get(&apos;price&apos;, 0))
+            </code>
+          </div>
+          <div>
+            {hasForecast ? (
+              <>
+                Look ahead:{" "}
+                <code className="rounded bg-surface px-1 font-mono text-[10px] text-ink">
+                  state[&apos;forecast&apos;][&apos;price&apos;]
+                </code>
+              </>
+            ) : (
+              "No future price data is exposed in this scenario."
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PriceStat({
+  label,
+  value,
+  emphasis,
+}: {
+  label: string;
+  value: string;
+  emphasis?: boolean;
+}) {
+  return (
+    <div className="rounded-md border border-line bg-surface px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+        {label}
+      </div>
+      <div
+        className={
+          emphasis
+            ? "mt-1 font-mono text-xl font-semibold tabular-nums text-ink"
+            : "mt-1 font-mono text-sm font-semibold tabular-nums text-ink"
+        }
+      >
+        {value}
+      </div>
     </div>
   );
 }
@@ -269,4 +396,13 @@ function ThroughputGauge() {
 
 function round(value: number): number {
   return Math.round(value * 10) / 10;
+}
+
+function numberOrNull(value: unknown): number | null {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function formatPrice(value: number): string {
+  return `$${value.toFixed(0)}/MWh`;
 }

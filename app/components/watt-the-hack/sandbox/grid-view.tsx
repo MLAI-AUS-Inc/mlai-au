@@ -83,6 +83,9 @@ export function GridDiagram() {
   const mechanics = scenario?.mechanics;
   const maxInverterKw =
     scenario?.limits?.max_inverter_mw ?? DEFAULT_MAX_INVERTER_MW;
+  const maxImportMw = scenario?.limits?.grid_max_import_mw ?? Infinity;
+  const maxExportMw = scenario?.limits?.grid_max_export_mw ?? Infinity;
+  const exportTariff = scenario?.penalties?.export_tariff_per_mwh ?? 0;
 
   // Scenario-driven node visibility. New mechanics that introduce a grid
   // node should add a check here.
@@ -238,30 +241,43 @@ export function GridDiagram() {
 
         {/* ── Battery → FCAS (capacity commitment from the battery directly) ──
             Conceptual: "your battery is committing inverter MW to FCAS".
-            Active when fcas_reserve_mw > 0 in the action dict. */}
+            Active only when actively dispatching. */}
         {showFcas && (
-          <FlowLine
-            x1={BATT_X + ICON_R}
-            y1={BATT_Y}
-            x2={FCAS_X - 25}
-            y2={FCAS_Y + 10}
-            active={fcasReserve > 0.01 || isFcasDispatching}
-            color="#7C3AED"
-            direction="forward"
-            pulse={isFcasDispatching}
-          />
+          <g>
+            <FlowLine
+              x1={BATT_X + ICON_R}
+              y1={BATT_Y}
+              x2={FCAS_X - 25}
+              y2={FCAS_Y + 10}
+              active={isFcasDispatching}
+              color="#7C3AED"
+              direction="forward"
+              pulse={isFcasDispatching}
+            />
+            {isFcasDispatching && (
+              <text
+                x={(BATT_X + ICON_R + FCAS_X - 25) / 2}
+                y={(BATT_Y + FCAS_Y + 10) / 2 + 15}
+                textAnchor="middle"
+                style={{ fontSize: 10, fontFamily: "var(--font-geist-sans)", fontWeight: 600 }}
+                fill="#7C3AED"
+              >
+                Dispatching!
+              </text>
+            )}
+          </g>
         )}
 
         {/* ── FCAS → Grid (reserve backs the external grid) ──
             Conceptual: "the grid operator can call on this capacity".
-            We don't model actual dispatch yet \u2014 always shows as available. */}
+            Active only when actively dispatching. */}
         {showFcas && (
           <FlowLine
             x1={FCAS_X}
             y1={FCAS_Y}
             x2={GRID_X}
             y2={GRID_Y}
-            active={fcasReserve > 0.01 || isFcasDispatching}
+            active={isFcasDispatching}
             color="#7C3AED"
             direction="forward"
             pulse={isFcasDispatching}
@@ -329,6 +345,67 @@ export function GridDiagram() {
         >
           <ZapIcon />
         </PeriphNode>
+
+        {/* ── Grid Constraints Box ── */}
+        <g transform={`translate(${GRID_X}, ${GRID_Y + 86})`}>
+          <rect
+            x={-56}
+            y={0}
+            width={112}
+            height={52}
+            rx={6}
+            fill="rgba(255, 255, 255, 0.7)"
+            stroke="#CBD5E1"
+            strokeWidth={1}
+            strokeDasharray="2 2"
+          />
+          <text
+            x={0}
+            y={14}
+            textAnchor="middle"
+            style={{ fontSize: 9, fontFamily: "var(--font-geist-sans)", fontWeight: 600, letterSpacing: "0.05em" }}
+            fill="#64748B"
+          >
+            GRID LIMITS
+          </text>
+          <text
+            x={0}
+            y={28}
+            textAnchor="middle"
+            style={{ fontSize: 10, fontFamily: "var(--font-geist-mono)", fontWeight: 500 }}
+            fill={maxImportMw === Infinity ? "#94A3B8" : "#0F172A"}
+          >
+            Imp: {maxImportMw === Infinity ? "∞" : `${maxImportMw} MW`}
+          </text>
+          <text
+            x={0}
+            y={42}
+            textAnchor="middle"
+            style={{ fontSize: 10, fontFamily: "var(--font-geist-mono)", fontWeight: 500 }}
+            fill={maxExportMw === Infinity ? "#94A3B8" : "#0F172A"}
+          >
+            Exp: {maxExportMw === Infinity ? "∞" : `${maxExportMw} MW`}
+          </text>
+          {/* Small badge for export price */}
+          <rect
+            x={-34}
+            y={58}
+            width={68}
+            height={18}
+            rx={9}
+            fill="#F0FDF4"
+            stroke="#BBF7D0"
+          />
+          <text
+            x={0}
+            y={69}
+            textAnchor="middle"
+            style={{ fontSize: 9, fontFamily: "var(--font-geist-mono)", fontWeight: 600 }}
+            fill="#166534"
+          >
+            +${exportTariff}/MWh
+          </text>
+        </g>
 
         {/* ── FCAS market node (only when the scenario unlocks FCAS) ── */}
         {showFcas && (

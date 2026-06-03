@@ -1,5 +1,6 @@
 "use client";
 
+import { lazy, Suspense } from "react";
 import {
   CheckCircle2Icon,
   CircleAlertIcon,
@@ -13,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "~/components/watt-the-
 import { Slider } from "~/components/watt-the-hack/sandbox/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/watt-the-hack/sandbox/ui/tabs";
 import {
-  CONTROLLER_TEMPLATES,
+  getTemplatesForScenario,
   type ControllerTemplate,
 } from "~/lib/watt-the-hack-sandbox/controller-templates";
 import { DEFAULT_CONTROLLER_SOURCE } from "~/lib/watt-the-hack-sandbox/default-controller";
@@ -21,6 +22,11 @@ import { lookupMechanic, type MechanicSlider } from "~/lib/watt-the-hack-sandbox
 import { useSimStore } from "~/lib/watt-the-hack-sandbox/sim-store";
 import type { SimpleControllerParams } from "~/lib/watt-the-hack-sandbox/types";
 import { cn } from "~/lib/watt-the-hack-sandbox/utils";
+
+const MonacoEditor = dynamic(
+  () => import("@monaco-editor/react").then((m) => m.default),
+  { ssr: false },
+);
 
 export function ControllerEditor() {
   const controllerKind = useSimStore((s) => s.controllerKind);
@@ -135,6 +141,7 @@ export function ControllerEditor() {
 
           <TabsContent value="code">
             <TemplatePicker
+              scenarioId={scenario?.id ?? null}
               currentSource={draft}
               onLoad={(template) => {
                 setDraft(template.source);
@@ -143,20 +150,32 @@ export function ControllerEditor() {
             />
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_280px]">
               <div className="overflow-hidden rounded-lg border border-line">
-                <textarea
+                <MonacoEditor
+                  height="460px"
+                  language="python"
+                  theme="vs"
                   value={draft}
-                  onChange={(e) => {
-                    const next = e.target.value;
+                  onChange={(value) => {
+                    const next = value ?? "";
                     setDraft(next);
                     setDirty(next !== controllerSource);
                   }}
-                  spellCheck={false}
-                  autoCorrect="off"
-                  autoCapitalize="off"
-                  wrap="off"
-                  aria-label="Controller Python source"
-                  className="block h-[460px] w-full resize-none overflow-auto bg-canvas px-4 py-3 font-mono text-[13px] leading-relaxed text-ink outline-none"
-                  style={{ tabSize: 4 }}
+                  options={{
+                    minimap: { enabled: false },
+                    fontSize: 13,
+                    fontFamily: "var(--font-geist-mono)",
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                    smoothScrolling: true,
+                    padding: { top: 16, bottom: 16 },
+                    fontLigatures: true,
+                    tabSize: 4,
+                    automaticLayout: true,
+                    scrollbar: {
+                      vertical: "auto",
+                      horizontal: "auto",
+                    },
+                  }}
                 />
               </div>
               <CodeReference />
@@ -384,14 +403,16 @@ ${actionLines.join("\n")}
 }
 
 interface TemplatePickerProps {
+  scenarioId: string | null;
   currentSource: string;
   onLoad: (template: ControllerTemplate) => void;
 }
 
-function TemplatePicker({ currentSource, onLoad }: TemplatePickerProps) {
+function TemplatePicker({ scenarioId, currentSource, onLoad }: TemplatePickerProps) {
+  const templates = getTemplatesForScenario(scenarioId);
   const activeId =
-    CONTROLLER_TEMPLATES.find((t) => t.source === currentSource)?.id ?? null;
-  const activeDescription = CONTROLLER_TEMPLATES.find(
+    templates.find((t) => t.source === currentSource)?.id ?? null;
+  const activeDescription = templates.find(
     (t) => t.id === activeId,
   )?.description;
 
@@ -401,8 +422,8 @@ function TemplatePicker({ currentSource, onLoad }: TemplatePickerProps) {
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
           Templates
         </span>
-        <div className="flex flex-wrap gap-1.5">
-          {CONTROLLER_TEMPLATES.map((template) => {
+        <div className="flex flex-wrap items-center gap-1.5">
+          {templates.map((template) => {
             const isActive = template.id === activeId;
             return (
               <button
@@ -421,6 +442,22 @@ function TemplatePicker({ currentSource, onLoad }: TemplatePickerProps) {
               </button>
             );
           })}
+          
+          <div className="mx-1 h-4 w-px bg-line" />
+          
+          <button
+            type="button"
+            disabled
+            title={activeId === null ? "You are editing custom code" : "Modify the code to create your own custom controller"}
+            className={cn(
+              "cursor-default rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors",
+              activeId === null
+                ? "border-amber-500 bg-amber-500 text-white"
+                : "border-transparent bg-transparent text-muted",
+            )}
+          >
+            Custom Code
+          </button>
         </div>
       </div>
       {activeDescription ? (
@@ -429,7 +466,7 @@ function TemplatePicker({ currentSource, onLoad }: TemplatePickerProps) {
         </p>
       ) : (
         <p className="mt-2 text-[11px] leading-relaxed text-muted">
-          Custom code — pick a template above to start from a known baseline.
+          Custom code — pick a template above to start from a known baseline, or continue writing your own!
         </p>
       )}
     </div>

@@ -7,19 +7,17 @@ import type {
   StepResponse,
 } from "./types";
 
-import { API_URL } from "~/lib/api";
+const DEFAULT_BASE_URL = "http://127.0.0.1:8000";
 
-const SIM_BASE_PATH = "/api/v1/hackathons/watt-the-hack/sim";
-
-const apiUrl = (path: string): string => `${API_URL}${SIM_BASE_PATH}${path}`;
+const baseUrl = (): string =>
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_BASE_URL;
 
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(apiUrl(path), {
+  const response = await fetch(`${baseUrl()}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     cache: "no-store",
-    credentials: "include",
   });
 
   if (!response.ok) {
@@ -37,14 +35,13 @@ export async function fetchInit(
   const body: Record<string, unknown> = {};
   if (steps) body.steps = steps;
   if (scenarioId) body.scenario_id = scenarioId;
-  return post<InitResponse>("/init/", body);
+  return post<InitResponse>("/sim/init", body);
 }
 
 export async function fetchScenarios(): Promise<ScenarioSummary[]> {
-  const response = await fetch(apiUrl("/scenarios/"), {
+  const response = await fetch(`${baseUrl()}/sim/scenarios`, {
     method: "GET",
     cache: "no-store",
-    credentials: "include",
   });
   if (!response.ok) {
     throw new Error(`API /sim/scenarios failed: ${response.status}`);
@@ -56,7 +53,7 @@ export async function fetchStep(
   state: SimulationState,
   controller: ControllerSpec,
 ): Promise<StepResponse> {
-  return post<StepResponse>("/step/", { state, controller });
+  return post<StepResponse>("/sim/step", { state, controller });
 }
 
 export async function fetchRun(
@@ -64,5 +61,5 @@ export async function fetchRun(
   controller: ControllerSpec,
   steps: number,
 ): Promise<RunResponse> {
-  return post<RunResponse>("/run/", { state, controller, steps });
+  return post<RunResponse>("/sim/run", { state, controller, steps });
 }

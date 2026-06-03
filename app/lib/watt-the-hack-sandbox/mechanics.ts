@@ -24,6 +24,7 @@ import {
   EyeIcon,
   FuelIcon,
   GaugeIcon,
+  ScaleIcon,
   ScissorsIcon,
   ShieldAlertIcon,
   ZapIcon,
@@ -186,6 +187,18 @@ export const MECHANICS: Record<string, MechanicDef> = {
     costGroup: "penalties",
   },
 
+  compliance: {
+    id: "compliance",
+    label: "Compliance windows",
+    short: "SOC floors and export caps during operator directives.",
+    long: "During a compliance window the engine enforces min SOC floors and max export caps from scenario events. Breaches accrue per-step penalties (SOC shortfall × $/unit; export excess × $/MW·h). Read qualitative alerts ahead of time and position the battery before the window opens.",
+    icon: ScaleIcon,
+    iconTint: "text-orange-700",
+    iconBg: "bg-orange-50",
+    costKeys: ["compliance_penalty", "phishing_fine"],
+    costGroup: "penalties",
+  },
+
   forecast_bias: {
     id: "forecast_bias",
     label: "Forecast bias",
@@ -253,6 +266,8 @@ const COST_KEY_LABELS: Record<string, string> = {
   fcas_revenue: "FCAS revenue",
   fcas_dispatch_bonus: "Dispatch bonus",
   fcas_shortfall_penalty: "Shortfall penalty",
+  compliance_penalty: "Compliance",
+  phishing_fine: "Phishing trap",
 };
 
 export function buildCostTiles(activeIds: string[]): CostTileConfig[] {

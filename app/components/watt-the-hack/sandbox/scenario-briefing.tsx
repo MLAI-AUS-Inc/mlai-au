@@ -15,7 +15,7 @@
  * scenario needs no change in this file.
  */
 
-import { ChevronDownIcon, ChevronRightIcon, PlayCircleIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, PlayCircleIcon, HelpCircleIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ScenarioPicker } from "~/components/watt-the-hack/sandbox/scenario-picker";
@@ -124,11 +124,7 @@ function BrandBar() {
             rel="noopener noreferrer"
             className="transition-transform hover:scale-105"
           >
-            <img
-              src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/watt-the-hack%2FRobotics%20%26%20AI%20For%20Everyone%20(5)%20(1).png?alt=media&token=dc52eeaa-033f-40a3-95e7-030ace78444d"
-              alt="MDN Logo"
-              className="h-10 object-contain"
-            />
+            <img src="/mdn-logo.png" alt="MDN Logo" className="h-10 object-contain" />
           </a>
           <a
             href="https://www.linkedin.com/company/mlai-aus-inc/"
@@ -136,17 +132,23 @@ function BrandBar() {
             rel="noopener noreferrer"
             className="transition-transform hover:scale-105"
           >
-            <img
-              src="https://firebasestorage.googleapis.com/v0/b/mlai-main-website.firebasestorage.app/o/MLAI%20logo.png?alt=media&token=35ee6faf-8f75-4b41-becb-0f192f4c20f2"
-              alt="MLAI Logo"
-              className="h-10 object-contain"
-            />
+            <img src="/mlai-logo.webp" alt="MLAI Logo" className="h-10 object-contain" />
           </a>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-[17px] font-bold tracking-tight text-ink drop-shadow-sm">
             Watt-The-Hack Advanced Track
           </span>
+          <a
+            href="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Official Documentation"
+            className="flex items-center gap-1.5 rounded-md bg-canvas px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted shadow-sm transition-all duration-300 hover:scale-105 hover:bg-white hover:text-ink hover:shadow-md border border-line"
+          >
+            <HelpCircleIcon className="h-4 w-4" />
+            Docs
+          </a>
           <a
             href="https://colab.research.google.com/github/AaronEliasZachariah/Watt-The-Hack-Engine-Public/blob/main/notebooks/training_starter.ipynb"
             target="_blank"
@@ -252,7 +254,7 @@ export function ActiveEventBanner() {
   if (!activeEvent) return null;
   
   return (
-    <div className="mb-1">
+    <div className="w-full">
       <EventBanner event={activeEvent} />
     </div>
   );
@@ -263,17 +265,19 @@ function EventBanner({ event }: { event: ScenarioEvent }) {
   return (
     <div
       className={cn(
-        "flex items-start gap-2 rounded-md border px-3 py-2 text-[12px]",
+        "flex w-full items-start gap-3 border-y px-5 py-3.5 transition-colors",
         tone,
       )}
     >
-      <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider">
-        {event.severity}
-      </span>
       <div className="flex-1">
-        <div className="font-semibold leading-snug">{event.title}</div>
+        <div className="flex items-center gap-2">
+          <span className="rounded-md bg-black/10 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] opacity-90">
+            {event.severity}
+          </span>
+          <div className="text-[15px] font-bold tracking-tight">{event.title}</div>
+        </div>
         {event.description ? (
-          <div className="mt-0.5 text-[11px] leading-relaxed opacity-90">
+          <div className="mt-1.5 text-[13px] font-medium leading-relaxed opacity-95">
             {event.description}
           </div>
         ) : null}
@@ -283,11 +287,11 @@ function EventBanner({ event }: { event: ScenarioEvent }) {
 }
 
 const SEVERITY_TONES: Record<string, string> = {
-  info: "border-sky-200 bg-sky-50 text-sky-900",
-  low: "border-emerald-200 bg-emerald-50 text-emerald-900",
-  medium: "border-amber-200 bg-amber-50 text-amber-900",
-  high: "border-orange-300 bg-orange-50 text-orange-900",
-  critical: "border-rose-300 bg-rose-50 text-rose-900",
+  info: "border-sky-300 bg-sky-100 text-sky-950",
+  low: "border-emerald-300 bg-emerald-100 text-emerald-950",
+  medium: "border-amber-300 bg-amber-100 text-amber-950",
+  high: "border-orange-400 bg-orange-100 text-orange-950",
+  critical: "border-rose-400 bg-rose-100 text-rose-950",
 };
 
 function pickActiveEvent(
