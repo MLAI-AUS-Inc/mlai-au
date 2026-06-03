@@ -1,3 +1,4 @@
+import { redirect } from "react-router";
 import { createApiClient, getBaseUrl } from "~/lib/api";
 import type { Announcement } from "~/components/Announcements";
 import type { Hackathon } from "~/services/hackathon";
@@ -101,6 +102,28 @@ export async function getGenericCurrentTeam(env: Env, request: Request, slug = W
   const client = createApiClient(env, request);
   const response = await client.get(appPath(slug, "team/"));
   return asGenericTeam(response.data);
+}
+
+/** A Watt team may enter the streamed game only with 2..6 members (matches the backend gate). */
+export const WATT_MIN_TEAM_MEMBERS = 2;
+export const WATT_MAX_TEAM_MEMBERS = 6;
+
+export function isValidWattTeam(team: GenericHackathonTeam | null): boolean {
+  if (!team) return false;
+  const count = team.member_count ?? team.members?.length ?? 0;
+  return count >= WATT_MIN_TEAM_MEMBERS && count <= WATT_MAX_TEAM_MEMBERS;
+}
+
+/**
+ * Loader guard: the smart-home game (stream + controller + shop) is only reachable by a team of
+ * 2..6 members. Redirects to the profile/team page otherwise, and returns the team when valid.
+ */
+export async function requireValidWattTeam(env: Env, request: Request): Promise<GenericHackathonTeam> {
+  const team = await getGenericCurrentTeam(env, request);
+  if (!isValidWattTeam(team)) {
+    throw redirect("/watt-the-hack/profile");
+  }
+  return team as GenericHackathonTeam;
 }
 
 export async function getGenericTeams(env: Env, request: Request, slug = WATT_THE_HACK_SLUG): Promise<GenericHackathonTeam[]> {
