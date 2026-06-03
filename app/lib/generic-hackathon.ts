@@ -135,7 +135,9 @@ export function isValidWattTeam(team: GenericHackathonTeam | null): boolean {
 export async function requireValidWattTeam(env: Env, request: Request): Promise<GenericHackathonTeam> {
   const team = await getGenericCurrentTeam(env, request);
   if (!isValidWattTeam(team)) {
-    throw redirect("/watt-the-hack/profile");
+    // Carry a reason so the profile page can explain why they landed there
+    // instead of dumping them on the team page with no context.
+    throw redirect("/watt-the-hack/profile?reason=team-size");
   }
   return team as GenericHackathonTeam;
 }
@@ -295,6 +297,10 @@ export interface SmartHomeState {
   score?: number | null;
   tariff_period?: string | null;
   weather_condition?: string | null;
+  // Why the house is/ isn't live (from the backend's observation_liveness):
+  // "live" | "stale" | "no_observation" | "missing_timestamp".
+  live_reason?: string | null;
+  published_age_ms?: number | null;
 }
 
 export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
