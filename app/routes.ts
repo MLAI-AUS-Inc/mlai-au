@@ -58,6 +58,7 @@ export default [
     index("routes/watt-the-hack._index.tsx"),
     route("dashboard", "routes/watt-the-hack.dashboard.tsx"),
     route("profile", "routes/watt-the-hack.profile.tsx"),
+    route("notifications", "routes/watt-the-hack.notifications.tsx"),
     route("team", "routes/watt-the-hack.team.tsx"),
     route("submissions", "routes/watt-the-hack.submissions.tsx"),
     route("resources", "routes/watt-the-hack.resources.tsx"),
