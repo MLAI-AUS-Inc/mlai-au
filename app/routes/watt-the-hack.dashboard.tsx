@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Route } from "./+types/watt-the-hack.dashboard";
 import { Link, redirect, useLoaderData } from "react-router";
 import {
@@ -97,6 +98,8 @@ function StatCard({
 }
 
 function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
+  const [revealToken, setRevealToken] = useState(false);
+
   return (
     <div className={`${wattClasses.panel} px-6 py-5`}>
       <div className="flex items-center justify-between gap-4">
@@ -115,6 +118,7 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
           Manage
         </Link>
       </div>
+
       {team && (
         <div className="mt-5 flex flex-wrap gap-2">
           {team.members.map((member) => (
@@ -122,6 +126,39 @@ function TeamPanel({ team }: { team: GenericHackathonTeam | null }) {
               {member.full_name || member.email}
             </span>
           ))}
+        </div>
+      )}
+      {team && (
+        <div className="mt-5 border-t border-[#e8dfcf] pt-4">
+          <h3 className="text-sm font-bold text-[#64705f]">Evaluation Server Status</h3>
+          <div className="mt-2 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-4 py-3">
+            {!team.eval_token ? (
+              <span className="text-sm font-medium text-[#121e16]">Pending Admin Approval</span>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[#121e16]">Team ID</span>
+                  <code className="rounded bg-[#e6efd7] px-2 py-1 text-xs font-mono text-[#155420] break-all max-w-[50%]">
+                    {team.eval_team_uuid || "Not generated"}
+                  </code>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-[#121e16]">Token</span>
+                  <div className="flex items-center gap-2">
+                    <code className="rounded bg-[#e6efd7] px-2 py-1 text-xs font-mono text-[#155420]">
+                      {revealToken ? team.eval_token : "••••••••••••••••"}
+                    </code>
+                    <button
+                      onClick={() => setRevealToken(!revealToken)}
+                      className="text-xs font-medium text-[#465341] hover:text-[#121e16] underline"
+                    >
+                      {revealToken ? "Hide" : "Reveal"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
@@ -173,6 +210,22 @@ function ResourcesPanel({ resources }: { resources: GenericHackathonResource[] }
         </Link>
       </div>
       <div className="relative mt-5 grid gap-4 lg:grid-cols-2 lg:pr-44">
+
+        <Link to="/watt-the-hack/docs" className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e6efd7] text-[#155420]">
+                <DocumentTextIcon className="h-6 w-6 stroke-[1.8]" aria-hidden="true" />
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-black text-[#121e16]">API Documentation</p>
+                <p className="mt-1 truncate text-xs font-medium text-[#354031]">Read the official python controller guide</p>
+              </div>
+            </div>
+            <ArrowTopRightOnSquareIcon className="h-5 w-5 shrink-0 text-[#64705f]" aria-hidden="true" />
+          </div>
+        </Link>
+
         {resources.length > 0 ? resources.map((resource) => (
           <Link key={resource.id} to="/watt-the-hack/resources" className="block rounded-xl border border-[#e8dfcf] bg-[rgba(255,254,250,0.88)] p-4 transition hover:border-[#c9dbb8] hover:bg-[#fffefa]">
             <div className="flex items-center justify-between gap-4">
