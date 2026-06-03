@@ -977,7 +977,7 @@ function AdvancedTrackDocs() {
             <code>python -m watt_the_hack.playtest strategy.py --scenario t1_welcome</code>
           </pre>
           <p className="leading-relaxed text-white/70 mb-4">
-            <strong>Submission:</strong> When ready, submit a ZIP file containing your <code>strategy.py</code> and <code>requirements.txt</code> via the Sandbox portal. The engine will run your code inside an isolated Kubernetes pod against hidden evaluation scenarios.
+            <strong>Submission:</strong> When ready, submit a ZIP file containing your <code>strategy.py</code> and <code>requirements.txt</code> via the <a href="https://mlai.au/watt-the-hack/city-of-melbourne-advanced-submit" className="font-semibold text-[#7cffc3] hover:underline" target="_blank" rel="noreferrer">Sandbox submission portal</a>. The engine will run your code inside an isolated Kubernetes pod against hidden evaluation scenarios.
           </p>
         </Card>
 
