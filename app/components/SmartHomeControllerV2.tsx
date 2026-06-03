@@ -1,8 +1,9 @@
-import { type CSSProperties, type ReactNode, useMemo, useState } from "react";
+import { type CSSProperties, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
   PointerSensor,
+  defaultDropAnimation,
   useDraggable,
   useDroppable,
   useSensor,
@@ -11,6 +12,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
+  AlertTriangle,
   ArrowRightLeft,
   Battery,
   BatteryCharging,
@@ -43,6 +45,7 @@ import {
   PIPELINE,
   PIPELINE_BY_TYPE,
   PALETTE,
+  compilePipeline,
   emptyPipeline,
   isComplete,
   type BlockDef,
@@ -77,6 +80,37 @@ const ICON: Record<string, LucideIcon> = {
   ou_ev: Car,
   sa_manual: Hand,
   sa_budget: ShieldCheck,
+};
+
+/**
+ * Hover/focus tooltip copy — one beginner-friendly line per block describing what it IS and
+ * what it does once deployed. Kept in the presentation layer (like ICON / HOW_IT_WORKS) and
+ * worded to match the real backend policy (smart_home_policy.py), so the hover never over-promises.
+ */
+const BLOCK_DETAIL: Record<string, string> = {
+  // Inputs (sensors the brain reads)
+  in_smart_meter: "Reads your home's live power draw. Lets the brain react when usage spikes — e.g. trim the thermostat when the grid draw is high.",
+  in_temp: "Reads indoor & outdoor temperature, so the brain can ease off heating or cooling when it's already mild outside.",
+  in_weather: "Sun & temperature outlook. Unlocks solar-aware moves — pre-charge the battery or pre-heat water before a cloudy morning.",
+  // Schedule (the trigger / timing)
+  sc_time: "Runs your rules against the clock, so flexible jobs land in the cheaper off-peak hours.",
+  sc_day: "Tells weekdays from weekends, so the plan matches when you're actually home.",
+  sc_price: "Reacts to live electricity prices — turns the battery into smart peak-shaving: store cheap power, spend it through the expensive peak.",
+  // Brain (the policy engine — one only)
+  br_chatgpt: "The decision-maker, tuned as a saver: leans to lower setpoints and tighter budgets to cut cost.",
+  br_claude: "The decision-maker, comfort-first: keeps rooms and hot water a little warmer.",
+  br_gemini: "The decision-maker, balanced: a middle ground between saving money and staying comfy.",
+  // Actions (strategy verbs)
+  ac_shift: "Moves flexible jobs — dishwasher, laundry, EV — into cheaper, greener hours instead of cutting them.",
+  ac_reduce: "Trims consumption where comfort allows: eco thermostat, lights off in empty rooms.",
+  ac_charge: "Stores cheap or solar energy now to use later, when grid power is pricey.",
+  // Outputs (target devices)
+  ou_plugs: "Controls appliances, lights and the thermostat — the everyday loads.",
+  ou_battery: "Your home battery: charges on cheap/solar power and discharges through the peak.",
+  ou_ev: "Your EV charger — best filled overnight on cheap power, ready by morning.",
+  // Safety (guardrails)
+  sa_manual: "A guardrail: you can always step in and take control back from the automation.",
+  sa_budget: "A guardrail that caps spending — won't grid-charge the battery during the pricey peak.",
 };
 
 type ShapeKind = "tab" | "arrow" | "rounded" | "pill";
@@ -165,31 +199,46 @@ function SlotCell({
   index,
   block,
   activeType,
+  energized = false,
+  dead = false,
   onRemove,
 }: {
   slot: SlotDef;
   index: number;
   block: BlockDef | null;
   activeType: SlotType | null;
+  energized?: boolean;
+  dead?: boolean;
   onRemove: () => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: `${slot.type}#${index}`, data: { slotType: slot.type } });
   const isTarget = activeType === slot.type;
   const dimmed = activeType !== null && !isTarget;
+  // A filled slot whose upstream flow is unbroken reads as "powered" (steady accent glow). The
+  // active drop target keeps its stronger highlight; a dead (incompatible) block never glows.
+  const glow = isTarget ? `${slot.accent}66` : energized && block && !dead ? `${slot.accent}44` : null;
 
   return (
     <div
       ref={setNodeRef}
-      className={`relative min-h-[4.5rem] flex-1 transition ${dimmed ? "opacity-35" : ""}`}
+      className={`relative min-h-[4.5rem] flex-1 transition ${dimmed ? "opacity-35" : ""} ${dead ? "opacity-60" : ""}`}
     >
       <div
         className={`h-full w-full rounded-[1rem] transition ${isTarget && !block ? "animate-pulse" : ""}`}
-        style={isTarget ? ({ filter: `drop-shadow(0 0 0.45rem ${slot.accent}66)` } as CSSProperties) : undefined}
+        style={glow ? ({ filter: `drop-shadow(0 0 0.45rem ${glow})` } as CSSProperties) : undefined}
       >
         <ShapeBox type={slot.type} variant={block ? "filled" : "empty"}>
           {block ? <FilledContent block={block} /> : <EmptyContent slot={slot} />}
         </ShapeBox>
       </div>
+      {dead && block && (
+        <span
+          className="absolute -left-1.5 -top-1.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#e7d3a3] bg-[#fdf6e3] text-[#9a6b00] shadow-sm"
+          title="This block isn't paired with a compatible block, so it won't do anything."
+        >
+          <AlertTriangle className="h-3 w-3" />
+        </span>
+      )}
       {block && (
         <button
           type="button"
@@ -208,33 +257,80 @@ function FlowColumn({
   slot,
   cells,
   activeType,
+  energized,
+  deadLabels,
   onRemove,
 }: {
   slot: SlotDef;
   cells: Array<BlockDef | null>;
   activeType: SlotType | null;
+  energized: boolean;
+  deadLabels: Set<string>;
   onRemove: (index: number) => void;
 }) {
   const single = slot.max === 1;
   return (
     <div className="flex min-w-[8rem] flex-1 flex-col">
       <div className="mb-3 text-center">
-        <div className="text-[13px] font-black uppercase tracking-[0.1em]" style={{ color: slot.accent }}>{slot.label}</div>
+        <div className="flex items-center justify-center gap-1.5 text-[13px] font-black uppercase tracking-[0.1em]" style={{ color: slot.accent }}>
+          {/* Power pip: lit when the flow has reached this stage, dim otherwise. */}
+          <span
+            className={`h-1.5 w-1.5 rounded-full transition ${energized ? "" : "opacity-30"}`}
+            style={{ background: slot.accent, boxShadow: energized ? `0 0 6px ${slot.accent}` : undefined }}
+          />
+          {slot.label}
+        </div>
         <div className="text-[11px] font-bold text-[#8a8477]">{slot.min === 0 ? "Optional" : single ? "Add 1" : `Add up to ${slot.max}`}</div>
       </div>
       <div className={`flex flex-1 flex-col gap-3 ${single ? "justify-center" : ""}`}>
         {cells.map((block, index) => (
-          <SlotCell key={index} slot={slot} index={index} block={block} activeType={activeType} onRemove={() => onRemove(index)} />
+          <SlotCell
+            key={index}
+            slot={slot}
+            index={index}
+            block={block}
+            activeType={activeType}
+            energized={energized}
+            dead={!!block && deadLabels.has(block.label)}
+            onRemove={() => onRemove(index)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function Connector() {
+function Connector({ live, index }: { live: boolean; index: number }) {
   return (
-    <div className="relative mt-12 w-5 self-stretch" aria-hidden>
-      <div className="absolute left-0 right-0 top-1/2 border-t-2 border-dotted border-[#d8cfbd]" />
+    <div className="relative mt-12 w-6 self-stretch" aria-hidden>
+      <div
+        className={`absolute left-0 right-0 top-1/2 -translate-y-1/2 border-t-2 transition-colors ${live ? "border-solid border-[#2f6f2c]/70" : "border-dotted border-[#d8cfbd]"}`}
+      />
+      {live && (
+        // A pulse travels left->right; the per-connector delay makes one wave flow down the chain.
+        <span
+          className="absolute top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-[#2f6f2c]"
+          style={{ animation: "watt-flow 1.25s linear infinite", animationDelay: `${index * 0.18}s`, boxShadow: "0 0 6px 1px rgba(47,111,44,0.75)" }}
+        />
+      )}
+    </div>
+  );
+}
+
+function PaletteTooltip({ accent, label, detail }: { accent: string; label: string; detail: string }) {
+  // Reveals on hover/focus of the parent `.group` card. Sits above the card on narrow layouts
+  // and to its left on xl (where there's open board space). Opacity-only transition avoids any
+  // transform conflict between the two placements. The panel doesn't clip overflow, so no clamp.
+  return (
+    <div
+      role="tooltip"
+      className="pointer-events-none absolute bottom-full left-0 z-30 mb-2 w-60 rounded-[0.8rem] border border-black/10 bg-[#121e16] p-3 text-left opacity-0 shadow-xl transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100 xl:bottom-auto xl:left-auto xl:right-full xl:top-1/2 xl:mb-0 xl:mr-3 xl:-translate-y-1/2"
+    >
+      <div className="flex items-center gap-1.5">
+        <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: accent }} />
+        <span className="text-[12px] font-black text-[#fffefa]">{label}</span>
+      </div>
+      <p className="mt-1 text-[11px] font-medium leading-snug text-[#cdd6c6]">{detail}</p>
     </div>
   );
 }
@@ -243,22 +339,27 @@ function PaletteCard({ block }: { block: BlockDef }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: `pal#${block.id}`, data: { block } });
   const accent = PIPELINE_BY_TYPE[block.type].accent;
   const Icon = ICON[block.id] ?? Plus;
+  const detail = BLOCK_DETAIL[block.id] ?? block.blurb;
   return (
-    <div
-      ref={setNodeRef}
-      style={{ opacity: isDragging ? 0.4 : 1 }}
-      className="flex w-full cursor-grab touch-none items-center gap-3 rounded-[0.8rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 shadow-sm transition hover:shadow-md active:cursor-grabbing"
-      {...listeners}
-      {...attributes}
-    >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${accent}1a`, color: accent }}>
-        <Icon className="h-4 w-4" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-black text-[#121e16]">{block.label}</span>
-        <span className="block truncate text-[11px] font-medium text-[#64705f]">{block.blurb}</span>
-      </span>
-      <GripVertical className="h-4 w-4 shrink-0 text-[#c9b98f]" />
+    <div className="group relative">
+      <div
+        ref={setNodeRef}
+        style={{ opacity: isDragging ? 0.4 : 1 }}
+        className="flex w-full cursor-grab touch-none items-center gap-3 rounded-[0.8rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2 shadow-sm transition hover:shadow-md active:cursor-grabbing"
+        {...listeners}
+        {...attributes}
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: `${accent}1a`, color: accent }}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-black text-[#121e16]">{block.label}</span>
+          <span className="block truncate text-[11px] font-medium text-[#64705f]">{block.blurb}</span>
+        </span>
+        <GripVertical className="h-4 w-4 shrink-0 text-[#c9b98f]" />
+      </div>
+      {/* Hidden mid-drag so the tip doesn't linger over the lifted card. */}
+      {!isDragging && <PaletteTooltip accent={accent} label={block.label} detail={detail} />}
     </div>
   );
 }
@@ -284,6 +385,9 @@ export function SmartHomeControllerV2({
   const [activeBlock, setActiveBlock] = useState<BlockDef | null>(null);
   const [collapsed, setCollapsed] = useState<Set<SlotType>>(new Set());
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
+  // Drives the DragOverlay drop animation: true => the drop missed, so fly the piece back to the
+  // palette; false => it landed in a slot, so kill the animation and let it snap into place.
+  const returnToPaletteRef = useRef(false);
 
   const flow = PIPELINE.filter((slot) => slot.type !== "safety");
   const safety = PIPELINE_BY_TYPE.safety;
@@ -292,10 +396,12 @@ export function SmartHomeControllerV2({
     setActiveBlock((event.active.data.current?.block as BlockDef | undefined) ?? null);
   }
   function handleDragEnd(event: DragEndEvent) {
-    setActiveBlock(null);
     const block = event.active.data.current?.block as BlockDef | undefined;
     const slotType = (event.over?.data.current as { slotType?: SlotType } | undefined)?.slotType;
     const index = Number(String(event.over?.id ?? "").split("#")[1]);
+    const accepted = Boolean(block && slotType && slotType === block.type && !Number.isNaN(index));
+    returnToPaletteRef.current = !accepted; // fly back only when the drop missed a matching slot
+    setActiveBlock(null);
     if (!block || !slotType || slotType !== block.type || Number.isNaN(index)) return; // shape/type gate
     setCells((prev) => {
       const next: PlacedCells = { ...prev, [slotType]: [...prev[slotType]] };
@@ -340,8 +446,52 @@ export function SmartHomeControllerV2({
   const canDeploy = complete && !isDeploying;
   const countOf = (type: SlotType) => cells[type].filter(Boolean).length;
 
+  // --- Living pipeline: how far the SENSE->THINK->ACT flow reaches before it hits an empty stage. ---
+  let poweredUpTo = 0;
+  for (const slot of flow) {
+    if (pipeline[slot.type].length > 0) poweredUpTo++;
+    else break;
+  }
+  const fullyConnected = poweredUpTo === flow.length;
+
+  // --- Pre-deploy preview: the one thing we can know for sure client-side is which output x action
+  //     pairings are incompatible (no command). Surfaced as warnings + dimmed "dead" blocks. ---
+  const { incompatible } = useMemo(() => compilePipeline(pipeline), [pipeline]);
+  const deadLabels = useMemo(() => {
+    const bad = new Set(incompatible.map((p) => `${p.device}|${p.action}`));
+    const dead = new Set<string>();
+    if (pipeline.action.length && pipeline.output.length) {
+      for (const o of pipeline.output) {
+        if (o.device && pipeline.action.every((a) => bad.has(`${o.label}|${a.label}`))) dead.add(o.label);
+      }
+      for (const a of pipeline.action) {
+        if (a.intent && pipeline.output.every((o) => bad.has(`${o.label}|${a.label}`))) dead.add(a.label);
+      }
+    }
+    return dead;
+  }, [incompatible, pipeline]);
+
+  // The chain is "charged" when every stage is filled AND nothing is mismatched. Fire a one-shot
+  // surge the moment it first becomes ready, so committing feels earned.
+  const chargedReady = fullyConnected && incompatible.length === 0;
+  const [surge, setSurge] = useState(false);
+  const wasReadyRef = useRef(false);
+  useEffect(() => {
+    if (chargedReady && !wasReadyRef.current) {
+      wasReadyRef.current = true;
+      setSurge(true);
+      const t = setTimeout(() => setSurge(false), 1100);
+      return () => clearTimeout(t);
+    }
+    if (!chargedReady) wasReadyRef.current = false;
+  }, [chargedReady]);
+
   return (
     <section className={`${wattClasses.panel} p-6`}>
+      <style>{`
+@keyframes watt-flow { 0% { left: -8%; opacity: 0 } 12% { opacity: 1 } 88% { opacity: 1 } 100% { left: 108%; opacity: 0 } }
+@keyframes watt-charge { 0%, 100% { box-shadow: 0 0 0 0 rgba(47,111,44,0.5) } 70% { box-shadow: 0 0 0 8px rgba(47,111,44,0) } }
+`}</style>
       {/* Header + counts */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -369,8 +519,15 @@ export function SmartHomeControllerV2({
               <div className="flex items-stretch gap-1 overflow-x-auto pb-2">
                 {flow.map((slot, i) => (
                   <div key={slot.type} className="flex items-stretch gap-1">
-                    <FlowColumn slot={slot} cells={cells[slot.type]} activeType={activeType} onRemove={(idx) => removeAt(slot.type, idx)} />
-                    {i < flow.length - 1 && <Connector />}
+                    <FlowColumn
+                      slot={slot}
+                      cells={cells[slot.type]}
+                      activeType={activeType}
+                      energized={i < poweredUpTo}
+                      deadLabels={deadLabels}
+                      onRemove={(idx) => removeAt(slot.type, idx)}
+                    />
+                    {i < flow.length - 1 && <Connector live={i + 1 < poweredUpTo} index={i} />}
                   </div>
                 ))}
               </div>
@@ -394,17 +551,27 @@ export function SmartHomeControllerV2({
 
             {/* Deploy bar */}
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => onDeploy(pipelinePayload)}
-                disabled={!canDeploy}
-                className={`${wattClasses.buttonPrimary} gap-2 px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
-              >
-                <Rocket className="h-4 w-4" />
-                {isDeploying ? "Deploying…" : "Deploy Controller"}
-              </button>
+              <span className="relative inline-flex">
+                {surge && (
+                  <span className="pointer-events-none absolute inset-0 rounded-[0.65rem] bg-[#2f6f2c]/40 animate-ping" aria-hidden />
+                )}
+                <button
+                  type="button"
+                  onClick={() => onDeploy(pipelinePayload)}
+                  disabled={!canDeploy}
+                  style={chargedReady && !isDeploying ? { animation: "watt-charge 1.6s ease-in-out infinite" } : undefined}
+                  className={`relative ${wattClasses.buttonPrimary} gap-2 px-6 py-2.5 disabled:cursor-not-allowed disabled:opacity-50`}
+                >
+                  <Rocket className="h-4 w-4" />
+                  {isDeploying ? "Deploying…" : "Deploy Controller"}
+                </button>
+              </span>
               <span className="text-xs font-semibold text-[#64705f]">
-                {complete ? "Ready to deploy" : "Fix all required slots to deploy"}
+                {!complete
+                  ? "Finish your controller — fill every required slot."
+                  : incompatible.length > 0
+                    ? "Ready — but some blocks are mismatched (see below)."
+                    : "Charged and ready to deploy ⚡"}
               </span>
               {feedback && (
                 <span className={`text-sm font-semibold ${feedback.ok ? "text-[#155420]" : "text-[#9f2f28]"}`}>{feedback.message}</span>
@@ -413,6 +580,21 @@ export function SmartHomeControllerV2({
                 <RotateCcw className="h-3.5 w-3.5" /> Reset
               </button>
             </div>
+            {incompatible.length > 0 && (
+              <ul className="mt-3 space-y-1.5 rounded-[0.9rem] border border-[#e7d3a3] bg-[#fdf6e3] p-3">
+                <li className="flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-[#9a6b00]">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Mismatched blocks
+                </li>
+                {incompatible.map((pair, i) => (
+                  <li key={i} className="flex items-start gap-2 text-xs font-medium text-[#5c4a16]">
+                    <span className="mt-0.5 shrink-0">•</span>
+                    <span>
+                      <b>{pair.action}</b> won’t do anything to <b>{pair.device}</b> — pair it with a compatible output.
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
             {feedback?.decisions && feedback.decisions.length > 0 && (
               <ul className="mt-3 space-y-1.5 rounded-[0.9rem] border border-[#e8dfcf] bg-[#fbf6e9] p-3">
                 <li className="text-[11px] font-black uppercase tracking-[0.12em] text-[#7c5cd6]">Your brain decided</li>
@@ -456,7 +638,7 @@ export function SmartHomeControllerV2({
         </div>
 
         {/* The dragged piece takes the SHAPE of its slot type, so it matches the hole. */}
-        <DragOverlay>
+        <DragOverlay dropAnimation={returnToPaletteRef.current ? defaultDropAnimation : null}>
           {activeBlock ? (
             <div className="h-14 w-48">
               <ShapeBox type={activeBlock.type} variant="filled">
