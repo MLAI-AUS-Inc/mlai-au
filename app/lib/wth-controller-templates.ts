@@ -458,4 +458,7 @@ export const LLM_SCENARIO_IDS = new Set<string>([
   "operators_mandate_judging",
   "cybersecurity_sandbox",
   "cybersecurity_judging",
+  // The Gauntlet bundles the prose-driven mechanics from Operator's Mandate
+  // and Cybersecurity, so it needs LLM egress too.
+  "gauntlet",
 ]);

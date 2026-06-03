@@ -281,6 +281,10 @@ export default function WattTheHackSubmissionPortal() {
         entrypoint: "strategy.py",
         scenario_id: scenarioId,
       };
+      if (detected.kind === "unknown") {
+        // handleSubmit already blocks this — narrow the type for TS.
+        throw new Error(detected.reason);
+      }
       if (detected.kind === "class") metadata.class_name = detected.name;
       else metadata.function_name = detected.name;
       zip.file("metadata.json", JSON.stringify(metadata, null, 2));
@@ -606,7 +610,122 @@ export default function WattTheHackSubmissionPortal() {
         activeSubmissionId={activeSubmissionId}
       />
       </main>
+
+      {confirmOpen ? (
+        <SubmissionConfirmModal
+          scenarioId={scenarioId}
+          scenarioLabel={SCENARIOS.find((s) => s.id === scenarioId)?.name ?? scenarioId}
+          remaining={scenarioRemaining}
+          cap={scenarioCap}
+          isHeadline={isHeadline}
+          onConfirm={() => void performSubmit()}
+          onCancel={() => setConfirmOpen(false)}
+        />
+      ) : null}
     </>
+  );
+}
+
+// ── Submission confirmation modal ────────────────────────────────────────
+//
+// Fires when the user clicks the "Submit to Evaluation Cluster" button. It
+// surfaces the per-scenario submission cap (Gauntlet = 1, others = 3) so
+// the team can't waste an attempt by mistake. For the Gauntlet, also calls
+// out the 3x leaderboard weighting — the cost of getting it wrong is
+// triple, so the modal copy is intentionally loud.
+function SubmissionConfirmModal({
+  scenarioId,
+  scenarioLabel,
+  remaining,
+  cap,
+  isHeadline,
+  onConfirm,
+  onCancel,
+}: {
+  scenarioId: string;
+  scenarioLabel: string;
+  remaining: number;
+  cap: number;
+  isHeadline: boolean;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  // After this confirmed submission lands the server will count it; show
+  // the *post-submission* number so the user can see exactly what they're
+  // burning.
+  const remainingAfter = Math.max(0, remaining - 1);
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/55 p-4"
+      onClick={onCancel}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wth-submit-confirm-title"
+    >
+      <div
+        className={`${wattClasses.panelStrong} flex w-full max-w-lg flex-col gap-5 p-6 sm:p-8`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          {isHeadline ? (
+            <ExclamationTriangleIcon className="mt-1 h-7 w-7 shrink-0 text-[#a16f14]" />
+          ) : (
+            <InformationCircleIcon className="mt-1 h-7 w-7 shrink-0 text-[#2f6f2c]" />
+          )}
+          <div>
+            <p className={wattClasses.eyebrow}>Confirm submission</p>
+            <h3 id="wth-submit-confirm-title" className={`${wattClasses.title} mt-1 text-xl`}>
+              {isHeadline ? "Lock in your Gauntlet attempt?" : "Send this to the evaluator?"}
+            </h3>
+          </div>
+        </div>
+
+        <div className="rounded-[1rem] border border-[#e8dfcf] bg-[#fbf6e9] p-4">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-[#64705f]">Target scenario</p>
+          <p className="mt-1 text-sm font-bold text-[#354031]">{scenarioLabel}</p>
+          <p className="mt-3 text-xs font-black uppercase tracking-[0.18em] text-[#64705f]">Submissions</p>
+          <p className="mt-1 text-sm font-bold text-[#354031]">
+            You have <span className="text-[#155420]">{remaining}</span> of {cap} left.
+            {" "}After this one, you will have <span className="text-[#155420]">{remainingAfter}</span> remaining.
+          </p>
+        </div>
+
+        {isHeadline ? (
+          <div className="rounded-[1rem] border border-[#a16f14]/40 bg-[#fff8dc] p-4">
+            <p className="text-sm font-bold text-[#6f4b08]">
+              ⚠ This is your only Gauntlet submission.
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] leading-snug text-[#6f4b08]">
+              <li>The Gauntlet's normalised score is multiplied <strong>3x</strong> in the leaderboard total.</li>
+              <li>The submission cap is enforced server-side — there is no override.</li>
+              <li>Make sure you ran a full local playtest of this controller before clicking confirm.</li>
+            </ul>
+          </div>
+        ) : (
+          <p className="text-[13px] leading-snug text-[#64705f]">
+            The evaluator will package and run this code against the hidden judging variant of this scenario. The leaderboard refreshes automatically once it finishes scoring.
+          </p>
+        )}
+
+        <div className="mt-1 flex flex-wrap justify-end gap-2">
+          <button type="button" onClick={onCancel} className={wattClasses.buttonOutline}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className={
+              wattClasses.buttonPrimary +
+              " gap-2 px-6 py-3 shadow-lg hover:shadow-xl " +
+              (isHeadline ? "bg-[#9f2f28] hover:bg-[#7f2520]" : "")
+            }
+          >
+            <ArrowUpTrayIcon className="h-4 w-4 stroke-[2.5]" />
+            {isHeadline ? "Send my Gauntlet attempt" : `Use 1 of ${cap} submissions`}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
