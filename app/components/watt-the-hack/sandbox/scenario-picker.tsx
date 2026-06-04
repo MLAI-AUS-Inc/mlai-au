@@ -44,29 +44,22 @@ export function ScenarioPicker() {
       >
         Scenario
       </label>
-      <div className="relative w-full">
-        <select
-          id="scenario-picker"
-          value={scenarioId ?? ""}
-          onChange={(e) => setScenarioId(e.target.value || null)}
-          disabled={available.length === 0}
-          className="w-full appearance-none rounded-md border border-[#7cffc3]/30 bg-[#0d211d] py-1.5 pl-3 pr-8 text-sm font-medium text-[#7cffc3] shadow-sm outline-none transition focus:border-[#7cffc3] focus:ring-1 focus:ring-[#7cffc3] disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {available.length === 0 ? (
-            <option value="">No scenarios unlocked</option>
-          ) : null}
-          {available.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title} ({s.pool})
-            </option>
-          ))}
-        </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-[#7cffc3]/70">
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </div>
+      <select
+        id="scenario-picker"
+        value={scenarioId ?? ""}
+        onChange={(e) => setScenarioId(e.target.value || null)}
+        disabled={available.length === 0}
+        className="rounded-md border border-line bg-surface px-2 py-1 text-sm text-ink disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {available.length === 0 ? (
+          <option value="">No scenarios unlocked</option>
+        ) : null}
+        {available.map((s) => (
+          <option key={s.id} value={s.id}>
+            {s.title} ({s.pool})
+          </option>
+        ))}
+      </select>
       {error ? (
         <p className="mt-1 text-[11px] text-warning">
           Could not load scenarios: {error}
