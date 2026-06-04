@@ -191,10 +191,11 @@ function EvalCredentialsPanel({
       <div className="mt-2 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fffefa] px-4 py-3">
         {!token || !uuid ? (
           <div className="flex flex-col gap-1">
-            <span className="text-sm font-medium text-[#121e16]">Pending admin approval</span>
-            <span className="text-xs text-[#64705f]">
-              An organiser will provision your team for the advanced track. Once approved,
-              your Team ID and Token will appear here.
+            <span className="text-sm font-bold text-[#121e16]">Advanced track not enabled yet</span>
+            <span className="text-xs leading-relaxed text-[#64705f]">
+              Ask a staff member to approve your team for the advanced track. Once they do, your
+              evaluation credentials appear here automatically and the submission portal unlocks —
+              nothing to copy or paste.
             </span>
           </div>
         ) : (
@@ -218,14 +219,14 @@ function EvalCredentialsPanel({
               }}
             />
             <p className="text-xs text-[#64705f]">
-              Paste both into the{" "}
+              These are filled in for you in the{" "}
               <Link
                 to="/watt-the-hack/city-of-melbourne-advanced-submit"
                 className="font-bold text-[#155420] underline-offset-2 hover:underline"
               >
                 submission portal
               </Link>{" "}
-              to submit a controller.
+              — just head there to submit a controller. (Shown here for reference.)
             </p>
           </div>
         )}

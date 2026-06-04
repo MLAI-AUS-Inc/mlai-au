@@ -1,25 +1,47 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLoaderData } from "react-router";
 import {
   ArrowDownTrayIcon,
   ArrowPathIcon,
   ArrowUpTrayIcon,
   BoltIcon,
+  CheckBadgeIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
   ClockIcon,
   CodeBracketIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
+  LockClosedIcon,
   SparklesIcon,
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import JSZip from "jszip";
+import type { Route } from "./+types/watt-the-hack.city-of-melbourne-advanced-submit";
+import { getEnv } from "~/lib/env.server";
+import { getGenericCurrentTeam } from "~/lib/generic-hackathon";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
 import {
   LLM_SCENARIO_IDS,
   getTemplatesForScenario,
   type ControllerTemplate,
 } from "~/lib/wth-controller-templates";
+
+// Pull the team's evaluation credentials server-side so the portal can
+// pre-fill them — teams approved for the advanced track shouldn't have to
+// copy/paste a UUID + token. Same source as the dashboard's "Evaluation
+// server credentials" panel (getGenericCurrentTeam → eval_team_uuid/token).
+// Empty creds ⇒ the team isn't provisioned yet ⇒ the form shows an
+// "ask staff to enable the advanced track" notice instead of inputs.
+export async function loader({ request, context }: Route.LoaderArgs) {
+  const env = getEnv(context);
+  const team = await getGenericCurrentTeam(env, request).catch(() => null);
+  return {
+    teamName: team?.team_name ?? null,
+    evalTeamUuid: team?.eval_team_uuid ?? null,
+    evalToken: team?.eval_token ?? null,
+  };
+}
 
 // Default starter code: minimal class-style controller. Auto-detection picks
 // `MyStrategy` as the class_name, so participants who hit Submit without
@@ -142,8 +164,13 @@ function capFor(scenarioId: string): number {
 const HEADLINE_SCENARIO_IDS = new Set<string>(["gauntlet"]);
 
 export default function WattTheHackSubmissionPortal() {
-  const [teamId, setTeamId] = useState("");
-  const [teamToken, setTeamToken] = useState("");
+  // Credentials come from the loader (the team's provisioned eval creds), not
+  // from user input. Derived, not state — they're authoritative every load.
+  const { teamName, evalTeamUuid, evalToken } = useLoaderData<typeof loader>();
+  const teamId = (evalTeamUuid ?? "").trim();
+  const teamToken = (evalToken ?? "").trim();
+  // Approved for the advanced track ⇔ the org has provisioned both creds.
+  const advancedTrackEnabled = teamId.length > 0 && teamToken.length > 0;
   const [scenarioId, setScenarioId] = useState(SCENARIOS[0].id);
   // Display label only — appears in the team's submission history. The entry-
   // point name in metadata.json comes from auto-detection of the pasted code,
@@ -242,32 +269,6 @@ export default function WattTheHackSubmissionPortal() {
     setRequirements("");
   };
 
-  // Rehydrate team creds saved earlier this session so navigating away and
-  // back doesn't blank the form — which previously reset the attempt chips to
-  // "full" (a confusing-but-cosmetic lie; the gateway still enforced the real
-  // cap). sessionStorage, not localStorage, so the token dies with the tab.
-  // Runs once after mount (not a lazy initializer) to avoid an SSR/hydration
-  // mismatch — server and first client render both start blank.
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const savedId = window.sessionStorage.getItem("wth_team_id");
-    const savedTok = window.sessionStorage.getItem("wth_team_token");
-    if (savedId) setTeamId(savedId);
-    if (savedTok) setTeamToken(savedTok);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (teamId) window.sessionStorage.setItem("wth_team_id", teamId);
-    else window.sessionStorage.removeItem("wth_team_id");
-  }, [teamId]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (teamToken) window.sessionStorage.setItem("wth_team_token", teamToken);
-    else window.sessionStorage.removeItem("wth_team_token");
-  }, [teamToken]);
-
   // The ONE poll of the team's submissions. Drives both the attempt chips
   // (via scenarioUsage above) and the history panel (passed down as props).
   // 5s cadence while anything is in-flight, backing off to 30s once settled,
@@ -323,9 +324,16 @@ export default function WattTheHackSubmissionPortal() {
       // Defensive — the button is already disabled during cooldown.
       return;
     }
-    if (!teamId || !teamToken || !strategyName || !controllerCode) {
+    if (!advancedTrackEnabled) {
+      // Defensive — the button is disabled and the form is hidden when the
+      // team isn't provisioned. Creds are loader-supplied, never typed.
       setStatus("error");
-      setMessage("Please fill in Team ID, Token, Submission name, and Code.");
+      setMessage("Your team isn't enabled for the advanced track yet — ask a staff member to approve it.");
+      return;
+    }
+    if (!strategyName || !controllerCode) {
+      setStatus("error");
+      setMessage("Add a submission name and your controller code before submitting.");
       return;
     }
     if (detected.kind === "unknown") {
@@ -470,31 +478,40 @@ export default function WattTheHackSubmissionPortal() {
 
       <div className={wattClasses.panelStrong + " p-6 sm:p-10"}>
         <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-          {/* Credentials Section */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <div>
-              <label className={wattClasses.label + " mb-2"}>Team ID</label>
-              <input
-                type="text"
-                value={teamId}
-                onChange={(e) => setTeamId(e.target.value)}
-                placeholder="UUID"
-                className={wattClasses.input}
-                required
-              />
+          {/* Team / credentials — auto-resolved from the team's provisioned
+              eval credentials. No copy/paste; approved teams just submit. */}
+          {advancedTrackEnabled ? (
+            <div className="flex items-center gap-3 rounded-[0.85rem] border border-[#cde7c0] bg-[#f1faec] p-4">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#9fe870]/30 text-[#155420]">
+                <CheckBadgeIcon className="h-6 w-6 stroke-[1.8]" />
+              </span>
+              <div className="min-w-0">
+                <p className={wattClasses.eyebrow}>Submitting as</p>
+                <p className="mt-0.5 truncate text-sm font-black text-[#121e16]">
+                  {teamName ?? "Your team"}
+                </p>
+                <p className="mt-0.5 text-xs text-[#64705f]">
+                  Advanced track enabled — your evaluation credentials are filled in automatically.
+                </p>
+              </div>
             </div>
-            <div>
-              <label className={wattClasses.label + " mb-2"}>Team Token</label>
-              <input
-                type="password"
-                value={teamToken}
-                onChange={(e) => setTeamToken(e.target.value)}
-                placeholder="••••••••••••"
-                className={wattClasses.input}
-                required
-              />
+          ) : (
+            <div className="flex items-start gap-3 rounded-[0.85rem] border border-[#e8dfcf] bg-[#fbf6e9] p-5">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#efe4c8] text-[#8a6d1f]">
+                <LockClosedIcon className="h-5 w-5 stroke-[1.8]" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#121e16]">Advanced track not enabled yet</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-[#354031]">
+                  {teamName
+                    ? <>Your team <strong>{teamName}</strong> isn&apos;t set up for the advanced track yet.</>
+                    : "You're not on a team set up for the advanced track yet."}{" "}
+                  Ask a <strong>staff member</strong> to approve your team — once they do, your credentials
+                  appear here automatically and this form unlocks. No copy/paste needed.
+                </p>
+              </div>
             </div>
-          </div>
+          )}
 
           <hr className={wattClasses.divider} />
 
@@ -692,13 +709,18 @@ export default function WattTheHackSubmissionPortal() {
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isSubmitting || cooldownActive}
+              disabled={isSubmitting || cooldownActive || !advancedTrackEnabled}
               className={wattClasses.buttonPrimary + " gap-2 px-8 py-4 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"}
             >
               {isSubmitting ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   <span>Packaging & Submitting...</span>
+                </>
+              ) : !advancedTrackEnabled ? (
+                <>
+                  <LockClosedIcon className="h-5 w-5 stroke-[2.5]" />
+                  <span>Advanced track not enabled</span>
                 </>
               ) : cooldownActive ? (
                 <>
