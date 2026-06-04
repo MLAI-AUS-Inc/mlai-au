@@ -270,135 +270,188 @@ class Strategy:
         }
 `;
 
-const TEMPLATE_CYBERSECURITY_SOURCE = `"""Cybersecurity — adversarial signals, IDS, attack-aware control.
+const TEMPLATE_CYBERSECURITY_SOURCE = `def controller(state):
+    """Welcome to your first CYBERSECURITY controller!
 
-This scenario introduces:
-  - Prose alerts describing compliance windows and IDS alerts.
-  - Cyber attacks where sensor readings (SOC, demand, solar) can be corrupted.
-  - An IDS subscription you can toggle to receive containment signals.
+    Two scenarios ago you wired up a battery to follow demand. Now the
+    grid is under attack — and you have to do TWO new things on top of
+    the usual self-consumption dispatch:
 
-This template scaffolds the four mechanics you need:
-  1. Parse compliance windows from prose alerts (regex-based).
-  2. Detect IDS containment alerts and ACK them (decoys cost you if you ACK
-     blindly — that's the trap).
-  3. Fall back to forecasts when sensor readings look corrupted during an
-     active attack window.
-  4. Reserve FCAS during announced dispatch windows.
-"""
+      1. Spot the attack. The engine puts "IDS Alert" entries into
+         state["alerts"]. Some are real CRITICAL intrusions; one is a
+         decoy. Each real one names an attack_id you have to echo back
+         via agent_plan["containment_ack"] — that's how you confirm
+         containment. ACK the wrong one (or a decoy) and you get fined.
 
-import re
+      2. Distrust your sensors during a confirmed attack. The attacker
+         spoofs state["soc"], state["demand"], state["solar"] — a real
+         attack typically shows demand=0 while solar reads 250+ MW.
+         Subscribe to the IDS feed (set "subscribe_ids": True in your
+         action) and the engine returns two confidence signals,
+         state["ids_signal_node_a"] and state["ids_signal_node_b"].
+         When BOTH agree something's wrong, fall back to your forecast
+         instead of trusting the raw reading.
 
-INVERTER_MW    = 50.0
-EXPORT_CAP_MW  = 50.0
-IMPORT_CAP_MW  = 120.0
+    This template shows the minimum viable version of both behaviours
+    with a tiny bit of regex. Beat it by adding an LLM-driven prose
+    parser (gpt-5.4-nano is the project default).
+    """
+    import re
 
+    t = int(state.get("time", 0))
+    soc = float(state.get("soc", 0.5))
+    demand = float(state.get("demand", 0.0))
+    solar = float(state.get("solar", 0.0))
+    alerts = state.get("alerts", []) or []
+    forecast = state.get("forecast", {}) or {}
 
-_MIN_SOC_RX = re.compile(r">=\\s*(\\d+(?:\\.\\d+)?)\\s*%.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)", re.I | re.S)
-_MAX_SOC_RX = re.compile(r"<=\\s*(\\d+(?:\\.\\d+)?)\\s*%.*?steps?\\s+(\\d+)\\s+through\\s+(\\d+)", re.I | re.S)
-_ATTACK_ID_RX = re.compile(r"\`?containment_ack\`?\\s*[:=]?\\s*\`?([A-Za-z0-9_\\-]+)\`?", re.I)
+    # ── 1. Scan current alerts for an "IDS Alert" ─────────────────────
+    # The naive strategy: ACK whatever attack_id the alert names. That
+    # works for the real attacks. The decoy alert ALSO names an
+    # attack_id — but its prose includes "possible decoy" / "do not ack" /
+    # "single node only". Skip those.
+    subscribe_ids = False
+    ack_id = None
+    for alert in alerts:
+        title = (alert.get("title") or "").lower()
+        body = alert.get("description") or ""
+        if "ids alert" in title:
+            subscribe_ids = True
+            m = re.search(r"containment_ack\`?\\s*[:=]\\s*\`?([A-Za-z0-9_-]+)\`?", body, re.I)
+            looks_like_decoy = re.search(r"decoy|do not ack|single[- ]node|unverified", body, re.I)
+            if m and not looks_like_decoy:
+                ack_id = m.group(1)
 
+    # ── 2. During an ACKed attack, don't trust the raw sensors ────────
+    # ids_signal_node_a/b appear in state ONE step after we subscribe.
+    # If both come back > 0.4 the attack is real and the sensors lie —
+    # fall back to the first step of the forecast.
+    node_a = state.get("ids_signal_node_a")
+    node_b = state.get("ids_signal_node_b")
+    attack_confirmed = (
+        ack_id is not None
+        and node_a is not None and node_b is not None
+        and float(node_a) > 0.4 and float(node_b) > 0.4
+    )
+    if attack_confirmed:
+        demand = (forecast.get("demand") or [demand])[0]
+        solar = (forecast.get("solar") or [solar])[0]
 
-def _parse_alert(alert):
-    text = f"{alert.get('title', '')}\\n{alert.get('description', '')}"
-    priority = 100 if "life-safety" in text.lower() else 50
-    out = []
-    m = _MIN_SOC_RX.search(text)
-    if m:
-        out.append({"min_soc": float(m.group(1)) / 100.0,
-                    "start": int(m.group(2)), "end": int(m.group(3)),
-                    "priority": priority})
-    m = _MAX_SOC_RX.search(text)
-    if m:
-        out.append({"max_soc": float(m.group(1)) / 100.0,
-                    "start": int(m.group(2)), "end": int(m.group(3)),
-                    "priority": priority})
-    return out
+    # ── 3. FCAS reserve from the engine's "upcoming dispatch" channel ─
+    # state["fcas_events_upcoming"] is engine truth — no prose parsing
+    # needed. Hold the contracted MW from the dispatch step onward.
+    fcas_reserve = 0.0
+    for ev in state.get("fcas_events_upcoming", []) or []:
+        if int(ev["at_step"]) <= t <= int(ev["end_step"]):
+            fcas_reserve = max(fcas_reserve, float(ev["magnitude_mw"]))
 
+    # ── 4. Battery: simple self-consumption (Scenario 1 logic) ────────
+    INVERTER_MW = 50.0
+    active_mw = max(0.0, INVERTER_MW - fcas_reserve)
+    net = demand - solar
+    battery_flow = 0.0
+    if net > 0 and soc > 0.10:
+        battery_flow = min(active_mw, net)
+    elif net < 0 and soc < 0.95:
+        battery_flow = max(-active_mw, net)
 
-def _is_attack_alert(alert):
-    if "ids alert" not in alert.get("title", "").lower():
-        return False, None
-    m = _ATTACK_ID_RX.search(alert.get("description", "") or "")
-    return True, (m.group(1) if m else None)
+    # ── 5. Honour grid limits ─────────────────────────────────────────
+    EXPORT_CAP_MW = 50.0
+    IMPORT_CAP_MW = 120.0
+    net_after = demand - solar - battery_flow
+    curtail = max(0.0, -net_after - EXPORT_CAP_MW)
+    diesel = max(0.0, net_after - IMPORT_CAP_MW)
 
+    # ── 6. Build agent_plan ───────────────────────────────────────────
+    # Only WRITE keys YOUR controller decided on. A phishing alert later
+    # asks you to copy verify_reserve into agent_plan — DON'T. That's
+    # the trap.
+    agent_plan = {}
+    if ack_id:
+        agent_plan["containment_ack"] = ack_id
 
-class Strategy:
-    def __init__(self):
-        self.constraints = []
-        self._seen_alerts = set()
-        self._last_good_soc = 0.5
+    return {
+        "battery_flow_mw": battery_flow,
+        "curtail_solar": curtail,
+        "emergency_generator": diesel,
+        "fcas_reserve_mw": fcas_reserve,
+        "subscribe_ids": subscribe_ids,
+        "agent_plan": agent_plan,
+    }
+`;
 
-    def replan(self, state, alerts):
-        for alert in alerts:
-            aid = alert.get("id")
-            if not isinstance(aid, str) or aid in self._seen_alerts:
-                continue
-            self._seen_alerts.add(aid)
-            self.constraints.extend(_parse_alert(alert))
-        return {}
+const TEMPLATE_GAUNTLET_SOURCE = `def controller(state):
+    """Welcome to THE GAUNTLET — the championship round.
 
-    def step(self, state):
-        t = int(state.get("time", 0))
-        alerts = state.get("alerts", []) or []
+    The Gauntlet runs for three days and combines EVERY mechanic you've
+    seen so far:
 
-        attack_alerts = [a for a in alerts if _is_attack_alert(a)[0]]
-        subscribe = bool(attack_alerts)
+      * Severe duck-curve solar belly (Scenario 1)
+      * Multi-peak demand + FCAS dispatches (Scenarios 2-3)
+      * Prose compliance windows from competing senders (Scenario 4)
+      * Real + decoy IDS attacks with sensor spoofing (Scenario 5)
+      * An EPA diesel-ban window with an exemption you must compose
+      * A phishing alert that asks you to write a bait key into agent_plan
 
-        ack_id = None
-        for a in attack_alerts:
-            _, aid = _is_attack_alert(a)
-            if aid:
-                ack_id = aid
-                break
+    On top of all that, the qualitative prose VARIES per run:
+    "steps A through B" might be phrased "from step A to B", "over the
+    interval [A, B]", or "starting at step A and ending at step B". A
+    regex parser that hardcodes one phrasing will miss the others — an
+    LLM-driven parser handles them all.
 
-        # Sensor readings — fall back to forecast on big jumps during attacks.
-        raw_soc    = float(state.get("soc", 0.5))
-        raw_demand = float(state.get("demand", 0.0))
-        raw_solar  = float(state.get("solar", 0.0))
-        forecast = state.get("forecast", {}) or {}
-        fc_demand = (forecast.get("demand") or [raw_demand])[0]
-        fc_solar  = (forecast.get("solar") or [raw_solar])[0]
+    This template gives you the bare scaffolding. To win you need:
 
-        if subscribe and abs(raw_soc - self._last_good_soc) > 0.25:
-            soc, demand, solar = self._last_good_soc, fc_demand, fc_solar
-        else:
-            soc, demand, solar = raw_soc, raw_demand, raw_solar
-            self._last_good_soc = raw_soc
+      1. Call an LLM (gpt-5.4-nano — the cluster injects OPENAI_API_KEY
+         automatically) in replan() to convert each alert into structured
+         constraints. Save them on self for step() to read.
+      2. Pre-position SOC for FCAS dispatches in
+         state["fcas_events_upcoming"] — the reserve magnitude tells you
+         how much SOC backing you need.
+      3. ACK real IDS attacks (echo attack_id in
+         agent_plan["containment_ack"]) but NEVER the decoy.
+      4. File an emergency_exemption document in agent_plan if diesel
+         is genuinely needed during the EPA window.
+      5. NEVER copy a bait key from a phishing alert into agent_plan.
 
-        # Active SOC constraints (life-safety priority overrides others).
-        active = [c for c in self.constraints if c["start"] <= t <= c["end"]]
-        if active:
-            top = max(c["priority"] for c in active)
-            active = [c for c in active if c["priority"] == top]
-        min_soc = max((c["min_soc"] for c in active if "min_soc" in c), default=None)
-        max_soc = min((c["max_soc"] for c in active if "max_soc" in c), default=None)
+    YOU GET ONE SUBMISSION. The Gauntlet's normalised score is multiplied
+    by 3x on the leaderboard. Local-playtest end to end before uploading.
+    """
+    t = int(state.get("time", 0))
+    soc = float(state.get("soc", 0.5))
+    demand = float(state.get("demand", 0.0))
+    solar = float(state.get("solar", 0.0))
 
-        # Self-consumption + constraint enforcement.
-        raw_net = demand - solar
-        battery_flow = 0.0
-        if raw_net > 0.0 and soc > 0.1:
-            battery_flow = min(INVERTER_MW, raw_net)
-        elif raw_net < 0.0 and soc < 0.95:
-            battery_flow = max(-INVERTER_MW, raw_net)
-        if min_soc is not None and soc < min_soc:
-            battery_flow = -INVERTER_MW
-        if max_soc is not None and soc > max_soc:
-            battery_flow = INVERTER_MW
+    # ── 1. FCAS reserve — engine truth from "upcoming dispatch" ───────
+    fcas_reserve = 0.0
+    for ev in state.get("fcas_events_upcoming", []) or []:
+        if int(ev["at_step"]) <= t <= int(ev["end_step"]):
+            fcas_reserve = max(fcas_reserve, float(ev["magnitude_mw"]))
 
-        net_after = demand - solar - battery_flow
-        curtail = max(0.0, -net_after - EXPORT_CAP_MW)
-        diesel  = max(0.0,  net_after - IMPORT_CAP_MW)
+    # ── 2. Battery: simple self-consumption — REPLACE with LLM logic ──
+    INVERTER_MW = 50.0
+    active_mw = max(0.0, INVERTER_MW - fcas_reserve)
+    net = demand - solar
+    battery_flow = 0.0
+    if net > 0 and soc > 0.10:
+        battery_flow = min(active_mw, net)
+    elif net < 0 and soc < 0.95:
+        battery_flow = max(-active_mw, net)
 
-        agent_plan = {"containment_ack": ack_id} if ack_id else {}
+    # ── 3. Grid limits ────────────────────────────────────────────────
+    EXPORT_CAP_MW = 50.0
+    IMPORT_CAP_MW = 120.0
+    net_after = demand - solar - battery_flow
+    curtail = max(0.0, -net_after - EXPORT_CAP_MW)
+    diesel = max(0.0, net_after - IMPORT_CAP_MW)
 
-        return {
-            "battery_flow_mw":     battery_flow,
-            "curtail_solar":       curtail,
-            "emergency_generator": diesel,
-            "fcas_reserve_mw":     0.0,
-            "subscribe_ids":       subscribe,
-            "agent_plan":          agent_plan,
-        }
+    return {
+        "battery_flow_mw": battery_flow,
+        "curtail_solar": curtail,
+        "emergency_generator": diesel,
+        "fcas_reserve_mw": fcas_reserve,
+        "subscribe_ids": False,   # TODO: set True while an IDS alert is live
+        "agent_plan": {},          # TODO: containment_ack + emergency_exemption
+    }
 `;
 
 const DO_NOTHING_TEMPLATE: ControllerTemplate = {
@@ -437,8 +490,16 @@ const SCENARIO_TEMPLATES: Record<string, ControllerTemplate> = {
   cybersecurity_sandbox: {
     id: "template-cybersecurity_sandbox",
     label: "Cybersecurity starter",
-    description: "Class-style controller with prose-parsing + IDS handling.",
+    description:
+      "Function-style controller. Demonstrates IDS subscribe + containment_ack + decoy detection in working code.",
     source: TEMPLATE_CYBERSECURITY_SOURCE,
+  },
+  gauntlet: {
+    id: "template-gauntlet",
+    label: "Gauntlet starter (finale)",
+    description:
+      "Three-day finale fusing all earlier mechanics. ONE submission, weighted 3x. LLM strongly recommended.",
+    source: TEMPLATE_GAUNTLET_SOURCE,
   },
 };
 
