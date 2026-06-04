@@ -1,11 +1,13 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2Icon,
   CircleAlertIcon,
   CodeIcon,
+  RotateCcwIcon,
   SlidersHorizontalIcon,
+  TriangleAlertIcon,
 } from "lucide-react";
 
 import { Button } from "~/components/watt-the-hack/sandbox/ui/button";
@@ -16,6 +18,7 @@ import {
   getTemplatesForScenario,
   type ControllerTemplate,
 } from "~/lib/watt-the-hack-sandbox/controller-templates";
+import { draftNeedsConfirm } from "~/lib/watt-the-hack-sandbox/controller-drafts";
 import { DEFAULT_CONTROLLER_SOURCE } from "~/lib/watt-the-hack-sandbox/default-controller";
 import { lookupMechanic, type MechanicSlider } from "~/lib/watt-the-hack-sandbox/mechanics";
 import { useSimStore } from "~/lib/watt-the-hack-sandbox/sim-store";
@@ -36,10 +39,17 @@ export function ControllerEditor() {
   const setControllerKind = useSimStore((s) => s.setControllerKind);
   const simpleParams = useSimStore((s) => s.simpleParams);
   const setSimpleParams = useSimStore((s) => s.setSimpleParams);
+  // Draft + applied live in the store, keyed per-scenario and persisted, so
+  // switching scenarios (and refreshes) never lose code. `dirty` = the editor
+  // content hasn't been Applied to the running sim yet.
   const controllerSource = useSimStore((s) => s.controllerSource);
-  const setControllerSource = useSimStore((s) => s.setControllerSource);
+  const controllerDraft = useSimStore((s) => s.controllerDraft);
+  const setControllerDraft = useSimStore((s) => s.setControllerDraft);
+  const applyController = useSimStore((s) => s.applyController);
   const controllerError = useSimStore((s) => s.controllerError);
   const scenario = useSimStore((s) => s.scenario);
+
+  const dirty = controllerDraft !== controllerSource;
 
   // Sliders are scenario-driven: only mechanics this scenario declares get
   // a slider. New mechanic = one entry in lib/mechanics.ts; no edit here.
@@ -62,14 +72,34 @@ export function ControllerEditor() {
     }
   }, [simpleAllowed, codeAllowed, controllerKind, setControllerKind]);
 
-  const [draft, setDraft] = useState(controllerSource);
-  const [dirty, setDirty] = useState(false);
+  const templates = useMemo(
+    () => getTemplatesForScenario(scenario?.id ?? null),
+    [scenario?.id],
+  );
 
-  useEffect(() => {
-    if (!dirty) {
-      setDraft(controllerSource);
+  // "Known" starting points the user could be sitting on without having
+  // hand-edited anything. Loading away from one of these is frictionless; only
+  // genuinely custom unsaved work triggers a confirm.
+  const knownSources = useMemo(
+    () => [DEFAULT_CONTROLLER_SOURCE, ...templates.map((t) => t.source)],
+    [templates],
+  );
+
+  // Destructive draft replacements (load template / reset / revert) route
+  // through here so they ask before throwing away custom unsaved edits.
+  const [pending, setPending] = useState<{
+    source: string;
+    action: string;
+  } | null>(null);
+
+  const requestReplace = (source: string, action: string) => {
+    if (source === controllerDraft) return;
+    if (draftNeedsConfirm(controllerDraft, controllerSource, knownSources)) {
+      setPending({ source, action });
+    } else {
+      setControllerDraft(source);
     }
-  }, [controllerSource, dirty]);
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -144,12 +174,14 @@ export function ControllerEditor() {
 
           <TabsContent value="code">
             <TemplatePicker
-              scenarioId={scenario?.id ?? null}
-              currentSource={draft}
-              onLoad={(template) => {
-                setDraft(template.source);
-                setDirty(template.source !== controllerSource);
-              }}
+              templates={templates}
+              currentSource={controllerDraft}
+              onLoad={(template) =>
+                requestReplace(
+                  template.source,
+                  `load the “${template.label}” template`,
+                )
+              }
             />
             <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_280px]">
               <div className="overflow-hidden rounded-lg border border-line">
@@ -164,11 +196,9 @@ export function ControllerEditor() {
                   height="460px"
                   language="python"
                   theme="vs"
-                  value={draft}
-                  onChange={(value: string | undefined) => { 
-                    const next = value ?? "";
-                    setDraft(next);
-                    setDirty(next !== controllerSource);
+                  value={controllerDraft}
+                  onChange={(value: string | undefined) => {
+                    setControllerDraft(value ?? "");
                   }}
                   options={{
                     minimap: { enabled: false },
@@ -192,19 +222,38 @@ export function ControllerEditor() {
               <CodeReference />
             </div>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-[11px] text-muted">
+              <div className="max-w-md text-[11px] text-muted">
                 Imports and side effects are disabled. On error the engine
                 falls back to do-nothing actions — your score will look like
                 the passive baseline, NOT your sliders. <strong>Note:</strong> You cannot import packages inside this sandbox. Switch to your local IDE or Google Colab if you need to use external libraries.
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <DraftStatus dirty={dirty} />
+                {dirty ? (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    title="Discard unsaved edits and return to the applied code"
+                    onClick={() =>
+                      requestReplace(
+                        controllerSource,
+                        "discard your unsaved changes",
+                      )
+                    }
+                  >
+                    <RotateCcwIcon className="h-3 w-3" />
+                    Revert
+                  </Button>
+                ) : null}
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() => {
-                    setDraft(DEFAULT_CONTROLLER_SOURCE);
-                    setDirty(DEFAULT_CONTROLLER_SOURCE !== controllerSource);
-                  }}
+                  onClick={() =>
+                    requestReplace(
+                      DEFAULT_CONTROLLER_SOURCE,
+                      "reset to the starter controller",
+                    )
+                  }
                 >
                   Reset code
                 </Button>
@@ -212,18 +261,35 @@ export function ControllerEditor() {
                   size="sm"
                   variant="primary"
                   disabled={!dirty}
-                  onClick={() => {
-                    setControllerSource(draft);
-                    setDirty(false);
-                  }}
+                  onClick={applyController}
                 >
                   Apply
                 </Button>
               </div>
             </div>
+            <p className="mt-2 text-[11px] text-muted">
+              Your code is saved per scenario — switch scenarios freely and it's
+              restored when you come back, even after a refresh.
+            </p>
           </TabsContent>
         </Tabs>
       </CardContent>
+
+      <ConfirmDialog
+        open={pending !== null}
+        title="Discard unsaved changes?"
+        body={
+          pending
+            ? `You have edits that haven't been applied. Continue to ${pending.action}? Your unsaved changes will be lost.`
+            : ""
+        }
+        confirmLabel="Discard & continue"
+        onConfirm={() => {
+          if (pending) setControllerDraft(pending.source);
+          setPending(null);
+        }}
+        onCancel={() => setPending(null)}
+      />
     </Card>
   );
 }
@@ -274,6 +340,34 @@ function SliderField({
       />
       {trailing ? <div className="mt-1.5">{trailing}</div> : null}
     </div>
+  );
+}
+
+// Shows whether the editor content matches what the sim is running. Amber when
+// there are edits waiting on Apply; green once applied.
+function DraftStatus({ dirty }: { dirty: boolean }) {
+  return (
+    <span
+      title={
+        dirty
+          ? "You have unsaved edits — click Apply to run them"
+          : "The editor matches the controller the sim is running"
+      }
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium",
+        dirty
+          ? "border-warning/40 bg-warning/5 text-warning"
+          : "border-positive/30 bg-positive/5 text-positive",
+      )}
+    >
+      <span
+        className={cn(
+          "h-1.5 w-1.5 rounded-full",
+          dirty ? "bg-warning" : "bg-positive",
+        )}
+      />
+      {dirty ? "Unsaved changes" : "Applied"}
+    </span>
   );
 }
 
@@ -422,13 +516,12 @@ ${actionLines.join("\n")}
 }
 
 interface TemplatePickerProps {
-  scenarioId: string | null;
+  templates: ControllerTemplate[];
   currentSource: string;
   onLoad: (template: ControllerTemplate) => void;
 }
 
-function TemplatePicker({ scenarioId, currentSource, onLoad }: TemplatePickerProps) {
-  const templates = getTemplatesForScenario(scenarioId);
+function TemplatePicker({ templates, currentSource, onLoad }: TemplatePickerProps) {
   const activeId =
     templates.find((t) => t.source === currentSource)?.id ?? null;
   const activeDescription = templates.find(
@@ -461,9 +554,9 @@ function TemplatePicker({ scenarioId, currentSource, onLoad }: TemplatePickerPro
               </button>
             );
           })}
-          
+
           <div className="mx-1 h-4 w-px bg-line" />
-          
+
           <button
             type="button"
             disabled
@@ -488,6 +581,73 @@ function TemplatePicker({ scenarioId, currentSource, onLoad }: TemplatePickerPro
           Custom code — pick a template above to start from a known baseline, or continue writing your own!
         </p>
       )}
+    </div>
+  );
+}
+
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  body: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+function ConfirmDialog({
+  open,
+  title,
+  body,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: ConfirmDialogProps) {
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onCancel]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="controller-confirm-title"
+    >
+      <div
+        className="absolute inset-0 bg-ink/40 backdrop-blur-sm"
+        onClick={onCancel}
+      />
+      <div className="relative w-full max-w-md rounded-xl border border-line bg-surface p-5 shadow-soft">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+            <TriangleAlertIcon className="h-4 w-4" />
+          </span>
+          <div>
+            <h3
+              id="controller-confirm-title"
+              className="text-sm font-semibold text-ink"
+            >
+              {title}
+            </h3>
+            <p className="mt-1 text-[13px] leading-relaxed text-muted">{body}</p>
+          </div>
+        </div>
+        <div className="mt-5 flex justify-end gap-2">
+          <Button size="sm" variant="secondary" onClick={onCancel} autoFocus>
+            Keep editing
+          </Button>
+          <Button size="sm" variant="danger" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

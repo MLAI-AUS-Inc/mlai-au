@@ -446,3 +446,7 @@
 - [x] Consolidate Vibe Raising publish handling so publish errors stay on-page instead of crashing
 - [x] Restore the publish confirmation popup before sending the reviewed update
 - [x] Disable publish-send in the popup and make local save the primary action
+- [x] Persist Watt The Hack controller code per scenario so switching scenarios (and refreshing) no longer loses work
+- [x] Add a confirm step before template/reset/revert discards custom unsaved controller code
+- [x] Add Applied/Unsaved status, a Revert action, and per-scenario save messaging to the controller editor
+- [x] Cover controller-draft logic and store persistence with bun tests; run `bunx tsc -b`

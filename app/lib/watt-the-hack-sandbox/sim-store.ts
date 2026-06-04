@@ -3,6 +3,15 @@
 import { create } from "zustand";
 
 import { fetchInit, fetchRun, fetchStep, fetchScenarios } from "./api";
+import {
+  emptyWorkspace,
+  entryFor,
+  parseWorkspace,
+  serializeWorkspace,
+  setApplied,
+  setDraft,
+  type ControllerWorkspace,
+} from "./controller-drafts";
 import { DEFAULT_CONTROLLER_SOURCE } from "./default-controller";
 import {
   DT_HOURS,
@@ -36,7 +45,13 @@ interface SimStoreState {
   metricsAccumulator: ReturnType<typeof createMetrics>;
   controllerKind: ControllerKind;
   simpleParams: SimpleControllerParams;
+  // `controllerSource` is the ACTIVE scenario's applied source (what the sim
+  // runs); `controllerDraft` is its live editor content. Both are mirrored
+  // per-scenario in `workspace` and persisted to localStorage, so switching
+  // scenarios in the picker never loses code.
   controllerSource: string;
+  controllerDraft: string;
+  workspace: ControllerWorkspace;
   controllerError: string | null;
   loading: boolean;
   running: boolean;
@@ -52,7 +67,8 @@ interface SimStoreState {
   reset: () => Promise<void>;
   setControllerKind: (kind: ControllerKind) => void;
   setSimpleParams: (params: Partial<SimpleControllerParams>) => void;
-  setControllerSource: (source: string) => void;
+  setControllerDraft: (draft: string) => void;
+  applyController: () => void;
   setScenarioId: (id: string | null) => Promise<void>;
 }
 
@@ -64,6 +80,41 @@ const DEFAULT_PARAMS: SimpleControllerParams = {
 };
 
 let runToken = 0;
+
+// ---- Per-scenario draft persistence (localStorage) --------------------------
+// Bump the key suffix if the persisted shape ever changes.
+const WORKSPACE_STORAGE_KEY = "wth:controller-workspace:v1";
+let workspaceHydrated = false;
+let persistTimer: ReturnType<typeof setTimeout> | null = null;
+
+function readPersistedWorkspace(): ControllerWorkspace | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(WORKSPACE_STORAGE_KEY);
+    return raw ? parseWorkspace(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Keystrokes debounce (so we don't hit localStorage on every character);
+// checkpoints like Apply / scenario-switch flush immediately.
+function persistWorkspace(ws: ControllerWorkspace, immediate = false): void {
+  if (typeof window === "undefined") return;
+  if (persistTimer) {
+    clearTimeout(persistTimer);
+    persistTimer = null;
+  }
+  const write = () => {
+    try {
+      window.localStorage.setItem(WORKSPACE_STORAGE_KEY, serializeWorkspace(ws));
+    } catch {
+      // Quota exceeded or storage disabled — drafts just won't survive reload.
+    }
+  };
+  if (immediate) write();
+  else persistTimer = setTimeout(write, 500);
+}
 
 const buildControllerSpec = (
   kind: ControllerKind,
@@ -91,6 +142,8 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
   controllerKind: "simple",
   simpleParams: { ...DEFAULT_PARAMS },
   controllerSource: DEFAULT_CONTROLLER_SOURCE,
+  controllerDraft: DEFAULT_CONTROLLER_SOURCE,
+  workspace: emptyWorkspace(),
   controllerError: null,
   loading: false,
   running: false,
@@ -99,6 +152,14 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
   scenario: null,
 
   init: async () => {
+    // Restore per-scenario drafts from localStorage once per session, before
+    // we resolve which scenario to show.
+    if (!workspaceHydrated) {
+      workspaceHydrated = true;
+      const restored = readPersistedWorkspace();
+      if (restored) set({ workspace: restored });
+    }
+
     set({ loading: true, error: null });
     try {
       let { scenarioId } = get();
@@ -108,7 +169,17 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
         const scenarios = await fetchScenarios();
         if (scenarios.length > 0) {
           scenarioId = scenarios[0].id;
-          set({ scenarioId });
+          // Activate this scenario's saved code (or seed a fresh default).
+          const entry = entryFor(
+            get().workspace,
+            scenarioId,
+            DEFAULT_CONTROLLER_SOURCE,
+          );
+          set({
+            scenarioId,
+            controllerSource: entry.applied,
+            controllerDraft: entry.draft,
+          });
         } else {
           throw new Error(
             "No scenarios are currently available. Please wait for the admin to unlock a scenario.",
@@ -144,7 +215,20 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
 
   setScenarioId: async (id) => {
     runToken += 1;
-    set({ scenarioId: id, running: false });
+    if (id) {
+      // The outgoing scenario's draft + applied source are already mirrored in
+      // `workspace` (kept in sync on every edit/apply), so switching only needs
+      // to load the incoming scenario's saved code — or seed a fresh default.
+      const entry = entryFor(get().workspace, id, DEFAULT_CONTROLLER_SOURCE);
+      set({
+        scenarioId: id,
+        controllerSource: entry.applied,
+        controllerDraft: entry.draft,
+        running: false,
+      });
+    } else {
+      set({ scenarioId: id, running: false });
+    }
     await get().init();
   },
 
@@ -279,7 +363,45 @@ export const useSimStore = create<SimStoreState>((set, get) => ({
   setControllerKind: (kind) => set({ controllerKind: kind }),
   setSimpleParams: (params) =>
     set((s) => ({ simpleParams: { ...s.simpleParams, ...params } })),
-  setControllerSource: (source) => set({ controllerSource: source }),
+
+  // Live editor edits: mirror into the active scenario's workspace entry and
+  // debounce-persist so a refresh restores unsaved work.
+  setControllerDraft: (draft) =>
+    set((s) => {
+      if (!s.scenarioId) return { controllerDraft: draft };
+      const workspace = setDraft(
+        s.workspace,
+        s.scenarioId,
+        draft,
+        DEFAULT_CONTROLLER_SOURCE,
+      );
+      persistWorkspace(workspace);
+      return { controllerDraft: draft, workspace };
+    }),
+
+  // "Apply": promote the current draft to the source the sim runs. Leaves
+  // draft === applied (a clean state) and flushes to storage immediately.
+  applyController: () =>
+    set((s) => {
+      const draft = s.controllerDraft;
+      if (!s.scenarioId) return { controllerSource: draft };
+      // Sync the draft first, then mark it applied, so the stored entry is
+      // exactly { applied: draft, draft } regardless of prior state.
+      const synced = setDraft(
+        s.workspace,
+        s.scenarioId,
+        draft,
+        DEFAULT_CONTROLLER_SOURCE,
+      );
+      const workspace = setApplied(
+        synced,
+        s.scenarioId,
+        draft,
+        DEFAULT_CONTROLLER_SOURCE,
+      );
+      persistWorkspace(workspace, true);
+      return { controllerSource: draft, workspace };
+    }),
 }));
 
 export function selectStepIndex(s: SimStoreState): number {
