@@ -26,6 +26,7 @@ This site deploys to **Cloudflare Workers** (not Vercel). Key differences from t
 The WTH sandbox components live in `app/components/watt-the-hack/sandbox/` and `app/lib/watt-the-hack-sandbox/`. This code is ported from the `Watt-The-Hack/frontend/` repo (Next.js).
 
 **When syncing code from the Next.js frontend:**
-- Audit every `process.env` reference and convert to `import.meta.env.VITE_*`.
-- The sandbox API client (`app/lib/watt-the-hack-sandbox/api.ts`) resolves the backend URL via hostname detection. On `mlai.au` it points to `https://watt-the-hack.vercel.app` (where the FastAPI backend is deployed). Override with `VITE_WTH_SANDBOX_API_URL` in `.dev.vars` or Cloudflare dashboard.
-- Do NOT blindly copy-paste files — the runtime environments are fundamentally different (Cloudflare Workers vs Node.js/Vercel).
+- Audit every `process.env` reference and convert to `import.meta.env.VITE_*`. In Vite/Cloudflare builds, `process.env.NEXT_PUBLIC_*` silently evaluates to `undefined`, which means the sandbox falls back to `http://127.0.0.1:8000` in prod — a silent breakage.
+- The sandbox API client (`app/lib/watt-the-hack-sandbox/api.ts`) resolves the backend URL via hostname detection. On `mlai.au` it points to **`https://api.mlai.au/api/v1/hackathons/watt-the-hack`** — the Django backend in `mlai-backend`, **not** the dev FastAPI sandbox at `watt-the-hack.vercel.app`. Override with `VITE_WTH_SANDBOX_API_URL` in `.dev.vars` or Cloudflare dashboard.
+- The Django endpoints require an authenticated user (`IsAuthenticated`) — JWT in the `access_token` cookie. The sandbox client MUST send credentials, which is why `api.ts` uses the shared `axiosInstance` (it has `withCredentials: true`) rather than a bare `fetch()`. If you ever rewrite the client back to `fetch()`, pass `credentials: "include"` or every call will 401.
+- Do NOT blindly copy-paste files from `Watt-The-Hack/frontend/` — the dev FastAPI sandbox is unauthenticated and uses a different env-var system, so a verbatim port will break in prod.
