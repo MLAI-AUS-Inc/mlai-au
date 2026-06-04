@@ -5,6 +5,7 @@ import {
   ArrowRightIcon,
   ArrowTopRightOnSquareIcon,
   BookOpenIcon,
+  CalendarDaysIcon,
   DocumentTextIcon,
   MegaphoneIcon,
   PaperAirplaneIcon,
@@ -26,6 +27,7 @@ import {
   type GenericHackathonTeam,
 } from "~/lib/generic-hackathon";
 import { wattClasses, wattImages } from "~/lib/watt-theme";
+import { wattTheHackSchedule } from "~/lib/watt-the-hack-schedule";
 import type { Hackathon } from "~/services/hackathon";
 
 const FALLBACK_HACKATHON: Hackathon = {
@@ -360,6 +362,83 @@ function ResourcesPanel({ resources }: { resources: GenericHackathonResource[] }
   );
 }
 
+function ScheduleSection() {
+  const [activeDayId, setActiveDayId] = useState(wattTheHackSchedule[0].id);
+  const activeDay =
+    wattTheHackSchedule.find((day) => day.id === activeDayId) ?? wattTheHackSchedule[0];
+
+  return (
+    <section className={`${wattClasses.panel} px-6 py-5 sm:px-7`}>
+      <div className="flex items-center gap-3">
+        <CalendarDaysIcon className="h-8 w-8 text-[#155420]" aria-hidden="true" />
+        <div>
+          <h2 className="text-xl font-black text-[#121e16]">Schedule &amp; Runsheet</h2>
+          <p className="mt-0.5 text-sm font-medium text-[#354031]">
+            Two days of building, talks and pitches.
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-5 inline-flex rounded-full border border-[#e8dfcf] bg-[#fbf6e9] p-1">
+        {wattTheHackSchedule.map((day) => {
+          const isActive = day.id === activeDayId;
+          return (
+            <button
+              key={day.id}
+              type="button"
+              onClick={() => setActiveDayId(day.id)}
+              aria-pressed={isActive}
+              className={`rounded-full px-4 py-1.5 text-sm transition ${
+                isActive
+                  ? "bg-[#2f6f2c] font-black text-white shadow-[0_8px_16px_rgba(21,84,32,0.18)]"
+                  : "font-bold text-[#485244] hover:text-[#155420]"
+              }`}
+            >
+              {day.shortLabel}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="mt-3 text-sm font-semibold text-[#485244]">
+        {activeDay.weekday} · {activeDay.date} — {activeDay.theme}
+      </p>
+
+      <ol className="mt-5">
+        {activeDay.items.map((item, index) => {
+          const isLast = index === activeDay.items.length - 1;
+          return (
+            <li key={`${item.time}-${item.title}`} className="flex gap-3 sm:gap-5">
+              <div className="w-16 shrink-0 pt-0.5 text-right sm:w-20">
+                <span className="text-sm font-black text-[#155420]">{item.time}</span>
+              </div>
+              <div className="flex w-3 shrink-0 flex-col items-center">
+                <span className="mt-0.5 h-3 w-3 shrink-0 rounded-full border-2 border-[#2f6f2c] bg-[#fffefa]" />
+                {!isLast && <span className="mt-1 w-px flex-1 bg-[#e8dfcf]" />}
+              </div>
+              <div className={`min-w-0 flex-1 ${isLast ? "pb-0" : "pb-6"}`}>
+                <p className="font-black leading-snug text-[#121e16]">{item.title}</p>
+                {item.detail && (
+                  <p className="mt-0.5 text-sm leading-6 text-[#64705f]">{item.detail}</p>
+                )}
+                {item.people && item.people.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {item.people.map((person) => (
+                      <span key={person} className={wattClasses.chip}>
+                        {person}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
 export default function WattTheHackDashboard() {
   const { hackathon, announcements, team, latestSubmission, resources } = useLoaderData<typeof loader>();
 
@@ -426,6 +505,8 @@ export default function WattTheHackDashboard() {
         </div>
 
         <ResourcesPanel resources={resources} />
+
+        <ScheduleSection />
       </div>
     </div>
   );
