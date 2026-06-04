@@ -21,7 +21,7 @@ const BACKDROP_URL =
 export default function DocsPage() {
   return (
     <div
-      className="relative min-h-full"
+      className="wth-sandbox relative min-h-full"
       style={{
         backgroundImage: `url("${BACKDROP_URL}")`,
         backgroundSize: "cover",
