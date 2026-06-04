@@ -22,6 +22,7 @@ import {
   CloudIcon,
   CloudLightningIcon,
   EyeIcon,
+  FingerprintIcon,
   FuelIcon,
   GaugeIcon,
   ScaleIcon,
@@ -211,6 +212,20 @@ export const MECHANICS: Record<string, MechanicDef> = {
     costKeys: [],
     costGroup: "grid",
   },
+
+  anomaly_classification: {
+    id: "anomaly_classification",
+    label: "Anomaly classification",
+    short:
+      "Decide which input to trust — the live sensor or the forecast — when they disagree.",
+    long:
+      "The grid's telemetry is under attack. An operator alert names an anomaly window, a channel (usually demand) and an `anomaly_id`. Inside the window one of three things is true: (1) a REAL attack — the demand genuinely spiked and BOTH the live meter and the forecast show it, so act on it; (2) a FALSE FLAG — a spoofed sensor shows a spike the forecast does NOT corroborate, so trust the forecast and ignore the meter; (3) a FORECAST ATTACK — the meter is honest but the forecast has been poisoned and reads low, so trust the meter. No single channel is safe to trust blindly: 'always believe the meter' over-exports on the false flag, 'always believe the forecast' blacks out on the forecast attack. Corroborate the live reading against the forecast and recent realised history, and read the alert prose — it hints which channel is compromised. You must also echo the `anomaly_id` in agent_plan[\"anomaly_ack\"] for the whole window or pay a per-step acknowledgement penalty.",
+    icon: FingerprintIcon,
+    iconTint: "text-rose-700",
+    iconBg: "bg-rose-50",
+    costKeys: ["anomaly_ack_fine"],
+    costGroup: "penalties",
+  },
 };
 
 // Fallback for ids the backend ships that aren't in the catalog yet —
@@ -268,6 +283,7 @@ const COST_KEY_LABELS: Record<string, string> = {
   fcas_shortfall_penalty: "Shortfall penalty",
   compliance_penalty: "Compliance",
   phishing_fine: "Phishing trap",
+  anomaly_ack_fine: "Anomaly ack",
 };
 
 export function buildCostTiles(activeIds: string[]): CostTileConfig[] {
