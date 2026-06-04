@@ -265,7 +265,7 @@ function EventBanner({ event }: { event: ScenarioEvent }) {
   return (
     <div
       className={cn(
-        "flex w-full items-start gap-3 border-y px-5 py-3.5 transition-colors",
+        "flex w-full items-start gap-3 rounded-2xl border px-5 py-3.5 shadow-sm transition-colors",
         tone,
       )}
     >
