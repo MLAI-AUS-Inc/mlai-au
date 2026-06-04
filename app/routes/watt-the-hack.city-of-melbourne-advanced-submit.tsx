@@ -163,17 +163,31 @@ export default function WattTheHackSubmissionPortal() {
   // this is a one-shot, 3x-weighted finale). The actual upload only fires
   // after the user confirms.
   const [confirmOpen, setConfirmOpen] = useState(false);
-  // Cached count of completed/in-flight submissions per scenario for the
-  // team, derived from the recent-submissions endpoint. Used by the
-  // confirmation modal AND by an inline "attempts remaining" chip on the
-  // scenario picker so the cap is visible before the user clicks submit.
-  const [scenarioUsage, setScenarioUsage] = useState<Record<string, number>>({});
+  // Single source of truth for the team's submissions, polled once below.
+  // BOTH the "attempts remaining" chips/modal AND the history panel derive
+  // from this, so every team member (up to 6) sees the same counts update
+  // live as teammates submit — no second fetch, no drift between the two.
+  const [submissions, setSubmissions] = useState<RecentSubmission[] | null>(null);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
 
   // Live entrypoint detection — drives both the inline badge under the editor
   // and the metadata.json the zip carries up to the gateway.
   const detected = useMemo(() => detectEntrypoint(controllerCode), [controllerCode]);
   const templates = useMemo(() => getTemplatesForScenario(scenarioId), [scenarioId]);
   const scenarioNeedsLLM = LLM_SCENARIO_IDS.has(scenarioId);
+
+  // Attempts used per scenario = submissions NOT in a failed-terminal state
+  // (failures are free retries). Counts in-flight too, matching the gateway's
+  // _enforce_scenario_cap, so the chip can never claim more attempts remain
+  // than the server will actually accept.
+  const scenarioUsage = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const r of submissions ?? []) {
+      if (!r.scenario_id || ATTEMPT_FAILED_STATUSES.has(r.status)) continue;
+      counts[r.scenario_id] = (counts[r.scenario_id] ?? 0) + 1;
+    }
+    return counts;
+  }, [submissions]);
 
   const scenarioCap = capFor(scenarioId);
   const scenarioUsed = scenarioUsage[scenarioId] ?? 0;
@@ -187,45 +201,75 @@ export default function WattTheHackSubmissionPortal() {
     setRequirements("");
   };
 
-  // Poll the gateway for the team's submission history and bucket the
-  // counts by scenario so the modal + inline chip can show "X of Y
-  // attempts used" without hitting the upload path. Only fetches when
-  // both credentials look plausible.
+  // Rehydrate team creds saved earlier this session so navigating away and
+  // back doesn't blank the form — which previously reset the attempt chips to
+  // "full" (a confusing-but-cosmetic lie; the gateway still enforced the real
+  // cap). sessionStorage, not localStorage, so the token dies with the tab.
+  // Runs once after mount (not a lazy initializer) to avoid an SSR/hydration
+  // mismatch — server and first client render both start blank.
   useEffect(() => {
-    if (!UUID_RE.test(teamId.trim()) || !teamToken.trim()) {
-      setScenarioUsage({});
+    if (typeof window === "undefined") return;
+    const savedId = window.sessionStorage.getItem("wth_team_id");
+    const savedTok = window.sessionStorage.getItem("wth_team_token");
+    if (savedId) setTeamId(savedId);
+    if (savedTok) setTeamToken(savedTok);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (teamId) window.sessionStorage.setItem("wth_team_id", teamId);
+    else window.sessionStorage.removeItem("wth_team_id");
+  }, [teamId]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (teamToken) window.sessionStorage.setItem("wth_team_token", teamToken);
+    else window.sessionStorage.removeItem("wth_team_token");
+  }, [teamToken]);
+
+  // The ONE poll of the team's submissions. Drives both the attempt chips
+  // (via scenarioUsage above) and the history panel (passed down as props).
+  // 5s cadence while anything is in-flight, backing off to 30s once settled,
+  // so a teammate's new/just-finished submission shows up for everyone within
+  // a few seconds. Re-runs when creds change or this member accepts a new
+  // submission (activeSubmissionId), which refreshes the cycle immediately.
+  useEffect(() => {
+    const id = teamId.trim();
+    const tok = teamToken.trim();
+    if (!UUID_RE.test(id) || !tok) {
+      setSubmissions(null);
+      setSubmissionsError(null);
       return;
     }
     let cancelled = false;
+    let timer: number | null = null;
     const tick = async () => {
       try {
         const res = await fetch(
-          `/watt-the-hack/city-of-melbourne-advanced-recent-submissions-data?team_id=${encodeURIComponent(teamId.trim())}`,
-          {
-            headers: {
-              "X-Team-Token": teamToken.trim(),
-              Accept: "application/json",
-            },
-          },
+          `/watt-the-hack/city-of-melbourne-advanced-recent-submissions-data?team_id=${encodeURIComponent(id)}`,
+          { headers: { "X-Team-Token": tok, Accept: "application/json" } },
         );
-        if (!res.ok) return;
-        const rows = (await res.json()) as Array<{ scenario_id: string | null }>;
-        if (cancelled) return;
-        const counts: Record<string, number> = {};
-        for (const r of rows) {
-          if (!r.scenario_id) continue;
-          counts[r.scenario_id] = (counts[r.scenario_id] ?? 0) + 1;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { detail?: string }).detail || `Status ${res.status}`);
         }
-        setScenarioUsage(counts);
-      } catch {
-        // Soft-fail — the count is informational; the gateway is still
-        // the authoritative cap. Don't block the form on a polling miss.
+        const data = (await res.json()) as RecentSubmission[];
+        if (cancelled) return;
+        setSubmissions(data);
+        setSubmissionsError(null);
+        const hasInflight = data.some((r) => !TERMINAL_STATUSES.has(r.status));
+        timer = window.setTimeout(() => void tick(), hasInflight ? 5000 : 30000);
+      } catch (err) {
+        if (cancelled) return;
+        // Keep the last-known rows on screen; just surface a soft retry notice.
+        setSubmissionsError(err instanceof Error ? err.message : "Couldn't load submissions");
+        timer = window.setTimeout(() => void tick(), 8000);
       }
     };
     void tick();
-    // Refresh after each successful accept (activeSubmissionId rotates).
     return () => {
       cancelled = true;
+      if (timer !== null) window.clearTimeout(timer);
     };
   }, [teamId, teamToken, activeSubmissionId]);
 
@@ -605,9 +649,10 @@ export default function WattTheHackSubmissionPortal() {
       <RecentSubmissionsPanel
         teamId={teamId}
         teamToken={teamToken}
-        // Bump on each new submission so the panel can show it as soon as
-        // possible without waiting for the next poll tick.
-        activeSubmissionId={activeSubmissionId}
+        // Rows + error come from the parent's single poll (see above), so the
+        // panel and the attempt chips never disagree and there's one fetch.
+        rows={submissions}
+        error={submissionsError}
       />
       </main>
 
@@ -750,6 +795,19 @@ type SubmissionStatus = {
 
 const TERMINAL_STATUSES = new Set([
   "COMPLETED",
+  "VALIDATION_FAILED",
+  "BUILD_FAILED",
+  "EVAL_FAILED",
+  "TIMEOUT",
+  "DISQUALIFIED",
+]);
+
+// Terminal states that DON'T consume a scenario attempt — a build/validation
+// error or timeout is a free retry. Mirrors the gateway's _ATTEMPT_FREE_STATES
+// so the portal's "attempts remaining" chip matches what the server enforces.
+// Anything NOT in this set (in-flight OR a COMPLETED success) counts as a used
+// attempt.
+const ATTEMPT_FAILED_STATUSES = new Set([
   "VALIDATION_FAILED",
   "BUILD_FAILED",
   "EVAL_FAILED",
@@ -1020,65 +1078,19 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 function RecentSubmissionsPanel({
   teamId,
   teamToken,
-  activeSubmissionId,
+  rows,
+  error,
 }: {
   teamId: string;
   teamToken: string;
-  activeSubmissionId: string | null;
+  // Polled once by the parent and passed down — this panel no longer fetches,
+  // so the attempt chips and the history list are always the same data.
+  rows: RecentSubmission[] | null;
+  error: string | null;
 }) {
   const credsLook = UUID_RE.test(teamId.trim()) && teamToken.trim().length > 0;
-  const [rows, setRows] = useState<RecentSubmission[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [viewer, setViewer] = useState<{ row: RecentSubmission; source: string } | null>(null);
   const [loadingViewer, setLoadingViewer] = useState(false);
-
-  // Re-fetch every 5 s while anything is non-terminal; back off to 30 s once
-  // everything has settled. Keeps the page light on a long-finished session
-  // without making participants refresh by hand.
-  useEffect(() => {
-    if (!credsLook) {
-      setRows(null);
-      setError(null);
-      return;
-    }
-    let cancelled = false;
-    let timer: number | null = null;
-
-    const tick = async () => {
-      try {
-        const res = await fetch(
-          `/watt-the-hack/city-of-melbourne-advanced-recent-submissions-data?team_id=${encodeURIComponent(teamId.trim())}`,
-          {
-            headers: { "X-Team-Token": teamToken.trim(), Accept: "application/json" },
-          },
-        );
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error((data as { detail?: string }).detail || `Status ${res.status}`);
-        }
-        const data = (await res.json()) as RecentSubmission[];
-        if (cancelled) return;
-        setRows(data);
-        setError(null);
-        const hasInflight = data.some((r) => !TERMINAL_STATUSES.has(r.status));
-        const delay = hasInflight ? 5000 : 30000;
-        timer = window.setTimeout(() => void tick(), delay);
-      } catch (err) {
-        if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Couldn't load submissions");
-        // Retry on a generous interval — most failures here are transient
-        // (cold worker, brief admin redeploy). Don't blast the proxy.
-        timer = window.setTimeout(() => void tick(), 8000);
-      }
-    };
-    void tick();
-    return () => {
-      cancelled = true;
-      if (timer !== null) window.clearTimeout(timer);
-    };
-    // activeSubmissionId is in the dep array so a fresh accept triggers a
-    // poll cycle immediately instead of waiting for the current timer.
-  }, [credsLook, teamId, teamToken, activeSubmissionId]);
 
   const openCode = async (row: RecentSubmission) => {
     setViewer({ row, source: "" });
