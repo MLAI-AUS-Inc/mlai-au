@@ -39,6 +39,14 @@ function errorMessage(error: unknown, fallback: string) {
   return fallback;
 }
 
+function formatClockMs(ms: number) {
+  try {
+    return new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
 async function loadSession(request: Request, context: Route.LoaderArgs["context"]): Promise<StreamData> {
   const env = getEnv(context);
   try {
@@ -194,6 +202,23 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     return { dot: "bg-amber-400", label: "…" };
   }, [homeState]);
 
+  // The campaign runs on one fixed global clock shared by every team/session, so a session
+  // started before it opens (or after it ends) shows a hold/final state. Surface that context.
+  // Recomputed on each 6s state poll (homeState dep) so it flips as the window opens/closes.
+  const windowNotice = useMemo(() => {
+    if (!session) return null;
+    const now = Date.now();
+    const start = session.campaign_start_ms;
+    const end = session.campaign_end_ms;
+    if (typeof start === "number" && now < start) {
+      return `Your team's house opens at ${formatClockMs(start)} — it begins at day 1 then.`;
+    }
+    if (typeof end === "number" && now >= end) {
+      return "The campaign has ended — you're viewing the final state of your house.";
+    }
+    return null;
+  }, [session, homeState]);
+
   useEffect(() => {
     const STATE_PATH = "/watt-the-hack/smart-home-beginner/state";
     stateFetcher.load(STATE_PATH);
@@ -280,6 +305,11 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
             <button type="button" onClick={() => setRecap(null)} className="shrink-0 text-xs font-bold underline">
               Dismiss
             </button>
+          </div>
+        )}
+        {windowNotice && (
+          <div className="rounded-xl border border-[#3a5a3a] bg-[#1a2a1e] px-4 py-3 text-sm font-semibold text-[#e6efd7]">
+            {windowNotice}
           </div>
         )}
         <section className={`${wattClasses.panelStrong} overflow-hidden p-0`}>

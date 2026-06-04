@@ -76,6 +76,10 @@ export interface WattUnitySession {
   stream_url: string;
   household_id: string;
   expires_at: string;
+  // Global campaign window (epoch ms), shared by every team and session. Present when the
+  // backend has WATT_CAMPAIGN_START configured; lets the page show pre-start / ended context.
+  campaign_start_ms?: number | null;
+  campaign_end_ms?: number | null;
 }
 
 function appPath(slug: string, path: string) {
