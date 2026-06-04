@@ -87,48 +87,6 @@ function getAuthErrorMessage(error: unknown, fallback: string, env?: Env) {
     return fallback;
 }
 
-function isLocalRequest(request: Request) {
-    const hostname = new URL(request.url).hostname;
-    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
-}
-
-function rewriteMagicLinkForRequestOrigin(magicLink: unknown, request: Request) {
-    if (typeof magicLink !== "string" || !magicLink.trim() || !isLocalRequest(request)) {
-        return magicLink;
-    }
-
-    try {
-        const requestUrl = new URL(request.url);
-        const rewritten = new URL(magicLink, requestUrl.origin);
-
-        if (
-            rewritten.pathname === "/verify-email" &&
-            rewritten.origin !== requestUrl.origin
-        ) {
-            rewritten.protocol = requestUrl.protocol;
-            rewritten.host = requestUrl.host;
-        }
-
-        return rewritten.toString();
-    } catch {
-        return magicLink;
-    }
-}
-
-function shouldWarnAboutLiveMagicEmail(result: Record<string, unknown>, request: Request) {
-    if (!isLocalRequest(request) || typeof result.magic_link !== "string") {
-        return false;
-    }
-
-    try {
-        const requestOrigin = new URL(request.url).origin;
-        const magicLinkOrigin = new URL(result.magic_link).origin;
-        return magicLinkOrigin !== requestOrigin && result.magic_link_sent !== false;
-    } catch {
-        return false;
-    }
-}
-
 export async function loader({ request, context }: Route.LoaderArgs) {
     const env = getEnv(context);
     const url = new URL(request.url);
@@ -186,9 +144,7 @@ export async function action({ request, context }: Route.ActionArgs) {
                 sentAt: Date.now(),
                 email,
                 message: result.message,
-                magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
                 magicLinkSent: result.magic_link_sent,
-                magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
             };
         } catch (error) {
             console.error("Failed to create account:", error);
@@ -209,9 +165,7 @@ export async function action({ request, context }: Route.ActionArgs) {
             sentAt: Date.now(),
             email,
             message: result.message,
-            magicLink: rewriteMagicLinkForRequestOrigin(result.magic_link, request),
             magicLinkSent: result.magic_link_sent,
-            magicLinkEmailUsesLiveSite: shouldWarnAboutLiveMagicEmail(result, request),
         };
     } catch (error) {
         console.error("Failed to send magic link:", error);
@@ -348,27 +302,9 @@ export default function PlatformLogin() {
                 )}
             >
                 <p>
-                    {data?.message || `Please click the link sent to your email: ${email}.`}
+                    {data?.message || "Account created. Check your email to sign in."}
                 </p>
-                {data?.magicLinkEmailUsesLiveSite && (
-                    <p className="mt-2 text-sm">
-                        Local testing note: the email sent by the deployed backend may open the live website.
-                        Use the local magic link below to continue on this localhost session.
-                    </p>
-                )}
-                {data?.magicLink && (
-                    <div className="mt-3">
-                        <a
-                            href={data.magicLink}
-                            className="font-semibold underline underline-offset-2 hover:opacity-80"
-                        >
-                            Open your local magic link
-                        </a>
-                    </div>
-                )}
-                {!data?.magicLink && (
-                    <p className="mt-2">Please click the link sent to your email: {email}.</p>
-                )}
+                <p className="mt-2">Please click the link we sent to {email} to sign in.</p>
             </div>
             <div className="mt-6 text-center">
                 <p className="text-sm text-gray-500">Didn&apos;t get the email?</p>
