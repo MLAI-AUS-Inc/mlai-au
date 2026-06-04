@@ -515,7 +515,7 @@ export default function GenericHackathonAppLayout({ children, user, config, head
             </div>
           </div>
         </header>
-        <main>{children}</main>
+        <main className={isWattTheme ? "wth-sandbox" : undefined}>{children}</main>
       </div>
     </div>
   );
