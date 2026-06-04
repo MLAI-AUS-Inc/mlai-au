@@ -5,18 +5,16 @@ import { wattClasses } from "~/lib/watt-theme";
 // ~6.5h event (12:00–18:30) at the default ~11.7 min/day ≈ 33 days.
 const CAMPAIGN_DAYS = 33;
 
-const LOW_CASH = 45;
-
 function round(value: number, dp = 0) {
   const f = 10 ** dp;
   return Math.round(value * f) / f;
 }
 
-function Stat({ label, value, warn = false }: { label: string; value: string; warn?: boolean }) {
+function Stat({ label, value, hero = false }: { label: string; value: string; hero?: boolean }) {
   return (
     <div className="rounded-[0.8rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2">
       <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8477]">{label}</div>
-      <div className={`text-base font-black ${warn ? "text-[#9f2f28]" : "text-[#121e16]"}`}>{value}</div>
+      <div className={`font-black text-[#121e16] ${hero ? "text-2xl" : "text-base"}`}>{value}</div>
     </div>
   );
 }
@@ -58,11 +56,9 @@ function Pill({ chip }: { chip: Chip }) {
 export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
   const live = state?.live ?? false;
   const day = typeof state?.day === "number" ? state.day : null;
-  const wallet = typeof state?.wallet === "number" ? state.wallet : null;
-  const cost = typeof state?.cost === "number" ? state.cost : null;
-  const comfort = typeof state?.comfort === "number" ? state.comfort : null;
-  const energy = typeof state?.energy_kwh === "number" ? state.energy_kwh : null;
-  const lowCash = wallet !== null && wallet < LOW_CASH;
+  // The unified Main Score is computed in the Unity sim (WattScoreFormula) and published through
+  // the backend. Money / energy / comfort detail now lives in the house stream's HUD, not here.
+  const score = typeof state?.score === "number" ? state.score : null;
   const weather = live ? weatherChip(state?.weather_condition) : null;
   const tariff = live ? tariffChip(state?.tariff_period) : null;
 
@@ -81,12 +77,9 @@ export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <Stat label="Day" value={day !== null ? `${day} / ${CAMPAIGN_DAYS}` : "—"} />
-        <Stat label="Wallet" value={wallet !== null ? `$${round(wallet, 2)}` : "—"} warn={lowCash} />
-        <Stat label="Cost / day" value={cost !== null ? `$${round(cost, 2)}` : "—"} />
-        <Stat label="Comfort" value={comfort !== null ? `${round(comfort)}%` : "—"} />
-        <Stat label="Energy" value={energy !== null ? `${round(energy, 1)} kWh` : "—"} />
+        <Stat label="Score" value={score !== null ? `${round(score)}` : "—"} hero />
       </div>
 
       {(weather || tariff) && (
@@ -97,11 +90,10 @@ export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
         </div>
       )}
 
-      {lowCash && (
-        <p className="mt-2 text-xs font-bold text-[#9f2f28]">
-          ⚠ Wallet low — cut peak-time grid use (shift load, store solar) or you'll fall behind.
-        </p>
-      )}
+      <p className="mt-2 text-xs font-medium text-[#6f6a5d]">
+        Your score balances energy use, carbon, and home comfort — watch the house stream for the detail.
+        Money is managed in the house: let it run low and the family starts selling things off.
+      </p>
     </section>
   );
 }

@@ -212,22 +212,21 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     }
   }, [deployData]);
 
-  // Lightweight recap: snapshot the deltas when the game day advances.
-  const lastDayRef = useRef<{ day: number; wallet: number; comfort: number } | null>(null);
+  // Lightweight recap: snapshot the score delta when the game day advances.
+  const lastDayRef = useRef<{ day: number; score: number } | null>(null);
   const [recap, setRecap] = useState<string | null>(null);
   useEffect(() => {
     if (!homeState || typeof homeState.day !== "number") return;
     const snap = {
       day: homeState.day,
-      wallet: typeof homeState.wallet === "number" ? homeState.wallet : 0,
-      comfort: typeof homeState.comfort === "number" ? homeState.comfort : 0,
+      score: typeof homeState.score === "number" ? homeState.score : 0,
     };
     const prev = lastDayRef.current;
     if (prev && snap.day > prev.day) {
-      const dWallet = Math.round((snap.wallet - prev.wallet) * 100) / 100;
+      const dScore = Math.round(snap.score - prev.score);
       const brainLine = lastBrainEffectRef.current ? ` ${lastBrainEffectRef.current}` : "";
       setRecap(
-        `Day ${prev.day} done — wallet ${dWallet >= 0 ? "+" : ""}$${dWallet}, comfort ${Math.round(snap.comfort)}%.${brainLine} Tune your controller for day ${snap.day}.`,
+        `Day ${prev.day} done — score ${dScore >= 0 ? "+" : ""}${dScore} (now ${Math.round(snap.score)}).${brainLine} Tune your controller for day ${snap.day}.`,
       );
     }
     lastDayRef.current = snap;
