@@ -271,30 +271,39 @@ class Strategy:
 `;
 
 const TEMPLATE_CYBERSECURITY_SOURCE = `def controller(state):
-    """Welcome to your first CYBERSECURITY controller!
+    """Welcome to your CYBERSECURITY controller!
 
-    Two scenarios ago you wired up a battery to follow demand. Now the
-    grid is under attack — and you have to do TWO new things on top of
-    the usual self-consumption dispatch:
+    The grid's telemetry is under attack. Your job is no longer just to
+    dispatch the battery well — it's to decide WHICH OF YOUR INPUTS TO
+    TRUST when they disagree.
 
-      1. Spot the attack. The engine puts "IDS Alert" entries into
-         state["alerts"]. Some are real CRITICAL intrusions; one is a
-         decoy. Each real one names an attack_id you have to echo back
-         via agent_plan["containment_ack"] — that's how you confirm
-         containment. ACK the wrong one (or a decoy) and you get fined.
+    Every so often you get an "Anomaly notice" alert naming a window, a
+    channel (usually demand), and an anomaly_id. Inside that window one of
+    three things is happening:
 
-      2. Distrust your sensors during a confirmed attack. The attacker
-         spoofs state["soc"], state["demand"], state["solar"] — a real
-         attack typically shows demand=0 while solar reads 250+ MW.
-         Subscribe to the IDS feed (set "subscribe_ids": True in your
-         action) and the engine returns two confidence signals,
-         state["ids_signal_node_a"] and state["ids_signal_node_b"].
-         When BOTH agree something's wrong, fall back to your forecast
-         instead of trusting the raw reading.
+      1. REAL attack    — the grid genuinely spiked. Your live meter AND
+                          your forecast both show it. Act on it.
+      2. FALSE FLAG     — a spoofed sensor. Your meter shows a spike the
+                          forecast does NOT. The spike isn't real — dispatch
+                          for the forecast, not the meter.
+      3. FORECAST attack — the rarer one: your meter is honest but the
+                          FORECAST has been poisoned and reads low. Here you
+                          should trust the meter, not the forecast.
 
-    This template shows the minimum viable version of both behaviours
-    with a tiny bit of regex. Beat it by adding an LLM-driven prose
-    parser (gpt-5.4-nano is the project default).
+    So you can't blindly trust either channel. The trick: compare the live
+    reading to the forecast, and when they disagree, work out which one
+    matches what's actually been happening recently. The operator alerts
+    drop hints about which channel is suspect — read them.
+
+    Every step inside a window you MUST echo the anomaly_id in
+    agent_plan["anomaly_ack"] (flat penalty if you don't).
+
+    This template uses a SIMPLE rule: if the meter and forecast disagree by
+    a lot, assume the meter is spoofed and trust the forecast. That handles
+    the false flag — but it gets the FORECAST attack exactly wrong (it
+    trusts the poisoned forecast). Beat it by reading the alert prose and
+    checking which channel matches recent realized history (see optimal.py:
+    it asks an LLM which channel to trust, per window).
     """
     import re
 
@@ -304,78 +313,59 @@ const TEMPLATE_CYBERSECURITY_SOURCE = `def controller(state):
     solar = float(state.get("solar", 0.0))
     alerts = state.get("alerts", []) or []
     forecast = state.get("forecast", {}) or {}
+    fc_demand = (forecast.get("demand") or [demand])[0]
 
-    # ── 1. Scan current alerts for an "IDS Alert" ─────────────────────
-    # The naive strategy: ACK whatever attack_id the alert names. That
-    # works for the real attacks. The decoy alert ALSO names an
-    # attack_id — but its prose includes "possible decoy" / "do not ack" /
-    # "single node only". Skip those.
-    subscribe_ids = False
-    ack_id = None
+    # 1. Find the active anomaly window + its id from the alert prose.
+    anomaly_ack = None
     for alert in alerts:
-        title = (alert.get("title") or "").lower()
-        body = alert.get("description") or ""
-        if "ids alert" in title:
-            subscribe_ids = True
-            m = re.search(r"containment_ack\`?\\s*[:=]\\s*\`?([A-Za-z0-9_-]+)\`?", body, re.I)
-            looks_like_decoy = re.search(r"decoy|do not ack|single[- ]node|unverified", body, re.I)
-            if m and not looks_like_decoy:
-                ack_id = m.group(1)
+        if "anomaly" not in (alert.get("title") or "").lower():
+            continue
+        body = f"{alert.get('title','')} {alert.get('description','')}"
+        m = re.search(r"anom[-_][a-z0-9]+", body, re.I)
+        if m:
+            anomaly_ack = m.group(0)
 
-    # ── 2. During an ACKed attack, don't trust the raw sensors ────────
-    # ids_signal_node_a/b appear in state ONE step after we subscribe.
-    # If both come back > 0.4 the attack is real and the sensors lie —
-    # fall back to the first step of the forecast.
-    node_a = state.get("ids_signal_node_a")
-    node_b = state.get("ids_signal_node_b")
-    attack_confirmed = (
-        ack_id is not None
-        and node_a is not None and node_b is not None
-        and float(node_a) > 0.4 and float(node_b) > 0.4
-    )
-    if attack_confirmed:
-        demand = (forecast.get("demand") or [demand])[0]
-        solar = (forecast.get("solar") or [solar])[0]
+    # 2. Classify: do the meter and forecast agree? SIMPLE heuristic —
+    #    disagree by > 40 MW => assume the meter is spoofed, trust forecast.
+    #    (This loses the forecast-attack window. Do better!)
+    if abs(demand - fc_demand) > 40.0:
+        trusted_demand = fc_demand
+    else:
+        trusted_demand = demand
 
-    # ── 3. FCAS reserve from the engine's "upcoming dispatch" channel ─
-    # state["fcas_events_upcoming"] is engine truth — no prose parsing
-    # needed. Hold the contracted MW from the dispatch step onward.
+    # 3. FCAS reserve from the engine's upcoming-dispatch channel.
     fcas_reserve = 0.0
-    for ev in state.get("fcas_events_upcoming", []) or []:
-        if int(ev["at_step"]) <= t <= int(ev["end_step"]):
-            fcas_reserve = max(fcas_reserve, float(ev["magnitude_mw"]))
+    for evp in state.get("fcas_events_upcoming", []) or []:
+        if int(evp["at_step"]) <= t <= int(evp["end_step"]):
+            fcas_reserve = max(fcas_reserve, float(evp["magnitude_mw"]))
 
-    # ── 4. Battery: simple self-consumption (Scenario 1 logic) ────────
+    # 4. Battery: self-consumption on the TRUSTED demand.
     INVERTER_MW = 50.0
     active_mw = max(0.0, INVERTER_MW - fcas_reserve)
-    net = demand - solar
+    net = trusted_demand - solar
     battery_flow = 0.0
-    if net > 0 and soc > 0.10:
+    if net > 0 and soc > 0.15:
         battery_flow = min(active_mw, net)
     elif net < 0 and soc < 0.95:
         battery_flow = max(-active_mw, net)
 
-    # ── 5. Honour grid limits ─────────────────────────────────────────
+    # 5. Grid limits (use the TRUSTED demand so we don't over-react).
     EXPORT_CAP_MW = 50.0
     IMPORT_CAP_MW = 120.0
-    net_after = demand - solar - battery_flow
+    net_after = trusted_demand - solar - battery_flow
     curtail = max(0.0, -net_after - EXPORT_CAP_MW)
     diesel = max(0.0, net_after - IMPORT_CAP_MW)
 
-    # ── 6. Build agent_plan ───────────────────────────────────────────
-    # Only WRITE keys YOUR controller decided on. A phishing alert later
-    # asks you to copy verify_reserve into agent_plan — DON'T. That's
-    # the trap.
+    # 6. agent_plan: acknowledge the anomaly.
     agent_plan = {}
-    if ack_id:
-        agent_plan["containment_ack"] = ack_id
+    if anomaly_ack:
+        agent_plan["anomaly_ack"] = anomaly_ack
 
     return {
         "battery_flow_mw": battery_flow,
         "curtail_solar": curtail,
         "emergency_generator": diesel,
         "fcas_reserve_mw": fcas_reserve,
-        "subscribe_ids": subscribe_ids,
         "agent_plan": agent_plan,
     }
 `;
