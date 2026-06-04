@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowPathIcon,
+  BoltIcon,
   ChevronUpIcon,
   ChevronDownIcon,
   ExclamationTriangleIcon,
@@ -99,10 +100,55 @@ const STYLE = `
 }
 @keyframes wthSheen { to { transform: translateX(120%); } }
 
+/* ── Overtake "voltage surge" — fires once on a team that climbs in rank. ──
+   The shake is on the slot via the CSS \`translate\` property, which composes
+   with the \`transform: translateY\` slide instead of fighting it. The glow,
+   streak and bolt are opacity/transform only (compositor-cheap). One-shot. */
+.wth-zap-shake { animation: wthZapShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes wthZapShake {
+  0%, 100% { translate: 0 0; }
+  15% { translate: -2.5px 0; } 30% { translate: 2.5px 0; }
+  45% { translate: -2px 0; }   60% { translate: 2px 0; }
+  75% { translate: -1px 0; }   90% { translate: 1px 0; }
+}
+.wth-zap-aura {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 6; opacity: 0;
+  box-shadow: inset 0 0 0 2px rgba(206, 255, 224, 0.95),
+    0 0 24px 3px rgba(159, 232, 112, 0.7), 0 0 52px 10px rgba(140, 255, 190, 0.35);
+  animation: wthZapFlicker 0.72s ease-out both;
+}
+@keyframes wthZapFlicker {
+  0% { opacity: 0; } 8% { opacity: 1; } 18% { opacity: 0.25; } 28% { opacity: 1; }
+  42% { opacity: 0.5; } 58% { opacity: 0.92; } 100% { opacity: 0; }
+}
+.wth-zap-streak {
+  position: absolute; left: 50%; bottom: -30%; width: 55%; height: 130%; margin-left: -27.5%;
+  pointer-events: none; z-index: 4; border-radius: 9999px; filter: blur(5px); opacity: 0;
+  background: linear-gradient(to top, rgba(159, 232, 112, 0), rgba(214, 255, 224, 0.55) 55%, rgba(255, 255, 255, 0));
+  animation: wthZapStreak 0.6s ease-out both;
+}
+@keyframes wthZapStreak {
+  0% { opacity: 0; transform: translateY(35%) scaleY(0.5); }
+  30% { opacity: 0.85; }
+  100% { opacity: 0; transform: translateY(-65%) scaleY(1.25); }
+}
+.wth-zap-bolt {
+  position: absolute; left: 0.35rem; top: 50%; margin-top: -0.62rem; z-index: 7; pointer-events: none;
+  color: #eaffd0; filter: drop-shadow(0 0 6px rgba(159, 232, 112, 0.95));
+  animation: wthZapBolt 0.62s ease-out both;
+}
+@keyframes wthZapBolt {
+  0% { opacity: 0; transform: scale(0.4) rotate(-10deg); }
+  22% { opacity: 1; transform: scale(1.3) rotate(0); }
+  50% { opacity: 0.95; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.1); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .wth-pos { transition: none; }
   .wth-card { animation: none; }
   .wth-sheen { display: none; }
+  .wth-zap-shake, .wth-zap-aura, .wth-zap-streak, .wth-zap-bolt { animation: none; }
 }
 `;
 
@@ -169,6 +215,9 @@ export default function WattTheHackLeaderboard() {
   // Per-team counter that ticks when a score changes — keys the one-shot sheen
   // so it replays only on an actual update (never on plain re-renders/polls).
   const [bumps, setBumps] = useState<Map<string, number>>(new Map());
+  // Teams that just climbed in rank — get the one-shot "voltage surge". Held
+  // briefly (one animation cycle) then cleared.
+  const [zapTeams, setZapTeams] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -226,6 +275,17 @@ export default function WattTheHackLeaderboard() {
       const nextScores = new Map<string, number>();
       sorted.forEach((e) => nextScores.set(e.team_name, e.final_score));
       prevScores.current = nextScores;
+
+      // Teams that moved UP in rank this refresh get the voltage surge.
+      const climbed: string[] = [];
+      nextDeltas.forEach((d, name) => {
+        if (typeof d === "number" && d > 0) climbed.push(name);
+      });
+      if (climbed.length) {
+        setZapTeams(new Set(climbed));
+        // Clear after one animation cycle so the next climb can re-trigger it.
+        window.setTimeout(() => setZapTeams(new Set()), 760);
+      }
 
       const present = new Set(sorted.map((e) => e.team_name));
       setOrder((prevOrder) => {
@@ -383,11 +443,11 @@ export default function WattTheHackLeaderboard() {
                 return (
                   <div
                     key={name}
-                    className="wth-pos"
+                    className={`wth-pos${!reduced && zapTeams.has(name) ? " wth-zap-shake" : ""}`}
                     style={{
                       transform: `translateY(${index * STRIDE}px)`,
                       transition: reduced ? "none" : undefined,
-                      zIndex: 100 - index,
+                      zIndex: zapTeams.has(name) ? 200 : 100 - index,
                     }}
                     role="listitem"
                     aria-label={`Rank ${entry.rank}: ${entry.team_name}, ${score.toFixed(2)} points`}
@@ -396,6 +456,15 @@ export default function WattTheHackLeaderboard() {
                       {medal ? <span className={`wth-accent ${medal.bar}`} /> : null}
                       {!reduced && (bumps.get(name) ?? 0) > 0 ? (
                         <span key={`sheen-${bumps.get(name)}`} className="wth-sheen" />
+                      ) : null}
+                      {!reduced && zapTeams.has(name) ? (
+                        <>
+                          <span className="wth-zap-streak" aria-hidden="true" />
+                          <span className="wth-zap-aura" aria-hidden="true" />
+                          <span className="wth-zap-bolt" aria-hidden="true">
+                            <BoltIcon className="h-5 w-5" />
+                          </span>
+                        </>
                       ) : null}
                       <span className="flex w-10 shrink-0 justify-center pl-2 text-2xl font-black tabular-nums text-[#f0d9a8]">
                         {entry.rank}
