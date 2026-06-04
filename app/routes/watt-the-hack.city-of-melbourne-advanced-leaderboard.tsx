@@ -81,9 +81,28 @@ const STYLE = `
 }
 .wth-accent { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
 @keyframes wthCardIn { from { opacity: 0; transform: scale(0.975); } to { opacity: 1; transform: none; } }
+
+/* Leader spotlight — static gold ring + warm glow, no animation. */
+.wth-card.is-first {
+  border-color: rgba(244, 207, 87, 0.7);
+  box-shadow: 0 16px 34px rgba(45, 30, 12, 0.3),
+    inset 0 1px 0 rgba(255, 242, 208, 0.3), inset 0 -4px 10px rgba(28, 16, 6, 0.42),
+    0 0 0 1px rgba(244, 207, 87, 0.42), 0 16px 44px -12px rgba(240, 199, 66, 0.5);
+}
+
+/* One-shot light sweep when a team's score updates (fires once on change, no loop). */
+.wth-sheen {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 5;
+  background: linear-gradient(105deg, transparent 32%, rgba(255, 246, 216, 0.32) 50%, transparent 68%);
+  transform: translateX(-120%);
+  animation: wthSheen 1.15s cubic-bezier(0.22, 1, 0.36, 1) 1 forwards;
+}
+@keyframes wthSheen { to { transform: translateX(120%); } }
+
 @media (prefers-reduced-motion: reduce) {
   .wth-pos { transition: none; }
   .wth-card { animation: none; }
+  .wth-sheen { display: none; }
 }
 `;
 
@@ -145,7 +164,11 @@ export default function WattTheHackLeaderboard() {
   const [auto, setAuto] = useState(true);
 
   const prevRanks = useRef<Map<string, number>>(new Map());
+  const prevScores = useRef<Map<string, number>>(new Map());
   const hadData = useRef(false);
+  // Per-team counter that ticks when a score changes — keys the one-shot sheen
+  // so it replays only on an actual update (never on plain re-renders/polls).
+  const [bumps, setBumps] = useState<Map<string, number>>(new Map());
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -185,6 +208,24 @@ export default function WattTheHackLeaderboard() {
           nextDeltas.set(e.team_name, prev.get(e.team_name)! - e.rank);
         }
       }
+
+      // Detect score changes (not first sighting) to trigger a one-shot sheen.
+      const ps = prevScores.current;
+      const changedScores: string[] = [];
+      for (const e of sorted) {
+        const before = ps.get(e.team_name);
+        if (before !== undefined && before !== e.final_score) changedScores.push(e.team_name);
+      }
+      if (changedScores.length) {
+        setBumps((prevBumps) => {
+          const next = new Map(prevBumps);
+          for (const n of changedScores) next.set(n, (prevBumps.get(n) ?? 0) + 1);
+          return next;
+        });
+      }
+      const nextScores = new Map<string, number>();
+      sorted.forEach((e) => nextScores.set(e.team_name, e.final_score));
+      prevScores.current = nextScores;
 
       const present = new Set(sorted.map((e) => e.team_name));
       setOrder((prevOrder) => {
@@ -242,9 +283,11 @@ export default function WattTheHackLeaderboard() {
         <img
           src={wattImages.submitBackdrop}
           alt=""
-          className="h-full w-full object-cover object-center opacity-[0.28]"
+          className="h-full w-full object-cover object-center opacity-[0.34]"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[#f8f2e6]/82 via-[#f8f2e6]/55 to-[#f8f2e6]/88" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#f8f2e6]/80 via-[#f8f2e6]/52 to-[#f8f2e6]/88" />
+        {/* Soft vignette for depth — static, no animation. */}
+        <div className="absolute inset-0" style={{ background: "radial-gradient(125% 80% at 50% 38%, transparent 60%, rgba(74,54,24,0.16) 100%)" }} />
       </div>
 
       <main className="relative z-10 mx-auto flex min-h-screen max-w-4xl flex-col gap-6 px-4 py-8 sm:px-6 sm:py-12">
@@ -349,8 +392,11 @@ export default function WattTheHackLeaderboard() {
                     role="listitem"
                     aria-label={`Rank ${entry.rank}: ${entry.team_name}, ${score.toFixed(2)} points`}
                   >
-                    <article className="wth-card">
+                    <article className={`wth-card${entry.rank === 1 ? " is-first" : ""}`}>
                       {medal ? <span className={`wth-accent ${medal.bar}`} /> : null}
+                      {!reduced && (bumps.get(name) ?? 0) > 0 ? (
+                        <span key={`sheen-${bumps.get(name)}`} className="wth-sheen" />
+                      ) : null}
                       <span className="flex w-10 shrink-0 justify-center pl-2 text-2xl font-black tabular-nums text-[#f0d9a8]">
                         {entry.rank}
                       </span>
