@@ -70,7 +70,7 @@ const TEMPLATE_DUCK_CURVE_SOURCE = `def controller(state):
     }
 `;
 
-const TEMPLATE_MELBOURNE_COLD_WINTER_SOURCE = `class Strategy:
+const TEMPLATE_FREQUENCY_FRENZY_SOURCE = `class Strategy:
     """
     Forecast Controller Template — Frequency Frenzy.
 
@@ -462,7 +462,7 @@ const SCENARIO_TEMPLATES: Record<string, ControllerTemplate> = {
     id: "template-frequency_frenzy",
     label: "Frequency Frenzy starter",
     description: "Class-style controller that uses the forecast lookahead.",
-    source: TEMPLATE_MELBOURNE_COLD_WINTER_SOURCE,
+    source: TEMPLATE_FREQUENCY_FRENZY_SOURCE,
   },
   ai_grid_shock: {
     id: "template-ai_grid_shock",
