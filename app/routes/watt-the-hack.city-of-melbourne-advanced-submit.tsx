@@ -143,7 +143,7 @@ const SCENARIOS = [
   { id: "ai_grid_shock", name: "Level 3: AI Grid Shock" },
   { id: "operators_mandate", name: "Level 4: The Operator's Mandate" },
   { id: "cybersecurity_sandbox", name: "Level 5: Cybersecurity sandbox" },
-  { id: "gauntlet", name: "FINALE: The Gauntlet — 3x weight, 1 submission" },
+  { id: "gauntlet", name: "FINALE: The Gauntlet (3x weight, 1 submission)" },
 ];
 
 // Per-scenario hard submission cap, mirroring `_enforce_scenario_cap` in
@@ -328,7 +328,7 @@ export default function WattTheHackSubmissionPortal() {
       // Defensive — the button is disabled and the form is hidden when the
       // team isn't provisioned. Creds are loader-supplied, never typed.
       setStatus("error");
-      setMessage("Your team isn't enabled for the advanced track yet — ask a staff member to approve it.");
+      setMessage("Your team isn't enabled for the advanced track yet. Ask a staff member to approve it.");
       return;
     }
     if (!strategyName || !controllerCode) {
@@ -432,7 +432,7 @@ export default function WattTheHackSubmissionPortal() {
       };
       setStatus("success");
       setMessage(
-        "Submission accepted — tracking evaluation below. The leaderboard will update automatically when it finishes.",
+        "Submission accepted. Tracking evaluation below; the leaderboard will update automatically when it finishes.",
       );
       if (accepted.submission_id) setActiveSubmissionId(accepted.submission_id);
       // Proactively start the cooldown so the submitter sees the countdown
@@ -491,7 +491,7 @@ export default function WattTheHackSubmissionPortal() {
                   {teamName ?? "Your team"}
                 </p>
                 <p className="mt-0.5 text-xs text-[#64705f]">
-                  Advanced track enabled — your evaluation credentials are filled in automatically.
+                  Advanced track enabled. Your evaluation credentials are filled in automatically.
                 </p>
               </div>
             </div>
@@ -506,7 +506,7 @@ export default function WattTheHackSubmissionPortal() {
                   {teamName
                     ? <>Your team <strong>{teamName}</strong> isn&apos;t set up for the advanced track yet.</>
                     : "You're not on a team set up for the advanced track yet."}{" "}
-                  Ask a <strong>staff member</strong> to approve your team — once they do, your credentials
+                  Ask a <strong>staff member</strong> to approve your team. Once they do, your credentials
                   appear here automatically and this form unlocks. No copy/paste needed.
                 </p>
               </div>
@@ -564,7 +564,7 @@ export default function WattTheHackSubmissionPortal() {
                 <div className="mt-2 flex items-start gap-2 rounded-[0.85rem] border border-[#a16f14]/30 bg-[#fff8dc] p-3">
                   <BoltIcon className="mt-0.5 h-4 w-4 shrink-0 text-[#6f4b08]" />
                   <p className="text-[12.5px] leading-snug text-[#6f4b08]">
-                    <strong>The Gauntlet is the championship round.</strong> You get exactly one submission, and the score it earns counts <strong>3x</strong> on the leaderboard. Make it count — local-playtest the controller end-to-end before uploading.
+                    <strong>The Gauntlet is the championship round.</strong> You get exactly one submission, and the score it earns counts <strong>3x</strong> on the leaderboard. Make it count: local-playtest the controller end-to-end before uploading.
                   </p>
                 </div>
               ) : null}
@@ -574,7 +574,7 @@ export default function WattTheHackSubmissionPortal() {
                   <p className="text-[12.5px] leading-snug text-[#155420]">
                     LLM access enabled for this scenario.{" "}
                     <strong>OPENAI_API_KEY is set automatically</strong> in the eval
-                    pod — no <code className="font-mono text-[11px]">.env</code> file
+                    pod; no <code className="font-mono text-[11px]">.env</code> file
                     is needed in your submission. The cluster injects the key from a
                     Kubernetes Secret. (For local testing on your laptop, set it in
                     your own shell.)
@@ -725,7 +725,7 @@ export default function WattTheHackSubmissionPortal() {
               ) : cooldownActive ? (
                 <>
                   <ClockIcon className="h-5 w-5 stroke-[2.5]" />
-                  <span>On cooldown — {formatCooldown(cooldownRemainingMs)}</span>
+                  <span>On cooldown: {formatCooldown(cooldownRemainingMs)}</span>
                 </>
               ) : (
                 <>
@@ -819,7 +819,7 @@ function CooldownBanner({ remainingMs, totalMs }: { remainingMs: number; totalMs
           Next submission unlocks in {formatCooldown(remainingMs)}
         </p>
         <p className={`${wattClasses.muted} mt-0.5 text-xs`}>
-          The cooldown is shared across your whole team — anyone&apos;s submission starts it.
+          The cooldown is shared across your whole team; anyone&apos;s submission starts it.
         </p>
       </div>
     </div>
@@ -897,7 +897,7 @@ function SubmissionConfirmModal({
             </p>
             <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px] leading-snug text-[#6f4b08]">
               <li>The Gauntlet's normalised score is multiplied <strong>3x</strong> in the leaderboard total.</li>
-              <li>The submission cap is enforced server-side — there is no override.</li>
+              <li>The submission cap is enforced server-side; there is no override.</li>
               <li>Make sure you ran a full local playtest of this controller before clicking confirm.</li>
             </ul>
           </div>

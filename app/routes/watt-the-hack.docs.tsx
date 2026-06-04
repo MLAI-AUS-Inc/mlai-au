@@ -416,7 +416,7 @@ export default function DocsPage() {
                     >
                       Submission Portal
                     </Link>
-                    . No zipping, no CLI — paste your code into the editor, hit submit.
+                    . No zipping, no CLI: paste your code into the editor and hit submit.
                   </p>
                 </div>
 
@@ -426,7 +426,7 @@ export default function DocsPage() {
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-950/90">
                     Your code can take exactly <strong>one of two shapes</strong>. The engine auto-detects which.
-                    Pick the one that fits your strategy — there's no advantage to picking the more complex one if
+                    Pick the one that fits your strategy; there's no advantage to picking the more complex one if
                     you don't need it.
                   </p>
                 </div>
@@ -440,7 +440,7 @@ export default function DocsPage() {
                       <h3 className="text-lg font-extrabold text-blue-950">A controller(state) function</h3>
                     </div>
                     <p className="mt-1.5 text-sm text-blue-950/90">
-                      Use this if your controller is stateless — every step's action depends only on the current state
+                      Use this if your controller is stateless: every step's action depends only on the current state
                       (plus the forecast). No persistent variables between timesteps.
                     </p>
                   </div>
@@ -505,7 +505,7 @@ export default function DocsPage() {
 
     def step(self, state):
         # REQUIRED. Called every 15-minute timestep.
-        # DO NOT call an LLM here — it will time out.
+        # DO NOT call an LLM here; it will time out.
         # Read state["agent_plan"] if you used plan()/replan().
         self.history.append(state["soc"])
         return {"battery_flow_mw": 10.0}`}
@@ -524,7 +524,7 @@ export default function DocsPage() {
                       </ul>
                       <p className="mt-2 text-[13px] text-amber-950/85">
                         <code>plan(self, initial_state)</code> and <code>replan(self, state, alerts)</code> are
-                        optional — the engine just skips them if you don't define them.
+                        optional: the engine just skips them if you don't define them.
                       </p>
                     </div>
                   </div>
@@ -532,11 +532,10 @@ export default function DocsPage() {
 
                 <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-50/95 shadow-sm">
                   <div className="border-b border-rose-300 bg-rose-100/80 px-5 py-3">
-                    <h3 className="text-lg font-extrabold text-rose-950">Using OpenAI or Anthropic APIs</h3>
+                    <h3 className="text-lg font-extrabold text-rose-950">Using the OpenAI API</h3>
                     <p className="mt-1.5 text-sm text-rose-950/90">
-                      The evaluation platform injects <code>OPENAI_API_KEY</code> and <code>ANTHROPIC_API_KEY</code> as
-                      environment variables inside your container. Read them with <code>os.environ</code> — they're
-                      already there.
+                      The evaluation platform injects <code>OPENAI_API_KEY</code> as an environment variable inside
+                      your container. Read it with <code>os.environ</code>; it's already there.
                     </p>
                   </div>
                   <div className="space-y-3 p-4">
@@ -547,7 +546,7 @@ from openai import OpenAI
 
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# Use a fast model — the whole evaluation must finish within ~14 minutes.
+# Use a fast model; the whole evaluation must finish within ~14 minutes.
 resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                     </CodeBlock>
 
@@ -557,11 +556,11 @@ resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                       </p>
                       <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
                         Your whole evaluation runs under a <strong>~14-minute budget</strong>. Stick to{" "}
-                        <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code> — they're quick
-                        enough to stay inside it. Larger / slower models risk exceeding the budget, and your run
+                        <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code>; they're quick
+                        enough to stay inside it. Larger or slower models risk exceeding the budget, and your run
                         <strong> times out with no score</strong> (a timeout doesn't cost you a submission attempt, but
-                        you also get no result). These models draw on a shared credit pool, so keep calls few — see the
-                        cadence rule below.
+                        you also get no result). These models draw on a shared credit pool, so keep calls few (see the
+                        cadence rule below).
                       </p>
                     </div>
 
@@ -574,7 +573,7 @@ resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                       </p>
                       <div className="mt-2">
                         <CodeBlock>
-{`# LOCAL TESTING ONLY — DELETE BEFORE SUBMITTING.
+{`# LOCAL TESTING ONLY. DELETE BEFORE SUBMITTING.
 from dotenv import load_dotenv
 load_dotenv()`}
                         </CodeBlock>
@@ -582,16 +581,14 @@ load_dotenv()`}
                       <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
                         Delete those two lines (and the <code>python-dotenv</code> entry in your{" "}
                         <code>requirements.txt</code>, if you added it) before pasting into the portal. The platform
-                        doesn't ship your <code>.env</code> — the env vars are already in the container. Code that
+                        doesn't ship your <code>.env</code>; the env vars are already in the container. Code that
                         tries to read a non-existent <code>.env</code> can silently no-op and leave the API key empty,
                         which then throws an <code>AuthenticationError</code> on the first LLM call.
                       </p>
                     </div>
 
                     <p className="text-[13px] text-rose-950/85">
-                      The same rule applies to Anthropic (<code>ANTHROPIC_API_KEY</code>) and any other secret the
-                      platform injects. Never hardcode a key in your <code>strategy.py</code> — submissions are stored
-                      and re-runnable.
+                      Never hardcode a key in your <code>strategy.py</code>; submissions are stored and re-runnable.
                     </p>
                   </div>
                 </div>
@@ -603,7 +600,7 @@ load_dotenv()`}
                     additional pip packages your strategy needs there (one per line, same format as a normal{" "}
                     <code>requirements.txt</code>). The platform builds a fresh container with those packages installed
                     before running your code. Common ones (<code>numpy</code>, <code>scipy</code>, <code>pandas</code>,
-                    the OpenAI / Anthropic SDKs) are already in the base image — you don't need to list them.
+                    the OpenAI SDK) are already in the base image, so you don't need to list them.
                   </p>
                 </div>
 
@@ -611,7 +608,7 @@ load_dotenv()`}
                   <h3 className="font-semibold text-ink">Submission attempts are capped per scenario</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-700">
                     Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
-                    remaining count before you submit. Spend them wisely — playtest locally first.
+                    remaining count before you submit. Spend them wisely; playtest locally first.
                   </p>
                 </div>
               </section>
@@ -621,31 +618,31 @@ load_dotenv()`}
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: LLM-driven strategies</h2>
                   <p className="mt-1 text-sm text-muted">
                     Some scenarios surface qualitative text events (cyberattacks, policy changes, operator mandates).
-                    The <code>Strategy</code> class lifecycle is built to let you reason about them with an LLM —
-                    cheaply, without blowing the evaluation's time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
-                    above for the skeleton, and the <strong>OpenAI / Anthropic</strong> section for env-var setup.
+                    The <code>Strategy</code> class lifecycle is built to let you reason about them with an LLM
+                    without blowing the evaluation's time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
+                    above for the skeleton, and the <strong>OpenAI</strong> section for env-var setup.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-amber-300 bg-amber-50/95 p-5">
                   <h3 className="text-base font-bold text-amber-950">
-                    The LLM budget rule — call it in <code>plan</code> / <code>replan</code>, never <code>step</code>
+                    The LLM budget rule: call it in <code>plan</code> / <code>replan</code>, never <code>step</code>
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-amber-950/90">
                     Your <strong>entire evaluation</strong> (every timestep of the run) must finish within{" "}
-                    <strong>~14 minutes</strong> of wall-clock. There is no per-step rescue — if the run as a whole
+                    <strong>~14 minutes</strong> of wall-clock. There is no per-step rescue: if the run as a whole
                     exceeds the budget it ends in <code>TIMEOUT</code> with <strong>no score</strong>. (A timeout is a
-                    free retry — it doesn't burn one of your 3 attempts — but you still get nothing back.) So the LLM
+                    free retry: it doesn't burn one of your 3 attempts, but you still get nothing back.) So the LLM
                     has to live where it's called rarely:
                   </p>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950/90">
                     <li>
-                      <code>plan(initial_state)</code> runs <strong>once</strong> before step 0 — the right place for an
+                      <code>plan(initial_state)</code> runs <strong>once</strong> before step 0: the right place for an
                       LLM call to read the scenario briefing and pick a high-level policy.
                     </li>
                     <li>
-                      <code>replan(state, alerts)</code> runs <strong>only when a new qualitative alert fires</strong>{" "}
-                      — call the LLM here to react to text events. The dict you return is merged into{" "}
+                      <code>replan(state, alerts)</code> runs <strong>only when a new qualitative alert fires</strong>.{" "}
+                      Call the LLM here to react to text events. The dict you return is merged into{" "}
                       <code>state["agent_plan"]</code> for every subsequent step.
                     </li>
                     <li>
@@ -654,7 +651,7 @@ load_dotenv()`}
                       </strong>{" "}
                       It runs every 15 simulated minutes; a network call there is multiplied across the whole run and
                       will blow the 14-minute budget. Instead read{" "}
-                      <code>state.get("agent_plan", {`{}`})</code> and branch on the cached policy — LLM-quality
+                      <code>state.get("agent_plan", {`{}`})</code> and branch on the cached policy: LLM-quality
                       decisions at deterministic-controller latency.
                     </li>
                     <li>

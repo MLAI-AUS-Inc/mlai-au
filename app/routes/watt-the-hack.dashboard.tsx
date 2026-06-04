@@ -194,8 +194,8 @@ function EvalCredentialsPanel({
             <span className="text-sm font-bold text-[#121e16]">Advanced track not enabled yet</span>
             <span className="text-xs leading-relaxed text-[#64705f]">
               Ask a staff member to approve your team for the advanced track. Once they do, your
-              evaluation credentials appear here automatically and the submission portal unlocks —
-              nothing to copy or paste.
+              evaluation credentials appear here automatically and the submission portal unlocks.
+              Nothing to copy or paste.
             </span>
           </div>
         ) : (
@@ -225,8 +225,8 @@ function EvalCredentialsPanel({
                 className="font-bold text-[#155420] underline-offset-2 hover:underline"
               >
                 submission portal
-              </Link>{" "}
-              — just head there to submit a controller. (Shown here for reference.)
+              </Link>
+              , so just head there to submit a controller. (Shown here for reference.)
             </p>
           </div>
         )}
@@ -402,7 +402,7 @@ function ScheduleSection() {
       </div>
 
       <p className="mt-3 text-sm font-semibold text-[#485244]">
-        {activeDay.weekday} · {activeDay.date} — {activeDay.theme}
+        {activeDay.weekday} · {activeDay.date} · {activeDay.theme}
       </p>
 
       <ol className="mt-5">
