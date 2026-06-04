@@ -222,7 +222,9 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
   useEffect(() => {
     const STATE_PATH = "/watt-the-hack/smart-home-beginner/state";
     stateFetcher.load(STATE_PATH);
-    const id = setInterval(() => stateFetcher.load(STATE_PATH), 6000);
+    // 3s so the live HUD (energy/money tick up each second in-sim) feels responsive; the score
+    // summary is a tiny payload and this is the only state poll. Shop stays at 6s.
+    const id = setInterval(() => stateFetcher.load(STATE_PATH), 3000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

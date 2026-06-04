@@ -301,6 +301,7 @@ export interface SmartHomeState {
   wallet?: number | null;
   cost?: number | null;
   energy_kwh?: number | null;
+  carbon?: number | null;
   comfort?: number | null;
   score?: number | null;
   tariff_period?: string | null;
