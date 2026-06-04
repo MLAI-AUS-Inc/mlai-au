@@ -390,7 +390,6 @@ export default function WattTheHackResources() {
             <CodeOfConduct />
             <Policies />
             <Contact />
-            <AdvancedTrackLink />
           </main>
         </div>
       </div>
@@ -854,26 +853,3 @@ function RubricRow({ label, text, tone }: { label: string; text: string; tone: "
 }
 
 
-function AdvancedTrackLink() {
-  return (
-    <Section id="advanced-track" title="Advanced Track" eyebrow="Engine & API">
-      <Card>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-white">Advanced Track Documentation</h3>
-            <p className="mt-2 text-white/70 max-w-xl leading-relaxed">
-              Building a controller in Python? Read the comprehensive docs for API entrypoints, 
-              game constraints, sandbox warnings, and submission limits.
-            </p>
-          </div>
-          <a
-            href="/watt-the-hack/docs"
-            className="shrink-0 rounded-full bg-[#7cffc3] px-6 py-3 text-sm font-bold text-[#061412] transition hover:bg-white text-center"
-          >
-            Read the Docs
-          </a>
-        </div>
-      </Card>
-    </Section>
-  );
-}

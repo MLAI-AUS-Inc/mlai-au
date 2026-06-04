@@ -43,16 +43,23 @@ export default function GenericHackathonAppLayout({ children, user, config, head
   const avatarUrl = user.avatar_url || generateAvatarUrl(getInitials(fullName));
   const isWattTheme = config.theme === "watt";
 
-  const navigation = [
+  const navigation: Array<{
+    name: string;
+    href?: string;
+    icon: typeof HomeIcon;
+    highlighted?: boolean;
+    children?: Array<{ name: string; href: string }>;
+  }> = [
     { name: "Dashboard", href: `${config.basePath}/dashboard`, icon: HomeIcon },
     { name: "Profile & Team", href: `${config.basePath}/profile`, icon: UserGroupIcon },
     { name: "Submissions", href: `${config.basePath}/submissions`, icon: DocumentTextIcon },
     { name: "Resources", href: `${config.basePath}/resources`, icon: BookOpenIcon },
     ...(isWattTheme
       ? [
+          { name: "Docs", href: `${config.basePath}/docs`, icon: BookOpenIcon, highlighted: true },
           { name: "Base44 (Pitching) Track", href: `${config.basePath}/base44-pitching`, icon: PresentationChartBarIcon },
-          { 
-            name: "City Of Melbourne (Advanced) Track", 
+          {
+            name: "City Of Melbourne (Advanced) Track",
             icon: BuildingOffice2Icon,
             children: [
               { name: "Sandbox", href: `${config.basePath}/city-of-melbourne-advanced` },
@@ -93,9 +100,13 @@ export default function GenericHackathonAppLayout({ children, user, config, head
                       to={item.href!}
                       onClick={() => setSidebarOpen(false)}
                       className={classNames(
-                        item.current
-                          ? "bg-white/10 text-[#9fe870]"
-                          : "text-white/72 hover:bg-white/8 hover:text-white",
+                        item.highlighted
+                          ? item.current
+                            ? "bg-[#9fe870] text-[#10231f] ring-2 ring-white/40"
+                            : "bg-[#9fe870] text-[#10231f] hover:bg-[#b6f491]"
+                          : item.current
+                            ? "bg-white/10 text-[#9fe870]"
+                            : "text-white/72 hover:bg-white/8 hover:text-white",
                         "group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition",
                       )}
                     >
@@ -214,9 +225,13 @@ export default function GenericHackathonAppLayout({ children, user, config, head
                       to={item.href!}
                       onClick={() => setSidebarOpen(false)}
                       className={classNames(
-                        item.current
-                          ? "bg-[#e6efd7] text-[#155420]"
-                          : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
+                        item.highlighted
+                          ? item.current
+                            ? "bg-[#9fe870] text-[#10231f] ring-2 ring-[#155420] shadow-[0_4px_14px_rgba(21,84,32,0.25)]"
+                            : "bg-[#c8f5a1] text-[#10231f] ring-1 ring-[#155420]/40 shadow-[0_2px_10px_rgba(21,84,32,0.18)] hover:bg-[#9fe870] hover:ring-[#155420]"
+                          : item.current
+                            ? "bg-[#e6efd7] text-[#155420]"
+                            : "text-[#354031] hover:bg-[#fbf6e9] hover:text-[#155420]",
                         "group flex min-h-[52px] items-center rounded-xl px-3 py-2 text-sm font-black leading-6 transition-all duration-200",
                         mobile || expanded ? "justify-start gap-x-3" : "justify-center gap-x-0",
                       )}
