@@ -449,6 +449,22 @@ export default function WattTheHackSubmissionPortal() {
 
   return (
     <>
+      {/* One-shot submission FX — all play once on mount, no loops; disabled
+          under prefers-reduced-motion. Energy-green ring + pop + score bloom. */}
+      <style>{`
+        .wth-fx-pop { animation: wthFxPop 0.55s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes wthFxPop { 0%{opacity:0; transform:translateY(7px) scale(0.97);} 60%{opacity:1;} 100%{opacity:1; transform:none;} }
+        .wth-fx-iconwrap { position:relative; display:inline-flex; }
+        .wth-fx-iconwrap::before { content:""; position:absolute; inset:-6px; border-radius:9999px; border:2px solid currentColor; opacity:0; pointer-events:none; animation: wthFxRing 0.9s ease-out 0.05s both; }
+        @keyframes wthFxRing { 0%{opacity:0.5; transform:scale(0.55);} 100%{opacity:0; transform:scale(1.85);} }
+        .wth-fx-score { display:inline-block; animation: wthFxScore 0.7s cubic-bezier(0.22,1,0.36,1) both; }
+        @keyframes wthFxScore { 0%{opacity:0; transform:scale(0.82); text-shadow:0 0 0 rgba(47,111,44,0);} 55%{transform:scale(1.13); text-shadow:0 0 18px rgba(47,111,44,0.45);} 100%{opacity:1; transform:scale(1); text-shadow:0 0 0 rgba(47,111,44,0);} }
+        @media (prefers-reduced-motion: reduce) {
+          .wth-fx-pop, .wth-fx-score { animation: none; }
+          .wth-fx-iconwrap::before { display:none; animation:none; }
+        }
+      `}</style>
+
       {/* Scenic backdrop (shared visual from the Watt The Hack marketing site). */}
       <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0">
         <img
@@ -685,8 +701,10 @@ export default function WattTheHackSubmissionPortal() {
             </div>
           )}
           {status === "success" && (
-            <div className={wattClasses.successAlert + " flex items-center gap-3"}>
-              <CheckCircleIcon className="h-6 w-6 shrink-0" />
+            <div className={wattClasses.successAlert + " wth-fx-pop flex items-center gap-3"}>
+              <span className="wth-fx-iconwrap shrink-0">
+                <CheckCircleIcon className="h-6 w-6" />
+              </span>
               <p className="text-sm font-medium">{message}</p>
             </div>
           )}
@@ -1163,8 +1181,10 @@ function EvaluationTracker({
           <p className="min-w-0 text-sm font-medium">{info?.status_message}</p>
         </div>
       ) : terminal ? (
-        <div className={`${wattClasses.successAlert} flex items-center gap-3`}>
-          <CheckCircleIcon className="h-5 w-5 shrink-0" />
+        <div className={`${wattClasses.successAlert} wth-fx-pop flex items-center gap-3`}>
+          <span className="wth-fx-iconwrap shrink-0">
+            <CheckCircleIcon className="h-5 w-5" />
+          </span>
           <p className="text-sm font-medium">
             Evaluation finished cleanly. The leaderboard will refresh in a few seconds.
           </p>
@@ -1469,7 +1489,7 @@ function ScoreReadout({ points, rawCost }: { points: number; rawCost: number | n
     <div className="flex items-end gap-3 text-right">
       <div>
         <div className="text-[10px] font-black uppercase tracking-[0.16em] text-[#155420]">Points</div>
-        <div className="text-3xl font-black tabular-nums text-[#155420]">{points.toFixed(1)}</div>
+        <div className="wth-fx-score text-3xl font-black tabular-nums text-[#155420]">{points.toFixed(1)}</div>
       </div>
       {rawCost !== null ? (
         <div className="border-l border-[#c9dbb8] pl-3">
