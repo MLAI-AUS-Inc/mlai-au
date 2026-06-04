@@ -6,6 +6,7 @@ import {
   BoltIcon,
   CheckCircleIcon,
   ClipboardDocumentIcon,
+  ClockIcon,
   CodeBracketIcon,
   ExclamationTriangleIcon,
   InformationCircleIcon,
@@ -169,6 +170,46 @@ export default function WattTheHackSubmissionPortal() {
   // live as teammates submit — no second fetch, no drift between the two.
   const [submissions, setSubmissions] = useState<RecentSubmission[] | null>(null);
   const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  // Per-team submission cooldown. Server-driven: set from the success
+  // response's `cooldown_seconds` (proactive, right after you submit) or from a
+  // 429's Retry-After (reactive, if a teammate already started the window).
+  // `endsAt`/`totalMs` drive the countdown ring; null when no cooldown is
+  // active. Dormant whenever the gateway's SUBMISSION_COOLDOWN_S is 0.
+  const [cooldown, setCooldown] = useState<{ endsAt: number; totalMs: number } | null>(null);
+  // Ticks ~4x/sec while a cooldown is active so the ring sweeps smoothly and
+  // the mm:ss updates. Self-clears the cooldown (and the interval) at zero.
+  const [nowTs, setNowTs] = useState<number>(() => Date.now());
+  useEffect(() => {
+    if (!cooldown) return;
+    if (cooldown.endsAt <= Date.now()) {
+      setCooldown(null);
+      return;
+    }
+    const tick = window.setInterval(() => {
+      const t = Date.now();
+      setNowTs(t);
+      if (t >= cooldown.endsAt) {
+        setCooldown(null);
+        window.clearInterval(tick);
+      }
+    }, 250);
+    return () => window.clearInterval(tick);
+  }, [cooldown]);
+
+  const cooldownRemainingMs = cooldown ? Math.max(0, cooldown.endsAt - nowTs) : 0;
+  const cooldownActive = cooldownRemainingMs > 0;
+
+  // Start (or extend to the max of) a cooldown of `seconds`. Ignores 0/garbage
+  // so a disabled cooldown (0s) never shows a timer. Caps at 1h so a daily-cap
+  // Retry-After (86400) can't spawn a 24-hour ticking clock — that case shows
+  // a plain message instead.
+  const startCooldown = (seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 3600) return;
+    const ms = Math.round(seconds * 1000);
+    const endsAt = Date.now() + ms;
+    setCooldown((prev) => (prev && prev.endsAt > endsAt ? prev : { endsAt, totalMs: ms }));
+    setNowTs(Date.now());
+  };
 
   // Live entrypoint detection — drives both the inline badge under the editor
   // and the metadata.json the zip carries up to the gateway.
@@ -278,6 +319,10 @@ export default function WattTheHackSubmissionPortal() {
   // button can call it directly.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (cooldownActive) {
+      // Defensive — the button is already disabled during cooldown.
+      return;
+    }
     if (!teamId || !teamToken || !strategyName || !controllerCode) {
       setStatus("error");
       setMessage("Please fill in Team ID, Token, Submission name, and Code.");
@@ -351,11 +396,23 @@ export default function WattTheHackSubmissionPortal() {
 
       if (!res.ok) {
         let errMessage = `Error ${res.status}: ${res.statusText}`;
+        let detail = "";
         try {
           const errData = (await res.json()) as { detail?: string };
-          errMessage = errData.detail || errMessage;
+          detail = errData.detail || "";
+          errMessage = detail || errMessage;
         } catch (e) {
           // ignore
+        }
+        // On a cooldown 429, start the countdown so the button stays disabled
+        // for exactly the server's remaining window. Prefer the Retry-After
+        // header (forwarded by the proxy); fall back to parsing "Wait Ns" from
+        // the detail. startCooldown ignores the daily-cap's huge Retry-After.
+        if (res.status === 429) {
+          const headerSecs = Number(res.headers.get("Retry-After"));
+          const detailSecs = Number(/wait\s+(\d+)\s*s/i.exec(detail)?.[1]);
+          const secs = Number.isFinite(headerSecs) && headerSecs > 0 ? headerSecs : detailSecs;
+          if (Number.isFinite(secs) && secs > 0) startCooldown(secs);
         }
         throw new Error(errMessage);
       }
@@ -363,12 +420,16 @@ export default function WattTheHackSubmissionPortal() {
       const accepted = (await res.json().catch(() => ({}))) as {
         submission_id?: string;
         status?: string;
+        cooldown_seconds?: number;
       };
       setStatus("success");
       setMessage(
         "Submission accepted — tracking evaluation below. The leaderboard will update automatically when it finishes.",
       );
       if (accepted.submission_id) setActiveSubmissionId(accepted.submission_id);
+      // Proactively start the cooldown so the submitter sees the countdown
+      // immediately (no need to get bounced by a 429 first). 0 → no-op.
+      if (typeof accepted.cooldown_seconds === "number") startCooldown(accepted.cooldown_seconds);
     } catch (err: any) {
       console.error(err);
       setStatus("error");
@@ -620,17 +681,29 @@ export default function WattTheHackSubmissionPortal() {
             />
           ) : null}
 
+          {/* Cooldown — premium countdown shown while the per-team submission
+              window is open. Server-driven; absent entirely when the cooldown
+              is disabled (SUBMISSION_COOLDOWN_S=0). */}
+          {cooldownActive ? (
+            <CooldownBanner remainingMs={cooldownRemainingMs} totalMs={cooldown!.totalMs} />
+          ) : null}
+
           {/* Submit Button */}
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || cooldownActive}
               className={wattClasses.buttonPrimary + " gap-2 px-8 py-4 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"}
             >
               {isSubmitting ? (
                 <>
                   <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/20 border-t-white" />
                   <span>Packaging & Submitting...</span>
+                </>
+              ) : cooldownActive ? (
+                <>
+                  <ClockIcon className="h-5 w-5 stroke-[2.5]" />
+                  <span>On cooldown — {formatCooldown(cooldownRemainingMs)}</span>
                 </>
               ) : (
                 <>
@@ -668,6 +741,66 @@ export default function WattTheHackSubmissionPortal() {
         />
       ) : null}
     </>
+  );
+}
+
+// ── Submission cooldown ──────────────────────────────────────────────────
+
+/** "M:SS" from a millisecond remaining value. Ceils so the last second reads
+ *  "0:01" and only hits "0:00" exactly at expiry. */
+function formatCooldown(ms: number): string {
+  const totalSec = Math.max(0, Math.ceil(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+/** Premium cooldown card: a depleting progress ring + live mm:ss. The arc
+ *  shrinks as the window elapses; stroke-dashoffset transitions over the
+ *  250ms tick so the sweep looks smooth rather than stepped. */
+function CooldownBanner({ remainingMs, totalMs }: { remainingMs: number; totalMs: number }) {
+  const fraction = totalMs > 0 ? Math.max(0, Math.min(1, remainingMs / totalMs)) : 0;
+  const r = 26;
+  const circumference = 2 * Math.PI * r;
+  const offset = circumference * (1 - fraction);
+  return (
+    <div
+      className={`${wattClasses.panelSoft} mt-2 flex items-center gap-4 p-4`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="relative h-16 w-16 shrink-0">
+        <svg viewBox="0 0 64 64" className="h-16 w-16 -rotate-90">
+          <circle cx="32" cy="32" r={r} fill="none" stroke="#e8dfcf" strokeWidth="6" />
+          <circle
+            cx="32"
+            cy="32"
+            r={r}
+            fill="none"
+            stroke="#2f6f2c"
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: "stroke-dashoffset 250ms linear" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-black tabular-nums text-[#121e16]">
+            {formatCooldown(remainingMs)}
+          </span>
+        </div>
+      </div>
+      <div className="min-w-0">
+        <p className={wattClasses.eyebrow}>Submission cooldown</p>
+        <p className="mt-0.5 text-sm font-bold text-[#121e16]">
+          Next submission unlocks in {formatCooldown(remainingMs)}
+        </p>
+        <p className={`${wattClasses.muted} mt-0.5 text-xs`}>
+          The cooldown is shared across your whole team — anyone&apos;s submission starts it.
+        </p>
+      </div>
+    </div>
   );
 }
 

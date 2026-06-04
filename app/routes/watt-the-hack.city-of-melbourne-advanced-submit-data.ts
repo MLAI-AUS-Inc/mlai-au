@@ -185,12 +185,17 @@ export async function action({ request, context }: Route.ActionArgs) {
     const body = await upstream.text();
     // Forward the cluster's status + body so the client keeps seeing real
     // validation errors (e.g. a 401 bad-token or 400 with a `detail` message).
+    // Also forward Retry-After so the portal can drive its cooldown countdown
+    // off the real remaining seconds on a 429 (cooldown / daily-cap).
+    const forwardHeaders: Record<string, string> = {
+      "Content-Type":
+        upstream.headers.get("Content-Type") ?? "application/json; charset=utf-8",
+    };
+    const retryAfter = upstream.headers.get("Retry-After");
+    if (retryAfter) forwardHeaders["Retry-After"] = retryAfter;
     return new Response(body, {
       status: upstream.status,
-      headers: {
-        "Content-Type":
-          upstream.headers.get("Content-Type") ?? "application/json; charset=utf-8",
-      },
+      headers: forwardHeaders,
     });
   } catch (err) {
     return new Response(
