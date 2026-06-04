@@ -36,20 +36,18 @@ const baseUrl = (): string => {
   return DEFAULT_BASE_URL;
 };
 
+import { axiosInstance } from "../api";
+
 async function post<T>(path: string, body: unknown): Promise<T> {
-  const response = await fetch(`${baseUrl()}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`API ${path} failed: ${response.status} ${text}`);
+  const url = `${baseUrl()}${path}`;
+  try {
+    const response = await axiosInstance.post(url, body);
+    return response.data as T;
+  } catch (error: any) {
+    const status = error.response?.status || "Unknown";
+    const text = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+    throw new Error(`API ${path} failed: ${status} ${text}`);
   }
-
-  return (await response.json()) as T;
 }
 
 export async function fetchInit(
@@ -63,14 +61,14 @@ export async function fetchInit(
 }
 
 export async function fetchScenarios(): Promise<ScenarioSummary[]> {
-  const response = await fetch(`${baseUrl()}/sim/scenarios/`, {
-    method: "GET",
-    cache: "no-store",
-  });
-  if (!response.ok) {
-    throw new Error(`API /sim/scenarios failed: ${response.status}`);
+  const url = `${baseUrl()}/sim/scenarios/`;
+  try {
+    const response = await axiosInstance.get(url);
+    return response.data as ScenarioSummary[];
+  } catch (error: any) {
+    const status = error.response?.status || "Unknown";
+    throw new Error(`API /sim/scenarios/ failed: ${status}`);
   }
-  return (await response.json()) as ScenarioSummary[];
 }
 
 export async function fetchStep(
