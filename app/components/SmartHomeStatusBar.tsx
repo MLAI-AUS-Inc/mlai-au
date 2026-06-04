@@ -10,13 +10,38 @@ function round(value: number, dp = 0) {
   return Math.round(value * f) / f;
 }
 
-function Stat({ label, value, hero = false }: { label: string; value: string; hero?: boolean }) {
+function Stat({
+  label,
+  value,
+  hero = false,
+  accent = "#121e16",
+  icon,
+}: {
+  label: string;
+  value: string;
+  hero?: boolean;
+  accent?: string;
+  icon?: string;
+}) {
   return (
     <div className="rounded-[0.8rem] border border-[#e8dfcf] bg-[#fffefa] px-3 py-2">
       <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8477]">{label}</div>
-      <div className={`font-black text-[#121e16] ${hero ? "text-2xl" : "text-base"}`}>{value}</div>
+      <div
+        className={`flex items-baseline gap-1 font-black ${hero ? "text-2xl" : "text-base"}`}
+        style={{ color: accent }}
+      >
+        {icon ? <span aria-hidden="true">{icon}</span> : null}
+        <span>{value}</span>
+      </div>
     </div>
   );
+}
+
+// House mood -> a quick face, echoing the mood meter we removed from the in-house HUD.
+function moodFace(mood: number): string {
+  if (mood >= 67) return "🙂";
+  if (mood >= 34) return "😐";
+  return "🙁";
 }
 
 type Chip = { icon: string; label: string; cls: string };
@@ -55,10 +80,22 @@ function Pill({ chip }: { chip: Chip }) {
 
 export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
   const live = state?.live ?? false;
-  const day = typeof state?.day === "number" ? state.day : null;
-  // The unified Main Score is computed in the Unity sim (WattScoreFormula) and published through
-  // the backend. Money / energy / comfort detail now lives in the house stream's HUD, not here.
-  const score = typeof state?.score === "number" ? state.score : null;
+  const num = (v: unknown): number | null => (typeof v === "number" && Number.isFinite(v) ? v : null);
+  // Live house telemetry, published by the Unity sim each tick (score/current in RTDB) and forwarded
+  // by the backend state endpoint. This panel is now the primary HUD: the wooden stat bar + day/night
+  // wheel were removed from the streamed game, so energy / carbon / money / mood are shown here.
+  const energy = num(state?.energy_kwh);
+  const carbon = num(state?.carbon);
+  const money = num(state?.wallet);
+  const mood = num(state?.comfort);
+  const day = num(state?.day);
+  const score = num(state?.score);
+  const dash = "—";
+
+  const time = live && state?.game_time ? state.game_time : null;
+  const timeChip: Chip | null = time
+    ? { icon: "◷", label: time, cls: "border-[#e8dfcf] bg-[#fffefa] text-[#354031]" }
+    : null;
   const weather = live ? weatherChip(state?.weather_condition) : null;
   const tariff = live ? tariffChip(state?.tariff_period) : null;
 
@@ -77,22 +114,35 @@ export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
         </div>
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
-        <Stat label="Day" value={day !== null ? `${day} / ${CAMPAIGN_DAYS}` : "—"} />
-        <Stat label="Score" value={score !== null ? `${round(score)}` : "—"} hero />
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Stat label="Energy" icon="⚡" accent="#5f7a1f" value={energy !== null ? `${round(energy, 1)} kWh` : dash} />
+        <Stat label="Carbon" icon="🌍" accent="#6b6f6a" value={carbon !== null ? `${round(carbon, 1)} kg` : dash} />
+        <Stat label="Money" accent="#9a7b1a" value={money !== null ? `$${round(money).toLocaleString()}` : dash} />
+        <Stat
+          label="Mood"
+          icon={mood !== null ? moodFace(mood) : undefined}
+          accent="#2f6f2c"
+          value={mood !== null ? `${round(mood)}%` : dash}
+        />
       </div>
 
-      {(weather || tariff) && (
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <Stat label="Day" value={day !== null ? `${day} / ${CAMPAIGN_DAYS}` : dash} />
+        <Stat label="Score" value={score !== null ? `${round(score)}` : dash} hero />
+      </div>
+
+      {(timeChip || weather || tariff) && (
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8477]">Today</span>
+          {timeChip && <Pill chip={timeChip} />}
           {weather && <Pill chip={weather} />}
           {tariff && <Pill chip={tariff} />}
         </div>
       )}
 
       <p className="mt-2 text-xs font-medium text-[#6f6a5d]">
-        Your score balances energy use, carbon, and home comfort — watch the house stream for the detail.
-        Money is managed in the house: let it run low and the family starts selling things off.
+        Energy, carbon and comfort drive your Score. Money is managed in the house — let it run low
+        and the family starts selling things off.
       </p>
     </section>
   );
