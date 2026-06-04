@@ -545,8 +545,25 @@ export default function DocsPage() {
 import os
 from openai import OpenAI
 
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])`}
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+# Use a fast model — the whole evaluation must finish within ~14 minutes.
+resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                     </CodeBlock>
+
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100/70 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-900">
+                        ⚠ Use gpt-5.4-nano or gpt-5.4-mini
+                      </p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                        Your whole evaluation runs under a <strong>~14-minute budget</strong>. Stick to{" "}
+                        <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code> — they're quick
+                        enough to stay inside it. Larger / slower models risk exceeding the budget, and your run
+                        <strong> times out with no score</strong> (a timeout doesn't cost you a submission attempt, but
+                        you also get no result). These models draw on a shared credit pool, so keep calls few — see the
+                        cadence rule below.
+                      </p>
+                    </div>
 
                     <div className="rounded-lg border-2 border-rose-500 bg-rose-100/70 p-4">
                       <p className="text-sm font-extrabold uppercase tracking-wider text-rose-900">
@@ -605,33 +622,44 @@ load_dotenv()`}
                   <p className="mt-1 text-sm text-muted">
                     Some scenarios surface qualitative text events (cyberattacks, policy changes, operator mandates).
                     The <code>Strategy</code> class lifecycle is built to let you reason about them with an LLM —
-                    cheaply, without blowing your per-step time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
+                    cheaply, without blowing the evaluation's time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
                     above for the skeleton, and the <strong>OpenAI / Anthropic</strong> section for env-var setup.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-amber-300 bg-amber-50/95 p-5">
-                  <h3 className="text-base font-bold text-amber-950">The LLM budget rule</h3>
+                  <h3 className="text-base font-bold text-amber-950">
+                    The LLM budget rule — call it in <code>plan</code> / <code>replan</code>, never <code>step</code>
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-950/90">
+                    Your <strong>entire evaluation</strong> (every timestep of the run) must finish within{" "}
+                    <strong>~14 minutes</strong> of wall-clock. There is no per-step rescue — if the run as a whole
+                    exceeds the budget it ends in <code>TIMEOUT</code> with <strong>no score</strong>. (A timeout is a
+                    free retry — it doesn't burn one of your 3 attempts — but you still get nothing back.) So the LLM
+                    has to live where it's called rarely:
+                  </p>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950/90">
                     <li>
+                      <code>plan(initial_state)</code> runs <strong>once</strong> before step 0 — the right place for an
+                      LLM call to read the scenario briefing and pick a high-level policy.
+                    </li>
+                    <li>
+                      <code>replan(state, alerts)</code> runs <strong>only when a new qualitative alert fires</strong>{" "}
+                      — call the LLM here to react to text events. The dict you return is merged into{" "}
+                      <code>state["agent_plan"]</code> for every subsequent step.
+                    </li>
+                    <li>
                       <strong>
-                        <code>step(state)</code> runs every 15 simulated minutes and is on a tight wall-clock budget.
+                        Never call an LLM from <code>step(state)</code>.
                       </strong>{" "}
-                      Calling an LLM from here will time out and your action will be replaced with the zero-action
-                      fallback for that step. Don't do it.
+                      It runs every 15 simulated minutes; a network call there is multiplied across the whole run and
+                      will blow the 14-minute budget. Instead read{" "}
+                      <code>state.get("agent_plan", {`{}`})</code> and branch on the cached policy — LLM-quality
+                      decisions at deterministic-controller latency.
                     </li>
                     <li>
-                      <code>plan(initial_state)</code> runs <strong>once</strong> before step 0 — this is the right
-                      place for an expensive LLM call to read the scenario briefing and pick a high-level policy.
-                    </li>
-                    <li>
-                      <code>replan(state, alerts)</code> runs only when a <strong>new</strong> qualitative alert
-                      fires. Use it to update your policy in response to text events. The dict you return is merged
-                      into <code>state["agent_plan"]</code> for every subsequent step.
-                    </li>
-                    <li>
-                      Inside <code>step</code>, read <code>state.get("agent_plan", {`{}`})</code> and branch on the
-                      cached policy. That's how you get LLM-quality decisions at deterministic-controller latency.
+                      Keep models fast: <code>gpt-5.4-nano</code> or <code>gpt-5.4-mini</code> (see the OpenAI section).
+                      Even in <code>plan</code>/<code>replan</code>, a slow model called repeatedly can run you over.
                     </li>
                   </ul>
                 </div>
