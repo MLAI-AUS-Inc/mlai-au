@@ -10,6 +10,13 @@
   --font-sans:
     "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, "Menlo", "Monaco",
+    "Consolas", "Liberation Mono", "Courier New", monospace;
+  /* Aliased for the Watt The Hack Monaco editor, which inlines
+     fontFamily: "var(--font-geist-mono)" to match the dev frontend's
+     next/font CSS-variable name. */
+  --font-geist-mono: var(--font-mono);
 }
 
 html,
