@@ -514,11 +514,16 @@ export default function DocsPage() {
                       <p className="text-[13px] font-bold text-amber-950">REQUIRED</p>
                       <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950/90">
                         <li>
-                          The class MUST be named <code>Strategy</code>.
+                          The class can have <strong>any name</strong> (the starter code uses{" "}
+                          <code>MyStrategy</code>) — the portal detects it automatically from your code.
+                          What matters is the <code>step</code> method below, not the class name.
                         </li>
                         <li>
-                          It MUST define a <code>step(self, state)</code> method that returns an action dict.{" "}
-                          <strong>If your class has no <code>step</code> method, the engine refuses the submission.</strong>
+                          It MUST define a <code>step(self, state)</code> method, written{" "}
+                          <strong>directly in this class</strong>, that returns an action dict.{" "}
+                          <strong>If the class has no <code>step</code> method, the engine refuses the submission.</strong>{" "}
+                          (A <code>step</code> only inherited from a base class or assigned by alias
+                          isn&apos;t detected — keep it as a plain method here.)
                         </li>
                         <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
                       </ul>
