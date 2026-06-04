@@ -139,7 +139,7 @@ const SUBMIT_ENDPOINT = "/watt-the-hack/city-of-melbourne-advanced-submit-data";
 
 const SCENARIOS = [
   { id: "duck_curve", name: "Level 1: The Duck Curve" },
-  { id: "melbourne_cold_winter", name: "Level 2: Melbourne Cold Winter" },
+  { id: "frequency_frenzy", name: "Level 2: Frequency Frenzy" },
   { id: "ai_grid_shock", name: "Level 3: AI Grid Shock" },
   { id: "operators_mandate", name: "Level 4: The Operator's Mandate" },
   { id: "cybersecurity_sandbox", name: "Level 5: Cybersecurity sandbox" },

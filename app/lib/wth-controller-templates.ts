@@ -72,7 +72,7 @@ const TEMPLATE_DUCK_CURVE_SOURCE = `def controller(state):
 
 const TEMPLATE_MELBOURNE_COLD_WINTER_SOURCE = `class Strategy:
     """
-    Forecast Controller Template — Melbourne Cold Winter.
+    Forecast Controller Template — Frequency Frenzy.
 
     This scenario introduces the 'forecast' dictionary in state. Instead of
     only looking at current conditions, you can look ahead 12 steps (3 hours)
@@ -458,9 +458,9 @@ const SCENARIO_TEMPLATES: Record<string, ControllerTemplate> = {
     description: "Function-style controller. Reads SOC + demand + solar each step.",
     source: TEMPLATE_DUCK_CURVE_SOURCE,
   },
-  melbourne_cold_winter: {
-    id: "template-melbourne_cold_winter",
-    label: "Melbourne Cold Winter starter",
+  frequency_frenzy: {
+    id: "template-frequency_frenzy",
+    label: "Frequency Frenzy starter",
     description: "Class-style controller that uses the forecast lookahead.",
     source: TEMPLATE_MELBOURNE_COLD_WINTER_SOURCE,
   },
