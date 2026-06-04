@@ -407,131 +407,233 @@ export default function DocsPage() {
 
               <section id="submission" className="scroll-mt-24 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Submission Guide</h2>
-                  <p className="mt-1 text-sm text-muted">
-                    Once you're happy with how your controller performs locally, it's time to submit it for the official
-                    cloud evaluation.
+                  <h2 className="text-3xl font-extrabold tracking-tight text-ink">Submission Guide</h2>
+                  <p className="mt-2 text-base text-muted">
+                    Submit your controller through the in-app{" "}
+                    <Link
+                      to="/watt-the-hack/city-of-melbourne-advanced-submit"
+                      className="font-semibold text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Submission Portal
+                    </Link>
+                    . No zipping, no CLI — paste your code into the editor, hit submit.
                   </p>
                 </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <ComponentCard
-                    title="Required Files"
-                    icon={<CodeIcon className="h-5 w-5 text-emerald-600" />}
-                    bgColor="bg-emerald-50"
-                  >
-                    Your submission must be a ZIP file containing:
-                    <ul className="mt-2 list-disc pl-5">
-                      <li>
-                        <code>strategy.py</code>: Your logic.
-                      </li>
-                      <li>
-                        <code>requirements.txt</code>: Any pip dependencies you need.
-                      </li>
-                      <li>
-                        <code>metadata.json</code> (Optional): Used if you rename your function or use a class.
-                      </li>
-                    </ul>
-                  </ComponentCard>
+                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/95 p-6 shadow-sm">
+                  <h3 className="text-xl font-extrabold tracking-tight text-emerald-950">
+                    The structure of your submission
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-950/90">
+                    Your code can take exactly <strong>one of two shapes</strong>. The engine auto-detects which.
+                    Pick the one that fits your strategy — there's no advantage to picking the more complex one if
+                    you don't need it.
+                  </p>
+                </div>
 
-                  <ComponentCard
-                    title="Cloud Isolation"
-                    icon={<BuildingIcon className="h-5 w-5 text-slate-600" />}
-                    bgColor="bg-slate-50"
-                  >
-                    Your code runs on our Google Kubernetes Engine platform. We use Kaniko to securely build an isolated
-                    Docker environment pre-loaded with the dependencies from your <code>requirements.txt</code>.
-                  </ComponentCard>
+                <div className="overflow-hidden rounded-2xl border border-blue-300 bg-blue-50/95 shadow-sm">
+                  <div className="border-b border-blue-300 bg-blue-100/80 px-5 py-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        Shape 1
+                      </span>
+                      <h3 className="text-lg font-extrabold text-blue-950">A controller(state) function</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm text-blue-950/90">
+                      Use this if your controller is stateless — every step's action depends only on the current state
+                      (plus the forecast). No persistent variables between timesteps.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`def controller(state):
+    # Read state, return an action dictionary.
+    soc = state["soc"]
+    demand = state["demand"]
+    solar = state["solar"]
+
+    return {
+        "battery_flow_mw": demand - solar,
+        # Any key you omit defaults to 0.
+    }`}
+                    </CodeBlock>
+                    <div className="mt-3 rounded-lg border border-blue-300 bg-white/60 p-3">
+                      <p className="text-[13px] font-bold text-blue-950">REQUIRED</p>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-blue-950/90">
+                        <li>
+                          The function MUST be named <code>controller</code> and take a single <code>state</code>{" "}
+                          argument.
+                        </li>
+                        <li>It MUST return a dict (any of the action keys; missing keys default to 0).</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/95 shadow-sm">
+                  <div className="border-b border-amber-300 bg-amber-100/80 px-5 py-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        Shape 2
+                      </span>
+                      <h3 className="text-lg font-extrabold text-amber-950">A Strategy class</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm text-amber-950/90">
+                      Use this if you need persistent state between timesteps (e.g. a rolling error buffer, a PID
+                      memory, a precomputed plan from an LLM call). The engine instantiates your class once and reuses
+                      it for the whole run.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`class Strategy:
+    def __init__(self):
+        # Anything you want to persist between steps lives on self.
+        self.history = []
+
+    def plan(self, initial_state):
+        # OPTIONAL. Called ONCE before step 0. Right place for a slow
+        # LLM call to read the scenario briefing. The dict you return
+        # is stashed on state["agent_plan"] for every later step().
+        return {"policy": "conserve"}
+
+    def replan(self, state, alerts):
+        # OPTIONAL. Called when new qualitative alerts fire mid-run.
+        # Right place for a second LLM call to react to text events.
+        # Returned dict is merged into state["agent_plan"].
+        return {"policy": "respond"}
+
+    def step(self, state):
+        # REQUIRED. Called every 15-minute timestep.
+        # DO NOT call an LLM here — it will time out.
+        # Read state["agent_plan"] if you used plan()/replan().
+        self.history.append(state["soc"])
+        return {"battery_flow_mw": 10.0}`}
+                    </CodeBlock>
+                    <div className="mt-3 rounded-lg border border-amber-400 bg-white/60 p-3">
+                      <p className="text-[13px] font-bold text-amber-950">REQUIRED</p>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950/90">
+                        <li>
+                          The class MUST be named <code>Strategy</code>.
+                        </li>
+                        <li>
+                          It MUST define a <code>step(self, state)</code> method that returns an action dict.{" "}
+                          <strong>If your class has no <code>step</code> method, the engine refuses the submission.</strong>
+                        </li>
+                        <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
+                      </ul>
+                      <p className="mt-2 text-[13px] text-amber-950/85">
+                        <code>plan(self, initial_state)</code> and <code>replan(self, state, alerts)</code> are
+                        optional — the engine just skips them if you don't define them.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-50/95 shadow-sm">
+                  <div className="border-b border-rose-300 bg-rose-100/80 px-5 py-3">
+                    <h3 className="text-lg font-extrabold text-rose-950">Using OpenAI or Anthropic APIs</h3>
+                    <p className="mt-1.5 text-sm text-rose-950/90">
+                      The evaluation platform injects <code>OPENAI_API_KEY</code> and <code>ANTHROPIC_API_KEY</code> as
+                      environment variables inside your container. Read them with <code>os.environ</code> — they're
+                      already there.
+                    </p>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <CodeBlock>
+{`# Works as-is on the evaluation platform.
+import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])`}
+                    </CodeBlock>
+
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100/70 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-900">
+                        ⚠ Remove your .env loading line before you submit
+                      </p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                        Locally you probably load your key from a <code>.env</code> file:
+                      </p>
+                      <div className="mt-2">
+                        <CodeBlock>
+{`# LOCAL TESTING ONLY — DELETE BEFORE SUBMITTING.
+from dotenv import load_dotenv
+load_dotenv()`}
+                        </CodeBlock>
+                      </div>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                        Delete those two lines (and the <code>python-dotenv</code> entry in your{" "}
+                        <code>requirements.txt</code>, if you added it) before pasting into the portal. The platform
+                        doesn't ship your <code>.env</code> — the env vars are already in the container. Code that
+                        tries to read a non-existent <code>.env</code> can silently no-op and leave the API key empty,
+                        which then throws an <code>AuthenticationError</code> on the first LLM call.
+                      </p>
+                    </div>
+
+                    <p className="text-[13px] text-rose-950/85">
+                      The same rule applies to Anthropic (<code>ANTHROPIC_API_KEY</code>) and any other secret the
+                      platform injects. Never hardcode a key in your <code>strategy.py</code> — submissions are stored
+                      and re-runnable.
+                    </p>
+                  </div>
                 </div>
 
                 <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-                  <h3 className="mb-2 font-semibold text-ink">Creating the ZIP Archive (CLI)</h3>
-                  <p className="mb-3 text-sm text-muted">
-                    Depending on your OS, run the following commands in the folder containing your files:
+                  <h3 className="font-semibold text-ink">Extra pip dependencies?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    The portal has a <strong>requirements</strong> textarea right under the code editor. Paste any
+                    additional pip packages your strategy needs there (one per line, same format as a normal{" "}
+                    <code>requirements.txt</code>). The platform builds a fresh container with those packages installed
+                    before running your code. Common ones (<code>numpy</code>, <code>scipy</code>, <code>pandas</code>,
+                    the OpenAI / Anthropic SDKs) are already in the base image — you don't need to list them.
                   </p>
+                </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <h4 className="mb-1 text-sm font-semibold text-slate-700">Windows (PowerShell)</h4>
-                      <CodeBlock>{`Compress-Archive -Path strategy.py, requirements.txt, metadata.json -DestinationPath submission.zip -Force`}</CodeBlock>
-                    </div>
-                    <div>
-                      <h4 className="mb-1 text-sm font-semibold text-slate-700">Mac / Linux / WSL</h4>
-                      <CodeBlock>{`zip submission.zip strategy.py requirements.txt metadata.json`}</CodeBlock>
-                    </div>
-                  </div>
-                  <p className="mt-4 text-sm font-semibold text-muted">
-                    Submit this ZIP file via the{" "}
-                    <Link
-                      to="/watt-the-hack/city-of-melbourne-advanced-submit"
-                      className="text-emerald-600 underline hover:text-emerald-700"
-                    >
-                      <strong>Submission Portal</strong>
-                    </Link>
-                    .
+                <div className="rounded-xl border border-slate-300 bg-slate-50/95 p-5">
+                  <h3 className="font-semibold text-ink">Submission attempts are capped per scenario</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
+                    remaining count before you submit. Spend them wisely — playtest locally first.
                   </p>
                 </div>
               </section>
 
               <section id="agentic" className="scroll-mt-24 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: Agentic Strategies</h2>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: LLM-driven strategies</h2>
                   <p className="mt-1 text-sm text-muted">
-                    For scenarios with text events (like cyberattacks or policy changes), you can use an Object-Oriented
-                    approach. This lets you hook up Large Language Models (LLMs) to reason about the grid state.
+                    Some scenarios surface qualitative text events (cyberattacks, policy changes, operator mandates).
+                    The <code>Strategy</code> class lifecycle is built to let you reason about them with an LLM —
+                    cheaply, without blowing your per-step time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
+                    above for the skeleton, and the <strong>OpenAI / Anthropic</strong> section for env-var setup.
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-amber-200/70 bg-amber-50/95 p-5">
-                  <h3 className="text-base font-bold text-amber-900">
-                    The <code>Strategy</code> Class
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-amber-900/90">
-                    Instead of a simple <code>controller(state)</code> function, you can submit a Python class named{" "}
-                    <code>Strategy</code>. Just make sure to set <code>"class_name": "Strategy"</code> in your{" "}
-                    <code>metadata.json</code> file.
-                  </p>
-                </div>
-
-                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
-                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
-                    <h3 className="font-mono text-sm font-semibold text-ink">Lifecycle Hooks</h3>
-                  </div>
-                  <div className="p-4">
-                    <CodeBlock>
-{`class Strategy:
-    def plan(self, initial_state):
-        # Called once at the start of the simulation.
-        # Ideal for making a single, slow LLM call to process the initial scenario briefing.
-        # The engine automatically persists the dictionary you return inside state["agent_plan"].
-        return {"policy": "aggressive_saving"}
-
-    def replan(self, state, alerts):
-        # Called only when a new qualitative alert fires (e.g. "DIESEL GENERATOR BANNED").
-        # Make a new LLM call to adjust your strategy based on the text.
-        # The engine will merge your returned dictionary into state["agent_plan"].
-        return {"policy": "conserve_diesel"}
-
-    def step(self, state):
-        # Called every 15-minute timestep.
-        # DO NOT MAKE LLM CALLS HERE! It will time out.
-        # Instead, read the pre-computed plan from state.get("agent_plan", {}).
-
-        my_plan = state.get("agent_plan", {})
-        if my_plan.get("policy") == "conserve_diesel":
-            return {"emergency_generator": 0.0}
-
-        return {"battery_flow_mw": 10.0}`}
-                    </CodeBlock>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <ConstraintRow title="API Keys" tone="warning">
-                    When you submit an agentic strategy, the cloud evaluation platform securely injects{" "}
-                    <code>OPENAI_API_KEY</code> and <code>ANTHROPIC_API_KEY</code> environment variables into your
-                    isolated pod. You do not (and should not) hardcode your API keys in your submission!
-                  </ConstraintRow>
+                <div className="rounded-xl border border-amber-300 bg-amber-50/95 p-5">
+                  <h3 className="text-base font-bold text-amber-950">The LLM budget rule</h3>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950/90">
+                    <li>
+                      <strong>
+                        <code>step(state)</code> runs every 15 simulated minutes and is on a tight wall-clock budget.
+                      </strong>{" "}
+                      Calling an LLM from here will time out and your action will be replaced with the zero-action
+                      fallback for that step. Don't do it.
+                    </li>
+                    <li>
+                      <code>plan(initial_state)</code> runs <strong>once</strong> before step 0 — this is the right
+                      place for an expensive LLM call to read the scenario briefing and pick a high-level policy.
+                    </li>
+                    <li>
+                      <code>replan(state, alerts)</code> runs only when a <strong>new</strong> qualitative alert
+                      fires. Use it to update your policy in response to text events. The dict you return is merged
+                      into <code>state["agent_plan"]</code> for every subsequent step.
+                    </li>
+                    <li>
+                      Inside <code>step</code>, read <code>state.get("agent_plan", {`{}`})</code> and branch on the
+                      cached policy. That's how you get LLM-quality decisions at deterministic-controller latency.
+                    </li>
+                  </ul>
                 </div>
               </section>
             </div>
