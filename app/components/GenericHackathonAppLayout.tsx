@@ -43,7 +43,7 @@ export default function GenericHackathonAppLayout({ children, user, config, head
   const avatarUrl = user.avatar_url || generateAvatarUrl(getInitials(fullName));
   const isWattTheme = config.theme === "watt";
 
-  const navigation: Array<{
+  const baseNavigation: Array<{
     name: string;
     href?: string;
     icon: typeof HomeIcon;
@@ -70,13 +70,15 @@ export default function GenericHackathonAppLayout({ children, user, config, head
           { name: "Smart Home (Beginner) Track", href: `${config.basePath}/smart-home-beginner`, icon: HomeModernIcon },
         ]
       : []),
-  ].map((item) => ({
+  ];
+
+  const navigation = baseNavigation.map((item) => ({
     ...item,
     current: item.href ? location.pathname === item.href : false,
-    children: item.children?.map(child => ({
+    children: item.children?.map((child) => ({
       ...child,
-      current: location.pathname === child.href
-    }))
+      current: location.pathname === child.href,
+    })),
   }));
 
   const defaultSidebar = (
