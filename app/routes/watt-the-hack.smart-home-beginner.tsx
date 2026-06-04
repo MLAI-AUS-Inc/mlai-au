@@ -202,6 +202,16 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Remember the last deployed brain's effect line so the nightly recap can name it
+  // ("Claude kept rooms & showers warmer — more comfort, a little more cost"), making the
+  // ChatGPT/Claude/Gemini choice felt each day rather than only at deploy time.
+  const lastBrainEffectRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (deployData?.kind === "deploy" && deployData.result?.brain_effect) {
+      lastBrainEffectRef.current = deployData.result.brain_effect;
+    }
+  }, [deployData]);
+
   // Lightweight recap: snapshot the deltas when the game day advances.
   const lastDayRef = useRef<{ day: number; wallet: number; comfort: number } | null>(null);
   const [recap, setRecap] = useState<string | null>(null);
@@ -215,8 +225,9 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     const prev = lastDayRef.current;
     if (prev && snap.day > prev.day) {
       const dWallet = Math.round((snap.wallet - prev.wallet) * 100) / 100;
+      const brainLine = lastBrainEffectRef.current ? ` ${lastBrainEffectRef.current}` : "";
       setRecap(
-        `Day ${prev.day} done — wallet ${dWallet >= 0 ? "+" : ""}$${dWallet}, comfort ${Math.round(snap.comfort)}%. Tune your controller for day ${snap.day}.`,
+        `Day ${prev.day} done — wallet ${dWallet >= 0 ? "+" : ""}$${dWallet}, comfort ${Math.round(snap.comfort)}%.${brainLine} Tune your controller for day ${snap.day}.`,
       );
     }
     lastDayRef.current = snap;

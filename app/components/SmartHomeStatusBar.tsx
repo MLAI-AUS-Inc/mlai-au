@@ -21,6 +21,40 @@ function Stat({ label, value, warn = false }: { label: string; value: string; wa
   );
 }
 
+type Chip = { icon: string; label: string; cls: string };
+
+// Map the live weather condition the game publishes -> a glanceable chip, so heatwave /
+// cold-snap days (which spike cooling / heating load and cut solar) are obvious at a glance
+// and the player knows to re-tune their controller.
+function weatherChip(condition?: string | null): Chip | null {
+  if (!condition) return null;
+  const c = condition.toLowerCase();
+  if (c.includes("heat")) return { icon: "☀", label: "Heatwave", cls: "border-[#f0c9a6] bg-[#fce8d6] text-[#9a4a1a]" };
+  if (c.includes("cold") || c.includes("snap")) return { icon: "❄", label: "Cold snap", cls: "border-[#bcd6e6] bg-[#e2eef6] text-[#1f5673]" };
+  if (c.includes("cloud") || c.includes("overcast") || c.includes("rain"))
+    return { icon: "☁", label: "Cloudy", cls: "border-[#d6d6d6] bg-[#edeef0] text-[#555]" };
+  return { icon: "☀", label: "Mild", cls: "border-[#cfe0c2] bg-[#e6efd7] text-[#2f6f2c]" };
+}
+
+// Tariff-period chip: peak grid power is the expensive window to shift load away from.
+function tariffChip(period?: string | null): Chip | null {
+  if (!period) return null;
+  const p = period.toLowerCase();
+  if (p.includes("off")) return { icon: "▼", label: "Off-peak power", cls: "border-[#cfe0c2] bg-[#e6efd7] text-[#2f6f2c]" };
+  if (p.includes("peak")) return { icon: "▲", label: "Peak power", cls: "border-[#eeb7b1] bg-[#fbe3e0] text-[#9f2f28]" };
+  if (p.includes("shoulder")) return { icon: "◆", label: "Shoulder power", cls: "border-[#ecd9a6] bg-[#fcefcf] text-[#8a6d1a]" };
+  return null;
+}
+
+function Pill({ chip }: { chip: Chip }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold ${chip.cls}`}>
+      <span aria-hidden="true">{chip.icon}</span>
+      {chip.label}
+    </span>
+  );
+}
+
 export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
   const live = state?.live ?? false;
   const day = typeof state?.day === "number" ? state.day : null;
@@ -29,6 +63,8 @@ export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
   const comfort = typeof state?.comfort === "number" ? state.comfort : null;
   const energy = typeof state?.energy_kwh === "number" ? state.energy_kwh : null;
   const lowCash = wallet !== null && wallet < LOW_CASH;
+  const weather = live ? weatherChip(state?.weather_condition) : null;
+  const tariff = live ? tariffChip(state?.tariff_period) : null;
 
   return (
     <section className={`${wattClasses.panel} p-4`}>
@@ -52,6 +88,14 @@ export function SmartHomeStatusBar({ state }: { state?: SmartHomeState }) {
         <Stat label="Comfort" value={comfort !== null ? `${round(comfort)}%` : "—"} />
         <Stat label="Energy" value={energy !== null ? `${round(energy, 1)} kWh` : "—"} />
       </div>
+
+      {(weather || tariff) && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8477]">Today</span>
+          {weather && <Pill chip={weather} />}
+          {tariff && <Pill chip={tariff} />}
+        </div>
+      )}
 
       {lowCash && (
         <p className="mt-2 text-xs font-bold text-[#9f2f28]">

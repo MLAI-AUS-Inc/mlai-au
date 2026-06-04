@@ -275,6 +275,8 @@ export interface SmartHomeDeployResult {
   commands: SmartHomeDeployCommand[];
   decisions: string[];
   brain?: string | null;
+  // One-line "what your brain did" summary for the nightly recap (Path B-lite policy only).
+  brain_effect?: string | null;
 }
 
 export interface SmartHomePipeline {
