@@ -15,7 +15,7 @@
  * scenario needs no change in this file.
  */
 
-import { ChevronDownIcon, ChevronRightIcon, PlayCircleIcon, HelpCircleIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, PlayCircleIcon, HelpCircleIcon, GithubIcon } from "lucide-react";
 import { useState } from "react";
 
 import { ScenarioPicker } from "~/components/watt-the-hack/sandbox/scenario-picker";
@@ -150,7 +150,7 @@ function BrandBar() {
             Docs
           </a>
           <a
-            href="https://colab.research.google.com/github/AaronEliasZachariah/Watt-The-Hack-Engine-Public/blob/main/notebooks/training_starter.ipynb"
+            href="https://colab.research.google.com/github/AaronEliasZachariah/City-of-Melbourne-Watt-the-Hack-Advanced-Track/blob/main/notebooks/training_starter.ipynb"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex transition-all duration-300 hover:scale-105 hover:drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
@@ -160,6 +160,16 @@ function BrandBar() {
               alt="Open in Colab"
               className="h-[22px]"
             />
+          </a>
+          <a
+            href="https://github.com/AaronEliasZachariah/City-of-Melbourne-Watt-the-Hack-Advanced-Track"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Engine source + local playtesting instructions"
+            className="flex items-center gap-1.5 rounded-md bg-canvas px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted shadow-sm transition-all duration-300 hover:scale-105 hover:bg-white hover:text-ink hover:shadow-md border border-line"
+          >
+            <GithubIcon className="h-4 w-4" />
+            GitHub
           </a>
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSftkjGzVPS9Ifa9bXHMHyh36v9fh_-9ALxQT7Vq4nEmvwrvRg/viewform?usp=dialog"

@@ -489,12 +489,12 @@ export default function DocsPage() {
 
                 <div className="space-y-4">
                   <ConstraintRow title="1. Install the Engine">
-                    The public engine is hosted on GitHub. Install it via pip:
-                    <CodeBlock>{`pip install git+https://github.com/AaronEliasZachariah/Watt-The-Hack-Engine-Public.git`}</CodeBlock>
+                    The public engine is published on PyPI. Install it via pip:
+                    <CodeBlock>{`pip install "watt-the-hack[playtest]"`}</CodeBlock>
                     <div className="mt-2 text-xs text-muted">
                       <em>
-                        Note: As new scenarios are released, run this command again with{" "}
-                        <code>--upgrade --force-reinstall</code> to get the latest content.
+                        Note: As new scenarios are released, upgrade with{" "}
+                        <code>pip install --upgrade "watt-the-hack[playtest]"</code> to get the latest content.
                       </em>
                     </div>
                   </ConstraintRow>
