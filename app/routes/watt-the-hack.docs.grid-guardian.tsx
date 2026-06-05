@@ -13,6 +13,11 @@ import {
   PaperAirplaneIcon as SendIcon,
   CpuChipIcon as BrainCircuitIcon,
   CircleStackIcon as StackIcon,
+  ScaleIcon,
+  BellAlertIcon,
+  ShieldCheckIcon,
+  TrophyIcon,
+  RocketLaunchIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router";
 import {
@@ -26,54 +31,142 @@ import {
 export default function GridGuardianDocs() {
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-            <aside className="hidden w-52 shrink-0 lg:block">
-              <nav className="sticky top-6 flex flex-col gap-1 rounded-2xl border border-line/70 bg-surface/95 p-3 shadow-sm backdrop-blur">
-                <h4 className="mb-1 px-2 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">
-                  On this page
-                </h4>
-                <SidebarLink href="#introduction" icon={<InfoIcon className="h-4 w-4" />}>
-                  Introduction
-                </SidebarLink>
-                <SidebarLink href="#grid-components" icon={<ZapIcon className="h-4 w-4" />}>
-                  Grid Components
-                </SidebarLink>
-                <SidebarLink href="#financials" icon={<DollarSignIcon className="h-4 w-4" />}>
-                  Financials &amp; Constraints
-                </SidebarLink>
-                <SidebarLink href="#common-pitfalls" icon={<AlertCircleIcon className="h-4 w-4" />}>
-                  Common Pitfalls
-                </SidebarLink>
-                <SidebarLink href="#controllers" icon={<CodeIcon className="h-4 w-4" />}>
-                  Writing a Controller
-                </SidebarLink>
-                <SidebarLink href="#playtesting" icon={<TerminalIcon className="h-4 w-4" />}>
-                  Local Playtesting
-                </SidebarLink>
-                <SidebarLink href="#submission" icon={<SendIcon className="h-4 w-4" />}>
-                  Submission Guide
-                </SidebarLink>
-                <SidebarLink href="#python" icon={<StackIcon className="h-4 w-4" />}>
-                  Persisting State &amp; Python
-                </SidebarLink>
-                <SidebarLink href="#agentic" icon={<BrainCircuitIcon className="h-4 w-4" />}>
-                  Agentic Strategies
-                </SidebarLink>
+            <aside className="hidden w-56 shrink-0 lg:block">
+              <nav className="sticky top-6 flex flex-col gap-3 rounded-2xl border border-line/70 bg-surface/95 p-3 shadow-sm backdrop-blur">
+                <SidebarGroup label="Getting Started">
+                  <SidebarLink href="#introduction" icon={<InfoIcon className="h-4 w-4" />}>
+                    Introduction
+                  </SidebarLink>
+                  <SidebarLink href="#quickstart" icon={<RocketLaunchIcon className="h-4 w-4" />}>
+                    Quickstart
+                  </SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup label="The Simulation">
+                  <SidebarLink href="#grid-components" icon={<ZapIcon className="h-4 w-4" />}>
+                    Grid Components
+                  </SidebarLink>
+                  <SidebarLink href="#financials" icon={<DollarSignIcon className="h-4 w-4" />}>
+                    Costs &amp; Penalties
+                  </SidebarLink>
+                  <SidebarLink href="#scoring" icon={<ScaleIcon className="h-4 w-4" />}>
+                    Scoring &amp; Leaderboard
+                  </SidebarLink>
+                  <SidebarLink href="#common-pitfalls" icon={<AlertCircleIcon className="h-4 w-4" />}>
+                    Common Pitfalls
+                  </SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup label="Build a Controller">
+                  <SidebarLink href="#controllers" icon={<CodeIcon className="h-4 w-4" />}>
+                    Controller Basics
+                  </SidebarLink>
+                  <SidebarLink href="#python" icon={<StackIcon className="h-4 w-4" />}>
+                    State &amp; Python
+                  </SidebarLink>
+                  <SidebarLink href="#playtesting" icon={<TerminalIcon className="h-4 w-4" />}>
+                    Playtest &amp; Debug
+                  </SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup label="Advanced &amp; Agentic">
+                  <SidebarLink href="#events" icon={<BellAlertIcon className="h-4 w-4" />}>
+                    Reacting to Events
+                  </SidebarLink>
+                  <SidebarLink href="#cyber" icon={<ShieldCheckIcon className="h-4 w-4" />}>
+                    Cyber &amp; Phishing
+                  </SidebarLink>
+                  <SidebarLink href="#agentic" icon={<BrainCircuitIcon className="h-4 w-4" />}>
+                    LLM Strategies
+                  </SidebarLink>
+                  <SidebarLink href="#gauntlet" icon={<TrophyIcon className="h-4 w-4" />}>
+                    The Gauntlet
+                  </SidebarLink>
+                </SidebarGroup>
+
+                <SidebarGroup label="Submission">
+                  <SidebarLink href="#submission" icon={<SendIcon className="h-4 w-4" />}>
+                    Submission Guide
+                  </SidebarLink>
+                  <SidebarLink href="#openai" icon={<BrainCircuitIcon className="h-4 w-4" />}>
+                    OpenAI API
+                  </SidebarLink>
+                </SidebarGroup>
               </nav>
             </aside>
 
             <div className="min-w-0 flex-1 space-y-10 pb-12">
+              {/* ============================ INTRODUCTION ============================ */}
               <section id="introduction" className="scroll-mt-24">
                 <div className="rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 via-white to-blue-50/40 p-6 shadow-sm sm:p-8">
                   <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                     Grid Simulator Mechanics
                   </h1>
                   <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
-                    Welcome to the Watt-The-Hack Advanced Track docs. Here you'll find everything you need to know about
-                    the grid components, financial constraints, and API endpoints to help you build a winning controller.
+                    Welcome to the Watt-The-Hack Advanced Track docs. This is the complete reference for the grid
+                    components, financial constraints, scoring, event mechanics, and the API your controller talks
+                    to. Read the <a href="#quickstart" className="font-semibold text-sky-700 underline">Quickstart</a>{" "}
+                    first, then dip into whichever section you need.
+                  </p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <MiniFact label="One step">15 simulated minutes</MiniFact>
+                    <MiniFact label="A scenario run">288 steps (72 h / 3 days)</MiniFact>
+                    <MiniFact label="Your job">Meet demand at the lowest cost</MiniFact>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">The control loop, in one breath</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    Every 15 simulated minutes the engine hands your controller a <code>state</code> dictionary
+                    (current demand, solar, price, battery charge, a short forecast, and any active alerts). You
+                    return an <code>action</code> dictionary saying how to dispatch the battery, diesel, solar
+                    curtailment and grid reserves. The engine applies physics + market rules, charges you the cost
+                    of that step, and loops. Your score is the total cost over the whole run — <strong>lower is
+                    better</strong>.
                   </p>
                 </div>
               </section>
 
+              {/* ============================ QUICKSTART ============================ */}
+              <section id="quickstart" className="scroll-mt-24 space-y-4">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Quickstart</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    From zero to a scored submission in four moves. Each links to the section with the detail.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <StepCard n="1" title="Install the engine" href="#playtesting">
+                    <CodeBlock>{`pip install "watt-the-hack[playtest]"`}</CodeBlock>
+                    The same engine the judges run. Develop on your own machine with full Python — imports, LLM
+                    calls, anything.
+                  </StepCard>
+                  <StepCard n="2" title="Write a controller" href="#controllers">
+                    A function <code>controller(state)</code> or a <code>Strategy</code> class with a{" "}
+                    <code>step(self, state)</code> method, returning an action dict. Start from a template in the
+                    Submission Portal.
+                  </StepCard>
+                  <StepCard n="3" title="Playtest &amp; read the report" href="#playtesting">
+                    <CodeBlock>{`python -m watt_the_hack.playtest my_controller.py \\
+  --scenario duck_curve --open-report`}</CodeBlock>
+                    The HTML report tells you <em>exactly</em> where your money went.
+                  </StepCard>
+                  <StepCard n="4" title="Submit" href="#submission">
+                    Paste your code into the{" "}
+                    <Link
+                      to="/watt-the-hack/city-of-melbourne-advanced-submit"
+                      className="font-semibold text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Submission Portal
+                    </Link>
+                    , pick a scenario, hit submit. No zipping. Attempts are limited — playtest first.
+                  </StepCard>
+                </div>
+              </section>
+
+              {/* ============================ GRID COMPONENTS ============================ */}
               <section id="grid-components" className="scroll-mt-24 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Grid Components</h2>
@@ -127,9 +220,11 @@ export default function GridGuardianDocs() {
                     icon={<ZapIcon className="h-5 w-5 text-emerald-600" />}
                     bgColor="bg-emerald-50"
                   >
-                    The city's connection to the broader energy market. You can import energy (buying at the dynamic
-                    import tariff) or export energy (selling at the export tariff). It has strict{" "}
-                    <strong>Import Caps</strong> (default 120 MW) and <strong>Export Caps</strong> (default 50 MW).
+                    The city's connection to the broader energy market. Import and export happen{" "}
+                    <strong>automatically</strong> to balance the grid — you never set them directly. Whatever your
+                    dispatch doesn't cover is imported (at <code>state["price"]</code>); any surplus is exported (at
+                    the export tariff). Both respect strict <strong>Import Caps</strong> (default 120 MW) and{" "}
+                    <strong>Export Caps</strong> (default 50 MW).
                   </ComponentCard>
 
                   <ComponentCard
@@ -219,41 +314,34 @@ export default function GridGuardianDocs() {
                 </div>
               </section>
 
+              {/* ============================ FINANCIALS ============================ */}
               <section id="financials" className="scroll-mt-24 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Financials &amp; Constraints</h2>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Costs &amp; Penalties</h2>
                   <p className="mt-1 text-sm text-muted">
-                    Your leaderboard score is the total cost accumulated over the run. Lower is better, and a negative
-                    score means you actually turned a profit!
+                    Every step accrues cost. The sum over the run is your raw score (lower is better; a negative raw
+                    score means you turned a profit). Here&apos;s every lever that moves it.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <ConstraintRow title="Dynamic Import Tariff">
-                    This is what it costs to import power from the external grid. It fluctuates wildly based on the time
-                    of day and market conditions. You can read it via <code>state["price"]</code>. The goal is simple:
-                    buy low, and avoid buying high.
+                    What it costs to import power from the external grid (which happens automatically to cover any
+                    shortfall). It fluctuates wildly with time of day and market conditions — read it via{" "}
+                    <code>state["price"]</code>. The goal is simple: buy low, avoid buying high.
                   </ConstraintRow>
 
                   <ConstraintRow title="Static Export Tariff">
-                    When you export excess solar or battery power to the grid, you earn this flat rate (default $50/MWh).
+                    When surplus solar or battery power is exported to the grid (also automatic), you earn this flat
+                    rate (default $50/MWh). When <code>price</code> goes negative, exporting <em>costs</em> you — see
+                    Negative Prices under Common Pitfalls.
                   </ConstraintRow>
 
-                  <ConstraintRow title="Blackout Penalty" tone="danger">
-                    If Demand &gt; (Solar + Battery Discharge + Diesel + Grid Import Cap), the city suffers a blackout.
-                    This triggers an extremely punishing penalty per MWh. You should avoid this at all costs.
-                  </ConstraintRow>
-
-                  <ConstraintRow title="Overvoltage Penalty" tone="danger">
-                    If (Solar + Battery Discharge) &gt; (Demand + Grid Export Cap), the grid is overwhelmed by your
-                    exports. This incurs a severe overvoltage penalty. Use <code>curtail_solar</code> or charge your
-                    battery to prevent this.
-                  </ConstraintRow>
-
-                  <ConstraintRow title="Leaderboard Scoring" tone="warning">
-                    Submitting the provided starter template will yield <strong>0 points</strong>. You must write a
-                    controller that performs strictly better than the naive baseline to score points. The better your
-                    controller relative to the optimal solution, the closer you get to 100 points!
+                  <ConstraintRow title="Demand Charge" tone="warning">
+                    Your single biggest grid-import spike over the whole run is billed once, at{" "}
+                    <strong>$1,000 per MW</strong> of that peak. One careless 120 MW import moment can cost{" "}
+                    <strong>$120,000</strong> on its own. This rewards <em>peak shaving</em> — pre-charging the battery
+                    so you never lean hard on the grid in a single step.
                   </ConstraintRow>
 
                   <ConstraintRow title="Battery Wear" tone="warning">
@@ -262,19 +350,122 @@ export default function GridGuardianDocs() {
                     score. Separately, a <strong>ramp charge</strong> penalises sudden swings in your{" "}
                     <strong>net grid power</strong> between steps (≈ $1 × ΔMW², so a 30 MW swing ≈ $900) — and since the
                     battery is your main lever on the grid draw, jerky dispatch feeds straight into it. Smooth, gradual
-                    moves are much cheaper than slamming between extremes. (Full rates in the cost reference below.)
+                    moves are much cheaper than slamming between extremes.
+                  </ConstraintRow>
+
+                  <ConstraintRow title="Carbon Cost" tone="warning">
+                    CO₂ from grid imports and diesel is priced at <strong>$50/kg</strong>. Grid intensity is{" "}
+                    ≈ 0.7 kg/MWh and diesel ≈ 0.27 kg/MWh by default (scenarios may override grid intensity, exposed as{" "}
+                    <code>state["grid_co2_intensity"]</code>). Cleaner dispatch is cheaper dispatch.
+                  </ConstraintRow>
+
+                  <ConstraintRow title="Blackout Penalty" tone="danger">
+                    If demand exceeds everything you can supply (solar + battery discharge + diesel + the grid import
+                    cap), the city browns out. This costs <strong>$100,000 per MWh</strong> of unmet demand. Avoid it
+                    at all costs.
+                  </ConstraintRow>
+
+                  <ConstraintRow title="Overvoltage Penalty" tone="danger">
+                    If (solar + battery discharge) overwhelms (demand + grid export cap), you flood the grid:{" "}
+                    <strong>$5,000 per MWh</strong> over the cap. Use <code>curtail_solar</code> or charge the battery
+                    to absorb the excess.
                   </ConstraintRow>
 
                   <ConstraintRow title="Throughput Budget" tone="warning">
-                    Batteries degrade. In some scenarios, you are given a total throughput budget (MWh). Every MWh you
-                    charge or discharge permanently consumes this budget. Once depleted, you can no longer use the
-                    battery.
+                    Some scenarios give you a total battery throughput budget (MWh). Every MWh you charge or discharge
+                    permanently consumes it — read what&apos;s left via{" "}
+                    <code>state["battery_throughput_remaining_mwh"]</code>. Once depleted, the battery is locked. Spend
+                    cycles where they matter most.
                   </ConstraintRow>
 
                   <CostReferenceTable />
                 </div>
               </section>
 
+              {/* ============================ SCORING ============================ */}
+              <section id="scoring" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Scoring &amp; Leaderboard</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    There are <strong>two</strong> numbers, and they point in opposite directions. Don&apos;t confuse
+                    them.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-300 bg-slate-50 p-5">
+                    <h3 className="text-base font-bold text-slate-900">Raw cost — what you see locally</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      The playtest report&apos;s <code>final_score</code> is the total dollars your run accrued.{" "}
+                      <strong>Lower wins.</strong> This is what you optimise against on your own machine.
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-5">
+                    <h3 className="text-base font-bold text-emerald-900">Points — what the leaderboard shows</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-emerald-800">
+                      Your raw cost is converted into <strong>leaderboard points</strong>. <strong>Higher wins.</strong>{" "}
+                      The conversion is anchored to two baselines for each scenario.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-sky-300 bg-sky-50 p-5">
+                  <h3 className="text-base font-bold text-sky-950">How raw cost becomes points</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-sky-950">
+                    Each scenario has a <strong>naive baseline</strong> (a do-nothing-clever controller) and an{" "}
+                    <strong>optimal baseline</strong> (a strong reference). Your points are a linear interpolation
+                    between them:
+                  </p>
+                  <div className="mt-3">
+                    <CodeBlock>
+{`points = 100 × (naive_cost − your_cost) / (naive_cost − optimal_cost)
+points = clamp(points, 0, 150)`}
+                    </CodeBlock>
+                  </div>
+                  <ul className="mt-3 list-disc space-y-1.5 pl-5 text-sm text-sky-950">
+                    <li>Match the <strong>naive baseline</strong> → <strong>0 points</strong>.</li>
+                    <li>Match the <strong>optimal baseline</strong> → <strong>100 points</strong>.</li>
+                    <li>
+                      <strong>Beat optimal</strong> → above 100, up to a <strong>150-point cap</strong> per scenario.
+                    </li>
+                    <li>
+                      <strong>Worse than naive</strong> → clamped to <strong>0</strong>. The starter template scores 0
+                      — you must beat naive to put a point on the board.
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
+                  <h3 className="text-base font-bold text-amber-950">Your leaderboard total — and why the Gauntlet dominates</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                    Your headline total is the <strong>sum</strong> of your per-scenario points, with one twist: the{" "}
+                    <strong>Gauntlet counts triple (×3)</strong>. With five Phase-1 scenarios plus the Gauntlet, a
+                    flawless run is 5 × 100 + (100 × 3) = <strong>800 points</strong>, of which the Gauntlet is{" "}
+                    <strong>≈ 37.5%</strong>. No other single scenario comes close — it is by far the highest-leverage
+                    thing you can get right. See <a href="#gauntlet" className="font-semibold underline">The Gauntlet</a>.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-slate-300 bg-white p-5">
+                  <h4 className="font-semibold text-slate-900">Worked example</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Say a scenario&apos;s naive baseline is <strong>$1,000,000</strong> and its optimal is{" "}
+                    <strong>$400,000</strong> (a $600k &quot;moat&quot;). Your controller runs at{" "}
+                    <strong>$520,000</strong>:
+                  </p>
+                  <div className="mt-2">
+                    <CodeBlock>{`points = 100 × (1,000,000 − 520,000) / (1,000,000 − 400,000)
+       = 100 × 480,000 / 600,000  =  80 points`}</CodeBlock>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Shave another $120k off (to $400k) and you hit 100. Every dollar closer to optimal is worth more
+                    points when the moat is narrow — so the scenarios with the widest naive→optimal gap are where
+                    effort pays off most. The playtest report shows your standing on this ladder after every run.
+                  </p>
+                </div>
+              </section>
+
+              {/* ============================ COMMON PITFALLS ============================ */}
               <section id="common-pitfalls" className="scroll-mt-24 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Common Pitfalls &amp; Clarifications</h2>
@@ -302,13 +493,15 @@ export default function GridGuardianDocs() {
                   </ComponentCard>
 
                   <ComponentCard
-                    title="Capacity vs Inverter Limit"
+                    title="Inverter limits & clamping"
                     icon={<BatteryFullIcon className="h-5 w-5 text-indigo-600" />}
                     bgColor="bg-indigo-50"
                   >
                     A massive 100 MWh battery is useless if its <strong>inverter limit</strong> is only 10 MW. The
-                    inverter caps how much power (MW) can flow in or out per step. You cannot dump all 100 MWh onto the
-                    grid in one 15-minute step!
+                    inverter caps how much power (MW) can flow in or out per step. Ask for more — say{" "}
+                    <code>battery_flow_mw = 300</code> — and the engine simply <strong>clamps</strong> it to the
+                    limit (~50 MW). It won&apos;t error, but you also won&apos;t get 300 MW. See &quot;out-of-range
+                    values&quot; under Controller Basics.
                   </ComponentCard>
 
                   <ComponentCard
@@ -316,10 +509,10 @@ export default function GridGuardianDocs() {
                     icon={<DollarSignIcon className="h-5 w-5 text-green-600" />}
                     bgColor="bg-green-50"
                   >
-                    When <code>price</code> is negative (e.g., -$20/MWh), the grid is oversupplied. This means you get{" "}
-                    <strong>paid to import</strong> (charge your battery) and you will be{" "}
-                    <strong>charged money to export</strong>. Curtail your solar to avoid paying the grid to take your
-                    power!
+                    When <code>price</code> is negative (e.g., -$20/MWh), the grid is oversupplied. Because import and
+                    export are automatic, this means you get <strong>paid to import</strong> (charge your battery) and
+                    you are <strong>charged to export</strong>. Curtail your solar so you aren&apos;t paying the grid to
+                    take your surplus!
                   </ComponentCard>
 
                   <ComponentCard
@@ -334,9 +527,10 @@ export default function GridGuardianDocs() {
                 </div>
               </section>
 
+              {/* ============================ CONTROLLER BASICS ============================ */}
               <section id="controllers" className="scroll-mt-24 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Writing a Controller</h2>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Controller Basics</h2>
                   <p className="mt-1 text-sm text-muted">
                     Your controller is just a Python function that runs every timestep. It takes in a <code>state</code>{" "}
                     dictionary and returns an <code>action</code> dictionary.
@@ -345,29 +539,37 @@ export default function GridGuardianDocs() {
 
                 <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
                   <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
-                    <h3 className="font-mono text-sm font-semibold text-ink">The State Dictionary</h3>
+                    <h3 className="font-mono text-sm font-semibold text-ink">The State Dictionary (what you read)</h3>
                   </div>
                   <div className="p-4">
                     <CodeBlock>
 {`{
-  "time": 42,                  # Timestep index
-  "demand": 145.2,             # Current city demand (MW) (current step only!)
-  "solar": 80.5,               # Current solar generation (MW) (current step only!)
-  "soc": 0.45,                 # Battery state of charge (current step only)
-  "price": 120.0,              # Current import tariff ($/MWh)
-  "features": {                # Dictionary of active mechanics
-    "battery": true,
-    "fcas": false
+  "time": 42,                       # Timestep index (0..287)
+  "demand": 145.2,                  # Current city demand (MW)   — this step only
+  "solar": 80.5,                    # Current solar generation (MW) — this step only
+  "soc": 0.45,                      # Battery state of charge (0..1) — this step only
+  "price": 120.0,                   # Current import tariff ($/MWh)
+  "features": {                     # Which mechanics are live this scenario
+    "battery": True, "fcas": True, "ids": True
   },
-  "alerts": [                  # List of qualitative events
-    {"type": "qualitative_alert", "text": "DIESEL BANNED"}
-  ],
-  "forecast": {                # Lookahead arrays (use these for horizon planning!)
+  "forecast": {                     # Lookahead arrays (≈16 steps). NOISY — see Tips.
     "demand": [146.1, 150.2, ...],
-    "solar": [82.1, 85.0, ...],
-    "price": [125.0, 150.0, ...]
+    "solar":  [82.1, 85.0, ...],
+    "price":  [125.0, 150.0, ...]
   },
-  "battery_throughput_remaining_mwh": 500.0  # If throughput_budget is active
+  "alerts": [                       # Narrative events active RIGHT NOW (see Reacting to Events)
+    {"id": "ids_w1", "type": "qualitative_alert", "severity": "critical",
+     "title": "IDS Alert wave 1", "description": "SECURITY BREACH ...",
+     "at_step": 30, "end_step": 42}
+  ],
+  "fcas_events_upcoming": [         # Scheduled FCAS dispatch calls (pre-position SOC!)
+    {"at_step": 152, "end_step": 154, "magnitude_mw": 18.0}
+  ],
+  "ids_signal_node_a": 0.87,        # Attack-probability hint [0..1] — only if you subscribed,
+  "ids_signal_node_b": 0.64,        #   otherwise None (see Cyber & Phishing)
+  "battery_throughput_remaining_mwh": 500.0,   # If a throughput budget is active
+  "peak_import_mw": 92.0,           # Your biggest grid import so far (drives the demand charge)
+  "agent_plan": { ... }             # Whatever your plan()/replan() returned (see Agentic)
 }`}
                     </CodeBlock>
                   </div>
@@ -375,7 +577,7 @@ export default function GridGuardianDocs() {
 
                 <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
                   <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
-                    <h3 className="font-mono text-sm font-semibold text-ink">The Action Dictionary</h3>
+                    <h3 className="font-mono text-sm font-semibold text-ink">The Action Dictionary (what you return)</h3>
                   </div>
                   <div className="p-4">
                     <p className="mb-3 text-sm text-muted">
@@ -387,8 +589,8 @@ export default function GridGuardianDocs() {
     # Your logic here...
 
     return {
-        # Positive = discharge to grid, Negative = charge from grid
-        # Bounded by: inverter limit, SOC, and throughput budget
+        # Positive = discharge to grid, Negative = charge from grid.
+        # Bounded by: inverter limit, SOC, and throughput budget.
         "battery_flow_mw": 10.5,
 
         # MW of emergency diesel generation to dispatch [0, max_limit]
@@ -397,9 +599,17 @@ export default function GridGuardianDocs() {
         # MW of solar to intentionally disconnect (prevents overvoltage)
         "curtail_solar": 0.0,
 
-        # MW of inverter capacity to lock for frequency control
+        # MW of inverter capacity to lock for frequency control.
         # This capacity cannot be used for charging/discharging this step!
-        "fcas_reserve_mw": 5.0
+        "fcas_reserve_mw": 5.0,
+
+        # Pay for the IDS probability signal THIS step (cyber scenarios).
+        # Populates state["ids_signal_node_a"/"_b"] on the NEXT step.
+        "subscribe_ids": False,
+
+        # Per-step acknowledgements the engine reads from YOUR ACTION.
+        # (containment_ack / anomaly_ack — see Cyber & Phishing.)
+        "agent_plan": {},
     }`}
                     </CodeBlock>
                   </div>
@@ -436,291 +646,35 @@ export default function GridGuardianDocs() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-blue-300 bg-blue-100 p-5">
-                  <h3 className="text-base font-bold text-blue-950">Persistent Memory (Saving Arrays between Steps)</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-blue-950">
-                    Because <code>step(state)</code> is called repeatedly, any standard local variables you create inside
-                    the function will be lost. To persist an array or variable across time steps (e.g., keeping track of
-                    history or past errors for PID control), you should use the <strong>Strategy Class</strong> approach
-                    (see Agentic Strategies section).
-                    <br />
-                    <br />
-                    Inside the class, you can define an <code>__init__</code> method or initialize properties in the{" "}
-                    <code>plan()</code> method and assign them to <code>self.my_history = []</code>.
-                  </p>
-                </div>
-
                 <div className="rounded-xl border border-emerald-300 bg-emerald-100 p-5">
                   <h3 className="text-base font-bold text-emerald-950">Tips for Success</h3>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-emerald-950">
                     <li>
-                      <strong>Don't trust the forecast implicitly:</strong> Forecasts have AR(1) noise and can be
-                      deliberately skewed by cyberattacks or forecast biases in later scenarios.
+                      <strong>Don&apos;t trust the forecast implicitly:</strong> Forecasts carry AR(1) noise and a
+                      persistent bias, and can be deliberately skewed by cyberattacks in later scenarios. The error is{" "}
+                      <em>structured</em>, so it&apos;s partly learnable — debias it rather than taking it at face value.
                     </li>
                     <li>
                       <strong>Respect the Inverter:</strong> The battery cannot charge/discharge faster than its inverter
-                      limit. Furthermore, any capacity assigned to <code>fcas_reserve_mw</code> reduces your available
-                      inverter bandwidth for normal flow.
+                      limit, and any capacity assigned to <code>fcas_reserve_mw</code> reduces your available bandwidth
+                      for normal flow.
                     </li>
                     <li>
-                      <strong>Watch the Caps:</strong> Just because you have 100 MW of excess solar doesn't mean you can
-                      export it all. If the grid export cap is 50 MW, the remaining 50 MW will cause an overvoltage
-                      penalty unless you curtail it.
+                      <strong>Watch the Caps:</strong> 100 MW of excess solar doesn&apos;t mean you can export 100 MW. If
+                      the export cap is 50 MW, the rest causes an overvoltage penalty unless you curtail it.
+                    </li>
+                    <li>
+                      <strong>Shave your peak:</strong> The demand charge bills your single worst import spike. Smooth,
+                      pre-emptive battery use beats reacting at the peak.
                     </li>
                   </ul>
                 </div>
               </section>
 
-              <section id="playtesting" className="scroll-mt-24 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Local Installation &amp; Playtesting</h2>
-                  <p className="mt-1 text-sm text-muted">
-                    You can run the simulation locally using our public Python engine. It's the best way to iterate on
-                    your controller before submitting it to the judging server.
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <ConstraintRow title="1. Install the Engine">
-                    The public engine is published on PyPI. Install it via pip:
-                    <CodeBlock>{`pip install "watt-the-hack[playtest]"`}</CodeBlock>
-                    <div className="mt-2 text-xs text-muted">
-                      <em>
-                        Note: As new scenarios are released, upgrade with{" "}
-                        <code>pip install --upgrade "watt-the-hack[playtest]"</code> to get the latest content.
-                      </em>
-                    </div>
-                  </ConstraintRow>
-
-                  <ConstraintRow title="2. Run the Playtest Harness">
-                    Use the built-in playtest CLI to run your controller against a specific scenario. It generates an
-                    HTML report with performance graphs and raw metric logs.
-                    <CodeBlock>{`python -m watt_the_hack.playtest strategy.py --scenario t1_welcome --open-report`}</CodeBlock>
-                  </ConstraintRow>
-
-                  <ConstraintRow title="3. View Available Scenarios">
-                    List all the scenarios currently unlocked in your installed package:
-                    <CodeBlock>{`python -m watt_the_hack.playtest --list-scenarios`}</CodeBlock>
-                  </ConstraintRow>
-                </div>
-              </section>
-
-              <section id="submission" className="scroll-mt-24 space-y-6">
-                <div>
-                  <h2 className="text-3xl font-extrabold tracking-tight text-ink">Submission Guide</h2>
-                  <p className="mt-2 text-base text-muted">
-                    Submit your controller through the in-app{" "}
-                    <Link
-                      to="/watt-the-hack/city-of-melbourne-advanced-submit"
-                      className="font-semibold text-emerald-700 underline hover:text-emerald-800"
-                    >
-                      Submission Portal
-                    </Link>
-                    . No zipping, no CLI: paste your code into the editor and hit submit.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-100 p-6 shadow-sm">
-                  <h3 className="text-xl font-extrabold tracking-tight text-emerald-950">
-                    The structure of your submission
-                  </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-950">
-                    Your code can take exactly <strong>one of two shapes</strong>. The engine auto-detects which.
-                    Pick the one that fits your strategy; there's no advantage to picking the more complex one if
-                    you don't need it.
-                  </p>
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-blue-300 bg-blue-100 shadow-sm">
-                  <div className="border-b border-blue-300 bg-blue-100 px-5 py-3">
-                    <div className="flex items-baseline gap-3">
-                      <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
-                        Shape 1
-                      </span>
-                      <h3 className="text-lg font-extrabold text-blue-950">A controller(state) function</h3>
-                    </div>
-                    <p className="mt-1.5 text-sm text-blue-950">
-                      Use this if your controller is stateless: every step's action depends only on the current state
-                      (plus the forecast). No persistent variables between timesteps.
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <CodeBlock>
-{`def controller(state):
-    # Read state, return an action dictionary.
-    soc = state["soc"]
-    demand = state["demand"]
-    solar = state["solar"]
-
-    return {
-        "battery_flow_mw": demand - solar,
-        # Any key you omit defaults to 0.
-    }`}
-                    </CodeBlock>
-                    <div className="mt-3 rounded-lg border border-blue-300 bg-white/60 p-3">
-                      <p className="text-[13px] font-bold text-blue-950">REQUIRED</p>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-blue-950">
-                        <li>
-                          The function MUST be named <code>controller</code> and take a single <code>state</code>{" "}
-                          argument.
-                        </li>
-                        <li>It MUST return a dict (any of the action keys; missing keys default to 0).</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-100 shadow-sm">
-                  <div className="border-b border-amber-300 bg-amber-100 px-5 py-3">
-                    <div className="flex items-baseline gap-3">
-                      <span className="rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
-                        Shape 2
-                      </span>
-                      <h3 className="text-lg font-extrabold text-amber-950">A Strategy class</h3>
-                    </div>
-                    <p className="mt-1.5 text-sm text-amber-950">
-                      Use this if you need persistent state between timesteps (e.g. a rolling error buffer, a PID
-                      memory, a precomputed plan from an LLM call). The engine instantiates your class once and reuses
-                      it for the whole run.
-                    </p>
-                  </div>
-                  <div className="p-4">
-                    <CodeBlock>
-{`class Strategy:
-    def __init__(self):
-        # Anything you want to persist between steps lives on self.
-        self.history = []
-
-    def plan(self, initial_state):
-        # OPTIONAL. Called ONCE before step 0. Right place for a slow
-        # LLM call to read the scenario briefing. The dict you return
-        # is stashed on state["agent_plan"] for every later step().
-        return {"policy": "conserve"}
-
-    def replan(self, state, alerts):
-        # OPTIONAL. Called when new qualitative alerts fire mid-run.
-        # Right place for a second LLM call to react to text events.
-        # Returned dict is merged into state["agent_plan"].
-        return {"policy": "respond"}
-
-    def step(self, state):
-        # REQUIRED. Called every 15-minute timestep.
-        # DO NOT call an LLM here; it will time out.
-        # Read state["agent_plan"] if you used plan()/replan().
-        self.history.append(state["soc"])
-        return {"battery_flow_mw": 10.0}`}
-                    </CodeBlock>
-                    <div className="mt-3 rounded-lg border border-amber-400 bg-white/60 p-3">
-                      <p className="text-[13px] font-bold text-amber-950">REQUIRED</p>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950">
-                        <li>
-                          The class can have <strong>any name</strong> (the starter code uses{" "}
-                          <code>MyStrategy</code>) — the portal detects it automatically from your code.
-                          What matters is the <code>step</code> method below, not the class name.
-                        </li>
-                        <li>
-                          It MUST define a <code>step(self, state)</code> method, written{" "}
-                          <strong>directly in this class</strong>, that returns an action dict.{" "}
-                          <strong>If the class has no <code>step</code> method, the engine refuses the submission.</strong>{" "}
-                          (A <code>step</code> only inherited from a base class or assigned by alias
-                          isn&apos;t detected — keep it as a plain method here.)
-                        </li>
-                        <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
-                      </ul>
-                      <p className="mt-2 text-[13px] text-amber-950">
-                        <code>plan(self, initial_state)</code> and <code>replan(self, state, alerts)</code> are
-                        optional: the engine just skips them if you don't define them.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-100 shadow-sm">
-                  <div className="border-b border-rose-300 bg-rose-100 px-5 py-3">
-                    <h3 className="text-lg font-extrabold text-rose-950">Using the OpenAI API</h3>
-                    <p className="mt-1.5 text-sm text-rose-950">
-                      The evaluation platform injects <code>OPENAI_API_KEY</code> as an environment variable inside
-                      your container. Read it with <code>os.environ</code>; it's already there.
-                    </p>
-                  </div>
-                  <div className="space-y-3 p-4">
-                    <CodeBlock>
-{`# Works as-is on the evaluation platform.
-import os
-from openai import OpenAI
-
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
-
-# Use a fast model; the whole evaluation must finish within ~14 minutes.
-resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
-                    </CodeBlock>
-
-                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
-                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
-                        ⚠ Use gpt-5.4-nano or gpt-5.4-mini
-                      </p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
-                        Your whole evaluation runs under a <strong>~14-minute budget</strong>. Stick to{" "}
-                        <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code>; they're quick
-                        enough to stay inside it. Larger or slower models risk exceeding the budget, and your run
-                        <strong> times out with no score</strong> (a timeout doesn't cost you a submission attempt, but
-                        you also get no result). These models draw on a shared credit pool, so keep calls few (see the
-                        cadence rule below).
-                      </p>
-                    </div>
-
-                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
-                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
-                        ⚠ Remove your .env loading line before you submit
-                      </p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
-                        Locally you probably load your key from a <code>.env</code> file:
-                      </p>
-                      <div className="mt-2">
-                        <CodeBlock>
-{`# LOCAL TESTING ONLY. DELETE BEFORE SUBMITTING.
-from dotenv import load_dotenv
-load_dotenv()`}
-                        </CodeBlock>
-                      </div>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
-                        Delete those two lines (and the <code>python-dotenv</code> entry in your{" "}
-                        <code>requirements.txt</code>, if you added it) before pasting into the portal. The platform
-                        doesn't ship your <code>.env</code>; the env vars are already in the container. Code that
-                        tries to read a non-existent <code>.env</code> can silently no-op and leave the API key empty,
-                        which then throws an <code>AuthenticationError</code> on the first LLM call.
-                      </p>
-                    </div>
-
-                    <p className="text-[13px] text-rose-950">
-                      Never hardcode a key in your <code>strategy.py</code>; submissions are stored and re-runnable.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-                  <h3 className="font-semibold text-ink">Extra pip dependencies?</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">
-                    The portal has a <strong>requirements</strong> textarea right under the code editor. Paste any
-                    additional pip packages your strategy needs there (one per line, same format as a normal{" "}
-                    <code>requirements.txt</code>). The platform builds a fresh container with those packages installed
-                    before running your code. Common ones (<code>numpy</code>, <code>scipy</code>, <code>pandas</code>,
-                    the OpenAI SDK) are already in the base image, so you don't need to list them.
-                  </p>
-                </div>
-
-                <div className="rounded-xl border border-slate-300 bg-slate-100 p-5">
-                  <h3 className="font-semibold text-ink">Submission attempts are capped per scenario</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                    Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
-                    remaining count before you submit. Spend them wisely; playtest locally first.
-                  </p>
-                </div>
-              </section>
-
+              {/* ============================ STATE & PYTHON ============================ */}
               <section id="python" className="scroll-mt-24 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-ink">Persisting state &amp; Python essentials</h2>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">State &amp; Python essentials</h2>
                   <p className="mt-1 text-sm text-muted">
                     New to Python, or unsure what the engine does between steps? This is the stuff that quietly
                     breaks first-time controllers — read it before you fight a bug that isn&apos;t really a bug.
@@ -823,14 +777,15 @@ def controller(state):
                   <ul className="list-disc space-y-1 pl-5">
                     <li>Local variables inside <code>step()</code> / <code>controller()</code> — reset on every step.</li>
                     <li>
-                      Anything you write into the <code>state</code> dict you&apos;re handed. The engine rebuilds that
-                      view fresh each step, so <code>state["my_thing"] = ...</code> is discarded. Use{" "}
-                      <code>self.*</code> or a module-level variable instead.
+                      Arbitrary keys you write into the <code>state</code> dict you&apos;re handed (e.g.{" "}
+                      <code>state["my_thing"] = ...</code>) — the engine rebuilds that view fresh each step, so they&apos;re
+                      discarded. Use <code>self.*</code> or a module-level variable instead.
                     </li>
                   </ul>
                   <p className="mt-2">
                     The one channel the engine deliberately carries forward is <code>state["agent_plan"]</code>, which
-                    holds whatever your <code>plan()</code> / <code>replan()</code> returned (see Agentic Strategies).
+                    accumulates whatever your <code>plan()</code> / <code>replan()</code> returned <em>and</em> whatever
+                    you return under the <code>agent_plan</code> key from <code>step()</code> (see Reacting to Events).
                   </p>
                 </ConstraintRow>
 
@@ -899,14 +854,419 @@ class MyStrategy:                     # any name works
                 </ConstraintRow>
               </section>
 
+              {/* ============================ PLAYTEST & DEBUG ============================ */}
+              <section id="playtesting" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Playtest &amp; Debug</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    The public Python engine is identical to the one the judges run. Iterating locally — with the HTML
+                    report open — is the single fastest way to climb the leaderboard. This is also{" "}
+                    <strong>where you find out why you lost points</strong>.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <ConstraintRow title="1. Install the engine">
+                    The public engine is published on PyPI. Install it with the playtest extras:
+                    <CodeBlock>{`pip install "watt-the-hack[playtest]"`}</CodeBlock>
+                    <div className="mt-2 text-xs text-muted">
+                      <em>
+                        As new scenarios unlock, upgrade with{" "}
+                        <code>pip install --upgrade &quot;watt-the-hack[playtest]&quot;</code> to pull the latest content.
+                      </em>
+                    </div>
+                  </ConstraintRow>
+
+                  <ConstraintRow title="2. Run the playtest harness">
+                    Run your controller against a scenario. <code>--open-report</code> pops the HTML report in your
+                    browser when it finishes.
+                    <CodeBlock>{`python -m watt_the_hack.playtest my_controller.py --scenario duck_curve --open-report`}</CodeBlock>
+                  </ConstraintRow>
+
+                  <ConstraintRow title="3. List available scenarios">
+                    See everything unlocked in your installed package:
+                    <CodeBlock>{`python -m watt_the_hack.playtest --list-scenarios`}</CodeBlock>
+                  </ConstraintRow>
+                </div>
+
+                <div className="rounded-xl border border-indigo-300 bg-indigo-50 p-5">
+                  <h3 className="text-base font-bold text-indigo-950">
+                    Read the report — it tells you exactly where the money went
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-indigo-900">
+                    &quot;I scored badly&quot; is not a diagnosis. Every run writes a folder under{" "}
+                    <code>runs/&lt;scenario&gt;_&lt;timestamp&gt;/</code> containing a <code>report.html</code> plus raw{" "}
+                    <code>metrics.json</code> and per-step <code>steps.csv</code>. The report breaks down{" "}
+                    <strong>precisely which line items cost you</strong>:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-indigo-900">
+                    <li>
+                      <strong>Cost breakdown</strong> — every component (import, battery wear, demand charge, each
+                      penalty…) ranked by size and as a % of your total. Your &quot;biggest lever&quot; is called out.
+                    </li>
+                    <li>
+                      <strong>Top worst steps</strong> — the exact timesteps that hurt most, with the demand, solar,
+                      SOC, net grid and penalty at that moment. Start your fixes here.
+                    </li>
+                    <li>
+                      <strong>Opportunities</strong> — data-driven hints (&quot;you&apos;re importing at peak price in
+                      the evening — pre-charge earlier&quot;).
+                    </li>
+                    <li>
+                      <strong>Baseline ladder</strong> — where your raw cost sits between the naive and optimal
+                      baselines, i.e. roughly how many points you&apos;d score.
+                    </li>
+                  </ul>
+                  <p className="mt-2 text-sm leading-relaxed text-indigo-900">
+                    If a penalty line you didn&apos;t expect is non-zero (e.g.{" "}
+                    <code>cyber_containment_fine</code>, <code>diesel_ban_penalty</code>,{" "}
+                    <code>fcas_shortfall_penalty</code>), that&apos;s a mechanic you mis-handled — jump to the matching
+                    section below.
+                  </p>
+                </div>
+
+                <div className="rounded-lg border border-slate-300 bg-white p-5">
+                  <h4 className="font-semibold text-slate-900">Inspect costs straight from Python</h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Prefer raw numbers? Run a controller and print the breakdown yourself:
+                  </p>
+                  <div className="mt-2">
+                    <CodeBlock>
+{`from watt_the_hack.playtest import run_controller   # convenience wrapper
+
+result = run_controller("my_controller.py", scenario="gauntlet")
+print(result["metrics"]["final_score"])             # raw cost (lower wins)
+for k, v in sorted(result["cost_breakdown"].items(),
+                   key=lambda kv: -abs(kv[1])):
+    print(f"{k:<28} {v:>14,.0f}")                    # where every dollar went`}
+                    </CodeBlock>
+                  </div>
+                </div>
+              </section>
+
+              {/* ============================ REACTING TO EVENTS ============================ */}
+              <section id="events" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Reacting to Events</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    From Frequency Frenzy onward, scenarios fire <strong>events</strong>: weather notes, demand spikes,
+                    operator briefs, compliance windows, cyberattacks. Here&apos;s how they reach your controller and
+                    how to respond without blowing your time budget.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">Three channels carry events</h3>
+                  <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
+                    <li>
+                      <strong><code>state["alerts"]</code></strong> — the list of narrative events <em>active right
+                      now</em>. Each has <code>id</code>, <code>type</code>, <code>severity</code>, <code>title</code>,{" "}
+                      <code>description</code> (the prose), <code>at_step</code>, <code>end_step</code>. Read it every
+                      step.
+                    </li>
+                    <li>
+                      <strong><code>replan(self, state, alerts)</code></strong> — an optional hook that fires whenever
+                      alerts are active. The right place for a slow parse (e.g. an LLM call). Its return value is merged
+                      into the persistent <code>agent_plan</code>.
+                    </li>
+                    <li>
+                      <strong><code>state["agent_plan"]</code></strong> — your standing memo to the engine. It persists
+                      across steps and is how you <em>respond</em> to enforcement events (acknowledge an attack, file an
+                      exemption).
+                    </li>
+                  </ol>
+                </div>
+
+                <div className="rounded-xl border border-amber-300 bg-amber-100 p-5">
+                  <h3 className="text-base font-bold text-amber-950">
+                    ⚠ Not every event shows up as an alert
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                    Narrative events (qualitative alerts, weather, demand/price signals, forecast-bias notices) appear
+                    in <code>state["alerts"]</code>. But the engine deliberately <strong>hides the structured
+                    enforcement windows</strong> — compliance windows, the diesel ban, cyberattack windows, phishing
+                    traps — and strips their numeric payload. That&apos;s the whole challenge of the advanced
+                    scenarios: the <em>prose</em> brief tells you a rule is coming (&quot;cap exports to 22 MW over
+                    steps 108–124&quot;), and <strong>you</strong> must parse it into the right action. The engine
+                    won&apos;t hand you the number.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-rose-300 bg-rose-100 p-5">
+                  <h3 className="text-base font-bold text-rose-950">
+                    ⚠ The biggest timeout trap: <code>replan</code> fires <em>every</em> active step
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900">
+                    <code>replan</code> is called on <strong>every step where at least one alert is active</strong> —
+                    not once per alert. An alert that spans steps 8–20 calls <code>replan</code> 13 times. Across a
+                    full run that can be <strong>100–200 calls</strong>. If you fire an LLM request on every one,
+                    you&apos;ll blow the ~14-minute evaluation budget and your run ends in <code>TIMEOUT</code> with no
+                    score.
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900">
+                    <strong>The fix is one line: dedupe by alert id.</strong> Track which ids you&apos;ve already
+                    handled and only do expensive work for genuinely new ones. The number of <em>distinct</em> alerts
+                    is small (see the table), so a deduped controller makes only a handful of LLM calls.
+                  </p>
+                  <div className="mt-3">
+                    <CodeBlock>
+{`class Strategy:
+    def __init__(self):
+        self.seen = set()
+        self.constraints = []          # parsed rules live here for step() to read
+
+    def replan(self, state, alerts):
+        new = [a for a in alerts if a["id"] not in self.seen]
+        if not new:
+            return {}                  # nothing new -> do NO work, return immediately
+        for a in new:
+            self.seen.add(a["id"])
+            self.constraints.append(self._parse(a))   # regex or ONE batched LLM call
+        return {}                      # (you can also return dict updates for agent_plan)
+
+    def _parse(self, alert):
+        # turn alert["description"] prose into a structured rule on self
+        ...`}
+                    </CodeBlock>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-ink">How many alerts to expect</h3>
+                  <p className="mt-1 text-sm text-muted">
+                    Counts for the scored (judging) run of each scenario. Budget your LLM calls against{" "}
+                    <strong>distinct alerts</strong> (what you handle when you dedupe), not the raw{" "}
+                    <code>replan</code> firings.
+                  </p>
+                </div>
+                <AlertBudgetTable />
+
+                <div className="rounded-xl border border-sky-300 bg-sky-100 p-5">
+                  <h3 className="text-base font-bold text-sky-950">
+                    <code>agent_plan</code> is one persistent dictionary
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-sky-950">
+                    Everything you write to <code>agent_plan</code> accumulates into a <strong>single plan that
+                    persists</strong> for the rest of the run, and the engine reads it back. Anything you return under
+                    the <code>agent_plan</code> key of your <code>step()</code> action is merged into that same plan — so
+                    you don&apos;t have to memorise which key goes where. The clean habit:
+                  </p>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-sky-400 bg-white/70 p-3">
+                      <p className="text-[13px] font-extrabold text-sky-950">
+                        Per-step acknowledgements → from <code>step()</code>
+                      </p>
+                      <p className="mt-1 text-[13px] leading-relaxed text-sky-900">
+                        <code>containment_ack</code> / <code>anomaly_ack</code> are a <em>live signal</em> — set them in
+                        the <code>agent_plan</code> you return from <code>step()</code>, every step the incident is live.
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-sky-400 bg-white/70 p-3">
+                      <p className="text-[13px] font-extrabold text-sky-950">
+                        One-time policy → from <code>plan()</code> / <code>replan()</code>
+                      </p>
+                      <p className="mt-1 text-[13px] leading-relaxed text-sky-900">
+                        <code>emergency_exemption</code> and your parsed constraints are a <em>standing document</em> you
+                        file once — the natural home for anything you parse with an LLM (see the budget rule).
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-[13px] leading-relaxed text-sky-900">
+                    Both land in the same persistent <code>agent_plan</code>; pick the hook that reads cleanly. The
+                    worked examples in Cyber &amp; Phishing show both.
+                  </p>
+                </div>
+              </section>
+
+              {/* ============================ CYBER & PHISHING ============================ */}
+              <section id="cyber" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Cyber &amp; Phishing Defense</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    The Cybersecurity scenario and the Gauntlet attack your <em>inputs</em>. Some incidents are real and
+                    must be contained; some are decoys you must <em>not</em> react to; some prose is bait designed to
+                    make you sabotage yourself. This is the section playtesters asked for most — here is exactly what to
+                    do.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <ComponentCard title="The IDS signal" icon={<ShieldCheckIcon className="h-5 w-5 text-cyan-600" />} bgColor="bg-cyan-50">
+                    Set <code>subscribe_ids: True</code> in your action to buy an intrusion hint (small per-step fee).
+                    Next step you can read two probabilities, <code>ids_signal_node_a</code> and{" "}
+                    <code>ids_signal_node_b</code> ∈ [0, 1]. If you don&apos;t subscribe, both are <code>None</code>.
+                  </ComponentCard>
+                  <ComponentCard title="The forecast cross-check" icon={<ActivityIcon className="h-5 w-5 text-violet-600" />} bgColor="bg-violet-50">
+                    A real attack corrupts your live sensors (<code>demand</code>, <code>solar</code>, <code>soc</code>)
+                    but the forecast still reads the true series. A large, sudden gap between a sensor and its forecast
+                    is a tell that your data is being spoofed.
+                  </ComponentCard>
+                  <ComponentCard title="The alert prose" icon={<BellAlertIcon className="h-5 w-5 text-amber-600" />} bgColor="bg-amber-50">
+                    Critical alerts name the incident and often the exact id to acknowledge. Decoy alerts hedge
+                    (&quot;single node&quot;, &quot;second node disagrees&quot;, &quot;do not ack unless both agree&quot;).
+                    Read the words.
+                  </ComponentCard>
+                </div>
+
+                <div className="rounded-xl border border-cyan-300 bg-cyan-50 p-5">
+                  <h3 className="text-base font-bold text-cyan-950">Real vs decoy: the two IDS nodes must agree</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-cyan-900">
+                    The two IDS nodes are designed so you can&apos;t trust either alone:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-cyan-900">
+                    <li><strong>Real attack</strong> → both nodes read high (node A ≈ 0.85, node B ≈ 0.65). They <em>agree</em>.</li>
+                    <li><strong>Decoy / false flag</strong> → node A looks suspicious (≈ 0.60) but node B stays low (≈ 0.10). They <em>disagree</em>.</li>
+                    <li><strong>Normal</strong> → both low (≈ 0.20 / 0.10).</li>
+                  </ul>
+                  <p className="mt-2 text-sm leading-relaxed text-cyan-900">
+                    So the rule is: <strong>only treat it as real when BOTH nodes clear a threshold</strong> (≈ 0.4 each).
+                    The signal is noisy, so smooth it over a couple of steps rather than trusting a single reading.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-rose-300 bg-rose-100 p-5">
+                  <h3 className="text-base font-bold text-rose-950">
+                    Containment: acknowledge real attacks, ignore decoys
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900">
+                    During a real attack window you must set{" "}
+                    <code>agent_plan["containment_ack"] = &lt;the attack id&gt;</code> (the critical alert names it, e.g.{" "}
+                    <code>&quot;attack_30&quot;</code>). Both mistakes are punished equally hard — about{" "}
+                    <strong>$50,000 per step</strong>:
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-rose-900">
+                    <li><strong>Miss a real attack</strong> (no ack, or wrong id) → fined every step of the window.</li>
+                    <li><strong>Acknowledge a decoy</strong> (ack the fake one&apos;s id) → fined every step of <em>that</em> window.</li>
+                  </ul>
+                  <p className="mt-2 text-sm leading-relaxed text-rose-900">
+                    Remember the channel: <code>containment_ack</code> is read from{" "}
+                    <strong>the action your <code>step()</code> returns</strong>, so set it there, every step the
+                    confirmed attack is live.
+                  </p>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
+                    <h3 className="font-mono text-sm font-semibold text-ink">Worked example — detect, confirm, contain</h3>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`import re
+
+class Strategy:
+    def __init__(self):
+        self.seen = set()
+        self.attacks = {}        # attack_id -> (start_step, end_step), learned from prose
+        self.ema_a = 0.0         # smoothed IDS node A
+        self.ema_b = 0.0         # smoothed IDS node B
+
+    def replan(self, state, alerts):
+        # Parse each NEW alert once. A critical alert names the attack id to ack;
+        # a decoy alert names an id but tells you NOT to ack it.
+        for a in alerts:
+            if a["id"] in self.seen:
+                continue
+            self.seen.add(a["id"])
+            m = re.search(r"\`containment_ack\`:\\s*\`([^\`]+)\`", a.get("description", ""))
+            if m and a.get("severity") == "critical" and "decoy" not in a["description"].lower():
+                self.attacks[m.group(1)] = (a.get("at_step"), a.get("end_step"))
+        return {}
+
+    def step(self, state):
+        t = int(state["time"])
+
+        # 1) Smooth the (noisy) IDS signal. Subscribe whenever an attack window is open.
+        in_window = any(s <= t <= e for (s, e) in self.attacks.values())
+        a = state.get("ids_signal_node_a") or 0.0
+        b = state.get("ids_signal_node_b") or 0.0
+        self.ema_a = 0.5 * self.ema_a + 0.5 * a
+        self.ema_b = 0.5 * self.ema_b + 0.5 * b
+        corroborated = self.ema_a >= 0.4 and self.ema_b >= 0.4   # BOTH nodes agree -> real
+
+        # 2) Acknowledge ONLY a confirmed real attack, using the id from the prose.
+        agent_plan = {}
+        for aid, (s, e) in self.attacks.items():
+            if s is not None and s <= t <= e and corroborated:
+                agent_plan["containment_ack"] = aid
+
+        # 3) When data looks spoofed, steer by the forecast instead of the live sensor.
+        demand = state["demand"]; solar = state["solar"]
+        fc = state.get("forecast", {})
+        if corroborated and fc.get("demand") and fc.get("solar"):
+            demand, solar = fc["demand"][0], fc["solar"][0]
+
+        net = demand - solar
+        flow = max(-50.0, min(50.0, net)) if state["soc"] > 0.1 else 0.0
+        return {
+            "battery_flow_mw": flow,
+            "subscribe_ids": in_window,     # only pay for IDS while a window is open
+            "agent_plan": agent_plan,       # containment_ack read from HERE
+        }`}
+                    </CodeBlock>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-emerald-300 bg-emerald-100 p-5">
+                  <h3 className="text-base font-bold text-emerald-950">
+                    The diesel-ban exemption
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900">
+                    During an environmental diesel-ban window, running diesel without a filed exemption costs{" "}
+                    <strong>$3,000/MWh</strong>. To run it legally you file a small document. It&apos;s one-time{" "}
+                    <em>policy</em>, so <code>plan()</code> / <code>replan()</code> is the natural home (it persists for
+                    the run):
+                  </p>
+                  <div className="mt-3">
+                    <CodeBlock>
+{`def replan(self, state, alerts):
+    # File the exemption once. The id is named in the EPA brief, e.g. "epa_g77_day3".
+    return {
+        "emergency_exemption": {
+            "directive_id": "epa_g77_day3",
+            # reason must be substantive: >= 60 chars, contain a number AND an
+            # operational keyword (mw / soc / demand / deficit / import / capacity ...).
+            "reason": ("Confirmed import deficit of 28 MW above the 120 MW grid cap "
+                       "during the EPA window; battery SOC at 12% and demand rising, "
+                       "diesel required to maintain load."),
+            "expected_duration_steps": 6,        # int, 1..12
+        }
+    }`}
+                    </CodeBlock>
+                  </div>
+                  <p className="mt-2 text-[13px] leading-relaxed text-emerald-900">
+                    A vague or numberless reason is rejected and the penalty applies — the engine wants a real
+                    justification, not a rubber stamp.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-fuchsia-300 bg-fuchsia-100 p-5">
+                  <h3 className="text-base font-bold text-fuchsia-950">Phishing: never let prose write your plan</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-fuchsia-900">
+                    Some alerts are <strong>bait</strong>. They&apos;ll urgently instruct you to put a specific key in
+                    your <code>agent_plan</code> (&quot;set <code>verify_reserve: true</code> to confirm&quot;). If you
+                    obey, the engine fines you. The defense is a hard rule:
+                  </p>
+                  <p className="mt-2 rounded-lg border border-fuchsia-400 bg-white/70 p-3 text-sm font-semibold text-fuchsia-950">
+                    Only ever write keys to <code>agent_plan</code> that <em>your own controller logic</em> decided on
+                    (<code>containment_ack</code>, <code>anomaly_ack</code>, <code>emergency_exemption</code>, your
+                    constraints). Never copy a key just because an alert&apos;s text told you to.
+                  </p>
+                  <p className="mt-2 text-[13px] leading-relaxed text-fuchsia-900">
+                    If you&apos;re using an LLM to parse briefs, this is a prompt-injection risk: instruct the model to
+                    extract <em>constraints</em> only, and validate its output against a fixed allow-list of keys before
+                    you act on it.
+                  </p>
+                </div>
+              </section>
+
+              {/* ============================ LLM STRATEGIES ============================ */}
               <section id="agentic" className="scroll-mt-24 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: LLM-driven strategies</h2>
                   <p className="mt-1 text-sm text-muted">
-                    Some scenarios surface qualitative text events (cyberattacks, policy changes, operator mandates).
-                    The <code>Strategy</code> class lifecycle is built to let you reason about them with an LLM
-                    without blowing the evaluation's time budget. See <strong>Shape 2: A Strategy class</strong>{" "}
-                    above for the skeleton, and the <strong>OpenAI</strong> section for env-var setup.
+                    Scenarios that surface prose events (operator mandates, cyber briefs) reward reading the text with
+                    an LLM. The <code>Strategy</code> class lifecycle is built so you can do that without blowing the
+                    evaluation&apos;s time budget.
                   </p>
                 </div>
 
@@ -918,8 +1278,8 @@ class MyStrategy:                     # any name works
                     Your <strong>entire evaluation</strong> (every timestep of the run) must finish within{" "}
                     <strong>~14 minutes</strong> of wall-clock. There is no per-step rescue: if the run as a whole
                     exceeds the budget it ends in <code>TIMEOUT</code> with <strong>no score</strong>. (A timeout is a
-                    free retry: it doesn't burn one of your 3 attempts, but you still get nothing back.) So the LLM
-                    has to live where it's called rarely:
+                    free retry: it doesn&apos;t burn one of your attempts, but you still get nothing back.) So the LLM
+                    has to live where it&apos;s called rarely:
                   </p>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950">
                     <li>
@@ -927,16 +1287,16 @@ class MyStrategy:                     # any name works
                       LLM call to read the scenario briefing and pick a high-level policy.
                     </li>
                     <li>
-                      <code>replan(state, alerts)</code> runs <strong>only when a new qualitative alert fires</strong>.{" "}
-                      Call the LLM here to react to text events. The dict you return is merged into{" "}
-                      <code>state["agent_plan"]</code> for every subsequent step.
+                      <code>replan(state, alerts)</code> runs <strong>whenever alerts are active</strong> — so{" "}
+                      <strong>dedupe by alert id</strong> (see Reacting to Events) and only call the LLM for new ones.
+                      The dict you return is merged into the persistent <code>state["agent_plan"]</code>.
                     </li>
                     <li>
                       <strong>
                         Never call an LLM from <code>step(state)</code>.
                       </strong>{" "}
                       It runs every 15 simulated minutes; a network call there is multiplied across the whole run and
-                      will blow the 14-minute budget. Instead read{" "}
+                      will blow the budget. Instead read{" "}
                       <code>state.get("agent_plan", {`{}`})</code> and branch on the cached policy: LLM-quality
                       decisions at deterministic-controller latency.
                     </li>
@@ -946,9 +1306,424 @@ class MyStrategy:                     # any name works
                     </li>
                   </ul>
                 </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">The full Strategy lifecycle</h3>
+                  <div className="mt-3">
+                    <CodeBlock>
+{`class Strategy:
+    def __init__(self):
+        # Persist anything across the run here.
+        self.policy = {}
+        self.seen = set()
+
+    def plan(self, initial_state):
+        # OPTIONAL. Called ONCE before step 0. Right place for a slow LLM call
+        # to read the briefing. The dict you return seeds state["agent_plan"].
+        return {"stance": "conserve"}
+
+    def replan(self, state, alerts):
+        # OPTIONAL. Called when alerts are active. DEDUPE first, then (maybe) call
+        # an LLM. The dict you return is MERGED into the persistent agent_plan.
+        new = [a for a in alerts if a["id"] not in self.seen]
+        for a in new:
+            self.seen.add(a["id"])
+        return {}    # e.g. {"export_cap": 22.0} parsed from a brief
+
+    def step(self, state):
+        # REQUIRED. Called every 15 minutes. NO LLM here — read the cached plan.
+        plan = state.get("agent_plan", {})
+        return {"battery_flow_mw": 10.0}`}
+                    </CodeBlock>
+                  </div>
+                </div>
+              </section>
+
+              {/* ============================ THE GAUNTLET ============================ */}
+              <section id="gauntlet" className="scroll-mt-24 space-y-6">
+                <div className="rounded-2xl border border-amber-300 bg-gradient-to-br from-amber-50 via-white to-orange-50/40 p-6 shadow-sm sm:p-8">
+                  <div className="flex items-center gap-3">
+                    <TrophyIcon className="h-7 w-7 text-amber-600" />
+                    <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">The Gauntlet</h2>
+                  </div>
+                  <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
+                    The finale. A single <strong>288-step (3-day)</strong> run that combines <em>every</em> mechanic
+                    from the earlier scenarios at once. You get <strong>one submission</strong>, and it counts{" "}
+                    <strong>×3</strong> on the leaderboard — by far the highest-leverage scenario in the event.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-5">
+                  <h3 className="text-base font-bold text-emerald-950">
+                    It introduces no new mechanic — so you can fully prepare
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-900">
+                    Every challenge in the Gauntlet is something you already practised in an earlier scenario, where you
+                    have <strong>unlimited local playtests</strong>. The single-submission limit applies to the{" "}
+                    <em>scored run</em>, not to your iteration: master each mechanic in its own scenario first, then the
+                    Gauntlet is &quot;just&quot; doing all of them in one controller.
+                  </p>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
+                    <h3 className="text-sm font-semibold text-ink">What it folds in, and where you learned it</h3>
+                  </div>
+                  <div className="overflow-x-auto p-1">
+                    <table className="w-full border-collapse text-left text-[13px]">
+                      <thead>
+                        <tr className="border-b border-line text-[11px] uppercase tracking-wide text-muted">
+                          <th className="px-3 py-2 font-semibold">In the Gauntlet you&apos;ll face…</th>
+                          <th className="px-3 py-2 font-semibold">Practise it in</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <GauntletRow what="A severe duck curve + battery throughput budget" where="Duck Curve" />
+                        <GauntletRow what="A noisy AR(1) forecast to debias and plan against" where="Frequency Frenzy" />
+                        <GauntletRow what="FCAS reserve bids + scheduled dispatch calls" where="AI Grid Shock" />
+                        <GauntletRow what="Prose briefs → compliance windows (SOC floors, export caps)" where="Operator's Mandate" />
+                        <GauntletRow what="An EPA diesel-ban window needing an exemption" where="Operator's Mandate" />
+                        <GauntletRow what="A phishing / bait directive to ignore" where="Operator's Mandate" />
+                        <GauntletRow what="Real + decoy cyberattacks, IDS, sensor spoofing" where="Cybersecurity" />
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-amber-300 bg-amber-100 p-5">
+                  <h3 className="text-base font-bold text-amber-950">Build a detector, not a memoriser</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-amber-900">
+                    The Gauntlet rephrases its briefs and can shuffle the timing of incidents between runs, and the
+                    scored run is graded fresh. A controller that hard-codes &quot;ack at step 30&quot; is brittle; one
+                    that <em>detects</em> conditions (corroborated IDS nodes, a forecast-vs-sensor gap, a parsed
+                    constraint window) generalises. The reference patterns in Cyber &amp; Phishing and Reacting to
+                    Events are written to generalise on purpose.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-300 bg-slate-50 p-5">
+                  <h3 className="text-base font-bold text-slate-900">One-submission checklist</h3>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-slate-700">
+                    <li>Score 100+ on each Phase-1 scenario locally before you touch the Gauntlet.</li>
+                    <li>Confirm your <code>replan</code> dedupes — check your LLM call count over a full run.</li>
+                    <li>Verify each penalty line is <strong>$0</strong> in the report: containment, diesel-ban, FCAS shortfall, compliance, overvoltage, blackout.</li>
+                    <li>Confirm you ignore the bait key and only write your own keys to <code>agent_plan</code>.</li>
+                    <li>Check your worst-case wall-clock is comfortably under 14 minutes (LLM latency varies).</li>
+                    <li>Re-read the <a href="#submission" className="font-semibold underline">Submission Guide</a>: the Gauntlet allows <strong>1</strong> attempt.</li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* ============================ SUBMISSION ============================ */}
+              <section id="submission" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-3xl font-extrabold tracking-tight text-ink">Submission Guide</h2>
+                  <p className="mt-2 text-base text-muted">
+                    Submit your controller through the in-app{" "}
+                    <Link
+                      to="/watt-the-hack/city-of-melbourne-advanced-submit"
+                      className="font-semibold text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Submission Portal
+                    </Link>
+                    . No zipping, no CLI: paste your code into the editor and hit submit.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-100 p-6 shadow-sm">
+                  <h3 className="text-xl font-extrabold tracking-tight text-emerald-950">
+                    The structure of your submission
+                  </h3>
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-950">
+                    Your code can take exactly <strong>one of two shapes</strong>. The engine auto-detects which.
+                    Pick the one that fits your strategy; there&apos;s no advantage to picking the more complex one if
+                    you don&apos;t need it.
+                  </p>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-blue-300 bg-blue-100 shadow-sm">
+                  <div className="border-b border-blue-300 bg-blue-100 px-5 py-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        Shape 1
+                      </span>
+                      <h3 className="text-lg font-extrabold text-blue-950">A controller(state) function</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm text-blue-950">
+                      Use this if your controller is stateless: every step&apos;s action depends only on the current state
+                      (plus the forecast). No persistent variables between timesteps.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`def controller(state):
+    # Read state, return an action dictionary.
+    soc = state["soc"]
+    demand = state["demand"]
+    solar = state["solar"]
+
+    return {
+        "battery_flow_mw": demand - solar,
+        # Any key you omit defaults to 0.
+    }`}
+                    </CodeBlock>
+                    <div className="mt-3 rounded-lg border border-blue-300 bg-white/60 p-3">
+                      <p className="text-[13px] font-bold text-blue-950">REQUIRED</p>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-blue-950">
+                        <li>
+                          The function MUST be named <code>controller</code> and take a single <code>state</code>{" "}
+                          argument.
+                        </li>
+                        <li>It MUST return a dict (any of the action keys; missing keys default to 0).</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-100 shadow-sm">
+                  <div className="border-b border-amber-300 bg-amber-100 px-5 py-3">
+                    <div className="flex items-baseline gap-3">
+                      <span className="rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
+                        Shape 2
+                      </span>
+                      <h3 className="text-lg font-extrabold text-amber-950">A Strategy class</h3>
+                    </div>
+                    <p className="mt-1.5 text-sm text-amber-950">
+                      Use this if you need persistent state between timesteps (e.g. a rolling error buffer, a PID
+                      memory, a precomputed plan from an LLM call). The engine instantiates your class once and reuses
+                      it for the whole run.
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`class Strategy:
+    def __init__(self):
+        # Anything you want to persist between steps lives on self.
+        self.history = []
+
+    def plan(self, initial_state):
+        # OPTIONAL. Called ONCE before step 0. Right place for a slow
+        # LLM call to read the scenario briefing. The dict you return
+        # is stashed on state["agent_plan"] for every later step().
+        return {"policy": "conserve"}
+
+    def replan(self, state, alerts):
+        # OPTIONAL. Called when qualitative alerts are active mid-run.
+        # Right place for a second LLM call to react to text events.
+        # Returned dict is merged into state["agent_plan"]. DEDUPE first!
+        return {"policy": "respond"}
+
+    def step(self, state):
+        # REQUIRED. Called every 15-minute timestep.
+        # DO NOT call an LLM here; it will time out.
+        # Read state["agent_plan"] if you used plan()/replan().
+        self.history.append(state["soc"])
+        return {"battery_flow_mw": 10.0}`}
+                    </CodeBlock>
+                    <div className="mt-3 rounded-lg border border-amber-400 bg-white/60 p-3">
+                      <p className="text-[13px] font-bold text-amber-950">REQUIRED</p>
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950">
+                        <li>
+                          The class can have <strong>any name</strong> (the starter code uses{" "}
+                          <code>MyStrategy</code>) — the portal detects it automatically from your code.
+                          What matters is the <code>step</code> method below, not the class name.
+                        </li>
+                        <li>
+                          It MUST define a <code>step(self, state)</code> method, written{" "}
+                          <strong>directly in this class</strong>, that returns an action dict.{" "}
+                          <strong>If the class has no <code>step</code> method, the engine refuses the submission.</strong>{" "}
+                          (A <code>step</code> only inherited from a base class or assigned by alias
+                          isn&apos;t detected — keep it as a plain method here.)
+                        </li>
+                        <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
+                      </ul>
+                      <p className="mt-2 text-[13px] text-amber-950">
+                        <code>plan(self, initial_state)</code> and <code>replan(self, state, alerts)</code> are
+                        optional: the engine just skips them if you don&apos;t define them.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-100 shadow-sm">
+                  <div className="border-b border-rose-300 bg-rose-100 px-5 py-3">
+                    <h3 className="text-lg font-extrabold text-rose-950">Using the OpenAI API</h3>
+                    <p className="mt-1.5 text-sm text-rose-950">
+                      The evaluation platform injects <code>OPENAI_API_KEY</code> as an environment variable inside
+                      your container. Read it with <code>os.environ</code>; it&apos;s already there.
+                    </p>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <CodeBlock>
+{`# Works as-is on the evaluation platform.
+import os
+from openai import OpenAI
+
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+
+# Use a fast model; the whole evaluation must finish within ~14 minutes.
+resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
+                    </CodeBlock>
+
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
+                        ⚠ Use gpt-5.4-nano or gpt-5.4-mini
+                      </p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
+                        Your whole evaluation runs under a <strong>~14-minute budget</strong>. Stick to{" "}
+                        <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code>; they&apos;re quick
+                        enough to stay inside it. Larger or slower models risk exceeding the budget, and your run
+                        <strong> times out with no score</strong> (a timeout doesn&apos;t cost you a submission attempt, but
+                        you also get no result). These models draw on a shared credit pool, so keep calls few (call in{" "}
+                        <code>plan</code>/<code>replan</code>, dedupe by alert id).
+                      </p>
+                    </div>
+
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
+                        ⚠ Remove your .env loading line before you submit
+                      </p>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
+                        Locally you probably load your key from a <code>.env</code> file:
+                      </p>
+                      <div className="mt-2">
+                        <CodeBlock>
+{`# LOCAL TESTING ONLY. DELETE BEFORE SUBMITTING.
+from dotenv import load_dotenv
+load_dotenv()`}
+                        </CodeBlock>
+                      </div>
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
+                        Delete those two lines (and the <code>python-dotenv</code> entry in your{" "}
+                        <code>requirements.txt</code>, if you added it) before pasting into the portal. The platform
+                        doesn&apos;t ship your <code>.env</code>; the env vars are already in the container. Code that
+                        tries to read a non-existent <code>.env</code> can silently no-op and leave the API key empty,
+                        which then throws an <code>AuthenticationError</code> on the first LLM call.
+                      </p>
+                    </div>
+
+                    <p className="text-[13px] text-rose-950">
+                      Never hardcode a key in your <code>strategy.py</code>; submissions are stored and re-runnable.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">Extra pip dependencies?</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    The portal has a <strong>requirements</strong> textarea right under the code editor. Paste any
+                    additional pip packages your strategy needs there (one per line, same format as a normal{" "}
+                    <code>requirements.txt</code>). The platform builds a fresh container with those packages installed
+                    before running your code. Common ones (<code>numpy</code>, <code>scipy</code>, <code>pandas</code>,
+                    the OpenAI SDK) are already in the base image, so you don&apos;t need to list them.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-slate-300 bg-slate-100 p-5">
+                  <h3 className="font-semibold text-ink">Submission attempts are capped per scenario</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
+                    remaining count before you submit. Spend them wisely; playtest locally first. (A run that{" "}
+                    <code>TIMEOUT</code>s does not consume an attempt — but it also returns no score.)
+                  </p>
+                </div>
               </section>
             </div>
           </div>
   );
 }
 
+function SidebarGroup({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <h4 className="mb-0.5 px-2 pt-1 text-[10px] font-bold uppercase tracking-[0.14em] text-muted">{label}</h4>
+      {children}
+    </div>
+  );
+}
+
+function MiniFact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-sky-200 bg-white/70 px-3 py-2">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-sky-600">{label}</p>
+      <p className="mt-0.5 text-[13px] font-semibold text-slate-800">{children}</p>
+    </div>
+  );
+}
+
+function StepCard({
+  n,
+  title,
+  href,
+  children,
+}: {
+  n: string;
+  title: string;
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-line bg-surface p-4 shadow-sm">
+      <div className="flex items-center gap-2.5">
+        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-600 text-[12px] font-extrabold text-white">
+          {n}
+        </span>
+        <a href={href} className="text-sm font-bold text-ink hover:text-sky-700 hover:underline">
+          {title}
+        </a>
+      </div>
+      <div className="mt-2.5 text-[13px] leading-relaxed text-muted">{children}</div>
+    </div>
+  );
+}
+
+function GauntletRow({ what, where }: { what: string; where: string }) {
+  return (
+    <tr className="border-t border-slate-200 align-top">
+      <td className="px-3 py-2 text-slate-700">{what}</td>
+      <td className="px-3 py-2 font-medium text-slate-900">{where}</td>
+    </tr>
+  );
+}
+
+const ALERT_BUDGET: { scenario: string; distinct: number; replans: string }[] = [
+  { scenario: "Duck Curve", distinct: 9, replans: "~86" },
+  { scenario: "Frequency Frenzy", distinct: 8, replans: "~60" },
+  { scenario: "AI Grid Shock", distinct: 36, replans: "~197" },
+  { scenario: "The Operator's Mandate", distinct: 13, replans: "~73" },
+  { scenario: "Cybersecurity", distinct: 11, replans: "~92" },
+  { scenario: "The Gauntlet", distinct: 18, replans: "~119" },
+];
+
+function AlertBudgetTable() {
+  return (
+    <div className="rounded-lg border border-slate-300 bg-white px-5 py-4">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse text-left text-[13px]">
+          <thead>
+            <tr className="border-b border-slate-300 text-[11px] uppercase tracking-wide text-slate-500">
+              <th className="py-2 pr-4 font-semibold">Scenario</th>
+              <th className="py-2 pr-4 font-semibold">Distinct alerts (your LLM-call budget)</th>
+              <th className="py-2 font-semibold">replan() firings if you don&apos;t dedupe</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ALERT_BUDGET.map((row) => (
+              <tr key={row.scenario} className="border-t border-slate-200 align-top">
+                <td className="py-2 pr-4 font-medium text-slate-900">{row.scenario}</td>
+                <td className="py-2 pr-4 tabular-nums text-emerald-700">{row.distinct}</td>
+                <td className="py-2 tabular-nums text-rose-700">{row.replans}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
+        The middle column is the number of <strong>unique</strong> alerts — dedupe by <code>id</code> and that&apos;s
+        how many times you do real work. The right column is how often <code>replan()</code> is called if you{" "}
+        <em>don&apos;t</em> dedupe: firing an LLM on each of those will time you out. Figures are for the scored
+        (judging) runs and may shift slightly as scenarios are tuned; treat them as ceilings, not contracts.
+      </p>
+    </div>
+  );
+}

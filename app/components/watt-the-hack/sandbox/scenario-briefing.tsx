@@ -140,7 +140,7 @@ function BrandBar() {
             Watt-The-Hack Advanced Track
           </span>
           <a
-            href="/watt-the-hack/docs"
+            href="/watt-the-hack/docs/grid-guardian"
             target="_blank"
             rel="noopener noreferrer"
             title="Official Documentation"
@@ -148,6 +148,16 @@ function BrandBar() {
           >
             <HelpCircleIcon className="h-4 w-4" />
             Docs
+          </a>
+          <a
+            href="https://github.com/AaronEliasZachariah/City-of-Melbourne-Watt-the-Hack-Advanced-Track"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Engine source + local playtesting instructions"
+            className="flex items-center gap-1.5 rounded-md bg-canvas px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted shadow-sm transition-all duration-300 hover:scale-105 hover:bg-white hover:text-ink hover:shadow-md border border-line"
+          >
+            <GithubIcon className="h-4 w-4" />
+            GitHub
           </a>
           <a
             href="https://colab.research.google.com/github/AaronEliasZachariah/City-of-Melbourne-Watt-the-Hack-Advanced-Track/blob/main/notebooks/training_starter.ipynb"
@@ -160,16 +170,6 @@ function BrandBar() {
               alt="Open in Colab"
               className="h-[22px]"
             />
-          </a>
-          <a
-            href="https://github.com/AaronEliasZachariah/City-of-Melbourne-Watt-the-Hack-Advanced-Track"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Engine source + local playtesting instructions"
-            className="flex items-center gap-1.5 rounded-md bg-canvas px-2.5 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted shadow-sm transition-all duration-300 hover:scale-105 hover:bg-white hover:text-ink hover:shadow-md border border-line"
-          >
-            <GithubIcon className="h-4 w-4" />
-            GitHub
           </a>
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSftkjGzVPS9Ifa9bXHMHyh36v9fh_-9ALxQT7Vq4nEmvwrvRg/viewform?usp=dialog"
