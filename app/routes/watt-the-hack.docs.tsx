@@ -12,6 +12,7 @@ import {
   CommandLineIcon as TerminalIcon,
   PaperAirplaneIcon as SendIcon,
   CpuChipIcon as BrainCircuitIcon,
+  CircleStackIcon as StackIcon,
 } from "@heroicons/react/24/outline";
 import { Link } from "react-router";
 
@@ -57,6 +58,9 @@ export default function DocsPage() {
                 </SidebarLink>
                 <SidebarLink href="#submission" icon={<SendIcon className="h-4 w-4" />}>
                   Submission Guide
+                </SidebarLink>
+                <SidebarLink href="#python" icon={<StackIcon className="h-4 w-4" />}>
+                  Persisting State &amp; Python
                 </SidebarLink>
                 <SidebarLink href="#agentic" icon={<BrainCircuitIcon className="h-4 w-4" />}>
                   Agentic Strategies
@@ -616,6 +620,187 @@ load_dotenv()`}
                     remaining count before you submit. Spend them wisely; playtest locally first.
                   </p>
                 </div>
+              </section>
+
+              <section id="python" className="scroll-mt-24 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-ink">Persisting state &amp; Python essentials</h2>
+                  <p className="mt-1 text-sm text-muted">
+                    New to Python, or unsure what the engine does between steps? This is the stuff that quietly
+                    breaks first-time controllers — read it before you fight a bug that isn&apos;t really a bug.
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
+                  <h3 className="font-semibold text-ink">How the engine runs your code</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    The engine imports your file <strong>once</strong>, then calls your controller{" "}
+                    <strong>every 15 simulated minutes</strong> for the whole run — it never restarts in between. So
+                    a value you compute inside <code>step()</code> / <code>controller()</code> and keep in a{" "}
+                    <strong>local variable is thrown away</strong> the instant the function returns. Locals do not
+                    survive to the next step. To remember anything, you need state that lives <em>outside</em> a
+                    single call.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-bold tracking-tight text-ink">
+                    Keep an array (or any value) alive for the whole run
+                  </h3>
+                  <p className="mt-1 text-sm text-muted">
+                    This is the most common sticking point: you want a list you can update <em>every</em> step (a
+                    price history, a rolling error buffer, a counter). There are two correct ways.
+                  </p>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-emerald-300 bg-emerald-50/95 shadow-sm">
+                  <div className="border-b border-emerald-300 bg-emerald-100/70 px-4 py-2.5">
+                    <h3 className="text-sm font-extrabold text-emerald-950">Recommended: a Strategy class with self.</h3>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`class MyStrategy:                    # any name works — the portal detects it
+    def __init__(self):
+        # Runs ONCE, when the engine first creates your strategy.
+        # Put anything you want to remember for the whole run here.
+        self.price_history = []          # this list lives for the entire run
+
+    def step(self, state):
+        # self.price_history is the SAME list every step — append to it,
+        # read it, modify it, and it is still there on the next step.
+        self.price_history.append(state["price"])
+        recent = self.price_history[-12:]            # last 3 hours (12 x 15min)
+        avg = sum(recent) / len(recent)
+        flow = 20.0 if state["price"] > avg else -20.0
+        return {"battery_flow_mw": flow}`}
+                    </CodeBlock>
+                    <p className="mt-3 text-[13px] leading-relaxed text-emerald-950/90">
+                      The engine builds your strategy class <strong>once</strong> and reuses that one instance
+                      for every step, so everything stored on <code>self</code> persists automatically. This is the
+                      clean way, and it sidesteps the gotcha below.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
+                    <h3 className="text-sm font-semibold text-ink">Alternative: a module-level variable (plain function)</h3>
+                  </div>
+                  <div className="p-4">
+                    <CodeBlock>
+{`price_history = []          # defined at the TOP of the file = "module level"
+
+def controller(state):
+    price_history.append(state["price"])         # appending is fine, no keyword needed
+    recent = price_history[-12:]
+    avg = sum(recent) / len(recent)
+    return {"battery_flow_mw": 20.0 if state["price"] > avg else -20.0}`}
+                    </CodeBlock>
+                    <p className="mt-3 text-[13px] leading-relaxed text-muted">
+                      This works because your file is imported once, so the module-level{" "}
+                      <code>price_history</code> is shared across every call.
+                    </p>
+                  </div>
+                </div>
+
+                <ConstraintRow title="The #1 gotcha: rebinding a global needs the `global` keyword" tone="warning">
+                  <strong>Mutating</strong> a module-level value (<code>.append()</code>, <code>my_list[i] = ...</code>,{" "}
+                  <code>my_dict[k] = ...</code>) works with no ceremony. But if you <strong>reassign</strong> the name
+                  itself inside a function, Python silently creates a <em>new local</em> instead — so your value never
+                  actually updates:
+                  <div className="mt-2">
+                    <CodeBlock>
+{`counter = 0
+
+def controller(state):
+    global counter          # WITHOUT this line, the next line makes a NEW local...
+    counter = counter + 1   # ...and the module-level counter never changes.
+    return {"battery_flow_mw": 0.0}`}
+                    </CodeBlock>
+                  </div>
+                  Rule of thumb: mutating an existing object needs nothing; <strong>rebinding the name</strong>{" "}
+                  (<code>counter = ...</code>, <code>x = x + 1</code>) needs <code>global</code>. The{" "}
+                  class-based approach avoids this trap entirely — just write <code>self.counter += 1</code>.
+                </ConstraintRow>
+
+                <ConstraintRow title="What does NOT persist" tone="danger">
+                  <ul className="list-disc space-y-1 pl-5">
+                    <li>Local variables inside <code>step()</code> / <code>controller()</code> — reset on every step.</li>
+                    <li>
+                      Anything you write into the <code>state</code> dict you&apos;re handed. The engine rebuilds that
+                      view fresh each step, so <code>state["my_thing"] = ...</code> is discarded. Use{" "}
+                      <code>self.*</code> or a module-level variable instead.
+                    </li>
+                  </ul>
+                  <p className="mt-2">
+                    The one channel the engine deliberately carries forward is <code>state["agent_plan"]</code>, which
+                    holds whatever your <code>plan()</code> / <code>replan()</code> returned (see Agentic Strategies).
+                  </p>
+                </ConstraintRow>
+
+                <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
+                  <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
+                    <h3 className="text-sm font-semibold text-ink">Class syntax, for non-experts</h3>
+                  </div>
+                  <div className="space-y-3 p-4">
+                    <ul className="list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-muted">
+                      <li>
+                        A class bundles data (<code>self.x</code>) with functions (called <strong>methods</strong>). The
+                        engine makes one instance and calls its <code>step</code> each tick.
+                      </li>
+                      <li>
+                        Every method&apos;s first parameter must be <code>self</code> (<code>def step(self, state):</code>).
+                        Forget it and you get <code>TypeError: step() takes 1 positional argument but 2 were given</code>.
+                      </li>
+                      <li>
+                        To call one method from another, go through <code>self.</code> — a bare{" "}
+                        <code>helper()</code> raises <code>NameError</code>.
+                      </li>
+                      <li>
+                        Plain functions defined at module level <em>are</em> callable from inside a method directly (no{" "}
+                        <code>self.</code>).
+                      </li>
+                      <li>
+                        You never create the class yourself — the engine does. So{" "}
+                        <code>__init__(self)</code> must work with no arguments (don&apos;t add required parameters).
+                      </li>
+                    </ul>
+                    <CodeBlock>
+{`def clamp(x, lo, hi):                 # a plain module-level helper
+    return max(lo, min(hi, x))
+
+class MyStrategy:                     # any name works
+    def __init__(self):
+        self.target_soc = 0.5
+
+    def _decide_target(self, price):  # a helper METHOD (leading _ is just convention)
+        return 0.8 if price < 0.10 else 0.3
+
+    def step(self, state):
+        self.target_soc = self._decide_target(state["price"])   # call a method via self.
+        raw = (self.target_soc - state["soc"]) * 100
+        return {"battery_flow_mw": clamp(raw, -50.0, 50.0)}       # call a function directly`}
+                    </CodeBlock>
+                  </div>
+                </div>
+
+                <ConstraintRow title="A few more traps that fail silently or error" tone="warning">
+                  <ul className="list-disc space-y-1 pl-5">
+                    <li>
+                      <strong>Mutable default arguments:</strong> <code>def f(x, hist=[]):</code> creates that list{" "}
+                      <em>once</em> and reuses it across calls. Use <code>hist=None</code>, then{" "}
+                      <code>hist = hist or []</code> inside.
+                    </li>
+                    <li>
+                      <strong>Division:</strong> <code>1 / 2</code> is <code>0.5</code> (true division);{" "}
+                      <code>1 // 2</code> is <code>0</code> (floor). Mixing them up skews your maths.
+                    </li>
+                    <li>
+                      <strong>Indentation is syntax:</strong> blocks are defined by consistent indentation (4 spaces).
+                      Mixing tabs and spaces, or uneven indents, is an <code>IndentationError</code>.
+                    </li>
+                  </ul>
+                </ConstraintRow>
               </section>
 
               <section id="agentic" className="scroll-mt-24 space-y-6">
