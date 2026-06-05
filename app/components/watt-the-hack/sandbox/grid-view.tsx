@@ -86,6 +86,8 @@ export function GridDiagram() {
   const maxImportMw = scenario?.limits?.grid_max_import_mw ?? Infinity;
   const maxExportMw = scenario?.limits?.grid_max_export_mw ?? Infinity;
   const exportTariff = scenario?.penalties?.export_tariff_per_mwh ?? 0;
+  const blackoutPenalty = scenario?.penalties?.blackout_per_mwh ?? 100000;
+  const overvoltagePenalty = scenario?.penalties?.overvoltage_per_mwh ?? 5000;
 
   // Scenario-driven node visibility. New mechanics that introduce a grid
   // node should add a check here.
@@ -145,12 +147,12 @@ export function GridDiagram() {
       <div className="pointer-events-none absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 flex-wrap justify-center gap-2">
         {unmetDemand > 0.01 && (
           <div className="whitespace-nowrap rounded-full border border-danger/30 bg-danger/5 px-3 py-1 text-[11px] font-medium text-danger shadow-soft backdrop-blur">
-            ⚠ {formatKw(unmetDemand)} unmet · $10/MWh
+            ⚠ {formatKw(unmetDemand)} unmet · {`$${blackoutPenalty.toLocaleString("en-AU")}/MWh`}
           </div>
         )}
         {overvoltage && (
           <div className="whitespace-nowrap rounded-full border border-amber-500/40 bg-amber-50 px-3 py-1 text-[11px] font-medium text-amber-700 shadow-soft backdrop-blur">
-            ⚠ {formatKw(overvoltageKw)} overvoltage · $5/MWh
+            ⚠ {formatKw(overvoltageKw)} overvoltage · {`$${overvoltagePenalty.toLocaleString("en-AU")}/MWh`}
           </div>
         )}
       </div>
