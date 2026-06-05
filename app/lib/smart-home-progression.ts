@@ -18,16 +18,42 @@ export const STAGE2_DAY = 6; // pipeline introduced: Actions + Outputs
 export const STAGE3_DAY = 16; // + Schedule
 export const STAGE4_DAY = 26; // + Brain + Inputs (the full board)
 
+export type SwitchGroup = "Lights" | "Climate & energy" | "Appliances";
+
 export interface SwitchDevice {
   id: string;
   label: string;
   hint: string;
+  group: SwitchGroup;
+  defaultOn: boolean;
 }
 
-/** Stage-1 devices the player can switch on/off directly (-> backend set_lights{room,on}). */
+/** Group render order for the switchboard. */
+export const SWITCH_GROUPS: SwitchGroup[] = ["Lights", "Climate & energy", "Appliances"];
+
+/**
+ * Stage-1 devices the player can switch on/off directly. On Deploy the page posts
+ * `{ switches: {id: on} }` -> backend `SWITCH_DEVICE_COMMANDS` -> the matching device command
+ * (set_lights / set_thermostat_setpoint / set_ev_charging / run_appliance / ...). The ids here
+ * MUST mirror the backend map (generic_hackathons/smart_home_progression.py).
+ */
 export const SWITCH_DEVICES: SwitchDevice[] = [
-  { id: "bathroom", label: "Bathroom Light", hint: "The one that always gets left on." },
-  { id: "living", label: "Living Room Lights", hint: "Where everyone hangs out." },
+  // Lights — the house leaves some on; spotting one to switch off is the natural first move.
+  { id: "bathroom", label: "Bathroom Light", hint: "The one that always gets left on.", group: "Lights", defaultOn: true },
+  { id: "living", label: "Living Room Lights", hint: "Where everyone hangs out.", group: "Lights", defaultOn: true },
+  { id: "kitchen", label: "Kitchen Lights", hint: "Bright while someone's cooking.", group: "Lights", defaultOn: true },
+  { id: "bedroom", label: "Main Bedroom Light", hint: "Usually off through the day.", group: "Lights", defaultOn: false },
+  { id: "child_bedroom", label: "Child's Bedroom Light", hint: "On around bedtime.", group: "Lights", defaultOn: false },
+  { id: "office", label: "Office Light", hint: "On while working from home.", group: "Lights", defaultOn: false },
+  // Climate & energy.
+  { id: "thermostat", label: "Thermostat", hint: "Comfort (22°) vs eco setback (18°).", group: "Climate & energy", defaultOn: true },
+  { id: "hot_water", label: "Hot Water", hint: "Heat-pump water for showers & taps.", group: "Climate & energy", defaultOn: true },
+  { id: "ev", label: "EV Charger", hint: "Charge the electric car.", group: "Climate & energy", defaultOn: true },
+  { id: "battery", label: "Home Battery", hint: "Store & dispatch cheap / solar power.", group: "Climate & energy", defaultOn: true },
+  // Appliances — run a cycle now, or hold it for cheaper off-peak power.
+  { id: "dishwasher", label: "Dishwasher", hint: "Run a wash now, or hold for off-peak.", group: "Appliances", defaultOn: false },
+  { id: "washer", label: "Washing Machine", hint: "Run a load now, or hold for off-peak.", group: "Appliances", defaultOn: false },
+  { id: "dryer", label: "Dryer", hint: "Tumble dry now, or hold for off-peak.", group: "Appliances", defaultOn: false },
 ];
 
 const SLOTS_BY_STAGE: Record<number, SlotType[]> = {
