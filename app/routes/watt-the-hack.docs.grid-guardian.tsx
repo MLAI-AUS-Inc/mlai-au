@@ -122,7 +122,7 @@ export default function GridGuardianDocs() {
                     (current demand, solar, price, battery charge, a short forecast, and any active alerts). You
                     return an <code>action</code> dictionary saying how to dispatch the battery, diesel, solar
                     curtailment and grid reserves. The engine applies physics + market rules, charges you the cost
-                    of that step, and loops. Your score is the total cost over the whole run — <strong>lower is
+                    of that step, and loops. Your score is the total cost over the whole run, <strong>lower is
                     better</strong>.
                   </p>
                 </div>
@@ -140,7 +140,7 @@ export default function GridGuardianDocs() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <StepCard n="1" title="Install the engine" href="#playtesting">
                     <CodeBlock>{`pip install "watt-the-hack[playtest]"`}</CodeBlock>
-                    The same engine the judges run. Develop on your own machine with full Python — imports, LLM
+                    The same engine the judges run. Develop on your own machine with full Python. Imports, LLM
                     calls, anything.
                   </StepCard>
                   <StepCard n="2" title="Write a controller" href="#controllers">
@@ -161,7 +161,7 @@ export default function GridGuardianDocs() {
                     >
                       Submission Portal
                     </Link>
-                    , pick a scenario, hit submit. No zipping. Attempts are limited — playtest first.
+                    , pick a scenario, hit submit. No zipping. Attempts are limited. Playtest first.
                   </StepCard>
                 </div>
               </section>
@@ -221,7 +221,7 @@ export default function GridGuardianDocs() {
                     bgColor="bg-emerald-50"
                   >
                     The city's connection to the broader energy market. Import and export happen{" "}
-                    <strong>automatically</strong> to balance the grid — you never set them directly. Whatever your
+                    <strong>automatically</strong> to balance the grid. You never set them directly. Whatever your
                     dispatch doesn't cover is imported (at <code>state["price"]</code>); any surplus is exported (at
                     the export tariff). Both respect strict <strong>Import Caps</strong> (default 120 MW) and{" "}
                     <strong>Export Caps</strong> (default 50 MW).
@@ -232,10 +232,10 @@ export default function GridGuardianDocs() {
                     icon={<ActivityIcon className="h-5 w-5 text-violet-600" />}
                     bgColor="bg-violet-50"
                   >
-                    Frequency Control Ancillary Services — a paid <strong>standby market</strong>. You bid{" "}
+                    Frequency Control Ancillary Services. A paid <strong>standby market</strong>. You bid{" "}
                     <code>fcas_reserve_mw</code> = how much inverter capacity you keep on call for the grid, and get
                     paid <strong>$40/MW per hour</strong> just for holding it ready, whether or not it&apos;s ever used.
-                    It&apos;s a promise, not a discharge — full mechanics in the FCAS explainer below.
+                    It&apos;s a promise, not a discharge. Full mechanics in the FCAS explainer below.
                   </ComponentCard>
                 </div>
 
@@ -254,13 +254,13 @@ export default function GridGuardianDocs() {
                 </div>
 
                 <div className="rounded-xl border border-violet-300 bg-violet-100 p-5">
-                  <h3 className="text-base font-bold text-violet-950">FCAS, explained — it&apos;s a bid, not a discharge</h3>
+                  <h3 className="text-base font-bold text-violet-950">FCAS, explained: it&apos;s a bid, not a discharge</h3>
                   <p className="mt-2 text-sm leading-relaxed text-violet-950">
                     <strong>What it is in real life:</strong> FCAS (Frequency Control Ancillary Services) is a real
                     market run by AEMO, Australia&apos;s grid operator. The grid must stay at almost exactly{" "}
                     <strong>50 Hz</strong>; when a large generator trips, fast assets like batteries are paid to inject
                     or soak up power within <em>seconds</em> to catch the frequency. Crucially, they&apos;re paid mostly
-                    for being <em>on standby</em>, not for the energy they end up moving — the Hornsdale &quot;Tesla big
+                    for being <em>on standby</em>, not for the energy they end up moving. The Hornsdale &quot;Tesla big
                     battery&quot; in South Australia earns a large share of its income from FCAS, not from buying and
                     selling energy. This scenario models that market.
                   </p>
@@ -268,7 +268,7 @@ export default function GridGuardianDocs() {
                     <p>
                       <strong>In the game it&apos;s a pure bid.</strong> Each step you set{" "}
                       <code>fcas_reserve_mw</code> = how many MW you <em>promise</em> to keep available for the grid.
-                      You move <strong>no energy</strong> and pay <strong>nothing</strong> to bid — you&apos;re just
+                      You move <strong>no energy</strong> and pay <strong>nothing</strong> to bid. You&apos;re just
                       claiming &quot;I&apos;m holding this much in reserve.&quot;
                     </p>
                     <p>
@@ -278,12 +278,12 @@ export default function GridGuardianDocs() {
                     </p>
                     <p>
                       <strong>It costs you inverter headroom.</strong> FCAS gets first claim on the inverter:{" "}
-                      <code>|battery_flow_mw| + fcas_reserve_mw ≤ inverter limit</code> (default 50 MW) — every MW you
+                      <code>|battery_flow_mw| + fcas_reserve_mw ≤ inverter limit</code> (default 50 MW). Every MW you
                       reserve is a MW you can&apos;t use for arbitrage that step. Changing your bid sharply between steps
                       also costs a small ramp charge (~$500 per MW of change), so keep it steady.
                     </p>
                     <p>
-                      <strong>Dispatch events test your claim.</strong> Sometimes the grid actually calls your reserve —
+                      <strong>Dispatch events test your claim.</strong> Sometimes the grid actually calls your reserve,
                       a <code>fcas_dispatch</code> event asks for a number of MW over a window. You&apos;re warned ahead
                       of time: read <code>state["fcas_events_upcoming"]</code> (each entry has <code>at_step</code>,{" "}
                       <code>end_step</code>, <code>magnitude_mw</code>). When called you must actually deliver from{" "}
@@ -300,14 +300,14 @@ export default function GridGuardianDocs() {
                         <strong>$200/MWh</strong> bonus.
                       </li>
                       <li>
-                        <strong>Fall short</strong> — you didn&apos;t reserve enough, or your battery is too empty to
+                        <strong>Fall short</strong>. You didn&apos;t reserve enough, or your battery is too empty to
                         back it → <strong>$100,000 per MWh of shortfall</strong>. Example: bid 10 MW, get called for
                         10 MW over one 15-minute step, deliver 0 → 10 MW × 0.25 h × $100,000 ={" "}
                         <strong>$250,000</strong> in a single step.
                       </li>
                     </ul>
                     <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
-                      So FCAS is reliable, near-free income — but only bid what you can truly back with charge when a
+                      So FCAS is reliable, near-free income. But only bid what you can truly back with charge when a
                       dispatch lands, and keep some SOC in the tank ahead of the windows the engine warns you about.
                     </p>
                   </div>
@@ -327,28 +327,28 @@ export default function GridGuardianDocs() {
                 <div className="space-y-4">
                   <ConstraintRow title="Dynamic Import Tariff">
                     What it costs to import power from the external grid (which happens automatically to cover any
-                    shortfall). It fluctuates wildly with time of day and market conditions — read it via{" "}
+                    shortfall). It fluctuates wildly with time of day and market conditions. Read it via{" "}
                     <code>state["price"]</code>. The goal is simple: buy low, avoid buying high.
                   </ConstraintRow>
 
                   <ConstraintRow title="Static Export Tariff">
                     When surplus solar or battery power is exported to the grid (also automatic), you earn this flat
-                    rate (default $50/MWh). When <code>price</code> goes negative, exporting <em>costs</em> you — see
+                    rate (default $50/MWh). When <code>price</code> goes negative, exporting <em>costs</em> you. See
                     Negative Prices under Common Pitfalls.
                   </ConstraintRow>
 
                   <ConstraintRow title="Demand Charge" tone="warning">
                     Your single biggest grid-import spike over the whole run is billed once, at{" "}
                     <strong>$1,000 per MW</strong> of that peak. One careless 120 MW import moment can cost{" "}
-                    <strong>$120,000</strong> on its own. This rewards <em>peak shaving</em> — pre-charging the battery
+                    <strong>$120,000</strong> on its own. This rewards <em>peak shaving</em>. Pre-charging the battery
                     so you never lean hard on the grid in a single step.
                   </ConstraintRow>
 
                   <ConstraintRow title="Battery Wear" tone="warning">
-                    Cycling the battery isn&apos;t free. Every MWh you move through it — charging <em>or</em>{" "}
-                    discharging — costs <strong>$50/MWh</strong> in wear, so needless round-trips quietly eat your
+                    Cycling the battery isn&apos;t free. Every MWh you move through it, charging <em>or</em>{" "}
+                    discharging, costs <strong>$50/MWh</strong> in wear, so needless round-trips quietly eat your
                     score. Separately, a <strong>ramp charge</strong> penalises sudden swings in your{" "}
-                    <strong>net grid power</strong> between steps (≈ $1 × ΔMW², so a 30 MW swing ≈ $900) — and since the
+                    <strong>net grid power</strong> between steps (≈ $1 × ΔMW², so a 30 MW swing ≈ $900). And since the
                     battery is your main lever on the grid draw, jerky dispatch feeds straight into it. Smooth, gradual
                     moves are much cheaper than slamming between extremes.
                   </ConstraintRow>
@@ -373,7 +373,7 @@ export default function GridGuardianDocs() {
 
                   <ConstraintRow title="Throughput Budget" tone="warning">
                     Some scenarios give you a total battery throughput budget (MWh). Every MWh you charge or discharge
-                    permanently consumes it — read what&apos;s left via{" "}
+                    permanently consumes it. Read what&apos;s left via{" "}
                     <code>state["battery_throughput_remaining_mwh"]</code>. Once depleted, the battery is locked. Spend
                     cycles where they matter most.
                   </ConstraintRow>
@@ -394,14 +394,14 @@ export default function GridGuardianDocs() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="rounded-xl border border-slate-300 bg-slate-50 p-5">
-                    <h3 className="text-base font-bold text-slate-900">Raw cost — what you see locally</h3>
+                    <h3 className="text-base font-bold text-slate-900">Raw cost: what you see locally</h3>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">
                       The playtest report&apos;s <code>final_score</code> is the total dollars your run accrued.{" "}
                       <strong>Lower wins.</strong> This is what you optimise against on your own machine.
                     </p>
                   </div>
                   <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-5">
-                    <h3 className="text-base font-bold text-emerald-900">Points — what the leaderboard shows</h3>
+                    <h3 className="text-base font-bold text-emerald-900">Points: what the leaderboard shows</h3>
                     <p className="mt-2 text-sm leading-relaxed text-emerald-800">
                       Your raw cost is converted into <strong>leaderboard points</strong>. <strong>Higher wins.</strong>{" "}
                       The conversion is anchored to two baselines for each scenario.
@@ -429,19 +429,19 @@ points = clamp(points, 0, 150)`}
                       <strong>Beat optimal</strong> → above 100, up to a <strong>150-point cap</strong> per scenario.
                     </li>
                     <li>
-                      <strong>Worse than naive</strong> → clamped to <strong>0</strong>. The starter template scores 0
-                      — you must beat naive to put a point on the board.
+                      <strong>Worse than naive</strong> → clamped to <strong>0</strong>. The starter template scores 0.
+                      You must beat naive to put a point on the board.
                     </li>
                   </ul>
                 </div>
 
                 <div className="rounded-xl border border-amber-300 bg-amber-50 p-5">
-                  <h3 className="text-base font-bold text-amber-950">Your leaderboard total — and why the Gauntlet dominates</h3>
+                  <h3 className="text-base font-bold text-amber-950">Your leaderboard total: why the Gauntlet dominates</h3>
                   <p className="mt-2 text-sm leading-relaxed text-amber-900">
                     Your headline total is the <strong>sum</strong> of your per-scenario points, with one twist: the{" "}
                     <strong>Gauntlet counts triple (×3)</strong>. With five Phase-1 scenarios plus the Gauntlet, a
                     flawless run is 5 × 100 + (100 × 3) = <strong>800 points</strong>, of which the Gauntlet is{" "}
-                    <strong>≈ 37.5%</strong>. No other single scenario comes close — it is by far the highest-leverage
+                    <strong>≈ 37.5%</strong>. No other single scenario comes close. It is by far the highest-leverage
                     thing you can get right. See <a href="#gauntlet" className="font-semibold underline">The Gauntlet</a>.
                   </p>
                 </div>
@@ -459,7 +459,7 @@ points = clamp(points, 0, 150)`}
                   </div>
                   <p className="mt-2 text-sm leading-relaxed text-slate-700">
                     Shave another $120k off (to $400k) and you hit 100. Every dollar closer to optimal is worth more
-                    points when the moat is narrow — so the scenarios with the widest naive→optimal gap are where
+                    points when the moat is narrow. So the scenarios with the widest naive→optimal gap are where
                     effort pays off most. The playtest report shows your standing on this ladder after every run.
                   </p>
                 </div>
@@ -498,8 +498,8 @@ points = clamp(points, 0, 150)`}
                     bgColor="bg-indigo-50"
                   >
                     A massive 100 MWh battery is useless if its <strong>inverter limit</strong> is only 10 MW. The
-                    inverter caps how much power (MW) can flow in or out per step. Ask for more — say{" "}
-                    <code>battery_flow_mw = 300</code> — and the engine simply <strong>clamps</strong> it to the
+                    inverter caps how much power (MW) can flow in or out per step. Ask for more. Say{" "}
+                    <code>battery_flow_mw = 300</code>. And the engine simply <strong>clamps</strong> it to the
                     limit (~50 MW). It won&apos;t error, but you also won&apos;t get 300 MW. See &quot;out-of-range
                     values&quot; under Controller Basics.
                   </ComponentCard>
@@ -545,14 +545,14 @@ points = clamp(points, 0, 150)`}
                     <CodeBlock>
 {`{
   "time": 42,                       # Timestep index (0..287)
-  "demand": 145.2,                  # Current city demand (MW)   — this step only
-  "solar": 80.5,                    # Current solar generation (MW) — this step only
-  "soc": 0.45,                      # Battery state of charge (0..1) — this step only
+  "demand": 145.2,                  # Current city demand (MW)   - this step only
+  "solar": 80.5,                    # Current solar generation (MW) - this step only
+  "soc": 0.45,                      # Battery state of charge (0..1) - this step only
   "price": 120.0,                   # Current import tariff ($/MWh)
   "features": {                     # Which mechanics are live this scenario
     "battery": True, "fcas": True, "ids": True
   },
-  "forecast": {                     # Lookahead arrays (≈16 steps). NOISY — see Tips.
+  "forecast": {                     # Lookahead arrays (≈16 steps). NOISY - see Tips.
     "demand": [146.1, 150.2, ...],
     "solar":  [82.1, 85.0, ...],
     "price":  [125.0, 150.0, ...]
@@ -565,7 +565,7 @@ points = clamp(points, 0, 150)`}
   "fcas_events_upcoming": [         # Scheduled FCAS dispatch calls (pre-position SOC!)
     {"at_step": 152, "end_step": 154, "magnitude_mw": 18.0}
   ],
-  "ids_signal_node_a": 0.87,        # Attack-probability hint [0..1] — only if you subscribed,
+  "ids_signal_node_a": 0.87,        # Attack-probability hint [0..1] - only if you subscribed,
   "ids_signal_node_b": 0.64,        #   otherwise None (see Cyber & Phishing)
   "battery_throughput_remaining_mwh": 500.0,   # If a throughput budget is active
   "peak_import_mw": 92.0,           # Your biggest grid import so far (drives the demand charge)
@@ -608,7 +608,7 @@ points = clamp(points, 0, 150)`}
         "subscribe_ids": False,
 
         # Per-step acknowledgements the engine reads from YOUR ACTION.
-        # (containment_ack / anomaly_ack — see Cyber & Phishing.)
+        # (containment_ack / anomaly_ack - see Cyber & Phishing.)
         "agent_plan": {},
     }`}
                     </CodeBlock>
@@ -619,7 +619,7 @@ points = clamp(points, 0, 150)`}
                   <h3 className="text-base font-bold text-sky-950">What if I return out-of-range values?</h3>
                   <p className="mt-2 text-sm leading-relaxed text-sky-950">
                     You don&apos;t need to pre-validate your numbers. The engine reads each value, treats it as a
-                    number, and <strong>clamps it to what&apos;s physically possible that step</strong> — it does not
+                    number, and <strong>clamps it to what&apos;s physically possible that step</strong>. It does not
                     error or penalise you just for asking for too much:
                   </p>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-sky-950">
@@ -627,7 +627,7 @@ points = clamp(points, 0, 150)`}
                       <code>battery_flow_mw</code> → clamped to <strong>±the inverter limit</strong> (default 50 MW,
                       minus any FCAS reserve), then further to what your <strong>state of charge</strong> can actually
                       deliver or absorb. So <code>battery_flow_mw = 300</code> just becomes a ~50 MW full-power
-                      discharge — not an error.
+                      discharge. Not an error.
                     </li>
                     <li><code>curtail_solar</code> → clamped to <strong>[0, current solar]</strong>.</li>
                     <li><code>emergency_generator</code> → clamped to <strong>[0, its MW limit]</strong>.</li>
@@ -641,7 +641,7 @@ points = clamp(points, 0, 150)`}
                     <strong>So always return plain numbers.</strong> A value the engine can&apos;t convert to a number
                     (<code>None</code> or non-numeric text) can fail the whole evaluation. And if your{" "}
                     <code>step()</code> throws, or returns something that isn&apos;t a dict, that step is replaced with
-                    the <strong>zero action</strong> (do nothing) and logged as a controller error — one buggy step
+                    the <strong>zero action</strong> (do nothing) and logged as a controller error. One buggy step
                     won&apos;t crash the run, but its intended action is lost.
                   </p>
                 </div>
@@ -652,7 +652,7 @@ points = clamp(points, 0, 150)`}
                     <li>
                       <strong>Don&apos;t trust the forecast implicitly:</strong> Forecasts carry AR(1) noise and a
                       persistent bias, and can be deliberately skewed by cyberattacks in later scenarios. The error is{" "}
-                      <em>structured</em>, so it&apos;s partly learnable — debias it rather than taking it at face value.
+                      <em>structured</em>, so it&apos;s partly learnable. Debias it rather than taking it at face value.
                     </li>
                     <li>
                       <strong>Respect the Inverter:</strong> The battery cannot charge/discharge faster than its inverter
@@ -677,7 +677,7 @@ points = clamp(points, 0, 150)`}
                   <h2 className="text-2xl font-bold tracking-tight text-ink">State &amp; Python essentials</h2>
                   <p className="mt-1 text-sm text-muted">
                     New to Python, or unsure what the engine does between steps? This is the stuff that quietly
-                    breaks first-time controllers — read it before you fight a bug that isn&apos;t really a bug.
+                    breaks first-time controllers. Read it before you fight a bug that isn&apos;t really a bug.
                   </p>
                 </div>
 
@@ -685,7 +685,7 @@ points = clamp(points, 0, 150)`}
                   <h3 className="font-semibold text-ink">How the engine runs your code</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">
                     The engine imports your file <strong>once</strong>, then calls your controller{" "}
-                    <strong>every 15 simulated minutes</strong> for the whole run — it never restarts in between. So
+                    <strong>every 15 simulated minutes</strong> for the whole run. It never restarts in between. So
                     a value you compute inside <code>step()</code> / <code>controller()</code> and keep in a{" "}
                     <strong>local variable is thrown away</strong> the instant the function returns. Locals do not
                     survive to the next step. To remember anything, you need state that lives <em>outside</em> a
@@ -709,14 +709,14 @@ points = clamp(points, 0, 150)`}
                   </div>
                   <div className="p-4">
                     <CodeBlock>
-{`class MyStrategy:                    # any name works — the portal detects it
+{`class MyStrategy:                    # any name works - the portal detects it
     def __init__(self):
         # Runs ONCE, when the engine first creates your strategy.
         # Put anything you want to remember for the whole run here.
         self.price_history = []          # this list lives for the entire run
 
     def step(self, state):
-        # self.price_history is the SAME list every step — append to it,
+        # self.price_history is the SAME list every step - append to it,
         # read it, modify it, and it is still there on the next step.
         self.price_history.append(state["price"])
         recent = self.price_history[-12:]            # last 3 hours (12 x 15min)
@@ -756,7 +756,7 @@ def controller(state):
                 <ConstraintRow title="The #1 gotcha: rebinding a global needs the `global` keyword" tone="warning">
                   <strong>Mutating</strong> a module-level value (<code>.append()</code>, <code>my_list[i] = ...</code>,{" "}
                   <code>my_dict[k] = ...</code>) works with no ceremony. But if you <strong>reassign</strong> the name
-                  itself inside a function, Python silently creates a <em>new local</em> instead — so your value never
+                  itself inside a function, Python silently creates a <em>new local</em> instead. So your value never
                   actually updates:
                   <div className="mt-2">
                     <CodeBlock>
@@ -770,15 +770,15 @@ def controller(state):
                   </div>
                   Rule of thumb: mutating an existing object needs nothing; <strong>rebinding the name</strong>{" "}
                   (<code>counter = ...</code>, <code>x = x + 1</code>) needs <code>global</code>. The{" "}
-                  class-based approach avoids this trap entirely — just write <code>self.counter += 1</code>.
+                  class-based approach avoids this trap entirely. Just write <code>self.counter += 1</code>.
                 </ConstraintRow>
 
                 <ConstraintRow title="What does NOT persist" tone="danger">
                   <ul className="list-disc space-y-1 pl-5">
-                    <li>Local variables inside <code>step()</code> / <code>controller()</code> — reset on every step.</li>
+                    <li>Local variables inside <code>step()</code> / <code>controller()</code>. Reset on every step.</li>
                     <li>
                       Arbitrary keys you write into the <code>state</code> dict you&apos;re handed (e.g.{" "}
-                      <code>state["my_thing"] = ...</code>) — the engine rebuilds that view fresh each step, so they&apos;re
+                      <code>state["my_thing"] = ...</code>). The engine rebuilds that view fresh each step, so they&apos;re
                       discarded. Use <code>self.*</code> or a module-level variable instead.
                     </li>
                   </ul>
@@ -804,7 +804,7 @@ def controller(state):
                         Forget it and you get <code>TypeError: step() takes 1 positional argument but 2 were given</code>.
                       </li>
                       <li>
-                        To call one method from another, go through <code>self.</code> — a bare{" "}
+                        To call one method from another, go through <code>self.</code>. A bare{" "}
                         <code>helper()</code> raises <code>NameError</code>.
                       </li>
                       <li>
@@ -812,7 +812,7 @@ def controller(state):
                         <code>self.</code>).
                       </li>
                       <li>
-                        You never create the class yourself — the engine does. So{" "}
+                        You never create the class yourself. The engine does. So{" "}
                         <code>__init__(self)</code> must work with no arguments (don&apos;t add required parameters).
                       </li>
                     </ul>
@@ -859,8 +859,8 @@ class MyStrategy:                     # any name works
                 <div>
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Playtest &amp; Debug</h2>
                   <p className="mt-1 text-sm text-muted">
-                    The public Python engine is identical to the one the judges run. Iterating locally — with the HTML
-                    report open — is the single fastest way to climb the leaderboard. This is also{" "}
+                    The public Python engine is identical to the one the judges run. Iterating locally. With the HTML
+                    report open. Is the single fastest way to climb the leaderboard. This is also{" "}
                     <strong>where you find out why you lost points</strong>.
                   </p>
                 </div>
@@ -891,7 +891,7 @@ class MyStrategy:                     # any name works
 
                 <div className="rounded-xl border border-indigo-300 bg-indigo-50 p-5">
                   <h3 className="text-base font-bold text-indigo-950">
-                    Read the report — it tells you exactly where the money went
+                    Read the report. It tells you exactly where the money went
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-indigo-900">
                     &quot;I scored badly&quot; is not a diagnosis. Every run writes a folder under{" "}
@@ -901,26 +901,26 @@ class MyStrategy:                     # any name works
                   </p>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-indigo-900">
                     <li>
-                      <strong>Cost breakdown</strong> — every component (import, battery wear, demand charge, each
+                      <strong>Cost breakdown</strong>. Every component (import, battery wear, demand charge, each
                       penalty…) ranked by size and as a % of your total. Your &quot;biggest lever&quot; is called out.
                     </li>
                     <li>
-                      <strong>Top worst steps</strong> — the exact timesteps that hurt most, with the demand, solar,
+                      <strong>Top worst steps</strong>. The exact timesteps that hurt most, with the demand, solar,
                       SOC, net grid and penalty at that moment. Start your fixes here.
                     </li>
                     <li>
-                      <strong>Opportunities</strong> — data-driven hints (&quot;you&apos;re importing at peak price in
-                      the evening — pre-charge earlier&quot;).
+                      <strong>Opportunities</strong>. Data-driven hints (&quot;you&apos;re importing at peak price in
+                      the evening. Pre-charge earlier&quot;).
                     </li>
                     <li>
-                      <strong>Baseline ladder</strong> — where your raw cost sits between the naive and optimal
+                      <strong>Baseline ladder</strong>. Where your raw cost sits between the naive and optimal
                       baselines, i.e. roughly how many points you&apos;d score.
                     </li>
                   </ul>
                   <p className="mt-2 text-sm leading-relaxed text-indigo-900">
                     If a penalty line you didn&apos;t expect is non-zero (e.g.{" "}
                     <code>cyber_containment_fine</code>, <code>diesel_ban_penalty</code>,{" "}
-                    <code>fcas_shortfall_penalty</code>), that&apos;s a mechanic you mis-handled — jump to the matching
+                    <code>fcas_shortfall_penalty</code>), that&apos;s a mechanic you mis-handled. Jump to the matching
                     section below.
                   </p>
                 </div>
@@ -959,18 +959,18 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   <h3 className="font-semibold text-ink">Three channels carry events</h3>
                   <ol className="mt-2 list-decimal space-y-2 pl-5 text-sm leading-relaxed text-muted">
                     <li>
-                      <strong><code>state["alerts"]</code></strong> — the list of narrative events <em>active right
+                      <strong><code>state["alerts"]</code></strong>. The list of narrative events <em>active right
                       now</em>. Each has <code>id</code>, <code>type</code>, <code>severity</code>, <code>title</code>,{" "}
                       <code>description</code> (the prose), <code>at_step</code>, <code>end_step</code>. Read it every
                       step.
                     </li>
                     <li>
-                      <strong><code>replan(self, state, alerts)</code></strong> — an optional hook that fires whenever
+                      <strong><code>replan(self, state, alerts)</code></strong>. An optional hook that fires whenever
                       alerts are active. The right place for a slow parse (e.g. an LLM call). Its return value is merged
                       into the persistent <code>agent_plan</code>.
                     </li>
                     <li>
-                      <strong><code>state["agent_plan"]</code></strong> — your standing memo to the engine. It persists
+                      <strong><code>state["agent_plan"]</code></strong>. Your standing memo to the engine. It persists
                       across steps and is how you <em>respond</em> to enforcement events (acknowledge an attack, file an
                       exemption).
                     </li>
@@ -984,8 +984,8 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   <p className="mt-2 text-sm leading-relaxed text-amber-900">
                     Narrative events (qualitative alerts, weather, demand/price signals, forecast-bias notices) appear
                     in <code>state["alerts"]</code>. But the engine deliberately <strong>hides the structured
-                    enforcement windows</strong> — compliance windows, the diesel ban, cyberattack windows, phishing
-                    traps — and strips their numeric payload. That&apos;s the whole challenge of the advanced
+                    enforcement windows</strong>. Compliance windows, the diesel ban, cyberattack windows, phishing
+                    traps. And strips their numeric payload. That&apos;s the whole challenge of the advanced
                     scenarios: the <em>prose</em> brief tells you a rule is coming (&quot;cap exports to 22 MW over
                     steps 108–124&quot;), and <strong>you</strong> must parse it into the right action. The engine
                     won&apos;t hand you the number.
@@ -997,7 +997,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                     ⚠ The biggest timeout trap: <code>replan</code> fires <em>every</em> active step
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-rose-900">
-                    <code>replan</code> is called on <strong>every step where at least one alert is active</strong> —
+                    <code>replan</code> is called on <strong>every step where at least one alert is active</strong>,
                     not once per alert. An alert that spans steps 8–20 calls <code>replan</code> 13 times. Across a
                     full run that can be <strong>100–200 calls</strong>. If you fire an LLM request on every one,
                     you&apos;ll blow the ~14-minute evaluation budget and your run ends in <code>TIMEOUT</code> with no
@@ -1034,7 +1034,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                 <div>
                   <h3 className="text-lg font-bold tracking-tight text-ink">How many alerts to expect</h3>
                   <p className="mt-1 text-sm text-muted">
-                    Counts for the scored (judging) run of the scenarios where an LLM actually helps — the earlier
+                    Counts for the scored (judging) run of the scenarios where an LLM actually helps. The earlier
                     ones (Duck Curve, Frequency Frenzy, AI Grid Shock) don&apos;t need one. Budget your LLM calls
                     against <strong>distinct alerts</strong> (what you handle when you dedupe), not the raw{" "}
                     <code>replan</code> firings.
@@ -1049,7 +1049,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   <p className="mt-2 text-sm leading-relaxed text-sky-950">
                     Everything you write to <code>agent_plan</code> accumulates into a <strong>single plan that
                     persists</strong> for the rest of the run, and the engine reads it back. Anything you return under
-                    the <code>agent_plan</code> key of your <code>step()</code> action is merged into that same plan — so
+                    the <code>agent_plan</code> key of your <code>step()</code> action is merged into that same plan. So
                     you don&apos;t have to memorise which key goes where. The clean habit:
                   </p>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -1058,7 +1058,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                         Per-step acknowledgements → from <code>step()</code>
                       </p>
                       <p className="mt-1 text-[13px] leading-relaxed text-sky-900">
-                        <code>containment_ack</code> / <code>anomaly_ack</code> are a <em>live signal</em> — set them in
+                        <code>containment_ack</code> / <code>anomaly_ack</code> are a <em>live signal</em>. Set them in
                         the <code>agent_plan</code> you return from <code>step()</code>, every step the incident is live.
                       </p>
                     </div>
@@ -1068,7 +1068,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                       </p>
                       <p className="mt-1 text-[13px] leading-relaxed text-sky-900">
                         <code>emergency_exemption</code> and your parsed constraints are a <em>standing document</em> you
-                        file once — the natural home for anything you parse with an LLM (see the budget rule).
+                        file once. The natural home for anything you parse with an LLM (see the budget rule).
                       </p>
                     </div>
                   </div>
@@ -1131,7 +1131,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
                   <p className="mt-2 text-sm leading-relaxed text-rose-900">
                     During a real attack window you must set{" "}
                     <code>agent_plan["containment_ack"] = &lt;the attack id&gt;</code> (the critical alert names it, e.g.{" "}
-                    <code>&quot;attack_30&quot;</code>). Both mistakes are punished equally hard — about{" "}
+                    <code>&quot;attack_30&quot;</code>). Both mistakes are punished equally hard. About{" "}
                     <strong>$50,000 per step</strong>:
                   </p>
                   <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-rose-900">
@@ -1147,7 +1147,7 @@ for k, v in sorted(result["cost_breakdown"].items(),
 
                 <div className="overflow-hidden rounded-xl border border-line bg-surface shadow-sm">
                   <div className="border-b border-line/60 bg-subtle px-4 py-2.5">
-                    <h3 className="font-mono text-sm font-semibold text-ink">Worked example — detect, confirm, contain</h3>
+                    <h3 className="font-mono text-sm font-semibold text-ink">Worked example. Detect, confirm, contain</h3>
                   </div>
                   <div className="p-4">
                     <CodeBlock>
@@ -1234,7 +1234,7 @@ class Strategy:
                     </CodeBlock>
                   </div>
                   <p className="mt-2 text-[13px] leading-relaxed text-emerald-900">
-                    A vague or numberless reason is rejected and the penalty applies — the engine wants a real
+                    A vague or numberless reason is rejected and the penalty applies. The engine wants a real
                     justification, not a rubber stamp.
                   </p>
                 </div>
@@ -1265,7 +1265,7 @@ class Strategy:
                   <h2 className="text-2xl font-bold tracking-tight text-ink">Advanced: LLM-driven strategies</h2>
                   <p className="mt-1 text-sm text-muted">
                     The Operator&apos;s Mandate, Cybersecurity, and the Gauntlet hide their rules in plain-English
-                    briefs. To act on them you have to <em>read</em> the text — that&apos;s where an LLM helps. This is
+                    briefs. To act on them you have to <em>read</em> the text. That&apos;s where an LLM helps. This is
                     the part most people find confusing, so here it is from scratch.
                   </p>
                 </div>
@@ -1289,16 +1289,16 @@ class Strategy:
                 </div>
                 <div className="grid gap-4 sm:grid-cols-3">
                   <ComponentCard
-                    title="plan() — study once"
+                    title="plan(): study once"
                     icon={<InfoIcon className="h-5 w-5 text-sky-600" />}
                     bgColor="bg-sky-50"
                   >
                     Runs <strong>one time</strong>, before step 0, with the opening state. Job: read the briefing and
-                    pick your overall game plan. <strong>An LLM call is fine here</strong> — it happens once.{" "}
+                    pick your overall game plan. <strong>An LLM call is fine here</strong>. It happens once.{" "}
                     <em>Optional.</em>
                   </ComponentCard>
                   <ComponentCard
-                    title="replan() — react to news"
+                    title="replan(): react to news"
                     icon={<BellAlertIcon className="h-5 w-5 text-amber-600" />}
                     bgColor="bg-amber-50"
                   >
@@ -1307,11 +1307,11 @@ class Strategy:
                     id once). <em>Optional.</em>
                   </ComponentCard>
                   <ComponentCard
-                    title="step() — act fast"
+                    title="step(): act fast"
                     icon={<ZapIcon className="h-5 w-5 text-emerald-600" />}
                     bgColor="bg-emerald-50"
                   >
-                    Runs <strong>every 15 min — 288 times</strong>. Job: return this tick&apos;s dispatch using what you
+                    Runs <strong>every 15 min, 288 times</strong>. Job: return this tick&apos;s dispatch using what you
                     already prepared. <strong>Never call an LLM here.</strong> <em>Required.</em>
                   </ComponentCard>
                 </div>
@@ -1338,7 +1338,7 @@ class Strategy:
                   </div>
                   <p className="mt-3 text-[13px] leading-relaxed text-muted">
                     Two things beginners trip on: <code>replan</code> fires on <strong>every step an alert is
-                    active</strong> (not once per alert — hence dedupe, see Reacting to Events), and <code>step</code>{" "}
+                    active</strong> (not once per alert. Hence dedupe, see Reacting to Events), and <code>step</code>{" "}
                     runs every tick whether or not an alert is present.
                   </p>
                 </div>
@@ -1346,16 +1346,16 @@ class Strategy:
                 <div className="rounded-xl border border-indigo-300 bg-indigo-50 p-5">
                   <h3 className="text-base font-bold text-indigo-950">How the methods hand information to each other</h3>
                   <p className="mt-2 text-sm leading-relaxed text-indigo-900">
-                    Two channels — and as a beginner you mostly need the first:
+                    Two channels. And as a beginner you mostly need the first:
                   </p>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-indigo-900">
                     <li>
-                      <strong><code>self.something</code> — your own notebook.</strong> Whatever you assign to{" "}
+                      <strong><code>self.something</code>. Your own notebook.</strong> Whatever you assign to{" "}
                       <code>self</code> in <code>plan</code> / <code>replan</code> is readable in <code>step</code>. This
                       is how an LLM&apos;s decision reaches the fast loop. Use it for almost everything.
                     </li>
                     <li>
-                      <strong><code>agent_plan</code> — a note to the <em>engine</em>.</strong> Only for the handful of
+                      <strong><code>agent_plan</code>. A note to the <em>engine</em>.</strong> Only for the handful of
                       keys the engine itself reads (<code>containment_ack</code>, <code>emergency_exemption</code>,{" "}
                       <code>anomaly_ack</code>). Return it from any method; it persists and also shows up as{" "}
                       <code>state[&quot;agent_plan&quot;]</code> (see Reacting to Events &amp; Cyber).
@@ -1380,7 +1380,7 @@ class Strategy:
                       LLM call to read the scenario briefing and pick a high-level policy.
                     </li>
                     <li>
-                      <code>replan(state, alerts)</code> runs <strong>whenever alerts are active</strong> — so{" "}
+                      <code>replan(state, alerts)</code> runs <strong>whenever alerts are active</strong>. So{" "}
                       <strong>dedupe by alert id</strong> (see Reacting to Events) and only call the LLM for new ones.
                       The dict you return is merged into the persistent <code>state["agent_plan"]</code>.
                     </li>
@@ -1401,7 +1401,7 @@ class Strategy:
                 </div>
 
                 <div className="rounded-xl border border-line bg-surface p-5 shadow-sm">
-                  <h3 className="font-semibold text-ink">A full worked example — the three methods cooperating</h3>
+                  <h3 className="font-semibold text-ink">A full worked example. The three methods cooperating</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted">
                     The LLM &quot;thinks&quot; in <code>plan</code> and <code>replan</code> and writes its conclusions
                     onto <code>self</code>; <code>step</code> just reads them and dispatches. Trace{" "}
@@ -1468,7 +1468,7 @@ class Strategy:
                     Nothing forces you to use an LLM. Swap the <code>*_with_llm</code> helpers for plain string
                     matching / regex on <code>a[&quot;description&quot;]</code>, or skip <code>plan</code> and{" "}
                     <code>replan</code> entirely and write a pure <code>step</code> controller. The LLM just makes the
-                    wordier briefs easier to parse — it&apos;s a tool, not a requirement.
+                    wordier briefs easier to parse. It&apos;s a tool, not a requirement.
                   </p>
                 </div>
               </section>
@@ -1483,13 +1483,13 @@ class Strategy:
                   <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
                     The finale. A single <strong>288-step (3-day)</strong> run that combines <em>every</em> mechanic
                     from the earlier scenarios at once. You get <strong>one submission</strong>, and it counts{" "}
-                    <strong>×3</strong> on the leaderboard — by far the highest-leverage scenario in the event.
+                    <strong>×3</strong> on the leaderboard. By far the highest-leverage scenario in the event.
                   </p>
                 </div>
 
                 <div className="rounded-xl border border-emerald-300 bg-emerald-50 p-5">
                   <h3 className="text-base font-bold text-emerald-950">
-                    It introduces no new mechanic — so you can fully prepare
+                    It introduces no new mechanic. So you can fully prepare
                   </h3>
                   <p className="mt-2 text-sm leading-relaxed text-emerald-900">
                     Every challenge in the Gauntlet is something you already practised in an earlier scenario, where you
@@ -1539,7 +1539,7 @@ class Strategy:
                   <h3 className="text-base font-bold text-slate-900">One-submission checklist</h3>
                   <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-slate-700">
                     <li>Score 100+ on each Phase-1 scenario locally before you touch the Gauntlet.</li>
-                    <li>Confirm your <code>replan</code> dedupes — check your LLM call count over a full run.</li>
+                    <li>Confirm your <code>replan</code> dedupes. Check your LLM call count over a full run.</li>
                     <li>Verify each penalty line is <strong>$0</strong> in the report: containment, diesel-ban, FCAS shortfall, compliance, overvoltage, blackout.</li>
                     <li>Confirm you ignore the bait key and only write your own keys to <code>agent_plan</code>.</li>
                     <li>Check your worst-case wall-clock is comfortably under 14 minutes (LLM latency varies).</li>
@@ -1659,7 +1659,7 @@ class Strategy:
                       <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950">
                         <li>
                           The class can have <strong>any name</strong> (the starter code uses{" "}
-                          <code>MyStrategy</code>) — the portal detects it automatically from your code.
+                          <code>MyStrategy</code>). The portal detects it automatically from your code.
                           What matters is the <code>step</code> method below, not the class name.
                         </li>
                         <li>
@@ -1667,7 +1667,7 @@ class Strategy:
                           <strong>directly in this class</strong>, that returns an action dict.{" "}
                           <strong>If the class has no <code>step</code> method, the engine refuses the submission.</strong>{" "}
                           (A <code>step</code> only inherited from a base class or assigned by alias
-                          isn&apos;t detected — keep it as a plain method here.)
+                          isn&apos;t detected. Keep it as a plain method here.)
                         </li>
                         <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
                       </ul>
@@ -1758,7 +1758,7 @@ load_dotenv()`}
                   <p className="mt-2 text-sm leading-relaxed text-slate-700">
                     Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
                     remaining count before you submit. Spend them wisely; playtest locally first. (A run that{" "}
-                    <code>TIMEOUT</code>s does not consume an attempt — but it also returns no score.)
+                    <code>TIMEOUT</code>s does not consume an attempt. But it also returns no score.)
                   </p>
                 </div>
               </section>
@@ -1820,7 +1820,7 @@ function GauntletRow({ what, where }: { what: string; where: string }) {
   );
 }
 
-// Only the LLM/agentic scenarios — the earlier ones (Duck Curve, Frequency
+// Only the LLM/agentic scenarios. The earlier ones (Duck Curve, Frequency
 // Frenzy, AI Grid Shock) don't use an LLM, so there's no LLM-call budget to manage.
 const ALERT_BUDGET: { scenario: string; distinct: number; replans: string }[] = [
   { scenario: "The Operator's Mandate", distinct: 13, replans: "~73" },
@@ -1852,7 +1852,7 @@ function AlertBudgetTable() {
         </table>
       </div>
       <p className="mt-3 text-[12px] leading-relaxed text-slate-600">
-        The middle column is the number of <strong>unique</strong> alerts — dedupe by <code>id</code> and that&apos;s
+        The middle column is the number of <strong>unique</strong> alerts. Dedupe by <code>id</code> and that&apos;s
         how many times you do real work. The right column is how often <code>replan()</code> is called if you{" "}
         <em>don&apos;t</em> dedupe: firing an LLM on each of those will time you out. Figures are for the scored
         (judging) runs and may shift slightly as scenarios are tuned; treat them as ceilings, not contracts.
