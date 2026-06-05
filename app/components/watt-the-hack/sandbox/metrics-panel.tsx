@@ -14,7 +14,7 @@ import {
 import { motion } from "framer-motion";
 import { useMemo } from "react";
 
-import { buildCostTiles, type CostGroup } from "~/lib/watt-the-hack-sandbox/mechanics";
+import { buildCostTiles, COST_KEY_RATES, type CostGroup } from "~/lib/watt-the-hack-sandbox/mechanics";
 import { selectBreakdownTotals, useSimStore } from "~/lib/watt-the-hack-sandbox/sim-store";
 import { cn } from "~/lib/watt-the-hack-sandbox/utils";
 
@@ -242,13 +242,19 @@ function CostTile({
           <div className="space-y-2">
             {components.map((component) => {
               const actual = componentValue(breakdown, component);
+              const rate = COST_KEY_RATES[component.key];
               return (
                 <div
                   key={component.key}
-                  className="grid grid-cols-[1fr_auto] gap-x-3"
+                  className="grid grid-cols-[1fr_auto] items-baseline gap-x-3"
                 >
-                  <span className="min-w-0 truncate text-muted">
-                    {component.label}
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-muted">{component.label}</span>
+                    {rate ? (
+                      <span className="truncate text-[10px] tabular-nums text-muted/75">
+                        {rate}
+                      </span>
+                    ) : null}
                   </span>
                   <span
                     className={cn(

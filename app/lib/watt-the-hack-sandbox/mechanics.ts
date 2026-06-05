@@ -95,7 +95,7 @@ export const MECHANICS: Record<string, MechanicDef> = {
     id: "diesel",
     label: "Diesel backup",
     short: "Emergency dispatch when imports hit the grid cap.",
-    long: "Last-resort generator. Runs at $1000/MWh — pricey, but a tenth of the $10000/MWh blackout penalty. Use to cover the gap when net import exceeds the grid's import ceiling.",
+    long: "Last-resort generator. Runs at $1000/MWh — pricey, but far cheaper than the $100,000/MWh blackout penalty it prevents. Use to cover the gap when net import exceeds the grid's import ceiling.",
     icon: FuelIcon,
     iconTint: "text-red-700",
     iconBg: "bg-rose-50",
@@ -149,7 +149,7 @@ export const MECHANICS: Record<string, MechanicDef> = {
       description:
         "MW of inverter capacity reserved for FCAS. Eats into the battery_flow_mw budget.",
     },
-    costKeys: ["fcas_revenue", "fcas_dispatch_bonus", "fcas_shortfall_penalty"],
+    costKeys: ["fcas_revenue", "fcas_dispatch_bonus", "fcas_shortfall_penalty", "fcas_ramp_charge"],
     costGroup: "fcas",
   },
 
@@ -282,9 +282,39 @@ const COST_KEY_LABELS: Record<string, string> = {
   fcas_revenue: "FCAS revenue",
   fcas_dispatch_bonus: "Dispatch bonus",
   fcas_shortfall_penalty: "Shortfall penalty",
+  fcas_ramp_charge: "Reserve ramp",
   compliance_penalty: "Compliance",
   phishing_fine: "Phishing trap",
   anomaly_ack_fine: "Anomaly ack",
+  diesel_ban_penalty: "Diesel ban",
+  cyber_containment_fine: "Containment",
+  ids_cost: "IDS feed",
+};
+
+// Exact engine rate for each cost-breakdown key, surfaced in the metrics
+// tooltip so participants can see what each line actually charges. Mirrors
+// the "Cost & penalty reference" table in the docs. Keep both in sync with
+// EngineConfig defaults in watt_the_hack/engine/engine.py.
+export const COST_KEY_RATES: Record<string, string> = {
+  tariff_import: "dynamic $/MWh",
+  tariff_export: "$50/MWh",
+  demand_charge: "$1,000/MW peak",
+  carbon_cost: "$50/kg CO₂",
+  ramp_charge: "$1 × ΔMW²",
+  battery_wear: "$50/MWh",
+  generator_fuel: "$1,000/MWh",
+  blackout_penalty: "$100,000/MWh",
+  overvoltage_penalty: "$5,000/MWh",
+  fcas_revenue: "$40/MW/h",
+  fcas_dispatch_bonus: "$200/MWh",
+  fcas_shortfall_penalty: "$100,000/MWh",
+  fcas_ramp_charge: "$500/MW Δ",
+  compliance_penalty: "$2M/SOC · $500k/MW",
+  diesel_ban_penalty: "$3,000/MWh",
+  anomaly_ack_fine: "$5,000/step",
+  cyber_containment_fine: "$50,000 each",
+  ids_cost: "per-step fee",
+  phishing_fine: "scenario fine",
 };
 
 export function buildCostTiles(activeIds: string[]): CostTileConfig[] {
