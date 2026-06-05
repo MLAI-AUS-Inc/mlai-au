@@ -312,6 +312,20 @@ export interface SmartHomeState {
   published_age_ms?: number | null;
 }
 
+// A short-lived Firebase custom token (role: watt_participant) + the team's RTDB path segments, so
+// the browser can subscribe DIRECTLY to the team's live score/observation nodes instead of polling.
+export interface WattParticipantAuth {
+  firebase_custom_token: string;
+  class_id: string;
+  household_id: string;
+}
+
+export async function getWattParticipantToken(env: Env, request: Request): Promise<WattParticipantAuth> {
+  const client = createApiClient(env, request);
+  const response = await client.post("/api/v1/hackathons/watt/firebase-token/", {});
+  return response.data as WattParticipantAuth;
+}
+
 export async function getSmartHomeBlocks(env: Env, request: Request): Promise<SmartHomeCatalog> {
   const client = createApiClient(env, request);
   const response = await client.get("/api/v1/hackathons/watt/smart-home/blocks/");

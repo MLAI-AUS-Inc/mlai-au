@@ -12,7 +12,6 @@ import {
   type SmartHomeCatalog,
   type SmartHomePipeline,
   type SmartHomeShopState,
-  type SmartHomeState,
   type WattUnitySession,
 } from "~/lib/generic-hackathon";
 import { getEnv } from "~/lib/env.server";
@@ -21,6 +20,7 @@ import { SmartHomeControllerV2 } from "~/components/SmartHomeControllerV2";
 import { SmartHomeSwitchboard } from "~/components/SmartHomeSwitchboard";
 import { SmartHomeShop, type ShopFeedback } from "~/components/SmartHomeShop";
 import { SmartHomeStatusBar } from "~/components/SmartHomeStatusBar";
+import { useWattRealtimeState } from "~/hooks/useWattRealtimeState";
 import { progressionForDay } from "~/lib/smart-home-progression";
 import type { DeployFeedback } from "~/components/SmartHomeController";
 
@@ -209,11 +209,13 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
   const handleSwitchDeploy = (switches: Record<string, boolean>) =>
     deployFetcher.submit({ intent: "deploy", switches: JSON.stringify(switches) }, { method: "post" });
 
-  // Poll the live game state for the goal/day/wallet status bar.
-  const stateFetcher = useFetcher();
-  const homeState = stateFetcher.data as SmartHomeState | undefined;
+  // Live game state: subscribe DIRECTLY to the team's Firebase RTDB score/observation nodes for
+  // real-time push updates (~1s, when the streamed game writes) instead of polling the backend.
+  // Returns zeros until a game has started.
+  const { state: homeState } = useWattRealtimeState(session?.household_id);
   // Day-gated capability progression: a simple switchboard early, the full pipeline later.
-  const progression = useMemo(() => progressionForDay(homeState?.day ?? null), [homeState?.day]);
+  // `day || null` so the pre-game zero state maps to the earliest stage, same as "no data" before.
+  const progression = useMemo(() => progressionForDay(homeState.day || null), [homeState.day]);
 
   // T5: live/offline badge driven by the published-observation freshness the backend reports
   // (live / stale / no_observation / missing_timestamp from observation_liveness).
@@ -244,16 +246,6 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
     return null;
   }, [session, homeState]);
 
-  useEffect(() => {
-    const STATE_PATH = "/watt-the-hack/smart-home-beginner/state";
-    stateFetcher.load(STATE_PATH);
-    // 3s so the live HUD (energy/money tick up each second in-sim) feels responsive; the score
-    // summary is a tiny payload and this is the only state poll. Shop stays at 6s.
-    const id = setInterval(() => stateFetcher.load(STATE_PATH), 3000);
-    return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Remember the last deployed brain's effect line so the nightly recap can name it
   // ("Claude kept rooms & showers warmer — more comfort, a little more cost"), making the
   // ChatGPT/Claude/Gemini choice felt each day rather than only at deploy time.
@@ -268,7 +260,8 @@ export default function WattTheHackSmartHomeBeginnerTrack() {
   const lastDayRef = useRef<{ day: number; score: number } | null>(null);
   const [recap, setRecap] = useState<string | null>(null);
   useEffect(() => {
-    if (!homeState || typeof homeState.day !== "number") return;
+    // Ignore the pre-game zero state (day 0) so the first live snapshot doesn't fire a fake recap.
+    if (typeof homeState.day !== "number" || homeState.day < 1) return;
     const snap = {
       day: homeState.day,
       score: typeof homeState.score === "number" ? homeState.score : 0,
