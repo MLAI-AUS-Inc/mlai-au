@@ -70,7 +70,7 @@ export default function DocsPage() {
 
             <div className="min-w-0 flex-1 space-y-10 pb-12">
               <section id="introduction" className="scroll-mt-24">
-                <div className="rounded-2xl border border-sky-200/70 bg-gradient-to-br from-sky-50 via-white to-blue-50/40 p-6 shadow-sm sm:p-8">
+                <div className="rounded-2xl border border-sky-300 bg-gradient-to-br from-sky-50 via-white to-blue-50/40 p-6 shadow-sm sm:p-8">
                   <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
                     Grid Simulator Mechanics
                   </h1>
@@ -151,9 +151,9 @@ export default function DocsPage() {
                   </ComponentCard>
                 </div>
 
-                <div className="rounded-xl border border-blue-200/70 bg-blue-50/95 p-5">
-                  <h3 className="text-base font-bold text-blue-900">The Inverter Bottleneck</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-blue-900/90">
+                <div className="rounded-xl border border-blue-300 bg-blue-100 p-5">
+                  <h3 className="text-base font-bold text-blue-950">The Inverter Bottleneck</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-blue-950">
                     Think of the inverter as the gateway between your battery and the rest of the grid.{" "}
                     <strong>Even if your battery is completely full, it can't discharge faster than its inverter limit.</strong>
                     <br />
@@ -165,9 +165,9 @@ export default function DocsPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-violet-200/70 bg-violet-50/95 p-5">
-                  <h3 className="text-base font-bold text-violet-900">FCAS, explained — it&apos;s a bid, not a discharge</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-violet-900/90">
+                <div className="rounded-xl border border-violet-300 bg-violet-100 p-5">
+                  <h3 className="text-base font-bold text-violet-950">FCAS, explained — it&apos;s a bid, not a discharge</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-violet-950">
                     <strong>What it is in real life:</strong> FCAS (Frequency Control Ancillary Services) is a real
                     market run by AEMO, Australia&apos;s grid operator. The grid must stay at almost exactly{" "}
                     <strong>50 Hz</strong>; when a large generator trips, fast assets like batteries are paid to inject
@@ -176,7 +176,7 @@ export default function DocsPage() {
                     battery&quot; in South Australia earns a large share of its income from FCAS, not from buying and
                     selling energy. This scenario models that market.
                   </p>
-                  <div className="mt-3 space-y-2 text-sm leading-relaxed text-violet-900/90">
+                  <div className="mt-3 space-y-2 text-sm leading-relaxed text-violet-950">
                     <p>
                       <strong>In the game it&apos;s a pure bid.</strong> Each step you set{" "}
                       <code>fcas_reserve_mw</code> = how many MW you <em>promise</em> to keep available for the grid.
@@ -202,11 +202,11 @@ export default function DocsPage() {
                       <strong>stored charge</strong>, so a reserve bid is only as good as the battery SOC backing it.
                     </p>
                   </div>
-                  <div className="mt-3 rounded-lg border-2 border-rose-300 bg-rose-50/85 p-3">
-                    <p className="text-[13px] font-extrabold uppercase tracking-wider text-rose-900">
+                  <div className="mt-3 rounded-lg border-2 border-rose-300 bg-rose-100 p-3">
+                    <p className="text-[13px] font-extrabold uppercase tracking-wider text-rose-950">
                       ⚠ Failing a dispatch is the harshest penalty in the game
                     </p>
-                    <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-rose-950/90">
+                    <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] leading-relaxed text-rose-950">
                       <li>
                         <strong>Deliver</strong> the called MW (from your reserve + enough SOC) → a{" "}
                         <strong>$200/MWh</strong> bonus.
@@ -218,7 +218,7 @@ export default function DocsPage() {
                         <strong>$250,000</strong> in a single step.
                       </li>
                     </ul>
-                    <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                    <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
                       So FCAS is reliable, near-free income — but only bid what you can truly back with charge when a
                       dispatch lands, and keep some SOC in the tank ahead of the windows the engine warns you about.
                     </p>
@@ -401,9 +401,9 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-blue-200/70 bg-blue-50/95 p-5">
-                  <h3 className="text-base font-bold text-blue-900">Persistent Memory (Saving Arrays between Steps)</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-blue-900/90">
+                <div className="rounded-xl border border-blue-300 bg-blue-100 p-5">
+                  <h3 className="text-base font-bold text-blue-950">Persistent Memory (Saving Arrays between Steps)</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-blue-950">
                     Because <code>step(state)</code> is called repeatedly, any standard local variables you create inside
                     the function will be lost. To persist an array or variable across time steps (e.g., keeping track of
                     history or past errors for PID control), you should use the <strong>Strategy Class</strong> approach
@@ -415,9 +415,9 @@ export default function DocsPage() {
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-emerald-200/70 bg-emerald-50/95 p-5">
-                  <h3 className="text-base font-bold text-emerald-900">Tips for Success</h3>
-                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-emerald-900/90">
+                <div className="rounded-xl border border-emerald-300 bg-emerald-100 p-5">
+                  <h3 className="text-base font-bold text-emerald-950">Tips for Success</h3>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-emerald-950">
                     <li>
                       <strong>Don't trust the forecast implicitly:</strong> Forecasts have AR(1) noise and can be
                       deliberately skewed by cyberattacks or forecast biases in later scenarios.
@@ -485,26 +485,26 @@ export default function DocsPage() {
                   </p>
                 </div>
 
-                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/95 p-6 shadow-sm">
+                <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-100 p-6 shadow-sm">
                   <h3 className="text-xl font-extrabold tracking-tight text-emerald-950">
                     The structure of your submission
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-emerald-950/90">
+                  <p className="mt-2 text-sm leading-relaxed text-emerald-950">
                     Your code can take exactly <strong>one of two shapes</strong>. The engine auto-detects which.
                     Pick the one that fits your strategy; there's no advantage to picking the more complex one if
                     you don't need it.
                   </p>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-blue-300 bg-blue-50/95 shadow-sm">
-                  <div className="border-b border-blue-300 bg-blue-100/80 px-5 py-3">
+                <div className="overflow-hidden rounded-2xl border border-blue-300 bg-blue-100 shadow-sm">
+                  <div className="border-b border-blue-300 bg-blue-100 px-5 py-3">
                     <div className="flex items-baseline gap-3">
                       <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
                         Shape 1
                       </span>
                       <h3 className="text-lg font-extrabold text-blue-950">A controller(state) function</h3>
                     </div>
-                    <p className="mt-1.5 text-sm text-blue-950/90">
+                    <p className="mt-1.5 text-sm text-blue-950">
                       Use this if your controller is stateless: every step's action depends only on the current state
                       (plus the forecast). No persistent variables between timesteps.
                     </p>
@@ -524,7 +524,7 @@ export default function DocsPage() {
                     </CodeBlock>
                     <div className="mt-3 rounded-lg border border-blue-300 bg-white/60 p-3">
                       <p className="text-[13px] font-bold text-blue-950">REQUIRED</p>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-blue-950/90">
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-blue-950">
                         <li>
                           The function MUST be named <code>controller</code> and take a single <code>state</code>{" "}
                           argument.
@@ -535,15 +535,15 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-50/95 shadow-sm">
-                  <div className="border-b border-amber-300 bg-amber-100/80 px-5 py-3">
+                <div className="overflow-hidden rounded-2xl border border-amber-300 bg-amber-100 shadow-sm">
+                  <div className="border-b border-amber-300 bg-amber-100 px-5 py-3">
                     <div className="flex items-baseline gap-3">
                       <span className="rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white">
                         Shape 2
                       </span>
                       <h3 className="text-lg font-extrabold text-amber-950">A Strategy class</h3>
                     </div>
-                    <p className="mt-1.5 text-sm text-amber-950/90">
+                    <p className="mt-1.5 text-sm text-amber-950">
                       Use this if you need persistent state between timesteps (e.g. a rolling error buffer, a PID
                       memory, a precomputed plan from an LLM call). The engine instantiates your class once and reuses
                       it for the whole run.
@@ -577,7 +577,7 @@ export default function DocsPage() {
                     </CodeBlock>
                     <div className="mt-3 rounded-lg border border-amber-400 bg-white/60 p-3">
                       <p className="text-[13px] font-bold text-amber-950">REQUIRED</p>
-                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950/90">
+                      <ul className="mt-1.5 list-disc space-y-1 pl-5 text-[13px] text-amber-950">
                         <li>
                           The class can have <strong>any name</strong> (the starter code uses{" "}
                           <code>MyStrategy</code>) — the portal detects it automatically from your code.
@@ -592,7 +592,7 @@ export default function DocsPage() {
                         </li>
                         <li>It MUST be instantiable with no args (no required <code>__init__</code> parameters).</li>
                       </ul>
-                      <p className="mt-2 text-[13px] text-amber-950/85">
+                      <p className="mt-2 text-[13px] text-amber-950">
                         <code>plan(self, initial_state)</code> and <code>replan(self, state, alerts)</code> are
                         optional: the engine just skips them if you don't define them.
                       </p>
@@ -600,10 +600,10 @@ export default function DocsPage() {
                   </div>
                 </div>
 
-                <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-50/95 shadow-sm">
-                  <div className="border-b border-rose-300 bg-rose-100/80 px-5 py-3">
+                <div id="openai" className="scroll-mt-24 overflow-hidden rounded-2xl border border-rose-300 bg-rose-100 shadow-sm">
+                  <div className="border-b border-rose-300 bg-rose-100 px-5 py-3">
                     <h3 className="text-lg font-extrabold text-rose-950">Using the OpenAI API</h3>
-                    <p className="mt-1.5 text-sm text-rose-950/90">
+                    <p className="mt-1.5 text-sm text-rose-950">
                       The evaluation platform injects <code>OPENAI_API_KEY</code> as an environment variable inside
                       your container. Read it with <code>os.environ</code>; it's already there.
                     </p>
@@ -620,11 +620,11 @@ client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                     </CodeBlock>
 
-                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100/70 p-4">
-                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-900">
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
                         ⚠ Use gpt-5.4-nano or gpt-5.4-mini
                       </p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
                         Your whole evaluation runs under a <strong>~14-minute budget</strong>. Stick to{" "}
                         <code>gpt-5.4-nano</code> (fastest, cheapest) or <code>gpt-5.4-mini</code>; they're quick
                         enough to stay inside it. Larger or slower models risk exceeding the budget, and your run
@@ -634,11 +634,11 @@ resp = client.chat.completions.create(model="gpt-5.4-nano", messages=[...])`}
                       </p>
                     </div>
 
-                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100/70 p-4">
-                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-900">
+                    <div className="rounded-lg border-2 border-rose-500 bg-rose-100 p-4">
+                      <p className="text-sm font-extrabold uppercase tracking-wider text-rose-950">
                         ⚠ Remove your .env loading line before you submit
                       </p>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
                         Locally you probably load your key from a <code>.env</code> file:
                       </p>
                       <div className="mt-2">
@@ -648,7 +648,7 @@ from dotenv import load_dotenv
 load_dotenv()`}
                         </CodeBlock>
                       </div>
-                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950/90">
+                      <p className="mt-2 text-[13px] leading-relaxed text-rose-950">
                         Delete those two lines (and the <code>python-dotenv</code> entry in your{" "}
                         <code>requirements.txt</code>, if you added it) before pasting into the portal. The platform
                         doesn't ship your <code>.env</code>; the env vars are already in the container. Code that
@@ -657,7 +657,7 @@ load_dotenv()`}
                       </p>
                     </div>
 
-                    <p className="text-[13px] text-rose-950/85">
+                    <p className="text-[13px] text-rose-950">
                       Never hardcode a key in your <code>strategy.py</code>; submissions are stored and re-runnable.
                     </p>
                   </div>
@@ -674,7 +674,7 @@ load_dotenv()`}
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-slate-300 bg-slate-50/95 p-5">
+                <div className="rounded-xl border border-slate-300 bg-slate-100 p-5">
                   <h3 className="font-semibold text-ink">Submission attempts are capped per scenario</h3>
                   <p className="mt-2 text-sm leading-relaxed text-slate-700">
                     Each scenario allows 3 submissions. <strong>The Gauntlet allows 1.</strong> The portal shows your
@@ -714,8 +714,8 @@ load_dotenv()`}
                   </p>
                 </div>
 
-                <div className="overflow-hidden rounded-xl border border-emerald-300 bg-emerald-50/95 shadow-sm">
-                  <div className="border-b border-emerald-300 bg-emerald-100/70 px-4 py-2.5">
+                <div className="overflow-hidden rounded-xl border border-emerald-300 bg-emerald-100 shadow-sm">
+                  <div className="border-b border-emerald-300 bg-emerald-100 px-4 py-2.5">
                     <h3 className="text-sm font-extrabold text-emerald-950">Recommended: a Strategy class with self.</h3>
                   </div>
                   <div className="p-4">
@@ -735,7 +735,7 @@ load_dotenv()`}
         flow = 20.0 if state["price"] > avg else -20.0
         return {"battery_flow_mw": flow}`}
                     </CodeBlock>
-                    <p className="mt-3 text-[13px] leading-relaxed text-emerald-950/90">
+                    <p className="mt-3 text-[13px] leading-relaxed text-emerald-950">
                       The engine builds your strategy class <strong>once</strong> and reuses that one instance
                       for every step, so everything stored on <code>self</code> persists automatically. This is the
                       clean way, and it sidesteps the gotcha below.
@@ -875,18 +875,18 @@ class MyStrategy:                     # any name works
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-amber-300 bg-amber-50/95 p-5">
+                <div className="rounded-xl border border-amber-300 bg-amber-100 p-5">
                   <h3 className="text-base font-bold text-amber-950">
                     The LLM budget rule: call it in <code>plan</code> / <code>replan</code>, never <code>step</code>
                   </h3>
-                  <p className="mt-2 text-sm leading-relaxed text-amber-950/90">
+                  <p className="mt-2 text-sm leading-relaxed text-amber-950">
                     Your <strong>entire evaluation</strong> (every timestep of the run) must finish within{" "}
                     <strong>~14 minutes</strong> of wall-clock. There is no per-step rescue: if the run as a whole
                     exceeds the budget it ends in <code>TIMEOUT</code> with <strong>no score</strong>. (A timeout is a
                     free retry: it doesn't burn one of your 3 attempts, but you still get nothing back.) So the LLM
                     has to live where it's called rarely:
                   </p>
-                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950/90">
+                  <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-amber-950">
                     <li>
                       <code>plan(initial_state)</code> runs <strong>once</strong> before step 0: the right place for an
                       LLM call to read the scenario briefing and pick a high-level policy.
@@ -973,21 +973,21 @@ function ConstraintRow({
 }) {
   const tones = {
     default: {
-      card: "border-sky-200 bg-sky-50/95",
+      card: "border-sky-300 bg-sky-100",
       title: "text-sky-950",
       body: "text-slate-700",
       accent: "bg-sky-400",
     },
     warning: {
-      card: "border-amber-300 bg-amber-100/90",
+      card: "border-amber-300 bg-amber-100",
       title: "text-amber-950",
-      body: "text-amber-950/85",
+      body: "text-amber-950",
       accent: "bg-amber-400",
     },
     danger: {
-      card: "border-rose-300 bg-rose-100/90",
+      card: "border-rose-300 bg-rose-100",
       title: "text-rose-950",
-      body: "text-rose-950/85",
+      body: "text-rose-950",
       accent: "bg-rose-400",
     },
   };
