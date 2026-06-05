@@ -1,14 +1,77 @@
 import { useState } from "react";
-import { Lightbulb, RotateCcw, Rocket } from "lucide-react";
+import {
+  BatteryCharging,
+  Car,
+  Droplets,
+  Lightbulb,
+  RotateCcw,
+  Rocket,
+  Thermometer,
+  Utensils,
+  WashingMachine,
+  Wind,
+  type LucideIcon,
+} from "lucide-react";
 import { wattClasses } from "~/lib/watt-theme";
 import type { DeployFeedback } from "~/components/SmartHomeController";
-import { SWITCH_DEVICES, type Upcoming } from "~/lib/smart-home-progression";
+import { SWITCH_DEVICES, SWITCH_GROUPS, type SwitchDevice, type Upcoming } from "~/lib/smart-home-progression";
 
 /**
- * Stage 1 — the simplest possible controller: a few light switches. Flip and Deploy.
- * On Deploy the page posts { switches: {bathroom:false,...} } -> backend set_lights{room,on}.
- * This is the gentle on-ramp before the full SENSE->THINK->ACT pipeline unlocks.
+ * Stage 1 — the simplest controller: flip switches for the home's devices, then Deploy.
+ * On Deploy the page posts { switches: {bathroom:false, ev:true, ...} } -> backend
+ * SWITCH_DEVICE_COMMANDS -> the matching device command. This is the gentle on-ramp before
+ * the full SENSE->THINK->ACT pipeline unlocks.
  */
+const DEVICE_ICON: Record<string, LucideIcon> = {
+  bathroom: Lightbulb,
+  living: Lightbulb,
+  kitchen: Lightbulb,
+  bedroom: Lightbulb,
+  child_bedroom: Lightbulb,
+  office: Lightbulb,
+  thermostat: Thermometer,
+  hot_water: Droplets,
+  ev: Car,
+  battery: BatteryCharging,
+  dishwasher: Utensils,
+  washer: WashingMachine,
+  dryer: Wind,
+};
+
+function DeviceSwitch({ device, isOn, onToggle }: { device: SwitchDevice; isOn: boolean; onToggle: () => void }) {
+  const Icon = DEVICE_ICON[device.id] ?? Lightbulb;
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      role="switch"
+      aria-checked={isOn}
+      aria-label={`${device.label} ${isOn ? "on" : "off"}`}
+      className={`flex items-center gap-3 rounded-[1rem] border-2 p-4 text-left transition ${
+        isOn ? "border-[#cfe0c2] bg-[#eef4e3]" : "border-[#e8dfcf] bg-[#fffefa]"
+      }`}
+    >
+      <span
+        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
+          isOn ? "bg-[#e6efd7] text-[#155420]" : "bg-[#f1ece0] text-[#8a8477]"
+        }`}
+      >
+        <Icon className="h-5 w-5" aria-hidden="true" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-black text-[#121e16]">{device.label}</span>
+        <span className="block truncate text-[11px] font-medium text-[#64705f]">{device.hint}</span>
+      </span>
+      <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${isOn ? "bg-[#2f6f2c]" : "bg-[#d8cfbd]"}`}>
+        <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${isOn ? "left-[1.4rem]" : "left-0.5"}`} />
+      </span>
+      <span className="w-7 shrink-0 text-right text-[11px] font-black uppercase" style={{ color: isOn ? "#155420" : "#8a8477" }}>
+        {isOn ? "On" : "Off"}
+      </span>
+    </button>
+  );
+}
+
 export function SmartHomeSwitchboard({
   onDeploy,
   isDeploying,
@@ -20,9 +83,8 @@ export function SmartHomeSwitchboard({
   feedback: DeployFeedback;
   upcoming: Upcoming[];
 }) {
-  // Lights default ON — the house tends to start with some left on, so the natural first
-  // action is to spot one and turn it off.
-  const initial = () => Object.fromEntries(SWITCH_DEVICES.map((d) => [d.id, true]));
+  // Each device starts at its natural default (lights tend to be left on; appliances idle).
+  const initial = () => Object.fromEntries(SWITCH_DEVICES.map((d) => [d.id, d.defaultOn]));
   const [on, setOn] = useState<Record<string, boolean>>(initial);
   const toggle = (id: string) => setOn((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -32,7 +94,7 @@ export function SmartHomeSwitchboard({
         <div>
           <h2 className="text-xl font-black text-[#121e16]">Your Smart Home</h2>
           <p className="mt-1 text-sm font-medium text-[#64705f]">
-            Flip a switch, then hit Deploy to control your house. Spotted a light left on? Turn it off.
+            Flip any switch, then hit Deploy to control your house. Spotted a light left on? Turn it off.
           </p>
         </div>
         <span className="rounded-full border border-[#e8dfcf] bg-[#fffefa] px-3 py-1 text-xs font-black text-[#155420]">
@@ -40,37 +102,19 @@ export function SmartHomeSwitchboard({
         </span>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        {SWITCH_DEVICES.map((d) => {
-          const isOn = on[d.id];
+      <div className="mt-5 space-y-5">
+        {SWITCH_GROUPS.map((group) => {
+          const devices = SWITCH_DEVICES.filter((d) => d.group === group);
+          if (devices.length === 0) return null;
           return (
-            <button
-              key={d.id}
-              type="button"
-              onClick={() => toggle(d.id)}
-              aria-pressed={isOn}
-              className={`flex items-center gap-3 rounded-[1rem] border-2 p-4 text-left transition ${
-                isOn ? "border-[#e7d3a3] bg-[#fdf6e3]" : "border-[#cfe0c2] bg-[#eef4e3]"
-              }`}
-            >
-              <span
-                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full ${
-                  isOn ? "bg-[#f4c84a] text-[#5c4a16]" : "bg-[#d6e3c6] text-[#64705f]"
-                }`}
-              >
-                <Lightbulb className="h-5 w-5" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-sm font-black text-[#121e16]">{d.label}</span>
-                <span className="block truncate text-[11px] font-medium text-[#64705f]">{d.hint}</span>
-              </span>
-              <span className={`relative h-6 w-11 shrink-0 rounded-full transition ${isOn ? "bg-[#e0a93a]" : "bg-[#bcd0a8]"}`}>
-                <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${isOn ? "left-[1.4rem]" : "left-0.5"}`} />
-              </span>
-              <span className="w-7 shrink-0 text-right text-[11px] font-black uppercase" style={{ color: isOn ? "#9a6b00" : "#5b7a3a" }}>
-                {isOn ? "On" : "Off"}
-              </span>
-            </button>
+            <div key={group}>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.14em] text-[#64705f]">{group}</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {devices.map((d) => (
+                  <DeviceSwitch key={d.id} device={d} isOn={Boolean(on[d.id])} onToggle={() => toggle(d.id)} />
+                ))}
+              </div>
+            </div>
           );
         })}
       </div>
