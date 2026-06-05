@@ -727,7 +727,7 @@ export default function WattTheHackSubmissionPortal() {
           <div className="flex justify-end pt-4">
             <button
               type="submit"
-              disabled={isSubmitting || cooldownActive || !advancedTrackEnabled}
+              disabled={isSubmitting || cooldownActive || !advancedTrackEnabled || scenarioRemaining <= 0}
               className={wattClasses.buttonPrimary + " gap-2 px-8 py-4 disabled:opacity-70 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"}
             >
               {isSubmitting ? (
